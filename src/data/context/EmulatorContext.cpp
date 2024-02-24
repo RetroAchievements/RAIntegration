@@ -203,6 +203,13 @@ void EmulatorContext::UpdateUserAgent()
     ra::services::ServiceLocator::GetMutable<ra::services::IHttpRequester>().SetUserAgent(sUserAgent);
 }
 
+std::string EmulatorContext::GetUserAgentClause() const
+{
+    std::string sClause = "Integration/";
+    AppendIntegrationVersion(sClause);
+    return sClause;
+}
+
 static unsigned long long ParseVersion(const char* sVersion)
 {
     Expects(sVersion != nullptr);

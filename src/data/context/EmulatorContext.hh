@@ -66,6 +66,10 @@ public:
     /// </summary>
     void SetClientUserAgentDetail(const std::string& sDetail) { m_sClientUserAgentDetail = sDetail; UpdateUserAgent(); }
 
+    /// <summary>
+    /// Gets the Integration/X.X.X.X portion of the User-Agent clause.
+    /// </summary>
+    std::string GetUserAgentClause() const;
 
     /// <summary>
     /// Prompts the user to confirm disabling hardcore mode to perform some activity.

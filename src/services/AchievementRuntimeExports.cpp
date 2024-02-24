@@ -100,6 +100,13 @@ public:
             pConfiguration->SetHost(value);
     }
 
+    static size_t get_user_agent_clause(char buffer[], size_t buffer_size)
+    {
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        const auto sUserAgent = pEmulatorContext.GetUserAgentClause();
+        return snprintf(buffer, buffer_size, "%s", sUserAgent.c_str());
+    }
+
     static bool IsUpdatingHardcore() noexcept { return s_bUpdatingHardcore; }
 
     static void set_hardcore_enabled(int value)
@@ -892,6 +899,7 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal) noexcept
     pClientExternal->set_read_memory = ra::services::AchievementRuntimeExports::set_read_memory;
     pClientExternal->set_get_time_millisecs = ra::services::AchievementRuntimeExports::set_get_time_millisecs;
     pClientExternal->set_host = ra::services::AchievementRuntimeExports::set_host;
+    pClientExternal->get_user_agent_clause = ra::services::AchievementRuntimeExports::get_user_agent_clause;
 
     pClientExternal->set_hardcore_enabled = ra::services::AchievementRuntimeExports::set_hardcore_enabled;
     pClientExternal->get_hardcore_enabled = ra::services::AchievementRuntimeExports::get_hardcore_enabled;

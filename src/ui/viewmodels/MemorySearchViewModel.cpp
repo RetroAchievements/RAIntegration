@@ -692,7 +692,10 @@ void MemorySearchViewModel::ApplyContinuousFilter()
     const auto nNewResults = pNewResult->pResults.MatchingAddressCount();
 
     // replace the last item with the new results
-    m_vSearchResults.back().swap(pNewResult);
+    {
+        std::lock_guard lock(m_oMutex);
+        m_vSearchResults.back().swap(pNewResult);
+    }
 
     ChangePage(m_nSelectedSearchResult);
 
@@ -705,7 +708,10 @@ void MemorySearchViewModel::ApplyContinuousFilter()
 
 void MemorySearchViewModel::ChangePage(size_t nNewPage)
 {
-    m_nSelectedSearchResult = nNewPage;
+    {
+        std::lock_guard lock(m_oMutex);
+        m_nSelectedSearchResult = nNewPage;
+    }
     SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
 
     const auto& pResult = *m_vSearchResults.at(nNewPage).get();

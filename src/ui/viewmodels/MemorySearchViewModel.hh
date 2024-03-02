@@ -467,6 +467,7 @@ private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
     void ApplyContinuousFilter();
     void UpdateResults();
+    void DoUpdateResults();
     void UpdateResult(SearchResultViewModel& pRow, const ra::services::SearchResults& pResults,
         ra::services::SearchResults::Result& pResult, bool bForceFilterCheck,
         const ra::data::context::EmulatorContext& pEmulatorContext);

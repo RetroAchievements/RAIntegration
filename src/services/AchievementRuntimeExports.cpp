@@ -463,16 +463,16 @@ public:
         return rc_client_progress_size(pClient.GetClient());
     }
 
-    static int serialize_progress(uint8_t* buffer)
+    static int serialize_progress(uint8_t* buffer, size_t buffer_size)
     {
         const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_serialize_progress(pClient.GetClient(), buffer);
+        return rc_client_serialize_progress_sized(pClient.GetClient(), buffer, buffer_size);
     }
 
-    static int deserialize_progress(const uint8_t* buffer)
+    static int deserialize_progress(const uint8_t* buffer, size_t buffer_size)
     {
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return rc_client_deserialize_progress(pClient.GetClient(), buffer);
+        return rc_client_deserialize_progress_sized(pClient.GetClient(), buffer, buffer_size);
     }
 
     static void set_raintegration_write_memory_function(rc_client_t* client, rc_client_raintegration_write_memory_func_t handler) noexcept

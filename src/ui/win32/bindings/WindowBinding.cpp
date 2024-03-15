@@ -133,7 +133,11 @@ void WindowBinding::UpdateAppTitle()
 {
     const auto& pEmulatorViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().Emulator;
     if (pEmulatorViewModel.IsAppTitleManaged())
-        SetWindowTextW(m_hWnd, GetValue(WindowViewModelBase::WindowTitleProperty).c_str());
+    {
+        InvokeOnUIThread([this]() {
+            SetWindowTextW(m_hWnd, GetValue(WindowViewModelBase::WindowTitleProperty).c_str());
+        });
+    }
 }
 
 void WindowBinding::SetInitialPosition(RelativePosition nDefaultHorizontalLocation, RelativePosition nDefaultVerticalLocation, const char* sSizeAndPositionKey)

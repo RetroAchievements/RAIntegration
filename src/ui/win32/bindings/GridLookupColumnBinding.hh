@@ -37,12 +37,15 @@ public:
     typedef bool (*IsVisibleFunction)(const ViewModelBase& vmItem, int nValue);
     void SetVisibilityFilter(IsVisibleFunction fIsVisible) noexcept { m_fIsVisible = fIsVisible; }
 
+    void SetDropDownWidth(int nPixels) { m_nDropDownWidth = nPixels; }
+
 protected:
     const IntModelProperty* m_pBoundProperty = nullptr;
     const ra::ui::viewmodels::LookupItemViewModelCollection& m_vmItems;
 
     IsVisibleFunction m_fIsVisible = nullptr;
     std::vector<int> m_vVisibleItems;
+    int m_nDropDownWidth = -1;
 };
 
 } // namespace bindings

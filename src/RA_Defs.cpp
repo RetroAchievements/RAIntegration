@@ -76,6 +76,12 @@ std::wstring MemSizeFormat(unsigned nValue, MemSize nSize, MemFormat nFormat)
         case MemSize::FloatBigEndian:
             return U32ToFloatString(nValue, RC_MEMSIZE_FLOAT_BE);
 
+        case MemSize::Double32:
+            return U32ToFloatString(nValue, RC_MEMSIZE_DOUBLE32);
+
+        case MemSize::Double32BigEndian:
+            return U32ToFloatString(nValue, RC_MEMSIZE_DOUBLE32_BE);
+
         case MemSize::MBF32:
             return U32ToFloatString(nValue, RC_MEMSIZE_MBF32);
 
@@ -158,6 +164,18 @@ unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
         case MemSize::FloatBigEndian:
             return ReverseBytes(uUnion.nValue);
 
+        case MemSize::Double32:
+        case MemSize::Double32BigEndian:
+        {
+            // double has 3 extra bits for the exponent
+            const int32_t exponent = (int32_t)((uUnion.nValue >> 23) & 0xFF) - 127 + 1023; // change exponent base from 127 to 1023
+            unsigned nValue = ((uUnion.nValue & 0x007FFFFF) >> 3)  | // mantissa is shifted three bits right
+                              (((uint32_t)exponent & 0x7FF) << 20) | // adjusted exponent
+                              ((uUnion.nValue & 0x80000000));       // sign is unmoved
+
+            return (nFloatType == MemSize::Double32) ? nValue : ReverseBytes(nValue);
+        }
+
         case MemSize::MBF32:
         case MemSize::MBF32LE:
         {
@@ -193,6 +211,22 @@ float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept
         case MemSize::Float:
             uUnion.nValue = nValue;
             break;
+
+        case MemSize::Double32BigEndian:
+            nValue = ReverseBytes(nValue);
+            __fallthrough; // to MemSize::Double32
+
+        case MemSize::Double32:
+        {
+            // double has 3 extra bits for the exponent, and uses a 1023 base instead of a 127 base
+            const int32_t exponent = (int32_t)((uUnion.nValue >> 20) & 0x7FF) - 1023 + 127; // change exponent base from 1023 to 127
+            nValue = ((uUnion.nValue & 0x000FFFFF) << 3) | // mantissa is shifted three bits left
+                     (((uint32_t)exponent & 0xFF) << 23) | // adjusted exponent
+                     ((uUnion.nValue & 0x80000000));       // sign is unmoved
+
+            uUnion.nValue = nValue;
+            break;
+        }
 
         case MemSize::MBF32:
             nValue = ReverseBytes(nValue);

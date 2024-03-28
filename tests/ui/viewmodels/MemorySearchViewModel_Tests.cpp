@@ -158,7 +158,7 @@ public:
         Assert::AreEqual(std::wstring(L""), search.GetFilterRange());
         Assert::AreEqual(std::wstring(L""), search.GetFilterValue());
 
-        Assert::AreEqual({ 16U }, search.SearchTypes().Count());
+        Assert::AreEqual({ 18U }, search.SearchTypes().Count());
         Assert::AreEqual((int)ra::services::SearchType::FourBit, search.SearchTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"4-bit"), search.SearchTypes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)ra::services::SearchType::EightBit, search.SearchTypes().GetItemAt(1)->GetId());
@@ -185,12 +185,16 @@ public:
         Assert::AreEqual(std::wstring(L"Float"), search.SearchTypes().GetItemAt(11)->GetLabel());
         Assert::AreEqual((int)ra::services::SearchType::FloatBigEndian, search.SearchTypes().GetItemAt(12)->GetId());
         Assert::AreEqual(std::wstring(L"Float BE"), search.SearchTypes().GetItemAt(12)->GetLabel());
-        Assert::AreEqual((int)ra::services::SearchType::MBF32, search.SearchTypes().GetItemAt(13)->GetId());
-        Assert::AreEqual(std::wstring(L"MBF32"), search.SearchTypes().GetItemAt(13)->GetLabel());
-        Assert::AreEqual((int)ra::services::SearchType::MBF32LE, search.SearchTypes().GetItemAt(14)->GetId());
-        Assert::AreEqual(std::wstring(L"MBF32 LE"), search.SearchTypes().GetItemAt(14)->GetLabel());
-        Assert::AreEqual((int)ra::services::SearchType::AsciiText, search.SearchTypes().GetItemAt(15)->GetId());
-        Assert::AreEqual(std::wstring(L"ASCII Text"), search.SearchTypes().GetItemAt(15)->GetLabel());
+        Assert::AreEqual((int)ra::services::SearchType::Double32, search.SearchTypes().GetItemAt(13)->GetId());
+        Assert::AreEqual(std::wstring(L"Double32"), search.SearchTypes().GetItemAt(13)->GetLabel());
+        Assert::AreEqual((int)ra::services::SearchType::Double32BigEndian, search.SearchTypes().GetItemAt(14)->GetId());
+        Assert::AreEqual(std::wstring(L"Double32 BE"), search.SearchTypes().GetItemAt(14)->GetLabel());
+        Assert::AreEqual((int)ra::services::SearchType::MBF32, search.SearchTypes().GetItemAt(15)->GetId());
+        Assert::AreEqual(std::wstring(L"MBF32"), search.SearchTypes().GetItemAt(15)->GetLabel());
+        Assert::AreEqual((int)ra::services::SearchType::MBF32LE, search.SearchTypes().GetItemAt(16)->GetId());
+        Assert::AreEqual(std::wstring(L"MBF32 LE"), search.SearchTypes().GetItemAt(16)->GetLabel());
+        Assert::AreEqual((int)ra::services::SearchType::AsciiText, search.SearchTypes().GetItemAt(17)->GetId());
+        Assert::AreEqual(std::wstring(L"ASCII Text"), search.SearchTypes().GetItemAt(17)->GetLabel());
         Assert::AreEqual(ra::services::SearchType::EightBit, search.GetSearchType());
 
         Assert::AreEqual({ 6U }, search.ComparisonTypes().Count());

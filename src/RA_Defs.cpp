@@ -168,10 +168,10 @@ unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
         case MemSize::Double32BigEndian:
         {
             // double has 3 extra bits for the exponent
-            const int32_t exponent = (int32_t)((uUnion.nValue >> 23) & 0xFF) - 127 + 1023; // change exponent base from 127 to 1023
-            unsigned nValue = ((uUnion.nValue & 0x007FFFFF) >> 3)  | // mantissa is shifted three bits right
-                              (((uint32_t)exponent & 0x7FF) << 20) | // adjusted exponent
-                              ((uUnion.nValue & 0x80000000));       // sign is unmoved
+            const int32_t exponent = ra::to_signed((uUnion.nValue >> 23) & 0xFF) - 127 + 1023; // change exponent base from 127 to 1023
+            const unsigned nValue = ((uUnion.nValue & 0x007FFFFF) >> 3)  |        // mantissa is shifted three bits right
+                                    ((ra::to_unsigned(exponent) & 0x7FF) << 20) | // adjusted exponent
+                                    ((uUnion.nValue & 0x80000000));               // sign is unmoved
 
             return (nFloatType == MemSize::Double32) ? nValue : ReverseBytes(nValue);
         }
@@ -219,10 +219,10 @@ float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept
         case MemSize::Double32:
         {
             // double has 3 extra bits for the exponent, and uses a 1023 base instead of a 127 base
-            const int32_t exponent = (int32_t)((uUnion.nValue >> 20) & 0x7FF) - 1023 + 127; // change exponent base from 1023 to 127
-            nValue = ((uUnion.nValue & 0x000FFFFF) << 3) | // mantissa is shifted three bits left
-                     (((uint32_t)exponent & 0xFF) << 23) | // adjusted exponent
-                     ((uUnion.nValue & 0x80000000));       // sign is unmoved
+            const int32_t exponent = ra::to_signed((uUnion.nValue >> 20) & 0x7FF) - 1023 + 127; // change exponent base from 1023 to 127
+            nValue = ((uUnion.nValue & 0x000FFFFF) << 3) |        // mantissa is shifted three bits left
+                     ((ra::to_unsigned(exponent) & 0xFF) << 23) | // adjusted exponent
+                     ((uUnion.nValue & 0x80000000));              // sign is unmoved
 
             uUnion.nValue = nValue;
             break;

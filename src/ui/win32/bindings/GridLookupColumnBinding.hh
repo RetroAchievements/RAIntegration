@@ -37,7 +37,7 @@ public:
     typedef bool (*IsVisibleFunction)(const ViewModelBase& vmItem, int nValue);
     void SetVisibilityFilter(IsVisibleFunction fIsVisible) noexcept { m_fIsVisible = fIsVisible; }
 
-    void SetDropDownWidth(int nPixels) { m_nDropDownWidth = nPixels; }
+    void SetDropDownWidth(int nPixels) noexcept { m_nDropDownWidth = nPixels; }
 
 protected:
     const IntModelProperty* m_pBoundProperty = nullptr;

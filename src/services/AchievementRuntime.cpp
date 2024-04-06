@@ -59,7 +59,7 @@ static int CanSubmit()
     if (pEmulatorContext.WasMemoryModified())
         return 0;
 
-    if (pEmulatorContext.IsMemoryInsecure())
+    if (_RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
         return 0;
 
     return 1;
@@ -71,10 +71,11 @@ static int CanSubmitAchievementUnlock(uint32_t nAchievementId, rc_client_t*)
         return 0;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* vmAchievement = pGameContext.Assets().FindAchievement(nAchievementId);
-    if (vmAchievement == nullptr ||
-        vmAchievement->GetChanges() != ra::data::models::AssetChanges::None ||
-        vmAchievement->GetCategory() != ra::data::models::AssetCategory::Core)
+    const auto* pAchievement = pGameContext.Assets().FindAchievement(nAchievementId);
+    if (pAchievement == nullptr ||
+        pAchievement->IsModified() ||
+        pAchievement->GetChanges() != ra::data::models::AssetChanges::None ||
+        pAchievement->GetCategory() != ra::data::models::AssetCategory::Core)
     {
         return 0;
     }
@@ -91,6 +92,7 @@ static int CanSubmitLeaderboardEntry(uint32_t nLeaderboardId, rc_client_t*)
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nLeaderboardId);
     if (pLeaderboard == nullptr ||
+        pLeaderboard->IsModified() ||
         pLeaderboard->GetChanges() != ra::data::models::AssetChanges::None ||
         pLeaderboard->GetCategory() != ra::data::models::AssetCategory::Core)
     {

@@ -62,6 +62,8 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
     m_vSizes.Add(ra::etoi(MemSize::Nibble_Upper), L"Upper4");
     m_vSizes.Add(ra::etoi(MemSize::Float), L"Float");
     m_vSizes.Add(ra::etoi(MemSize::FloatBigEndian), L"Float BE");
+    m_vSizes.Add(ra::etoi(MemSize::Double32), L"Double32");
+    m_vSizes.Add(ra::etoi(MemSize::Double32BigEndian), L"Double32 BE");
     m_vSizes.Add(ra::etoi(MemSize::MBF32), L"MBF32");
     m_vSizes.Add(ra::etoi(MemSize::MBF32LE), L"MBF32 LE");
     m_vSizes.Add(ra::etoi(MemSize::Text), L"ASCII");
@@ -246,6 +248,8 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValue(const st
     {
         case MemSize::Float:
         case MemSize::FloatBigEndian:
+        case MemSize::Double32:
+        case MemSize::Double32BigEndian:
         case MemSize::MBF32:
         case MemSize::MBF32LE:
             float fValue;
@@ -662,7 +666,13 @@ void MemoryBookmarksViewModel::AddBookmark(ra::ByteAddress nAddress, MemSize nSi
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
     if (pNote)
+    {
         vmBookmark->SetDescription(*pNote);
+
+        // if bookmarking an 8-byte double, automatically adjust the bookmark for the significant bytes
+        if (nSize == MemSize::Double32 && pCodeNotes->GetCodeNoteBytes(nAddress) == 8)
+            vmBookmark->SetAddress(nAddress + 4);
+    }
 
     vmBookmark->EndInitialization();
 

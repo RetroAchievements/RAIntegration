@@ -81,6 +81,10 @@ std::wstring ToString<MemSize>(const MemSize& t)
             return L"Float";
         case MemSize::FloatBigEndian:
             return L"FloatBigEndian";
+        case MemSize::Double32:
+            return L"Double32";
+        case MemSize::Double32BigEndian:
+            return L"Double32BigEndian";
         case MemSize::MBF32:
             return L"MBF32";
         case MemSize::MBF32LE:

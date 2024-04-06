@@ -117,6 +117,9 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, InPlaceEditorInf
             ComboBox_SetCurSel(hInPlaceEditor, nIndex);
     }
 
+    if (m_nDropDownWidth > 0)
+        SendMessage(hInPlaceEditor, CB_SETDROPPEDWIDTH, m_nDropDownWidth, 0);
+
     SetWindowFont(hInPlaceEditor, GetStockObject(DEFAULT_GUI_FONT), TRUE);
     ComboBox_ShowDropdown(hInPlaceEditor, TRUE);
 

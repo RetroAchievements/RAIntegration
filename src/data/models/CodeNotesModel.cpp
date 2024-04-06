@@ -171,13 +171,31 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
                     bFoundSize = true;
                 }
             }
+            else if (sPreviousWord == L"double" && sWord == L"32")
+            {
+                pNote.Bytes = 4;
+                pNote.MemSize = MemSize::Double32;
+                bWordIsSize = true;
+                bFoundSize = true;
+            }
         }
         else if (bLastWordIsSize)
         {
             if (sWord == L"float")
             {
                 if (pNote.MemSize == MemSize::ThirtyTwoBit)
+                {
                     pNote.MemSize = MemSize::Float;
+                    bWordIsSize = true; // allow trailing be/bigendian
+                }
+            }
+            else if (sWord == L"double")
+            {
+                if (pNote.MemSize == MemSize::ThirtyTwoBit || pNote.Bytes == 8)
+                {
+                    pNote.MemSize = MemSize::Double32;
+                    bWordIsSize = true; // allow trailing be/bigendian
+                }
             }
             else if (sWord == L"be" || sWord == L"bigendian")
             {
@@ -187,6 +205,7 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
                     case MemSize::TwentyFourBit: pNote.MemSize = MemSize::TwentyFourBitBigEndian; break;
                     case MemSize::ThirtyTwoBit: pNote.MemSize = MemSize::ThirtyTwoBitBigEndian; break;
                     case MemSize::Float: pNote.MemSize = MemSize::FloatBigEndian; break;
+                    case MemSize::Double32: pNote.MemSize = MemSize::Double32BigEndian; break;
                     default: break;
                 }
             }
@@ -246,10 +265,22 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
             {
                 pNote.Bytes = 4;
                 pNote.MemSize = MemSize::Float;
-                bWordIsSize = true;
+                bWordIsSize = true; // allow trailing be/bigendian
 
                 if (sPreviousWord == L"be" || sPreviousWord == L"bigendian")
                     pNote.MemSize = MemSize::FloatBigEndian;
+            }
+        }
+        else if (sWord == L"double")
+        {
+            if (!bFoundSize)
+            {
+                pNote.Bytes = 8;
+                pNote.MemSize = MemSize::Double32;
+                bWordIsSize = true; // allow trailing be/bigendian
+
+                if (sPreviousWord == L"be" || sPreviousWord == L"bigendian")
+                    pNote.MemSize = MemSize::Double32BigEndian;
             }
         }
 

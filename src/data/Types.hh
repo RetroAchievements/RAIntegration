@@ -26,6 +26,8 @@ enum class MemSize : uint8_t
     MBF32,
     MBF32LE,
     FloatBigEndian,
+    Double32,
+    Double32BigEndian,
 
     // extended sizes not supported by rcheevos
     Unknown,

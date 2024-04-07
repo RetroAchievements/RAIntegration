@@ -270,7 +270,8 @@ void MultiLineGridBinding::UpdateCellContents(const ItemMetrics& pItemMetrics,
             for (auto nIndex : pIter->second)
             {
                 auto nIndex2 = gsl::narrow_cast<size_t>(nIndex) - 1;
-                while (nIndex2 > nStop && isspace(sText.at(nIndex2 - 1)))
+                wchar_t c = 0; // isspace throws a debug assertion if c > 255
+                while (nIndex2 > nStop && (c = sText.at(nIndex2 - 1)) < 255 && isspace(c))
                     --nIndex2;
                 sText.at(nIndex2) = '\0';
 

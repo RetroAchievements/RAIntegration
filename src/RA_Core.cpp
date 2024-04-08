@@ -101,6 +101,8 @@ static int DoShutdown()
     if (!ra::services::Initialization::IsInitialized())
         return 0;
 
+    ra::services::Initialization::StartShutdown();
+
     // detach any client-registered functions
     _RA_InstallSharedFunctionsExt(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 

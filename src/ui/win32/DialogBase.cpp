@@ -24,15 +24,7 @@ DialogBase::DialogBase(ra::ui::WindowViewModelBase& vmWindow) noexcept :
 
 DialogBase::~DialogBase() noexcept
 {
-    if (m_hWnd)
-    {
-        // remove the pointer to the instance from the HWND so the StaticDialogProc doesn't try to redirect
-        // the WM_DESTROY message through the instance we're trying to destroy.
-        ::SetWindowLongPtr(m_hWnd, DWLP_USER, 0L);
-
-        DestroyWindow(m_hWnd);
-        m_hWnd = nullptr;
-    }
+    Destroy();
 }
 
 _Use_decl_annotations_
@@ -59,6 +51,26 @@ _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM
         ::SetWindowLongPtr(hDlg, DWLP_USER, 0L);
 
     return result;
+}
+
+void DialogBase::Destroy() noexcept
+{
+    if (m_hWnd)
+    {
+        // remove the pointer to the instance from the HWND so the StaticDialogProc doesn't try to redirect
+        // the WM_DESTROY message through the instance we're trying to destroy.
+        ::SetWindowLongPtr(m_hWnd, DWLP_USER, 0L);
+
+        // if shutting down, clear out our custom WndProc, as it won't be available to process the message
+        // after the DLL is unloaded.
+        if (ra::services::ServiceLocator::IsShuttingDown())
+            ::SetWindowLongPtrW(m_hWnd, GWLP_WNDPROC, (LONG_PTR)::DefWindowProc);
+
+        // send WM_CLOSE message to the window to ensure it gets destroyed from the UI thread.
+        ::PostMessage(m_hWnd, WM_CLOSE, 0L, 0L);
+
+        m_hWnd = nullptr;
+    }
 }
 
 _Use_decl_annotations_ HWND DialogBase::CreateDialogWindow(const TCHAR* restrict sResourceId,

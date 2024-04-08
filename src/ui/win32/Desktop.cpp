@@ -106,11 +106,18 @@ ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel, const 
     return vmViewModel.GetDialogResult();
 }
 
-void Desktop::CloseWindow(WindowViewModelBase& vmViewModel) const noexcept
+void Desktop::CloseWindow(WindowViewModelBase& vmViewModel) const
 {
-    const auto* const pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
+    auto* pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
     if (pBinding != nullptr)
-        ::SendMessage(pBinding->GetHWnd(), WM_COMMAND, IDCANCEL, 0);
+    {
+        // if shutting down, just destroy the window. otherwise send a IDCANCEL command so the
+        // viewmodel can possibly prevent the close.
+        if (ra::services::ServiceLocator::IsShuttingDown())
+            pBinding->DestroyWindow();
+        else
+            ::PostMessage(pBinding->GetHWnd(), WM_COMMAND, IDCANCEL, 0);
+    }
 }
 
 void Desktop::GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const

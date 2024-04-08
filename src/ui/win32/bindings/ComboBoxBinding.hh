@@ -142,6 +142,8 @@ protected:
 
     virtual void PopulateComboBox()
     {
+        SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
+
         const auto nCount = ra::to_signed(m_pViewModelCollection->Count());
         for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
         {
@@ -149,6 +151,8 @@ protected:
 
             ComboBox_AddString(m_hWnd, NativeStr(pLabel).c_str());
         }
+
+        SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
     }
 
     virtual void UpdateSelectedItem()

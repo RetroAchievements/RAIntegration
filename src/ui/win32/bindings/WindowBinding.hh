@@ -76,6 +76,8 @@ public:
     /// <returns>The window handle.</returns>
     HWND GetHWnd() const noexcept { return m_hWnd; }
 
+    void DestroyWindow() noexcept;
+
     /// <summary>
     /// Specifies a secondary view model to watch for BindLabel and BindEnabled bindings.
     /// </summary>

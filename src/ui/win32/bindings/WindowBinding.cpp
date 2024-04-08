@@ -129,6 +129,12 @@ void WindowBinding::SetHWND(DialogBase* pDialog, HWND hWnd)
     }
 }
 
+void WindowBinding::DestroyWindow() noexcept
+{
+    if (m_pDialog != nullptr)
+        m_pDialog->Destroy();
+}
+
 void WindowBinding::UpdateAppTitle()
 {
     const auto& pEmulatorViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().Emulator;

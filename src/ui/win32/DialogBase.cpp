@@ -64,7 +64,7 @@ void DialogBase::Destroy() noexcept
         // if shutting down, clear out our custom WndProc, as it won't be available to process the message
         // after the DLL is unloaded.
         if (ra::services::ServiceLocator::IsShuttingDown())
-            ::SetWindowLongPtrW(m_hWnd, GWLP_WNDPROC, (LONG_PTR)::DefWindowProc);
+            GSL_SUPPRESS_TYPE1 ::SetWindowLongPtrW(m_hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(::DefWindowProc));
 
         // send WM_CLOSE message to the window to ensure it gets destroyed from the UI thread.
         ::PostMessage(m_hWnd, WM_CLOSE, 0L, 0L);

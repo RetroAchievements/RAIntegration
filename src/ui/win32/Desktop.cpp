@@ -106,7 +106,7 @@ ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel, const 
     return vmViewModel.GetDialogResult();
 }
 
-void Desktop::CloseWindow(WindowViewModelBase& vmViewModel) const
+void Desktop::CloseWindow(WindowViewModelBase& vmViewModel) const noexcept
 {
     auto* pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
     if (pBinding != nullptr)
@@ -332,8 +332,11 @@ void Desktop::InvokeOnUIThread(std::function<void()> fAction) const
 
 void Desktop::Shutdown() noexcept
 {
-    // must destroy binding before viewmodel
+    // must destroy binding before viewmodel gets destructed
     m_pWindowBinding.reset();
+
+    // make sure any custom WndProcs are detached
+    ra::ui::win32::bindings::ControlBinding::DetachSubclasses();
 }
 
 } // namespace win32

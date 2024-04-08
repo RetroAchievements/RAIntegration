@@ -14,17 +14,12 @@ namespace bindings {
 constexpr int MEMVIEW_MARGIN = 4;
 constexpr UINT WM_USER_INVALIDATE = WM_USER + 1;
 
-static LRESULT CALLBACK s_MemoryViewerControlWndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK MemoryViewerControlBinding::WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    MemoryViewerControlBinding* pControl{};
-    GSL_SUPPRESS_TYPE1 pControl = reinterpret_cast<MemoryViewerControlBinding*>(GetWindowLongPtr(hControl, GWLP_USERDATA));
-    if (pControl == nullptr)
-        return DefWindowProc(hControl, uMsg, wParam, lParam);
-
     switch (uMsg)
     {
         case WM_PAINT:
-            pControl->RenderMemViewer();
+            RenderMemViewer();
             return 0;
 
         case WM_ERASEBKGND:
@@ -33,38 +28,38 @@ static LRESULT CALLBACK s_MemoryViewerControlWndProc(HWND hControl, UINT uMsg, W
 
         case WM_MOUSEWHEEL:
             if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
-                pControl->ScrollUp();
+                ScrollUp();
             else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
-                pControl->ScrollDown();
+                ScrollDown();
             return FALSE;
 
         case WM_LBUTTONUP:
-            pControl->OnClick({ GET_X_LPARAM(lParam) - MEMVIEW_MARGIN, GET_Y_LPARAM(lParam) - MEMVIEW_MARGIN });
+            OnClick({ GET_X_LPARAM(lParam) - MEMVIEW_MARGIN, GET_Y_LPARAM(lParam) - MEMVIEW_MARGIN });
             return FALSE;
 
         case WM_KEYDOWN:
-            return (!pControl->OnKeyDown(static_cast<UINT>(LOWORD(wParam))));
+            return (!OnKeyDown(static_cast<UINT>(LOWORD(wParam))));
 
         case WM_CHAR:
-            return (!pControl->OnEditInput(static_cast<UINT>(LOWORD(wParam))));
+            return (!OnEditInput(static_cast<UINT>(LOWORD(wParam))));
 
         case WM_SETFOCUS:
-            pControl->OnGotFocus();
+            OnGotFocus();
             return FALSE;
 
         case WM_KILLFOCUS:
-            pControl->OnLostFocus();
+            OnLostFocus();
             return FALSE;
 
         case WM_GETDLGCODE:
             return DLGC_WANTCHARS | DLGC_WANTARROWS;
 
         case WM_USER_INVALIDATE:
-            pControl->Invalidate();
+            Invalidate();
             return FALSE;
     }
 
-    return DefWindowProc(hControl, uMsg, wParam, lParam);
+    return ControlBinding::WndProc(hControl, uMsg, wParam, lParam);
 }
 
 void MemoryViewerControlBinding::RegisterControlClass() noexcept
@@ -74,7 +69,7 @@ void MemoryViewerControlBinding::RegisterControlClass() noexcept
     {
         WNDCLASSEX wc{ sizeof(WNDCLASSEX) };
         wc.style = ra::to_unsigned(CS_PARENTDC | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS);
-        wc.lpfnWndProc = s_MemoryViewerControlWndProc;
+        wc.lpfnWndProc = DefWindowProc;
         wc.hInstance = GetModuleHandle(nullptr);
         wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
         wc.hbrBackground = GetStockBrush(WHITE_BRUSH);
@@ -104,11 +99,18 @@ void MemoryViewerControlBinding::RegisterControlClass() noexcept
     }
 }
 
+void MemoryViewerControlBinding::UnsubclassWndProc() noexcept
+{
+    ControlBinding::UnsubclassWndProc();
+
+    SetWindowLongPtr(m_hWnd, GWLP_WNDPROC, (LONG_PTR)::DefWindowProc);
+}
+
 void MemoryViewerControlBinding::SetHWND(DialogBase& pDialog, HWND hControl)
 {
     ControlBinding::SetHWND(pDialog, hControl);
 
-    GSL_SUPPRESS_TYPE1 SetWindowLongPtr(hControl, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    SubclassWndProc();
 
     RECT rcRect;
     GetWindowRect(hControl, &rcRect);

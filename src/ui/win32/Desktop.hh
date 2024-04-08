@@ -17,7 +17,7 @@ public:
     void ShowWindow(WindowViewModelBase& vmViewModel) const override;
     ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel) const override;
     ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase& vmParentViewModel) const override;
-    void CloseWindow(WindowViewModelBase& vmViewModel) const override;
+    void CloseWindow(WindowViewModelBase& vmViewModel) const noexcept override;
 
     void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const override;
     ra::ui::Size GetClientSize(const WindowViewModelBase& vmViewModel) const noexcept override;

@@ -168,7 +168,7 @@ protected:
     }
 
     void SubclassWndProc();
-    virtual void UnsubclassWndProc() noexcept;
+    void UnsubclassWndProc() noexcept;
 
     void AddSecondaryControlBinding(HWND hWnd) noexcept
     {

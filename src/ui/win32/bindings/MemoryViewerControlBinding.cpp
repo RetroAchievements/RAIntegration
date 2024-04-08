@@ -99,13 +99,6 @@ void MemoryViewerControlBinding::RegisterControlClass() noexcept
     }
 }
 
-void MemoryViewerControlBinding::UnsubclassWndProc() noexcept
-{
-    ControlBinding::UnsubclassWndProc();
-
-    SetWindowLongPtr(m_hWnd, GWLP_WNDPROC, (LONG_PTR)::DefWindowProc);
-}
-
 void MemoryViewerControlBinding::SetHWND(DialogBase& pDialog, HWND hControl)
 {
     ControlBinding::SetHWND(pDialog, hControl);

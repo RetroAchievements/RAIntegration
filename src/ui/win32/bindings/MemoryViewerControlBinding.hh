@@ -59,7 +59,6 @@ protected:
 
     void OnSizeChanged(const ra::ui::Size& pNewSize) override;
 
-    void UnsubclassWndProc() noexcept override;
     INT_PTR CALLBACK WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
 private:

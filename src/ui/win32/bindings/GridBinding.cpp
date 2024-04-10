@@ -451,8 +451,25 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
 
     if (!WindowBinding::IsOnUIThread())
     {
-        InvokeOnUIThread([this, nIndex, bExisting]() { UpdateRow(nIndex, bExisting); });
+        ++m_nPendingUpdates;
+        InvokeOnUIThread([this, nIndex, bExisting]() {
+            UpdateRow(nIndex, bExisting);
+
+            if (--m_nPendingUpdates == 0)
+            {
+                m_bForceRepaintItems = true;
+                if (!m_vmItems->IsUpdating())
+                    OnEndViewModelCollectionUpdate();
+            }
+        });
         return;
+    }
+
+    if (m_nPendingUpdates > 0 && !m_bRedrawSuspended)
+    {
+        // update was queued on UI thread, disable redraw while doing it.
+        m_bRedrawSuspended = true;
+        SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
     }
 
     std::wstring sText;

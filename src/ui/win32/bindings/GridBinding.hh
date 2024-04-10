@@ -118,6 +118,7 @@ private:
     bool m_bForceRepaintItems = false;
     bool m_bRedrawSuspended = false;
     bool m_bUpdateSelectedItemStates = false;
+    int m_nPendingUpdates = 0;
     int m_nAdjustingScrollOffset = 0;
 
     size_t m_nColumnsCreated = 0;

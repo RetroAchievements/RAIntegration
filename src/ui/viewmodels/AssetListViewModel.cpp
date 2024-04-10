@@ -617,6 +617,19 @@ void AssetListViewModel::FilteredListMonitor::OnEndViewModelCollectionUpdate()
     }
 }
 
+static bool constexpr CanPublish(ra::data::models::AssetType nAssetType) noexcept
+{
+    switch (nAssetType)
+    {
+        case ra::data::models::AssetType::RichPresence:
+            // there's currently no API to publish rich presence changes
+            return false;
+
+        default:
+            return true;
+    }
+}
+
 void AssetListViewModel::UpdateButtons()
 {
     if (m_bNeedToUpdateButtons.exchange(true) == false)
@@ -677,7 +690,8 @@ void AssetListViewModel::DoUpdateButtons()
                         bHasModified = true;
                         break;
                     case ra::data::models::AssetChanges::Unpublished:
-                        bHasUnpublished = true;
+                        if (CanPublish(pItem->GetType()))
+                            bHasUnpublished = true;
                         break;
                     default:
                         break;
@@ -719,7 +733,8 @@ void AssetListViewModel::DoUpdateButtons()
                             break;
                         case ra::data::models::AssetChanges::Unpublished:
                             bHasNonNewSelection = true;
-                            bHasUnpublishedSelection = true;
+                            if (CanPublish(pItem->GetType()))
+                                bHasUnpublishedSelection = true;
                             break;
                         default:
                             bHasNonNewSelection = true;
@@ -1092,7 +1107,10 @@ void AssetListViewModel::SaveSelected()
         // publish - find the selected unpublished items
         GetSelectedAssets(vSelectedAssets, [](const ra::data::models::AssetModelBase& pModel)
         {
-            return pModel.GetChanges() == ra::data::models::AssetChanges::Unpublished;
+            if (pModel.GetChanges() != ra::data::models::AssetChanges::Unpublished)
+                return false;
+
+            return CanPublish(pModel.GetType());
         });
 
         if (vSelectedAssets.empty())

@@ -5459,6 +5459,34 @@ public:
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
+
+    TEST_METHOD(TestUpdateButtonsRichPresenceUnpublished)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
+
+        vmAssetList.AddRichPresence("Display:\nTest\n");
+        auto* pRichPresence = vmAssetList.mockGameContext.Assets().FindRichPresence();
+        pRichPresence->SetScript("Display:\nTest2\n");
+        pRichPresence->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pRichPresence->GetChanges());
+
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.AssertButtonState(ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
+                                      ResetButtonState::ResetAll, RevertButtonState::RevertAll,
+                                      CreateButtonState::Enabled, CloneButtonState::Disabled);
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.AssertButtonState(ActivateButtonState::ActivateDisabled, SaveButtonState::SaveDisabled,
+                                      ResetButtonState::ResetDisabled, RevertButtonState::Revert,
+                                      CreateButtonState::Enabled, CloneButtonState::Disabled);
+    }
 };
 
 } // namespace tests

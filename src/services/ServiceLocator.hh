@@ -73,6 +73,11 @@ public:
     /// </summary>
     static bool IsInitialized() noexcept;
 
+    /// <summary>
+    /// Gets whether or not shutdown has started
+    /// </summary>
+    static bool IsShuttingDown() noexcept;
+
 #ifdef RA_UTEST
     /// <summary>
     /// Provides a temporary implementation of an interface for the duration of the scope of the ServiceOverride.

@@ -67,7 +67,9 @@ public:
     /// <summary>
     /// Returns <c>true</c> if the current thread is the UI thread.
     /// </summary>
-    bool IsOnUIThread() const noexcept { return m_bindWindow.IsOnUIThread(); }
+    bool IsOnUIThread() const noexcept { return ra::ui::win32::bindings::WindowBinding::IsOnUIThread(); }
+
+    void Destroy() noexcept;
 
 protected:
     explicit DialogBase(_Inout_ ra::ui::WindowViewModelBase& vmWindow) noexcept;

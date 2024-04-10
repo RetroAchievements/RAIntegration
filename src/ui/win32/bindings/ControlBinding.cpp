@@ -19,15 +19,13 @@ static std::atomic_int g_nSuspendRepaintCount = 0;
 static std::set<HWND> g_vSuspendedRepaintHWnds;
 bool ControlBinding::s_bNeedsUpdateWindow = false;
 
+static std::vector<ControlBinding*> s_vSubclassedBindings;
+
 ControlBinding::~ControlBinding() noexcept
 {
     DisableBinding();
 
-    if (m_pOriginalWndProc)
-    {
-        SetWindowLongPtr(m_hWnd, GWLP_WNDPROC, (LONG_PTR)m_pOriginalWndProc);
-        SetWindowLongPtr(m_hWnd, GWLP_USERDATA, 0);
-    }
+    UnsubclassWndProc();
 }
 
 void ControlBinding::ForceRepaint(HWND hWnd)
@@ -90,14 +88,48 @@ _NODISCARD static INT_PTR CALLBACK ControlBindingWndProc(HWND hControl, UINT uMs
     return 0;
 }
 
-void ControlBinding::SubclassWndProc() noexcept
+void ControlBinding::SubclassWndProc()
 {
     if (m_pOriginalWndProc != nullptr)
         return;
 
+    s_vSubclassedBindings.push_back(this);
+
     GSL_SUPPRESS_TYPE1 SetWindowLongPtr(m_hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
     GSL_SUPPRESS_TYPE1 m_pOriginalWndProc = reinterpret_cast<WNDPROC>(
         SetWindowLongPtr(m_hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&ControlBindingWndProc)));
+}
+
+void ControlBinding::UnsubclassWndProc() noexcept
+{
+    if (m_pOriginalWndProc)
+    {
+        GSL_SUPPRESS_TYPE1 SetWindowLongPtr(m_hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(m_pOriginalWndProc));
+        SetWindowLongPtr(m_hWnd, GWLP_USERDATA, 0);
+
+        for (auto iter = s_vSubclassedBindings.begin(); iter != s_vSubclassedBindings.end(); ++iter)
+        {
+            if (*iter == this)
+            {
+                s_vSubclassedBindings.erase(iter);
+                break;
+            }
+        }
+
+        m_pOriginalWndProc = nullptr;
+    }
+}
+
+void ControlBinding::DetachSubclasses() noexcept
+{
+    std::vector<ControlBinding*> vSubclassedBindings;
+    vSubclassedBindings.swap(s_vSubclassedBindings);
+
+    for (auto* pBinding : vSubclassedBindings)
+    {
+        if (pBinding != nullptr)
+            pBinding->UnsubclassWndProc();
+    }
 }
 
 _Use_decl_annotations_

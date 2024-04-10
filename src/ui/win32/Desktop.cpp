@@ -108,9 +108,16 @@ ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel, const 
 
 void Desktop::CloseWindow(WindowViewModelBase& vmViewModel) const noexcept
 {
-    const auto* const pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
+    auto* pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
     if (pBinding != nullptr)
-        ::SendMessage(pBinding->GetHWnd(), WM_COMMAND, IDCANCEL, 0);
+    {
+        // if shutting down, just destroy the window. otherwise send a IDCANCEL command so the
+        // viewmodel can possibly prevent the close.
+        if (ra::services::ServiceLocator::IsShuttingDown())
+            pBinding->DestroyWindow();
+        else
+            ::PostMessage(pBinding->GetHWnd(), WM_COMMAND, IDCANCEL, 0);
+    }
 }
 
 void Desktop::GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const
@@ -325,8 +332,11 @@ void Desktop::InvokeOnUIThread(std::function<void()> fAction) const
 
 void Desktop::Shutdown() noexcept
 {
-    // must destroy binding before viewmodel
+    // must destroy binding before viewmodel gets destructed
     m_pWindowBinding.reset();
+
+    // make sure any custom WndProcs are detached
+    ra::ui::win32::bindings::ControlBinding::DetachSubclasses();
 }
 
 } // namespace win32

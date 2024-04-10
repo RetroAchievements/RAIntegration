@@ -18,10 +18,15 @@ public:
 
     static bool IsInitialized() noexcept { return s_bIsInitialized; }
 
+    static bool IsShuttingDown() noexcept { return s_bIsShuttingDown; }
+
+    static void StartShutdown() noexcept { s_bIsShuttingDown = true; }
+
 private:
     static void InitializeNotifyTargets();
 
     static bool s_bIsInitialized;
+    static bool s_bIsShuttingDown;
 };
 
 } // namespace services

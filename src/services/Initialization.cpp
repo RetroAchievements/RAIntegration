@@ -47,10 +47,16 @@ namespace ra {
 namespace services {
 
 bool Initialization::s_bIsInitialized = false;
+bool Initialization::s_bIsShuttingDown = false;
 
 bool ServiceLocator::IsInitialized() noexcept
 {
     return Initialization::IsInitialized();
+}
+
+bool ServiceLocator::IsShuttingDown() noexcept
+{
+    return Initialization::IsShuttingDown();
 }
 
 static void LogHeader(_In_ const ra::services::ILogger& pLogger,

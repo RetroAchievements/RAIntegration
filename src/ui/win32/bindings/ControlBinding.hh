@@ -136,6 +136,8 @@ public:
     /// </summary>
     _NODISCARD virtual INT_PTR CALLBACK WndProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM) noexcept(false);
 
+    static void DetachSubclasses() noexcept;
+
 protected:
     void DisableBinding() noexcept
     {
@@ -165,7 +167,8 @@ protected:
         return m_pDialog->m_hWnd;
     }
 
-    void SubclassWndProc() noexcept;
+    void SubclassWndProc();
+    void UnsubclassWndProc() noexcept;
 
     void AddSecondaryControlBinding(HWND hWnd) noexcept
     {

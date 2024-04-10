@@ -9,6 +9,7 @@
 
 #include "RA_md5factory.h"
 
+#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
@@ -59,7 +60,7 @@ static int CanSubmit()
     if (pEmulatorContext.WasMemoryModified())
         return 0;
 
-    if (pEmulatorContext.IsMemoryInsecure())
+    if (_RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
         return 0;
 
     return 1;
@@ -71,10 +72,11 @@ static int CanSubmitAchievementUnlock(uint32_t nAchievementId, rc_client_t*)
         return 0;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* vmAchievement = pGameContext.Assets().FindAchievement(nAchievementId);
-    if (vmAchievement == nullptr ||
-        vmAchievement->GetChanges() != ra::data::models::AssetChanges::None ||
-        vmAchievement->GetCategory() != ra::data::models::AssetCategory::Core)
+    const auto* pAchievement = pGameContext.Assets().FindAchievement(nAchievementId);
+    if (pAchievement == nullptr ||
+        pAchievement->IsModified() ||
+        pAchievement->GetChanges() != ra::data::models::AssetChanges::None ||
+        pAchievement->GetCategory() != ra::data::models::AssetCategory::Core)
     {
         return 0;
     }
@@ -91,6 +93,7 @@ static int CanSubmitLeaderboardEntry(uint32_t nLeaderboardId, rc_client_t*)
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nLeaderboardId);
     if (pLeaderboard == nullptr ||
+        pLeaderboard->IsModified() ||
         pLeaderboard->GetChanges() != ra::data::models::AssetChanges::None ||
         pLeaderboard->GetCategory() != ra::data::models::AssetCategory::Core)
     {
@@ -156,6 +159,9 @@ static uint32_t IdentifyUnknownHash(uint32_t console_id, const char* hash, rc_cl
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+
+    if (console_id == RC_CONSOLE_UNKNOWN)
+        console_id = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Id();
 
     ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
     vmUnknownGame.InitializeGameTitles(ra::itoe<ConsoleID>(console_id));
@@ -1181,8 +1187,13 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
         // doesn't flag every achievement as invalid.
         if (IsExternalRcheevosClient() && pClient->game)
         {
-            _RA_SetConsoleID(pClient->game->public_.console_id);
-            ResetEmulatorMemoryRegionsForRcheevosClient();
+            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+            if (pConsoleContext.Id() != ra::itoe<ConsoleID>(pClient->game->public_.console_id) &&
+                pClient->game->public_.console_id != 0)
+            {
+                _RA_SetConsoleID(pClient->game->public_.console_id);
+                ResetEmulatorMemoryRegionsForRcheevosClient();
+            }
         }
 
         // initialize the game context

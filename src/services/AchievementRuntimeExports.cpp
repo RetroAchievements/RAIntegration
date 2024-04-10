@@ -490,6 +490,30 @@ public:
         pEmulatorContext.SetGetGameTitleFunction(GetGameTitle);
     }
 
+    static int get_achievement_state(uint32_t nAchievementId)
+    {
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pAchievement = pGameContext.Assets().FindAchievement(nAchievementId);
+        if (pAchievement == nullptr)
+            return RC_CLIENT_RAINTEGRATION_ACHIEVEMENT_STATE_NONE;
+
+        if (pAchievement->GetCategory() == ra::data::models::AssetCategory::Local)
+            return RC_CLIENT_RAINTEGRATION_ACHIEVEMENT_STATE_LOCAL;
+
+        if (pAchievement->IsModified() ||                                       // actual modifications
+            pAchievement->GetChanges() != ra::data::models::AssetChanges::None) // unpublished changes
+            return RC_CLIENT_RAINTEGRATION_ACHIEVEMENT_STATE_MODIFIED;
+
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+        if (pEmulatorContext.WasMemoryModified())
+            return RC_CLIENT_RAINTEGRATION_ACHIEVEMENT_STATE_INSECURE;
+
+        if (_RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
+            return RC_CLIENT_RAINTEGRATION_ACHIEVEMENT_STATE_INSECURE;
+
+        return RC_CLIENT_RAINTEGRATION_ACHIEVEMENT_STATE_PUBLISHED;
+    }
+
     static void set_raintegration_event_handler(rc_client_t* client, rc_client_raintegration_event_handler_t handler) noexcept
     {
         s_callbacks.raintegration_event_client = client;
@@ -1015,6 +1039,11 @@ API int CCONV _Rcheevos_HasModifications(void)
     }
 
     return false;
+}
+
+API int CCONV _Rcheevos_GetAchievementState(uint32_t nId)
+{
+    return ra::services::AchievementRuntimeExports::get_achievement_state(nId);
 }
 
 #ifdef __cplusplus

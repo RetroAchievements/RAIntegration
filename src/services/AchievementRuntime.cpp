@@ -9,6 +9,7 @@
 
 #include "RA_md5factory.h"
 
+#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
@@ -158,6 +159,9 @@ static uint32_t IdentifyUnknownHash(uint32_t console_id, const char* hash, rc_cl
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+
+    if (console_id == RC_CONSOLE_UNKNOWN)
+        console_id = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Id();
 
     ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
     vmUnknownGame.InitializeGameTitles(ra::itoe<ConsoleID>(console_id));
@@ -1183,8 +1187,13 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
         // doesn't flag every achievement as invalid.
         if (IsExternalRcheevosClient() && pClient->game)
         {
-            _RA_SetConsoleID(pClient->game->public_.console_id);
-            ResetEmulatorMemoryRegionsForRcheevosClient();
+            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+            if (pConsoleContext.Id() != ra::itoe<ConsoleID>(pClient->game->public_.console_id) &&
+                pClient->game->public_.console_id != 0)
+            {
+                _RA_SetConsoleID(pClient->game->public_.console_id);
+                ResetEmulatorMemoryRegionsForRcheevosClient();
+            }
         }
 
         // initialize the game context

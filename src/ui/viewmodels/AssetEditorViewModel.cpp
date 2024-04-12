@@ -60,19 +60,20 @@ AssetEditorViewModel::AssetEditorViewModel() noexcept
     m_vAchievementTypes.Add(ra::etoi(ra::data::models::AchievementType::Progression), L"Progression");
     m_vAchievementTypes.Add(ra::etoi(ra::data::models::AchievementType::Win), L"Win");
 
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Value), L"Value");
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Score), L"Score");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Frames), L"Frames");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Centiseconds), L"Centiseconds");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Seconds), L"Seconds");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Minutes), L"Minutes");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed1), L"Fixed1");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed2), L"Fixed2");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed3), L"Fixed3");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Tens), L"Tens");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Hundreds), L"Hundreds");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Thousands), L"Thousands");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::UnsignedValue), L"Unsigned Value");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Frames), L"Time (Frames)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Centiseconds), L"Time (Centiseconds)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Seconds), L"Time (Seconds)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Minutes), L"Time (Minutes)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::SecondsAsMinutes), L"Time (Seconds as Minutes)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Value), L"Value");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::UnsignedValue), L"Value (Unsigned)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Tens), L"Value (Tens)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Hundreds), L"Value (Hundreds)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Thousands), L"Value (Thousands)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed1), L"Value (Fixed1)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed2), L"Value (Fixed2)");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed3), L"Value (Fixed3)");
 
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Start), L"Start");
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Cancel), L"Cancel");

@@ -108,7 +108,7 @@ void OverlayRecentGamesPageViewModel::Refresh()
 
                     httpRequest.CallAsync([this, nGameId](const ra::services::Http::Response& pResponse)
                     {
-                        rc_api_fetch_game_data_response_t response;
+                        rc_api_fetch_game_data_response_t response{};
                         rc_api_server_response_t server_response;
 
                         memset(&server_response, 0, sizeof(server_response));

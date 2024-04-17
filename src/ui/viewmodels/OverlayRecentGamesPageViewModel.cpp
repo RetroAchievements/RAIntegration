@@ -109,8 +109,18 @@ void OverlayRecentGamesPageViewModel::Refresh()
                     httpRequest.CallAsync([this, nGameId](const ra::services::Http::Response& pResponse)
                     {
                         rc_api_fetch_game_data_response_t response;
-                        if (rc_api_process_fetch_game_data_response(&response, pResponse.Content().c_str()) == RC_OK)
+                        rc_api_server_response_t server_response;
+
+                        memset(&server_response, 0, sizeof(server_response));
+                        server_response.body = pResponse.Content().c_str();
+                        server_response.body_length = pResponse.Content().length();
+                        server_response.http_status_code = ra::etoi(pResponse.StatusCode());
+
+                        if (rc_api_process_fetch_game_data_server_response(&response, &server_response) == RC_OK &&
+                            response.response.succeeded)
+                        {
                             UpdateGameEntry(nGameId, ra::Widen(response.title), response.image_name);
+                        }
                     });
                 }
             }

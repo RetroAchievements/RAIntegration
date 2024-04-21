@@ -2,6 +2,7 @@
 
 #include "RA_Defs.h"
 
+#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
@@ -830,6 +831,15 @@ void MemoryViewerViewModel::UpdateColor(ra::ByteAddress nAddress)
 }
 
 #pragma warning(pop)
+
+void MemoryViewerViewModel::OnShiftClick(ByteAddress address)
+{
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(address);
+    if (nConvertedAddress != 0xFFFFFFFF)
+        address = nConvertedAddress;
+    SetAddress(address);
+}
 
 void MemoryViewerViewModel::OnClick(int nX, int nY)
 {

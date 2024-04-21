@@ -65,7 +65,7 @@ public:
     void SetDialogResult(DialogResult nResult);
 
     /// <summary>
-    /// Returns <c>true</c> if the current thread is the UI thread.
+    /// Returns <c>true</c> if the current thread is the UI thread (or invoking to the UI thread is disabled).
     /// </summary>
     bool IsOnUIThread() const noexcept { return ra::ui::win32::bindings::WindowBinding::IsOnUIThread(); }
 

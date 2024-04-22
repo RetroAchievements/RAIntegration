@@ -16,6 +16,7 @@ constexpr UINT WM_USER_INVALIDATE = WM_USER + 1;
 
 INT_PTR CALLBACK MemoryViewerControlBinding::WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
     switch (uMsg)
     {
         case WM_PAINT:
@@ -34,7 +35,10 @@ INT_PTR CALLBACK MemoryViewerControlBinding::WndProc(HWND hControl, UINT uMsg, W
             return FALSE;
 
         case WM_LBUTTONUP:
-            OnClick({ GET_X_LPARAM(lParam) - MEMVIEW_MARGIN, GET_Y_LPARAM(lParam) - MEMVIEW_MARGIN });
+            if (bShiftHeld)
+                OnShiftClick({GET_X_LPARAM(lParam) - MEMVIEW_MARGIN, GET_Y_LPARAM(lParam) - MEMVIEW_MARGIN});
+            else
+                OnClick({ GET_X_LPARAM(lParam) - MEMVIEW_MARGIN, GET_Y_LPARAM(lParam) - MEMVIEW_MARGIN });
             return FALSE;
 
         case WM_KEYDOWN:
@@ -262,6 +266,15 @@ void MemoryViewerControlBinding::OnClick(POINT point)
     SetFocus(m_hWnd);
 
     Invalidate();
+}
+
+void MemoryViewerControlBinding::OnShiftClick(POINT point)
+{
+    OnClick(point);
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    ra::ByteAddress nAddress =
+        pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize()) & 0xFFFFFF;
+    m_pViewModel.OnShiftClick(nAddress);
 }
 
 void MemoryViewerControlBinding::OnGotFocus()

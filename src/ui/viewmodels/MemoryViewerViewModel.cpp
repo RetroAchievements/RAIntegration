@@ -832,13 +832,13 @@ void MemoryViewerViewModel::UpdateColor(ra::ByteAddress nAddress)
 
 #pragma warning(pop)
 
-void MemoryViewerViewModel::OnShiftClick(ByteAddress address)
+void MemoryViewerViewModel::OnShiftClick(ra::ByteAddress nAddress)
 {
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-    const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(address);
+    const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
     if (nConvertedAddress != 0xFFFFFFFF)
-        address = nConvertedAddress;
-    SetAddress(address);
+        nAddress = nConvertedAddress;
+    SetAddress(nAddress);
 }
 
 void MemoryViewerViewModel::OnClick(int nX, int nY)

@@ -270,8 +270,8 @@ void MemoryViewerControlBinding::OnShiftClick(POINT point)
 {
     OnClick(point);
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    ByteAddress address = pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize()) & 0xFFFFFF;
-    m_pViewModel.OnShiftClick(address);
+    ra::ByteAddress nAddress = pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize()) & 0xFFFFFF;
+    m_pViewModel.OnShiftClick(nAddress);
 }
 
 void MemoryViewerControlBinding::OnGotFocus()

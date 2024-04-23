@@ -3,6 +3,7 @@
 #include "ra_fwd.h"
 #include "ra_utility.h"
 
+#include "services\IClipboard.hh"
 #include "ui/EditorTheme.hh"
 #include "ui/drawing/gdi/GDISurface.hh"
 
@@ -231,6 +232,56 @@ bool MemoryViewerControlBinding::HandleNavigation(UINT nChar)
             }
             return true;
 
+        case 'C':
+            if (bControlHeld)
+            {
+                const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+                const auto iValue = pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize());
+                std::wstring sValue = ra::data::MemSizeFormat(iValue, m_pViewModel.GetSize(), MemFormat::Hex);
+
+                ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sValue));
+            }
+            return true;
+
+        case 'V':
+            if (bControlHeld)
+            {
+                auto nAddress = m_pViewModel.GetAddress();
+                const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+                std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
+                auto n = m_pViewModel.GetSize();
+
+                if (sClipboardText.empty())
+                    return false;
+
+                // Check if the string is a valid hexadecimal value
+                for (wchar_t ch : sClipboardText)
+                    if (!iswxdigit(ch)) return false;
+
+                // Padding zeroes depending if shift is pressed (strict mode) or not (replace mode)
+                if (bShiftHeld)
+                {
+                    const auto nNibblesForSize = ra::data::MemSizeBytes(m_pViewModel.GetSize()) * 2;
+
+                    if (nNibblesForSize < sClipboardText.length())
+                        sClipboardText = sClipboardText.substr(sClipboardText.length() - nNibblesForSize);
+                    else
+                    {
+                        std::wstring sPadding(nNibblesForSize - sClipboardText.length(), L'0');
+                        sClipboardText = (sPadding + sClipboardText);
+                    }
+                }else 
+                    sClipboardText = sClipboardText.length() % 2 == 1 ? (L"0" + sClipboardText) : sClipboardText;
+
+                // Writing every byte separately considerably improves stability and enables long sequences to be pasted
+                for (int i = sClipboardText.length(); i != 0; i-=2)
+                {
+                    std::wstring sValue = sClipboardText.substr(i - 2, 2);
+                    pEmulatorContext.WriteMemoryByte(nAddress++, std::stoi(sValue, 0, 16));
+                }
+            }
+            return true;
+
         default:
             return false;
     }
@@ -308,7 +359,9 @@ void MemoryViewerControlBinding::RenderMemViewer()
 
     const auto& pRenderImage = m_pViewModel.GetRenderImage();
     const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
-    HBRUSH hBackground = CreateSolidBrush(RGB(pEditorTheme.ColorBackground().Channel.R, pEditorTheme.ColorBackground().Channel.G, pEditorTheme.ColorBackground().Channel.B));
+    HBRUSH hBackground = CreateSolidBrush(RGB(pEditorTheme.ColorBackground().Channel.R,
+                                              pEditorTheme.ColorBackground().Channel.G,
+                                              pEditorTheme.ColorBackground().Channel.B));
 
     // left margin
     RECT rcFill{ rcClient.left, rcClient.top, rcClient.left + MEMVIEW_MARGIN, rcClient.bottom - 1 };

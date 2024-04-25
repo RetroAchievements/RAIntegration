@@ -23,11 +23,14 @@ constexpr uint8_t HIGHLIGHTED_COLOR = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra
 constexpr int ADDRESS_COLUMN_WIDTH = 10;
 constexpr int BASE_MEMORY_VIEWER_WIDTH_IN_CHARACTERS =
     (ADDRESS_COLUMN_WIDTH + 16 * 3 - 1); // address column + 16 bytes "XX " - last space
+constexpr int MEMVIEW_HISTORY_MAX_SIZE = 50;
 
 std::unique_ptr<ra::ui::drawing::ISurface> MemoryViewerViewModel::s_pFontSurface;
 std::unique_ptr<ra::ui::drawing::ISurface> MemoryViewerViewModel::s_pFontASCIISurface;
 ra::ui::Size MemoryViewerViewModel::s_szChar;
 int MemoryViewerViewModel::s_nFont = 0;
+std::list<ra::ByteAddress> MemoryViewerViewModel::s_listMemViewHistory = {0};
+std::list<ra::ByteAddress>::iterator MemoryViewerViewModel::s_iterMemViewHistoryIndex = s_listMemViewHistory.begin();
 
 constexpr char FIRST_ASCII_CHAR = 32;
 constexpr char LAST_ASCII_CHAR = 127;
@@ -1312,6 +1315,33 @@ void MemoryViewerViewModel::RenderHeader()
         m_pSurface->WriteText(nX, -2, s_nFont, nColor, sValue);
         nX += s_szChar.Width * (nNibblesPerWord + 1);
     }
+}
+
+void MemoryViewerViewModel::SaveToMemViewHistory()
+{
+    if (*s_iterMemViewHistoryIndex != GetAddress())
+    {
+        s_listMemViewHistory.erase(s_listMemViewHistory.begin(), s_iterMemViewHistoryIndex);
+        if (s_listMemViewHistory.size() > MEMVIEW_HISTORY_MAX_SIZE)
+            s_listMemViewHistory.pop_back();
+        s_listMemViewHistory.push_front(GetAddress());
+        s_iterMemViewHistoryIndex = s_listMemViewHistory.begin();
+    }
+}
+
+void MemoryViewerViewModel::MoveMemViewHistoryForward()
+{
+    if (s_listMemViewHistory.size() >= 1 and s_iterMemViewHistoryIndex != s_listMemViewHistory.begin())
+        --s_iterMemViewHistoryIndex;
+    SetAddress(*s_iterMemViewHistoryIndex);
+}
+
+void MemoryViewerViewModel::MoveMemViewHistoryBackward()
+{
+    int iIndex = std::distance(s_listMemViewHistory.begin(), s_iterMemViewHistoryIndex);
+    if (s_listMemViewHistory.size() > (iIndex + 1))
+        ++s_iterMemViewHistoryIndex;
+    SetAddress(*s_iterMemViewHistoryIndex);
 }
 
 } // namespace viewmodels

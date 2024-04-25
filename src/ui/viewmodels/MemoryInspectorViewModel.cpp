@@ -287,6 +287,7 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddre
     SetValue(CurrentAddressValueProperty, nValue);
 
     m_pViewer.SetAddress(nNewAddress);
+    m_pViewer.SaveToMemViewHistory();
 }
 
 void MemoryInspectorViewModel::BookmarkCurrentAddress() const

@@ -68,9 +68,15 @@ public:
         if (!AreAllAddressesMatching())
         {
             if ((m_nMatchingAddresses + 7) / 8 > sizeof(m_vAddresses))
-                std::memcpy(m_pAddresses, other.m_pAddresses, (m_nMatchingAddresses + 7) / 8);
+            {
+                auto* pAddresses = AllocateMatchingAddresses();
+                if (pAddresses != nullptr)
+                    std::memcpy(pAddresses, other.m_pAddresses, (m_nMatchingAddresses + 7) / 8);
+            }
             else
+            {
                 std::memcpy(m_vAddresses, other.m_vAddresses, sizeof(m_vAddresses));
+            }
         }
     }
 

@@ -40,7 +40,6 @@ public:
     void ScrollDown();
 
     void OnClick(POINT point);
-    void OnShiftClick(POINT point);
 
     bool OnKeyDown(UINT nChar);
     bool OnEditInput(UINT c);

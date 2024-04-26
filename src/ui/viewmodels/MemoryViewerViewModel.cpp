@@ -896,12 +896,18 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
     }
 }
 
-void MemoryViewerViewModel::OnShiftClick(ra::ByteAddress nAddress)
+void MemoryViewerViewModel::OnShiftClick(int nX, int nY)
 {
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+
+    OnClick(nX, nY);
+
+    ra::ByteAddress nAddress = pEmulatorContext.ReadMemory(GetAddress(), GetSize());
     const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
     if (nConvertedAddress != 0xFFFFFFFF)
         nAddress = nConvertedAddress;
+
     SetAddress(nAddress);
 }
 

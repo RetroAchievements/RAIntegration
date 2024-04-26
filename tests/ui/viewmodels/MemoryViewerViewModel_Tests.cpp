@@ -7,6 +7,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 #undef GetMessage
@@ -70,6 +71,9 @@ private:
 
         bool IsReadOnly() const noexcept { return m_bReadOnly; }
         void SetReadOnly(bool value) noexcept { m_bReadOnly = value;  }
+
+        bool IsAddressFixed() const noexcept { return m_bAddressFixed; }
+        void SetAddressFixed(bool value) noexcept { m_bAddressFixed = value; }
 
         void InitializeMemory(size_t nSize)
         {
@@ -1918,7 +1922,77 @@ public:
         Assert::IsTrue(viewer.NeedsRedraw());
         viewer.MockRender();
     }
+
+    TEST_METHOD(TestOnShiftClickEightBit)
+    {
+        ra::data::context::mocks::MockConsoleContext mockConsole(PlayStation, L"Playstation");
+
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(128); // 8 rows of 16 bytes
+        viewer.mockEmulatorContext.WriteMemoryByte(0U, 0x20);
+        viewer.mockEmulatorContext.WriteMemoryByte(1U, 0xff);
+        viewer.mockEmulatorContext.WriteMemoryByte(2U, 0x0);
+        
+        Assert::AreEqual(MemSize::EightBit, viewer.GetSize());
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // If fixed address, ignore
+        viewer.SetAddressFixed(true);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x0U}, viewer.GetAddress());
+
+        // If not fixed address and Shift click on the first byte containing 0x20 should lead to address 0x20
+        viewer.SetAddressFixed(false);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0x20U }, viewer.GetAddress());
+
+        // Shift click on the second byte containing 0xFF should lead to address 0x7F as 0xFF is bigger than the last
+        // address in memory
+        viewer.OnShiftClick(13 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x7FU}, viewer.GetAddress());
+
+        // Shift click on the third byte containing 0x0 should lead back to address 0x0
+        viewer.OnShiftClick(16 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x0U}, viewer.GetAddress());
+    }
+
+    TEST_METHOD(TestOnShiftClickSixTeenBit)
+    {
+        ra::data::context::mocks::MockConsoleContext mockConsole(PlayStation, L"Playstation");
+
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(512); // 32 rows of 16 bytes
+        viewer.SetSize(MemSize::SixteenBit);
+        viewer.mockEmulatorContext.WriteMemory(0U, MemSize::SixteenBit, 0x20);
+        viewer.mockEmulatorContext.WriteMemory(2U, MemSize::SixteenBit, 0xff);
+        viewer.mockEmulatorContext.WriteMemory(4U, MemSize::SixteenBit, 0xffff);
+
+        Assert::AreEqual(MemSize::SixteenBit, viewer.GetSize());
+        Assert::AreEqual({0U}, viewer.GetAddress());
+        Assert::AreEqual({0U}, viewer.GetSelectedNibble());
+
+        // If fixed address, ignore
+        viewer.SetAddressFixed(true);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x0U}, viewer.GetAddress());
+
+        // If not fixed address and Shift click on the first word containing 0x20 should lead to address 0x20
+        viewer.SetAddressFixed(false);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x20U}, viewer.GetAddress());
+
+        // Shift click on the second word containing 0x40 should lead to address 0xFF
+        viewer.OnShiftClick(15 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0xFFU}, viewer.GetAddress());
+
+        // Shift click on the third word containing 0xFFFF should lead to address 0x1FF as 0xFFFF is bigger than the
+        // last address in memory
+        viewer.OnShiftClick(19 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x1FFU}, viewer.GetAddress());
+    }
 };
+
 
 } // namespace tests
 } // namespace viewmodels

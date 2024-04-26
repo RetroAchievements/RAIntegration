@@ -161,7 +161,7 @@ public:
     void SetSize(MemSize value) { SetValue(SizeProperty, ra::etoi(value)); }
 
     void OnClick(int nX, int nY);
-    void OnShiftClick(ByteAddress address);
+    void OnShiftClick(int nX, int nY);
     void OnResized(int nWidth, int nHeight);
     bool OnChar(char c);
     void OnGotFocus();

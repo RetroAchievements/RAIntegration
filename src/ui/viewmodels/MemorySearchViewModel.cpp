@@ -487,6 +487,7 @@ void MemorySearchViewModel::ClearResults()
         m_vSelectedAddresses.clear();
         m_vSearchResults.clear();
         m_vResults.Clear();
+        m_nSelectedSearchResult = 0;
     }
 
     SetValue(FilterSummaryProperty, FilterSummaryProperty.GetDefaultValue());
@@ -1288,6 +1289,146 @@ void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::fu
             }
         }
     }
+}
+
+void MemorySearchViewModel::ImportResults()
+{
+    switch (GetSearchType())
+    {
+        case ra::services::SearchType::AsciiText:
+        case ra::services::SearchType::BitCount:
+        case ra::services::SearchType::FourBit:
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                ra::StringPrintf(L"Cannot import %s search results",
+                    m_vSearchTypes.GetLabelForId(ra::etoi(GetSearchType()))));
+            return;
+    }
+
+    if (m_vResults.Count() != 0 || m_nSelectedSearchResult != 0)
+    {
+        if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Start new search?",
+            L"This will initialize a new search with previously exported search results.",
+            ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo) == ra::ui::DialogResult::No)
+        {
+            return;
+        }
+    }
+
+    ra::ui::viewmodels::FileDialogViewModel vmFileDialog;
+    vmFileDialog.SetWindowTitle(L"Import Search Results");
+    vmFileDialog.AddFileType(L"CSV File", L"*.csv");
+    vmFileDialog.SetDefaultExtension(L"csv");
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-SearchResults.csv", pGameContext.GameId()));
+
+    if (vmFileDialog.ShowOpenFileDialog() == ra::ui::DialogResult::OK)
+    {
+        const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+        auto pTextReader = pFileSystem.OpenTextFile(vmFileDialog.GetFileName());
+        if (pTextReader == nullptr)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                ra::StringPrintf(L"Could not open %s", vmFileDialog.GetFileName()));
+        }
+        else
+        {
+            std::string sLine;
+            if (!pTextReader->GetLine(sLine) || sLine != "Address,Value,PreviousValue,InitialValue")
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                    L"File does not appear to be an exported search result");
+            }
+            else
+            {
+                if (m_bIsContinuousFiltering)
+                    ToggleContinuousFilter();
+
+                std::unique_ptr<SearchResult> pResult;
+                pResult.reset(new SearchResult());
+                pResult->sSummary =
+                    ra::StringPrintf(L"Imported Search", SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
+
+                LoadResults(*pTextReader, *pResult);
+
+                std::unique_ptr<SearchResult> pResult2;
+                pResult2.reset(new SearchResult());
+                pResult2->sSummary = pResult->sSummary;
+
+                pResult2->pResults.Initialize(pResult->pResults,
+                    [pResults = &pResult->pResults](ra::ByteAddress nAddress, uint8_t* pBuffer, size_t nCount) noexcept {
+                        pResults->GetBytes(nAddress, pBuffer, nCount);
+                    },
+                    ComparisonType::Equals, GetValueType(), GetFilterValue());
+
+                SetValue(FilterSummaryProperty, pResult->sSummary);
+                SetValue(SelectedPageProperty, L"1/1");
+                SetValue(ScrollOffsetProperty, 0);
+                SetValue(ScrollMaximumProperty, 0);
+                SetValue(ResultCountProperty, gsl::narrow_cast<int>(pResult->pResults.MatchingAddressCount()));
+                SetValue(ResultMemSizeProperty, ra::etoi(pResult->pResults.GetSize()));
+
+                {
+                    std::lock_guard lock(m_oMutex);
+
+                    m_vSearchResults.clear();
+                    m_vSearchResults.push_back(std::move(pResult));
+                    m_vSearchResults.push_back(std::move(pResult2));
+                }
+
+                ChangePage(1);
+            }
+        }
+    }
+}
+
+void MemorySearchViewModel::LoadResults(ra::services::TextReader& pTextReader,
+                                        MemorySearchViewModel::SearchResult& vmResult) const
+{
+    std::vector<ra::services::SearchResults::Result> vEntries;
+    ra::services::SearchResults::Result pResult{};
+
+    ra::services::SearchResults pTemp;
+    pTemp.Initialize(0, 0, GetSearchType());
+    pResult.nSize = pTemp.GetSize();
+
+    const bool bIsFloat = ra::data::MemSizeIsFloat(pResult.nSize);
+
+    std::string sLine;
+    while (pTextReader.GetLine(sLine))
+    {
+        const auto index = sLine.find(',');
+        if (index == std::string::npos)
+            continue;
+        const auto index2 = sLine.find(',', index + 1);
+        if (index2 == std::string::npos)
+            continue;
+
+        pResult.nAddress = ra::ByteAddressFromString(sLine.substr(0, index));
+
+        const auto sValue = sLine.substr(index + 1, index2 - index - 1);
+        if (bIsFloat)
+        {
+            char* pEnd = nullptr;
+            const auto fValue = std::strtof(sValue.c_str(), &pEnd);
+            if (pEnd && *pEnd != '\0')
+                continue;
+            pResult.nValue = ra::data::FloatToU32(fValue, pResult.nSize);
+        }
+        else
+        {
+            char* pEnd = nullptr;
+            const auto nValue = std::strtoul(sValue.c_str(), &pEnd, 16);
+            if (pEnd && *pEnd != '\0')
+                continue;
+            pResult.nValue = gsl::narrow_cast<unsigned int>(nValue);
+        }
+
+        vEntries.push_back(pResult);
+    }
+
+    if (!vEntries.empty())
+        vmResult.pResults.Initialize(vEntries, GetSearchType());
 }
 
 } // namespace viewmodels

@@ -7,6 +7,7 @@
 #include "data\context\GameContext.hh"
 
 #include "services\SearchResults.h"
+#include "services\TextReader.hh"
 #include "services\TextWriter.hh"
 
 #include "ui\WindowViewModelBase.hh"
@@ -445,6 +446,11 @@ public:
     /// </summary>
     void ExportResults() const;
 
+    /// <summary>
+    /// Allows the user to imports the contents of a CSV file as a search starting point.
+    /// </summary>
+    void ImportResults();
+
     std::wstring GetTooltip(const SearchResultViewModel& vmResult) const;
 
 protected:
@@ -496,6 +502,8 @@ private:
 
         std::wstring sSummary;
     };
+
+    void LoadResults(ra::services::TextReader& sFile, SearchResult& pResult) const;
 
     void AddNewPage(std::unique_ptr<SearchResult>&& pNewPage);
     void ChangePage(size_t nNewPage);

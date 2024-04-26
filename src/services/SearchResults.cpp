@@ -576,6 +576,7 @@ protected:
         return srResults.m_vBlocks.emplace_back(nAddress, nSize, nMaxAddresses);
     }
 
+public:
     void AddBlocks(SearchResults& srNew, std::vector<ra::ByteAddress>& vMatches,
         std::vector<unsigned char>& vMemory, ra::ByteAddress nPreviousBlockFirstAddress, unsigned int nPadding) const
     {
@@ -1754,9 +1755,56 @@ ra::ByteAddress MemBlock::GetMatchingAddress(gsl::index nIndex) const noexcept
 
 _CONSTANT_VAR MAX_BLOCK_SIZE = 256U * 1024; // 256K
 
+static impl::SearchImpl* GetSearchImpl(SearchType nType) noexcept
+{
+    switch (nType)
+    {
+        case SearchType::FourBit:
+            return &ra::services::impl::s_pFourBitSearchImpl;
+        default:
+        case SearchType::EightBit:
+            return &ra::services::impl::s_pEightBitSearchImpl;
+        case SearchType::SixteenBit:
+            return &ra::services::impl::s_pSixteenBitSearchImpl;
+        case SearchType::TwentyFourBit:
+            return &ra::services::impl::s_pTwentyFourBitSearchImpl;
+        case SearchType::ThirtyTwoBit:
+            return &ra::services::impl::s_pThirtyTwoBitSearchImpl;
+        case SearchType::SixteenBitAligned:
+            return &ra::services::impl::s_pSixteenBitAlignedSearchImpl;
+        case SearchType::ThirtyTwoBitAligned:
+            return &ra::services::impl::s_pThirtyTwoBitAlignedSearchImpl;
+        case SearchType::SixteenBitBigEndian:
+            return &ra::services::impl::s_pSixteenBitBigEndianSearchImpl;
+        case SearchType::ThirtyTwoBitBigEndian:
+            return &ra::services::impl::s_pThirtyTwoBitBigEndianSearchImpl;
+        case SearchType::SixteenBitBigEndianAligned:
+            return &ra::services::impl::s_pSixteenBitBigEndianAlignedSearchImpl;
+        case SearchType::ThirtyTwoBitBigEndianAligned:
+            return &ra::services::impl::s_pThirtyTwoBitBigEndianAlignedSearchImpl;
+        case SearchType::BitCount:
+            return &ra::services::impl::s_pBitCountSearchImpl;
+        case SearchType::AsciiText:
+            return &ra::services::impl::s_pAsciiTextSearchImpl;
+        case SearchType::Float:
+            return &ra::services::impl::s_pFloatSearchImpl;
+        case SearchType::FloatBigEndian:
+            return &ra::services::impl::s_pFloatBESearchImpl;
+        case SearchType::Double32:
+            return &ra::services::impl::s_pDouble32SearchImpl;
+        case SearchType::Double32BigEndian:
+            return &ra::services::impl::s_pDouble32BESearchImpl;
+        case SearchType::MBF32:
+            return &ra::services::impl::s_pMBF32SearchImpl;
+        case SearchType::MBF32LE:
+            return &ra::services::impl::s_pMBF32LESearchImpl;
+    }
+}
+
 void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchType nType)
 {
     m_nType = nType;
+    m_pImpl = GetSearchImpl(nType);
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nTotalMemorySize = pEmulatorContext.TotalMemorySize();
@@ -1764,68 +1812,6 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
         nAddress = 0;
     if (nBytes + nAddress > nTotalMemorySize)
         nBytes = nTotalMemorySize - nAddress;
-
-    switch (nType)
-    {
-        case SearchType::FourBit:
-            m_pImpl = &ra::services::impl::s_pFourBitSearchImpl;
-            break;
-        default:
-        case SearchType::EightBit:
-            m_pImpl = &ra::services::impl::s_pEightBitSearchImpl;
-            break;
-        case SearchType::SixteenBit:
-            m_pImpl = &ra::services::impl::s_pSixteenBitSearchImpl;
-            break;
-        case SearchType::TwentyFourBit:
-            m_pImpl = &ra::services::impl::s_pTwentyFourBitSearchImpl;
-            break;
-        case SearchType::ThirtyTwoBit:
-            m_pImpl = &ra::services::impl::s_pThirtyTwoBitSearchImpl;
-            break;
-        case SearchType::SixteenBitAligned:
-            m_pImpl = &ra::services::impl::s_pSixteenBitAlignedSearchImpl;
-            break;
-        case SearchType::ThirtyTwoBitAligned:
-            m_pImpl = &ra::services::impl::s_pThirtyTwoBitAlignedSearchImpl;
-            break;
-        case SearchType::SixteenBitBigEndian:
-            m_pImpl = &ra::services::impl::s_pSixteenBitBigEndianSearchImpl;
-            break;
-        case SearchType::ThirtyTwoBitBigEndian:
-            m_pImpl = &ra::services::impl::s_pThirtyTwoBitBigEndianSearchImpl;
-            break;
-        case SearchType::SixteenBitBigEndianAligned:
-            m_pImpl = &ra::services::impl::s_pSixteenBitBigEndianAlignedSearchImpl;
-            break;
-        case SearchType::ThirtyTwoBitBigEndianAligned:
-            m_pImpl = &ra::services::impl::s_pThirtyTwoBitBigEndianAlignedSearchImpl;
-            break;
-        case SearchType::BitCount:
-            m_pImpl = &ra::services::impl::s_pBitCountSearchImpl;
-            break;
-        case SearchType::AsciiText:
-            m_pImpl = &ra::services::impl::s_pAsciiTextSearchImpl;
-            break;
-        case SearchType::Float:
-            m_pImpl = &ra::services::impl::s_pFloatSearchImpl;
-            break;
-        case SearchType::FloatBigEndian:
-            m_pImpl = &ra::services::impl::s_pFloatBESearchImpl;
-            break;
-        case SearchType::Double32:
-            m_pImpl = &ra::services::impl::s_pDouble32SearchImpl;
-            break;
-        case SearchType::Double32BigEndian:
-            m_pImpl = &ra::services::impl::s_pDouble32BESearchImpl;
-            break;
-        case SearchType::MBF32:
-            m_pImpl = &ra::services::impl::s_pMBF32SearchImpl;
-            break;
-        case SearchType::MBF32LE:
-            m_pImpl = &ra::services::impl::s_pMBF32LESearchImpl;
-            break;
-    }
 
     const unsigned int nPadding = m_pImpl->GetPadding();
     if (nPadding >= nBytes)
@@ -1844,6 +1830,86 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
         nAddress += nBlockSize;
         nBytes -= nBlockSize;
     }
+}
+
+_Use_decl_annotations_
+void SearchResults::Initialize(const std::vector<Result>& vResults, SearchType nType)
+{
+    m_nType = nType;
+    m_pImpl = GetSearchImpl(nType);
+
+    const auto bAligned = m_pImpl->ConvertToRealAddress(m_pImpl->ConvertFromRealAddress(7)) != 7;
+    const auto nSize = ra::data::MemSizeBytes(m_pImpl->GetMemSize());
+    bool bNeedsReversed = false;
+    switch (nType)
+    {
+        case SearchType::SixteenBitBigEndian:
+        case SearchType::SixteenBitBigEndianAligned:
+        case SearchType::ThirtyTwoBitBigEndian:
+        case SearchType::ThirtyTwoBitBigEndianAligned:
+            bNeedsReversed = true;
+            break;
+    }
+
+    auto nFirstAddress = vResults.front().nAddress;
+    auto nLastAddressPlusOne = vResults.back().nAddress + nSize;
+    if (bAligned)
+    {
+        nFirstAddress = m_pImpl->ConvertToRealAddress(m_pImpl->ConvertFromRealAddress(nFirstAddress));
+        nLastAddressPlusOne = m_pImpl->ConvertToRealAddress(m_pImpl->ConvertFromRealAddress(nLastAddressPlusOne));
+    }
+
+    const auto nMemorySize = gsl::narrow_cast<size_t>(nLastAddressPlusOne) - nFirstAddress;
+    std::vector<unsigned char> vMemory;
+    vMemory.resize(nMemorySize);
+
+    std::vector<ra::ByteAddress> vAddresses;
+    vAddresses.reserve(vResults.size());
+
+    for (const auto& pResult : vResults)
+    {
+        if (pResult.nAddress < nFirstAddress || pResult.nAddress + nSize > nLastAddressPlusOne)
+            continue;
+
+        const auto nVirtualAddress = m_pImpl->ConvertFromRealAddress(pResult.nAddress);
+
+        // ignore unaligned values for aligned types
+        if (bAligned && m_pImpl->ConvertToRealAddress(nVirtualAddress) != pResult.nAddress)
+            continue;
+
+        vAddresses.push_back(nVirtualAddress);
+
+        auto nOffset = pResult.nAddress - nFirstAddress;        
+        auto nValue = pResult.nValue;
+        if (bNeedsReversed)
+        {
+            nValue = (((nValue & 0xFF000000) >> 24) |
+                      ((nValue & 0x00FF0000) >> 8) |
+                      ((nValue & 0x0000FF00) << 8) |
+                      ((nValue & 0x000000FF) << 24));
+        }
+
+        switch (nSize)
+        {
+            case 4:
+                vMemory.at(nOffset++) = nValue & 0xFF;
+                nValue >>= 8;
+                _FALLTHROUGH;
+            case 3:
+                vMemory.at(nOffset++) = nValue & 0xFF;
+                nValue >>= 8;
+                _FALLTHROUGH;
+            case 2:
+                vMemory.at(nOffset++) = nValue & 0xFF;
+                nValue >>= 8;
+                _FALLTHROUGH;
+            default:
+                vMemory.at(nOffset) = nValue & 0xFF;
+                break;
+        }
+    }
+
+    m_pImpl->AddBlocks(*this, vAddresses, vMemory, nFirstAddress, m_pImpl->GetPadding());
 }
 
 bool SearchResults::ContainsAddress(ra::ByteAddress nAddress) const

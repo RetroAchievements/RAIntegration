@@ -138,9 +138,9 @@ public:
     static void EnableInvokeOnUIThread();
 
     /// <summary>
-    /// Returns <c>true</c> if the current thread is the UI thread.
+    /// Returns <c>true</c> if the current thread is the UI thread (or invoking to the UI thread is disabled).
     /// </summary>
-    static bool IsOnUIThread() noexcept { return GetCurrentThreadId() == s_hUIThreadId; }
+    static bool IsOnUIThread() noexcept { return s_bInvokeOnUIThreadDisabled || GetCurrentThreadId() == s_hUIThreadId; }
 
     /// <summary>
     /// Dispatches a function to the UI thread.
@@ -212,6 +212,7 @@ private:
     HWND m_hWnd{};
 
     static DWORD s_hUIThreadId;
+    static bool s_bInvokeOnUIThreadDisabled;
 
     static std::vector<WindowBinding*> s_vKnownBindings;
 };

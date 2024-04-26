@@ -51,6 +51,7 @@ static DispatchingWindow::ViewModel s_vmDispatchingWindow;
 
 std::vector<WindowBinding*> WindowBinding::s_vKnownBindings;
 DWORD WindowBinding::s_hUIThreadId;
+bool WindowBinding::s_bInvokeOnUIThreadDisabled = true;
 
 void WindowBinding::SetHWND(DialogBase* pDialog, HWND hWnd)
 {
@@ -545,16 +546,26 @@ void WindowBinding::SetUIThread(DWORD hThreadId) noexcept
 
 void WindowBinding::EnableInvokeOnUIThread()
 {
-    if (s_pDispatchingWindow == nullptr && IsOnUIThread())
+    if (s_pDispatchingWindow == nullptr)
     {
-        // create a hidden dummy window for dispatching UI messages
-
-        s_pDispatchingWindow.reset(new DispatchingWindow(s_vmDispatchingWindow));
-        if (!s_pDispatchingWindow->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_RICHPRESENCE),
-                                                      &s_pDispatchingWindow->m_pPresenter))
+        if (GetCurrentThreadId() == s_hUIThreadId)
         {
-            RA_LOG_ERR("Could not create Code Notes dialog!");
-            s_pDispatchingWindow.reset();
+            // create a hidden dummy window for dispatching UI messages
+
+            s_pDispatchingWindow.reset(new DispatchingWindow(s_vmDispatchingWindow));
+            if (!s_pDispatchingWindow->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_RICHPRESENCE),
+                                                          &s_pDispatchingWindow->m_pPresenter))
+            {
+                RA_LOG_ERR("Could not create dispatching window!");
+                s_pDispatchingWindow.reset();
+            }
+
+            s_bInvokeOnUIThreadDisabled = (s_pDispatchingWindow == nullptr);
+        }
+        else
+        {
+            // can't create the dummy window unless we're on the UI thread. disable InvokeOnUIThread
+            s_bInvokeOnUIThreadDisabled = true;
         }
     }
 }

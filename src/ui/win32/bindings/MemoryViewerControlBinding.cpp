@@ -139,6 +139,8 @@ bool MemoryViewerControlBinding::OnKeyDown(UINT nChar)
 
     if (!m_pViewModel.IsAddressFixed())
         bHandled = HandleNavigation(nChar);
+    if (!bHandled)
+        bHandled = HandleShortcut(nChar);
 
     m_bSuppressMemoryViewerInvalidate = false;
 
@@ -231,41 +233,29 @@ bool MemoryViewerControlBinding::HandleNavigation(UINT nChar)
             }
             return true;
 
+        default:
+            return false;
+    }
+}
+
+bool MemoryViewerControlBinding::HandleShortcut(UINT nChar)
+{
+    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
+    const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
+    auto nModifier = 1;
+
+    // Increase by 1 or 2 on the high and lower nibble depending key pressed
+    if (bControlHeld)
+        nModifier *= 2;
+    if (bShiftHeld)
+        nModifier *= 16;
+
+    switch (nChar)
+    {
         case VK_ADD:
+            return m_pViewModel.IncreaseCurrentValue(nModifier);
         case VK_SUBTRACT:
-        {
-            auto nAddress = m_pViewModel.GetAddress();
-            const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-            auto iMem = pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize());
-            auto iMaxValue = (1ULL << (ra::data::MemSizeBytes(m_pViewModel.GetSize()) * 8)) - 1;
-            auto iModifier = 0x1;
-
-            if (bControlHeld)
-                iModifier *= 4;
-            if (bShiftHeld)
-                iModifier *= 8;
-
-            // Min and Max tresholds
-            if ((iMem >= iMaxValue and nChar == VK_ADD) or (iMem == 0x0 and nChar == VK_SUBTRACT))
-                return false;
-
-            // Set value to min or max when tresholds are exceeded
-            if ((iMaxValue - iMem < iModifier) and nChar == VK_ADD)
-                iModifier = (iMaxValue - iMem);
-            else if ((iMem < iModifier) and nChar == VK_SUBTRACT)
-                iModifier = iMem;
-
-            nChar == VK_SUBTRACT ? iMem -= iModifier : iMem += iModifier;
-            std::wstring sValueText = ra::data::MemSizeFormat(iMem, m_pViewModel.GetSize(), MemFormat::Hex);
-
-            // Writing every byte separately considerably improves stability
-            for (int i = sValueText.length(); i != 0; i -= 2)
-            {
-                std::wstring sByteValue = sValueText.substr(i - 2, 2);
-                pEmulatorContext.WriteMemoryByte(nAddress++, std::stoi(sByteValue, 0, 16));
-            }
-            return true;
-        }
+            return m_pViewModel.DecreaseCurrentValue(nModifier);
 
         default:
             return false;

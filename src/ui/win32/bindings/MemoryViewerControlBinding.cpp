@@ -140,6 +140,8 @@ bool MemoryViewerControlBinding::OnKeyDown(UINT nChar)
 
     if (!m_pViewModel.IsAddressFixed())
         bHandled = HandleNavigation(nChar);
+    if (!bHandled)
+        bHandled = HandleShortcut(nChar);
 
     m_bSuppressMemoryViewerInvalidate = false;
 
@@ -232,52 +234,64 @@ bool MemoryViewerControlBinding::HandleNavigation(UINT nChar)
             }
             return true;
 
+        default:
+            return false;
+    }
+}
+
+bool MemoryViewerControlBinding::HandleShortcut(UINT nChar)
+{
+    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
+    const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
+
+    switch (nChar)
+    {
         case 'C':
             if (bControlHeld)
             {
                 const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-                const auto iValue = pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize());
-                std::wstring sValue = ra::data::MemSizeFormat(iValue, m_pViewModel.GetSize(), MemFormat::Hex);
+                const auto nValue = pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize());
+                std::wstring sValue = ra::data::MemSizeFormat(nValue, m_pViewModel.GetSize(), MemFormat::Hex);
 
                 ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sValue));
             }
             return true;
 
         case 'V':
-            if (bControlHeld)
+            if (bControlHeld and !m_pViewModel.IsReadOnly())
             {
                 auto nAddress = m_pViewModel.GetAddress();
                 const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
                 std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
-                auto n = m_pViewModel.GetSize();
+                const auto nNibblesForSize = ra::data::MemSizeBytes(m_pViewModel.GetSize());
+                std::vector<std::uint32_t> v_nValues;
+                std::wstring sError;
 
                 if (sClipboardText.empty())
                     return false;
 
-                // Check if the string is a valid hexadecimal value
-                for (wchar_t ch : sClipboardText)
-                    if (!iswxdigit(ch)) return false;
-
-                // Padding zeroes depending if shift is pressed (strict mode) or not (replace mode)
-                if (bShiftHeld)
+                // Split the clipboard value into substrings matching the current size and check if they're valid hexadecimal values
+                for (size_t i = 0; i < sClipboardText.size(); i += nNibblesForSize * 2)
                 {
-                    const auto nNibblesForSize = ra::data::MemSizeBytes(m_pViewModel.GetSize()) * 2;
-
-                    if (nNibblesForSize < sClipboardText.length())
-                        sClipboardText = sClipboardText.substr(sClipboardText.length() - nNibblesForSize);
-                    else
+                    std::wstring sSubString = sClipboardText.substr(i, nNibblesForSize * 2);
+                    unsigned int nValue;
+                    
+                    if (!ra::ParseHex(sSubString, 0xFFFFFFFF, nValue, sError))
                     {
-                        std::wstring sPadding(nNibblesForSize - sClipboardText.length(), L'0');
-                        sClipboardText = (sPadding + sClipboardText);
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Paste value failed", sError);
+                        return false;
                     }
-                }else 
-                    sClipboardText = sClipboardText.length() % 2 == 1 ? (L"0" + sClipboardText) : sClipboardText;
 
-                // Writing every byte separately considerably improves stability and enables long sequences to be pasted
-                for (int i = sClipboardText.length(); i != 0; i-=2)
+                    v_nValues.push_back(nValue);
+                }
+
+                for (auto nValue : v_nValues)
                 {
-                    std::wstring sValue = sClipboardText.substr(i - 2, 2);
-                    pEmulatorContext.WriteMemoryByte(nAddress++, std::stoi(sValue, 0, 16));
+                    //Single mode writes only the first value, multi mode (shift) writes every values
+                    pEmulatorContext.WriteMemory(nAddress, m_pViewModel.GetSize(), nValue);
+                    if (!bShiftHeld)
+                        break;
+                    nAddress += nNibblesForSize;
                 }
             }
             return true;

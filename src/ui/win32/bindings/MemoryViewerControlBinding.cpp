@@ -249,50 +249,14 @@ bool MemoryViewerControlBinding::HandleShortcut(UINT nChar)
         case 'C':
             if (bControlHeld)
             {
-                const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-                const auto nValue = pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize());
-                std::wstring sValue = ra::data::MemSizeFormat(nValue, m_pViewModel.GetSize(), MemFormat::Hex);
-
-                ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sValue));
+                OnCopy();
             }
             return true;
 
         case 'V':
             if (bControlHeld and !m_pViewModel.IsReadOnly())
             {
-                auto nAddress = m_pViewModel.GetAddress();
-                const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-                std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
-                const auto nNibblesForSize = ra::data::MemSizeBytes(m_pViewModel.GetSize());
-                std::vector<std::uint32_t> v_nValues;
-                std::wstring sError;
-
-                if (sClipboardText.empty())
-                    return false;
-
-                // Split the clipboard value into substrings matching the current size and check if they're valid hexadecimal values
-                for (size_t i = 0; i < sClipboardText.size(); i += nNibblesForSize * 2)
-                {
-                    std::wstring sSubString = sClipboardText.substr(i, nNibblesForSize * 2);
-                    unsigned int nValue;
-                    
-                    if (!ra::ParseHex(sSubString, 0xFFFFFFFF, nValue, sError))
-                    {
-                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Paste value failed", sError);
-                        return false;
-                    }
-
-                    v_nValues.push_back(nValue);
-                }
-
-                for (auto nValue : v_nValues)
-                {
-                    //Single mode writes only the first value, multi mode (shift) writes every values
-                    pEmulatorContext.WriteMemory(nAddress, m_pViewModel.GetSize(), nValue);
-                    if (!bShiftHeld)
-                        break;
-                    nAddress += nNibblesForSize;
-                }
+                return OnPaste(bShiftHeld);
             }
             return true;
 
@@ -353,6 +317,66 @@ void MemoryViewerControlBinding::OnViewModelIntValueChanged(const IntModelProper
         // is paused - in which case, the update from DoFrame will not occur
         PostMessage(m_hWnd, WM_USER_INVALIDATE, 0, 0);
     }
+}
+
+void MemoryViewerControlBinding::OnCopy()
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto nValue = pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize());
+    std::wstring sValue = ra::data::MemSizeFormat(nValue, m_pViewModel.GetSize(), MemFormat::Hex);
+
+    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sValue));
+}
+
+bool MemoryViewerControlBinding::OnPaste(bool bShiftHeld)
+{
+    auto nAddress = m_pViewModel.GetAddress();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
+    const auto nBytesForSize = ra::data::MemSizeBytes(m_pViewModel.GetSize());
+    std::vector<std::uint32_t> vValues;
+    std::wstring sError;
+
+    if (sClipboardText.empty())
+        return false;
+
+    // Split the clipboard value into substrings matching the current size and check if they're valid hexadecimal values
+    // If the clipboard text is smaller than a single write, it will be treated as a padded value:
+    //    C => 0C, 000C, or 0000000C (depending on currently selected viewer size)
+    // If shift is held, and the clipboard string is bigger than a single write, multiple writes will occur.
+    // If the last write is not a complete chunk, it will be padded in the same way as described above:
+    //    12345678C => 12 34 56 78 0C, 1234 5678 000C, or 12345678 0000000C
+    for (size_t i = 0; i < sClipboardText.size(); i += nBytesForSize * 2)
+    {
+        std::wstring sSubString = sClipboardText.substr(i, nBytesForSize * 2);
+        unsigned int nValue;
+
+        if (!ra::ParseHex(sSubString, 0xFFFFFFFF, nValue, sError))
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Paste value failed", sError);
+            return false;
+        }
+
+        // Single mode writes only the first value,
+        if (!bShiftHeld)
+        {
+            pEmulatorContext.WriteMemory(nAddress, m_pViewModel.GetSize(), nValue);
+            return true;
+        }
+
+        vValues.push_back(nValue);
+    }
+
+    // Multi mode (shift) writes every values
+    for (auto nValue : vValues)
+    {
+        pEmulatorContext.WriteMemory(nAddress, m_pViewModel.GetSize(), nValue);
+        if (!bShiftHeld)
+            break;
+        nAddress += nBytesForSize;
+    }
+
+    return true;
 }
 
 void MemoryViewerControlBinding::Invalidate()

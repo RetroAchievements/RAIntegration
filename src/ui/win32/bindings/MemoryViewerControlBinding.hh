@@ -48,6 +48,9 @@ public:
     void OnGotFocus() override;
     void OnLostFocus() override;
 
+    void OnCopy();
+    bool OnPaste(bool bShiftHeld);
+
     void Invalidate();
 
     void SetHWND(DialogBase& pDialog, HWND hControl) override;

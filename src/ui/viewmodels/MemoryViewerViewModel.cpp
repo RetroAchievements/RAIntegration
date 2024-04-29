@@ -29,8 +29,6 @@ std::unique_ptr<ra::ui::drawing::ISurface> MemoryViewerViewModel::s_pFontSurface
 std::unique_ptr<ra::ui::drawing::ISurface> MemoryViewerViewModel::s_pFontASCIISurface;
 ra::ui::Size MemoryViewerViewModel::s_szChar;
 int MemoryViewerViewModel::s_nFont = 0;
-std::list<ra::ByteAddress> MemoryViewerViewModel::s_listMemViewHistory = {0};
-std::list<ra::ByteAddress>::iterator MemoryViewerViewModel::s_iterMemViewHistoryIndex = s_listMemViewHistory.begin();
 
 constexpr char FIRST_ASCII_CHAR = 32;
 constexpr char LAST_ASCII_CHAR = 127;
@@ -97,6 +95,8 @@ protected:
 private:
     ViewModelCollection<ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel>& m_vBookmarks;
     MemoryViewerViewModel& m_pOwner;
+    std::vector<ra::ByteAddress> vHistory;
+    std::vector<ra::ByteAddress>::iterator iterHistoryIndex;
 };
 
 MemoryViewerViewModel::MemoryViewerViewModel()
@@ -113,6 +113,9 @@ MemoryViewerViewModel::MemoryViewerViewModel()
 
     m_pInvalid = m_pMemory + MaxLines * 16 * 2;
     memset(m_pInvalid, 0, MaxLines * 16);
+
+    vHistory = {0};
+    iterHistoryIndex = vHistory.begin();
 }
 
 void MemoryViewerViewModel::InitializeNotifyTargets()
@@ -369,6 +372,8 @@ void MemoryViewerViewModel::SetAddress(ra::ByteAddress nValue)
     {
         SetValue(PendingAddressProperty, gsl::narrow_cast<int>(nValue));
     }
+
+    AddToHistory(nValue);
 }
 
 void MemoryViewerViewModel::SetFirstAddress(ra::ByteAddress value)
@@ -669,6 +674,8 @@ void MemoryViewerViewModel::OnActiveGameChanged()
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     m_bReadOnly = (pGameContext.GameId() == 0);
+
+    ClearHistory();
 }
 
 void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote)
@@ -1317,31 +1324,38 @@ void MemoryViewerViewModel::RenderHeader()
     }
 }
 
-void MemoryViewerViewModel::SaveToMemViewHistory()
+void MemoryViewerViewModel::AddToHistory(ra::ByteAddress nAddress)
 {
-    if (*s_iterMemViewHistoryIndex != GetAddress())
+    if (*iterHistoryIndex != nAddress)
     {
-        s_listMemViewHistory.erase(s_listMemViewHistory.begin(), s_iterMemViewHistoryIndex);
-        if (s_listMemViewHistory.size() > MEMVIEW_HISTORY_MAX_SIZE)
-            s_listMemViewHistory.pop_back();
-        s_listMemViewHistory.push_front(GetAddress());
-        s_iterMemViewHistoryIndex = s_listMemViewHistory.begin();
+        vHistory.erase(iterHistoryIndex + 1, vHistory.end());
+        if (vHistory.size() == MEMVIEW_HISTORY_MAX_SIZE)
+            vHistory.erase(vHistory.begin());
+        vHistory.push_back(nAddress);
+        iterHistoryIndex = vHistory.end() - 1;
     }
 }
 
-void MemoryViewerViewModel::MoveMemViewHistoryForward()
+void MemoryViewerViewModel::ClearHistory()
 {
-    if (s_listMemViewHistory.size() >= 1 and s_iterMemViewHistoryIndex != s_listMemViewHistory.begin())
-        --s_iterMemViewHistoryIndex;
-    SetAddress(*s_iterMemViewHistoryIndex);
+    vHistory.erase(vHistory.begin(), vHistory.end());
+    vHistory.push_back(0);
+    iterHistoryIndex = vHistory.begin();
 }
 
-void MemoryViewerViewModel::MoveMemViewHistoryBackward()
+void MemoryViewerViewModel::MoveHistoryForward()
 {
-    int iIndex = std::distance(s_listMemViewHistory.begin(), s_iterMemViewHistoryIndex);
-    if (s_listMemViewHistory.size() > (iIndex + 1))
-        ++s_iterMemViewHistoryIndex;
-    SetAddress(*s_iterMemViewHistoryIndex);
+    int nIndex = std::distance(vHistory.begin(), iterHistoryIndex);
+    if (vHistory.size() > (nIndex + 1))
+        ++iterHistoryIndex;
+    SetAddress(*iterHistoryIndex);
+}
+
+void MemoryViewerViewModel::MoveHistoryBackward()
+{
+    if (vHistory.size() >= 1 and iterHistoryIndex != vHistory.begin())
+        --iterHistoryIndex;
+    SetAddress(*iterHistoryIndex);
 }
 
 } // namespace viewmodels

@@ -175,9 +175,10 @@ public:
     void AdvanceCursorPage();
     void RetreatCursorPage();
 
-    void SaveToMemViewHistory();
-    void MoveMemViewHistoryBackward();
-    void MoveMemViewHistoryForward();
+    void AddToHistory(ra::ByteAddress nAddress);
+    void ClearHistory();
+    void MoveHistoryBackward();
+    void MoveHistoryForward();
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
@@ -210,6 +211,8 @@ protected:
     static constexpr int REDRAW_ALL = REDRAW_MEMORY | REDRAW_ADDRESSES | REDRAW_HEADERS;
     int m_nNeedsRedraw = REDRAW_ALL;
 
+
+
     static constexpr int MaxLines = 128;
 
 private:
@@ -239,12 +242,13 @@ private:
     static std::unique_ptr<ra::ui::drawing::ISurface> s_pFontSurface;
     static std::unique_ptr<ra::ui::drawing::ISurface> s_pFontASCIISurface;
     static int s_nFont;
-    static std::list<ra::ByteAddress> s_listMemViewHistory;
-    static std::list<ra::ByteAddress>::iterator s_iterMemViewHistoryIndex;
 
     class MemoryBookmarkMonitor;
     friend class MemoryBookmarkMonitor;
     std::unique_ptr<MemoryBookmarkMonitor> m_pBookmarkMonitor;
+
+    std::vector<ra::ByteAddress> vHistory;
+    std::vector<ra::ByteAddress>::iterator iterHistoryIndex;
 };
 
 } // namespace viewmodels

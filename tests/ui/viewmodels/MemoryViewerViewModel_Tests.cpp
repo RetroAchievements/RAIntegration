@@ -1957,7 +1957,7 @@ public:
         ra::data::context::mocks::MockConsoleContext mockConsole(PlayStation, L"PlayStation");
 
         MemoryViewerViewModelHarness viewer;
-        viewer.InitializeMemory(0xFFFF); 
+        viewer.InitializeMemory(0x1FFF); 
         viewer.SetSize(MemSize::SixteenBit);
 
         Assert::AreEqual(MemSize::SixteenBit, viewer.GetSize());
@@ -1994,7 +1994,7 @@ public:
         ra::data::context::mocks::MockConsoleContext mockConsole(PlayStation, L"Playstation");
 
         MemoryViewerViewModelHarness viewer;
-        viewer.InitializeMemory(0x1FFFFF); // PSX full memory
+        viewer.InitializeMemory(0x1FFF); // PSX full memory
         viewer.SetSize(MemSize::ThirtyTwoBit);
 
         Assert::AreEqual(MemSize::ThirtyTwoBit, viewer.GetSize());
@@ -2013,12 +2013,12 @@ public:
         viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
         Assert::AreEqual({0x1234U}, viewer.GetAddress());
 
-        // Shift click on the first dword containing 0x80012345 should lead to address 0x00012345 as the conversion keeps
-        // only the same number of nibbles as the Max address from console context (PSX : 1FFFFF)
+        // Shift click on the first dword containing 0x80000123 should lead to address 0x00000123 as PSX has mirrored RAM
+        // on 0x80000000-0x801FFFFF mapped to 0x00000000-0x001FFFFF
         viewer.SetAddress(0);
-        viewer.mockEmulatorContext.WriteMemory(0U, MemSize::ThirtyTwoBit, 0x00012345);
+        viewer.mockEmulatorContext.WriteMemory(0U, MemSize::ThirtyTwoBit, 0x80000123);
         viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
-        Assert::AreEqual({0x00012345}, viewer.GetAddress());
+        Assert::AreEqual({0x00000123}, viewer.GetAddress());
 
         // Shift click on the second dword containing 0x0 should do nothing
         viewer.SetAddress(0x8);

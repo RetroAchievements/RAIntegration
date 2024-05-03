@@ -325,7 +325,7 @@ void MemoryViewerControlBinding::OnCopy()
     const auto nValue = pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize());
     std::wstring sValue = ra::data::MemSizeFormat(nValue, m_pViewModel.GetSize(), MemFormat::Hex);
 
-    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sValue));
+    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(sValue);
 }
 
 bool MemoryViewerControlBinding::OnPaste(bool bShiftHeld)
@@ -334,7 +334,6 @@ bool MemoryViewerControlBinding::OnPaste(bool bShiftHeld)
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
     const auto nBytesForSize = ra::data::MemSizeBytes(m_pViewModel.GetSize());
-    std::vector<std::uint32_t> vValues;
     std::wstring sError;
 
     if (sClipboardText.empty())
@@ -350,30 +349,18 @@ bool MemoryViewerControlBinding::OnPaste(bool bShiftHeld)
     {
         std::wstring sSubString = sClipboardText.substr(i, nBytesForSize * 2);
         unsigned int nValue;
-
         if (!ra::ParseHex(sSubString, 0xFFFFFFFF, nValue, sError))
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Paste value failed", sError);
             return false;
         }
 
-        // Single mode writes only the first value,
-        if (!bShiftHeld)
-        {
-            pEmulatorContext.WriteMemory(nAddress, m_pViewModel.GetSize(), nValue);
-            return true;
-        }
-
-        vValues.push_back(nValue);
-    }
-
-    // Multi mode (shift) writes every values
-    for (auto nValue : vValues)
-    {
         pEmulatorContext.WriteMemory(nAddress, m_pViewModel.GetSize(), nValue);
-        if (!bShiftHeld)
-            break;
         nAddress += nBytesForSize;
+
+        // Single mode writes only the first value else multi mode (shift) writes every values
+        if (!bShiftHeld)
+            return true;
     }
 
     return true;

@@ -3,7 +3,8 @@
 	url = https://github.com/Tencent/rapidjson.git
 [submodule "rcheevos"]
 	path = rcheevos
-	url = https://github.com/RetroAchievements/rcheevos.git
+	url = https://github.com/redwizard42/rcheevos-tmo.git
+	branch = modulus
 [submodule "lua"]
 	path = lua
 	url = https://github.com/lua/lua.git

@@ -237,6 +237,8 @@ public:
         Assert::AreEqual(std::wstring(L"&"), vmTrigger.OperatorTypes().GetItemAt(9)->GetLabel());
         Assert::AreEqual((int)TriggerOperatorType::BitwiseXor, vmTrigger.OperatorTypes().GetItemAt(10)->GetId());
         Assert::AreEqual(std::wstring(L"^"), vmTrigger.OperatorTypes().GetItemAt(10)->GetLabel());
+        Assert::AreEqual((int)TriggerOperatorType::Modulus, vmTrigger.OperatorTypes().GetItemAt(11)->GetId());
+        Assert::AreEqual(std::wstring(L"%"), vmTrigger.OperatorTypes().GetItemAt(8)->GetLabel());
     }
 
     TEST_METHOD(TestParseAndRegenerateCoreOnly)

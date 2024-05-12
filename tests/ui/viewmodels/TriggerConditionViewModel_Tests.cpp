@@ -189,6 +189,10 @@ public:
         vmCondition.SetOperator(TriggerOperatorType::BitwiseAnd);
         Assert::AreEqual(TriggerOperatorType::BitwiseAnd, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::Modulus);
+        Assert::AreEqual(TriggerOperatorType::Modulus, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
     }
 
     TEST_METHOD(TestHasTargetSize)
@@ -1124,6 +1128,7 @@ public:
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseXor)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Modulus)));
 
         condition.SetType(TriggerConditionType::AddAddress);
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Equals)));
@@ -1137,6 +1142,7 @@ public:
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseXor)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Modulus)));
     }
 
     TEST_METHOD(TestIsComparisonVisibleMeasured)
@@ -1155,6 +1161,7 @@ public:
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseXor)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Modulus)));
 
         TriggerViewModel vmTrigger;
         vmTrigger.SetIsValue(true);
@@ -1172,6 +1179,7 @@ public:
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseXor)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Modulus)));
     }
 
     TEST_METHOD(TestFormatValueNumber)

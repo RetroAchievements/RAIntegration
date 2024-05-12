@@ -129,16 +129,15 @@ public:
         return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
     }
 
-    static void set_unofficial_enabled(int value)
+    static void set_unofficial_enabled(int) noexcept
     {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        rc_client_set_unofficial_enabled(pClient.GetClient(), value);
+        // do nothing. unofficial achievements should always be available when using the toolkit.
     }
 
-    static int get_unofficial_enabled()
+    static int get_unofficial_enabled() noexcept
     {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_get_unofficial_enabled(pClient.GetClient());
+        // unofficial achievements should always be available when using the toolkit.
+        return true;
     }
 
     static void set_encore_mode_enabled(int value)

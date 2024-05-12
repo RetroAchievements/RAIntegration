@@ -176,6 +176,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     m_bindWindow.BindEnabled(IDC_RA_FILTER_VALUE, MemorySearchViewModel::CanEditFilterValueProperty);
     m_bindWindow.BindEnabled(IDC_RA_APPLY_FILTER, MemorySearchViewModel::CanFilterProperty);
     m_bindWindow.BindEnabled(IDC_RA_RESULTS_EXPORT, MemorySearchViewModel::CanFilterProperty);
+    m_bindWindow.BindEnabled(IDC_RA_RESULTS_IMPORT, MemorySearchViewModel::CanBeginNewSearchProperty);
     m_bindWindow.BindEnabled(IDC_RA_CONTINUOUS_FILTER, MemorySearchViewModel::CanContinuousFilterProperty);
     m_bindWindow.BindLabel(IDC_RA_CONTINUOUS_FILTER, MemorySearchViewModel::ContinuousFilterLabelProperty);
 
@@ -404,6 +405,14 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
             auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
             if (vmMemoryInspector)
                 vmMemoryInspector->Search().ExportResults();
+
+            return TRUE;
+        }
+
+        case IDC_RA_RESULTS_IMPORT: {
+            auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
+            if (vmMemoryInspector)
+                vmMemoryInspector->Search().ImportResults();
 
             return TRUE;
         }

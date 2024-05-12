@@ -86,6 +86,23 @@ enum class ValueFormat : uint8_t
 const char* ValueFormatToString(ValueFormat nFormat) noexcept;
 ValueFormat ValueFormatFromString(const std::string& sFormat) noexcept;
 
+constexpr bool MemSizeIsFloat(MemSize nSize)
+{
+    switch (nSize)
+    {
+        case MemSize::Float:
+        case MemSize::FloatBigEndian:
+        case MemSize::MBF32:
+        case MemSize::MBF32LE:
+        case MemSize::Double32:
+        case MemSize::Double32BigEndian:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 constexpr unsigned int MemSizeBits(MemSize nSize)
 {
     switch (nSize)
@@ -96,6 +113,8 @@ constexpr unsigned int MemSizeBits(MemSize nSize)
         case MemSize::FloatBigEndian:
         case MemSize::MBF32:
         case MemSize::MBF32LE:
+        case MemSize::Double32:
+        case MemSize::Double32BigEndian:
             return 32;
 
         case MemSize::EightBit:

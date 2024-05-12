@@ -135,7 +135,7 @@ private:
     };
 
     void AssertRow(MemorySearchViewModelHarness& search, gsl::index nRow, ra::ByteAddress nAddress,
-        const wchar_t* sAddress, const wchar_t* sCurrentValue)
+                   const wchar_t* sAddress, const wchar_t* sCurrentValue)
     {
         auto* pRow = search.Results().GetItemAt(nRow);
         Assert::IsNotNull(pRow);
@@ -1964,6 +1964,237 @@ public:
         search.ExportResults();
         Assert::IsTrue(bMessageSeen);
         Assert::IsFalse(bDialogSeen);
+    }
+
+    TEST_METHOD(TestImportResults)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockGameContext.SetGameId(3);
+        search.InitializeMemory();
+
+        const std::string sContents = "Address,Value,PreviousValue,InitialValue\n0x0005,0x05,0x08,0x05\n0x000c,0x07,0x09,0x0c\n";
+        search.mockFileSystem.MockFile(L"E:\\Data\\3-SearchResults.csv", sContents);
+        
+        bool bDialogSeen = false;
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"Import Search Results"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({1U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"csv"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-SearchResults.csv"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-SearchResults.csv");
+
+                return DialogResult::OK;
+            });
+
+        search.ImportResults();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({2U}, search.Results().Count());
+        AssertRow(search, 0, 5U, L"0x0005", L"0x05");
+        AssertRow(search, 1, 12U, L"0x000c", L"0x0c");
+
+        // use tooltip to validate "initial" value for $000c is 0x07
+        const auto sTooltip = search.GetTooltip(*search.Results().GetItemAt(1));
+        Assert::AreEqual(std::wstring(L"0x000c\n0x0c | Current\n0x07 | Last Filter\n0x07 | Initial"), sTooltip);
+    }
+
+    TEST_METHOD(TestImportResultsThirtyTwoBit)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockGameContext.SetGameId(3);
+        search.InitializeMemory();
+        search.SetSearchType(ra::services::SearchType::ThirtyTwoBit);
+
+        const std::string sContents =
+            "Address,Value,PreviousValue,InitialValue\n0x0005,0x12345678,0x08,0x05\n";
+        search.mockFileSystem.MockFile(L"E:\\Data\\3-SearchResults.csv", sContents);
+
+        bool bDialogSeen = false;
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"Import Search Results"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({1U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"csv"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-SearchResults.csv"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-SearchResults.csv");
+
+                return DialogResult::OK;
+            });
+
+        search.ImportResults();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({1U}, search.Results().Count());
+        AssertRow(search, 0, 5U, L"0x0005", L"0x08070605");
+
+        // use tooltip to validate "initial" value
+        const auto sTooltip = search.GetTooltip(*search.Results().GetItemAt(0));
+        Assert::AreEqual(std::wstring(L"0x0005\n0x08070605 | Current\n0x12345678 | Last Filter\n0x12345678 | Initial"), sTooltip);
+    }
+
+    TEST_METHOD(TestImportResultsFloat)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockGameContext.SetGameId(3);
+        search.InitializeMemory();
+        search.memory.at(4) = 0xDB;
+        search.memory.at(5) = 0x0F;
+        search.memory.at(6) = 0x49;
+        search.memory.at(7) = 0x40;
+        search.SetSearchType(ra::services::SearchType::Float);
+
+        const std::string sContents = "Address,Value,PreviousValue,InitialValue\n0x0004,1.5,2.6,2.6\n";
+        search.mockFileSystem.MockFile(L"E:\\Data\\3-SearchResults.csv", sContents);
+
+        bool bDialogSeen = false;
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"Import Search Results"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({1U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"csv"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-SearchResults.csv"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-SearchResults.csv");
+
+                return DialogResult::OK;
+            });
+
+        search.ImportResults();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({1U}, search.Results().Count());
+        AssertRow(search, 0, 4U, L"0x0004", L"3.141593");
+
+        // use tooltip to validate "initial" value
+        const auto sTooltip = search.GetTooltip(*search.Results().GetItemAt(0));
+        Assert::AreEqual(std::wstring(L"0x0004\n3.141593 | Current\n1.5 | Last Filter\n1.5 | Initial"), sTooltip);
+    }
+
+    TEST_METHOD(TestImportResultsAsciiText)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockGameContext.SetGameId(3);
+        search.InitializeMemory();
+        search.SetSearchType(ra::services::SearchType::AsciiText);
+
+        bool bDialogSeen = false;
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"Cannot import ASCII Text search results"), vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::OK;
+            });
+
+        search.ImportResults();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({0U}, search.Results().Count());
+    }
+
+    TEST_METHOD(TestImportResultsConfirmOverwrite)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockGameContext.SetGameId(3);
+        search.InitializeMemory();
+        search.BeginNewSearch();
+        search.ApplyFilter();
+        Assert::AreEqual({32U}, search.GetResultCount());
+
+        const std::string sContents =
+            "Address,Value,PreviousValue,InitialValue\n0x0005,0x05,0x08,0x05\n0x000c,0x07,0x09,0x0c\n";
+        search.mockFileSystem.MockFile(L"E:\\Data\\3-SearchResults.csv", sContents);
+
+        int nDialogSeen = 0;
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&nDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                nDialogSeen++;
+
+                Assert::AreEqual(std::wstring(L"Start new search?"), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"This will initialize a new search with previously exported search results."), vmMessageBox.GetMessage());
+                Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+                return (nDialogSeen == 1) ? DialogResult::No : DialogResult::Yes;
+            });
+
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&nDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                nDialogSeen++;
+
+                Assert::AreEqual(std::wstring(L"Import Search Results"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({1U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"csv"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-SearchResults.csv"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-SearchResults.csv");
+
+                return DialogResult::OK;
+            });
+
+        search.ImportResults();
+        Assert::AreEqual(1, nDialogSeen); // one dialog, canceled
+
+        Assert::AreEqual({32U}, search.GetResultCount());
+
+        search.ImportResults();
+        Assert::AreEqual(3, nDialogSeen); // second confirmation dialog + file selection dialog
+
+        Assert::AreEqual({2U}, search.GetResultCount());
+        AssertRow(search, 0, 5U, L"0x0005", L"0x05");
+        AssertRow(search, 1, 12U, L"0x000c", L"0x0c");
+
+        // use tooltip to validate "initial" value for $000c is 0x07
+        const auto sTooltip = search.GetTooltip(*search.Results().GetItemAt(1));
+        Assert::AreEqual(std::wstring(L"0x000c\n0x0c | Current\n0x07 | Last Filter\n0x07 | Initial"), sTooltip);
+    }
+
+    TEST_METHOD(TestImportResultsEmptyFile)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockGameContext.SetGameId(3);
+        search.InitializeMemory();
+
+        const std::string sContents = "";
+        search.mockFileSystem.MockFile(L"E:\\Data\\3-SearchResults.csv", sContents);
+
+        int nDialogSeen = 0;
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&nDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                nDialogSeen++;
+
+                Assert::AreEqual(std::wstring(L"Import Search Results"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({1U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"csv"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-SearchResults.csv"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-SearchResults.csv");
+
+                return DialogResult::OK;
+            });
+
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&nDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                nDialogSeen++;
+                Assert::AreEqual(std::wstring(L"File does not appear to be an exported search result"), vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::OK;
+            });
+
+        search.ImportResults();
+
+        Assert::AreEqual(2, nDialogSeen);
+        Assert::AreEqual({0U}, search.Results().Count());
     }
 };
 

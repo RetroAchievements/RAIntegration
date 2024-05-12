@@ -249,6 +249,13 @@ public:
     };
 
     /// <summary>
+    /// Initializes a result set from a list of address/value pairs
+    /// </summary>
+    /// <param name="srResults">The results to populate from.</param>
+    /// <param name="nType">Type of search to initialize.</param>
+    void Initialize(_In_ const std::vector<Result>& srResults, _In_ SearchType nSearchType);
+
+    /// <summary>
     /// Gets the nIndex'th matching address.
     /// </summary>
     /// <param name="result">The result.</param>

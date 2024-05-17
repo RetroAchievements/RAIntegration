@@ -499,6 +499,9 @@ public:
         ParseAndRegenerate("A:0xH1234"); // none
         ParseAndRegenerate("A:0xH1234*5"); // multiply
         ParseAndRegenerate("A:0xH1234/5"); // divide
+        ParseAndRegenerate("A:0xH1234%5"); // modulus
+        ParseAndRegenerate("A:0xH1234+5"); // addition
+        ParseAndRegenerate("A:0xH1234-5"); // subtraction
         ParseAndRegenerate("A:0xH1234&5"); // bitwise and
     }
 

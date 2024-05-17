@@ -140,6 +140,14 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
                 sBuffer.push_back('%');
                 break;
 
+            case TriggerOperatorType::Add:
+                sBuffer.push_back('+');
+                break;
+
+            case TriggerOperatorType::Subtract:
+                sBuffer.push_back('-');
+                break;
+
             default:
                 assert(!"Unknown comparison");
                 break;
@@ -520,6 +528,8 @@ static constexpr bool IsModifyingOperator(TriggerOperatorType nType)
         case TriggerOperatorType::BitwiseAnd:
         case TriggerOperatorType::BitwiseXor:
         case TriggerOperatorType::Modulus:
+        case TriggerOperatorType::Add:
+        case TriggerOperatorType::Subtract:
             return true;
 
         default:

@@ -193,6 +193,14 @@ public:
         vmCondition.SetOperator(TriggerOperatorType::Modulus);
         Assert::AreEqual(TriggerOperatorType::Modulus, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::Add);
+        Assert::AreEqual(TriggerOperatorType::Add, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::Subtract);
+        Assert::AreEqual(TriggerOperatorType::Subtract, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
     }
 
     TEST_METHOD(TestHasTargetSize)

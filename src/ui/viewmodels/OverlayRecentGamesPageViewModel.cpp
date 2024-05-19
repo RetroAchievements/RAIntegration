@@ -8,7 +8,7 @@
 #include "data\context\SessionTracker.hh"
 #include "data\context\UserContext.hh"
 
-#include "services\Http.hh"
+#include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
@@ -108,29 +108,21 @@ void OverlayRecentGamesPageViewModel::Refresh()
                 if (rc_api_init_fetch_game_titles_request(&request, &api_params) != RC_OK)
                     return;
 
-                ra::services::Http::Request httpRequest(request.url);
-                httpRequest.SetContentType(request.content_type);
-                httpRequest.SetPostData(request.post_data);
+                ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().AsyncServerCall(
+                    &request, [](const rc_api_server_response_t& server_response, void* pCallbackData) {
+                        rc_api_fetch_game_titles_response_t response{};
 
-                httpRequest.CallAsync([this](const ra::services::Http::Response& pResponse) {
-                    rc_api_fetch_game_titles_response_t response{};
-                    rc_api_server_response_t server_response;
-
-                    memset(&server_response, 0, sizeof(server_response));
-                    server_response.body = pResponse.Content().c_str();
-                    server_response.body_length = pResponse.Content().length();
-                    server_response.http_status_code = ra::etoi(pResponse.StatusCode());
-
-                    if (rc_api_process_fetch_game_titles_server_response(&response, &server_response) == RC_OK &&
-                        response.response.succeeded)
-                    {
-                        for (uint32_t i = 0; i < response.num_entries; i++)
+                        if (rc_api_process_fetch_game_titles_server_response(&response, &server_response) == RC_OK &&
+                            response.response.succeeded)
                         {
-                            UpdateGameEntry(response.entries[i].id, ra::Widen(response.entries[i].title),
-                                            response.entries[i].image_name);
+                            auto* pThis = reinterpret_cast<OverlayRecentGamesPageViewModel*>(pCallbackData);
+                            for (uint32_t i = 0; i < response.num_entries; i++)
+                            {
+                                pThis->UpdateGameEntry(response.entries[i].id, ra::Widen(response.entries[i].title),
+                                                       response.entries[i].image_name);
+                            }
                         }
-                    }
-                });
+                    }, this);
             }
         });
     }

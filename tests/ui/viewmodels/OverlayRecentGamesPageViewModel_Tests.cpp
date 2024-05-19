@@ -2,6 +2,7 @@
 
 #include "ui\viewmodels\OverlayRecentGamesPageViewModel.hh"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockImageRepository.hh"
@@ -94,6 +95,7 @@ public:
     TEST_METHOD(TestRefreshOneGameDataFetched)
     {
         OverlayRecentGamesPageViewModelHarness gamesPage;
+        ra::services::mocks::MockAchievementRuntime achievementRuntime;
         gamesPage.mockSessions.MockSession(3U, 1234567890U, std::chrono::seconds(5000));
         gamesPage.mockUserContext.Initialize("Username", "APITOKEN");
 

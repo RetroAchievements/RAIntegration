@@ -149,6 +149,12 @@ public:
     /// </summary>
     void SetPaused(bool bValue) noexcept { m_bPaused = bValue; }
 
+    typedef void (*AsyncServerCallCallback)(const rc_api_server_response_t& pResponse, void* pCallbackData);
+    /// <summary>
+    /// Makes an asynchronous rc_api server call
+    /// </summary>
+    void AsyncServerCall(const rc_api_request_t* pRequest, AsyncServerCallCallback fCallback, void* pCallbackData) const;
+
     class Synchronizer
     {
     public:

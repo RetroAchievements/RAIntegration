@@ -99,15 +99,9 @@ public:
 
         ra::services::mocks::MockHttpRequester mockHttp([](const ra::services::Http::Request&) {
             return ra::services::Http::Response(ra::services::Http::StatusCode::OK,
-                                                "{\"Success\":true,\"PatchData\":{"
-                                                    "\"ID\":99,"
-                                                    "\"Title\":\"Game Name\","
-                                                    "\"ConsoleID\":5,"
-                                                    "\"ImageIcon\":\"/Images/BADGE.png\","
-                                                    "\"Achievements\":[],"
-                                                    "\"Leaderboards\":[],"
-                                                    "\"RichPresencePatch\":\"\""
-                                                "}}");
+                                                "{\"Success\":true,\"Response\":["
+                                                    "{\"ID\":3,\"Title\":\"Game Name\",\"ImageIcon\":\"/Images/BADGE.png\"}"
+                                                "]}");
         });
 
         gamesPage.Refresh();

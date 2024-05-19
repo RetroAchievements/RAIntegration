@@ -115,7 +115,9 @@ void OverlayRecentGamesPageViewModel::Refresh()
                         if (rc_api_process_fetch_game_titles_server_response(&response, &server_response) == RC_OK &&
                             response.response.succeeded)
                         {
-                            auto* pThis = reinterpret_cast<OverlayRecentGamesPageViewModel*>(pCallbackData);
+                            auto* pThis = static_cast<OverlayRecentGamesPageViewModel*>(pCallbackData);
+                            Expects(pThis != nullptr);
+
                             for (uint32_t i = 0; i < response.num_entries; i++)
                             {
                                 pThis->UpdateGameEntry(response.entries[i].id, ra::Widen(response.entries[i].title),

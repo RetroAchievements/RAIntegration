@@ -322,13 +322,25 @@ static ra::services::Http::Response HandleOfflineRequest(const ra::services::Htt
 void AchievementRuntime::AsyncServerCall(const rc_api_request_t* pRequest,
                                          AsyncServerCallCallback fCallback, void* pCallbackData) const
 {
-    auto* pCallbackPair = new std::pair<AsyncServerCallCallback, void*>(fCallback, pCallbackData);
+    struct callback_pair_t
+    {
+        AsyncServerCallCallback fCallback;
+        void* pCallbackData;
+    };
+
+    auto* pCallbackPair = static_cast<callback_pair_t*>(malloc(sizeof(callback_pair_t)));
+    Expects(pCallbackPair != nullptr);
+    pCallbackPair->fCallback = fCallback;
+    pCallbackPair->pCallbackData = pCallbackData;
+
     ServerCallAsync(pRequest,
         [](const rc_api_server_response_t* server_response, void* callback_data)
         {
-            auto* pCallbackPair = reinterpret_cast<std::pair<AsyncServerCallCallback, void*>*>(callback_data);
-            pCallbackPair->first(*server_response, pCallbackPair->second);
-            delete pCallbackPair;
+            Expects(server_response != nullptr);
+            Expects(callback_data != nullptr);
+            auto* pCallbackPair = static_cast<callback_pair_t*>(callback_data);
+            pCallbackPair->fCallback(*server_response, pCallbackPair->pCallbackData);
+            free(pCallbackPair);
         },
         pCallbackPair, nullptr);
 }

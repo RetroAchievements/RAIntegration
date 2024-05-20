@@ -476,7 +476,7 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         if (!IsAddressType(nNewType))
         {
             SetValue(HasSourceSizeProperty, false);
-            SetSourceSize(nNewType == TriggerOperandType::Value ? MemSize::ThirtyTwoBit : MemSize::Float);
+            SetSourceSize(nNewType == TriggerOperandType::Value || IsVariableType(nNewType) ? MemSize::ThirtyTwoBit : MemSize::Float);
         }
         else if (!IsAddressType(nOldType))
         {
@@ -493,7 +493,7 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         if (!IsAddressType(nNewType))
         {
             SetValue(HasTargetSizeProperty, false);
-            SetTargetSize(nNewType == TriggerOperandType::Value ? MemSize::ThirtyTwoBit : MemSize::Float);
+            SetTargetSize(nNewType == TriggerOperandType::Value || IsVariableType(nNewType) ? MemSize::ThirtyTwoBit : MemSize::Float);
         }
         else if (!IsAddressType(ra::itoe<TriggerOperandType>(args.tOldValue)))
         {

@@ -137,6 +137,11 @@ public:
         Assert::IsTrue(vmCondition.HasSourceSize());
         Assert::AreEqual(MemSize::EightBit, vmCondition.GetSourceSize());
 
+        vmCondition.SetSourceType(TriggerOperandType::Recall);
+        Assert::AreEqual(TriggerOperandType::Recall, vmCondition.GetSourceType());
+        Assert::IsFalse(vmCondition.HasSourceSize());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetSourceSize());
+
         vmCondition.SetSourceType(TriggerOperandType::Value);
         Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetSourceType());
         Assert::IsFalse(vmCondition.HasSourceSize());
@@ -233,6 +238,11 @@ public:
         Assert::IsTrue(vmCondition.HasTarget());
         Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
+        vmCondition.SetTargetType(TriggerOperandType::Recall);
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsTrue(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
+
         vmCondition.SetOperator(TriggerOperatorType::None);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
@@ -284,6 +294,10 @@ public:
         vmCondition.SetTargetType(TriggerOperandType::Inverted);
         Assert::AreEqual(TriggerOperandType::Inverted, vmCondition.GetTargetType());
         Assert::IsTrue(vmCondition.HasTargetSize());
+
+        vmCondition.SetTargetType(TriggerOperandType::Recall);
+        Assert::AreEqual(TriggerOperandType::Recall, vmCondition.GetTargetType());
+        Assert::IsFalse(vmCondition.HasTargetSize());
 
         vmCondition.SetTargetType(TriggerOperandType::Value);
         Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetTargetType());
@@ -486,6 +500,7 @@ public:
         ParseAndRegenerate("0xH1234=p0xH1234"); // prior
         ParseAndRegenerate("0xH1234=b0xH1234"); // bcd
         ParseAndRegenerate("0xH1234=~0xH1234"); // inverted
+        ParseAndRegenerate("{recall}={recall}"); // inverted
         ParseAndRegenerate("0xH1234=1234"); // value
         ParseAndRegenerate("0xH1234=f12.34"); // float
     }
@@ -515,6 +530,7 @@ public:
         ParseAndRegenerate("C:0xH1234=5"); // add hits
         ParseAndRegenerate("D:0xH1234=5"); // sub hits
         ParseAndRegenerate("N:0xH1234=5"); // and next
+        ParseAndRegenerate("K:0xH1234"); // remember
         ParseAndRegenerate("O:0xH1234=5"); // or next
         ParseAndRegenerate("M:0xH1234=5"); // measured
         ParseAndRegenerate("Q:0xH1234=5"); // measured if

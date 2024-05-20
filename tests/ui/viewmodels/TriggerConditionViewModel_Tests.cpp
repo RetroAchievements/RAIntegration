@@ -356,6 +356,11 @@ public:
         Assert::AreEqual(TriggerConditionType::Trigger, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
+
+        vmCondition.SetType(TriggerConditionType::Remember);
+        Assert::AreEqual(TriggerConditionType::Remember, vmCondition.GetType());
+        Assert::IsFalse(vmCondition.HasHits());
+        Assert::IsFalse(vmCondition.CanEditHits());
     }
 
     TEST_METHOD(TestHasHitsForValue)
@@ -442,6 +447,11 @@ public:
         vmCondition.SetType(TriggerConditionType::Standard);
         sSerialized = vmCondition.Serialize();
         Assert::AreEqual(std::string("0xH1234=0xH2345.10."), sSerialized);
+
+        // changing to a type that does not support hits should remove the hit count (and comparison)
+        vmCondition.SetType(TriggerConditionType::Remember);
+        sSerialized = vmCondition.Serialize();
+        Assert::AreEqual(std::string("K:0xH1234"), sSerialized);
     }
 
     TEST_METHOD(TestSizes)
@@ -983,6 +993,9 @@ public:
 
         condition.SetType(TriggerConditionType::Trigger);
         Assert::IsFalse(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::Remember);
+        Assert::IsTrue(condition.IsModifying());
     }
 
     TEST_METHOD(TestSwitchBetweenModifyingAndNonModifying)
@@ -1020,6 +1033,22 @@ public:
         condition.SetType(TriggerConditionType::Standard);
         Assert::AreEqual(TriggerOperatorType::Equals, condition.GetOperator());
         Assert::AreEqual(std::string("0xH1234=8"), condition.Serialize());
+        Assert::IsFalse(condition.IsModifying());
+
+        // change to modifying switches operator to None. the 8 is unmodified, but ignored
+        condition.SetType(TriggerConditionType::Remember);
+        Assert::AreEqual(TriggerOperatorType::None, condition.GetOperator());
+        Assert::AreEqual(std::string("K:0xH1234"), condition.Serialize());
+        Assert::IsTrue(condition.IsModifying());
+
+        // changing operator "restores" the 8
+        condition.SetOperator(TriggerOperatorType::Multiply);
+        Assert::AreEqual(std::string("K:0xH1234*8"), condition.Serialize());
+
+        // change to non-modifying switches operator to Equals
+        condition.SetType(TriggerConditionType::ResetIf);
+        Assert::AreEqual(TriggerOperatorType::Equals, condition.GetOperator());
+        Assert::AreEqual(std::string("R:0xH1234=8"), condition.Serialize());
         Assert::IsFalse(condition.IsModifying());
     }
 

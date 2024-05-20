@@ -63,6 +63,7 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
             case TriggerConditionType::SubSource:   sBuffer.push_back('B'); break;
             case TriggerConditionType::AddHits:     sBuffer.push_back('C'); break;
             case TriggerConditionType::SubHits:     sBuffer.push_back('D'); break;
+            case TriggerConditionType::Remember:    sBuffer.push_back('K'); break;
             case TriggerConditionType::AndNext:     sBuffer.push_back('N'); break;
             case TriggerConditionType::OrNext:      sBuffer.push_back('O'); break;
             case TriggerConditionType::MeasuredIf:  sBuffer.push_back('Q'); break;
@@ -218,6 +219,15 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
         case TriggerOperandType::Inverted:
             sBuffer.push_back('~');
             break;
+
+        case TriggerOperandType::Recall:
+        {
+            std::string recall = "{recall}";
+            for (int i = 0; i < recall.length(); i++) {
+                sBuffer.push_back(recall[i]);
+            }
+            return;
+        }
 
         default:
             assert(!"Unknown operand type");
@@ -415,6 +425,12 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
             break;
         }
 
+        case TriggerOperandType::Recall:
+            SetValue(pSizeProperty, ra::etoi(MemSize::ThirtyTwoBit));
+            pValue.type = RC_VALUE_TYPE_UNSIGNED;
+            pValue.value.u32 = 1;
+            break;
+
         default:
             Expects(!"Unknown operand type");
             break;
@@ -600,6 +616,9 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
         if (nType == TriggerOperandType::Float)
             return L"";
 
+        if (nType == TriggerOperandType::Recall)
+            return L"";
+
         if (IsIndirect())
         {
             ra::ByteAddress nPointerAddress = 0;
@@ -618,6 +637,9 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
             return GetValueTooltip(GetTargetAddress());
 
         if (nType == TriggerOperandType::Float)
+            return L"";
+
+        if (nType == TriggerOperandType::Recall)
             return L"";
 
         if (IsIndirect())
@@ -838,6 +860,7 @@ bool TriggerConditionViewModel::IsModifying(TriggerConditionType nType) noexcept
         case TriggerConditionType::AddAddress:
         case TriggerConditionType::AddSource:
         case TriggerConditionType::SubSource:
+        case TriggerConditionType::Remember:
             return true;
 
         default:
@@ -851,10 +874,22 @@ bool TriggerConditionViewModel::IsAddressType(TriggerOperandType nType) noexcept
     {
         case TriggerOperandType::Value:
         case TriggerOperandType::Float:
+        case TriggerOperandType::Recall:
             return false;
 
         default:
             return true;
+    }
+}
+
+bool TriggerConditionViewModel::IsVariableType(TriggerOperandType nType) noexcept
+{
+    switch (nType)
+    {
+        case TriggerOperandType::Recall:
+            return true;
+        default:
+            return false;
     }
 }
 

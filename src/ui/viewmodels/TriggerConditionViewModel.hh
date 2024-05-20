@@ -24,6 +24,7 @@ enum class TriggerConditionType : uint8_t
     SubSource = RC_CONDITION_SUB_SOURCE,
     AddHits = RC_CONDITION_ADD_HITS,
     SubHits = RC_CONDITION_SUB_HITS,
+    Remember = RC_CONDITION_REMEMBER,
     AndNext = RC_CONDITION_AND_NEXT,
     Measured = RC_CONDITION_MEASURED,
     AddAddress = RC_CONDITION_ADD_ADDRESS,
@@ -41,7 +42,8 @@ enum class TriggerOperandType : uint8_t
     Prior = RC_OPERAND_PRIOR,           // the last differing value at this address.
     BCD = RC_OPERAND_BCD,               // Address, but decoded from binary-coded-decimal
     Float = RC_OPERAND_FP,              // a 32-bit floating point value
-    Inverted = RC_OPERAND_INVERTED      // the bitwise compliment of the current value at the address
+    Inverted = RC_OPERAND_INVERTED,     // the bitwise compliment of the current value at the address
+    Recall = RC_OPERAND_RECALL          // the last value stored by RC_CONDITION_REMEMBER 
 };
 
 enum class TriggerOperatorType : uint8_t
@@ -163,6 +165,7 @@ private:
 
     static bool IsModifying(TriggerConditionType nType) noexcept;
     static bool IsAddressType(TriggerOperandType nType) noexcept;
+    static bool IsVariableType(TriggerOperandType nType) noexcept;
     void UpdateHasHits();
     bool IsForValue() const noexcept;
 

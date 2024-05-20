@@ -159,6 +159,12 @@ public:
                 return true;
             }
 
+            case ra::ui::viewmodels::TriggerOperandType::Recall:
+            {
+                vmItems.SetItemValue(nIndex, *m_pBoundProperty, L"");
+                return true;
+            }
+
             case ra::ui::viewmodels::TriggerOperandType::Value:
             {
                 const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -252,7 +258,8 @@ protected:
     {
         const auto nOperandType = ra::itoe<ra::ui::viewmodels::TriggerOperandType>(vmItems.GetItemValue(nIndex, *m_pTypeProperty));
         return (nOperandType != ra::ui::viewmodels::TriggerOperandType::Value &&
-            nOperandType != ra::ui::viewmodels::TriggerOperandType::Float);
+            nOperandType != ra::ui::viewmodels::TriggerOperandType::Float &&
+            nOperandType !=ra::ui::viewmodels::TriggerOperandType::Recall);
     }
 
     const IntModelProperty* m_pTypeProperty = nullptr;

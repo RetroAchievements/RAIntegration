@@ -34,8 +34,10 @@ const IntModelProperty TriggerConditionViewModel::TotalHitsProperty("TriggerCond
 const BoolModelProperty TriggerConditionViewModel::IsSelectedProperty("TriggerConditionViewModel", "IsSelected", false);
 const BoolModelProperty TriggerConditionViewModel::IsIndirectProperty("TriggerConditionViewModel", "IsIndirect", false);
 const BoolModelProperty TriggerConditionViewModel::HasSourceSizeProperty("TriggerConditionViewModel", "HasSourceSize", true);
+const BoolModelProperty TriggerConditionViewModel::HasSourceValueProperty("TriggerConditionViewModel", "HasSourceValue", true);
 const BoolModelProperty TriggerConditionViewModel::HasTargetProperty("TriggerConditionViewModel", "HasTarget", true);
 const BoolModelProperty TriggerConditionViewModel::HasTargetSizeProperty("TriggerConditionViewModel", "HasTargetSize", false);
+const BoolModelProperty TriggerConditionViewModel::HasTargetValueProperty("TriggerConditionViewModel", "HasTargetValue", true);
 const BoolModelProperty TriggerConditionViewModel::HasHitsProperty("TriggerConditionViewModel", "HasHits", true);
 const BoolModelProperty TriggerConditionViewModel::CanEditHitsProperty("TriggerConditionViewModel", "CanEditHits", true);
 const IntModelProperty TriggerConditionViewModel::RowColorProperty("TriggerConditionViewModel", "RowColor", 0);
@@ -483,6 +485,8 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
             SetSourceSize(GetTargetSize());
             SetValue(HasSourceSizeProperty, true);
         }
+
+        SetValue(HasSourceValueProperty, IsVariableType(nNewType) ? false : true);
     }
     else if (args.Property == TargetTypeProperty)
     {
@@ -500,6 +504,8 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
             SetTargetSize(GetSourceSize());
             SetValue(HasTargetSizeProperty, GetValue(HasTargetProperty));
         }
+
+        SetValue(HasTargetValueProperty, IsVariableType(nNewType) ? false : true);
     }
     else if (args.Property == OperatorProperty)
     {

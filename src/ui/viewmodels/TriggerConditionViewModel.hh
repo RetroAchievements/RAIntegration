@@ -82,6 +82,7 @@ public:
     MemSize GetSourceSize() const { return ra::itoe<MemSize>(GetValue(SourceSizeProperty)); }
     void SetSourceSize(MemSize nValue) { SetValue(SourceSizeProperty, ra::etoi(nValue)); }
 
+    static const BoolModelProperty HasSourceValueProperty;
     static const StringModelProperty SourceValueProperty;
     const std::wstring& GetSourceValue() const { return GetValue(SourceValueProperty); }
     void SetSourceValue(const std::wstring& sValue) { SetValue(SourceValueProperty, sValue); }
@@ -101,6 +102,7 @@ public:
     MemSize GetTargetSize() const { return ra::itoe<MemSize>(GetValue(TargetSizeProperty)); }
     void SetTargetSize(MemSize nValue) { SetValue(TargetSizeProperty, ra::etoi(nValue)); }
 
+    static const BoolModelProperty HasTargetValueProperty;
     static const StringModelProperty TargetValueProperty;
     const std::wstring& GetTargetValue() const { return GetValue(TargetValueProperty); }
     void SetTargetValue(const std::wstring& sValue) { SetValue(TargetValueProperty, sValue); }

@@ -266,6 +266,53 @@ protected:
     unsigned int m_nMaximum = 0xFFFFFFFF;
 };
 
+class SourceValueColumnBinding : public ValueColumnBinding
+{
+public:
+    SourceValueColumnBinding(const StringModelProperty& pBoundProperty, const IntModelProperty& pTypeProperty) noexcept
+        : ValueColumnBinding(pBoundProperty, pTypeProperty)
+    {
+    }
+
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        if (IsHidden(vmItems, nIndex))
+            return L"";
+
+        return ValueColumnBinding::GetText(vmItems, nIndex);
+    }
+
+    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const override
+    {
+        if (pProperty == TriggerConditionViewModel::HasTargetProperty)
+            return true;
+
+        return GridColumnBinding::DependsOn(pProperty);
+    }
+
+    std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        if (IsHidden(vmItems, nIndex))
+            return L"";
+
+        return ValueColumnBinding::GetTooltip(vmItems, nIndex);
+    }
+
+    bool HandleRightClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override
+    {
+        if (IsHidden(vmItems, nIndex))
+            return false;
+
+        return ValueColumnBinding::HandleRightClick(vmItems, nIndex);
+    }
+
+protected:
+    bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
+    {
+        return !vmItems.GetItemValue(nIndex, TriggerConditionViewModel::HasSourceValueProperty);
+    }
+};
+
 class TargetValueColumnBinding : public ValueColumnBinding
 {
 public:
@@ -309,7 +356,7 @@ public:
 protected:
     bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
     {
-        return !vmItems.GetItemValue(nIndex, TriggerConditionViewModel::HasTargetProperty);
+        return !vmItems.GetItemValue(nIndex, TriggerConditionViewModel::HasTargetProperty) || !vmItems.GetItemValue(nIndex, TriggerConditionViewModel::HasTargetValueProperty);
     }
 };
 
@@ -851,7 +898,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     pSourceSizeColumn->SetReadOnly(false);
     m_bindConditions.BindColumn(3, std::move(pSourceSizeColumn));
 
-    auto pSourceValueColumn = std::make_unique<ValueColumnBinding>(
+    auto pSourceValueColumn = std::make_unique<SourceValueColumnBinding>(
         TriggerConditionViewModel::SourceValueProperty, TriggerConditionViewModel::SourceTypeProperty);
     pSourceValueColumn->SetHeader(L"Memory");
     pSourceValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_VALUE);

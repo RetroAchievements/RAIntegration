@@ -405,6 +405,21 @@ void OverlayManager::ClearPopups()
     RequestRender();
 }
 
+void OverlayManager::ClearLeaderboardPopups()
+{
+    {
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
+
+        for (auto& pScoreboard : m_vScoreboards)
+            pScoreboard.SetDestroyPending();
+
+        for (auto& pTracker : m_vScoreTrackers)
+            pTracker->SetDestroyPending();
+    }
+
+    RequestRender();
+}
+
 ra::ui::Position OverlayManager::GetRenderLocation(const ra::ui::viewmodels::PopupViewModelBase& vmPopup,
     int nX, int nY, const ra::ui::drawing::ISurface& pSurface, const PopupLocations& pPopupLocations)
 {

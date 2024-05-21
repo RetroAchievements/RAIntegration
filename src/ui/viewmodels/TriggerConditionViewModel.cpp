@@ -505,7 +505,7 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
             SetValue(HasTargetSizeProperty, GetValue(HasTargetProperty));
         }
 
-        SetValue(HasTargetValueProperty, IsParameterlessType(nNewType) ? false : true);
+        SetValue(HasTargetValueProperty, IsParameterlessType(nNewType) || !GetValue(HasTargetProperty) ? false : true);
     }
     else if (args.Property == OperatorProperty)
     {

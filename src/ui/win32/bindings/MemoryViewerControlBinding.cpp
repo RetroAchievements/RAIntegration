@@ -333,7 +333,7 @@ bool MemoryViewerControlBinding::OnPaste(bool bShiftHeld)
     auto nAddress = m_pViewModel.GetAddress();
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
-    const auto nBytesForSize = ra::data::MemSizeBytes(m_pViewModel.GetSize());
+    const size_t nBytesForSize = ra::data::MemSizeBytes(m_pViewModel.GetSize());
     std::wstring sError;
 
     if (sClipboardText.empty())
@@ -356,7 +356,7 @@ bool MemoryViewerControlBinding::OnPaste(bool bShiftHeld)
         }
 
         pEmulatorContext.WriteMemory(nAddress, m_pViewModel.GetSize(), nValue);
-        nAddress += nBytesForSize;
+        nAddress += static_cast<ra::ByteAddress>(nBytesForSize);
 
         // Single mode writes only the first value else multi mode (shift) writes every values
         if (!bShiftHeld)

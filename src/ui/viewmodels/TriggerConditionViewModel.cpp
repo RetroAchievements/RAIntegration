@@ -478,7 +478,7 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         if (!IsAddressType(nNewType))
         {
             SetValue(HasSourceSizeProperty, false);
-            SetSourceSize(nNewType == TriggerOperandType::Value || IsVariableType(nNewType) ? MemSize::ThirtyTwoBit : MemSize::Float);
+            SetSourceSize(nNewType == TriggerOperandType::Value || IsParameterlessType(nNewType) ? MemSize::ThirtyTwoBit : MemSize::Float);
         }
         else if (!IsAddressType(nOldType))
         {
@@ -486,7 +486,7 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
             SetValue(HasSourceSizeProperty, true);
         }
 
-        SetValue(HasSourceValueProperty, IsVariableType(nNewType) ? false : true);
+        SetValue(HasSourceValueProperty, IsParameterlessType(nNewType) ? false : true);
     }
     else if (args.Property == TargetTypeProperty)
     {
@@ -497,7 +497,7 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         if (!IsAddressType(nNewType))
         {
             SetValue(HasTargetSizeProperty, false);
-            SetTargetSize(nNewType == TriggerOperandType::Value || IsVariableType(nNewType) ? MemSize::ThirtyTwoBit : MemSize::Float);
+            SetTargetSize(nNewType == TriggerOperandType::Value || IsParameterlessType(nNewType) ? MemSize::ThirtyTwoBit : MemSize::Float);
         }
         else if (!IsAddressType(ra::itoe<TriggerOperandType>(args.tOldValue)))
         {
@@ -505,7 +505,7 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
             SetValue(HasTargetSizeProperty, GetValue(HasTargetProperty));
         }
 
-        SetValue(HasTargetValueProperty, IsVariableType(nNewType) ? false : true);
+        SetValue(HasTargetValueProperty, IsParameterlessType(nNewType) ? false : true);
     }
     else if (args.Property == OperatorProperty)
     {
@@ -888,7 +888,8 @@ bool TriggerConditionViewModel::IsAddressType(TriggerOperandType nType) noexcept
     }
 }
 
-bool TriggerConditionViewModel::IsVariableType(TriggerOperandType nType) noexcept
+/* Has no address or value */
+bool TriggerConditionViewModel::IsParameterlessType(TriggerOperandType nType) noexcept
 {
     switch (nType)
     {

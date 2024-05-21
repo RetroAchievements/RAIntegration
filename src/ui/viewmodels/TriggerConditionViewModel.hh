@@ -167,7 +167,7 @@ private:
 
     static bool IsModifying(TriggerConditionType nType) noexcept;
     static bool IsAddressType(TriggerOperandType nType) noexcept;
-    static bool IsVariableType(TriggerOperandType nType) noexcept;
+    static bool IsParameterlessType(TriggerOperandType nType) noexcept;
     void UpdateHasHits();
     bool IsForValue() const noexcept;
 

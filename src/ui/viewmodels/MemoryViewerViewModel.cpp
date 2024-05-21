@@ -658,7 +658,7 @@ void MemoryViewerViewModel::RetreatCursorPage()
     }
 }
 
-bool MemoryViewerViewModel::IncreaseCurrentValue(int nModifier)
+bool MemoryViewerViewModel::IncreaseCurrentValue(uint32_t nModifier)
 {
     if (m_bReadOnly)
         return false;
@@ -670,7 +670,7 @@ bool MemoryViewerViewModel::IncreaseCurrentValue(int nModifier)
 
     if (nMem >= nMaxValue)
         return false;
-    if (nMaxValue - nMem < nModifier)
+    if ((nMaxValue - nMem) < nModifier)
         nModifier = (nMaxValue - nMem);
     nMem += nModifier;
 
@@ -678,7 +678,7 @@ bool MemoryViewerViewModel::IncreaseCurrentValue(int nModifier)
     return true;
 }
 
-bool MemoryViewerViewModel::DecreaseCurrentValue(int nModifier)
+bool MemoryViewerViewModel::DecreaseCurrentValue(uint32_t nModifier)
 {
     if (m_bReadOnly)
         return false;

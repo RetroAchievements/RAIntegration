@@ -105,6 +105,10 @@ std::wstring ToString<ra::ui::viewmodels::TriggerOperatorType>(
             return L"BitwiseAnd";
         case ra::ui::viewmodels::TriggerOperatorType::Modulus:
             return L"Modulus";
+        case ra::ui::viewmodels::TriggerOperatorType::Add:
+            return L"Add";
+        case ra::ui::viewmodels::TriggerOperatorType::Subtract:
+            return L"Subtract";
         default:
             return std::to_wstring(static_cast<int>(nConditionType));
     }

@@ -588,7 +588,7 @@ public:
         ParseAndRegenerate("0xH1234=p0xH1234"); // prior
         ParseAndRegenerate("0xH1234=b0xH1234"); // bcd
         ParseAndRegenerate("0xH1234=~0xH1234"); // inverted
-        ParseAndRegenerate("{recall}={recall}"); // inverted
+        ParseAndRegenerate("{recall}={recall}"); // recall
         ParseAndRegenerate("0xH1234=1234"); // value
         ParseAndRegenerate("0xH1234=f12.34"); // float
     }

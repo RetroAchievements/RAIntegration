@@ -319,8 +319,34 @@ static ra::services::Http::Response HandleOfflineRequest(const ra::services::Htt
         ra::StringPrintf("{\"Success\":false,\"Error\":\"No offline implementation for %s\"}", sApi));
 }
 
+void AchievementRuntime::AsyncServerCall(const rc_api_request_t* pRequest,
+                                         AsyncServerCallCallback fCallback, void* pCallbackData) const
+{
+    struct callback_pair_t
+    {
+        AsyncServerCallCallback fCallback;
+        void* pCallbackData;
+    };
+
+    auto* pCallbackPair = static_cast<callback_pair_t*>(malloc(sizeof(callback_pair_t)));
+    Expects(pCallbackPair != nullptr);
+    pCallbackPair->fCallback = fCallback;
+    pCallbackPair->pCallbackData = pCallbackData;
+
+    ServerCallAsync(pRequest,
+        [](const rc_api_server_response_t* server_response, void* callback_data)
+        {
+            Expects(server_response != nullptr);
+            Expects(callback_data != nullptr);
+            auto* pCallbackPair = static_cast<callback_pair_t*>(callback_data);
+            pCallbackPair->fCallback(*server_response, pCallbackPair->pCallbackData);
+            free(pCallbackPair);
+        },
+        pCallbackPair, nullptr);
+}
+
 void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,
-                                     void* pCallbackData, rc_client_t*)
+                                         void* pCallbackData, rc_client_t*)
 {
     ra::services::Http::Request httpRequest(pRequest->url);
     httpRequest.SetPostData(pRequest->post_data);

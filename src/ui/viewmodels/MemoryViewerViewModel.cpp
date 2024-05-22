@@ -663,10 +663,10 @@ bool MemoryViewerViewModel::IncreaseCurrentValue(uint32_t nModifier)
     if (m_bReadOnly)
         return false;
 
-    auto nAddress = GetAddress();
+    const auto nAddress = GetAddress();
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     auto nMem = pEmulatorContext.ReadMemory(GetAddress(), GetSize());
-    auto nMaxValue = ra::data::MemSizeMax(GetSize());
+    auto const nMaxValue = ra::data::MemSizeMax(GetSize());
 
     if (nMem >= nMaxValue)
         return false;
@@ -683,7 +683,7 @@ bool MemoryViewerViewModel::DecreaseCurrentValue(uint32_t nModifier)
     if (m_bReadOnly)
         return false;
 
-    auto nAddress = GetAddress();
+    auto const nAddress = GetAddress();
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     auto nMem = pEmulatorContext.ReadMemory(GetAddress(), GetSize());
 

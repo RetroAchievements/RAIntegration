@@ -35,13 +35,13 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::SubSource), L"Sub Source");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AddHits), L"Add Hits");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::SubHits), L"Sub Hits");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Remember), L"Remember");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AddAddress), L"Add Address");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AndNext), L"And Next");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::OrNext), L"Or Next");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Measured), L"Measured");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::MeasuredIf), L"Measured If");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Trigger), L"Trigger");
+    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Remember), L"Remember");
 
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Address), L"Mem");
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Value), L"Value");

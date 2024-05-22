@@ -138,6 +138,14 @@ public:
 
     void SetMaximum(unsigned int nValue) noexcept { m_nMaximum = nValue; }
 
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        if (IsHidden(vmItems, nIndex))
+            return L"";
+
+        return ValueColumnBinding::GetText(vmItems, nIndex);
+    }
+
     bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
     {
         const auto nOperandType = ra::itoe<ra::ui::viewmodels::TriggerOperandType>(vmItems.GetItemValue(nIndex, *m_pTypeProperty));
@@ -215,6 +223,9 @@ public:
 
     std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
     {
+        if (IsHidden(vmItems, nIndex))
+            return L"";
+
         const auto* vmConditions = dynamic_cast<const ViewModelCollection<TriggerConditionViewModel>*>(&vmItems);
         Expects(vmConditions != nullptr);
         const auto* vmCondition = vmConditions->GetItemAt(nIndex);
@@ -226,6 +237,9 @@ public:
 
     bool HandleRightClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override
     {
+        if (IsHidden(vmItems, nIndex))
+            return false;
+
         if (IsAddressType(vmItems, nIndex))
         {
             unsigned int nAddress;
@@ -262,6 +276,12 @@ protected:
             nOperandType !=ra::ui::viewmodels::TriggerOperandType::Recall);
     }
 
+protected:
+    virtual bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
+    {
+        return false;
+    }
+
     const IntModelProperty* m_pTypeProperty = nullptr;
     unsigned int m_nMaximum = 0xFFFFFFFF;
 };
@@ -274,43 +294,33 @@ public:
     {
     }
 
-    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
-    {
-        if (IsHidden(vmItems, nIndex))
-            return L"";
-
-        return ValueColumnBinding::GetText(vmItems, nIndex);
-    }
-
     bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const override
     {
-        if (pProperty == TriggerConditionViewModel::HasTargetProperty)
+        if (pProperty == TriggerConditionViewModel::HasSourceValueProperty)
             return true;
 
         return GridColumnBinding::DependsOn(pProperty);
     }
 
-    std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
     {
-        if (IsHidden(vmItems, nIndex))
-            return L"";
+        auto* pGridBinding = static_cast<ra::ui::win32::bindings::GridBinding*>(pInfo.pGridBinding);
+        Expects(pGridBinding != nullptr);
+        if (!pGridBinding->GetItems().GetItemValue(pInfo.nItemIndex, TriggerConditionViewModel::HasSourceValueProperty))
+            return nullptr;
 
-        return ValueColumnBinding::GetTooltip(vmItems, nIndex);
-    }
-
-    bool HandleRightClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override
-    {
-        if (IsHidden(vmItems, nIndex))
-            return false;
-
-        return ValueColumnBinding::HandleRightClick(vmItems, nIndex);
+        m_nEditingItemIndex = pInfo.nItemIndex;
+        return ValueColumnBinding::CreateInPlaceEditor(hParent, pInfo);
     }
 
 protected:
-    bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
+    bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
     {
         return !vmItems.GetItemValue(nIndex, TriggerConditionViewModel::HasSourceValueProperty);
     }
+
+private:
+    mutable gsl::index m_nEditingItemIndex = -1;
 };
 
 class TargetValueColumnBinding : public ValueColumnBinding
@@ -321,43 +331,37 @@ public:
     {
     }
 
-    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
-    {
-        if (IsHidden(vmItems, nIndex))
-            return L"";
-
-        return ValueColumnBinding::GetText(vmItems, nIndex);
-    }
-
     bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const override
     {
         if (pProperty == TriggerConditionViewModel::HasTargetProperty)
+            return true;
+        if (pProperty == TriggerConditionViewModel::HasTargetValueProperty)
             return true;
 
         return GridColumnBinding::DependsOn(pProperty);
     }
 
-    std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
     {
-        if (IsHidden(vmItems, nIndex))
-            return L"";
+        auto* pGridBinding = static_cast<ra::ui::win32::bindings::GridBinding*>(pInfo.pGridBinding);
+        Expects(pGridBinding != nullptr);
+        if (!pGridBinding->GetItems().GetItemValue(pInfo.nItemIndex, TriggerConditionViewModel::HasTargetProperty))
+            return nullptr;
+        if (!pGridBinding->GetItems().GetItemValue(pInfo.nItemIndex, TriggerConditionViewModel::HasTargetValueProperty))
+            return nullptr;
 
-        return ValueColumnBinding::GetTooltip(vmItems, nIndex);
-    }
-
-    bool HandleRightClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override
-    {
-        if (IsHidden(vmItems, nIndex))
-            return false;
-
-        return ValueColumnBinding::HandleRightClick(vmItems, nIndex);
+        m_nEditingItemIndex = pInfo.nItemIndex;
+        return ValueColumnBinding::CreateInPlaceEditor(hParent, pInfo);
     }
 
 protected:
-    bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
+    bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
     {
         return !vmItems.GetItemValue(nIndex, TriggerConditionViewModel::HasTargetProperty) || !vmItems.GetItemValue(nIndex, TriggerConditionViewModel::HasTargetValueProperty);
     }
+
+private:
+    mutable gsl::index m_nEditingItemIndex = -1;
 };
 
 class HitsColumnBinding : public ra::ui::win32::bindings::GridNumberColumnBinding

@@ -224,10 +224,7 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
 
         case TriggerOperandType::Recall:
         {
-            std::string recall = "{recall}";
-            for (size_t i = 0; i < recall.length(); i++) {
-                sBuffer.push_back(recall.at(i));
-            }
+            sBuffer.append("{recall}");
             return;
         }
 

@@ -337,7 +337,6 @@ static std::wstring FormatTypedValue(rc_typed_value_t& pValue, TriggerOperandTyp
         default:
             rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
             return ra::Widen(ra::ByteAddressToString(pValue.value.u32));
-            break;
     }
 }
 

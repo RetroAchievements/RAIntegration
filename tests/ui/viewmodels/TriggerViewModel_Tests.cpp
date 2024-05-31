@@ -218,7 +218,7 @@ public:
         Assert::AreEqual((int)MemSize::MBF32LE, vmTrigger.OperandSizes().GetItemAt(23)->GetId());
         Assert::AreEqual(std::wstring(L"MBF32 LE"), vmTrigger.OperandSizes().GetItemAt(23)->GetLabel());
 
-        Assert::AreEqual({ 12U }, vmTrigger.OperatorTypes().Count());
+        Assert::AreEqual({ 14U }, vmTrigger.OperatorTypes().Count());
         Assert::AreEqual((int)TriggerOperatorType::Equals, vmTrigger.OperatorTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"="), vmTrigger.OperatorTypes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)TriggerOperatorType::LessThan, vmTrigger.OperatorTypes().GetItemAt(1)->GetId());
@@ -239,10 +239,14 @@ public:
         Assert::AreEqual(std::wstring(L"/"), vmTrigger.OperatorTypes().GetItemAt(8)->GetLabel());
         Assert::AreEqual((int)TriggerOperatorType::Modulus, vmTrigger.OperatorTypes().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"%"), vmTrigger.OperatorTypes().GetItemAt(9)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::BitwiseAnd, vmTrigger.OperatorTypes().GetItemAt(10)->GetId());
-        Assert::AreEqual(std::wstring(L"&"), vmTrigger.OperatorTypes().GetItemAt(10)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::BitwiseXor, vmTrigger.OperatorTypes().GetItemAt(11)->GetId());
-        Assert::AreEqual(std::wstring(L"^"), vmTrigger.OperatorTypes().GetItemAt(11)->GetLabel());
+        Assert::AreEqual((int)TriggerOperatorType::Add, vmTrigger.OperatorTypes().GetItemAt(10)->GetId());
+        Assert::AreEqual(std::wstring(L"+"), vmTrigger.OperatorTypes().GetItemAt(10)->GetLabel());
+        Assert::AreEqual((int)TriggerOperatorType::Subtract, vmTrigger.OperatorTypes().GetItemAt(11)->GetId());
+        Assert::AreEqual(std::wstring(L"-"), vmTrigger.OperatorTypes().GetItemAt(11)->GetLabel());
+        Assert::AreEqual((int)TriggerOperatorType::BitwiseAnd, vmTrigger.OperatorTypes().GetItemAt(12)->GetId());
+        Assert::AreEqual(std::wstring(L"&"), vmTrigger.OperatorTypes().GetItemAt(12)->GetLabel());
+        Assert::AreEqual((int)TriggerOperatorType::BitwiseXor, vmTrigger.OperatorTypes().GetItemAt(13)->GetId());
+        Assert::AreEqual(std::wstring(L"^"), vmTrigger.OperatorTypes().GetItemAt(13)->GetLabel());
     }
 
     TEST_METHOD(TestParseAndRegenerateCoreOnly)

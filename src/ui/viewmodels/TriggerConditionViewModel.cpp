@@ -143,6 +143,14 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
                 sBuffer.push_back('%');
                 break;
 
+            case TriggerOperatorType::Add:
+                sBuffer.push_back('+');
+                break;
+
+            case TriggerOperatorType::Subtract:
+                sBuffer.push_back('-');
+                break;
+
             default:
                 assert(!"Unknown comparison");
                 break;
@@ -346,7 +354,6 @@ static std::wstring FormatTypedValue(rc_typed_value_t& pValue, TriggerOperandTyp
         default:
             rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
             return ra::Widen(ra::ByteAddressToString(pValue.value.u32));
-            break;
     }
 }
 
@@ -539,6 +546,8 @@ static constexpr bool IsModifyingOperator(TriggerOperatorType nType)
         case TriggerOperatorType::BitwiseAnd:
         case TriggerOperatorType::BitwiseXor:
         case TriggerOperatorType::Modulus:
+        case TriggerOperatorType::Add:
+        case TriggerOperatorType::Subtract:
             return true;
 
         default:

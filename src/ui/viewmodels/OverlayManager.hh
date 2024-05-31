@@ -289,6 +289,11 @@ public:
     virtual void ClearPopups();
 
     /// <summary>
+    /// Clear leaderboard popups.
+    /// </summary>
+    void ClearLeaderboardPopups();
+
+    /// <summary>
     /// Sets the function to call when there's something to be rendered.
     /// </summary>
     void SetRenderRequestHandler(std::function<void()>&& fHandleRenderRequest)

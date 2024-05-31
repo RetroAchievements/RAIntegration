@@ -63,6 +63,7 @@ protected:
 
 private:
     bool HandleNavigation(UINT nChar);
+    bool HandleShortcut(UINT nChar);
     bool m_bSuppressMemoryViewerInvalidate = false;
 
     ra::ui::viewmodels::MemoryViewerViewModel& m_pViewModel;

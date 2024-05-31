@@ -87,6 +87,8 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Multiply), L"*");
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Divide), L"/");
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Modulus), L"%");
+    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Add), L"+");
+    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Subtract), L"-");
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::BitwiseAnd), L"&");
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::BitwiseXor), L"^");
 }

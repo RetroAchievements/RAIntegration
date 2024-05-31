@@ -24,6 +24,7 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -379,6 +380,7 @@ public:
     TEST_METHOD(TestToggleLeaderboardsEnabled)
     {
         IntegrationMenuViewModelHarness menu;
+        ra::ui::viewmodels::mocks::MockOverlayManager overlayManager;
         menu.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, false);
         bool bMenuRebuilt = false;
         menu.mockEmulatorContext.SetRebuildMenuFunction([&bMenuRebuilt]() { bMenuRebuilt = true;  });
@@ -401,6 +403,7 @@ public:
     TEST_METHOD(TestToggleLeaderboardsDisabled)
     {
         IntegrationMenuViewModelHarness menu;
+        ra::ui::viewmodels::mocks::MockOverlayManager overlayManager;
         menu.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
         bool bMenuRebuilt = false;
         menu.mockEmulatorContext.SetRebuildMenuFunction([&bMenuRebuilt]() { bMenuRebuilt = true;  });

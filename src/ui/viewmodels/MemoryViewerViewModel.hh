@@ -175,6 +175,9 @@ public:
     void AdvanceCursorPage();
     void RetreatCursorPage();
 
+    bool IncreaseCurrentValue(uint32_t nModifier);
+    bool DecreaseCurrentValue(uint32_t nModifier);
+
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 

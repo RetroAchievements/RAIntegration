@@ -245,6 +245,14 @@ public:
         vmCondition.SetOperator(TriggerOperatorType::Modulus);
         Assert::AreEqual(TriggerOperatorType::Modulus, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::Add);
+        Assert::AreEqual(TriggerOperatorType::Add, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::Subtract);
+        Assert::AreEqual(TriggerOperatorType::Subtract, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
     }
 
     TEST_METHOD(TestHasTargetSize)
@@ -604,6 +612,9 @@ public:
         ParseAndRegenerate("A:0xH1234"); // none
         ParseAndRegenerate("A:0xH1234*5"); // multiply
         ParseAndRegenerate("A:0xH1234/5"); // divide
+        ParseAndRegenerate("A:0xH1234%5"); // modulus
+        ParseAndRegenerate("A:0xH1234+5"); // addition
+        ParseAndRegenerate("A:0xH1234-5"); // subtraction
         ParseAndRegenerate("A:0xH1234&5"); // bitwise and
     }
 

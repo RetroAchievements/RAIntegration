@@ -2,6 +2,7 @@
 
 #include "ui\viewmodels\OverlayRecentGamesPageViewModel.hh"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockImageRepository.hh"
@@ -94,20 +95,15 @@ public:
     TEST_METHOD(TestRefreshOneGameDataFetched)
     {
         OverlayRecentGamesPageViewModelHarness gamesPage;
+        ra::services::mocks::MockAchievementRuntime achievementRuntime;
         gamesPage.mockSessions.MockSession(3U, 1234567890U, std::chrono::seconds(5000));
         gamesPage.mockUserContext.Initialize("Username", "APITOKEN");
 
         ra::services::mocks::MockHttpRequester mockHttp([](const ra::services::Http::Request&) {
             return ra::services::Http::Response(ra::services::Http::StatusCode::OK,
-                                                "{\"Success\":true,\"PatchData\":{"
-                                                    "\"ID\":99,"
-                                                    "\"Title\":\"Game Name\","
-                                                    "\"ConsoleID\":5,"
-                                                    "\"ImageIcon\":\"/Images/BADGE.png\","
-                                                    "\"Achievements\":[],"
-                                                    "\"Leaderboards\":[],"
-                                                    "\"RichPresencePatch\":\"\""
-                                                "}}");
+                                                "{\"Success\":true,\"Response\":["
+                                                    "{\"ID\":3,\"Title\":\"Game Name\",\"ImageIcon\":\"/Images/BADGE.png\"}"
+                                                "]}");
         });
 
         gamesPage.Refresh();

@@ -277,10 +277,7 @@ protected:
     }
 
 protected:
-    virtual bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
-    {
-        return false;
-    }
+    virtual bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const = 0;
 
     const IntModelProperty* m_pTypeProperty = nullptr;
     unsigned int m_nMaximum = 0xFFFFFFFF;

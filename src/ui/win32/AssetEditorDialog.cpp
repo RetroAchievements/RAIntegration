@@ -309,7 +309,7 @@ public:
         if (!pGridBinding->GetItems().GetItemValue(pInfo.nItemIndex, TriggerConditionViewModel::HasSourceValueProperty))
             return nullptr;
 
-        return ValueColumnBinding::CreateInPlaceEditor(hParent, pInfo);
+        return GridTextColumnBinding::CreateInPlaceEditor(hParent, pInfo);
     }
 
 protected:

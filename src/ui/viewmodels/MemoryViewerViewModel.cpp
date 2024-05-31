@@ -4,6 +4,7 @@
 
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
+#include "data\context\ConsoleContext.hh"
 
 #include "ui\EditorTheme.hh"
 #include "ui\viewmodels\WindowManager.hh"
@@ -892,6 +893,21 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
 
             m_nNeedsRedraw |= REDRAW_MEMORY;
         }
+    }
+}
+
+void MemoryViewerViewModel::OnShiftClick(int nX, int nY)
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+
+    OnClick(nX, nY);
+
+    ra::ByteAddress nAddress = (pEmulatorContext.ReadMemory(GetAddress(), GetSize()));
+    const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
+    if (nConvertedAddress != 0xFFFFFFFF)
+    {
+        SetAddress(nConvertedAddress);
     }
 }
 

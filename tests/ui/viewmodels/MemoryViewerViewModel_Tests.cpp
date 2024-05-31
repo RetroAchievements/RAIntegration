@@ -7,6 +7,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 #undef GetMessage
@@ -70,6 +71,9 @@ private:
 
         bool IsReadOnly() const noexcept { return m_bReadOnly; }
         void SetReadOnly(bool value) noexcept { m_bReadOnly = value;  }
+
+        bool IsAddressFixed() const noexcept { return m_bAddressFixed; }
+        void SetAddressFixed(bool value) noexcept { m_bAddressFixed = value; }
 
         void InitializeMemory(size_t nSize)
         {
@@ -1918,7 +1922,119 @@ public:
         Assert::IsTrue(viewer.NeedsRedraw());
         viewer.MockRender();
     }
+
+    TEST_METHOD(TestOnShiftClickEightBit)
+    {
+        ra::data::context::mocks::MockConsoleContext mockConsole(PlayStation, L"PlayStation");
+
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(0xFFFF); 
+        
+        Assert::AreEqual(MemSize::EightBit, viewer.GetSize());
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // If fixed address, ignore
+        viewer.mockEmulatorContext.WriteMemoryByte(0U, 0x20);
+        viewer.SetAddressFixed(true);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x0U}, viewer.GetAddress());
+
+        // If not fixed address and Shift click on the first byte containing 0x20 should lead to address 0x20
+        viewer.SetAddressFixed(false);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0x20U }, viewer.GetAddress());
+
+        // Shift click on the second byte containing 0x0 should do nothing
+        viewer.SetAddress(0);
+        viewer.mockEmulatorContext.WriteMemoryByte(1U, 0x0);
+        viewer.OnShiftClick(15 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x1U}, viewer.GetAddress());
+    }
+
+    TEST_METHOD(TestOnShiftClickSixteenBit)
+    {
+        ra::data::context::mocks::MockConsoleContext mockConsole(PlayStation, L"PlayStation");
+
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(0x1FFF); 
+        viewer.SetSize(MemSize::SixteenBit);
+
+        Assert::AreEqual(MemSize::SixteenBit, viewer.GetSize());
+        Assert::AreEqual({0U}, viewer.GetAddress());
+        Assert::AreEqual({0U}, viewer.GetSelectedNibble());
+
+        // If fixed address, ignore
+        viewer.SetAddressFixed(true);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x0U}, viewer.GetAddress());
+
+        // If not fixed address and Shift click on the first word containing 0x20 should lead to address 0x20
+        viewer.SetAddress(0);
+        viewer.SetAddressFixed(false);
+        viewer.mockEmulatorContext.WriteMemory(0U, MemSize::SixteenBit, 0x0020);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x20U}, viewer.GetAddress());
+
+        // Shift click on the first word containing 0x0140 should lead to address 0x0140
+        viewer.SetAddress(0);
+        viewer.mockEmulatorContext.WriteMemory(0U, MemSize::SixteenBit, 0x0140);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x0140U}, viewer.GetAddress());
+
+        // Shift click on the second word containing 0x0 should do nothing
+        viewer.SetAddress(0x4);
+        viewer.mockEmulatorContext.WriteMemory(4U, MemSize::SixteenBit, 0x0);
+        viewer.OnShiftClick(22 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x4U}, viewer.GetAddress());
+    }
+
+    TEST_METHOD(TestOnShiftClickThirtyTwoBit)
+    {
+        ra::data::context::mocks::MockConsoleContext mockConsole(PlayStation, L"Playstation");
+
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(0x1FFF); // PSX full memory
+        viewer.SetSize(MemSize::ThirtyTwoBit);
+
+        Assert::AreEqual(MemSize::ThirtyTwoBit, viewer.GetSize());
+        Assert::AreEqual({0U}, viewer.GetAddress());
+        Assert::AreEqual({0U}, viewer.GetSelectedNibble());
+
+        // If fixed address, ignore
+        viewer.SetAddressFixed(true);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x0U}, viewer.GetAddress());
+
+        // If not fixed address and Shift click on the first dword containing 0x1234 should lead to address 0x1234
+        viewer.SetAddress(0);
+        viewer.SetAddressFixed(false);
+        viewer.mockEmulatorContext.WriteMemory(0U, MemSize::ThirtyTwoBit, 0x1234);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x1234U}, viewer.GetAddress());
+
+        // Shift click on the first dword containing 0x80000123 should lead to address 0x00000123 as PSX has mirrored RAM
+        // on 0x80000000-0x801FFFFF mapped to 0x00000000-0x001FFFFF
+        viewer.SetAddress(0);
+        viewer.mockEmulatorContext.WriteMemory(0U, MemSize::ThirtyTwoBit, 0x80000123);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x00000123}, viewer.GetAddress());
+
+        // Shift click on the second dword containing 0x0 should do nothing
+        viewer.SetAddress(0x8);
+        viewer.mockEmulatorContext.WriteMemory(8U, MemSize::ThirtyTwoBit, 0x0);
+        viewer.OnShiftClick(28 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x8U}, viewer.GetAddress());
+
+        // Shift click on the first dword containing 0x005FFFFF should do nothing as 0x005FFFFF exceed the
+        // last address in the current console context (PSX : 0x1FFFFF) and can't be converted to real address
+        viewer.SetAddress(0);
+        viewer.mockEmulatorContext.WriteMemory(0U, MemSize::ThirtyTwoBit, 0x005FFFFF);
+        viewer.OnShiftClick(10 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({0x0}, viewer.GetAddress());
+    }
 };
+
 
 } // namespace tests
 } // namespace viewmodels

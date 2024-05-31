@@ -139,6 +139,8 @@ bool MemoryViewerControlBinding::OnKeyDown(UINT nChar)
 
     if (!m_pViewModel.IsAddressFixed())
         bHandled = HandleNavigation(nChar);
+    if (!bHandled)
+        bHandled = HandleShortcut(nChar);
 
     m_bSuppressMemoryViewerInvalidate = false;
 
@@ -230,6 +232,36 @@ bool MemoryViewerControlBinding::HandleNavigation(UINT nChar)
                 }
             }
             return true;
+
+        default:
+            return false;
+    }
+}
+
+bool MemoryViewerControlBinding::HandleShortcut(UINT nChar)
+{
+    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
+    const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
+
+    switch (nChar)
+    {
+        // Increment/Decrement value Shortcuts
+        case VK_ADD:
+        case VK_SUBTRACT:
+        {
+            auto nModifier = 1;
+
+            // Increase/decrease by 1 or 2 on the high and lower nibble depending key pressed
+            if (bControlHeld)
+                nModifier *= 2;
+            if (bShiftHeld)
+                nModifier *= 16;
+
+            if (nChar == VK_ADD)
+                return m_pViewModel.IncreaseCurrentValue(nModifier);
+            else
+                return m_pViewModel.DecreaseCurrentValue(nModifier);
+        }
 
         default:
             return false;

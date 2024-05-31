@@ -658,6 +658,45 @@ void MemoryViewerViewModel::RetreatCursorPage()
     }
 }
 
+bool MemoryViewerViewModel::IncreaseCurrentValue(uint32_t nModifier)
+{
+    if (m_bReadOnly)
+        return false;
+
+    const auto nAddress = GetAddress();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    auto nMem = pEmulatorContext.ReadMemory(GetAddress(), GetSize());
+    auto const nMaxValue = ra::data::MemSizeMax(GetSize());
+
+    if (nMem >= nMaxValue)
+        return false;
+    if ((nMaxValue - nMem) < nModifier)
+        nModifier = (nMaxValue - nMem);
+    nMem += nModifier;
+
+    pEmulatorContext.WriteMemory(nAddress, GetSize(), nMem);
+    return true;
+}
+
+bool MemoryViewerViewModel::DecreaseCurrentValue(uint32_t nModifier)
+{
+    if (m_bReadOnly)
+        return false;
+
+    auto const nAddress = GetAddress();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    auto nMem = pEmulatorContext.ReadMemory(GetAddress(), GetSize());
+
+    if (nMem == 0)
+        return false;
+    if (nMem < nModifier)
+        nModifier = nMem;
+    nMem -= nModifier;
+
+    pEmulatorContext.WriteMemory(nAddress, GetSize(), nMem);
+    return true;
+}
+
 void MemoryViewerViewModel::OnActiveGameChanged()
 {
     m_nNeedsRedraw |= REDRAW_ADDRESSES;

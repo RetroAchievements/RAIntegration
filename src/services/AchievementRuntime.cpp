@@ -1762,7 +1762,8 @@ static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeader
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted) !=
-        ra::ui::viewmodels::PopupLocation::None)
+        ra::ui::viewmodels::PopupLocation::None &&
+        pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -1783,7 +1784,8 @@ static void HandleLeaderboardFailedEvent(const rc_client_leaderboard_t& pLeaderb
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled) !=
-        ra::ui::viewmodels::PopupLocation::None)
+        ra::ui::viewmodels::PopupLocation::None &&
+        pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -1796,7 +1798,8 @@ static void ShowSimplifiedScoreboard(const rc_client_leaderboard_t& pLeaderboard
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) ==
-        ra::ui::viewmodels::PopupLocation::None)
+        ra::ui::viewmodels::PopupLocation::None ||
+        !pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
         return;
     }
@@ -1824,6 +1827,10 @@ static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLead
         RA_LOG_ERR("Received leaderboard started event for unknown leaderboard %u", pLeaderboard.id);
         return;
     }
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
+        return;
 
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
     vmPopup->SetDescription(ra::Widen(pLeaderboard.title));
@@ -1871,7 +1878,6 @@ static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLead
 
     if (bSubmit)
     {
-        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
         if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
         {
             vmPopup->SetErrorDetail(L"Submission requires Hardcore mode");
@@ -1918,7 +1924,8 @@ static void HandleLeaderboardTrackerShowEvent(const rc_client_leaderboard_tracke
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) !=
-        ra::ui::viewmodels::PopupLocation::None)
+        ra::ui::viewmodels::PopupLocation::None &&
+        pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         auto& pScoreTracker = pOverlayManager.AddScoreTracker(pTracker.id);
@@ -1937,7 +1944,8 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) ==
-        ra::ui::viewmodels::PopupLocation::None)
+        ra::ui::viewmodels::PopupLocation::None ||
+        !pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
         return;
     }
@@ -2037,6 +2045,10 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
 
     if (strcmp(pServerError.api, "submit_lboard_entry") == 0)
     {
+        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
+            return;
+
         const auto nLeaderboardId = pServerError.related_id;
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nLeaderboardId);

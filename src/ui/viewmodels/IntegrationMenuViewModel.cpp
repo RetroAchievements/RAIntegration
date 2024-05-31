@@ -16,6 +16,7 @@
 #include "ui/viewmodels/GameChecksumViewModel.hh"
 #include "ui/viewmodels/LoginViewModel.hh"
 #include "ui/viewmodels/MessageBoxViewModel.hh"
+#include "ui/viewmodels/OverlayManager.hh"
 #include "ui/viewmodels/OverlaySettingsViewModel.hh"
 #include "ui/viewmodels/UnknownGameViewModel.hh"
 #include "ui/viewmodels/WindowManager.hh"
@@ -248,13 +249,11 @@ void IntegrationMenuViewModel::ToggleLeaderboards()
 
     if (!bLeaderboardsActive)
     {
-        // TODO: disallow disabling leaderboards
-        //pGameContext.DeactivateLeaderboards();
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearLeaderboardPopups();
         ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now disabled.");
     }
     else
     {
-        //pGameContext.ActivateLeaderboards();
         ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now enabled.");
     }
 

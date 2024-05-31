@@ -143,7 +143,7 @@ public:
         if (IsHidden(vmItems, nIndex))
             return L"";
 
-        return ValueColumnBinding::GetText(vmItems, nIndex);
+        return GridTextColumnBinding::GetText(vmItems, nIndex);
     }
 
     bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
@@ -309,7 +309,6 @@ public:
         if (!pGridBinding->GetItems().GetItemValue(pInfo.nItemIndex, TriggerConditionViewModel::HasSourceValueProperty))
             return nullptr;
 
-        m_nEditingItemIndex = pInfo.nItemIndex;
         return ValueColumnBinding::CreateInPlaceEditor(hParent, pInfo);
     }
 
@@ -318,9 +317,6 @@ protected:
     {
         return !vmItems.GetItemValue(nIndex, TriggerConditionViewModel::HasSourceValueProperty);
     }
-
-private:
-    mutable gsl::index m_nEditingItemIndex = -1;
 };
 
 class TargetValueColumnBinding : public ValueColumnBinding
@@ -350,7 +346,6 @@ public:
         if (!pGridBinding->GetItems().GetItemValue(pInfo.nItemIndex, TriggerConditionViewModel::HasTargetValueProperty))
             return nullptr;
 
-        m_nEditingItemIndex = pInfo.nItemIndex;
         return ValueColumnBinding::CreateInPlaceEditor(hParent, pInfo);
     }
 
@@ -359,9 +354,6 @@ protected:
     {
         return !vmItems.GetItemValue(nIndex, TriggerConditionViewModel::HasTargetProperty) || !vmItems.GetItemValue(nIndex, TriggerConditionViewModel::HasTargetValueProperty);
     }
-
-private:
-    mutable gsl::index m_nEditingItemIndex = -1;
 };
 
 class HitsColumnBinding : public ra::ui::win32::bindings::GridNumberColumnBinding

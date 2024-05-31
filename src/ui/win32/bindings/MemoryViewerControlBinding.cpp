@@ -3,6 +3,7 @@
 #include "ra_fwd.h"
 #include "ra_utility.h"
 
+#include "services\IClipboard.hh"
 #include "ui/EditorTheme.hh"
 #include "ui/drawing/gdi/GDISurface.hh"
 
@@ -139,6 +140,8 @@ bool MemoryViewerControlBinding::OnKeyDown(UINT nChar)
 
     if (!m_pViewModel.IsAddressFixed())
         bHandled = HandleNavigation(nChar);
+    if (!bHandled)
+        bHandled = HandleShortcut(nChar);
 
     m_bSuppressMemoryViewerInvalidate = false;
 
@@ -236,6 +239,32 @@ bool MemoryViewerControlBinding::HandleNavigation(UINT nChar)
     }
 }
 
+bool MemoryViewerControlBinding::HandleShortcut(UINT nChar)
+{
+    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
+    const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
+
+    switch (nChar)
+    {
+        case 'C':
+            if (bControlHeld)
+            {
+                OnCopy();
+            }
+            return true;
+
+        case 'V':
+            if (bControlHeld and !m_pViewModel.IsReadOnly())
+            {
+                return OnPaste(bShiftHeld);
+            }
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 bool MemoryViewerControlBinding::OnEditInput(UINT c)
 {
     // multiple properties may change while typing, we'll do a single Invalidate after we're done
@@ -290,6 +319,53 @@ void MemoryViewerControlBinding::OnViewModelIntValueChanged(const IntModelProper
     }
 }
 
+void MemoryViewerControlBinding::OnCopy()
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto nValue = pEmulatorContext.ReadMemory(m_pViewModel.GetAddress(), m_pViewModel.GetSize());
+    std::wstring sValue = ra::data::MemSizeFormat(nValue, m_pViewModel.GetSize(), MemFormat::Hex);
+
+    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(sValue);
+}
+
+bool MemoryViewerControlBinding::OnPaste(bool bShiftHeld)
+{
+    auto nAddress = m_pViewModel.GetAddress();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
+    const size_t nBytesForSize = ra::data::MemSizeBytes(m_pViewModel.GetSize());
+    std::wstring sError;
+
+    if (sClipboardText.empty())
+        return false;
+
+    // Split the clipboard value into substrings matching the current size and check if they're valid hexadecimal values
+    // If the clipboard text is smaller than a single write, it will be treated as a padded value:
+    //    C => 0C, 000C, or 0000000C (depending on currently selected viewer size)
+    // If shift is held, and the clipboard string is bigger than a single write, multiple writes will occur.
+    // If the last write is not a complete chunk, it will be padded in the same way as described above:
+    //    12345678C => 12 34 56 78 0C, 1234 5678 000C, or 12345678 0000000C
+    for (size_t i = 0; i < sClipboardText.size(); i += nBytesForSize * 2)
+    {
+        std::wstring sSubString = sClipboardText.substr(i, nBytesForSize * 2);
+        unsigned int nValue;
+        if (!ra::ParseHex(sSubString, 0xFFFFFFFF, nValue, sError))
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Paste value failed", sError);
+            return false;
+        }
+
+        pEmulatorContext.WriteMemory(nAddress, m_pViewModel.GetSize(), nValue);
+        nAddress += static_cast<ra::ByteAddress>(nBytesForSize);
+
+        // Single mode writes only the first value else multi mode (shift) writes every values
+        if (!bShiftHeld)
+            return true;
+    }
+
+    return true;
+}
+
 void MemoryViewerControlBinding::Invalidate()
 {
     if (m_pViewModel.NeedsRedraw() && !m_bSuppressMemoryViewerInvalidate)
@@ -308,7 +384,9 @@ void MemoryViewerControlBinding::RenderMemViewer()
 
     const auto& pRenderImage = m_pViewModel.GetRenderImage();
     const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
-    HBRUSH hBackground = CreateSolidBrush(RGB(pEditorTheme.ColorBackground().Channel.R, pEditorTheme.ColorBackground().Channel.G, pEditorTheme.ColorBackground().Channel.B));
+    HBRUSH hBackground = CreateSolidBrush(RGB(pEditorTheme.ColorBackground().Channel.R,
+                                              pEditorTheme.ColorBackground().Channel.G,
+                                              pEditorTheme.ColorBackground().Channel.B));
 
     // left margin
     RECT rcFill{ rcClient.left, rcClient.top, rcClient.left + MEMVIEW_MARGIN, rcClient.bottom - 1 };

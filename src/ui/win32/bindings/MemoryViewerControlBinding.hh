@@ -5,6 +5,7 @@
 #include "ControlBinding.hh"
 
 #include "ui/viewmodels/MemoryViewerViewModel.hh"
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 
 namespace ra {
 namespace ui {
@@ -47,6 +48,9 @@ public:
     void OnGotFocus() override;
     void OnLostFocus() override;
 
+    void OnCopy();
+    bool OnPaste(bool bShiftHeld);
+
     void Invalidate();
 
     void SetHWND(DialogBase& pDialog, HWND hControl) override;
@@ -63,6 +67,7 @@ protected:
 
 private:
     bool HandleNavigation(UINT nChar);
+    bool HandleShortcut(UINT nChar);
     bool m_bSuppressMemoryViewerInvalidate = false;
 
     ra::ui::viewmodels::MemoryViewerViewModel& m_pViewModel;

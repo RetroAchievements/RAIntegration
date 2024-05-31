@@ -57,6 +57,13 @@ INT_PTR CALLBACK MemoryViewerControlBinding::WndProc(HWND hControl, UINT uMsg, W
         case WM_USER_INVALIDATE:
             Invalidate();
             return FALSE;
+
+        case WM_XBUTTONUP:
+            if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
+                m_pViewModel.MoveHistoryBackward();
+            else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2)
+                m_pViewModel.MoveHistoryForward();
+            return FALSE;
     }
 
     return ControlBinding::WndProc(hControl, uMsg, wParam, lParam);

@@ -1918,6 +1918,54 @@ public:
         Assert::IsTrue(viewer.NeedsRedraw());
         viewer.MockRender();
     }
+    TEST_METHOD(TestOnMoveHistory)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+
+        viewer.SetAddress(0U);
+        viewer.SetReadOnly(false);
+
+        // Step backward one time should do nothing as it's the first move
+        viewer.MoveHistoryBackward();
+        Assert::AreEqual({0U}, viewer.GetAddress());
+
+        // Move to 0x1 and step backward should lead to address 0x0
+        viewer.SetAddress(1U);
+        viewer.MoveHistoryBackward();
+        Assert::AreEqual({0U}, viewer.GetAddress());
+
+        // Move one step forward should lead to address 0x1
+        viewer.MoveHistoryForward();
+        Assert::AreEqual({1U}, viewer.GetAddress());
+
+        // Move to 0x1 then to 0x2 and finally to 0x3 and step backward one time should lead to address 0x2
+        viewer.SetAddress(1U);
+        viewer.SetAddress(2U);
+        viewer.SetAddress(3U);
+        viewer.MoveHistoryBackward();
+        Assert::AreEqual({2U}, viewer.GetAddress());
+
+        // Move two steps forward should lead to address 0x3 as it's the most recent history entry
+        viewer.MoveHistoryForward();
+        viewer.MoveHistoryForward();
+        Assert::AreEqual({3U}, viewer.GetAddress());
+
+        // Three last steps backward and we are back to square one at address 0x0
+        viewer.MoveHistoryBackward();
+        viewer.MoveHistoryBackward();
+        viewer.MoveHistoryBackward();
+        Assert::AreEqual({0U}, viewer.GetAddress());
+
+        // Change game to clear history
+        viewer.mockGameContext.NotifyActiveGameChanged();
+
+        // Move three steps forward to get back to 0x3 should do nothing as the game changed and history got cleared
+        viewer.MoveHistoryForward();
+        viewer.MoveHistoryForward();
+        viewer.MoveHistoryForward();
+        Assert::AreEqual({0U}, viewer.GetAddress());
+    }
 };
 
 } // namespace tests

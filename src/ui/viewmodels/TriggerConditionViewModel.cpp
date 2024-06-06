@@ -682,7 +682,8 @@ static bool IsIndirectMemref(const rc_operand_t& operand) noexcept
     return rc_operand_is_memref(&operand) && operand.value.memref->value.is_indirect;
 }
 
-ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress, ra::ByteAddress* pPointerAddress) const
+ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress,
+    ra::ByteAddress* pPointerAddress) const
 {
     if (pPointerAddress != nullptr)
         *pPointerAddress = UNKNOWN_ADDRESS;
@@ -696,9 +697,10 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
     if (pGroup == nullptr)
         return nAddress;
 
-    rc_condition_t* pCondition = nullptr;
+    rc_condition_t* pFirstCondition = nullptr;
 
     const auto* pTrigger = pTriggerViewModel->GetTriggerFromString();
+    bool bProcessPause = false;
     if (pTrigger != nullptr)
     {
         // if the trigger is managed by the viewmodel (not the runtime) then we need to update the memrefs
@@ -707,7 +709,8 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
         // find the condset associated to the selected group
         if (nIndex == 0)
         {
-            pCondition = pTrigger->requirement->conditions;
+            pFirstCondition = pTrigger->requirement->conditions;
+            bProcessPause = pTrigger->requirement->has_pause;
         }
         else
         {
@@ -718,40 +721,71 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
             if (!pAlt)
                 return nAddress;
 
-            pCondition = pAlt->conditions;
+            pFirstCondition = pAlt->conditions;
+            bProcessPause = pAlt->has_pause;
         }
     }
     else
     {
         Expects(pGroup->m_pConditionSet != nullptr);
-        pCondition = pGroup->m_pConditionSet->conditions;
+        pFirstCondition = pGroup->m_pConditionSet->conditions;
+        bProcessPause = pGroup->m_pConditionSet->has_pause;
     }
 
     bool bIsIndirect = false;
     bool bIsMultiLevelIndirect = false;
+    rc_typed_value_t value = {};
     rc_eval_state_t oEvalState;
     memset(&oEvalState, 0, sizeof(oEvalState));
-    rc_typed_value_t value = {};
     oEvalState.peek = rc_peek_callback;
+    oEvalState.recall_value.type = RC_VALUE_TYPE_UNSIGNED;
+    oEvalState.recall_value.value.u32 = 0;
 
-    gsl::index nConditionIndex = 0;
-    for (; pCondition != nullptr; pCondition = pCondition->next)
-    {
-        auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);
-        if (!vmCondition)
-            break;
-
-        if (vmCondition == this)
+    gsl::index nPassesLeft = (bProcessPause ? 2 : 1);
+    while (nPassesLeft > 0) {
+        rc_condition_t* pCondition = pFirstCondition;
+        gsl::index nConditionIndex = 0;
+        for (; pCondition != nullptr; pCondition = pCondition->next)
         {
-            if (bIsMultiLevelIndirect && pPointerAddress != nullptr)
-                *pPointerAddress = NESTED_POINTER_ADDRESS;
 
-            return nAddress + oEvalState.add_address;
-        }
+            auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);
+            if (!vmCondition)
+                break;
 
-        if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
-        {
-            bIsMultiLevelIndirect = bIsIndirect;
+            if ((pCondition->pause) ^ !bProcessPause) continue;
+
+            if (vmCondition == this)
+            {
+                // found the condition we're looking for
+                if (bIsMultiLevelIndirect && pPointerAddress != nullptr)
+                    *pPointerAddress = NESTED_POINTER_ADDRESS;
+
+                return nAddress + oEvalState.add_address;
+            }
+
+            switch (pCondition->type)
+            {
+            case RC_CONDITION_ADD_ADDRESS:
+                // AddAddress after an AddAddress is a multi-level indirect
+                bIsMultiLevelIndirect = bIsIndirect;
+                break;
+
+            case RC_CONDITION_ADD_SOURCE:
+            case RC_CONDITION_SUB_SOURCE:
+                // these can modify the Remembered value
+                break;
+
+            case RC_CONDITION_REMEMBER:
+                // Remember/Recall can be used in AddAddress chains
+                break;
+
+            default:
+                // other flags aren't part of the AddAddress chain
+                bIsIndirect = bIsMultiLevelIndirect = false;
+                oEvalState.add_address = 0;
+                oEvalState.add_value.type = RC_VALUE_TYPE_NONE;
+                continue;
+            }
 
             if (bIsIndirect && pTrigger == nullptr)
             {
@@ -774,26 +808,49 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
                 }
 
                 rc_evaluate_condition_value(&value, &oCondition, &oEvalState);
-                rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
-                oEvalState.add_address = value.value.u32;
             }
             else
             {
                 rc_evaluate_condition_value(&value, pCondition, &oEvalState);
+
+                if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
+                {
+                    // live AddAddress chain. capture the pointer value
+                    if (pPointerAddress != nullptr && rc_operand_is_memref(&pCondition->operand1))
+                        *pPointerAddress = (bIsIndirect) ? NESTED_POINTER_ADDRESS : pCondition->operand1.value.memref->address;
+                }
+            }
+
+            switch (pCondition->type)
+            {
+            case RC_CONDITION_ADD_ADDRESS:
                 rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
                 oEvalState.add_address = value.value.u32;
-
-                if (pPointerAddress != nullptr && rc_operand_is_memref(&pCondition->operand1))
-                    *pPointerAddress = (bIsIndirect) ? NESTED_POINTER_ADDRESS : pCondition->operand1.value.memref->address;
-
                 bIsIndirect = true;
+                break;
+
+            case RC_CONDITION_SUB_SOURCE:
+                rc_typed_value_negate(&value);
+                _FALLTHROUGH; // to RC_CONDITION_ADD_SOURCE
+
+            case RC_CONDITION_ADD_SOURCE:
+                rc_typed_value_add(&oEvalState.add_value, &value);
+                oEvalState.add_address = 0;
+                bIsIndirect = bIsMultiLevelIndirect = false;
+                break;
+
+            case RC_CONDITION_REMEMBER:
+                rc_typed_value_add(&value, &oEvalState.add_value);
+                oEvalState.recall_value.type = value.type;
+                oEvalState.recall_value.value = value.value;
+                oEvalState.add_value.type = RC_VALUE_TYPE_NONE;
+                oEvalState.add_address = 0;
+                bIsIndirect = bIsMultiLevelIndirect = false;
+                break;
             }
         }
-        else
-        {
-            bIsIndirect = bIsMultiLevelIndirect = false;
-            oEvalState.add_address = 0;
-        }
+        nPassesLeft--;
+        bProcessPause = false;
     }
 
     return nAddress;

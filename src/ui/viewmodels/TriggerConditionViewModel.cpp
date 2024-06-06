@@ -752,7 +752,7 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
             if (!vmCondition)
                 break;
 
-            if (!pCondition->pause ^ bProcessPause) continue;
+            if ((pCondition->pause > 0) != bProcessPause) continue;
 
             if (vmCondition == this)
             {

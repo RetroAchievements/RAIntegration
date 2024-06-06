@@ -741,13 +741,12 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
     oEvalState.recall_value.type = RC_VALUE_TYPE_UNSIGNED;
     oEvalState.recall_value.value.u32 = 0;
 
-    gsl::index nPassesLeft = (bProcessPause ? 2 : 1);
+    int nPassesLeft = (bProcessPause ? 2 : 1); //If there are pauses, they may have remembered values that need to be processed first, so we do [up to] two passes.
     while (nPassesLeft > 0) {
         rc_condition_t* pCondition = pFirstCondition;
         gsl::index nConditionIndex = 0;
         for (; pCondition != nullptr; pCondition = pCondition->next)
         {
-
             auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);
             if (!vmCondition)
                 break;
@@ -850,7 +849,7 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
             }
         }
         nPassesLeft--;
-        bProcessPause = false;
+        bProcessPause = false; //pause pass is always first, so we are no longer to process pause logic
     }
 
     return nAddress;

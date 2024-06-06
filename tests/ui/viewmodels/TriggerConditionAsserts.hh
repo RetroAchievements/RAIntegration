@@ -33,6 +33,8 @@ std::wstring ToString<ra::ui::viewmodels::TriggerConditionType>(
             return L"AddHits";
         case ra::ui::viewmodels::TriggerConditionType::SubHits:
             return L"SubHits";
+        case ra::ui::viewmodels::TriggerConditionType::Remember:
+            return L"Remember";
         case ra::ui::viewmodels::TriggerConditionType::AndNext:
             return L"AndNext";
         case ra::ui::viewmodels::TriggerConditionType::Measured:
@@ -72,6 +74,8 @@ std::wstring ToString<ra::ui::viewmodels::TriggerOperandType>(
             return L"Float";
         case ra::ui::viewmodels::TriggerOperandType::Inverted:
             return L"Inverted";
+        case ra::ui::viewmodels::TriggerOperandType::Recall:
+            return L"Recall";
         default:
             return std::to_wstring(static_cast<int>(nOperandType));
     }

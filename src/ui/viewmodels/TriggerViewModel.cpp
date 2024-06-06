@@ -41,6 +41,7 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Measured), L"Measured");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::MeasuredIf), L"Measured If");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Trigger), L"Trigger");
+    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Remember), L"Remember");
 
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Address), L"Mem");
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Value), L"Value");
@@ -49,6 +50,7 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::BCD), L"BCD");
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Float), L"Float");
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Inverted), L"Invert");
+    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Recall), L"Recall");
 
     m_vOperandSizes.Add(ra::etoi(MemSize::Bit_0), L"Bit0");
     m_vOperandSizes.Add(ra::etoi(MemSize::Bit_1), L"Bit1");
@@ -945,6 +947,7 @@ void TriggerViewModel::UpdateTotalHits()
             case ra::ui::viewmodels::TriggerConditionType::AddAddress:
             case ra::ui::viewmodels::TriggerConditionType::AddSource:
             case ra::ui::viewmodels::TriggerConditionType::SubSource:
+            case ra::ui::viewmodels::TriggerConditionType::Remember:
             case ra::ui::viewmodels::TriggerConditionType::AndNext:
             case ra::ui::viewmodels::TriggerConditionType::OrNext:
             case ra::ui::viewmodels::TriggerConditionType::ResetNextIf:
@@ -1101,6 +1104,7 @@ bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,
             case ra::ui::viewmodels::TriggerConditionType::AddAddress:
             case ra::ui::viewmodels::TriggerConditionType::AddSource:
             case ra::ui::viewmodels::TriggerConditionType::SubSource:
+            case ra::ui::viewmodels::TriggerConditionType::Remember:
             case ra::ui::viewmodels::TriggerConditionType::AndNext:
             case ra::ui::viewmodels::TriggerConditionType::OrNext:
             case ra::ui::viewmodels::TriggerConditionType::ResetNextIf:

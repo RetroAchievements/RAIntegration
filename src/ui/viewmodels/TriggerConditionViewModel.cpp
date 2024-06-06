@@ -34,8 +34,10 @@ const IntModelProperty TriggerConditionViewModel::TotalHitsProperty("TriggerCond
 const BoolModelProperty TriggerConditionViewModel::IsSelectedProperty("TriggerConditionViewModel", "IsSelected", false);
 const BoolModelProperty TriggerConditionViewModel::IsIndirectProperty("TriggerConditionViewModel", "IsIndirect", false);
 const BoolModelProperty TriggerConditionViewModel::HasSourceSizeProperty("TriggerConditionViewModel", "HasSourceSize", true);
+const BoolModelProperty TriggerConditionViewModel::HasSourceValueProperty("TriggerConditionViewModel", "HasSourceValue", true);
 const BoolModelProperty TriggerConditionViewModel::HasTargetProperty("TriggerConditionViewModel", "HasTarget", true);
 const BoolModelProperty TriggerConditionViewModel::HasTargetSizeProperty("TriggerConditionViewModel", "HasTargetSize", false);
+const BoolModelProperty TriggerConditionViewModel::HasTargetValueProperty("TriggerConditionViewModel", "HasTargetValue", true);
 const BoolModelProperty TriggerConditionViewModel::HasHitsProperty("TriggerConditionViewModel", "HasHits", true);
 const BoolModelProperty TriggerConditionViewModel::CanEditHitsProperty("TriggerConditionViewModel", "CanEditHits", true);
 const IntModelProperty TriggerConditionViewModel::RowColorProperty("TriggerConditionViewModel", "RowColor", 0);
@@ -63,6 +65,7 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
             case TriggerConditionType::SubSource:   sBuffer.push_back('B'); break;
             case TriggerConditionType::AddHits:     sBuffer.push_back('C'); break;
             case TriggerConditionType::SubHits:     sBuffer.push_back('D'); break;
+            case TriggerConditionType::Remember:    sBuffer.push_back('K'); break;
             case TriggerConditionType::AndNext:     sBuffer.push_back('N'); break;
             case TriggerConditionType::OrNext:      sBuffer.push_back('O'); break;
             case TriggerConditionType::MeasuredIf:  sBuffer.push_back('Q'); break;
@@ -226,6 +229,12 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
         case TriggerOperandType::Inverted:
             sBuffer.push_back('~');
             break;
+
+        case TriggerOperandType::Recall:
+        {
+            sBuffer.append("{recall}");
+            return;
+        }
 
         default:
             assert(!"Unknown operand type");
@@ -422,6 +431,12 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
             break;
         }
 
+        case TriggerOperandType::Recall:
+            SetValue(pSizeProperty, ra::etoi(MemSize::ThirtyTwoBit));
+            pValue.type = RC_VALUE_TYPE_UNSIGNED;
+            pValue.value.u32 = 1;
+            break;
+
         default:
             Expects(!"Unknown operand type");
             break;
@@ -467,13 +482,15 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         if (!IsAddressType(nNewType))
         {
             SetValue(HasSourceSizeProperty, false);
-            SetSourceSize(nNewType == TriggerOperandType::Value ? MemSize::ThirtyTwoBit : MemSize::Float);
+            SetSourceSize(nNewType == TriggerOperandType::Value || IsParameterlessType(nNewType) ? MemSize::ThirtyTwoBit : MemSize::Float);
         }
         else if (!IsAddressType(nOldType))
         {
             SetSourceSize(GetTargetSize());
             SetValue(HasSourceSizeProperty, true);
         }
+
+        SetValue(HasSourceValueProperty, IsParameterlessType(nNewType) ? false : true);
     }
     else if (args.Property == TargetTypeProperty)
     {
@@ -484,13 +501,15 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         if (!IsAddressType(nNewType))
         {
             SetValue(HasTargetSizeProperty, false);
-            SetTargetSize(nNewType == TriggerOperandType::Value ? MemSize::ThirtyTwoBit : MemSize::Float);
+            SetTargetSize(nNewType == TriggerOperandType::Value || IsParameterlessType(nNewType) ? MemSize::ThirtyTwoBit : MemSize::Float);
         }
         else if (!IsAddressType(ra::itoe<TriggerOperandType>(args.tOldValue)))
         {
             SetTargetSize(GetSourceSize());
             SetValue(HasTargetSizeProperty, GetValue(HasTargetProperty));
         }
+
+        SetValue(HasTargetValueProperty, IsParameterlessType(nNewType) || !GetValue(HasTargetProperty) ? false : true);
     }
     else if (args.Property == OperatorProperty)
     {
@@ -609,6 +628,9 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
         if (nType == TriggerOperandType::Float)
             return L"";
 
+        if (nType == TriggerOperandType::Recall)
+            return L"";
+
         if (IsIndirect())
         {
             ra::ByteAddress nPointerAddress = 0;
@@ -627,6 +649,9 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
             return GetValueTooltip(GetTargetAddress());
 
         if (nType == TriggerOperandType::Float)
+            return L"";
+
+        if (nType == TriggerOperandType::Recall)
             return L"";
 
         if (IsIndirect())
@@ -847,6 +872,7 @@ bool TriggerConditionViewModel::IsModifying(TriggerConditionType nType) noexcept
         case TriggerConditionType::AddAddress:
         case TriggerConditionType::AddSource:
         case TriggerConditionType::SubSource:
+        case TriggerConditionType::Remember:
             return true;
 
         default:
@@ -860,10 +886,23 @@ bool TriggerConditionViewModel::IsAddressType(TriggerOperandType nType) noexcept
     {
         case TriggerOperandType::Value:
         case TriggerOperandType::Float:
+        case TriggerOperandType::Recall:
             return false;
 
         default:
             return true;
+    }
+}
+
+/* Has no address or value */
+bool TriggerConditionViewModel::IsParameterlessType(TriggerOperandType nType) noexcept
+{
+    switch (nType)
+    {
+        case TriggerOperandType::Recall:
+            return true;
+        default:
+            return false;
     }
 }
 

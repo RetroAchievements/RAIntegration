@@ -8,6 +8,7 @@
 #include "data\context\EmulatorContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\AchievementRuntimeExports.hh"
 #include "services\IConfiguration.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -17,6 +18,16 @@
 namespace ra {
 namespace data {
 namespace context {
+
+void UserContext::Initialize(const std::string& sUsername, const std::string& sDisplayName, const std::string& sApiToken)
+{
+    m_sUsername = sUsername;
+    m_sDisplayName = sDisplayName;
+    m_sApiToken = sApiToken;
+    m_nScore = 0U;
+
+    RaiseClientExternalMenuChanged();
+}
 
 void UserContext::Logout()
 {
@@ -38,6 +49,7 @@ void UserContext::Logout()
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
     ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
+    RaiseClientExternalMenuChanged();
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"You are now logged out.");
 

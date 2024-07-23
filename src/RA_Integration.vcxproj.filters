@@ -704,9 +704,6 @@
     <ClInclude Include="services\GameIdentifier.hh">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="api\SubmitTicket.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="ui\viewmodels\OverlayViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>

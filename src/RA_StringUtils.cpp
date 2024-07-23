@@ -492,6 +492,42 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringContainsCaseInsensitive(_In_ const std::ws
     return false;
 }
 
+std::string Base64(const std::string& sString)
+{
+    const char base64EncTable[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    std::string sEncoded;
+    sEncoded.reserve(((sString.length() + 2) / 3) * 4 + 1);
+
+    const size_t nLength = sString.length();
+    size_t i = 0;
+    while (i < nLength)
+    {
+        const uint8_t a = sString[i++];
+        const uint8_t b = (i < nLength) ? sString[i] : 0; i++;
+        const uint8_t c = (i < nLength) ? sString[i] : 0; i++;
+        const uint32_t merged = (a << 16 | b << 8 | c);
+
+        sEncoded.push_back(base64EncTable[(merged >> 18) & 0x3F]);
+        sEncoded.push_back(base64EncTable[(merged >> 12) & 0x3F]);
+        sEncoded.push_back(base64EncTable[(merged >>  6) & 0x3F]);
+        sEncoded.push_back(base64EncTable[(merged      ) & 0x3F]);
+    }
+
+    if (i > nLength)
+    {
+        sEncoded.pop_back();
+        if (i - 1 > nLength)
+        {
+            sEncoded.pop_back();
+            sEncoded.push_back('=');
+        }
+        sEncoded.push_back('=');
+    }
+
+    return sEncoded;
+}
+
 #pragma warning(pop)
 
 } /* namespace ra */

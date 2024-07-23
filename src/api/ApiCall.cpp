@@ -26,7 +26,6 @@ FetchLeaderboardInfo::Response FetchLeaderboardInfo::Request::Call() const { ret
 LatestClient::Response LatestClient::Request::Call() const { return Server().LatestClient(*this); }
 FetchGamesList::Response FetchGamesList::Request::Call() const { return Server().FetchGamesList(*this); }
 SubmitNewTitle::Response SubmitNewTitle::Request::Call() const { return Server().SubmitNewTitle(*this); }
-SubmitTicket::Response SubmitTicket::Request::Call() const { return Server().SubmitTicket(*this); }
 FetchBadgeIds::Response FetchBadgeIds::Request::Call() const { return Server().FetchBadgeIds(*this); }
 UploadBadge::Response UploadBadge::Request::Call() const { return Server().UploadBadge(*this); }
 

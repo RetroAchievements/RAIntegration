@@ -361,7 +361,19 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
-            UpdateCell(nIndex, nColumnIndex);
+        {
+            const auto* pCheckBoxColumn = dynamic_cast<const GridCheckBoxColumnBinding*>(&pColumn);
+            if (pCheckBoxColumn != nullptr)
+            {
+                InvokeOnUIThread([this, nIndex, nValue = args.tNewValue]() noexcept {
+                    ListView_SetCheckState(m_hWnd, nIndex, nValue);
+                });
+            }
+            else
+            {
+                UpdateCell(nIndex, nColumnIndex);
+            }
+        }
     }
 }
 
@@ -888,11 +900,7 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
         {
             const auto* pCheckBoxBinding = dynamic_cast<GridCheckBoxColumnBinding*>(m_vColumns.at(0).get());
             if (pCheckBoxBinding != nullptr)
-            {
-                m_vmItems->RemoveNotifyTarget(*this);
                 m_vmItems->SetItemValue(nIndex, pCheckBoxBinding->GetBoundProperty(), true);
-                m_vmItems->AddNotifyTarget(*this);
-            }
         }
         break;
 
@@ -900,11 +908,7 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
         {
             const auto* pCheckBoxBinding = dynamic_cast<GridCheckBoxColumnBinding*>(m_vColumns.at(0).get());
             if (pCheckBoxBinding != nullptr)
-            {
-                m_vmItems->RemoveNotifyTarget(*this);
                 m_vmItems->SetItemValue(nIndex, pCheckBoxBinding->GetBoundProperty(), false);
-                m_vmItems->AddNotifyTarget(*this);
-            }
         }
         break;
     }

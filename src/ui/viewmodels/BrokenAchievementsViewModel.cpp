@@ -143,7 +143,7 @@ void BrokenAchievementsViewModel::OnItemSelectedChanged(gsl::index nIndex, const
         if (nPreviousSelectedIndex != -1)
             m_vAchievements.GetItemAt(nPreviousSelectedIndex)->SetSelected(false);
 
-        SetSelectedIndex(nIndex);
+        SetSelectedIndex(gsl::narrow_cast<int>(nIndex));
     }
     else
     {

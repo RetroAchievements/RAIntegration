@@ -214,27 +214,6 @@ static void GetRequiredJsonField(_Out_ std::wstring& sValue, _In_ const rapidjso
     }
 }
 
-static void GetRequiredJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Value& pDocument,
-    _In_ const char* const sField, _Inout_ ApiResponseBase& response)
-{
-    if (!pDocument.HasMember(sField))
-    {
-        nValue = 0;
-
-        response.Result = ApiResult::Error;
-        if (response.ErrorMessage.empty())
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
-    }
-    else
-    {
-        auto& pField = pDocument[sField];
-        if (pField.IsUint())
-            nValue = pField.GetUint();
-        else
-            nValue = 0;
-    }
-}
-
 static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam, _In_ const std::string& sValue)
 {
     if (!sParams.empty() && sParams.back() != '?')

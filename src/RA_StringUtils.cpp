@@ -503,15 +503,15 @@ std::string Base64(const std::string& sString)
     size_t i = 0;
     while (i < nLength)
     {
-        const uint8_t a = sString[i++];
-        const uint8_t b = (i < nLength) ? sString[i] : 0; i++;
-        const uint8_t c = (i < nLength) ? sString[i] : 0; i++;
+        GSL_SUPPRESS_BOUNDS4 const uint8_t a = sString[i++];
+        GSL_SUPPRESS_BOUNDS4 const uint8_t b = (i < nLength) ? sString[i] : 0; i++;
+        GSL_SUPPRESS_BOUNDS4 const uint8_t c = (i < nLength) ? sString[i] : 0; i++;
         const uint32_t merged = (a << 16 | b << 8 | c);
 
-        sEncoded.push_back(base64EncTable[(merged >> 18) & 0x3F]);
-        sEncoded.push_back(base64EncTable[(merged >> 12) & 0x3F]);
-        sEncoded.push_back(base64EncTable[(merged >>  6) & 0x3F]);
-        sEncoded.push_back(base64EncTable[(merged      ) & 0x3F]);
+        GSL_SUPPRESS_BOUNDS4 sEncoded.push_back(base64EncTable[(merged >> 18) & 0x3F]);
+        GSL_SUPPRESS_BOUNDS4 sEncoded.push_back(base64EncTable[(merged >> 12) & 0x3F]);
+        GSL_SUPPRESS_BOUNDS4 sEncoded.push_back(base64EncTable[(merged >> 6) & 0x3F]);
+        GSL_SUPPRESS_BOUNDS4 sEncoded.push_back(base64EncTable[(merged) & 0x3F]);
     }
 
     if (i > nLength)

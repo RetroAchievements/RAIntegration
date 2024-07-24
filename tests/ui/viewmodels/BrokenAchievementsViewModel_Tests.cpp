@@ -3,6 +3,7 @@
 #include "ui\viewmodels\BrokenAchievementsViewModel.hh"
 
 #include "tests\ui\UIAsserts.hh"
+#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockThreadPool.hh"
@@ -24,6 +25,7 @@ private:
     {
     public:
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockThreadPool mockThreadPool; // needed by asset list
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
@@ -31,6 +33,7 @@ private:
         BrokenAchievementsViewModelHarness() noexcept
         {
             GSL_SUPPRESS_F6 mockWindowManager.AssetList.InitializeNotifyTargets();
+            mockConfiguration.SetHostUrl("http://host");
         }
 
         void MockAchievements()
@@ -185,7 +188,7 @@ public:
         Assert::IsTrue(vmBrokenAchievements.Submit());
         Assert::IsFalse(vmBrokenAchievements.mockDesktop.WasDialogShown());
 
-        Assert::AreEqual(std::string("http://host/achievement/2/report-issue"),
+        Assert::AreEqual(std::string("http://host/achievement/3/report-issue"),
                          vmBrokenAchievements.mockDesktop.LastOpenedUrl());
     }
 
@@ -200,7 +203,7 @@ public:
         Assert::IsTrue(vmBrokenAchievements.Submit());
         Assert::IsFalse(vmBrokenAchievements.mockDesktop.WasDialogShown());
 
-        Assert::AreEqual(std::string("http://host/achievement/2/report-issue?extra=eyJ0cmlnZ2VyUmljaFByZXNlbmNlIjoiTm93aGVyZSwgMiBMaXZlcyJ9"),
+        Assert::AreEqual(std::string("http://host/achievement/1/report-issue?extra=eyJ0cmlnZ2VyUmljaFByZXNlbmNlIjoiTm93aGVyZSwgMiBMaXZlcyJ9"),
                          vmBrokenAchievements.mockDesktop.LastOpenedUrl());
     }
 

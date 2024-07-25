@@ -164,6 +164,18 @@ public:
         return rc_client_get_spectator_mode_enabled(pClient.GetClient());
     }
 
+    static void set_filereader(const struct rc_hash_filereader* pFileReader, const struct rc_hash_cdreader* pCdReader)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_set_filereader(pClient.GetClient(), pFileReader, pCdReader);
+    }
+
+    static void get_default_cdreader(struct rc_hash_cdreader* pCdReader)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_get_default_cdreader(pClient.GetClient(), pCdReader);
+    }
+
     static void abort_async(rc_client_async_handle_t* handle)
     {
         const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
@@ -973,6 +985,12 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal) noexcept
     pClientExternal->deserialize_progress = ra::services::AchievementRuntimeExports::deserialize_progress;
 }
 
+static void GetExternalClientV2(rc_client_external_t* pClientExternal) noexcept
+{
+    pClientExternal->set_filereader = ra::services::AchievementRuntimeExports::set_filereader;
+    pClientExternal->get_default_cdreader = ra::services::AchievementRuntimeExports::get_default_cdreader;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -983,6 +1001,10 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal,
     {
         default:
             RA_LOG_WARN("Unknown rc_client_external interface version: %s", nVersion);
+            __fallthrough;
+
+        case 2:
+            GetExternalClientV2(pClientExternal);
             __fallthrough;
 
         case 1:

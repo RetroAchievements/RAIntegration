@@ -136,6 +136,9 @@
     <ClCompile Include="..\rcheevos\src\rhash\aes.c">
       <Filter>rhash</Filter>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rhash\cdreader.c">
+      <Filter>rhash</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="lua">

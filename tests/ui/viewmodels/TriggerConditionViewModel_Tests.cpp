@@ -365,6 +365,15 @@ public:
         Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetTargetSize());
     }
 
+    TEST_METHOD(TestModifyingConditionUpdatesHasTargetValue)
+    {
+        TriggerConditionViewModelHarness vmCondition;
+        vmCondition.SetType(TriggerConditionType::AddSource);
+        Assert::IsFalse(vmCondition.HasTargetValue());
+        vmCondition.SetOperator(TriggerOperatorType::Divide);
+        Assert::IsTrue(vmCondition.HasTargetValue());
+    }
+
     TEST_METHOD(TestHasTargetSizeHasTarget)
     {
         TriggerConditionViewModelHarness vmCondition;

@@ -513,7 +513,9 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     }
     else if (args.Property == OperatorProperty)
     {
+        const auto nCurrentType = ra::itoe<TriggerOperandType>(GetValue(TargetTypeProperty));
         SetValue(HasTargetProperty, ra::itoe<TriggerOperatorType>(args.tNewValue) != TriggerOperatorType::None);
+        SetValue(HasTargetValueProperty, !IsParameterlessType(nCurrentType) && GetValue(HasTargetProperty));
         UpdateHasHits();
     }
     else if (args.Property == TypeProperty)

@@ -276,6 +276,7 @@ private:
 
     rc_client_async_handle_t* BeginChangeMedia(const char* file_path, const uint8_t* data, size_t data_size,
                                                CallbackWrapper* pCallbackWrapper) noexcept;
+    rc_client_async_handle_t* BeginChangeMediaFromHash(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept;
     static void ChangeMediaCallback(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata);
 
     static void PostProcessGameDataResponse(const rc_api_server_response_t* server_response,

@@ -273,6 +273,18 @@ public:
         return pClient.BeginLoadGame(hash, 0, pCallbackData);
     }
 
+    static void add_game_hash(const char* hash, uint32_t game_id)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_add_game_hash(pClient.GetClient(), hash, game_id);
+    }
+
+    static void load_unknown_game(const char* hash)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_load_unknown_game(pClient.GetClient(), hash);
+    }
+
     static void unload_game()
     {
         _RA_ActivateGame(0);
@@ -308,6 +320,17 @@ public:
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         return pClient.BeginChangeMedia(file_path, data, data_size, pCallbackData);
+    }
+
+    static rc_client_async_handle_t* begin_change_media_from_hash(rc_client_t* client,
+                                                                  const char* hash, rc_client_callback_t callback,
+                                                                  void* callback_userdata)
+    {
+        GSL_SUPPRESS_R3
+        auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        return pClient.BeginChangeMediaFromHash(hash, pCallbackData);
     }
 
     static rc_client_achievement_list_info_t* create_achievement_list(int category, int grouping)
@@ -955,6 +978,7 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal) noexcept
     pClientExternal->unload_game = ra::services::AchievementRuntimeExports::unload_game;
     pClientExternal->get_user_game_summary = ra::services::AchievementRuntimeExports::get_user_game_summary;
     pClientExternal->begin_change_media = ra::services::AchievementRuntimeExports::begin_change_media;
+    pClientExternal->begin_change_media_from_hash = ra::services::AchievementRuntimeExports::begin_change_media_from_hash;
 
     pClientExternal->create_achievement_list = ra::services::AchievementRuntimeExports::create_achievement_list;
     pClientExternal->has_achievements = ra::services::AchievementRuntimeExports::has_achievements;
@@ -981,6 +1005,12 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal) noexcept
     pClientExternal->deserialize_progress = ra::services::AchievementRuntimeExports::deserialize_progress;
 }
 
+static void GetExternalClientV2(rc_client_external_t* pClientExternal) noexcept
+{
+    pClientExternal->add_game_hash = ra::services::AchievementRuntimeExports::add_game_hash;
+    pClientExternal->load_unknown_game = ra::services::AchievementRuntimeExports::load_unknown_game;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -991,6 +1021,10 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal,
     {
         default:
             RA_LOG_WARN("Unknown rc_client_external interface version: %s", nVersion);
+            __fallthrough;
+
+        case 2:
+            GetExternalClientV2(pClientExternal);
             __fallthrough;
 
         case 1:

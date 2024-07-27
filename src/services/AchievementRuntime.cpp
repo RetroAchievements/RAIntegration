@@ -1282,6 +1282,12 @@ rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* file_
     return rc_client_begin_change_media(client, file_path, data, data_size, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
 }
 
+rc_client_async_handle_t* AchievementRuntime::BeginChangeMediaFromHash(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept
+{
+    auto* client = GetClient();
+    return rc_client_begin_change_media_from_hash(client, sHash, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
+}
+
 GSL_SUPPRESS_CON3
 void AchievementRuntime::ChangeMediaCallback(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata)
 {

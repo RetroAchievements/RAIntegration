@@ -21,13 +21,7 @@ public:
     /// <summary>
     /// Sets the username and API token for the current user.
     /// </summary>
-    void Initialize(const std::string& sUsername, const std::string& sDisplayName, const std::string& sApiToken)
-    {
-        m_sUsername = sUsername;
-        m_sDisplayName = sDisplayName;
-        m_sApiToken = sApiToken;
-        m_nScore = 0U;
-    }
+    void Initialize(const std::string& sUsername, const std::string& sDisplayName, const std::string& sApiToken);
 
     /// <summary>
     /// Gets the username of the current user.

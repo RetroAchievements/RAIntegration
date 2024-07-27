@@ -71,24 +71,30 @@ public:
         pClient.set_event_handler(&m_pExternalClient, DispatchEvent);
     }
 
-    void AssertHardcoreChangedEventSeen()
+    void AssertHardcoreChangedEventSeen() const
     {
         Assert::IsTrue(m_nEventsSeen & (1 << RC_CLIENT_RAINTEGRATION_EVENT_HARDCORE_CHANGED),
                        L"HARDCORE event not seen");
     }
 
-    void AssertPauseEventSeen()
+    void AssertPauseEventSeen() const
     {
         Assert::IsTrue(m_nEventsSeen & (1 << RC_CLIENT_RAINTEGRATION_EVENT_PAUSE),
                        L"PAUSE event not seen");
     }
 
-    void AssertResetEventSeen()
+    void AssertMenuChangedEventSeen() const
+    {
+        Assert::IsTrue(m_nEventsSeen & (1 << RC_CLIENT_RAINTEGRATION_EVENT_MENU_CHANGED),
+                       L"MENU_CHANGED event not seen");
+    }
+
+    void AssertResetEventSeen() const
     {
         Assert::IsTrue(m_nEventsSeen & ResetEventBit, L"RESET event not seen");
     }
 
-    void AssertMenuItemCheckedChangedEventSeen(uint32_t nMenuItemId)
+    void AssertMenuItemCheckedChangedEventSeen(uint32_t nMenuItemId) const
     {
         Assert::IsTrue(m_nEventsSeen & (1 << RC_CLIENT_RAINTEGRATION_EVENT_MENUITEM_CHECKED_CHANGED),
                        L"MENUITEM event not seen");
@@ -99,6 +105,12 @@ public:
                 return;
         }
         Assert::Fail(ra::StringPrintf(L"MENUITEM check changed event not seen for %d", nMenuItemId).c_str());
+    }
+
+    void ResetSeenEvents()
+    {
+        m_nEventsSeen = 0;
+        m_vMenuItemsChanged.clear();
     }
 
     void InitializeMemoryFunctions()
@@ -295,6 +307,7 @@ public:
     {
         AchievementRuntimeExportsHarness runtime;
         runtime.mockUserContext.Logout();
+        runtime.InitializeEventHandler();
 
         const rc_client_raintegration_menu_t* pMenu;
 
@@ -313,6 +326,8 @@ public:
         AssertMenuItem(pMenu, 10, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
 
         runtime.mockUserContext.Initialize("User", "ApiToken");
+        runtime.AssertMenuChangedEventSeen();
+        runtime.ResetSeenEvents();
 
         pMenu = _Rcheevos_RAIntegrationGetMenu();
         Assert::AreEqual(17U, pMenu->num_items);

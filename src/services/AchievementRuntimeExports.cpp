@@ -98,6 +98,9 @@ public:
             &ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
         if (pConfiguration != nullptr)
             pConfiguration->SetHost(value);
+
+        const auto* pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient();
+        rc_client_set_host(pClient, value);
     }
 
     static size_t get_user_agent_clause(char buffer[], size_t buffer_size)
@@ -891,6 +894,11 @@ bool IsExternalRcheevosClient() noexcept
 void ResetEmulatorMemoryRegionsForRcheevosClient()
 {
     ra::services::AchievementRuntimeExports::ResetMemory();
+}
+
+void RaiseClientExternalMenuChanged() noexcept
+{
+    ra::services::AchievementRuntimeExports::RaiseIntegrationEvent(RC_CLIENT_RAINTEGRATION_EVENT_MENU_CHANGED);
 }
 
 void SyncClientExternalRAIntegrationMenuItem(int nMenuItemId)

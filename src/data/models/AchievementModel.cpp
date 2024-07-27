@@ -403,6 +403,15 @@ void AchievementModel::SyncTrigger()
             m_pAchievement->trigger = nullptr;
         }
 
+        const auto* pPublishedAchievementInfo = pRuntime.GetPublishedAchievementInfo(m_pAchievement->public_.id);
+        if (pPublishedAchievementInfo && memcmp(pPublishedAchievementInfo->md5, md5, sizeof(md5)) == 0)
+        {
+            Expects(pPublishedAchievementInfo->trigger != nullptr);
+            m_pAchievement->trigger = pPublishedAchievementInfo->trigger;
+            rc_reset_trigger(m_pAchievement->trigger);
+            return;
+        }
+
         const auto nSize = rc_trigger_size(sTrigger.c_str());
         if (nSize > 0)
         {

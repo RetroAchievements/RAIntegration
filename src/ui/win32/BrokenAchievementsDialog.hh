@@ -4,8 +4,6 @@
 
 #include "ui/viewmodels/BrokenAchievementsViewModel.hh"
 #include "ui/win32/bindings/GridBinding.hh"
-#include "ui/win32/bindings/RadioButtonBinding.hh"
-#include "ui/win32/bindings/TextBoxBinding.hh"
 #include "ui/win32/DialogBase.hh"
 #include "ui/win32/IDialogPresenter.hh"
 
@@ -36,9 +34,6 @@ protected:
     BOOL OnCommand(WORD nCommand) override;
     
 private:
-    ra::ui::win32::bindings::RadioButtonBinding m_bindWrongTime;
-    ra::ui::win32::bindings::RadioButtonBinding m_bindDidNotTrigger;
-    ra::ui::win32::bindings::TextBoxBinding m_bindComment;
     ra::ui::win32::bindings::GridBinding m_bindAchievements;
 };
 

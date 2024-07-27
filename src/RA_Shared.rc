@@ -193,14 +193,9 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFR
 CAPTION "Report Achievement Problem"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Which achievement(s) would you like to report?",IDC_RA_SELECT_ACHIEVEMENTS,4,4,331,8
-    CONTROL         "",IDC_RA_REPORTBROKENACHIEVEMENTSLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,4,14,331,87
-    LTEXT           "What problem are you having with the selected achievement(s)?",IDC_RA_PROBLEMHEADER,4,104,207,8
-    CONTROL         "Triggered at wrong time",IDC_RA_PROBLEMTYPE1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,4,114,93,10
-    CONTROL         "Didn't trigger at all",IDC_RA_PROBLEMTYPE2,"Button",BS_AUTORADIOBUTTON,98,114,75,10
-    LTEXT           "Please include any additional information that might help the developer diagnose the issue: selected difficulty or character, use of level select or other cheat codes, where it did trigger, links to a video or image showing the problem, etc.",IDC_RA_COMMENT_HEADER,4,127,331,27
-    EDITTEXT        IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT,4,154,331,44,ES_MULTILINE | ES_AUTOHSCROLL | ES_WANTRETURN
-    DEFPUSHBUTTON   "Submit Ticket",IDOK,178,201,75,17
+    LTEXT           "Which achievement would you like to report?",IDC_RA_SELECT_ACHIEVEMENTS,4,4,331,8
+    CONTROL         "",IDC_RA_REPORTBROKENACHIEVEMENTSLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,4,14,331,185
+    DEFPUSHBUTTON   "Report Problem",IDOK,178,201,75,17
     PUSHBUTTON      "Cancel",IDCANCEL,259,201,76,17
 END
 

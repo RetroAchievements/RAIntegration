@@ -862,6 +862,8 @@ constexpr int StringHash(const std::basic_string<CharT>& sString) noexcept
     return nHash;
 }
 
+std::string Base64(const std::string& sString);
+
 } // namespace ra
 
 #ifdef UNICODE

@@ -249,12 +249,15 @@ void AchievementModel::SyncState()
             if (m_pAchievement->trigger)
                 m_pAchievement->trigger->state = RC_TRIGGER_STATE_TRIGGERED;
 
-            const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-            m_tUnlock = pClock.Now();
+            if (m_bCaptureTrigger)
+            {
+                const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
+                m_tUnlock = pClock.Now();
 
-            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-            if (pRuntime.HasRichPresence())
-                SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
+                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+                if (pRuntime.HasRichPresence())
+                    SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
+            }
             break;
         }
 
@@ -493,7 +496,9 @@ void AchievementModel::Attach(struct rc_client_achievement_info_t& pAchievement,
 
     m_pAchievement = &pAchievement;
 
+    m_bCaptureTrigger = false;
     DoFrame(); // sync state
+    m_bCaptureTrigger = true;
 }
 
 void AchievementModel::ReplaceAttached(struct rc_client_achievement_info_t& pAchievement) noexcept
@@ -512,7 +517,11 @@ void AchievementModel::AttachAndInitialize(struct rc_client_achievement_info_t& 
     SyncPoints();
     SyncCategory();
     SyncTrigger();
+
+    m_bCaptureTrigger = false;
     SyncState();
+    m_bCaptureTrigger = true;
+
     SyncAchievementType();
 }
 

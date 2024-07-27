@@ -38,19 +38,9 @@ void BrokenAchievementsDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase
 
 BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& vmBrokenAchievements)
     : DialogBase(vmBrokenAchievements),
-      m_bindWrongTime(vmBrokenAchievements),
-      m_bindDidNotTrigger(vmBrokenAchievements),
-      m_bindComment(vmBrokenAchievements),
       m_bindAchievements(vmBrokenAchievements)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Center, RelativePosition::Center, "Report Broken Achievements");
-
-    m_bindWrongTime.BindCheck(BrokenAchievementsViewModel::SelectedProblemIdProperty,
-        ra::etoi(ra::api::SubmitTicket::ProblemType::WrongTime));
-    m_bindDidNotTrigger.BindCheck(BrokenAchievementsViewModel::SelectedProblemIdProperty,
-        ra::etoi(ra::api::SubmitTicket::ProblemType::DidNotTrigger));
-
-    m_bindComment.BindText(BrokenAchievementsViewModel::CommentProperty);
 
     auto pSelectedColumn = std::make_unique<ra::ui::win32::bindings::GridCheckBoxColumnBinding>(
         BrokenAchievementsViewModel::BrokenAchievementViewModel::IsSelectedProperty);
@@ -80,11 +70,6 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_SELECT_ACHIEVEMENTS, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_REPORTBROKENACHIEVEMENTSLIST, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_PROBLEMHEADER, Anchor::Bottom | Anchor::Left);
-    SetAnchor(IDC_RA_PROBLEMTYPE1, Anchor::Bottom | Anchor::Left);
-    SetAnchor(IDC_RA_PROBLEMTYPE2, Anchor::Bottom | Anchor::Left);
-    SetAnchor(IDC_RA_COMMENT_HEADER, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDCANCEL, Anchor::Bottom | Anchor::Right);
     SetAnchor(IDOK, Anchor::Bottom | Anchor::Right);
 
@@ -93,11 +78,6 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
 
 BOOL BrokenAchievementsDialog::OnInitDialog()
 {
-    m_bindWrongTime.SetControl(*this, IDC_RA_PROBLEMTYPE1);
-    m_bindDidNotTrigger.SetControl(*this, IDC_RA_PROBLEMTYPE2);
-
-    m_bindComment.SetControl(*this, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT);
-
     m_bindAchievements.SetControl(*this, IDC_RA_REPORTBROKENACHIEVEMENTSLIST);
 
     return DialogBase::OnInitDialog();

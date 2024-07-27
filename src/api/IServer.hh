@@ -43,7 +43,6 @@ public:
     virtual LatestClient::Response LatestClient(const LatestClient::Request& request) = 0;
     virtual FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) = 0;
     virtual SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) = 0;
-    virtual SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) = 0;
     virtual FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) = 0;
     virtual UploadBadge::Response UploadBadge(const UploadBadge::Request& request) = 0;
 

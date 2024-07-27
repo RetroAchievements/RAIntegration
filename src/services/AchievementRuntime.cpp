@@ -803,6 +803,29 @@ public:
         return DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pMemory);
     }
 
+    const rc_client_achievement_info_t* GetPublishedAchievementInfo(ra::AchievementID nId) const
+    {
+        for (auto* pSubset = m_pPublishedSubset; pSubset; pSubset = pSubset->next)
+        {
+            const auto* pAchievement = FindAchievement(pSubset, nId);
+            if (pAchievement != nullptr)
+                return pAchievement;
+        }
+
+        return nullptr;
+    }
+
+    const rc_client_leaderboard_info_t* GetPublishedLeaderboardInfo(ra::LeaderboardID nId) const
+    {
+        for (auto* pSubset = m_pPublishedSubset; pSubset; pSubset = pSubset->next)
+        {
+            const auto* pLeaderboard = FindLeaderboard(pSubset, nId);
+            if (pLeaderboard != nullptr)
+                return pLeaderboard;
+        }
+
+        return nullptr;
+    }
 };
 
 void AchievementRuntime::SyncAssets()
@@ -848,6 +871,22 @@ rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId) c
 {
     rc_client_achievement_info_t* achievement = GetAchievementInfo(GetClient(), nId);
     return (achievement != nullptr) ? achievement->trigger : nullptr;
+}
+
+const rc_client_achievement_info_t* AchievementRuntime::GetPublishedAchievementInfo(ra::AchievementID nId) const
+{
+    if (m_pClientSynchronizer != nullptr)
+        return m_pClientSynchronizer->GetPublishedAchievementInfo(nId);
+
+    return nullptr;
+}
+
+const rc_client_leaderboard_info_t* AchievementRuntime::GetPublishedLeaderboardInfo(ra::LeaderboardID nId) const
+{
+    if (m_pClientSynchronizer != nullptr)
+        return m_pClientSynchronizer->GetPublishedLeaderboardInfo(nId);
+
+    return nullptr;
 }
 
 std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_t& pAchievement)
@@ -1241,6 +1280,12 @@ rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* file_
 {
     auto* client = GetClient();
     return rc_client_begin_change_media(client, file_path, data, data_size, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
+}
+
+rc_client_async_handle_t* AchievementRuntime::BeginChangeMediaFromHash(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept
+{
+    auto* client = GetClient();
+    return rc_client_begin_change_media_from_hash(client, sHash, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
 }
 
 GSL_SUPPRESS_CON3

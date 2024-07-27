@@ -279,15 +279,22 @@ void MemoryViewerViewModel::UpdateColors()
 
 void MemoryViewerViewModel::UpdateInvalidRegions()
 {
+    const auto nVisibleLines = ra::to_unsigned(GetNumVisibleLines());
+    const auto nFirstAddress = GetFirstAddress();
+    const auto nVisibleBytes = std::min(m_nTotalMemorySize - nFirstAddress, nVisibleLines * 16);
+
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     if (pEmulatorContext.HasInvalidRegions())
     {
-        const auto nVisibleLines = GetNumVisibleLines();
-        const auto nFirstAddress = GetFirstAddress();
-
-        for (int i = 0; i < nVisibleLines * 16; ++i)
+        for (unsigned i = 0; i < nVisibleBytes; ++i)
             m_pInvalid[i] = pEmulatorContext.IsValidAddress(nFirstAddress + i) ? 0 : 1;
     }
+    else
+    {
+        memset(m_pInvalid, 0, nVisibleBytes);
+    }
+
+    memset(&m_pInvalid[nVisibleBytes], 1, MaxLines * 16 - nVisibleBytes);
 }
 
 void MemoryViewerViewModel::UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength)
@@ -443,6 +450,7 @@ void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
             const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
             pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(args.tNewValue) * 16);
 
+            UpdateInvalidRegions();
             UpdateColors();
         }
 
@@ -812,10 +820,7 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
             SetFirstAddress(nMaxFirstAddress);
     }
 
-    if (pEmulatorContext.HasInvalidRegions())
-        UpdateInvalidRegions();
-    else
-        memset(m_pInvalid, 0, MaxLines * 16);
+    UpdateInvalidRegions();
 
     ResetSurface();
 }
@@ -1222,7 +1227,7 @@ void MemoryViewerViewModel::RenderMemory()
     const auto nFirstAddress = GetFirstAddress();
     auto nVisibleLines = GetNumVisibleLines();
     if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
-        nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
+        nVisibleLines = (m_nTotalMemorySize - nFirstAddress + 15) / 16;
 
     const bool bBigEndian = (GetSize() == MemSize::ThirtyTwoBitBigEndian);
     const int nWordSpacing = NibblesPerWord() + 1;
@@ -1319,7 +1324,7 @@ void MemoryViewerViewModel::RenderAddresses()
     m_pSurface->FillRectangle(0, s_szChar.Height, s_szChar.Width * 8, nVisibleLines * s_szChar.Height, pEditorTheme.ColorBackground());
 
     if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
-        nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
+        nVisibleLines = (m_nTotalMemorySize - nFirstAddress + 15) / 16;
 
     const wchar_t* sFormat = (m_nTotalMemorySize > 0x01000000) ? L"%08x" : L"0x%06x";
 

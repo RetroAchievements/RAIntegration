@@ -63,6 +63,7 @@ public:
     /// Gets the raw trigger for the achievement.
     /// </summary>
     rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const noexcept;
+    const rc_client_achievement_info_t* GetPublishedAchievementInfo(ra::AchievementID nId) const;
 
     static std::string GetAchievementBadge(const rc_client_achievement_t& pAchievement);
 
@@ -75,6 +76,7 @@ public:
     /// Gets the raw definition for the leaderboard.
     /// </summary>
     rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const noexcept;
+    const rc_client_leaderboard_info_t* GetPublishedLeaderboardInfo(ra::LeaderboardID nId) const;
 
     void ReleaseLeaderboardTracker(ra::LeaderboardID nId) noexcept;
 
@@ -274,6 +276,7 @@ private:
 
     rc_client_async_handle_t* BeginChangeMedia(const char* file_path, const uint8_t* data, size_t data_size,
                                                CallbackWrapper* pCallbackWrapper) noexcept;
+    rc_client_async_handle_t* BeginChangeMediaFromHash(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept;
     static void ChangeMediaCallback(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata);
 
     static void PostProcessGameDataResponse(const rc_api_server_response_t* server_response,

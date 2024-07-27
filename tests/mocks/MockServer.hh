@@ -122,11 +122,6 @@ public:
         return HandleRequest<ra::api::SubmitNewTitle>(request);
     }
 
-    SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) override
-    {
-        return HandleRequest<ra::api::SubmitTicket>(request);
-    }
-
     FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override
     {
         return HandleRequest<ra::api::FetchBadgeIds>(request);

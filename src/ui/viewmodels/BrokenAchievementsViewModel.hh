@@ -22,39 +22,24 @@ public:
     BrokenAchievementsViewModel& operator=(BrokenAchievementsViewModel&&) noexcept = delete;
     
     /// <summary>
-    /// Initializes the <see cref="Achievements"/> collection (asynchronously).
+    /// Initializes the <see cref="Achievements"/> collection.
     /// </summary>
     bool InitializeAchievements(); // shows error and returns false for Local achievements
     
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the selected problem.
+    /// The <see cref="ModelProperty" /> for the selected achievement index.
     /// </summary>
-    static const IntModelProperty SelectedProblemIdProperty;
+    static const IntModelProperty SelectedIndexProperty;
 
     /// <summary>
-    /// Gets the selected problem ID.
+    /// Gets the index of the selected achievement.
     /// </summary>
-    int GetSelectedProblemId() const { return GetValue(SelectedProblemIdProperty); }
+    int GetSelectedIndex() const { return GetValue(SelectedIndexProperty); }
 
     /// <summary>
-    /// Sets the selected problem ID.
+    /// Sets the index of the selected achievement.
     /// </summary>
-    void SetSelectedProblemId(int nValue) { SetValue(SelectedProblemIdProperty, nValue); }
-
-    /// <summary>
-    /// The <see cref="ModelProperty" /> for the comment.
-    /// </summary>
-    static const StringModelProperty CommentProperty;
-
-    /// <summary>
-    /// Gets the comment.
-    /// </summary>
-    const std::wstring& GetComment() const { return GetValue(CommentProperty); }
-
-    /// <summary>
-    /// Sets the comment.
-    /// </summary>
-    void SetComment(const std::wstring& sValue) { SetValue(CommentProperty, sValue); }
+    void SetSelectedIndex(int nValue) { SetValue(SelectedIndexProperty, nValue); }
 
     /// <summary>
     /// Command handler for Submit button.

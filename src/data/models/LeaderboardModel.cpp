@@ -325,6 +325,15 @@ void LeaderboardModel::SyncDefinition()
             m_pLeaderboard->lboard = nullptr;
         }
 
+        const auto* pPublishedLeaderboardInfo = pRuntime.GetPublishedLeaderboardInfo(m_pLeaderboard->public_.id);
+        if (pPublishedLeaderboardInfo && memcmp(pPublishedLeaderboardInfo->md5, md5, sizeof(md5)) == 0)
+        {
+            Expects(pPublishedLeaderboardInfo->lboard != nullptr);
+            m_pLeaderboard->lboard = pPublishedLeaderboardInfo->lboard;
+            rc_reset_lboard(m_pLeaderboard->lboard);
+            return;
+        }
+
         const auto nSize = rc_lboard_size(sMemAddr.c_str());
         if (nSize > 0)
         {

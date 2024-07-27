@@ -82,11 +82,6 @@ public:
         return UnsupportedApi<SubmitNewTitle::Response>(SubmitNewTitle::Name());
     }
 
-    SubmitTicket::Response SubmitTicket(const SubmitTicket::Request&) override
-    {
-        return UnsupportedApi<SubmitTicket::Response>(SubmitTicket::Name());
-    }
-
     FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request&) override
     {
         return UnsupportedApi<FetchBadgeIds::Response>(FetchBadgeIds::Name());

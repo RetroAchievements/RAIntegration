@@ -214,27 +214,6 @@ static void GetRequiredJsonField(_Out_ std::wstring& sValue, _In_ const rapidjso
     }
 }
 
-static void GetRequiredJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Value& pDocument,
-    _In_ const char* const sField, _Inout_ ApiResponseBase& response)
-{
-    if (!pDocument.HasMember(sField))
-    {
-        nValue = 0;
-
-        response.Result = ApiResult::Error;
-        if (response.ErrorMessage.empty())
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
-    }
-    else
-    {
-        auto& pField = pDocument[sField];
-        if (pField.IsUint())
-            nValue = pField.GetUint();
-        else
-            nValue = 0;
-    }
-}
-
 static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam, _In_ const std::string& sValue)
 {
     if (!sParams.empty() && sParams.back() != '?')
@@ -973,43 +952,6 @@ SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::R
     }
 
     rc_api_destroy_request(&api_request);
-    return response;
-}
-
-SubmitTicket::Response ConnectedServer::SubmitTicket(const SubmitTicket::Request& request)
-{
-    SubmitTicket::Response response;
-    rapidjson::Document document;
-    std::string sPostData;
-
-    std::string sAchievementIds;
-    for (auto nAchievementId : request.AchievementIds)
-    {
-        sAchievementIds.append(std::to_string(nAchievementId));
-        sAchievementIds.push_back(',');
-    }
-    sAchievementIds.pop_back();
-
-    AppendUrlParam(sPostData, "i", sAchievementIds);
-    AppendUrlParam(sPostData, "m", request.GameHash);
-    AppendUrlParam(sPostData, "p", std::to_string(ra::etoi(request.Problem)));
-    AppendUrlParam(sPostData, "n", request.Comment);
-
-    if (DoRequest(m_sHost, SubmitTicket::Name(), "submitticket", sPostData, response, document))
-    {
-        if (!document.HasMember("Response"))
-        {
-            response.Result = ApiResult::Error;
-            if (response.ErrorMessage.empty())
-                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
-            GetRequiredJsonField(response.TicketsCreated, document["Response"], "Added", response);
-        }
-    }
-
     return response;
 }
 

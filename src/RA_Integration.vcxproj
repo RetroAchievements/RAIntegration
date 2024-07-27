@@ -189,7 +189,6 @@
     <ClInclude Include="api\IServer.hh" />
     <ClInclude Include="api\LatestClient.hh" />
     <ClInclude Include="api\SubmitNewTitle.hh" />
-    <ClInclude Include="api\SubmitTicket.hh" />
     <ClInclude Include="api\UpdateAchievement.hh" />
     <ClInclude Include="api\UpdateCodeNote.hh" />
     <ClInclude Include="api\UpdateLeaderboard.hh" />

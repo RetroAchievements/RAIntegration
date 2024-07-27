@@ -428,7 +428,7 @@ void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::Ch
         SetCategory(ra::itoe<ra::data::models::AssetCategory>(args.tNewValue));
     else if (args.Property == ra::data::models::AchievementModel::PointsProperty)
         SetPoints(args.tNewValue);
-    else if (args.Property == ra::data::models::AchievementModel::TypeProperty)
+    else if (args.Property == ra::data::models::AchievementModel::AchievementTypeProperty)
         SetAchievementType(ra::itoe<ra::data::models::AchievementType>(args.tNewValue));
     else if (args.Property == ra::data::models::LeaderboardModel::ValueFormatProperty)
         SetValueFormat(ra::itoe<ra::data::ValueFormat>(args.tNewValue));

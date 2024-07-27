@@ -552,6 +552,65 @@ public:
         Assert::AreNotEqual(static_cast<const void*>(pNewerTrigger), static_cast<const void*>(pNewestTrigger));
     }
 
+    TEST_METHOD(TestSyncAssetsModifiedCoreAchievement)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockGame();
+
+        auto* pAchievement = runtime.MockAchievement(12345U, "0xH0000=1");
+        pAchievement->public_.category = gsl::narrow_cast<uint8_t>(ra::etoi(ra::data::models::AssetCategory::Core));
+        pAchievement->public_.title = "Achievement Name";
+        pAchievement->public_.description = "Do something cool";
+        pAchievement->public_.points = 25;
+
+        auto vmNewAchievement = std::make_unique<ra::data::models::AchievementModel>();
+        vmNewAchievement->Attach(*pAchievement, ra::data::models::AssetCategory::Core, "0xH0000=1");
+        auto& vmAchievement = reinterpret_cast<ra::data::models::AchievementModel&>(runtime.mockGameContext.Assets().Append(std::move(vmNewAchievement)));
+
+        // SyncAssets should generate the core subset
+        runtime.SyncAssets();
+
+        auto* pSubset = runtime.GetClient()->game->subsets;
+        Expects(pSubset != nullptr);
+        Assert::AreEqual("Game Title", pSubset->public_.title);
+        Assert::AreEqual(1U, pSubset->public_.id);
+        Assert::AreEqual("012345", pSubset->public_.badge_name);
+        Assert::AreEqual(1U, pSubset->public_.num_achievements);
+        Assert::IsTrue(pSubset->active);
+        Assert::IsNull(pSubset->next);
+        const auto* pOriginalTrigger = pSubset->achievements->trigger;
+
+        Assert::AreEqual(std::wstring(L"Achievement Name"), vmAchievement.GetName());
+        Assert::AreEqual(std::wstring(L"Do something cool"), vmAchievement.GetDescription());
+        Assert::AreEqual(25, vmAchievement.GetPoints());
+        Assert::AreEqual(12345U, vmAchievement.GetID());
+        Assert::IsNotNull(pAchievement->trigger);
+
+        // directly modifying the achievement trigger should rebuild the underlying trigger
+        runtime.mockGameContext.Assets().FindAchievement(12345U)->SetTrigger("0xH0000=99"); // force memref allocation
+        runtime.mockGameContext.Assets().FindAchievement(12345U)->SetTrigger("0xH0000=2"); // no memref allocation, can be freed
+        Assert::IsNotNull(pAchievement->trigger);
+        const auto* pNewTrigger = pSubset->achievements->trigger;
+        Assert::AreNotEqual(static_cast<const void*>(pOriginalTrigger), static_cast<const void*>(pNewTrigger));
+
+        runtime.SyncAssets();
+
+        pSubset = runtime.GetClient()->game->subsets;
+        const auto* pNewerTrigger = pSubset->achievements->trigger;
+        Assert::AreEqual(static_cast<const void*>(pNewerTrigger), static_cast<const void*>(pNewTrigger));
+        Assert::IsNull(pNewerTrigger->alternative); // simple check to make sure memory is valid - debug build will fill freed memory with 0xDD
+
+        // revert to the original definition - original trigger should be used
+        runtime.mockGameContext.Assets().FindAchievement(12345U)->RestoreServerCheckpoint();
+
+        runtime.SyncAssets();
+
+        pSubset = runtime.GetClient()->game->subsets;
+        const auto* pNewestTrigger = pSubset->achievements->trigger;
+        Assert::AreNotEqual(static_cast<const void*>(pNewerTrigger), static_cast<const void*>(pNewestTrigger));
+        Assert::AreEqual(static_cast<const void*>(pOriginalTrigger), static_cast<const void*>(pNewestTrigger));
+    }
+
     TEST_METHOD(TestDoFrameTriggerAchievement)
     {
         std::array<unsigned char, 1> memory{ 0x00 };

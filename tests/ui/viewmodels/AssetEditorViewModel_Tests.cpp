@@ -1018,6 +1018,10 @@ public:
         editor.SetAchievementType(ra::data::models::AchievementType::Missable);
         Assert::AreEqual(ra::data::models::AchievementType::Missable, editor.GetAchievementType());
         Assert::AreEqual(ra::data::models::AchievementType::Missable, achievement.GetAchievementType());
+
+        achievement.SetAchievementType(ra::data::models::AchievementType::None);
+        Assert::AreEqual(ra::data::models::AchievementType::None, editor.GetAchievementType());
+        Assert::AreEqual(ra::data::models::AchievementType::None, achievement.GetAchievementType());
     }
 
     TEST_METHOD(TestSyncBadge)

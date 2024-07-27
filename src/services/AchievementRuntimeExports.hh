@@ -2,6 +2,7 @@
 #define RA_SERVICES_ACHIEVEMENT_RUNTIME_EXPORTS_HH
 #pragma once
 
+void RaiseClientExternalMenuChanged();
 void SyncClientExternalRAIntegrationMenuItem(int nMenuItemId);
 void SyncClientExternalHardcoreState();
 bool IsExternalRcheevosClient() noexcept;

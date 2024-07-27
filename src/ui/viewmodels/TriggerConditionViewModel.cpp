@@ -513,9 +513,7 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     }
     else if (args.Property == OperatorProperty)
     {
-        const auto nCurrentType = ra::itoe<TriggerOperandType>(GetValue(TargetTypeProperty));
         SetValue(HasTargetProperty, ra::itoe<TriggerOperatorType>(args.tNewValue) != TriggerOperatorType::None);
-        SetValue(HasTargetValueProperty, !IsParameterlessType(nCurrentType) && GetValue(HasTargetProperty));
         UpdateHasHits();
     }
     else if (args.Property == TypeProperty)
@@ -583,7 +581,11 @@ void TriggerConditionViewModel::UpdateHasHits()
 void TriggerConditionViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == HasTargetProperty)
+    {
+        const auto nTargetType = GetTargetType();
         SetValue(HasTargetSizeProperty, args.tNewValue && IsAddressType(GetTargetType()));
+        SetValue(HasTargetValueProperty, args.tNewValue && !IsParameterlessType(nTargetType));
+    }
 
     ViewModelBase::OnValueChanged(args);
 }

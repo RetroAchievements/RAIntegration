@@ -581,7 +581,11 @@ void TriggerConditionViewModel::UpdateHasHits()
 void TriggerConditionViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == HasTargetProperty)
-        SetValue(HasTargetSizeProperty, args.tNewValue && IsAddressType(GetTargetType()));
+    {
+        const auto nTargetType = GetTargetType();
+        SetValue(HasTargetSizeProperty, args.tNewValue && IsAddressType(nTargetType));
+        SetValue(HasTargetValueProperty, args.tNewValue && !IsParameterlessType(nTargetType));
+    }
 
     ViewModelBase::OnValueChanged(args);
 }

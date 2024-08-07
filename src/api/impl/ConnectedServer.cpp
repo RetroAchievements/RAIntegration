@@ -176,6 +176,27 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
     }
 }
 
+static void GetRequiredJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Value& pDocument,
+    _In_ const char* const sField, _Inout_ ApiResponseBase& response)
+{
+    if (!pDocument.HasMember(sField))
+    {
+        nValue = 0;
+
+        response.Result = ApiResult::Error;
+        if (response.ErrorMessage.empty())
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
+    }
+    else
+    {
+        auto& pField = pDocument[sField];
+        if (pField.IsUint())
+            nValue = pField.GetUint();
+        else
+            nValue = 0;
+    }
+}
+
 static void GetOptionalJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Value& pDocument,
     _In_ const char* const sField, _In_ const char* const sDefaultValue = "")
 {
@@ -481,9 +502,7 @@ FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFrie
                 if (oFriend.LastActivity == L"_")
                     oFriend.LastActivity.clear();
 
-                std::string sPoints;
-                GetRequiredJsonField(sPoints, pFriend, "RAPoints", response);
-                oFriend.Score = std::stoi(sPoints);
+                GetRequiredJsonField(oFriend.Score, pFriend, "RAPoints", response);
 
                 response.Friends.emplace_back(oFriend);
             }

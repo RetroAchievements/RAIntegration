@@ -30,7 +30,7 @@ private:
     }
 
 public:
-    TEST_METHOD(TestAtari2600)
+    TEST_METHOD(TestInitializeAtari2600)
     {
         ConsoleContext context(ConsoleID::Atari2600);
 
@@ -54,7 +54,7 @@ public:
         Assert::AreEqual(0xFFFFFFFFU, context.ByteAddressFromRealAddress(0x14U));
     }
 
-    TEST_METHOD(TestGameboyAdvance)
+    TEST_METHOD(TestInitializeGameboyAdvance)
     {
         ConsoleContext context(ConsoleID::GBA);
 
@@ -91,7 +91,7 @@ public:
         Assert::AreEqual(0x00019234U, context.ByteAddressFromRealAddress(0x02011234U));
     }
 
-    TEST_METHOD(TestPlayStationPortable)
+    TEST_METHOD(TestInitializePlayStationPortable)
     {
         ConsoleContext context(ConsoleID::PSP);
 
@@ -119,6 +119,71 @@ public:
         AssertRegion(context, 0x02000000U, nullptr);
 
         Assert::AreEqual(0x01123456U, context.ByteAddressFromRealAddress(0x09123456U));
+    }
+
+    TEST_METHOD(TestByteAddressFromRealAddressDreamcast)
+    {
+        ConsoleContext context(ConsoleID::Dreamcast);
+
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x0C001234U));
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x8C001234U));
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0xAC001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0x9C001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0x00001234U));
+    }
+
+    TEST_METHOD(TestByteAddressFromRealAddressGameCube)
+    {
+        ConsoleContext context(ConsoleID::GameCube);
+
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x80001234U));
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0xC0001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0xA0001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0x00001234U));
+    }
+
+    TEST_METHOD(TestByteAddressFromRealAddressDSi)
+    {
+        ConsoleContext context(ConsoleID::DSi);
+
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x02001234U));
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x0C001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0x0A001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0x00001234U));
+    }
+
+    TEST_METHOD(TestByteAddressFromRealAddressPlayStation)
+    {
+        ConsoleContext context(ConsoleID::PlayStation);
+
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x00001234U));
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x80001234U));
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0xA0001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0x90001234U));
+    }
+
+    TEST_METHOD(TestByteAddressFromRealAddressPlayStation2)
+    {
+        ConsoleContext context(ConsoleID::PlayStation2);
+
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x00001234U));
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x20001234U));
+        Assert::AreEqual({ 0x00101234 }, context.ByteAddressFromRealAddress(0x30101234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0x30001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0x80001234U));
+    }
+
+    TEST_METHOD(TestByteAddressFromRealAddressWII)
+    {
+        ConsoleContext context(ConsoleID::WII);
+
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x80001234U));
+        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0xC0001234U));
+        Assert::AreEqual({ 0x01801234 }, context.ByteAddressFromRealAddress(0x90001234U));
+        Assert::AreEqual({ 0x01801234 }, context.ByteAddressFromRealAddress(0xD0001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0xA0001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0xB0001234U));
+        Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0x00001234U));
     }
 };
 

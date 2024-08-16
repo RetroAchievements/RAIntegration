@@ -436,6 +436,29 @@ public:
         Assert::AreEqual(std::string("ServerDefinition"), asset.GetDefinition());
     }
 
+    TEST_METHOD(TestRestoreDefinitionCheckpointEmpty)
+    {
+        AssetDefinitionViewModelHarness asset;
+        asset.SetDefinition("ServerDefinition");
+        asset.CreateServerCheckpoint();
+        asset.CreateLocalCheckpoint(); // no local value
+
+        Assert::AreEqual(AssetChanges::None, asset.GetChanges());
+        Assert::AreEqual(std::string("ServerDefinition"), asset.GetDefinition());
+
+        asset.SetDefinition("");
+        Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
+        Assert::AreEqual(std::string(""), asset.GetDefinition());
+
+        asset.UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(std::string(""), asset.GetDefinition());
+
+        asset.RestoreLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(std::string(""), asset.GetDefinition());
+    }
+
     TEST_METHOD(TestResetLocalCheckpoint)
     {
         AssetModelHarness asset;

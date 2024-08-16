@@ -404,6 +404,46 @@ public:
         vmUpload.AssertFailed(0, 1, L"* Title1: You must be a developer to modify values in Core!");
     }
 
+    TEST_METHOD(TestSingleCoreAchievementApiError)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        auto& pAchievement =
+            vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+        pAchievement.UpdateServerCheckpoint();
+        Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
+
+        pAchievement.SetTrigger("");
+        pAchievement.UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
+
+        vmUpload.QueueAsset(pAchievement);
+        Assert::AreEqual({1U}, vmUpload.TaskCount());
+
+        // mockServer doesn't call the API that would return Error/Invalid state, so update the mockServer
+        // to behave as if the failure happened at the API level.
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>(
+            [&bApiCalled](const ra::api::UpdateAchievement::Request&, ra::api::UpdateAchievement::Response& pResponse) {
+                bApiCalled = true;
+                pResponse.Result = ra::api::ApiResult::Error;
+                pResponse.ErrorMessage = "Invalid state";
+                return true;
+            });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+        Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
+
+        vmUpload.AssertFailed(0, 1, L"* Title1: Invalid state");
+
+        // This simulates the failure code in AssetListViewModel::Publish. The test can't be in
+        // AssetListViewModel_Tests, because AssetListViewModel_Tests overrides Publish to avoid
+        // using the AssetUploadViewModel.
+        pAchievement.RestoreLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
+    }
+
     TEST_METHOD(TestMultipleCoreAchievements)
     {
         AssetUploadViewModelHarness vmUpload;

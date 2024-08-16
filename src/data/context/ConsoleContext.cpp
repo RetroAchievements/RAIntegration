@@ -93,9 +93,59 @@ ra::ByteAddress ConsoleContext::ByteAddressFromRealAddress(ra::ByteAddress nReal
         }
     }
 
+    // additional mirror/shadow ram mappings not directly exposed by rc_console_memory_regions
+    switch (m_nId)
+    {
+        case ConsoleID::Dreamcast:
+            // http://archiv.sega-dc.de/munkeechuff/hardware/Memory.html
+            if (nRealAddress >= 0x8C000000 && nRealAddress <= 0x8CFFFFFF) // System Memory (MMU enabled)
+                return ByteAddressFromRealAddress(nRealAddress & 0x0FFFFFFF);
+            if (nRealAddress >= 0xAC000000 && nRealAddress <= 0xACFFFFFF) // System Memory (cache enabled)
+                return ByteAddressFromRealAddress(nRealAddress & 0x0FFFFFFF);
+            break;
+
+        case ConsoleID::GameCube:
+            // https://wiibrew.org/wiki/Memory_map
+            if (nRealAddress >= 0xC0000000 && nRealAddress <= 0xC17FFFFF) // System Memory (uncached)
+                return ByteAddressFromRealAddress(nRealAddress - (0xC0000000-0x80000000));
+            break;
+
+        case ConsoleID::DSi:
+            // https://problemkaputt.de/gbatek.htm#dsiiomap
+            if (nRealAddress >= 0x0C000000 && nRealAddress <= 0x0CFFFFFF) // Mirror of Main RAM
+                return ByteAddressFromRealAddress(nRealAddress - (0x0C000000-0x02000000));
+            break;
+
+        case ConsoleID::PlayStation:
+            // https://www.raphnet.net/electronique/psx_adaptor/Playstation.txt
+            if (nRealAddress >= 0x80000000 && nRealAddress <= 0x801FFFFF) // Kernel and User Memory Mirror (cached)
+                return ByteAddressFromRealAddress(nRealAddress & 0x001FFFFF);
+            if (nRealAddress >= 0xA0000000 && nRealAddress <= 0xA01FFFFF) // Kernel and User Memory Mirror (uncached)
+                return ByteAddressFromRealAddress(nRealAddress & 0x001FFFFF);
+            break;
+
+        case ConsoleID::PlayStation2:
+            // https://psi-rockin.github.io/ps2tek/
+            if (nRealAddress >= 0x20000000 && nRealAddress <= 0x21FFFFFF) // Main RAM Mirror (uncached)
+                return ByteAddressFromRealAddress(nRealAddress & 0x01FFFFFF);
+            if (nRealAddress >= 0x30100000 && nRealAddress <= 0x31FFFFFF) // Main RAM Mirror (uncached and accelerated)
+                return ByteAddressFromRealAddress(nRealAddress & 0x01FFFFFF);
+            break;
+
+        case ConsoleID::WII:
+            // https://wiibrew.org/wiki/Memory_map
+            if (nRealAddress >= 0xC0000000 && nRealAddress <= 0xC17FFFFF) // System Memory (uncached)
+                return ByteAddressFromRealAddress(nRealAddress - (0xC0000000 - 0x80000000));
+            if (nRealAddress >= 0xD0000000 && nRealAddress <= 0xD3FFFFFF) // System Memory (uncached)
+                return ByteAddressFromRealAddress(nRealAddress - (0xD0000000 - 0x90000000));
+            break;
+
+        default:
+            break;
+    }
+
     return 0xFFFFFFFF;
 }
-
 
 } // namespace context
 } // namespace data

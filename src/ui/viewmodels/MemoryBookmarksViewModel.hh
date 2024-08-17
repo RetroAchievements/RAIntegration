@@ -336,6 +336,9 @@ public:
     /// <returns>Number of bookmarks that were removed</returns>
     int RemoveSelectedBookmarks();
 
+    static const BoolModelProperty HasSelectionProperty;
+    const bool HasSelection() const { return GetValue(HasSelectionProperty); }
+
     static const StringModelProperty FreezeButtonTextProperty;
     const std::wstring& GetFreezeButtonText() const { return GetValue(FreezeButtonTextProperty); }
 
@@ -343,6 +346,14 @@ public:
     /// Freezes the selected items. Or, if they're already all frozen, unfreezes them.
     /// </summary>
     void ToggleFreezeSelected();
+
+    static const StringModelProperty PauseButtonTextProperty;
+    const std::wstring& GetPauseButtonText() const { return GetValue(PauseButtonTextProperty); }
+
+    /// <summary>
+    /// Marks the selected items to pause on change. Or, if they're already all marked, unmarks them.
+    /// </summary>
+    void TogglePauseSelected();
 
     /// <summary>
     /// Moves the selected bookmarks higher in the list.
@@ -394,6 +405,11 @@ protected:
 private:
     bool ShouldFreeze() const;
     void UpdateFreezeButtonText();
+
+    bool ShouldPause() const;
+    void UpdatePauseButtonText();
+
+    void UpdateHasSelection();
 
     ViewModelCollection<MemoryBookmarkViewModel> m_vBookmarks;
     LookupItemViewModelCollection m_vSizes;

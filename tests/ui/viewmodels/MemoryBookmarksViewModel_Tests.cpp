@@ -752,6 +752,63 @@ public:
         Assert::AreEqual(std::wstring(L"Freeze"), bookmarks.GetFreezeButtonText());
     }
 
+    TEST_METHOD(TestTogglePauseSelected)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.AddBookmark(1234U, MemSize::EightBit);
+        bookmarks.AddBookmark(2345U, MemSize::EightBit);
+        bookmarks.AddBookmark(4567U, MemSize::EightBit);
+        bookmarks.AddBookmark(6789U, MemSize::EightBit);
+        Assert::AreEqual(std::wstring(L"Pause"), bookmarks.GetPauseButtonText());
+        Assert::IsFalse(bookmarks.HasSelection());
+
+        // no selected items are marked to pause - mark them all
+        bookmarks.Bookmarks().GetItemAt(1)->SetSelected(true);
+        bookmarks.Bookmarks().GetItemAt(3)->SetSelected(true);
+        Assert::IsTrue(bookmarks.HasSelection());
+
+        Assert::AreEqual(std::wstring(L"Pause"), bookmarks.GetPauseButtonText());
+        bookmarks.TogglePauseSelected();
+        Assert::IsTrue(bookmarks.HasSelection());
+
+        Assert::AreEqual({ 4U }, bookmarks.Bookmarks().Count());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(0)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange, bookmarks.Bookmarks().GetItemAt(1)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(2)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange, bookmarks.Bookmarks().GetItemAt(3)->GetBehavior());
+        Assert::AreEqual(std::wstring(L"Stop Pausing"), bookmarks.GetPauseButtonText());
+
+        // some selected items are marked to pause - mark the rest (items 2 and 3 are selected)
+        bookmarks.Bookmarks().GetItemAt(1)->SetSelected(false);
+        bookmarks.Bookmarks().GetItemAt(2)->SetSelected(true);
+        Assert::IsTrue(bookmarks.HasSelection());
+
+        Assert::AreEqual(std::wstring(L"Pause"), bookmarks.GetPauseButtonText());
+        bookmarks.TogglePauseSelected();
+
+        Assert::AreEqual({ 4U }, bookmarks.Bookmarks().Count());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(0)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange, bookmarks.Bookmarks().GetItemAt(1)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange, bookmarks.Bookmarks().GetItemAt(2)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange, bookmarks.Bookmarks().GetItemAt(3)->GetBehavior());
+        Assert::AreEqual(std::wstring(L"Stop Pausing"), bookmarks.GetPauseButtonText());
+
+        // all selected items are marked to pause - unmark them (items 1 and 3 are selected)
+        bookmarks.Bookmarks().GetItemAt(1)->SetSelected(true);
+        bookmarks.Bookmarks().GetItemAt(2)->SetSelected(false);
+        Assert::IsTrue(bookmarks.HasSelection());
+
+        Assert::AreEqual(std::wstring(L"Stop Pausing"), bookmarks.GetPauseButtonText());
+        bookmarks.TogglePauseSelected();
+
+        Assert::AreEqual({ 4U }, bookmarks.Bookmarks().Count());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(0)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(1)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange, bookmarks.Bookmarks().GetItemAt(2)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(3)->GetBehavior());
+        Assert::AreEqual(std::wstring(L"Pause"), bookmarks.GetPauseButtonText());
+    }
+
     TEST_METHOD(TestClearAllChanges)
     {
         MemoryBookmarksViewModelHarness bookmarks;

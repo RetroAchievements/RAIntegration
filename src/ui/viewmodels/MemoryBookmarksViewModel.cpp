@@ -42,7 +42,9 @@ const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::Behavi
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::RowColorProperty("MemoryBookmarkViewModel", "RowColor", 0);
 const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadOnlyProperty("MemoryBookmarkViewModel", "IsReadOnly", false);
 const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsDirtyProperty("MemoryBookmarkViewModel", "IsDirty", false);
+const BoolModelProperty MemoryBookmarksViewModel::HasSelectionProperty("MemoryBookmarkViewModel", "HasSelection", false);
 const StringModelProperty MemoryBookmarksViewModel::FreezeButtonTextProperty("MemoryBookmarksViewModel", "FreezeButtonText", L"Freeze");
+const StringModelProperty MemoryBookmarksViewModel::PauseButtonTextProperty("MemoryBookmarksViewModel", "PauseButtonText", L"Pause");
 
 constexpr int MaxTextBookmarkLength = 8;
 
@@ -703,7 +705,11 @@ void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(gsl::index, const Boo
     if (args.Property == LookupItemViewModel::IsSelectedProperty)
     {
         if (!m_vBookmarks.IsUpdating())
+        {
+            UpdateHasSelection();
             UpdateFreezeButtonText();
+            UpdatePauseButtonText();
+        }
     }
 }
 
@@ -712,13 +718,33 @@ void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index, const IntM
     if (args.Property == MemoryBookmarkViewModel::BehaviorProperty)
     {
         if (!m_vBookmarks.IsUpdating())
+        {
             UpdateFreezeButtonText();
+            UpdatePauseButtonText();
+        }
     }
 }
 
 void MemoryBookmarksViewModel::OnEndViewModelCollectionUpdate()
 {
+    UpdateHasSelection();
     UpdateFreezeButtonText();
+    UpdatePauseButtonText();
+}
+
+void MemoryBookmarksViewModel::UpdateHasSelection()
+{
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
+    {
+        const auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
+        if (pBookmark.IsSelected())
+        {
+            SetValue(HasSelectionProperty, true);
+            return;
+        }
+    }
+
+    SetValue(HasSelectionProperty, false);
 }
 
 bool MemoryBookmarksViewModel::ShouldFreeze() const
@@ -735,7 +761,7 @@ bool MemoryBookmarksViewModel::ShouldFreeze() const
 
 void MemoryBookmarksViewModel::UpdateFreezeButtonText()
 {
-    if (ShouldFreeze())
+    if (!HasSelection() || ShouldFreeze())
         SetValue(FreezeButtonTextProperty, FreezeButtonTextProperty.GetDefaultValue());
     else
         SetValue(FreezeButtonTextProperty, L"Unfreeze");
@@ -760,6 +786,52 @@ void MemoryBookmarksViewModel::ToggleFreezeSelected()
         {
             auto* pItem = m_vBookmarks.GetItemAt(nIndex);
             if (pItem && pItem->IsSelected() && pItem->GetBehavior() == BookmarkBehavior::Frozen)
+                pItem->SetBehavior(BookmarkBehavior::None);
+        }
+    }
+
+    m_vBookmarks.EndUpdate();
+}
+
+bool MemoryBookmarksViewModel::ShouldPause() const
+{
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
+    {
+        const auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
+        if (pBookmark.IsSelected() && pBookmark.GetBehavior() != BookmarkBehavior::PauseOnChange)
+            return true;
+    }
+
+    return false;
+}
+
+void MemoryBookmarksViewModel::UpdatePauseButtonText()
+{
+    if (!HasSelection() || ShouldPause())
+        SetValue(PauseButtonTextProperty, PauseButtonTextProperty.GetDefaultValue());
+    else
+        SetValue(PauseButtonTextProperty, L"Stop Pausing");
+}
+
+void MemoryBookmarksViewModel::TogglePauseSelected()
+{
+    m_vBookmarks.BeginUpdate();
+
+    if (ShouldPause())
+    {
+        for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+        {
+            auto* pItem = m_vBookmarks.GetItemAt(nIndex);
+            if (pItem && pItem->IsSelected())
+                pItem->SetBehavior(BookmarkBehavior::PauseOnChange);
+        }
+    }
+    else
+    {
+        for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+        {
+            auto* pItem = m_vBookmarks.GetItemAt(nIndex);
+            if (pItem && pItem->IsSelected() && pItem->GetBehavior() == BookmarkBehavior::PauseOnChange)
                 pItem->SetBehavior(BookmarkBehavior::None);
         }
     }

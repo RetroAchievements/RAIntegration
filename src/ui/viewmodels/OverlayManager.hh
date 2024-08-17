@@ -389,6 +389,7 @@ private:
         int nFrameId = 0;
         std::unique_ptr<ra::ui::drawing::ISurface> pScreen;
         std::map<int, std::wstring> vMessages;
+        bool bDelayed = false;
     };
     std::vector<Screenshot> m_vScreenshotQueue;
     std::mutex m_pScreenshotQueueMutex;

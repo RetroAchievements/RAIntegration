@@ -873,7 +873,11 @@ void OverlayManager::ProcessScreenshots()
                     }
                     else
                     {
-                        RA_LOG_INFO("Image no longer available for %s", iter->second);
+                        if (!pScreenshot.bDelayed)
+                        {
+                            pScreenshot.bDelayed = true;
+                            RA_LOG_INFO("Image %s not available for %s", pImageReference.Name(), iter->second);
+                        }
                         ++iter;
                     }
                 }

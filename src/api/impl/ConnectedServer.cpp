@@ -131,6 +131,12 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
     if (pDocument.HasMember("Error"))
     {
         pResponse.ErrorMessage = pDocument["Error"].GetString();
+        if (httpResponse.StatusCode() == ra::services::Http::StatusCode::TooManyRequests)
+        {
+            pResponse.Result = ApiResult::Incomplete;
+            return false;
+        }
+
         if (!pResponse.ErrorMessage.empty())
         {
             pResponse.Result = ApiResult::Error;
@@ -382,14 +388,23 @@ static bool ValidateResponse(int nResult, const rc_api_response_t& api_response,
         if (api_response.error_message && *api_response.error_message)
         {
             pResponse.ErrorMessage = api_response.error_message;
-            pResponse.Result = ApiResult::Error;
-            RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage);
+
+            if (nStatusCode == ra::services::Http::StatusCode::TooManyRequests)
+            {
+                pResponse.Result = ApiResult::Incomplete;
+            }
+            else
+            {
+                pResponse.Result = ApiResult::Error;
+                RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage);
+            }
         }
         else
         {
             pResponse.Result = ApiResult::Failed;
             RA_LOG_ERR("-- %s Error: Success=false", sApiName, pResponse.ErrorMessage);
         }
+
 
         return false;
     }
@@ -1015,7 +1030,9 @@ UploadBadge::Response ConnectedServer::UploadBadge(const UploadBadge::Request& r
     {
         if (!document.HasMember("Response"))
         {
-            response.Result = ApiResult::Error;
+            if (response.Result == ApiResult::None)
+                response.Result = ApiResult::Error;
+
             if (response.ErrorMessage.empty())
                 response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
         }

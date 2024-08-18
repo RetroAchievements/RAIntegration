@@ -80,9 +80,10 @@ void IntegrationMenuViewModel::AddCommonMenuItems(LookupItemViewModelCollection&
     vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
     vmMenu.Add(IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
     vmMenu.Add(IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-    vmMenu.Add(IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
     vmMenu.Add(IDM_RA_FILES_CODENOTES, L"Code &Notes");
     vmMenu.Add(IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+    vmMenu.Add(0, L"-----");
+    vmMenu.Add(IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
 }
 
 void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)

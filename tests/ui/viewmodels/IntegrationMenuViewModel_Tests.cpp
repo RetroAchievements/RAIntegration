@@ -134,7 +134,7 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(16);
+        menu.AssertMenuSize(17);
         menu.AssertMenuItem(0, IDM_RA_FILES_LOGIN, L"&Login");
         menu.AssertMenuSeparator(1);
         menu.AssertMenuItem(2, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
@@ -148,9 +148,10 @@ public:
         menu.AssertMenuItem(10, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         menu.AssertMenuItem(11, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         menu.AssertMenuItem(12, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        menu.AssertMenuItem(13, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuItem(14, IDM_RA_FILES_CODENOTES, L"Code &Notes");
-        menu.AssertMenuItem(15, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        menu.AssertMenuItem(13, IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        menu.AssertMenuItem(14, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        menu.AssertMenuSeparator(15);
+        menu.AssertMenuItem(16, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
     }
 
     TEST_METHOD(TestBuildMenuLoggedIn)
@@ -160,7 +161,7 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(22);
+        menu.AssertMenuSize(23);
         menu.AssertMenuItem(0, IDM_RA_FILES_LOGOUT, L"Log&out");
         menu.AssertMenuSeparator(1);
         menu.AssertMenuItem(2, IDM_RA_OPENUSERPAGE, L"Open my &User Page");
@@ -177,12 +178,13 @@ public:
         menu.AssertMenuItem(13, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         menu.AssertMenuItem(14, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         menu.AssertMenuItem(15, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        menu.AssertMenuItem(16, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuItem(17, IDM_RA_FILES_CODENOTES, L"Code &Notes");
-        menu.AssertMenuItem(18, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
-        menu.AssertMenuSeparator(19);
-        menu.AssertMenuItem(20, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
-        menu.AssertMenuItem(21, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+        menu.AssertMenuItem(16, IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        menu.AssertMenuItem(17, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        menu.AssertMenuSeparator(18);
+        menu.AssertMenuItem(19, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
+        menu.AssertMenuSeparator(20);
+        menu.AssertMenuItem(21, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
+        menu.AssertMenuItem(22, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 
     TEST_METHOD(TestBuildMenuOffline)
@@ -192,7 +194,7 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(16);
+        menu.AssertMenuSize(17);
         menu.AssertMenuItem(0, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
         menu.AssertMenuItem(1, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
         menu.AssertMenuSeparator(2);
@@ -204,11 +206,12 @@ public:
         menu.AssertMenuItem(8, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         menu.AssertMenuItem(9, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         menu.AssertMenuItem(10, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        menu.AssertMenuItem(11, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuItem(12, IDM_RA_FILES_CODENOTES, L"Code &Notes");
-        menu.AssertMenuItem(13, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
-        menu.AssertMenuSeparator(14);
-        menu.AssertMenuItem(15, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+        menu.AssertMenuItem(11, IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        menu.AssertMenuItem(12, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        menu.AssertMenuSeparator(13);
+        menu.AssertMenuItem(14, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
+        menu.AssertMenuSeparator(15);
+        menu.AssertMenuItem(16, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 
     TEST_METHOD(TestLoginHardcoreValidClient)

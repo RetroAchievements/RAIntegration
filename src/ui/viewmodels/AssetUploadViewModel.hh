@@ -30,6 +30,13 @@ public:
 protected:
     void OnBegin() override;
 
+    virtual void Rest() const noexcept
+    {
+        // sleep 500-1500ms to allow server to stop throttling us.
+        // stagger value so we don't slam it in batches.
+        Sleep(rand() % 1000 + 500);
+    }
+
 private:
     enum class UploadState
     {

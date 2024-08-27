@@ -183,13 +183,22 @@ void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
     ra::api::UploadBadge::Request request;
     request.ImageFilePath = sFilename;
 
-    std::vector<ra::data::models::AchievementModel*> vAffectedAchievements;
+    ra::api::UploadBadge::Response response;
     {
         // only allow one badge upload at a time to prevent a race condition on server that could
         // result in non-unique image IDs being returned.
         std::lock_guard<std::mutex> pLock(m_pMutex);
-        const auto response = request.Call();
+        response = request.Call();
+    }
 
+    if (response.Result == ra::api::ApiResult::Incomplete)
+    {
+        Rest();
+        UploadBadge(sBadge);
+        return;
+    }
+    std::vector<ra::data::models::AchievementModel*> vAffectedAchievements;
+    {
         // if the upload succeeded, update the badge property for each associated achievement and queue the
         // achievement update. if the upload failed, set the error message and don't queue the achievement update.
         for (auto& pItem : m_vUploadQueue)
@@ -278,6 +287,12 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
         pAchievement.UpdateLocalCheckpoint();
         pAchievement.UpdateServerCheckpoint();
     }
+    else if (response.Result == ra::api::ApiResult::Incomplete)
+    {
+        Rest();
+        UploadAchievement(pAchievement);
+        return;
+    }
 
     // update the queue
     std::lock_guard<std::mutex> pLock(m_pMutex);
@@ -322,6 +337,12 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
         pLeaderboard.UpdateLocalCheckpoint();
         pLeaderboard.UpdateServerCheckpoint();
     }
+    else if (response.Result == ra::api::ApiResult::Incomplete)
+    {
+        Rest();
+        UploadLeaderboard(pLeaderboard);
+        return;
+    }
 
     // update the queue
     std::lock_guard<std::mutex> pLock(m_pMutex);
@@ -355,6 +376,12 @@ void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNot
             pNotes.SetServerCodeNote(nAddress, L"");
             nState = UploadState::Success;
         }
+        else if (response.Result == ra::api::ApiResult::Incomplete)
+        {
+            Rest();
+            UploadCodeNote(pNotes, nAddress);
+            return;
+        }
 
         sErrorMessage = response.ErrorMessage;
     }
@@ -371,6 +398,12 @@ void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNot
         {
             pNotes.SetServerCodeNote(nAddress, *pNote);
             nState = UploadState::Success;
+        }
+        else if (response.Result == ra::api::ApiResult::Incomplete)
+        {
+            Rest();
+            UploadCodeNote(pNotes, nAddress);
+            return;
         }
 
         sErrorMessage = response.ErrorMessage;

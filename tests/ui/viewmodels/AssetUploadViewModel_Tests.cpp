@@ -220,6 +220,9 @@ private:
             Assert::IsTrue(bDialogSeen);
         }
 
+    protected:
+        void Rest() const noexcept override {}
+
     private:
         ra::data::context::GameAssets m_pAssets;
     };
@@ -699,6 +702,68 @@ public:
 
         Assert::AreEqual(2, nImagesUploaded);
         Assert::AreEqual(2, nAchievementsUploaded);
+        Assert::AreEqual(AssetChanges::None, pAchievement1.GetChanges());
+        Assert::AreEqual(std::wstring(L"76543"), pAchievement1.GetBadge());
+        Assert::AreEqual(AssetChanges::None, pAchievement2.GetChanges());
+        Assert::AreEqual(std::wstring(L"55555"), pAchievement2.GetBadge());
+
+        vmUpload.AssertSuccess(2);
+    }
+
+    TEST_METHOD(TestMultipleCoreAchievementsWithImages429)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
+        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title2", L"Desc2", L"local\\22222", "0xH1234=1");
+        Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
+
+        vmUpload.QueueAsset(pAchievement1);
+        vmUpload.QueueAsset(pAchievement2);
+        Assert::AreEqual({ 2U }, vmUpload.TaskCount());
+
+        int nImagesUploaded = 0;
+        vmUpload.mockServer.HandleRequest<ra::api::UploadBadge>([&nImagesUploaded]
+                (const ra::api::UploadBadge::Request& pRequest, ra::api::UploadBadge::Response& pResponse)
+        {
+            ++nImagesUploaded;
+
+            if (pRequest.ImageFilePath == L"RACache\\Badges\\local\\12345")
+                pResponse.BadgeId = "76543";
+            else
+                pResponse.BadgeId = "55555";
+
+            if (nImagesUploaded % 2 == 0)
+                pResponse.Result = ra::api::ApiResult::Incomplete;
+            else
+                pResponse.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        int nAchievementsUploaded = 0;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&nAchievementsUploaded]
+                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
+        {
+            ++nAchievementsUploaded;
+
+            if (pRequest.Title == L"Title1")
+                Assert::AreEqual(std::string("76543"), pRequest.Badge);
+            else
+                Assert::AreEqual(std::string("55555"), pRequest.Badge);
+
+            pResponse.AchievementId = pRequest.AchievementId;
+
+            if (nAchievementsUploaded % 2 == 0)
+                pResponse.Result = ra::api::ApiResult::Incomplete;
+            else
+                pResponse.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        vmUpload.DoUpload();
+
+        Assert::AreEqual(3, nImagesUploaded);
+        Assert::AreEqual(3, nAchievementsUploaded);
         Assert::AreEqual(AssetChanges::None, pAchievement1.GetChanges());
         Assert::AreEqual(std::wstring(L"76543"), pAchievement1.GetBadge());
         Assert::AreEqual(AssetChanges::None, pAchievement2.GetChanges());
@@ -1216,6 +1281,51 @@ public:
         vmUpload.DoUpload();
 
         Assert::AreEqual(2, nApiCount);
+        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.AssertSuccess(2);
+    }
+
+    TEST_METHOD(TestMultipleCodeNotes429)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.CodeNotes().SetCodeNote(0x1234, L"This is a note.");
+        vmUpload.CodeNotes().SetCodeNote(0x1235, L"This is another note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        Assert::AreEqual({2U}, vmUpload.TaskCount());
+
+        int nApiCount = 0;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>(
+            [&nApiCount](const ra::api::UpdateCodeNote::Request& pRequest,
+                         ra::api::UpdateCodeNote::Response& pResponse) {
+                nApiCount++;
+                Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+                if (pRequest.Address == 0x1234U)
+                {
+                    Assert::AreEqual(0x1234U, pRequest.Address);
+                    Assert::AreEqual(std::wstring(L"This is a note."), pRequest.Note);
+                }
+                else
+                {
+                    Assert::AreEqual(0x1235U, pRequest.Address);
+                    Assert::AreEqual(std::wstring(L"This is another note."), pRequest.Note);
+                }
+
+                if (nApiCount % 2 == 0)
+                    pResponse.Result = ra::api::ApiResult::Incomplete;
+                else
+                    pResponse.Result = ra::api::ApiResult::Success;
+                return true;
+            });
+
+        vmUpload.DoUpload();
+
+        // 0 = 1234, success
+        // 1 = 1235, delayed
+        // 2 = 1235, success
+        Assert::AreEqual(3, nApiCount);
         Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
 
         vmUpload.AssertSuccess(2);

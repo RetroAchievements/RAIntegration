@@ -522,7 +522,8 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
     api_params.game_hash = request.Hash.c_str();
 
     rc_api_request_t api_request;
-    if (rc_api_init_resolve_hash_request(&api_request, &api_params) == RC_OK)
+    const int result = rc_api_init_resolve_hash_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
         ra::services::Http::Response httpResponse;
         if (DoRequest(api_request, ResolveHash::Name(), httpResponse, response))
@@ -539,6 +540,11 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
             rc_api_destroy_resolve_hash_response(&api_response);
         }
     }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
+    }
 
     rc_api_destroy_request(&api_request);
     return response;
@@ -554,7 +560,8 @@ FetchCodeNotes::Response ConnectedServer::FetchCodeNotes(const FetchCodeNotes::R
     api_params.game_id = request.GameId;
 
     rc_api_request_t api_request;
-    if (rc_api_init_fetch_code_notes_request(&api_request, &api_params) == RC_OK)
+    const int result = rc_api_init_fetch_code_notes_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
         ra::services::Http::Response httpResponse;
         if (DoRequest(api_request, FetchCodeNotes::Name(), httpResponse, response))
@@ -584,6 +591,11 @@ FetchCodeNotes::Response ConnectedServer::FetchCodeNotes(const FetchCodeNotes::R
 
             rc_api_destroy_fetch_code_notes_response(&api_response);
         }
+    }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
     }
 
     rc_api_destroy_request(&api_request);
@@ -625,7 +637,8 @@ static void SetCodeNote(ApiResponseBase& response, const char* sApiName,
     api_params.note = sNote;
 
     rc_api_request_t api_request;
-    if (rc_api_init_update_code_note_request(&api_request, &api_params) == RC_OK)
+    const int result = rc_api_init_update_code_note_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
         ra::services::Http::Response httpResponse;
         if (DoRequest(api_request, sApiName, httpResponse, response))
@@ -640,6 +653,11 @@ static void SetCodeNote(ApiResponseBase& response, const char* sApiName,
 
             rc_api_destroy_update_code_note_response(&api_response);
         }
+    }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
     }
 
     rc_api_destroy_request(&api_request);
@@ -689,7 +707,8 @@ UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchie
     api_params.type = request.Type;
 
     rc_api_request_t api_request;
-    if (rc_api_init_update_achievement_request(&api_request, &api_params) == RC_OK)
+    const int result = rc_api_init_update_achievement_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
         ra::services::Http::Response httpResponse;
         if (DoRequest(api_request, UpdateAchievement::Name(), httpResponse, response))
@@ -705,6 +724,11 @@ UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchie
 
             rc_api_destroy_update_achievement_response(&api_response);
         }
+    }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
     }
 
     rc_api_destroy_request(&api_request);
@@ -730,7 +754,8 @@ FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const Fetch
         api_params.friends_only = 1;
 
     rc_api_request_t api_request;
-    if (rc_api_init_fetch_achievement_info_request(&api_request, &api_params) == RC_OK)
+    const int result = rc_api_init_fetch_achievement_info_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
         ra::services::Http::Response httpResponse;
         if (DoRequest(api_request, FetchAchievementInfo::Name(), httpResponse, response))
@@ -758,6 +783,11 @@ FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const Fetch
 
             rc_api_destroy_fetch_achievement_info_response(&api_response);
         }
+    }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
     }
 
     rc_api_destroy_request(&api_request);
@@ -790,7 +820,8 @@ UpdateLeaderboard::Response ConnectedServer::UpdateLeaderboard(const UpdateLeade
     api_params.format = ValueFormatToString(request.Format);
 
     rc_api_request_t api_request;
-    if (rc_api_init_update_leaderboard_request(&api_request, &api_params) == RC_OK)
+    const int result = rc_api_init_update_leaderboard_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
         ra::services::Http::Response httpResponse;
         if (DoRequest(api_request, UpdateLeaderboard::Name(), httpResponse, response))
@@ -806,6 +837,11 @@ UpdateLeaderboard::Response ConnectedServer::UpdateLeaderboard(const UpdateLeade
 
             rc_api_destroy_update_leaderboard_response(&api_response);
         }
+    }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
     }
 
     rc_api_destroy_request(&api_request);
@@ -829,7 +865,8 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
     api_params.count = request.NumEntries;
 
     rc_api_request_t api_request;
-    if (rc_api_init_fetch_leaderboard_info_request(&api_request, &api_params) == RC_OK)
+    const int result = rc_api_init_fetch_leaderboard_info_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
         ra::services::Http::Response httpResponse;
         if (DoRequest(api_request, FetchLeaderboardInfo::Name(), httpResponse, response))
@@ -858,6 +895,11 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
 
             rc_api_destroy_fetch_leaderboard_info_response(&api_response);
         }
+    }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
     }
 
     rc_api_destroy_request(&api_request);
@@ -901,7 +943,8 @@ FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::R
     api_params.console_id = request.ConsoleId;
 
     rc_api_request_t api_request;
-    if (rc_api_init_fetch_games_list_request(&api_request, &api_params) == RC_OK)
+    const int result = rc_api_init_fetch_games_list_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
         ra::services::Http::Response httpResponse;
         if (DoRequest(api_request, FetchGamesList::Name(), httpResponse, response))
@@ -923,6 +966,11 @@ FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::R
 
             rc_api_destroy_fetch_games_list_response(&api_response);
         }
+    }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
     }
 
     rc_api_destroy_request(&api_request);
@@ -952,7 +1000,8 @@ SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::R
         api_params.hash_description = sDescription.c_str();
 
     rc_api_request_t api_request;
-    if (rc_api_init_add_game_hash_request(&api_request, &api_params) == RC_OK)
+    const int result = rc_api_init_add_game_hash_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
         ra::services::Http::Response httpResponse;
         if (DoRequest(api_request, SubmitNewTitle::Name(), httpResponse, response))
@@ -969,6 +1018,11 @@ SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::R
             rc_api_destroy_add_game_hash_response(&api_response);
         }
     }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
+    }
 
     rc_api_destroy_request(&api_request);
     return response;
@@ -982,7 +1036,8 @@ FetchBadgeIds::Response ConnectedServer::FetchBadgeIds(const FetchBadgeIds::Requ
     memset(&api_params, 0, sizeof(api_params));
 
     rc_api_request_t api_request;
-    if (rc_api_init_fetch_badge_range_request(&api_request, &api_params) == RC_OK)
+    const int result = rc_api_init_fetch_badge_range_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
         ra::services::Http::Response httpResponse;
         if (DoRequest(api_request, FetchBadgeIds::Name(), httpResponse, response))
@@ -999,6 +1054,11 @@ FetchBadgeIds::Response ConnectedServer::FetchBadgeIds(const FetchBadgeIds::Requ
 
             rc_api_destroy_fetch_badge_range_response(&api_response);
         }
+    }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
     }
 
     rc_api_destroy_request(&api_request);

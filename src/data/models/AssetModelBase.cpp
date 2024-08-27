@@ -541,6 +541,12 @@ void AssetModelBase::CommitTransaction()
                     pAsset->m_bLocalModified = true;
                     UpdateAssetDefinitionVersion(*pAsset, AssetChanges::Unpublished);
                 }
+                else if (pAsset->m_sLocalDefinition.empty() && !pAsset->m_bLocalModified)
+                {
+                    // local and current are both empty, but local isn't modified.
+                    // just change the state to unpublished.
+                    UpdateAssetDefinitionVersion(*pAsset, AssetChanges::Unpublished);
+                }
             }
         }
     }

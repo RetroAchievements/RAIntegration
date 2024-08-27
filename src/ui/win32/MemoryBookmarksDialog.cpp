@@ -179,7 +179,13 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
       m_bindBookmarks(vmMemoryBookmarks)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Memory Bookmarks");
+    m_bindWindow.BindLabel(IDC_RA_PAUSE, MemoryBookmarksViewModel::PauseButtonTextProperty);
     m_bindWindow.BindLabel(IDC_RA_FREEZE, MemoryBookmarksViewModel::FreezeButtonTextProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DEL_BOOKMARK, MemoryBookmarksViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_PAUSE, MemoryBookmarksViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_FREEZE, MemoryBookmarksViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_MOVE_BOOKMARK_UP, MemoryBookmarksViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_MOVE_BOOKMARK_DOWN, MemoryBookmarksViewModel::HasSelectionProperty);
 
     m_bindBookmarks.SetShowGridLines(true);
     m_bindBookmarks.BindIsSelected(MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsSelectedProperty);
@@ -251,6 +257,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     SetAnchor(IDC_RA_CLEAR_CHANGE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_DEL_BOOKMARK, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_PAUSE, Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_FREEZE, Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_MOVE_BOOKMARK_UP, Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_MOVE_BOOKMARK_DOWN, Anchor::Bottom | Anchor::Right);
@@ -310,6 +317,14 @@ BOOL MemoryBookmarksDialog::OnCommand(WORD nCommand)
             auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
             if (vmMemoryBookmarks)
                 vmMemoryBookmarks->ToggleFreezeSelected();
+
+            return TRUE;
+        }
+
+        case IDC_RA_PAUSE: {
+            auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
+            if (vmMemoryBookmarks)
+                vmMemoryBookmarks->TogglePauseSelected();
 
             return TRUE;
         }

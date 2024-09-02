@@ -245,10 +245,11 @@ void TriggerViewModel::PasteFromClipboard()
     rc_init_parse_state(&parse, nullptr, nullptr, 0);
     rc_memref_t* first_memref;
     rc_init_parse_state_memrefs(&parse, &first_memref);
+    parse.is_value = IsValue();
     std::string sTrigger = ra::Narrow(sClipboardText);
     const char* memaddr = sTrigger.c_str();
     Expects(memaddr != nullptr);
-    rc_parse_condset(&memaddr, &parse, IsValue());
+    rc_parse_condset(&memaddr, &parse);
 
     const auto nSize = parse.offset;
     if (nSize > 0 && *memaddr == 'S')
@@ -269,8 +270,9 @@ void TriggerViewModel::PasteFromClipboard()
     sTriggerBuffer.resize(nSize);
     rc_init_parse_state(&parse, sTriggerBuffer.data(), nullptr, 0);
     rc_init_parse_state_memrefs(&parse, &first_memref);
+    parse.is_value = IsValue();
     memaddr = sTrigger.c_str();
-    const rc_condset_t* pCondSet = rc_parse_condset(&memaddr, &parse, IsValue());
+    const rc_condset_t* pCondSet = rc_parse_condset(&memaddr, &parse);
     Expects(pCondSet != nullptr);
 
     m_vConditions.BeginUpdate();

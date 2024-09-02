@@ -683,7 +683,7 @@ std::wstring TriggerConditionViewModel::GetValueTooltip(unsigned int nValue)
 
 static bool IsIndirectMemref(const rc_operand_t& operand) noexcept
 {
-    return rc_operand_is_memref(&operand) && operand.value.memref->value.is_indirect;
+    return rc_operand_is_memref(&operand) && operand.value.memref->value.type == RC_MEMREF_TYPE_MODIFIED_MEMREF;
 }
 
 ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress,
@@ -735,7 +735,7 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
         pFirstCondition = pGroup->m_pConditionSet->conditions;
         bProcessPause = pGroup->m_pConditionSet->has_pause;
     }
-
+    /*
     bool bIsIndirect = false;
     bool bIsMultiLevelIndirect = false;
     rc_typed_value_t value = {};
@@ -855,7 +855,7 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
         nPassesLeft--;
         bProcessPause = false; //pause pass is always first, so we are no longer to process pause logic
     }
-
+    */
     return nAddress;
 }
 

@@ -144,7 +144,7 @@ static void ShowFolder(FileDialogViewModel& vmFileDialog, HWND hParentWnd)
 
 void FileDialog::Presenter::DoShowModal(ra::ui::WindowViewModelBase& oViewModel, HWND hParentWnd)
 {
-    auto& vmFileDialog = reinterpret_cast<FileDialogViewModel&>(oViewModel);
+    auto& vmFileDialog = dynamic_cast<FileDialogViewModel&>(oViewModel);
 
     if (vmFileDialog.GetMode() == FileDialogViewModel::Mode::Folder)
     {

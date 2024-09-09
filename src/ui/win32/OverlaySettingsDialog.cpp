@@ -14,7 +14,7 @@ bool OverlaySettingsDialog::Presenter::IsSupported(const ra::ui::WindowViewModel
 
 void OverlaySettingsDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
-    auto& vmSettings = reinterpret_cast<ra::ui::viewmodels::OverlaySettingsViewModel&>(vmViewModel);
+    auto& vmSettings = dynamic_cast<ra::ui::viewmodels::OverlaySettingsViewModel&>(vmViewModel);
 
     OverlaySettingsDialog oDialog(vmSettings);
     oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_OVERLAYSETTINGS), this, hParentWnd);
@@ -96,7 +96,7 @@ BOOL OverlaySettingsDialog::OnCommand(WORD nCommand)
 {
     if (nCommand == IDC_RA_BROWSE)
     {
-        auto& vmSettings = reinterpret_cast<ra::ui::viewmodels::OverlaySettingsViewModel&>(m_vmWindow);
+        auto& vmSettings = dynamic_cast<ra::ui::viewmodels::OverlaySettingsViewModel&>(m_vmWindow);
         vmSettings.BrowseLocation();
         return TRUE;
     }

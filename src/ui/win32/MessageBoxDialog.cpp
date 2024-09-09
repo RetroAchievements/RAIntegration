@@ -43,7 +43,7 @@ void MessageBoxDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewMo
 
 void MessageBoxDialog::Presenter::DoShowModal(ra::ui::WindowViewModelBase& oViewModel, HWND hParentWnd)
 {
-    auto& oMessageBoxViewModel = reinterpret_cast<MessageBoxViewModel&>(oViewModel);
+    auto& oMessageBoxViewModel = dynamic_cast<MessageBoxViewModel&>(oViewModel);
     int nButton = 0;
 
     if (pTaskDialog == nullptr || oMessageBoxViewModel.GetHeader().empty())

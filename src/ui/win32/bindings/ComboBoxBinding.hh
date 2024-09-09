@@ -64,7 +64,10 @@ public:
 
     void BindItems(ViewModelCollectionBase& pViewModels, const IntModelProperty& pIdProperty, const StringModelProperty& pTextProperty)
     {
+#pragma warning(push)
+#pragma warning(disable : 26465) // const_cast forces a call to the const implementation
         BindItems(const_cast<const ViewModelCollectionBase&>(pViewModels), pIdProperty, pTextProperty);
+#pragma warning(pop)
 
         m_pMutableViewModelCollection = &pViewModels;
         pViewModels.AddNotifyTarget(*this);

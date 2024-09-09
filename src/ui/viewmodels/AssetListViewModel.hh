@@ -312,6 +312,7 @@ private:
     bool MatchesFilter(const ra::data::models::AssetModelBase& pAsset) const;
     void AddOrRemoveFilteredItem(gsl::index nAssetIndex);
     bool AddOrRemoveFilteredItem(const ra::data::models::AssetModelBase& pAsset);
+    static void SyncAsset(AssetSummaryViewModel& vmSummary, const ra::data::models::AssetModelBase& pAsset);
     gsl::index GetFilteredAssetIndex(const ra::data::models::AssetModelBase& pAsset) const;
     void ApplyFilter();
 

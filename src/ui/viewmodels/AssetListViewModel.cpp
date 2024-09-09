@@ -491,6 +491,22 @@ void AssetListViewModel::AddOrRemoveFilteredItem(gsl::index nAssetIndex)
     }
 }
 
+void AssetListViewModel::SyncAsset(AssetSummaryViewModel& vmSummary, const ra::data::models::AssetModelBase& pAsset)
+{
+    vmSummary.SetLabel(pAsset.GetName());
+    vmSummary.SetType(pAsset.GetType());
+    vmSummary.SetCategory(pAsset.GetCategory());
+    vmSummary.SetChanges(pAsset.GetChanges());
+    vmSummary.SetState(pAsset.GetState());
+    vmSummary.SetWarning(pAsset.GetValidationError());
+
+    const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pAsset);
+    if (pAchievement != nullptr)
+        vmSummary.SetPoints(pAchievement->GetPoints());
+    else
+        vmSummary.SetPoints(0);
+}
+
 bool AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetModelBase& pAsset)
 {
     const auto nIndex = GetFilteredAssetIndex(pAsset);
@@ -501,21 +517,14 @@ bool AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetMo
         {
             auto pSummary = std::make_unique<AssetSummaryViewModel>();
             pSummary->SetId(ra::to_signed(pAsset.GetID()));
-            pSummary->SetLabel(pAsset.GetName());
-            pSummary->SetType(pAsset.GetType());
-            pSummary->SetCategory(pAsset.GetCategory());
-            pSummary->SetChanges(pAsset.GetChanges());
-            pSummary->SetState(pAsset.GetState());
-            pSummary->SetWarning(pAsset.GetValidationError());
-
-            const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pAsset);
-            if (pAchievement != nullptr)
-                pSummary->SetPoints(pAchievement->GetPoints());
-            else
-                pSummary->SetPoints(0);
+            SyncAsset(*pSummary, pAsset);
 
             m_vFilteredAssets.Append(std::move(pSummary));
             return true;
+        }
+        else
+        {
+            SyncAsset(*m_vFilteredAssets.GetItemAt(nIndex), pAsset);
         }
     }
     else

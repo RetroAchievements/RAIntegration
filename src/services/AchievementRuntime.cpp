@@ -944,6 +944,9 @@ void AchievementRuntime::UpdateActiveLeaderboards() noexcept
 
 static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra::LeaderboardID nId) noexcept
 {
+    if (!pClient || !pClient->game)
+        return nullptr;
+
     rc_client_subset_info_t* subset = pClient->game->subsets;
     for (; subset; subset = subset->next)
     {

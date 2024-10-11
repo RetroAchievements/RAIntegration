@@ -357,6 +357,16 @@ void OverlayManager::UpdateProgressTracker(ra::ui::ImageType imageType, const st
     RequestRender();
 }
 
+void OverlayManager::HideOverlayImmediately()
+{
+    // expect the emulator to be paused while the overlay is open and tell it to unpause
+    // as we're about to discard the overlay.
+    if (m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden)
+        ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().Unpause();
+
+    m_vmOverlay.DeactivateImmediately();
+}
+
 int OverlayManager::QueueMessage(std::unique_ptr<PopupMessageViewModel>& pMessage)
 {
     if (pMessage->GetImage().Type() != ra::ui::ImageType::None)

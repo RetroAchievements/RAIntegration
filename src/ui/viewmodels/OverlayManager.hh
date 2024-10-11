@@ -70,10 +70,7 @@ public:
     /// <summary>
     /// Hides the overlay without animating it.
     /// </summary>
-    void HideOverlayImmediately()
-    {
-        m_vmOverlay.DeactivateImmediately();
-    }
+    void HideOverlayImmediately();
 
     /// <summary>
     /// Determines if the overlay is completely covering the emulator screen.

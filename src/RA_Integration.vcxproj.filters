@@ -408,6 +408,9 @@
     <ClCompile Include="services\AchievementRuntimeExports.cpp">
       <Filter>Services</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\CodeNoteModel.cpp">
+      <Filter>Data\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -970,6 +973,9 @@
     </ClInclude>
     <ClInclude Include="services\AchievementRuntimeExports.hh">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\CodeNoteModel.hh">
+      <Filter>Data\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

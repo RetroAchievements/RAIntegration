@@ -86,374 +86,38 @@ void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCode
     });
 }
 
-void CodeNotesModel::ExtractSize(CodeNote& pNote)
-{
-    // provide defaults in case no matches are found
-    pNote.Bytes = 1;
-    pNote.MemSize = MemSize::Unknown;
-
-    // "Nbit" smallest possible note - and that's just the size annotation
-    if (pNote.Note.length() < 4)
-        return;
-
-    bool bBytesFromBits = false;
-    bool bFoundSize = false;
-    bool bLastWordIsSize = false;
-    bool bLastWordIsNumber = false;
-    bool bWordIsNumber = false;
-
-    std::wstring sPreviousWord, sWord;
-    const size_t nLength = pNote.Note.length();
-    for (size_t nIndex = 0; nIndex <= nLength; ++nIndex)
-    {
-        // support reading null terminator so we process the last word in the string
-        const wchar_t c = (nIndex == nLength) ? 0 : pNote.Note.at(nIndex);
-
-        // find the next word
-        if (c > 255)
-        {
-            // ignore unicode characters - isalpha with the default locale would return false,
-            // but also likes to pop up asserts when in a debug build.
-        }
-        else if (isalpha(c))
-        {
-            if (sWord.empty())
-            {
-                sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
-                bWordIsNumber = false;
-                continue;
-            }
-
-            if (!bWordIsNumber)
-            {
-                sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
-                continue;
-            }
-        }
-        else if (isdigit(c))
-        {
-            if (sWord.empty())
-            {
-                sWord.push_back(c);
-                bWordIsNumber = true;
-                continue;
-            }
-
-            if (bWordIsNumber)
-            {
-                sWord.push_back(c);
-                continue;
-            }
-        }
-
-        if (sWord.empty())
-            continue;
-
-        // process the word
-        bool bWordIsSize = false;
-        if (bWordIsNumber)
-        {
-            if (sPreviousWord == L"mbf")
-            {
-                const auto nBits = _wtoi(sWord.c_str());
-                if (nBits == 32)
-                {
-                    pNote.Bytes = 4;
-                    pNote.MemSize = MemSize::MBF32;
-                    bWordIsSize = true;
-                    bFoundSize = true;
-                }
-                else if (nBits == 40)
-                {
-                    pNote.Bytes = 5;
-                    pNote.MemSize = MemSize::MBF32;
-                    bWordIsSize = true;
-                    bFoundSize = true;
-                }
-            }
-            else if (sPreviousWord == L"double" && sWord == L"32")
-            {
-                pNote.Bytes = 4;
-                pNote.MemSize = MemSize::Double32;
-                bWordIsSize = true;
-                bFoundSize = true;
-            }
-        }
-        else if (bLastWordIsSize)
-        {
-            if (sWord == L"float")
-            {
-                if (pNote.MemSize == MemSize::ThirtyTwoBit)
-                {
-                    pNote.MemSize = MemSize::Float;
-                    bWordIsSize = true; // allow trailing be/bigendian
-                }
-            }
-            else if (sWord == L"double")
-            {
-                if (pNote.MemSize == MemSize::ThirtyTwoBit || pNote.Bytes == 8)
-                {
-                    pNote.MemSize = MemSize::Double32;
-                    bWordIsSize = true; // allow trailing be/bigendian
-                }
-            }
-            else if (sWord == L"be" || sWord == L"bigendian")
-            {
-                switch (pNote.MemSize)
-                {
-                    case MemSize::SixteenBit: pNote.MemSize = MemSize::SixteenBitBigEndian; break;
-                    case MemSize::TwentyFourBit: pNote.MemSize = MemSize::TwentyFourBitBigEndian; break;
-                    case MemSize::ThirtyTwoBit: pNote.MemSize = MemSize::ThirtyTwoBitBigEndian; break;
-                    case MemSize::Float: pNote.MemSize = MemSize::FloatBigEndian; break;
-                    case MemSize::Double32: pNote.MemSize = MemSize::Double32BigEndian; break;
-                    default: break;
-                }
-            }
-            else if (sWord == L"le")
-            {
-                if (pNote.MemSize == MemSize::MBF32)
-                    pNote.MemSize = MemSize::MBF32LE;
-            }
-            else if (sWord == L"mbf")
-            {
-                if (pNote.Bytes == 4 || pNote.Bytes == 5)
-                    pNote.MemSize = MemSize::MBF32;
-            }
-        }
-        else if (bLastWordIsNumber)
-        {
-            if (sWord == L"bit" || sWord == L"bits")
-            {
-                if (!bFoundSize)
-                {
-                    const auto nBits = _wtoi(sPreviousWord.c_str());
-                    pNote.Bytes = (nBits + 7) / 8;
-                    pNote.MemSize = MemSize::Unknown;
-                    bBytesFromBits = true;
-                    bWordIsSize = true;
-                    bFoundSize = true;
-                }
-            }
-            else if (sWord == L"byte" || sWord == L"bytes")
-            {
-                if (!bFoundSize || bBytesFromBits)
-                {
-                    pNote.Bytes = _wtoi(sPreviousWord.c_str());
-                    pNote.MemSize = MemSize::Unknown;
-                    bBytesFromBits = false;
-                    bWordIsSize = true;
-                    bFoundSize = true;
-                }
-            }
-
-            if (bWordIsSize)
-            {
-                switch (pNote.Bytes)
-                {
-                    case 0: pNote.Bytes = 1; break; // Unexpected size, reset to defaults (1 byte, Unknown)
-                    case 1: pNote.MemSize = MemSize::EightBit; break;
-                    case 2: pNote.MemSize = MemSize::SixteenBit; break;
-                    case 3: pNote.MemSize = MemSize::TwentyFourBit; break;
-                    case 4: pNote.MemSize = MemSize::ThirtyTwoBit; break;
-                    default: pNote.MemSize = MemSize::Array; break;
-                }
-            }
-        }
-        else if (sWord == L"float")
-        {
-            if (!bFoundSize)
-            {
-                pNote.Bytes = 4;
-                pNote.MemSize = MemSize::Float;
-                bWordIsSize = true; // allow trailing be/bigendian
-
-                if (sPreviousWord == L"be" || sPreviousWord == L"bigendian")
-                    pNote.MemSize = MemSize::FloatBigEndian;
-            }
-        }
-        else if (sWord == L"double")
-        {
-            if (!bFoundSize)
-            {
-                pNote.Bytes = 8;
-                pNote.MemSize = MemSize::Double32;
-                bWordIsSize = true; // allow trailing be/bigendian
-
-                if (sPreviousWord == L"be" || sPreviousWord == L"bigendian")
-                    pNote.MemSize = MemSize::Double32BigEndian;
-            }
-        }
-
-        // store information about the word for later
-        bLastWordIsSize = bWordIsSize;
-        bLastWordIsNumber = bWordIsNumber;
-
-        if (c < 256 && isalnum(c))
-        {
-            std::swap(sPreviousWord, sWord);
-            sWord.clear();
-
-            sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
-            bWordIsNumber = isdigit(c);
-        }
-        else
-        {
-            // only join words with spaces or hyphens.
-            if (c == L' ' || c == L'-')
-                std::swap(sPreviousWord, sWord);
-            else
-                sPreviousWord.clear();
-
-            sWord.clear();
-        }
-    }
-}
-
-static ra::ByteAddress ConvertPointer(ra::ByteAddress nAddress)
-{
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-    const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
-    if (nConvertedAddress != 0xFFFFFFFF)
-        nAddress = nConvertedAddress;
-
-    return nAddress;
-}
-
 void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
 {
-    auto nIndex = sNote.find(L'\n');
-    auto sFirstLine = (nIndex == std::string::npos) ? sNote : sNote.substr(0, nIndex);
-    StringMakeLowercase(sFirstLine);
+    CodeNoteModel note;
+    note.SetAuthor(sAuthor);
+    note.SetNote(sNote);
 
-    if (sFirstLine.find(L"pointer") != std::string::npos)
+    const bool bIsPointer = note.IsPointer();
+    if (bIsPointer)
     {
-        nIndex = sNote.find(L"\n+"); // look for line starting with plus sign
-        if (nIndex != std::string::npos)
-        {
-            nIndex += 2;
+        m_bHasPointers = true;
 
-            auto pointerData = std::make_unique<PointerData>();
-            do
-            {
-                OffsetCodeNote offsetNote;
-                const auto nNextIndex = sNote.find(L"\n+", nIndex);
-                auto sNextNote = sNote.substr(nIndex, nNextIndex - nIndex);
-                ra::Trim(sNextNote);
-
-                wchar_t* pEnd = nullptr;
-
-                try
-                {
-                    if (sNextNote.length() > 2 && sNextNote.at(1) == 'x')
-                        offsetNote.Offset = gsl::narrow_cast<int>(std::wcstoll(sNextNote.c_str() + 2, &pEnd, 16));
-                    else
-                        offsetNote.Offset = gsl::narrow_cast<int>(std::wcstoll(sNextNote.c_str(), &pEnd, 10));
-                }
-                catch (const std::exception&)
-                {
-                    break;
-                }
-
-                if (!pEnd || isalnum(*pEnd))
-                    break;
-
-                const wchar_t* pStop = sNextNote.c_str() + sNextNote.length();
-                while (pEnd < pStop && isspace(*pEnd))
-                    pEnd++;
-                if (pEnd < pStop && !isalnum(*pEnd))
-                {
-                    pEnd++;
-                    while (pEnd < pStop && isspace(*pEnd))
-                        pEnd++;
-                }
-
-                offsetNote.Author = sAuthor;
-                offsetNote.Note = sNextNote.substr(pEnd - sNextNote.c_str());
-                ExtractSize(offsetNote);
-
-                const auto nRangeOffset = offsetNote.Offset + offsetNote.Bytes;
-                pointerData->OffsetRange = std::max(pointerData->OffsetRange, nRangeOffset);
-
-                pointerData->OffsetNotes.push_back(std::move(offsetNote));
-
-                if (nNextIndex == std::string::npos)
-                {
-                    CodeNote pointerNote;
-                    pointerNote.Author = sAuthor;
-
-                    // extract pointer size from first line (assume 32-bit if not specified)
-                    pointerNote.Note = sFirstLine;
-                    ExtractSize(pointerNote);
-                    if (pointerNote.MemSize == MemSize::Unknown)
-                    {
-                        pointerNote.MemSize = MemSize::ThirtyTwoBit;
-                        pointerNote.Bytes = 4;
-                    }
-
-                    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-
-                    // assume anything annotated as a 32-bit pointer will read a real (non-translated) address and
-                    // flag it to be converted to an RA address when evaluating indirect notes in DoFrame()
-                    if (pointerNote.MemSize == MemSize::ThirtyTwoBit ||
-                        pointerNote.MemSize == MemSize::ThirtyTwoBitBigEndian)
-                    {
-                        const auto nMaxAddress = pEmulatorContext.TotalMemorySize();
-
-                        pointerData->OffsetType = OffsetType::Converted;
-
-                        // if any offset exceeds the available memory for the system, assume the user is leveraging
-                        // overflow math instead of masking, and don't attempt to translate the addresses.
-                        for (const auto& pNote : pointerData->OffsetNotes)
-                        {
-                            if (ra::to_unsigned(pNote.Offset) >= nMaxAddress)
-                            {
-                                pointerData->OffsetType = OffsetType::Overflow;
-                                break;
-                            }
-                        }
-                    }
-
-                    // capture the initial value of the pointer
-                    pointerData->RawPointerValue = pEmulatorContext.ReadMemory(nAddress, pointerNote.MemSize);
-                    const auto nPointerValue = (pointerData->OffsetType == OffsetType::Converted)
-                        ? ConvertPointer(pointerData->RawPointerValue) : pointerData->RawPointerValue;
-                    pointerData->PointerValue = nPointerValue;
-                    pointerNote.PointerData = std::move(pointerData);
-
-                    // assign entire note to pointer note
-                    pointerNote.Note = sNote;
-                    {
-                        std::unique_lock<std::mutex> lock(m_oMutex);
-                        m_mCodeNotes.insert_or_assign(nAddress, std::move(pointerNote));
-                    }
-                    m_bHasPointers = true;
-
-                    OnCodeNoteChanged(nAddress, sNote);
-
-                    if (m_fCodeNoteChanged)
-                    {
-                        for (const auto& pNote : m_mCodeNotes[nAddress].PointerData->OffsetNotes)
-                            m_fCodeNoteChanged(nPointerValue + pNote.Offset, pNote.Note);
-                    }
-
-                    return;
-                }
-
-                nIndex = nNextIndex + 2;
-            } while (true);
-        }
+        // capture the initial value of the pointer
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+        note.SetRawPointerValue(pEmulatorContext.ReadMemory(nAddress, note.GetMemSize()));
     }
 
-    CodeNote note;
-    note.Author = sAuthor;
-    note.Note = sNote;
-    ExtractSize(note);
     {
         std::unique_lock<std::mutex> lock(m_oMutex);
         m_mCodeNotes.insert_or_assign(nAddress, std::move(note));
     }
 
     OnCodeNoteChanged(nAddress, sNote);
+
+    // also raise CodeNoteChanged events for each indirect child note
+    if (bIsPointer && m_fCodeNoteChanged)
+    {
+        const auto& pNote = m_mCodeNotes[nAddress];
+        pNote.EnumeratePointerNotes([this](ra::ByteAddress nAddress, const CodeNoteModel& pOffsetNote) {
+            m_fCodeNoteChanged(nAddress, pOffsetNote.GetNote());
+            return true;
+        });
+    }
 }
 
 void CodeNotesModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
@@ -484,7 +148,7 @@ ra::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::ByteAddress nAddress) cons
         {
             --pIter;
 
-            if (pIter->second.Bytes > 1 && pIter->second.Bytes + pIter->first > nAddress)
+            if (pIter->second.GetBytes() > 1 && pIter->second.GetBytes() + pIter->first > nAddress)
                 return pIter->first;
 
         } while (pIter != m_mCodeNotes.begin());
@@ -495,23 +159,9 @@ ra::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::ByteAddress nAddress) cons
     {
         for (const auto& pCodeNote : m_mCodeNotes)
         {
-            if (pCodeNote.second.PointerData == nullptr)
-                continue;
-
-            const auto nPointerValue = pCodeNote.second.PointerData->PointerValue;
-            const auto nConvertedPointerValue = (pCodeNote.second.PointerData->OffsetType == OffsetType::Overflow)
-                ? ConvertPointer(nPointerValue) : nPointerValue;
-
-            if (nAddress >= nConvertedPointerValue &&
-                nAddress < nConvertedPointerValue + pCodeNote.second.PointerData->OffsetRange)
-            {
-                const auto nOffset = ra::to_signed(nAddress - nPointerValue);
-                for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
-                {
-                    if (pOffsetNote.Offset <= nOffset && pOffsetNote.Offset + ra::to_signed(pOffsetNote.Bytes) > nOffset)
-                        return nPointerValue + pOffsetNote.Offset;
-                }
-            }
+            const auto pair = pCodeNote.second.GetPointerNoteAtAddress(nAddress);
+            if (pair.second != nullptr)
+                return pair.first;
         }
     }
 
@@ -519,10 +169,10 @@ ra::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::ByteAddress nAddress) cons
 }
 
 std::wstring CodeNotesModel::BuildCodeNoteSized(ra::ByteAddress nAddress,
-    unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNote& pNote)
+    unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNoteModel& pNote)
 {
     // extract the first line
-    std::wstring sNote = pNote.Note;
+    std::wstring sNote = pNote.GetNote();
     const auto iNewLine = sNote.find('\n');
     if (iNewLine != std::string::npos)
     {
@@ -532,7 +182,7 @@ std::wstring CodeNotesModel::BuildCodeNoteSized(ra::ByteAddress nAddress,
             sNote.pop_back();
     }
 
-    const unsigned int nNoteSize = pNote.Bytes;
+    const unsigned int nNoteSize = pNote.GetBytes();
     if (nNoteAddress == nAddress && nNoteSize == nCheckBytes)
     {
         // exact size match - don't add a suffix
@@ -575,7 +225,7 @@ std::wstring CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, MemSize nSiz
     if (pIter != m_mCodeNotes.begin())
     {
         --pIter;
-        if (pIter->first + pIter->second.Bytes - 1 >= nAddress)
+        if (pIter->first + pIter->second.GetBytes() - 1 >= nAddress)
         {
             // previous item overlaps with requested address
             return BuildCodeNoteSized(nAddress, nCheckBytes, pIter->first, pIter->second);
@@ -585,34 +235,19 @@ std::wstring CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, MemSize nSiz
     // no code note on the address, check for pointers
     if (m_bHasPointers)
     {
+        for (const auto& pIter2 : m_mCodeNotes)
+        {
+            const auto pair = pIter2.second.GetPointerNoteAtAddress(nAddress);
+            if (pair.second != nullptr)
+                return BuildCodeNoteSized(nAddress, nCheckBytes, pair.first, *pair.second) + L" [indirect]";
+        }
+
         const auto nLastAddress = nAddress + nCheckBytes - 1;
         for (const auto& pIter2 : m_mCodeNotes)
         {
-            if (!pIter2.second.PointerData)
-                continue;
-
-            const auto nPointerValue = pIter2.second.PointerData->PointerValue;
-            const auto nConvertedPointerValue = (pIter2.second.PointerData->OffsetType == OffsetType::Overflow)
-                ? ConvertPointer(nPointerValue) : nPointerValue;
-
-            if (nLastAddress >= nConvertedPointerValue)
-            {
-                const auto nOffset = ra::to_signed(nAddress - nPointerValue);
-                const auto nLastOffset = nOffset + ra::to_signed(nCheckBytes) - 1;
-                for (const auto& pNote : pIter2.second.PointerData->OffsetNotes)
-                {
-                    if (pNote.Offset == nOffset)
-                    {
-                        // exact match
-                        return BuildCodeNoteSized(nAddress, nCheckBytes, nAddress, pNote) + L" [indirect]";
-                    }
-                    else if (pNote.Offset + ra::to_signed(pNote.Bytes) - 1 >= nOffset && pNote.Offset <= nLastOffset)
-                    {
-                        // overlap
-                        return BuildCodeNoteSized(nAddress, nCheckBytes, pIter2.second.PointerData->PointerValue + pNote.Offset, pNote) + L" [indirect]";
-                    }
-                }
-            }
+            const auto pair = pIter2.second.GetPointerNoteAtAddress(nLastAddress);
+            if (pair.second != nullptr)
+                return BuildCodeNoteSized(nAddress, nCheckBytes, pair.first, *pair.second) + L" [indirect]";
         }
     }
 
@@ -624,8 +259,8 @@ const std::wstring* CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, _Inou
     const auto pIter = m_mCodeNotes.find(nAddress);
     if (pIter != m_mCodeNotes.end())
     {
-        sAuthor = pIter->second.Author;
-        return &pIter->second.Note;
+        sAuthor = pIter->second.GetAuthor();
+        return &pIter->second.GetNote();
     }
 
     return nullptr;
@@ -647,7 +282,7 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
         const auto pIter = m_mCodeNotes.find(nAddress);
         if (pIter != m_mCodeNotes.end())
         {
-            if (pIter->second.Note == sNote)
+            if (pIter->second.GetNote() == sNote)
             {
                 // the note at this address is unchanged
                 return;
@@ -667,7 +302,7 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
             {
                 // capture the original value
                 m_mOriginalCodeNotes.insert_or_assign(nAddress,
-                    std::make_pair(pIter->second.Author, pIter->second.Note));
+                    std::make_pair(pIter->second.GetAuthor(), pIter->second.GetNote()));
             }
             else
             {
@@ -705,7 +340,7 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
     }
 }
 
-const CodeNotesModel::CodeNote* CodeNotesModel::FindCodeNoteInternal(ra::ByteAddress nAddress) const
+const CodeNoteModel* CodeNotesModel::FindCodeNoteInternal(ra::ByteAddress nAddress) const
 {
     const auto pIter = m_mCodeNotes.find(nAddress);
     if (pIter != m_mCodeNotes.end())
@@ -717,29 +352,14 @@ const CodeNotesModel::CodeNote* CodeNotesModel::FindCodeNoteInternal(ra::ByteAdd
     return nullptr;
 }
 
-std::pair<ra::ByteAddress, const CodeNotesModel::CodeNote*>
+std::pair<ra::ByteAddress, const CodeNoteModel*>
     CodeNotesModel::FindIndirectCodeNoteInternal(ra::ByteAddress nAddress) const
 {
     for (const auto& pCodeNote : m_mCodeNotes)
     {
-        if (pCodeNote.second.PointerData == nullptr)
-            continue;
-
-        // if the pointer address was not converted, do so now.
-        const auto nPointerValue = pCodeNote.second.PointerData->PointerValue;
-        const auto nConvertedPointerValue = (pCodeNote.second.PointerData->OffsetType == OffsetType::Overflow)
-            ? ConvertPointer(nPointerValue) : nPointerValue;
-
-        if (nAddress >= nConvertedPointerValue &&
-            nAddress < nConvertedPointerValue + pCodeNote.second.PointerData->OffsetRange)
-        {
-            const auto nOffset = ra::to_signed(nAddress - nPointerValue);
-            for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
-            {
-                if (pOffsetNote.Offset == nOffset)
-                    return {pCodeNote.first, &pOffsetNote};
-            }
-        }
+        auto pair = pCodeNote.second.GetPointerNoteAtAddress(nAddress);
+        if (pair.second != nullptr && pair.first == nAddress) // only match start of note
+            return {pCodeNote.first, pair.second};
     }
 
     return {0, nullptr};
@@ -752,30 +372,14 @@ const std::wstring* CodeNotesModel::FindIndirectCodeNote(ra::ByteAddress nAddres
 
     for (const auto& pCodeNote : m_mCodeNotes)
     {
-        if (pCodeNote.second.PointerData == nullptr)
+        if (!pCodeNote.second.IsPointer())
             continue;
 
         if (nAddress == pCodeNote.first)
         {
-            // look for the offset directly
-            for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
-            {
-                if (pOffsetNote.Offset == ra::to_signed(nOffset))
-                    return &pOffsetNote.Note;
-            }
-
-            if (pCodeNote.second.PointerData->OffsetType == OffsetType::Overflow)
-            {
-                // direct offset not found, look for converted offset
-                const auto nConvertedAddress = ConvertPointer(pCodeNote.second.PointerData->RawPointerValue);
-                nOffset += nConvertedAddress - pCodeNote.second.PointerData->RawPointerValue;
-
-                for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
-                {
-                    if (pOffsetNote.Offset == ra::to_signed(nOffset))
-                        return &pOffsetNote.Note;
-                }
-            }
+            const auto* pOffsetNote = pCodeNote.second.GetPointerNoteAtOffset(nOffset);
+            if (pOffsetNote != nullptr)
+                return &pOffsetNote->GetNote();
 
             break;
         }
@@ -807,30 +411,11 @@ ra::ByteAddress CodeNotesModel::GetNextNoteAddress(ra::ByteAddress nAfterAddress
 
     if (m_bHasPointers && bIncludeDerived)
     {
+        ra::ByteAddress nNextAddress = 0U;
         for (const auto& pNote : m_mCodeNotes)
         {
-            if (!pNote.second.PointerData)
-                continue;
-
-            const auto nPointerValue = pNote.second.PointerData->PointerValue;
-            const auto nConvertedPointerValue = (pNote.second.PointerData->OffsetType == OffsetType::Overflow)
-                ? ConvertPointer(nPointerValue) : nPointerValue;
-
-            if (nConvertedPointerValue > nBestAddress)
-                continue;
-
-            if (nConvertedPointerValue + pNote.second.PointerData->OffsetRange < nAfterAddress)
-                continue;
-
-            for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)
-            {
-                const auto pOffsetAddress = nPointerValue + pOffset.Offset;
-                if (pOffsetAddress > nAfterAddress)
-                {
-                    nBestAddress = std::min(nBestAddress, pOffsetAddress);
-                    break;
-                }
-            }
+            if (pNote.second.GetNextAddress(nAfterAddress, nNextAddress))
+                nBestAddress = std::min(nBestAddress, nNextAddress);
         }
     }
 
@@ -858,38 +443,20 @@ ra::ByteAddress CodeNotesModel::GetPreviousNoteAddress(ra::ByteAddress nBeforeAd
 
     if (m_bHasPointers && bIncludeDerived)
     {
+        ra::ByteAddress nPreviousAddress = 0U;
+
         // scan pointed-at addresses to see if there's anything between the next lower item and nBeforeAddress
         for (const auto& pNote : m_mCodeNotes)
         {
-            if (!pNote.second.PointerData)
-                continue;
-
-            const auto nPointerValue = pNote.second.PointerData->PointerValue;
-            const auto nConvertedPointerValue = (pNote.second.PointerData->OffsetType == OffsetType::Overflow)
-                ? ConvertPointer(nPointerValue) : nPointerValue;
-
-            if (nConvertedPointerValue > nBeforeAddress)
-                continue;
-
-            if (nConvertedPointerValue + pNote.second.PointerData->OffsetRange < nBestAddress)
-                continue;
-
-            for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)
-            {
-                const auto pOffsetAddress = nPointerValue + pOffset.Offset;
-                if (pOffsetAddress >= nBeforeAddress)
-                    break;
-
-                if (pOffsetAddress > nBestAddress || nBestAddress == 0xFFFFFFFF)
-                    nBestAddress = pOffsetAddress;
-            }
+            if (pNote.second.GetPreviousAddress(nBeforeAddress, nPreviousAddress))
+                nBestAddress = std::max(nBestAddress, nPreviousAddress);
         }
     }
 
     return nBestAddress;
 }
 
-void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback, bool bIncludeDerived) const
+void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel& pCodeNote)> callback, bool bIncludeDerived) const
 {
     if (!bIncludeDerived || !m_bHasPointers)
     {
@@ -904,15 +471,17 @@ void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddr
     }
 
     // create a hash from the current pointer addresses
-    std::map<ra::ByteAddress, const CodeNote*> mNotes;
+    std::map<ra::ByteAddress, const CodeNoteModel*> mNotes;
     for (const auto& pIter : m_mCodeNotes)
     {
-        if (!pIter.second.PointerData)
+        if (!pIter.second.IsPointer())
             continue;
 
-        const auto nPointerValue = pIter.second.PointerData->PointerValue;
-        for (const auto& pNote : pIter.second.PointerData->OffsetNotes)
-            mNotes[nPointerValue + pNote.Offset] = &pNote;
+        pIter.second.EnumeratePointerNotes(
+            [&mNotes](ra::ByteAddress nAddress, const CodeNoteModel& pNote) {
+                mNotes[nAddress] = &pNote;
+                return true;
+            });
     }
 
     // merge in the non-pointer notes
@@ -936,30 +505,26 @@ void CodeNotesModel::DoFrame()
 
     for (auto& pNote : m_mCodeNotes)
     {
-        if (!pNote.second.PointerData)
+        if (!pNote.second.IsPointer())
             continue;
 
-        const auto nNewRawAddress = pEmulatorContext.ReadMemory(pNote.first, pNote.second.MemSize);
-        if (nNewRawAddress == pNote.second.PointerData->RawPointerValue)
-            continue;
-        pNote.second.PointerData->RawPointerValue = nNewRawAddress;
-
-        const auto nNewAddress = (pNote.second.PointerData->OffsetType == OffsetType::Converted)
-            ? ConvertPointer(nNewRawAddress) : nNewRawAddress;
-
-        const auto nOldAddress = pNote.second.PointerData->PointerValue;
-        if (nNewAddress == nOldAddress)
-            continue;
-
-        pNote.second.PointerData->PointerValue = nNewAddress;
-
-        if (m_fCodeNoteChanged)
+        const auto nOldAddress = pNote.second.GetPointerAddress();
+        const auto nNewRawAddress = pEmulatorContext.ReadMemory(pNote.first, pNote.second.GetMemSize());
+        if (pNote.second.SetRawPointerValue(nNewRawAddress))
         {
-            for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)
-                m_fCodeNoteChanged(nOldAddress + pOffset.Offset, L"");
+            pNote.second.EnumeratePointerNotes(nOldAddress,
+                [this](ra::ByteAddress nAddress, const CodeNoteModel&)
+                {
+                    m_fCodeNoteChanged(nAddress, L"");
+                    return true;
+                });
 
-            for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)
-                m_fCodeNoteChanged(nNewAddress + pOffset.Offset, pOffset.Note);
+            pNote.second.EnumeratePointerNotes(
+                [this](ra::ByteAddress nAddress, const CodeNoteModel& pOffsetNote)
+                {
+                    m_fCodeNoteChanged(nAddress, pOffsetNote.GetNote());
+                    return true;
+                });
         }
     }
 }
@@ -975,7 +540,7 @@ void CodeNotesModel::SetServerCodeNote(ra::ByteAddress nAddress, const std::wstr
 
     // if we're just committing the current value, we're done
     const auto pIter2 = m_mCodeNotes.find(nAddress);
-    if (pIter2 != m_mCodeNotes.end() && pIter2->second.Note == sNote)
+    if (pIter2 != m_mCodeNotes.end() && pIter2->second.GetNote() == sNote)
     {
         if (sNote.empty())
             m_mCodeNotes.erase(pIter2);
@@ -1031,7 +596,7 @@ void CodeNotesModel::Serialize(ra::services::TextWriter& pWriter) const
 
         const auto pNote = m_mCodeNotes.find(pIter.first);
         if (pNote != m_mCodeNotes.end())
-            WriteQuoted(pWriter, pNote->second.Note);
+            WriteQuoted(pWriter, pNote->second.GetNote());
         else
             WriteQuoted(pWriter, "");
     }

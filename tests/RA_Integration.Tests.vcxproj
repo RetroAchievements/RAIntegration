@@ -348,6 +348,7 @@
     <ClCompile Include="..\src\ui\viewmodels\OverlaySettingsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PointerFinderViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\PointerInspectorViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp" />
@@ -423,6 +424,7 @@
     <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\PointerFinderViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\PointerInspectorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\ProgressViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\TriggerConditionViewModel_Tests.cpp" />

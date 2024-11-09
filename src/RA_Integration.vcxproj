@@ -133,6 +133,7 @@
     <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PointerFinderViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\PointerInspectorViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp" />
     <ClCompile Include="ui\viewmodels\ProgressTrackerViewModel.cpp" />
@@ -307,6 +308,7 @@
     <ClInclude Include="ui\viewmodels\OverlaySettingsViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PointerFinderViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\PointerInspectorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\ProgressTrackerViewModel.hh" />

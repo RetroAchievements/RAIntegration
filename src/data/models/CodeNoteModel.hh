@@ -41,6 +41,7 @@ public:
     bool GetPreviousAddress(ra::ByteAddress nBeforeAddress, ra::ByteAddress& nPreviousAddress) const;
     bool GetNextAddress(ra::ByteAddress nAfterAddress, ra::ByteAddress& nNextAddress) const;
 
+    std::wstring GetPrimaryNote() const noexcept;
     void EnumeratePointerNotes(ra::ByteAddress nPointerAddress,
                                std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
     void EnumeratePointerNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;

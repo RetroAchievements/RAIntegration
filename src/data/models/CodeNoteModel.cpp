@@ -262,6 +262,18 @@ bool CodeNoteModel::GetNextAddress(ra::ByteAddress nAfterAddress, ra::ByteAddres
     return bResult;
 }
 
+std::wstring CodeNoteModel::GetPrimaryNote() const noexcept
+{
+    if (m_pPointerData != nullptr)
+    {
+        const auto nIndex = m_sNote.find(L"\n+");
+        if (nIndex != std::wstring::npos)
+            return m_sNote.substr(0, nIndex);
+    }
+
+    return m_sNote;
+}
+
 void CodeNoteModel::SetNote(const std::wstring& sNote)
 {
     if (m_sNote == sNote)
@@ -284,7 +296,7 @@ void CodeNoteModel::SetNote(const std::wstring& sNote)
 
         // if there are any lines starting with a plus sign, extract the indirect code notes
         nIndex = sNote.find(L"\n+");
-        if (nIndex != std::string::npos)
+        if (nIndex != std::wstring::npos)
             ProcessIndirectNotes(sNote, nIndex);
     }
 }

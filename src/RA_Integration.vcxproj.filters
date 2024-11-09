@@ -411,6 +411,9 @@
     <ClCompile Include="data\models\CodeNoteModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\PointerInspectorViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -976,6 +979,9 @@
     </ClInclude>
     <ClInclude Include="data\models\CodeNoteModel.hh">
       <Filter>Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\PointerInspectorViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

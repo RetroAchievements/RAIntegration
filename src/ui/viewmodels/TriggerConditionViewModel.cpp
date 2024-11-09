@@ -401,7 +401,7 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
 {
     if (rc_operand_is_memref(&operand) && operand.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
     {
-        const auto* pModifiedMemref = reinterpret_cast<rc_modified_memref_t*>(operand.value.memref);
+        GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref = reinterpret_cast<rc_modified_memref_t*>(operand.value.memref);
         if (pModifiedMemref->modifier_type != RC_OPERATOR_INDIRECT_READ)
         {
             // if the modified memref is not an indirect read, the size and address are stored in the modifier.
@@ -704,7 +704,7 @@ static ra::ByteAddress GetParentAddress(const rc_modified_memref_t* pModifiedMem
             return pModifiedMemref->parent.value.memref->address;
 
         case RC_MEMREF_TYPE_MODIFIED_MEMREF:
-            const auto* pModifiedParentMemref =
+            GSL_SUPPRESS_TYPE1 const auto* pModifiedParentMemref =
                 reinterpret_cast<const rc_modified_memref_t*>(pModifiedMemref->parent.value.memref);
 
             // chained pointer
@@ -724,14 +724,14 @@ static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperan
     if (pOperand->value.memref->value.memref_type != RC_MEMREF_TYPE_MODIFIED_MEMREF)
         return nAddress;
 
-    const auto* pModifiedMemref = reinterpret_cast<const rc_modified_memref_t*>(pOperand->value.memref);
+    GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref = reinterpret_cast<const rc_modified_memref_t*>(pOperand->value.memref);
     if (pModifiedMemref->modifier_type != RC_OPERATOR_INDIRECT_READ)
         return nAddress;
 
     if (pPointerAddress)
         *pPointerAddress = GetParentAddress(pModifiedMemref);
 
-    rc_typed_value_t value, offset;
+    rc_typed_value_t value{}, offset;
     offset.type = RC_VALUE_TYPE_UNSIGNED;
     offset.value.u32 = nAddress;
     rc_evaluate_operand(&value, &pModifiedMemref->parent, nullptr);

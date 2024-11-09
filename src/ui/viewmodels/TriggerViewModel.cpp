@@ -1255,7 +1255,7 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
             {
                 // when a condset is paused, processing stops when the first pause condition is true. only highlight it
                 bool bFirstPause = true;
-                rc_condition_t* pPauseConditions = rc_condset_get_conditions(pSelectedGroup->m_pConditionSet);
+                const rc_condition_t* pPauseConditions = rc_condset_get_conditions(pSelectedGroup->m_pConditionSet);
                 const rc_condition_t* pEndPauseConditions = pPauseConditions + pSelectedGroup->m_pConditionSet->num_pause_conditions;
 
                 rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;

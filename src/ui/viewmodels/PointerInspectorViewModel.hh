@@ -5,14 +5,13 @@
 #include "data\Types.hh"
 #include "data\context\GameContext.hh"
 
-#include "ui\WindowViewModelBase.hh"
+#include "ui\viewmodels\MemoryBookmarksViewModel.hh"
 
 namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class PointerInspectorViewModel : public WindowViewModelBase,
-    protected ra::data::context::GameContext::NotifyTarget
+class PointerInspectorViewModel : public MemoryBookmarksViewModel
 {
 public:
     GSL_SUPPRESS_F6 PointerInspectorViewModel();
@@ -22,10 +21,6 @@ public:
     PointerInspectorViewModel& operator=(const PointerInspectorViewModel&) noexcept = delete;
     PointerInspectorViewModel(PointerInspectorViewModel&&) noexcept = delete;
     PointerInspectorViewModel& operator=(PointerInspectorViewModel&&) noexcept = delete;
-
-    void InitializeNotifyTargets();
-
-    void DoFrame();
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the current address.
@@ -72,6 +67,37 @@ public:
     /// </summary>
     void SetCurrentAddressNote(const std::wstring& sValue) { SetValue(CurrentAddressNoteProperty, sValue); }
 
+    class StructFieldViewModel : public MemoryBookmarkViewModel
+    {
+    public:
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the field offset.
+        /// </summary>
+        static const StringModelProperty OffsetProperty;
+
+        /// <summary>
+        /// Gets the field offset.
+        /// </summary>
+        const std::wstring& GetOffset() const { return GetValue(OffsetProperty); }
+
+        /// <summary>
+        /// Sets the field offset.
+        /// </summary>
+        void SetOffset(const std::wstring& sValue) { SetValue(OffsetProperty, sValue); }
+
+        int32_t m_nOffset;
+    };
+
+    /// <summary>
+    /// Gets the list of fields.
+    /// </summary>
+    ViewModelCollection<StructFieldViewModel>& Fields() noexcept { return m_vFields; }
+
+    /// <summary>
+    /// Gets the list of fields.
+    /// </summary>
+    const ViewModelCollection<StructFieldViewModel>& Fields() const noexcept { return m_vFields; }
+
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
@@ -82,9 +108,14 @@ protected:
 
 private:
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
-    void LoadNote(ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel* pNote);
+    void LoadNote(const ra::data::models::CodeNoteModel* pNote);
+    void SyncField(StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote);
+    void UpdateValues();
 
+    ViewModelCollection<StructFieldViewModel> m_vFields;
     bool m_bSyncingAddress = false;
+
+    MemSize m_nPointerSize = MemSize::Unknown;
 };
 
 } // namespace viewmodels

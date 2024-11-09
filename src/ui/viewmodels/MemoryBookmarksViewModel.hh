@@ -399,6 +399,8 @@ protected:
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnEndViewModelCollectionUpdate() override;
 
+    void UpdateBookmark(MemoryBookmarkViewModel& pBookmark, ra::data::context::EmulatorContext& pEmulatorContext);
+
     bool IsModified() const;
     size_t m_nUnmodifiedBookmarkCount = 0;
 

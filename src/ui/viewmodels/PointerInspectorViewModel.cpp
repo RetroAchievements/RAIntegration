@@ -11,20 +11,12 @@ namespace viewmodels {
 const IntModelProperty PointerInspectorViewModel::CurrentAddressProperty("PointerInspectorViewModel", "CurrentAddress", 0);
 const StringModelProperty PointerInspectorViewModel::CurrentAddressTextProperty("PointerInspectorViewModel", "CurrentAddressText", L"0x0000");
 const StringModelProperty PointerInspectorViewModel::CurrentAddressNoteProperty("PointerInspectorViewModel", "CurrentAddressNote", L"");
+const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::OffsetProperty("StructFieldViewModel", "Offset", L"+0000");
 
 PointerInspectorViewModel::PointerInspectorViewModel()
+    : MemoryBookmarksViewModel()
 {
     SetWindowTitle(L"Pointer Inspector");
-}
-
-void PointerInspectorViewModel::InitializeNotifyTargets()
-{
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    pGameContext.AddNotifyTarget(*this);
-}
-
-void PointerInspectorViewModel::DoFrame()
-{
 }
 
 void PointerInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
@@ -40,7 +32,7 @@ void PointerInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         OnCurrentAddressChanged(nAddress);
     }
 
-    WindowViewModelBase::OnValueChanged(args);
+    MemoryBookmarksViewModel::OnValueChanged(args);
 }
 
 void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
@@ -57,7 +49,7 @@ void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::Change
         OnCurrentAddressChanged(nAddress);
     }
 
-    WindowViewModelBase::OnValueChanged(args);
+    MemoryBookmarksViewModel::OnValueChanged(args);
 }
 
 void PointerInspectorViewModel::OnActiveGameChanged()
@@ -69,7 +61,7 @@ void PointerInspectorViewModel::OnActiveGameChanged()
         OnCurrentAddressChanged(GetCurrentAddress());
 }
 
-void PointerInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
+void PointerInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring&)
 {
     if (nAddress == GetCurrentAddress())
         OnCurrentAddressChanged(nAddress); // not really, but causes the note to be reloaded
@@ -83,23 +75,98 @@ void PointerInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddr
     {
         const auto* pNote = pCodeNotes->FindCodeNoteModel(nNewAddress);
         if (pNote)
-            LoadNote(nNewAddress, pNote);
+            LoadNote(pNote);
         else
-            LoadNote(nNewAddress, nullptr);
+            LoadNote(nullptr);
     }
 }
 
-void PointerInspectorViewModel::LoadNote(ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel* pNote)
+void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote)
+{
+    pFieldViewModel.SetSize(pOffsetNote.GetMemSize());
+    pFieldViewModel.SetDescription(pOffsetNote.GetNote());
+}
+
+void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* pNote)
 {
     if (pNote == nullptr)
     {
         SetCurrentAddressNote(L"");
-        // TODO: clear list
+        m_nPointerSize = MemSize::Unknown;
+        Bookmarks().Clear();
         return;
     }
 
     SetCurrentAddressNote(pNote->GetPrimaryNote());
-    // TODO: update list
+    m_nPointerSize = pNote->GetMemSize();
+
+    const auto nBaseAddress = pNote->GetPointerAddress();
+    gsl::index nCount = gsl::narrow_cast<gsl::index>(Fields().Count());
+
+    gsl::index nInsertIndex = 0;
+    Fields().BeginUpdate();
+    pNote->EnumeratePointerNotes([this, &nCount, &nInsertIndex, nBaseAddress]
+        (ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pOffsetNote)
+        {
+            const auto nOffset = nAddress - nBaseAddress;
+            const std::wstring sOffset = ra::StringPrintf(L"+%04x", nOffset);
+
+            bool bFound = false;
+            for (gsl::index nExistingIndex = nInsertIndex; nExistingIndex < nCount; ++nExistingIndex)
+            {
+                if (Fields().GetItemValue(nExistingIndex, StructFieldViewModel::OffsetProperty) == sOffset)
+                {
+                    // item exists. update it.
+                    auto* pItem = Fields().GetItemAt(nExistingIndex);
+                    Expects(pItem != nullptr);
+                    SyncField(*pItem, pOffsetNote);
+                    Fields().MoveItem(nExistingIndex, nInsertIndex);
+                    bFound = true;
+                }
+            }
+
+            if (!bFound)
+            {
+                // item doesn't exist. add it.
+                auto& pItem = Fields().Add();
+                pItem.m_nOffset = nOffset;
+                pItem.SetOffset(sOffset);
+                SyncField(pItem, pOffsetNote);
+
+                Fields().MoveItem(nCount, nInsertIndex);
+                ++nCount;
+            }
+
+            ++nInsertIndex;
+            return true;
+        });
+
+    while (nCount > nInsertIndex)
+        Fields().RemoveAt(--nCount);
+
+    UpdateValues();
+    Fields().EndUpdate();
+}
+
+void PointerInspectorViewModel::UpdateValues()
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    const auto nBaseAddress = pEmulatorContext.ReadMemory(GetCurrentAddress(), m_nPointerSize);
+
+    pEmulatorContext.RemoveNotifyTarget(*this);
+
+    const auto nCount = gsl::narrow_cast<gsl::index>(Fields().Count());
+    for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
+    {
+        auto* pField = Fields().GetItemAt(nIndex);
+        if (pField != nullptr)
+        {
+            pField->SetAddress(nBaseAddress + pField->m_nOffset);
+            UpdateBookmark(*pField, pEmulatorContext);
+        }
+    }
+
+    pEmulatorContext.AddNotifyTarget(*this);
 }
 
 } // namespace viewmodels

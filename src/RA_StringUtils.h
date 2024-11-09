@@ -45,7 +45,7 @@ std::wstring& NormalizeLineEndings(_Inout_ std::wstring& str);
 // ----- ToString -----
 
 template<typename T>
-_NODISCARD inline const std::string ToString(_In_ const T& value)
+_NODISCARD inline const std::string ToAString(_In_ const T& value)
 {
     if constexpr (std::is_arithmetic_v<T>)
     {
@@ -74,44 +74,44 @@ _NODISCARD inline const std::string ToString(_In_ const T& value)
 }
 
 template<>
-_NODISCARD inline const std::string ToString(_In_ const std::string& value)
+_NODISCARD inline const std::string ToAString(_In_ const std::string& value)
 {
     return value;
 }
 
 template<>
-_NODISCARD inline const std::string ToString(_In_ const std::wstring& value)
+_NODISCARD inline const std::string ToAString(_In_ const std::wstring& value)
 {
     return ra::Narrow(value);
 }
 
 template<>
-_NODISCARD inline const std::string ToString(_In_ const wchar_t* const& value)
+_NODISCARD inline const std::string ToAString(_In_ const wchar_t* const& value)
 {
     return ra::Narrow(value);
 }
 
 template<>
-_NODISCARD inline const std::string ToString(_In_ const char* const& value)
+_NODISCARD inline const std::string ToAString(_In_ const char* const& value)
 {
     return std::string(value);
 }
 
 template<>
-_NODISCARD inline const std::string ToString(_In_ char* const& value)
+_NODISCARD inline const std::string ToAString(_In_ char* const& value)
 {
     return std::string(value);
 }
 
 template<>
-_NODISCARD inline const std::string ToString(_In_ const char& value)
+_NODISCARD inline const std::string ToAString(_In_ const char& value)
 {
     return std::string(1, value);
 }
 
 // literal strings can't be passed by reference, so won't call the templated methods
-_NODISCARD inline const std::string ToString(_In_ const char* value) { return std::string(value); }
-_NODISCARD inline const std::string ToString(_In_ const wchar_t* value) { return ra::Narrow(value); }
+_NODISCARD inline const std::string ToAString(_In_ const char* value) { return std::string(value); }
+_NODISCARD inline const std::string ToAString(_In_ const wchar_t* value) { return ra::Narrow(value); }
 
 // ----- ToWString -----
 
@@ -200,7 +200,7 @@ public:
         if (m_bPrepareWide)
             m_vPending.emplace_back(std::wstring{ra::ToWString(arg)});
         else
-            m_vPending.emplace_back(std::string{ra::ToString(arg)});
+            m_vPending.emplace_back(std::string{ra::ToAString(arg)});
     }
 
     template<>
@@ -441,7 +441,7 @@ public:
                     const char c = sFormat.back();
                     sFormat.pop_back(); // remove 's'/'x'
                     sFormat.pop_back(); // remove '*'
-                    sFormat.append(ra::ToString(value));
+                    sFormat.append(ra::ToAString(value));
                     sFormat.push_back(c); // replace 's'/'x'
 
                     if constexpr (sizeof...(args) > 0)

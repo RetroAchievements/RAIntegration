@@ -4,6 +4,8 @@
 
 #include "AssetModelBase.hh"
 
+#include "CodeNoteModel.hh"
+
 #include "data/Types.hh"
 
 namespace ra {
@@ -39,7 +41,7 @@ public:
     const std::wstring* FindCodeNote(ra::ByteAddress nAddress) const
     {
         const auto* pNote = FindCodeNoteInternal(nAddress);
-        return (pNote != nullptr) ? &pNote->Note : nullptr;
+        return (pNote != nullptr) ? &pNote->GetNote() : nullptr;
     }
     
     /// <summary>
@@ -83,7 +85,7 @@ public:
     unsigned GetCodeNoteBytes(ra::ByteAddress nAddress) const
     {
         const auto* pNote = FindCodeNoteInternal(nAddress);
-        return (pNote == nullptr) ? 0 : pNote->Bytes;
+        return (pNote == nullptr) ? 0 : pNote->GetBytes();
     }
 
     /// <summary>
@@ -95,7 +97,7 @@ public:
     MemSize GetCodeNoteMemSize(ra::ByteAddress nAddress) const
     {
         const auto* pNote = FindCodeNoteInternal(nAddress);
-        return (pNote == nullptr) ? MemSize::Unknown : pNote->MemSize;
+        return (pNote == nullptr) ? MemSize::Unknown : pNote->GetMemSize();
     }
 
     /// <summary>
@@ -130,9 +132,9 @@ public:
     /// </remarks>
     void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)> callback, bool bIncludeDerived = false) const
     {
-        EnumerateCodeNotes([callback](ra::ByteAddress nAddress, const CodeNote& pCodeNote)
+        EnumerateCodeNotes([callback](ra::ByteAddress nAddress, const CodeNoteModel& pCodeNote)
         {
-            return callback(nAddress, pCodeNote.Bytes, pCodeNote.Note);
+            return callback(nAddress, pCodeNote.GetBytes(), pCodeNote.GetNote());
         }, bIncludeDerived);
     }
 
@@ -193,46 +195,14 @@ protected:
     void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
 
-    struct PointerData;
-
-    struct CodeNote
-    {
-        std::string Author;
-        std::wstring Note;
-        unsigned int Bytes = 1;
-        MemSize MemSize = MemSize::Unknown;
-        std::unique_ptr<PointerData> PointerData;
-    };
-
-    struct OffsetCodeNote : public CodeNote
-    {
-        int Offset = 0;
-    };
-
-    enum OffsetType
-    {
-        None = 0,
-        Converted,
-        Overflow,
-    };
-
-    struct PointerData
-    {
-        ra::ByteAddress RawPointerValue = 0;
-        ra::ByteAddress PointerValue = 0;
-        unsigned int OffsetRange = 0;
-        OffsetType OffsetType = OffsetType::None;
-        std::vector<OffsetCodeNote> OffsetNotes;
-    };
-
-    std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
+    std::map<ra::ByteAddress, CodeNoteModel> m_mCodeNotes;
     std::map<ra::ByteAddress, std::pair<std::string, std::wstring>> m_mOriginalCodeNotes;
 
     std::map<ra::ByteAddress, std::wstring> m_mPendingCodeNotes;
 
-    const CodeNote* FindCodeNoteInternal(ra::ByteAddress nAddress) const;
-    std::pair<ra::ByteAddress, const CodeNotesModel::CodeNote*> FindIndirectCodeNoteInternal(ra::ByteAddress nAddress) const;
-    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback,
+    const CodeNoteModel* FindCodeNoteInternal(ra::ByteAddress nAddress) const;
+    std::pair<ra::ByteAddress, const CodeNoteModel*> FindIndirectCodeNoteInternal(ra::ByteAddress nAddress) const;
+    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel& pCodeNote)> callback,
                             bool bIncludeDerived) const;
 
     unsigned int m_nGameId = 0;
@@ -242,8 +212,8 @@ protected:
     CodeNoteChangedFunction m_fCodeNoteChanged;
 
 private:
-    static std::wstring BuildCodeNoteSized(ra::ByteAddress nAddress, unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNote& pNote);
-    static void ExtractSize(CodeNote& pNote);
+    static std::wstring BuildCodeNoteSized(ra::ByteAddress nAddress, unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNoteModel& pNote);
+    static void ExtractSize(CodeNoteModel& pNote);
 
     mutable std::mutex m_oMutex;
 };
@@ -252,4 +222,4 @@ private:
 } // namespace data
 } // namespace ra
 
-#endif RA_DATA_LOCAL_BADGES_MODEL_H
+#endif RA_DATA_CODE_NOTES_MODEL_H

@@ -468,6 +468,12 @@
     <ClCompile Include="services\AchievementRuntimeExports_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\data\models\CodeNoteModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\CodeNoteModel_Tests.cpp">
+      <Filter>Tests\Data\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />
@@ -561,6 +567,9 @@
       <Filter>Code</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ui\viewmodels\PointerFinderViewModel.hh">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\data\models\CodeNoteModel.hh">
       <Filter>Code</Filter>
     </ClInclude>
   </ItemGroup>

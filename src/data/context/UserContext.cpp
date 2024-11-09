@@ -34,16 +34,14 @@ void UserContext::Logout()
     if (!IsLoggedIn())
         return;
 
+    _RA_ActivateGame(0U);
+
     auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
     rc_client_logout(pClient);
 
     m_sUsername.clear();
     m_sDisplayName.clear();
     m_sApiToken.clear();
-
-    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-    pOverlayManager.ClearPopups();
-    pOverlayManager.HideOverlay();
 
     ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 

@@ -98,6 +98,33 @@ public:
     /// </summary>
     const ViewModelCollection<StructFieldViewModel>& Fields() const noexcept { return m_vFields; }
 
+    /// <summary>
+    /// Gets the list of available nodes.
+    /// </summary>
+    LookupItemViewModelCollection& Nodes() noexcept { return m_vNodes; }
+
+    /// <summary>
+    /// Gets the list of available nodes.
+    /// </summary>
+    const LookupItemViewModelCollection& Nodes() const noexcept { return m_vNodes; }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the selected node.
+    /// </summary>
+    static const IntModelProperty SelectedNodeProperty;
+
+    /// <summary>
+    /// Gets the selected node index.
+    /// </summary>
+    int GetSelectedNode() const { return GetValue(SelectedNodeProperty); }
+
+    /// <summary>
+    /// Sets the selected node index.
+    /// </summary>
+    void SetSelectedNode(int nValue) { SetValue(SelectedNodeProperty, nValue); }
+
+    void DoFrame() override;
+
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
@@ -108,14 +135,18 @@ protected:
 
 private:
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
+    void OnSelectedNodeChanged(int nNode);
     void LoadNote(const ra::data::models::CodeNoteModel* pNote);
+    void LoadNodes(const ra::data::models::CodeNoteModel* pNote);
+    const ra::data::models::CodeNoteModel* FindNestedCodeNoteModel(const ra::data::models::CodeNoteModel& pRootNote, int nNewNode);
     void SyncField(StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote);
     void UpdateValues();
 
+    LookupItemViewModelCollection m_vNodes;
     ViewModelCollection<StructFieldViewModel> m_vFields;
     bool m_bSyncingAddress = false;
 
-    MemSize m_nPointerSize = MemSize::Unknown;
+    const ra::data::models::CodeNoteModel* m_pCurrentNote = nullptr;
 };
 
 } // namespace viewmodels

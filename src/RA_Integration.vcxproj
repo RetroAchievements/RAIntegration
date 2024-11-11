@@ -169,6 +169,7 @@
     <ClCompile Include="ui\win32\OverlaySettingsDialog.cpp" />
     <ClCompile Include="ui\win32\OverlayWindow.cpp" />
     <ClCompile Include="ui\win32\PointerFinderDialog.cpp" />
+    <ClCompile Include="ui\win32\PointerInspectorDialog.cpp" />
     <ClCompile Include="ui\win32\ProgressDialog.cpp" />
     <ClCompile Include="ui\win32\RichPresenceDialog.cpp" />
     <ClCompile Include="ui\win32\UnknownGameDialog.cpp" />
@@ -327,6 +328,8 @@
     <ClInclude Include="ui\win32\bindings\ControlBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridAddressColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridBookmarkFormatColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridBookmarkValueColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridBooleanColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridCheckBoxColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridColumnBinding.hh" />
@@ -356,6 +359,7 @@
     <ClInclude Include="ui\win32\OverlaySettingsDialog.hh" />
     <ClInclude Include="ui\win32\OverlayWindow.hh" />
     <ClInclude Include="ui\win32\PointerFinderDialog.hh" />
+    <ClInclude Include="ui\win32\PointerInspectorDialog.hh" />
     <ClInclude Include="ui\win32\ProgressDialog.hh" />
     <ClInclude Include="ui\win32\RichPresenceDialog.hh" />
     <ClInclude Include="ui\win32\IDialogPresenter.hh" />

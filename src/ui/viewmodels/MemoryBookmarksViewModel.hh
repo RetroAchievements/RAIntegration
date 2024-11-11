@@ -33,7 +33,7 @@ public:
     
     void InitializeNotifyTargets();
 
-    void DoFrame();
+    virtual void DoFrame();
 
     enum class BookmarkBehavior
     {
@@ -399,7 +399,7 @@ protected:
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnEndViewModelCollectionUpdate() override;
 
-    void UpdateBookmark(MemoryBookmarkViewModel& pBookmark, ra::data::context::EmulatorContext& pEmulatorContext);
+    void UpdateBookmark(MemoryBookmarkViewModel& pBookmark);
 
     bool IsModified() const;
     size_t m_nUnmodifiedBookmarkCount = 0;

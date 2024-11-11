@@ -586,13 +586,13 @@ void MemoryBookmarksViewModel::DoFrame()
     for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
     {
         auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
-        UpdateBookmark(pBookmark, pEmulatorContext);
+        UpdateBookmark(pBookmark);
     }
 
     pEmulatorContext.AddNotifyTarget(*this);
 }
 
-void MemoryBookmarksViewModel::UpdateBookmark(MemoryBookmarksViewModel::MemoryBookmarkViewModel& pBookmark, ra::data::context::EmulatorContext& pEmulatorContext)
+void MemoryBookmarksViewModel::UpdateBookmark(MemoryBookmarksViewModel::MemoryBookmarkViewModel& pBookmark)
 {
     if (pBookmark.MemoryChanged())
     {

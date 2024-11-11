@@ -72,6 +72,11 @@ uint32_t CodeNoteModel::GetRawPointerValue() const noexcept
     return m_pPointerData != nullptr ? m_pPointerData->RawPointerValue : 0xFFFFFFFF;
 }
 
+bool CodeNoteModel::HasNestedPointers() const noexcept
+{
+    return m_pPointerData != nullptr && m_pPointerData->HasPointers;
+}
+
 static ra::ByteAddress ConvertPointer(ra::ByteAddress nAddress)
 {
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
@@ -298,6 +303,13 @@ void CodeNoteModel::SetNote(const std::wstring& sNote)
         nIndex = sNote.find(L"\n+");
         if (nIndex != std::wstring::npos)
             ProcessIndirectNotes(sNote, nIndex);
+
+        // failed to find nested code notes. create a PointerData object so the note still gets treated as a pointer
+        if (!m_pPointerData)
+        {
+            m_pPointerData.reset(new PointerData());
+            m_pPointerData->HeaderLength = gsl::narrow_cast<unsigned>(sNote.length());
+        }
     }
 }
 

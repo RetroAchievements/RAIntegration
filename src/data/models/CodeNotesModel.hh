@@ -101,13 +101,6 @@ public:
     }
 
     /// <summary>
-    /// Returns the model for the note associated with the specified address.
-    /// </summary>
-    /// <param name="nAddress">The address to look up.</param>
-    /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    const CodeNoteModel* FindCodeNoteModel(ra::ByteAddress nAddress) const;
-
-    /// <summary>
     /// Returns the address of the real code note from which an indirect code note was derived.
     /// </summary>
     /// <returns>

@@ -84,6 +84,7 @@ void IntegrationMenuViewModel::AddCommonMenuItems(LookupItemViewModelCollection&
     vmMenu.Add(IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
     vmMenu.Add(0, L"-----");
     vmMenu.Add(IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
+    vmMenu.Add(IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
 }
 
 void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
@@ -140,6 +141,10 @@ void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
 
         case IDM_RA_FILES_POINTERFINDER:
             ShowPointerFinder();
+            break;
+
+        case IDM_RA_FILES_POINTERINSPECTOR:
+            ShowPointerInspector();
             break;
 
         case IDM_RA_FILES_CODENOTES:
@@ -314,6 +319,16 @@ void IntegrationMenuViewModel::ShowPointerFinder()
     {
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
         pWindowManager.PointerFinder.Show();
+    }
+}
+
+void IntegrationMenuViewModel::ShowPointerInspector()
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (pEmulatorContext.WarnDisableHardcoreMode("inspect pointers"))
+    {
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+        pWindowManager.PointerInspector.Show();
     }
 }
 

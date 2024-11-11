@@ -164,6 +164,7 @@
 #define IDD_RA_PROGRESS                 1512
 #define IDD_RA_NEWASSET                 1513
 #define IDD_RA_POINTERFINDER            1514
+#define IDD_RA_POINTERINSPECTOR         1515
 #define IDC_RA_PASSWORD                 1535
 #define IDC_RA_SAVEPASSWORD             1536
 #define IDC_RA_USERNAME                 1549
@@ -209,6 +210,7 @@
 #define IDM_RA_NON_HARDCORE_WARNING     1718
 #define IDM_RA_FILES_OPENALL            1719
 #define IDM_RA_FILES_POINTERFINDER      1720
+#define IDM_RA_FILES_POINTERINSPECTOR   1721
 #define IDM_RA_MENUEND                  1739
 
 // Next default values for new objects

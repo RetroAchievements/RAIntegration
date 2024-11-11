@@ -32,6 +32,7 @@ public:
     std::wstring GetPointerDescription() const;
     ra::ByteAddress GetPointerAddress() const noexcept;
     uint32_t GetRawPointerValue() const noexcept;
+    bool HasNestedPointers() const noexcept;
     const CodeNoteModel* GetPointerNoteAtOffset(int nOffset) const;
     std::pair<ra::ByteAddress, const CodeNoteModel*> GetPointerNoteAtAddress(ra::ByteAddress nAddress) const;
 

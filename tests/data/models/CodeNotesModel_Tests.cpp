@@ -94,10 +94,13 @@ private:
 
         void AssertIndirectNote(ra::ByteAddress nAddress, unsigned nOffset, const std::wstring& sExpected)
         {
-            const auto* pNote = FindIndirectCodeNote(nAddress, nOffset);
+            const auto* pNote = FindCodeNoteModel(nAddress);
+            Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X", nAddress, nOffset).c_str());
+            Ensures(pNote != nullptr);
+            pNote = pNote->GetPointerNoteAtOffset(nOffset);
             Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X + %u", nAddress, nOffset).c_str());
             Ensures(pNote != nullptr);
-            Assert::AreEqual(sExpected, *pNote);
+            Assert::AreEqual(sExpected, pNote->GetNote());
         }
 
         void AssertSerialize(const std::string& sExpected)
@@ -611,48 +614,6 @@ public:
         Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(32, MemSize::SixteenBit));
         Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(35, MemSize::SixteenBit));
         Assert::AreEqual(std::wstring(), notes.FindCodeNote(36, MemSize::SixteenBit));
-    }
-
-    TEST_METHOD(TestFindIndirectCodeNote)
-    {
-        CodeNotesModelHarness notes;
-        const std::wstring sNote =
-            L"Pointer\r\n"
-            L"[OFFSETS]\r\n"
-            L"+2 = EXP (32-bit)\r\n"
-            L"+5 = Base Level (8-bit)\r\n"
-            L"+6 = Job Level (8-bit)\r\n"
-            L"+20 = Stat Points (16-bit)\r\n"
-            L"+22 = Skill Points (8-bit)";
-        notes.AddCodeNote(1234, "Author", sNote);
-
-        notes.AssertIndirectNote(1234U, 5, L"Base Level (8-bit)");
-        notes.AssertIndirectNote(1234U, 22, L"Skill Points (8-bit)");
-        Assert::IsNull(notes.FindIndirectCodeNote(1234U, 0)); // no offset
-        Assert::IsNull(notes.FindIndirectCodeNote(1234U, 21)); // unknown offset
-        Assert::IsNull(notes.FindIndirectCodeNote(1235U, 5)); // wrong base address
-    }
-
-    TEST_METHOD(TestFindIndirectCodeNoteOverflow)
-    {
-        CodeNotesModelHarness notes;
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
-        std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
-        memory.at(4) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
-
-        const std::wstring sNote =
-            L"Pointer (32-bit)\n" // only 32-bit pointers are eligible for real address conversion
-            L"+0xFFFFFF81 = Small (8-bit)\n"
-            L"+0xFFFFFF82 = Medium (16-bit)\n"
-            L"+0xFFFFFF84 = Large (32-bit)";
-        notes.AddCodeNote(4, "Author", sNote);
-
-        notes.AssertIndirectNote(4U, 0x01, L"Small (8-bit)");
-        notes.AssertIndirectNote(4U, 0x04, L"Large (32-bit)");
-        Assert::IsNull(notes.FindIndirectCodeNote(4U, 0x00)); // no offset
-        Assert::IsNull(notes.FindIndirectCodeNote(4U, 0x30)); // unknown offset
-        Assert::IsNull(notes.FindIndirectCodeNote(8U, 0x01)); // wrong base address
     }
 
     TEST_METHOD(TestEnumerateCodeNotes)

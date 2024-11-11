@@ -17,7 +17,8 @@ struct CodeNoteModel::PointerData
     uint32_t RawPointerValue = 0xFFFFFFFF;       // last raw value of pointer captured
     ra::ByteAddress PointerAddress = 0xFFFFFFFF; // raw pointer value converted to RA address
     unsigned int OffsetRange = 0;                // highest offset captured within pointer block
-    bool HasPointers = false;
+    unsigned int HeaderLength = 0;               // length of note text not associated to OffsetNotes
+    bool HasPointers = false;                    // true if there are nested pointers
 
     enum OffsetType
     {
@@ -54,6 +55,11 @@ CodeNoteModel& CodeNoteModel::operator=(CodeNoteModel&& pOther) noexcept
     m_nMemSize = pOther.m_nMemSize;
     m_pPointerData = std::move(pOther.m_pPointerData);
     return *this;
+}
+
+std::wstring CodeNoteModel::GetPointerDescription() const
+{
+    return m_pPointerData != nullptr ? m_sNote.substr(0, m_pPointerData->HeaderLength) : std::wstring();
 }
 
 ra::ByteAddress CodeNoteModel::GetPointerAddress() const noexcept
@@ -96,8 +102,6 @@ void CodeNoteModel::UpdateRawPointerValue(ra::ByteAddress nAddress, const ra::da
             m_pPointerData->PointerAddress = nNewAddress;
             if (fNoteMovedCallback)
             {
-                fNoteMovedCallback(nOldAddress, nNewAddress, *this);
-
                 for (const auto& pNote : m_pPointerData->OffsetNotes)
                 {
                     if (!pNote.CodeNote.IsPointer())
@@ -154,11 +158,16 @@ std::pair<ra::ByteAddress, const CodeNoteModel*> CodeNoteModel::GetPointerNoteAt
         return {0, nullptr};
 
     const auto nPointerAddress = m_pPointerData->PointerAddress;
-    const auto nConvertedAddress = (m_pPointerData->OffsetType == PointerData::OffsetType::Overflow)
-        ? ConvertPointer(nPointerAddress) : nPointerAddress;
+
+    bool bAddressValid = true;
+    if (m_pPointerData->OffsetType == PointerData::OffsetType::Converted)
+    {
+        const auto nConvertedAddress = ConvertPointer(nPointerAddress);
+        bAddressValid = nAddress >= nConvertedAddress && nAddress < nConvertedAddress + m_pPointerData->OffsetRange;
+    }
 
     // if address is in the struct, look for a matching field
-    if (nAddress >= nConvertedAddress && nAddress < nConvertedAddress + m_pPointerData->OffsetRange)
+    if (bAddressValid)
     {
         auto nOffset = ra::to_signed(nAddress - nPointerAddress);
 
@@ -540,9 +549,10 @@ static void RemoveIndentPrefix(std::wstring& sNote)
 
 void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex)
 {
+    auto pointerData = std::make_unique<PointerData>();
+    pointerData->HeaderLength = gsl::narrow_cast<unsigned int>(nIndex);
     nIndex += 2;
 
-    auto pointerData = std::make_unique<PointerData>();
     do
     {
         PointerData::OffsetCodeNote offsetNote;

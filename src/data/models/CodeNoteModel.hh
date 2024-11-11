@@ -29,6 +29,7 @@ public:
     void SetNote(const std::wstring& sNote);
 
     bool IsPointer() const noexcept { return m_pPointerData != nullptr; }
+    std::wstring GetPointerDescription() const;
     ra::ByteAddress GetPointerAddress() const noexcept;
     uint32_t GetRawPointerValue() const noexcept;
     const CodeNoteModel* GetPointerNoteAtOffset(int nOffset) const;

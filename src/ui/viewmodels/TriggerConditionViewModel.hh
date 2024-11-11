@@ -128,7 +128,7 @@ public:
     static const BoolModelProperty IsIndirectProperty;
     bool IsIndirect() const { return GetValue(IsIndirectProperty); }
     void SetIndirect(bool bValue) { SetValue(IsIndirectProperty, bValue); }
-    ra::ByteAddress GetIndirectAddress(ra::ByteAddress nAddress, ra::ByteAddress* pPointerAddress) const;
+    ra::ByteAddress GetIndirectAddress(ra::ByteAddress nAddress, std::wstring& sPointerChain) const;
 
     static const BoolModelProperty IsSelectedProperty;
     bool IsSelected() const { return GetValue(IsSelectedProperty); }
@@ -160,7 +160,7 @@ private:
     void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, const std::wstring& nValue) const;
 
     static std::wstring GetValueTooltip(unsigned int nValue);
-    static std::wstring GetAddressTooltip(ra::ByteAddress nAddress, ra::ByteAddress nPointerAddress, ra::ByteAddress nOffset);
+    std::wstring GetAddressTooltip(ra::ByteAddress nAddress, const std::wstring& sPointerChain) const;
     ra::ByteAddress GetSourceAddress() const;
     ra::ByteAddress GetTargetAddress() const;
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,

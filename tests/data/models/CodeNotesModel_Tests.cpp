@@ -494,8 +494,11 @@ public:
         notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit); // full note for pointer address
 
         // extracted notes for offset fields (note: pointer base default is $0000)
-        notes.AssertNote(0x428U, L"Pointer - Award - Tee Hee Two (32bit)\n--- +0x24C | Flag", MemSize::ThirtyTwoBit);
-        notes.AssertNote(0x438U, L"Pointer - Award - Pretty Woman (32bit)\n--- +0x24C | Flag", MemSize::ThirtyTwoBit);
+        notes.AssertNote(0x428U, L"Pointer - Award - Tee Hee Two (32bit)\n+0x24C | Flag", MemSize::ThirtyTwoBit);
+        notes.AssertNote(0x438U, L"Pointer - Award - Pretty Woman (32bit)\n+0x24C | Flag", MemSize::ThirtyTwoBit);
+
+        // extracted notes for nested offset fields (note: nested pointer base default is $0000)
+        notes.AssertNote(0x24CU, L"Flag", MemSize::Unknown);
     }
 
     TEST_METHOD(TestCodeNotePointerNonPrefixedOffsets)

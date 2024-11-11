@@ -99,7 +99,7 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
 
         // capture the initial value of the pointer
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        note.SetRawPointerValue(pEmulatorContext.ReadMemory(nAddress, note.GetMemSize()));
+        note.UpdateRawPointerValue(nAddress, pEmulatorContext, nullptr);
     }
 
     {
@@ -505,25 +505,12 @@ void CodeNotesModel::DoFrame()
 
     for (auto& pNote : m_mCodeNotes)
     {
-        if (!pNote.second.IsPointer())
-            continue;
-
-        const auto nOldAddress = pNote.second.GetPointerAddress();
-        const auto nNewRawAddress = pEmulatorContext.ReadMemory(pNote.first, pNote.second.GetMemSize());
-        if (pNote.second.SetRawPointerValue(nNewRawAddress))
+        if (pNote.second.IsPointer())
         {
-            pNote.second.EnumeratePointerNotes(nOldAddress,
-                [this](ra::ByteAddress nAddress, const CodeNoteModel&)
-                {
-                    m_fCodeNoteChanged(nAddress, L"");
-                    return true;
-                });
-
-            pNote.second.EnumeratePointerNotes(
-                [this](ra::ByteAddress nAddress, const CodeNoteModel& pOffsetNote)
-                {
-                    m_fCodeNoteChanged(nAddress, pOffsetNote.GetNote());
-                    return true;
+            pNote.second.UpdateRawPointerValue(pNote.first, pEmulatorContext,
+                [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
+                    m_fCodeNoteChanged(nOldAddress, L"");
+                    m_fCodeNoteChanged(nNewAddress, pOffsetNote.GetNote());
                 });
         }
     }

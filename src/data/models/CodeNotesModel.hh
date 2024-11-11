@@ -213,7 +213,6 @@ protected:
 
 private:
     static std::wstring BuildCodeNoteSized(ra::ByteAddress nAddress, unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNoteModel& pNote);
-    static void ExtractSize(CodeNoteModel& pNote);
 
     mutable std::mutex m_oMutex;
 };

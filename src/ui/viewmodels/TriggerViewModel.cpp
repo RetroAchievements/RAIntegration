@@ -245,10 +245,11 @@ void TriggerViewModel::PasteFromClipboard()
     rc_init_parse_state(&parse, nullptr, nullptr, 0);
     rc_memref_t* first_memref;
     rc_init_parse_state_memrefs(&parse, &first_memref);
+    parse.is_value = IsValue();
     std::string sTrigger = ra::Narrow(sClipboardText);
     const char* memaddr = sTrigger.c_str();
     Expects(memaddr != nullptr);
-    rc_parse_condset(&memaddr, &parse, IsValue());
+    rc_parse_condset(&memaddr, &parse);
 
     const auto nSize = parse.offset;
     if (nSize > 0 && *memaddr == 'S')
@@ -269,8 +270,9 @@ void TriggerViewModel::PasteFromClipboard()
     sTriggerBuffer.resize(nSize);
     rc_init_parse_state(&parse, sTriggerBuffer.data(), nullptr, 0);
     rc_init_parse_state_memrefs(&parse, &first_memref);
+    parse.is_value = IsValue();
     memaddr = sTrigger.c_str();
-    const rc_condset_t* pCondSet = rc_parse_condset(&memaddr, &parse, IsValue());
+    const rc_condset_t* pCondSet = rc_parse_condset(&memaddr, &parse);
     Expects(pCondSet != nullptr);
 
     m_vConditions.BeginUpdate();
@@ -1253,13 +1255,16 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
             {
                 // when a condset is paused, processing stops when the first pause condition is true. only highlight it
                 bool bFirstPause = true;
+                const rc_condition_t* pPauseConditions = rc_condset_get_conditions(pSelectedGroup->m_pConditionSet);
+                const rc_condition_t* pEndPauseConditions = pPauseConditions + pSelectedGroup->m_pConditionSet->num_pause_conditions;
+
                 rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
                 for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
                 {
                     auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex);
                     if (vmCondition != nullptr)
                     {
-                        if (pCondition->pause && bFirstPause)
+                        if (pCondition < pEndPauseConditions && pCondition > pPauseConditions && bFirstPause)
                         {
                             vmCondition->UpdateRowColor(pCondition);
 

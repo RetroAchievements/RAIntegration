@@ -206,6 +206,9 @@
     </ClCompile>
     <ClCompile Include="..\rcheevos\src\rhash\md5.c" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\rcheevos\src\rcheevos\rc_runtime_types.natvis" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

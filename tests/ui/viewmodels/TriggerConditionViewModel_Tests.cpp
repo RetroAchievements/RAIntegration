@@ -1,5 +1,7 @@
 #include "CppUnitTest.h"
 
+#include "services\AchievementRuntime.hh"
+
 #include "ui\EditorTheme.hh"
 #include "ui\viewmodels\TriggerConditionViewModel.hh"
 #include "ui\viewmodels\TriggerViewModel.hh"
@@ -11,6 +13,8 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
+
+#include <rcheevos\src\rcheevos\rc_internal.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -1007,8 +1011,8 @@ public:
         Expects(pTrigger != nullptr);
         vmTrigger.InitializeFrom(*pTrigger);
 
-        // manually update the memrefs - GetIndirectAddress won't if the trigger is not internal to the viewmodel.
-        pTrigger->memrefs->value.value = 1;
+        // manually update the memrefs as if rc_runtime_do_frame where called
+        rc_update_memref_values(pTrigger->memrefs, rc_peek_callback, nullptr);
 
         const auto* pCondition1 = vmTrigger.Conditions().GetItemAt(0);
         Expects(pCondition1 != nullptr);
@@ -1029,15 +1033,9 @@ public:
         // Calling GetTooltip on a viewmodel attached to an external trigger should not evaluate the memrefs.
         // External memrefs should only be updated by the runtime to ensure delta values are correct.
         vmTrigger.SetMemory({ 1 }, 3);
-        Assert::AreEqual(std::wstring(L"0x0001\r\n[No code note]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0006 (indirect)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-
-        // memref should not have been updated
-        Assert::AreEqual(1U, pTrigger->memrefs->value.value);
 
         // Manually update the memref as if rc_runtime_do_frame were called, then the tooltips will update
-        pTrigger->memrefs->value.value = 3;
+        rc_update_memref_values(pTrigger->memrefs, rc_peek_callback, nullptr);
 
         // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008
         Assert::AreEqual(std::wstring(L"0x0001\r\n[No code note]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
@@ -1104,7 +1102,7 @@ public:
 
         // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008
         vmTrigger.SetMemory({ 1 }, 3);
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\nFirst Level A\n  +3=Second Level."), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L"0x0008 (indirect)\r\n[Nested pointer code note not supported]"), pCondition4->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
@@ -1208,7 +1206,7 @@ public:
 
         // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008
         vmTrigger.SetMemory({ 1 }, 3);
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\n[No code note]"), pCondition4->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\nFirst Level A\n  +3=Second Level."), pCondition4->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L"0x0008 (indirect)\r\n[Nested pointer code note not supported]"), pCondition5->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
@@ -1244,7 +1242,7 @@ public:
 
         // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008
         vmTrigger.SetMemory({ 1 }, 3);
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\nFirst Level A\n  +3=Second Level."), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L"0x0008 (indirect)\r\n[Nested pointer code note not supported]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 

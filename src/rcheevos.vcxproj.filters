@@ -168,4 +168,9 @@
     <ClInclude Include="..\rcheevos\include\rc_client_raintegration.h" />
     <ClInclude Include="..\rcheevos\src\rc_client_external.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\rcheevos\src\rcheevos\rc_runtime_types.natvis">
+      <Filter>rcheevos</Filter>
+    </Natvis>
+  </ItemGroup>
 </Project>

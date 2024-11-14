@@ -399,6 +399,21 @@ void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sVa
 void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty,
     const IntModelProperty& pSizeProperty, const StringModelProperty& pValueProperty, const rc_operand_t& operand)
 {
+    if (rc_operand_is_memref(&operand) && operand.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+    {
+        GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref = reinterpret_cast<rc_modified_memref_t*>(operand.value.memref);
+        if (pModifiedMemref->modifier_type != RC_OPERATOR_INDIRECT_READ)
+        {
+            // if the modified memref is not an indirect read, the size and address are stored in the modifier.
+            SetOperand(pTypeProperty, pSizeProperty, pValueProperty, pModifiedMemref->modifier);
+            return;
+        }
+
+        // if the modified memref is an indirect read, the modifier is just a constant with the offset.
+        // the size is local to the operand, and the offset is also stored in the local address field.
+        // just proceed normally.
+    }
+
     rc_typed_value_t pValue{};
 
     const auto nType = static_cast<TriggerOperandType>(operand.type);
@@ -681,9 +696,48 @@ std::wstring TriggerConditionViewModel::GetValueTooltip(unsigned int nValue)
     return std::to_wstring(nValue);
 }
 
-static bool IsIndirectMemref(const rc_operand_t& operand) noexcept
+static ra::ByteAddress GetParentAddress(const rc_modified_memref_t* pModifiedMemref)
 {
-    return rc_operand_is_memref(&operand) && operand.value.memref->value.is_indirect;
+    switch (pModifiedMemref->parent.value.memref->value.memref_type)
+    {
+        default:
+            return pModifiedMemref->parent.value.memref->address;
+
+        case RC_MEMREF_TYPE_MODIFIED_MEMREF:
+            GSL_SUPPRESS_TYPE1 const auto* pModifiedParentMemref =
+                reinterpret_cast<const rc_modified_memref_t*>(pModifiedMemref->parent.value.memref);
+
+            // chained pointer
+            if (pModifiedParentMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
+                return NESTED_POINTER_ADDRESS;
+
+            // indirect addresses have to be on the left
+            if (rc_operand_is_memref(&pModifiedParentMemref->parent))
+                return GetParentAddress(pModifiedParentMemref);
+
+            return UNKNOWN_ADDRESS;
+    }
+}
+
+static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperand, ra::ByteAddress nAddress, ra::ByteAddress* pPointerAddress)
+{
+    if (pOperand->value.memref->value.memref_type != RC_MEMREF_TYPE_MODIFIED_MEMREF)
+        return nAddress;
+
+    GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref = reinterpret_cast<const rc_modified_memref_t*>(pOperand->value.memref);
+    if (pModifiedMemref->modifier_type != RC_OPERATOR_INDIRECT_READ)
+        return nAddress;
+
+    if (pPointerAddress)
+        *pPointerAddress = GetParentAddress(pModifiedMemref);
+
+    rc_typed_value_t value{}, offset;
+    offset.type = RC_VALUE_TYPE_UNSIGNED;
+    offset.value.u32 = nAddress;
+    rc_evaluate_operand(&value, &pModifiedMemref->parent, nullptr);
+    rc_typed_value_add(&value, &offset);
+    rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
+    return value.value.u32;
 }
 
 ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress,
@@ -704,7 +758,6 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
     rc_condition_t* pFirstCondition = nullptr;
 
     const auto* pTrigger = pTriggerViewModel->GetTriggerFromString();
-    bool bProcessPause = false;
     if (pTrigger != nullptr)
     {
         // if the trigger is managed by the viewmodel (not the runtime) then we need to update the memrefs
@@ -714,7 +767,6 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
         if (nIndex == 0)
         {
             pFirstCondition = pTrigger->requirement->conditions;
-            bProcessPause = pTrigger->requirement->has_pause;
         }
         else
         {
@@ -726,134 +778,32 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
                 return nAddress;
 
             pFirstCondition = pAlt->conditions;
-            bProcessPause = pAlt->has_pause;
         }
     }
     else
     {
         Expects(pGroup->m_pConditionSet != nullptr);
         pFirstCondition = pGroup->m_pConditionSet->conditions;
-        bProcessPause = pGroup->m_pConditionSet->has_pause;
     }
 
-    bool bIsIndirect = false;
-    bool bIsMultiLevelIndirect = false;
-    rc_typed_value_t value = {};
-    rc_eval_state_t oEvalState;
-    memset(&oEvalState, 0, sizeof(oEvalState));
-    oEvalState.peek = rc_peek_callback;
-    oEvalState.recall_value.type = RC_VALUE_TYPE_UNSIGNED;
-    oEvalState.recall_value.value.u32 = 0;
+    rc_condition_t* pCondition = pFirstCondition;
+    gsl::index nConditionIndex = 0;
+    for (; pCondition != nullptr; pCondition = pCondition->next)
+    {
+        auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);
+        if (!vmCondition)
+            break;
 
-    int nPassesLeft = (bProcessPause ? 2 : 1); //If there are pauses, they may have remembered values that need to be processed first, so we do [up to] two passes.
-    while (nPassesLeft > 0) {
-        rc_condition_t* pCondition = pFirstCondition;
-        gsl::index nConditionIndex = 0;
-        for (; pCondition != nullptr; pCondition = pCondition->next)
+        if (vmCondition == this)
         {
-            auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);
-            if (!vmCondition)
-                break;
+            if (rc_operand_is_memref(&pCondition->operand1))
+                return GetIndirectAddressFromOperand(&pCondition->operand1, nAddress, pPointerAddress);
 
-            if ((pCondition->pause > 0) != bProcessPause) continue;
+            if (rc_operand_is_memref(&pCondition->operand2))
+                return GetIndirectAddressFromOperand(&pCondition->operand2, nAddress, pPointerAddress);
 
-            if (vmCondition == this)
-            {
-                // found the condition we're looking for
-                if (bIsMultiLevelIndirect && pPointerAddress != nullptr)
-                    *pPointerAddress = NESTED_POINTER_ADDRESS;
-
-                return nAddress + oEvalState.add_address;
-            }
-
-            switch (pCondition->type)
-            {
-            case RC_CONDITION_ADD_ADDRESS:
-                // AddAddress after an AddAddress is a multi-level indirect
-                bIsMultiLevelIndirect = bIsIndirect;
-                break;
-
-            case RC_CONDITION_ADD_SOURCE:
-            case RC_CONDITION_SUB_SOURCE:
-                // these can modify the Remembered value
-                break;
-
-            case RC_CONDITION_REMEMBER:
-                // Remember/Recall can be used in AddAddress chains
-                break;
-
-            default:
-                // other flags aren't part of the AddAddress chain
-                bIsIndirect = bIsMultiLevelIndirect = false;
-                oEvalState.add_address = 0;
-                oEvalState.add_value.type = RC_VALUE_TYPE_NONE;
-                continue;
-            }
-
-            if (bIsIndirect && pTrigger == nullptr)
-            {
-                // if this is part of a chain, we have to create a copy of the condition so we can point
-                // at copies of the indirect memrefs so the real delta values aren't modified.
-                rc_condition_t oCondition;
-                memcpy(&oCondition, pCondition, sizeof(oCondition));
-                rc_memref_t oSource{}, oTarget{};
-
-                if (IsIndirectMemref(pCondition->operand1))
-                {
-                    memcpy(&oSource, pCondition->operand1.value.memref, sizeof(oSource));
-                    oCondition.operand1.value.memref = &oSource;
-                }
-
-                if (IsIndirectMemref(pCondition->operand2))
-                {
-                    memcpy(&oTarget, pCondition->operand2.value.memref, sizeof(oTarget));
-                    oCondition.operand2.value.memref = &oTarget;
-                }
-
-                rc_evaluate_condition_value(&value, &oCondition, &oEvalState);
-            }
-            else
-            {
-                rc_evaluate_condition_value(&value, pCondition, &oEvalState);
-
-                if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
-                {
-                    // live AddAddress chain. capture the pointer value
-                    if (pPointerAddress != nullptr && rc_operand_is_memref(&pCondition->operand1))
-                        *pPointerAddress = (bIsIndirect) ? NESTED_POINTER_ADDRESS : pCondition->operand1.value.memref->address;
-                }
-            }
-
-            switch (pCondition->type)
-            {
-            case RC_CONDITION_ADD_ADDRESS:
-                rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
-                oEvalState.add_address = value.value.u32;
-                bIsIndirect = true;
-                break;
-
-            case RC_CONDITION_SUB_SOURCE:
-                rc_typed_value_negate(&value);
-                _FALLTHROUGH; // to RC_CONDITION_ADD_SOURCE
-
-            case RC_CONDITION_ADD_SOURCE:
-                rc_typed_value_add(&oEvalState.add_value, &value);
-                oEvalState.add_address = 0;
-                bIsIndirect = bIsMultiLevelIndirect = false;
-                break;
-
-            case RC_CONDITION_REMEMBER:
-                rc_typed_value_add(&value, &oEvalState.add_value);
-                oEvalState.recall_value.type = value.type;
-                oEvalState.recall_value.value = value.value;
-                oEvalState.add_value.type = RC_VALUE_TYPE_NONE;
-                oEvalState.add_address = 0;
-                bIsIndirect = bIsMultiLevelIndirect = false;
-                break;
-            }
+            break;
         }
-        nPassesLeft--;
-        bProcessPause = false; //pause pass is always first, so we are no longer to process pause logic
     }
 
     return nAddress;

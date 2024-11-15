@@ -1056,7 +1056,7 @@ public:
         // External memrefs should only be updated by the runtime to ensure delta values are correct.
         vmTrigger.SetMemory({ 1 }, 3);
 
-        // manually update the memrefs as if rc_runtime_do_frame where called
+        // Manually update the memrefs as if rc_runtime_do_frame where called
         rc_update_memref_values(pTrigger->memrefs, rc_peek_callback, nullptr);
 
         // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008

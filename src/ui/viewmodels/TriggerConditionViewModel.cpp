@@ -731,10 +731,7 @@ static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperan
     rc_typed_value_t value{}, parentValue{};
     rc_evaluate_operand(&value, &pModifiedMemref->modifier, nullptr);
     rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
-    if (value.value.u32 < 10)
-        sPointerChain += std::to_wstring(value.value.u32);
-    else
-        sPointerChain += ra::StringPrintf(L"0x%02x", value.value.u32);
+    sPointerChain += ra::StringPrintf(L"0x%02x", value.value.u32);
 
     rc_evaluate_operand(&parentValue, &pModifiedMemref->parent, nullptr);
     rc_typed_value_add(&value, &parentValue);

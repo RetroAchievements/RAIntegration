@@ -281,6 +281,35 @@ public:
             L"(32-bit pointer) Award - Pretty Woman\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
     }
+
+    TEST_METHOD(TestCodeNoteNestedMultiLine)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"Pointer [32bit]\n"
+            L"+0x428 | Obj1 pointer\n"
+            L"++0x24C | [16-bit] State\n"
+            L"-- Increments\n"
+            L"+0x438 | Obj2 pointer\n"
+            L"++0x08 | Flag\n"
+            L"-- b0=quest1 complete\n"
+            L"-- b1=quest2 complete\n"
+            L"+0x448 | [32-bit BE] Not-nested number";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
+
+        const auto* offsetNote = AssertIndirectNote(note, 0x428, L"Obj1 pointer\n+0x24C | [16-bit] State\n-- Increments",
+                                                    MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"[16-bit] State\n-- Increments", MemSize::SixteenBit, 2);
+
+        offsetNote = AssertIndirectNote(note, 0x438, L"Obj2 pointer\n+0x08 | Flag\n-- b0=quest1 complete\n-- b1=quest2 complete",
+                                        MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x08, L"Flag\n-- b0=quest1 complete\n-- b1=quest2 complete", MemSize::Unknown, 1);
+
+        AssertIndirectNote(note, 0x448, L"[32-bit BE] Not-nested number", MemSize::ThirtyTwoBitBigEndian, 4);
+    }
 };
 
 } // namespace tests

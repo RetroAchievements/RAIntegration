@@ -40,9 +40,15 @@ public:
     /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
     const std::wstring* FindCodeNote(ra::ByteAddress nAddress) const
     {
-        const auto* pNote = FindCodeNoteInternal(nAddress);
+        const auto* pNote = FindCodeNoteModel(nAddress);
         return (pNote != nullptr) ? &pNote->GetNote() : nullptr;
     }
+
+    /// <summary>
+    /// Returns the note model associated with the specified address.
+    /// </summary>
+    /// <returns>The note model associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
+    const CodeNoteModel* FindCodeNoteModel(ra::ByteAddress nAddress) const;
     
     /// <summary>
     /// Returns the address of the first byte containing the specified code note.
@@ -71,12 +77,6 @@ public:
     const std::wstring* FindCodeNote(ra::ByteAddress nAddress, _Inout_ std::string& sAuthor) const;
 
     /// <summary>
-    /// Returns the note associated with the specified address.
-    /// </summary>
-    /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    const std::wstring* FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const;
-
-    /// <summary>
     /// Returns the number of bytes associated to the code note at the specified address.
     /// </summary>
     /// <param name="nAddress">Address to query.</param>
@@ -84,7 +84,7 @@ public:
     /// <remarks>Only works for the first byte of a multi-byte address.</remarks>
     unsigned GetCodeNoteBytes(ra::ByteAddress nAddress) const
     {
-        const auto* pNote = FindCodeNoteInternal(nAddress);
+        const auto* pNote = FindCodeNoteModel(nAddress);
         return (pNote == nullptr) ? 0 : pNote->GetBytes();
     }
 
@@ -96,7 +96,7 @@ public:
     /// <remarks>Only works for the first byte of a multi-byte address.</remarks>
     MemSize GetCodeNoteMemSize(ra::ByteAddress nAddress) const
     {
-        const auto* pNote = FindCodeNoteInternal(nAddress);
+        const auto* pNote = FindCodeNoteModel(nAddress);
         return (pNote == nullptr) ? MemSize::Unknown : pNote->GetMemSize();
     }
 
@@ -200,7 +200,6 @@ protected:
 
     std::map<ra::ByteAddress, std::wstring> m_mPendingCodeNotes;
 
-    const CodeNoteModel* FindCodeNoteInternal(ra::ByteAddress nAddress) const;
     std::pair<ra::ByteAddress, const CodeNoteModel*> FindIndirectCodeNoteInternal(ra::ByteAddress nAddress) const;
     void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel& pCodeNote)> callback,
                             bool bIncludeDerived) const;
@@ -213,7 +212,6 @@ protected:
 
 private:
     static std::wstring BuildCodeNoteSized(ra::ByteAddress nAddress, unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNoteModel& pNote);
-    static void ExtractSize(CodeNoteModel& pNote);
 
     mutable std::mutex m_oMutex;
 };

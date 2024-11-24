@@ -17,6 +17,8 @@ struct CodeNoteModel::PointerData
     uint32_t RawPointerValue = 0xFFFFFFFF;       // last raw value of pointer captured
     ra::ByteAddress PointerAddress = 0xFFFFFFFF; // raw pointer value converted to RA address
     unsigned int OffsetRange = 0;                // highest offset captured within pointer block
+    unsigned int HeaderLength = 0;               // length of note text not associated to OffsetNotes
+    bool HasPointers = false;                    // true if there are nested pointers
 
     enum OffsetType
     {
@@ -55,6 +57,11 @@ CodeNoteModel& CodeNoteModel::operator=(CodeNoteModel&& pOther) noexcept
     return *this;
 }
 
+std::wstring CodeNoteModel::GetPointerDescription() const
+{
+    return m_pPointerData != nullptr ? m_sNote.substr(0, m_pPointerData->HeaderLength) : std::wstring();
+}
+
 ra::ByteAddress CodeNoteModel::GetPointerAddress() const noexcept
 {
     return m_pPointerData != nullptr ? m_pPointerData->PointerAddress : 0xFFFFFFFF;
@@ -75,24 +82,46 @@ static ra::ByteAddress ConvertPointer(ra::ByteAddress nAddress)
     return nAddress;
 }
 
-bool CodeNoteModel::SetRawPointerValue(uint32_t nValue)
+void CodeNoteModel::UpdateRawPointerValue(ra::ByteAddress nAddress, const ra::data::context::EmulatorContext& pEmulatorContext,
+                                          NoteMovedFunction fNoteMovedCallback)
 {
     if (m_pPointerData == nullptr)
-        return false;
+        return;
 
-    if (nValue == m_pPointerData->RawPointerValue)
-        return false;
-    m_pPointerData->RawPointerValue = nValue;
+    const uint32_t nValue = pEmulatorContext.ReadMemory(nAddress, GetMemSize());
+    if (nValue != m_pPointerData->RawPointerValue)
+    {
+        m_pPointerData->RawPointerValue = nValue;
 
-    const auto nNewAddress = (m_pPointerData->OffsetType == PointerData::OffsetType::Converted)
-        ? ConvertPointer(nValue) : nValue;
+        const auto nNewAddress = (m_pPointerData->OffsetType == PointerData::OffsetType::Converted)
+            ? ConvertPointer(nValue) : nValue;
 
-    const auto nOldAddress = m_pPointerData->PointerAddress;
-    if (nNewAddress == nOldAddress)
-        return false;
+        const auto nOldAddress = m_pPointerData->PointerAddress;
+        if (nNewAddress != nOldAddress)
+        {
+            m_pPointerData->PointerAddress = nNewAddress;
+            if (fNoteMovedCallback)
+            {
+                for (const auto& pNote : m_pPointerData->OffsetNotes)
+                {
+                    if (!pNote.CodeNote.IsPointer())
+                        fNoteMovedCallback(nOldAddress + pNote.Offset, nNewAddress + pNote.Offset, pNote.CodeNote);
+                }
+            }
+        }
+    }
 
-    m_pPointerData->PointerAddress = nNewAddress;
-    return true;
+    if (m_pPointerData->HasPointers)
+    {
+        for (auto& pNote : m_pPointerData->OffsetNotes)
+        {
+            if (pNote.CodeNote.IsPointer())
+            {
+                pNote.CodeNote.UpdateRawPointerValue(m_pPointerData->PointerAddress + pNote.Offset,
+                                                     pEmulatorContext, fNoteMovedCallback);
+            }
+        }
+    }
 }
 
 const CodeNoteModel* CodeNoteModel::GetPointerNoteAtOffset(int nOffset) const
@@ -129,10 +158,16 @@ std::pair<ra::ByteAddress, const CodeNoteModel*> CodeNoteModel::GetPointerNoteAt
         return {0, nullptr};
 
     const auto nPointerAddress = m_pPointerData->PointerAddress;
-    const auto nConvertedAddress = (m_pPointerData->OffsetType == PointerData::OffsetType::Overflow)
-        ? ConvertPointer(nPointerAddress) : nPointerAddress;
 
-    if (nAddress >= nConvertedAddress && nAddress < nConvertedAddress + m_pPointerData->OffsetRange)
+    bool bAddressValid = true;
+    if (m_pPointerData->OffsetType == PointerData::OffsetType::Converted)
+    {
+        const auto nConvertedAddress = ConvertPointer(nPointerAddress);
+        bAddressValid = nAddress >= nConvertedAddress && nAddress < nConvertedAddress + m_pPointerData->OffsetRange;
+    }
+
+    // if address is in the struct, look for a matching field
+    if (bAddressValid)
     {
         auto nOffset = ra::to_signed(nAddress - nPointerAddress);
 
@@ -155,6 +190,21 @@ std::pair<ra::ByteAddress, const CodeNoteModel*> CodeNoteModel::GetPointerNoteAt
         }
     }
 
+    // check pointer chains
+    if (m_pPointerData->HasPointers)
+    {
+        for (const auto& pOffsetNote : m_pPointerData->OffsetNotes)
+        {
+            if (pOffsetNote.CodeNote.IsPointer())
+            {
+                auto pNestedObject = pOffsetNote.CodeNote.GetPointerNoteAtAddress(nAddress);
+                if (pNestedObject.second)
+                    return pNestedObject;
+            }
+        }
+    }
+
+    // not found
     return {0, nullptr};
 }
 
@@ -462,18 +512,83 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
     }
 }
 
+static void RemoveIndentPrefix(std::wstring& sNote)
+{
+    auto nLineIndex = sNote.find('\n');
+    if (nLineIndex == std::wstring::npos)
+        return;
+
+    for (size_t nIndent = nLineIndex + 1; nIndent + 1 < sNote.length(); ++nIndent)
+    {
+        auto c = sNote.at(nIndent);
+        if (c != '+')
+        {
+            if (c == '\n')
+                nLineIndex = nIndent;
+
+            continue;
+        }
+
+        c = sNote.at(nIndent + 1);
+        if (isdigit(c)) // found +N
+        {
+            if (nIndent > nLineIndex + 1)
+            {
+                const auto sPrefix = sNote.substr(nLineIndex, nIndent - nLineIndex); // capture "\n" + prefix
+                auto nIndex = nLineIndex;
+                do
+                {
+                    sNote.erase(nIndex + 1, sPrefix.length() - 1);
+                    nIndex = sNote.find(sPrefix, nIndex + 1);
+                } while (nIndex != std::wstring::npos);
+            }
+            break;
+        }
+    }
+}
+
 void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex)
 {
+    auto pointerData = std::make_unique<PointerData>();
+    pointerData->HeaderLength = gsl::narrow_cast<unsigned int>(nIndex);
     nIndex += 2;
 
-    auto pointerData = std::make_unique<PointerData>();
     do
     {
         PointerData::OffsetCodeNote offsetNote;
-        const auto nNextIndex = sNote.find(L"\n+", nIndex);
-        auto sNextNote = sNote.substr(nIndex, nNextIndex - nIndex);
-        ra::Trim(sNextNote);
+        offsetNote.CodeNote.SetAuthor(m_sAuthor);
 
+        // the next note starts when we find a '+' at the start of a line.
+        auto nNextIndex = sNote.find(L"\n+", nIndex);
+        auto nStopIndex = nNextIndex;
+
+        if (nNextIndex != std::wstring::npos)
+        {
+            // a chain of plusses indicates an indented nested note. include them
+            //
+            //   [32-bit pointer] global data
+            //   +0x20 [32-bit pointer] user data
+            //   ++0x08 [16-bit] points
+            //
+            while (nNextIndex + 2 < sNote.length() && !isdigit(sNote.at(nNextIndex + 2)))
+            {
+                nNextIndex = nStopIndex = sNote.find(L"\n+", nNextIndex + 2);
+                if (nNextIndex == std::wstring::npos)
+                    break;
+            }
+
+            // remove trailing whitespace
+            if (nStopIndex != std::wstring::npos)
+            {
+                while (nStopIndex > 0 && isspace(sNote.at(nStopIndex - 1)))
+                    nStopIndex--;
+            }
+        }
+
+        auto sNextNote = sNote.substr(nIndex, nStopIndex - nIndex);
+        RemoveIndentPrefix(sNextNote);
+
+        // extract the offset
         wchar_t* pEnd = nullptr;
 
         try
@@ -491,6 +606,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
         if (!pEnd || isalnum(*pEnd))
             return;
 
+        // skip over [whitespace] [optional separator] [whitespace]
         const wchar_t* pStop = sNextNote.c_str() + sNextNote.length();
         while (pEnd < pStop && isspace(*pEnd))
             pEnd++;
@@ -501,8 +617,8 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
                 pEnd++;
         }
 
-        offsetNote.CodeNote.SetAuthor(m_sAuthor);
         offsetNote.CodeNote.SetNote(sNextNote.substr(pEnd - sNextNote.c_str()));
+        pointerData->HasPointers |= offsetNote.CodeNote.IsPointer();
 
         const auto nRangeOffset = offsetNote.Offset + offsetNote.CodeNote.GetBytes();
         pointerData->OffsetRange = std::max(pointerData->OffsetRange, nRangeOffset);
@@ -540,26 +656,26 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
 }
 
 void CodeNoteModel::EnumeratePointerNotes(
-    std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> callback) const
+    std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const
 {
     if (m_pPointerData == nullptr)
         return;
 
     if (m_pPointerData->OffsetType == PointerData::OffsetType::Overflow)
-        EnumeratePointerNotes(m_pPointerData->RawPointerValue, callback);
+        EnumeratePointerNotes(m_pPointerData->RawPointerValue, fCallback);
     else
-        EnumeratePointerNotes(m_pPointerData->PointerAddress, callback);
+        EnumeratePointerNotes(m_pPointerData->PointerAddress, fCallback);
 }
 
 void CodeNoteModel::EnumeratePointerNotes(ra::ByteAddress nPointerAddress,
-    std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> callback) const
+    std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const
 {
     if (m_pPointerData == nullptr)
         return;
 
     for (const auto& pNote : m_pPointerData->OffsetNotes)
     {
-        if (!callback(nPointerAddress + pNote.Offset, pNote.CodeNote))
+        if (!fCallback(nPointerAddress + pNote.Offset, pNote.CodeNote))
             break;
     }
 }

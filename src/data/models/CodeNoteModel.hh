@@ -4,6 +4,8 @@
 
 #include "data/Types.hh"
 
+#include "data/context/EmulatorContext.hh"
+
 namespace ra {
 namespace data {
 namespace models {
@@ -27,18 +29,21 @@ public:
     void SetNote(const std::wstring& sNote);
 
     bool IsPointer() const noexcept { return m_pPointerData != nullptr; }
+    std::wstring GetPointerDescription() const;
     ra::ByteAddress GetPointerAddress() const noexcept;
     uint32_t GetRawPointerValue() const noexcept;
-    bool SetRawPointerValue(uint32_t nValue);
     const CodeNoteModel* GetPointerNoteAtOffset(int nOffset) const;
     std::pair<ra::ByteAddress, const CodeNoteModel*> GetPointerNoteAtAddress(ra::ByteAddress nAddress) const;
+
+    typedef std::function<void(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const CodeNoteModel&)> NoteMovedFunction;
+    void UpdateRawPointerValue(ra::ByteAddress nAddress, const ra::data::context::EmulatorContext& pEmulatorContext, NoteMovedFunction fNoteMovedCallback);
 
     bool GetPreviousAddress(ra::ByteAddress nBeforeAddress, ra::ByteAddress& nPreviousAddress) const;
     bool GetNextAddress(ra::ByteAddress nAfterAddress, ra::ByteAddress& nNextAddress) const;
 
     void EnumeratePointerNotes(ra::ByteAddress nPointerAddress,
-                               std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> callback) const;
-    void EnumeratePointerNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> callback) const;
+                               std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
+    void EnumeratePointerNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
 
 private:
     std::string m_sAuthor;

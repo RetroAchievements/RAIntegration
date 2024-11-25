@@ -2,6 +2,8 @@
 
 #include "RA_Defs.h"
 
+#include "data\context\ConsoleContext.hh"
+
 #include "services\ServiceLocator.hh"
 
 namespace ra {
@@ -96,6 +98,26 @@ void PointerInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddr
     }
 }
 
+void PointerInspectorViewModel::GetPointerChain(gsl::index nIndex, std::stack<const LookupItemViewModel*>& sChain) const
+{
+    const auto* pNode = m_vNodes.GetItemAt(nIndex);
+    Expects(pNode != nullptr);
+
+    sChain.push(pNode);
+
+    auto nDepth = pNode->GetId() >> 24;
+    while (nDepth > 0 && nIndex > 1)
+    {
+        const auto* pNestedNode = m_vNodes.GetItemAt(--nIndex);
+        const auto nNestedDepth = pNestedNode->GetId() >> 24;
+        if (nNestedDepth < nDepth)
+        {
+            sChain.push(pNestedNode);
+            nDepth = nNestedDepth;
+        }
+    }
+}
+
 const ra::data::models::CodeNoteModel* PointerInspectorViewModel::FindNestedCodeNoteModel(
     const ra::data::models::CodeNoteModel& pRootNote, int nNewNode)
 {
@@ -103,24 +125,8 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::FindNestedCode
     if (nIndex == -1)
         return nullptr;
 
-    const auto* pNode = m_vNodes.GetItemAt(nIndex);
-    Expects(pNode != nullptr);
-
     std::stack<const LookupItemViewModel*> sChain;
-    sChain.push(pNode);
-
-    auto nDepth = nNewNode >> 24;
-    while (nDepth > 0 && nIndex > 1)
-    {
-        const auto* pNestedNode = m_vNodes.GetItemAt(--nIndex);
-        const auto nNestedDepth = pNode->GetId() >> 24;
-        if (nNestedDepth < nDepth)
-        {
-            sChain.push(pNestedNode);
-            nDepth = nNestedDepth;
-            break;
-        }
-    }
+    GetPointerChain(nIndex, sChain);
 
     const auto* pParentNote = &pRootNote;
     do
@@ -282,6 +288,113 @@ void PointerInspectorViewModel::UpdateValues()
 void PointerInspectorViewModel::DoFrame()
 {
     UpdateValues();
+}
+
+void PointerInspectorViewModel::CopyDefinition() const
+{
+    const auto sDefinition = GetDefinition();
+}
+
+static void AppendMaskedPointer(ra::StringBuilder& builder, uint32_t nMaskBits, MemSize nSize, const std::string& sAddress)
+{
+    const auto nSizeBits = ra::data::MemSizeBits(nSize);
+    if (nSizeBits < nMaskBits)
+        nMaskBits = nSizeBits;
+
+    const auto nBytes = (nMaskBits + 7) / 8;
+    switch (nBytes)
+    {
+        default: builder.Append('H'); break;
+        case 2:  builder.Append(' '); break;
+        case 3:  builder.Append('W'); break;
+        case 4:  builder.Append('X'); break;
+    }
+
+    builder.AppendSubString(sAddress.c_str() + 2, sAddress.length() - 2);
+
+    if (nMaskBits != nBytes * 8)
+    {
+        builder.Append('&');
+        builder.Append((1 << nMaskBits) - 1);
+    }
+}
+
+static void AppendPointer(ra::StringBuilder& builder, const ra::data::models::CodeNoteModel* pNote)
+{
+    MemSize nSize;
+    uint32_t nMask;
+    uint32_t nOffset;
+
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    if (!pConsoleContext.GetRealAddressConversion(&nSize, &nMask, &nOffset))
+    {
+        nSize = pNote->GetMemSize();
+        nMask = 0xFFFFFFFF;
+        nOffset = pConsoleContext.RealAddressFromByteAddress(0);
+    }
+
+    builder.Append("I:0x");
+    switch (nSize)
+    {
+        case MemSize::ThirtyTwoBit:          builder.Append('X'); break;
+        case MemSize::TwentyFourBit:         builder.Append('W'); break;
+        case MemSize::SixteenBit:            builder.Append(' '); break;
+        case MemSize::EightBit:              builder.Append('H'); break;
+        case MemSize::ThirtyTwoBitBigEndian: builder.Append('G'); break;
+        case MemSize::SixteenBitBigEndian:   builder.Append('I'); break;
+        case MemSize::TwentyFourBitBigEndian:builder.Append('J'); break;
+    }
+
+    const auto sAddress = ra::ByteAddressToString(pNote->GetPointerAddress());
+    builder.Append(sAddress.c_str() + 2, sAddress.length() - 2);
+
+    if (nOffset != 0)
+    {
+        builder.Append('-');
+        builder.Append(nOffset);
+    }
+    else if (nMask != 0xFFFFFFFF && nMask != ((1 << ra::data::MemSizeBits(nSize)) - 1))
+    {
+        builder.Append('&');
+        builder.Append(nMask);
+    }
+}
+
+std::string PointerInspectorViewModel::GetDefinition() const
+{
+    ra::StringBuilder builder;
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes != nullptr)
+    {
+        const auto* pRootNote = pCodeNotes->FindCodeNoteModel(GetCurrentAddress());
+
+        std::stack<const LookupItemViewModel*> sChain;
+        GetPointerChain(GetSelectedNode(), sChain);
+
+        const auto* pParentNote = pRootNote;
+        builder.Append("A:");
+        AppendPointer(builder, pRootNote);
+        do
+        {
+            const auto* pNestedNode = sChain.top();
+            const auto nOffset = pNestedNode->GetId() & 0x00FFFFFF;
+
+            const auto* pNestedNote = pParentNote->GetPointerNoteAtOffset(nOffset);
+            if (!pNestedNote)
+                return builder.ToString();
+
+            AppendPointer(builder, pNestedNote);
+
+            pParentNote = pNestedNote;
+            sChain.pop();
+        } while (!sChain.empty());
+
+        // TODO: append field
+    }
+
+    return builder.ToString();
 }
 
 } // namespace viewmodels

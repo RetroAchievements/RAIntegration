@@ -116,6 +116,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
 
 
     SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_COPY_ALL, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_PAUSE, Anchor::Right | Anchor::Bottom);
     SetAnchor(IDC_RA_FREEZE, Anchor::Right | Anchor::Bottom);
 
@@ -134,20 +135,28 @@ BOOL PointerInspectorDialog::OnInitDialog()
 
 BOOL PointerInspectorDialog::OnCommand(WORD nCommand)
 {
-    //switch (nCommand)
-    //{
+    switch (nCommand)
+    {
         //case IDC_RA_ADDBOOKMARK: {
         //    auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
         //    if (vmPointerInspector)
-        //        vmPointerInspector->Find();
+        //        vmPointerInspector->AddBookmark();
 
         //    return TRUE;
         //}
 
+        case IDC_RA_COPY_ALL: {
+            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
+            if (vmPointerInspector)
+                vmPointerInspector->CopyDefinition();
+
+            return TRUE;
+        }
+
         //case IDC_RA_PAUSE: {
         //    auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
         //    if (vmPointerInspector)
-        //        vmPointerInspector->BookmarkSelected();
+        //        vmPointerInspector->TogglePause();
 
         //    return TRUE;
         //}
@@ -155,11 +164,11 @@ BOOL PointerInspectorDialog::OnCommand(WORD nCommand)
         //case IDC_RA_FREEZE: {
         //    const auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
         //    if (vmPointerInspector)
-        //        vmPointerInspector->ExportResults();
+        //        vmPointerInspector->ToggleFreeze();
 
         //    return TRUE;
         //}
-    //}
+    }
 
     return DialogBase::OnCommand(nCommand);
 }

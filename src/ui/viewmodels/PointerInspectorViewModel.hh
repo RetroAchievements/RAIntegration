@@ -125,6 +125,8 @@ public:
 
     void DoFrame() override;
 
+    void CopyDefinition() const;
+
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
@@ -139,8 +141,10 @@ private:
     void LoadNote(const ra::data::models::CodeNoteModel* pNote);
     void LoadNodes(const ra::data::models::CodeNoteModel* pNote);
     const ra::data::models::CodeNoteModel* FindNestedCodeNoteModel(const ra::data::models::CodeNoteModel& pRootNote, int nNewNode);
+    void GetPointerChain(gsl::index nIndex, std::stack<const LookupItemViewModel*>& sChain) const;
     void SyncField(StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote);
     void UpdateValues();
+    std::string GetDefinition() const;
 
     LookupItemViewModelCollection m_vNodes;
     ViewModelCollection<StructFieldViewModel> m_vFields;

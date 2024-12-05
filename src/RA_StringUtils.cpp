@@ -162,6 +162,15 @@ bool ParseHex(const std::wstring& sValue, unsigned int nMaximumValue, unsigned i
 }
 
 _Use_decl_annotations_
+bool ParseNumeric(const std::wstring& sValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError)
+{
+    if (sValue.length() > 2 && sValue.at(1) == 'x')
+        return ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError);
+
+    return ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, nValue, sError);
+}
+
+_Use_decl_annotations_
 bool ParseFloat(const std::wstring& sValue, float& fValue, std::wstring& sError)
 {
     fValue = 0.0f;

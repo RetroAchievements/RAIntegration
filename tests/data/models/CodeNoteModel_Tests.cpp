@@ -153,6 +153,9 @@ public:
 
         TestCodeNoteSize(L"100 32-bit pointers [400 bytes]", 400U, MemSize::Array);
         TestCodeNoteSize(L"[400 bytes] 100 32-bit pointers", 400U, MemSize::Array);
+
+        TestCodeNoteSize(L"[NTSCU]\n[16-bit] Test\n", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[24-bit]\nIt's really 32-bit, but the top byte will never be non-zero\n", 3U, MemSize::TwentyFourBit);
     }
 
     TEST_METHOD(TestGetPointerNoteAtOffset)
@@ -176,6 +179,28 @@ public:
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
+            L"Pointer [32bit]\n"
+            L"+0x1BC | Equipment - Head - String[24 Bytes]\n"
+            L"---DEFAULT_HEAD = Barry's Head\n"
+            L"---FRAGGER_HEAD = Fragger Helmet";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
+
+        // extracted notes for offset fields
+        AssertIndirectNote(note, 0x1BCU,
+                           L"Equipment - Head - String[24 Bytes]\n"
+                           L"---DEFAULT_HEAD = Barry's Head\n"
+                           L"---FRAGGER_HEAD = Fragger Helmet",
+                           MemSize::Array, 24);
+    }
+
+        TEST_METHOD(TestGetPointerNoteAtOffsetMultilineWithHeader)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"[PAL]\n"
             L"Pointer [32bit]\n"
             L"+0x1BC | Equipment - Head - String[24 Bytes]\n"
             L"---DEFAULT_HEAD = Barry's Head\n"

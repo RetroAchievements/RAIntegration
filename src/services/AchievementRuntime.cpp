@@ -447,8 +447,6 @@ public:
 private:
     rc_client_subset_info_t* m_pPublishedSubset = nullptr;
     rc_client_t* m_pClient = nullptr;
-    rc_memref_t** m_pNextMemref = nullptr;
-    rc_value_t** m_pNextVariable = nullptr;
 
     typedef struct rc_client_subset_wrapper_t
     {
@@ -473,37 +471,6 @@ private:
         }
 
         return false;
-    }
-
-    bool AllocatedMemrefs() noexcept
-    {
-        bool bAllocatedMemref = false;
-
-        /* if at least one memref was allocated within the object, we can't free the buffer when the object is
-         * deactivated */
-        if (*m_pNextMemref != nullptr)
-        {
-            bAllocatedMemref = true;
-            /* advance through the new memrefs so we're ready for the next allocation */
-            do
-            {
-                m_pNextMemref = &(*m_pNextMemref)->next;
-            } while (*m_pNextMemref != nullptr);
-        }
-
-        /* if at least one variable was allocated within the object, we can't free the buffer when the object is
-         * deactivated */
-        if (*m_pNextVariable != nullptr)
-        {
-            bAllocatedMemref = true;
-            /* advance through the new variables so we're ready for the next allocation */
-            do
-            {
-                m_pNextVariable = &(*m_pNextVariable)->next;
-            } while (*m_pNextVariable != nullptr);
-        }
-
-        return bAllocatedMemref;
     }
 
     static rc_client_leaderboard_info_t* FindLeaderboard(rc_client_subset_info_t* pSubset, uint32_t nId)
@@ -703,10 +670,7 @@ public:
         if (m_pClient == nullptr)
         {
             m_pClient = pClient;
-            m_pNextMemref = &pClient->game->runtime.memrefs;
-            m_pNextVariable = &pClient->game->runtime.variables;
             m_pPublishedSubset = pClient->game->subsets;
-            AllocatedMemrefs(); // advance pointers
         }
 
         std::vector<ra::data::models::AchievementModel*> vCoreAchievements;
@@ -784,15 +748,10 @@ public:
 
     void AttachMemory(void* pMemory)
     {
-        if (AllocatedMemrefs())
-        {
-            // if memrefs were allocated, we can't release this memory until the game is unloaded
-            m_vAllocatedMemory.push_back(pMemory);
-        }
-        else
-        {
+        if (m_pSubsetWrapper)
             m_pSubsetWrapper->vAllocatedMemory.push_back(pMemory);
-        }
+        else
+            m_vAllocatedMemory.push_back(pMemory);
     }
 
     bool DetachMemory(void* pMemory) noexcept
@@ -2378,6 +2337,9 @@ _NODISCARD static char ComparisonSizeFromPrefix(_In_ char cPrefix) noexcept
 static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile)
 {
     auto& pRuntime = pClient->game->runtime;
+    rc_preparse_state_t pParseState;
+    rc_init_preparse_state(&pParseState, nullptr, 0);
+    pParseState.parse.existing_memrefs = pRuntime.memrefs;
 
     std::string sLine;
     while (pFile.GetLine(sLine))
@@ -2433,20 +2395,11 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
                     if (tokenizer.PeekChar() == sLineMD5.at(31))
                     {
                         // match! attempt to store it
-                        rc_memref_t* pMemoryReference = pRuntime.memrefs;
-                        while (pMemoryReference)
-                        {
-                            if (pMemoryReference->address == pMemRef.address &&
-                                pMemoryReference->value.size == pMemRef.value.size)
-                            {
-                                pMemoryReference->value.value = pMemRef.value.value;
-                                pMemoryReference->value.changed = pMemRef.value.changed;
-                                pMemoryReference->value.prior = pMemRef.value.prior;
-                                break;
-                            }
-
-                            pMemoryReference = pMemoryReference->next;
-                        }
+                        rc_memref_t* pMemoryReference = rc_alloc_memref(&pParseState.parse,
+                            pMemRef.address, pMemoryReference->value.size);
+                        pMemoryReference->value.value = pMemRef.value.value;
+                        pMemoryReference->value.changed = pMemRef.value.changed;
+                        pMemoryReference->value.prior = pMemRef.value.prior;
                     }
                 }
             }

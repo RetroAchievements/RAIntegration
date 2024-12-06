@@ -149,14 +149,14 @@ public:
     /// <summary>
     /// Returns the number of known code notes (not including indirect notes).
     /// </summary>
-    size_t CodeNoteCount() const noexcept { return m_mCodeNotes.size(); }
+    size_t CodeNoteCount() const noexcept { return m_vCodeNotes.size(); }
 
     /// <summary>
     /// Gets the address of the first code note.
     /// </summary>
     ra::ByteAddress FirstCodeNoteAddress() const noexcept
     {
-        return (m_mCodeNotes.size() == 0) ? 0U : m_mCodeNotes.begin()->first;
+        return (m_vCodeNotes.empty()) ? 0U : m_vCodeNotes.front().GetAddress();
     }
 
     /// <summary>
@@ -195,7 +195,7 @@ protected:
     void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
 
-    std::map<ra::ByteAddress, CodeNoteModel> m_mCodeNotes;
+    std::vector<CodeNoteModel> m_vCodeNotes;
     std::map<ra::ByteAddress, std::pair<std::string, std::wstring>> m_mOriginalCodeNotes;
 
     std::map<ra::ByteAddress, std::wstring> m_mPendingCodeNotes;

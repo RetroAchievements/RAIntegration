@@ -147,6 +147,71 @@ ra::ByteAddress ConsoleContext::ByteAddressFromRealAddress(ra::ByteAddress nReal
     return 0xFFFFFFFF;
 }
 
+ra::ByteAddress ConsoleContext::RealAddressFromByteAddress(ra::ByteAddress nByteAddress) const noexcept
+{
+    for (const auto& pRegion : m_vRegions)
+    {
+        if (pRegion.EndAddress >= nByteAddress && pRegion.StartAddress <= nByteAddress)
+            return nByteAddress + pRegion.RealAddress;
+    }
+
+    return 0xFFFFFFFF;
+}
+
+bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMask, uint32_t* nOffset) const
+{
+    Expects(nReadSize != nullptr);
+    Expects(nMask != nullptr);
+    Expects(nOffset != nullptr);
+
+    switch (m_nId)
+    {
+        case ConsoleID::Dreamcast:
+        case ConsoleID::DSi:
+        case ConsoleID::PlayStation:
+            *nReadSize = MemSize::TwentyFourBit;
+            *nMask = 0xFFFFFFFF;
+            *nOffset = 0;
+            return true;
+
+        case ConsoleID::GameCube:
+        case ConsoleID::WII:
+            *nReadSize = MemSize::ThirtyTwoBitBigEndian;
+            *nMask = 0x01FFFFFF;
+            *nOffset = 0;
+            return true;
+
+        case ConsoleID::PlayStation2:
+        case ConsoleID::PSP:
+            *nReadSize = MemSize::ThirtyTwoBit;
+            *nMask = 0x01FFFFFF;
+            *nOffset = 0;
+            return true;
+
+        default:
+            for (const auto& pRegion : m_vRegions)
+            {
+                if (pRegion.Type == AddressType::SystemRAM)
+                {
+                    *nOffset = (pRegion.RealAddress - pRegion.StartAddress);
+                    *nMask = 0xFFFFFFFF;
+
+                    if (m_nMaxAddress > 0x00FFFFFF)
+                        *nReadSize = MemSize::ThirtyTwoBit;
+                    else if (m_nMaxAddress > 0x0000FFFF)
+                        *nReadSize = MemSize::TwentyFourBit;
+                    else if (m_nMaxAddress > 0x000000FF)
+                        *nReadSize = MemSize::SixteenBit;
+                    else
+                        *nReadSize = MemSize::EightBit;
+
+                    return true;
+                }
+            }
+            return false;
+    }
+}
+
 } // namespace context
 } // namespace data
 } // namespace ra

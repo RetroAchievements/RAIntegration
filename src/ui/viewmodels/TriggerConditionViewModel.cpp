@@ -6,6 +6,7 @@
 #include "data\context\GameContext.hh"
 #include "data\models\TriggerValidation.hh"
 
+#include "services\AchievementLogicSerializer.hh"
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -56,36 +57,18 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
     const auto nType = GetType();
     if (nType != TriggerConditionType::Standard)
     {
-        switch (nType)
+        if (nType == TriggerConditionType::Measured)
         {
-            case TriggerConditionType::ResetIf:     sBuffer.push_back('R'); break;
-            case TriggerConditionType::PauseIf:     sBuffer.push_back('P'); break;
-            case TriggerConditionType::AddSource:   sBuffer.push_back('A'); break;
-            case TriggerConditionType::SubSource:   sBuffer.push_back('B'); break;
-            case TriggerConditionType::AddHits:     sBuffer.push_back('C'); break;
-            case TriggerConditionType::SubHits:     sBuffer.push_back('D'); break;
-            case TriggerConditionType::Remember:    sBuffer.push_back('K'); break;
-            case TriggerConditionType::AndNext:     sBuffer.push_back('N'); break;
-            case TriggerConditionType::OrNext:      sBuffer.push_back('O'); break;
-            case TriggerConditionType::MeasuredIf:  sBuffer.push_back('Q'); break;
-            case TriggerConditionType::AddAddress:  sBuffer.push_back('I'); break;
-            case TriggerConditionType::Trigger:     sBuffer.push_back('T'); break;
-            case TriggerConditionType::ResetNextIf: sBuffer.push_back('Z'); break;
-            case TriggerConditionType::Measured:
-            {
-                const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
-                if (pTriggerViewModel != nullptr && pTriggerViewModel->IsMeasuredTrackedAsPercent())
-                    sBuffer.push_back('G');
-                else
-                    sBuffer.push_back('M');
-                break;
-            }
-            default:
-                assert(!"Unknown condition type");
-                break;
+            const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
+            if (pTriggerViewModel != nullptr && pTriggerViewModel->IsMeasuredTrackedAsPercent())
+                ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, TriggerConditionType::MeasuredAsPercent);
+            else
+                ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, TriggerConditionType::Measured);
         }
-
-        sBuffer.push_back(':');
+        else
+        {
+            ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, nType);
+        }
     }
 
     SerializeAppendOperand(sBuffer, GetSourceType(), GetSourceSize(), GetSourceValue());
@@ -93,232 +76,42 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
     const auto nOperator = GetOperator();
     if (nOperator != TriggerOperatorType::None)
     {
-        switch (nOperator)
-        {
-            case TriggerOperatorType::Equals:
-                sBuffer.push_back('=');
-                break;
-
-            case TriggerOperatorType::NotEquals:
-                sBuffer.push_back('!');
-                sBuffer.push_back('=');
-                break;
-
-            case TriggerOperatorType::LessThan:
-                sBuffer.push_back('<');
-                break;
-
-            case TriggerOperatorType::LessThanOrEqual:
-                sBuffer.push_back('<');
-                sBuffer.push_back('=');
-                break;
-
-            case TriggerOperatorType::GreaterThan:
-                sBuffer.push_back('>');
-                break;
-
-            case TriggerOperatorType::GreaterThanOrEqual:
-                sBuffer.push_back('>');
-                sBuffer.push_back('=');
-                break;
-
-            case TriggerOperatorType::Multiply:
-                sBuffer.push_back('*');
-                break;
-
-            case TriggerOperatorType::Divide:
-                sBuffer.push_back('/');
-                break;
-
-            case TriggerOperatorType::BitwiseAnd:
-                sBuffer.push_back('&');
-                break;
-
-            case TriggerOperatorType::BitwiseXor:
-                sBuffer.push_back('^');
-                break;
-
-            case TriggerOperatorType::Modulus:
-                sBuffer.push_back('%');
-                break;
-
-            case TriggerOperatorType::Add:
-                sBuffer.push_back('+');
-                break;
-
-            case TriggerOperatorType::Subtract:
-                sBuffer.push_back('-');
-                break;
-
-            default:
-                assert(!"Unknown comparison");
-                break;
-        }
-
+        ra::services::AchievementLogicSerializer::AppendOperator(sBuffer, nOperator);
         SerializeAppendOperand(sBuffer, GetTargetType(), GetTargetSize(), GetTargetValue());
     }
 
     if (GetValue(HasHitsProperty) && GetValue(CanEditHitsProperty))
-    {
-        const auto nRequiredHits = GetRequiredHits();
-        if (nRequiredHits > 0)
-            sBuffer.append(ra::StringPrintf(".%zu.", nRequiredHits));
-    }
+        ra::services::AchievementLogicSerializer::AppendHitTarget(sBuffer, GetRequiredHits());
 }
 
 void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, const std::wstring& sValue) const
 {
+    unsigned int nValue = 0;
+    float fValue = 0.0;
+    std::wstring sError;
+
     switch (nType)
     {
-        case TriggerOperandType::Address:
-            break;
-
         case TriggerOperandType::Value:
-        {
-            unsigned int nValue = 0;
-            std::wstring sError;
+            if (!ra::ParseNumeric(sValue, nValue, sError))
+                nValue = 0;
 
-            if (sValue.length() > 2 && sValue.at(1) == 'x' && ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError))
-                sBuffer.append(std::to_string(nValue));
-            else if (ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, nValue, sError))
-                sBuffer.append(std::to_string(nValue));
-            else
-                sBuffer.push_back('0');
-            return;
-        }
+            ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, nType, nSize, nValue);
+            break;
 
         case TriggerOperandType::Float:
-        {
-            float fValue = 0.0;
-            std::wstring sError;
+            if (!ra::ParseFloat(sValue, fValue, sError))
+                fValue = 0.0;
 
-            if (ra::ParseFloat(sValue, fValue, sError))
-            {
-                std::string sFloat = std::to_string(fValue);
-                if (sFloat.find('.') != std::string::npos)
-                {
-                    while (sFloat.back() == '0')
-                        sFloat.pop_back();
-                    if (sFloat.back() == '.')
-                        sFloat.push_back('0');
-                }
-
-                sBuffer.push_back('f');
-                sBuffer.append(sFloat);
-            }
-            else
-            {
-                sBuffer.push_back('0');
-            }
-            return;
-        }
-
-        case TriggerOperandType::Delta:
-            sBuffer.push_back('d');
-            break;
-
-        case TriggerOperandType::Prior:
-            sBuffer.push_back('p');
-            break;
-
-        case TriggerOperandType::BCD:
-            sBuffer.push_back('b');
-            break;
-
-        case TriggerOperandType::Inverted:
-            sBuffer.push_back('~');
-            break;
-
-        case TriggerOperandType::Recall:
-        {
-            sBuffer.append("{recall}");
-            return;
-        }
-
-        default:
-            assert(!"Unknown operand type");
-            break;
-    }
-
-    sBuffer.push_back('0');
-    sBuffer.push_back('x');
-
-    switch (nSize)
-    {
-        case MemSize::BitCount:              sBuffer.push_back('K'); break;
-        case MemSize::Bit_0:                 sBuffer.push_back('M'); break;
-        case MemSize::Bit_1:                 sBuffer.push_back('N'); break;
-        case MemSize::Bit_2:                 sBuffer.push_back('O'); break;
-        case MemSize::Bit_3:                 sBuffer.push_back('P'); break;
-        case MemSize::Bit_4:                 sBuffer.push_back('Q'); break;
-        case MemSize::Bit_5:                 sBuffer.push_back('R'); break;
-        case MemSize::Bit_6:                 sBuffer.push_back('S'); break;
-        case MemSize::Bit_7:                 sBuffer.push_back('T'); break;
-        case MemSize::Nibble_Lower:          sBuffer.push_back('L'); break;
-        case MemSize::Nibble_Upper:          sBuffer.push_back('U'); break;
-        case MemSize::EightBit:              sBuffer.push_back('H'); break;
-        case MemSize::TwentyFourBit:         sBuffer.push_back('W'); break;
-        case MemSize::ThirtyTwoBit:          sBuffer.push_back('X'); break;
-        case MemSize::SixteenBit:            sBuffer.push_back(' '); break;
-        case MemSize::ThirtyTwoBitBigEndian: sBuffer.push_back('G'); break;
-        case MemSize::SixteenBitBigEndian:   sBuffer.push_back('I'); break;
-        case MemSize::TwentyFourBitBigEndian:sBuffer.push_back('J'); break;
-
-        case MemSize::Float:
-            sBuffer.pop_back();
-            sBuffer.pop_back();
-            sBuffer.push_back('f');
-            sBuffer.push_back('F');
-            break;
-
-        case MemSize::FloatBigEndian:
-            sBuffer.pop_back();
-            sBuffer.pop_back();
-            sBuffer.push_back('f');
-            sBuffer.push_back('B');
-            break;
-
-        case MemSize::Double32:
-            sBuffer.pop_back();
-            sBuffer.pop_back();
-            sBuffer.push_back('f');
-            sBuffer.push_back('H');
-            break;
-
-        case MemSize::Double32BigEndian:
-            sBuffer.pop_back();
-            sBuffer.pop_back();
-            sBuffer.push_back('f');
-            sBuffer.push_back('I');
-            break;
-
-        case MemSize::MBF32:
-            sBuffer.pop_back();
-            sBuffer.pop_back();
-            sBuffer.push_back('f');
-            sBuffer.push_back('M');
-            break;
-
-        case MemSize::MBF32LE:
-            sBuffer.pop_back();
-            sBuffer.pop_back();
-            sBuffer.push_back('f');
-            sBuffer.push_back('L');
+            ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, nType, nSize, fValue);
             break;
 
         default:
-            assert(!"Unknown memory size");
+            if (!ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError))
+                nValue = 0;
+
+            ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, nType, nSize, nValue);
             break;
-    }
-
-    {
-        unsigned int nValue = 0;
-        std::wstring sError;
-
-        if (ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError))
-            sBuffer.append(ra::ByteAddressToString(nValue), 2);
-        else
-            sBuffer.push_back('0');
     }
 }
 

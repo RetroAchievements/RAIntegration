@@ -7,6 +7,8 @@
 
 #include "data\Types.hh"
 
+#include "services\AchievementLogicSerializer.hh"
+
 #include "ra_utility.h"
 
 struct rc_condition_t;
@@ -15,54 +17,9 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-enum class TriggerConditionType : uint8_t
-{
-    Standard = RC_CONDITION_STANDARD,
-    PauseIf = RC_CONDITION_PAUSE_IF,
-    ResetIf = RC_CONDITION_RESET_IF,
-    AddSource = RC_CONDITION_ADD_SOURCE,
-    SubSource = RC_CONDITION_SUB_SOURCE,
-    AddHits = RC_CONDITION_ADD_HITS,
-    SubHits = RC_CONDITION_SUB_HITS,
-    Remember = RC_CONDITION_REMEMBER,
-    AndNext = RC_CONDITION_AND_NEXT,
-    Measured = RC_CONDITION_MEASURED,
-    AddAddress = RC_CONDITION_ADD_ADDRESS,
-    OrNext = RC_CONDITION_OR_NEXT,
-    Trigger = RC_CONDITION_TRIGGER,
-    MeasuredIf = RC_CONDITION_MEASURED_IF,
-    ResetNextIf = RC_CONDITION_RESET_NEXT_IF
-};
-
-enum class TriggerOperandType : uint8_t
-{
-    Address = RC_OPERAND_ADDRESS,       // compare to the value of a live address in RAM
-    Delta = RC_OPERAND_DELTA,           // the value last known at this address.
-    Value = RC_OPERAND_CONST,           // a 32 bit unsigned integer
-    Prior = RC_OPERAND_PRIOR,           // the last differing value at this address.
-    BCD = RC_OPERAND_BCD,               // Address, but decoded from binary-coded-decimal
-    Float = RC_OPERAND_FP,              // a 32-bit floating point value
-    Inverted = RC_OPERAND_INVERTED,     // the bitwise compliment of the current value at the address
-    Recall = RC_OPERAND_RECALL          // the last value stored by RC_CONDITION_REMEMBER 
-};
-
-enum class TriggerOperatorType : uint8_t
-{
-    Equals = RC_OPERATOR_EQ,
-    LessThan = RC_OPERATOR_LT,
-    LessThanOrEqual = RC_OPERATOR_LE,
-    GreaterThan = RC_OPERATOR_GT,
-    GreaterThanOrEqual = RC_OPERATOR_GE,
-    NotEquals = RC_OPERATOR_NE,
-    None = RC_OPERATOR_NONE,
-    Multiply = RC_OPERATOR_MULT,
-    Divide = RC_OPERATOR_DIV,
-    BitwiseAnd = RC_OPERATOR_AND,
-    BitwiseXor = RC_OPERATOR_XOR,
-    Modulus = RC_OPERATOR_MOD,
-    Add = RC_OPERATOR_ADD,
-    Subtract = RC_OPERATOR_SUB
-};
+using ra::services::TriggerConditionType;
+using ra::services::TriggerOperandType;
+using ra::services::TriggerOperatorType;
 
 class TriggerConditionViewModel : public ViewModelBase
 {

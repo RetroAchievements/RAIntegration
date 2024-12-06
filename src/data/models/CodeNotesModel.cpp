@@ -174,7 +174,7 @@ ra::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::ByteAddress nAddress) cons
     {
         for (const auto& pNote : m_vCodeNotes)
         {
-            auto pair = pNote.GetPointerNoteAtAddress(nAddress);
+            const auto pair = pNote.GetPointerNoteAtAddress(nAddress);
             if (pair.second != nullptr)
                 return pair.first;
         }

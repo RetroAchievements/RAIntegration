@@ -174,9 +174,9 @@ ra::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::ByteAddress nAddress) cons
     {
         for (const auto& pNote : m_vCodeNotes)
         {
-            const auto* pNestedNote = pNote.GetPointerNoteAtAddress(nAddress);
-            if (pNestedNote != nullptr)
-                return pNote.GetPointerAddress() + pNestedNote->GetAddress();
+            auto pair = pNote.GetPointerNoteAtAddress(nAddress);
+            if (pair.second != nullptr)
+                return pair.first;
         }
     }
 
@@ -254,17 +254,17 @@ std::wstring CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, MemSize nSiz
     {
         for (const auto& pCodeNote2 : m_vCodeNotes)
         {
-            const auto* pair = pCodeNote2.GetPointerNoteAtAddress(nAddress);
-            if (pair != nullptr)
-                return BuildCodeNoteSized(nAddress, nCheckBytes, pCodeNote2.GetPointerAddress() + pair->GetAddress(), *pair) + L" [indirect]";
+            const auto pair = pCodeNote2.GetPointerNoteAtAddress(nAddress);
+            if (pair.second != nullptr)
+                return BuildCodeNoteSized(nAddress, nCheckBytes, pair.first, *pair.second) + L" [indirect]";
         }
 
         const auto nLastAddress = nAddress + nCheckBytes - 1;
         for (const auto& pCodeNote2 : m_vCodeNotes)
         {
             const auto pair = pCodeNote2.GetPointerNoteAtAddress(nLastAddress);
-            if (pair != nullptr)
-                return BuildCodeNoteSized(nAddress, nCheckBytes, pCodeNote2.GetPointerAddress() + pair->GetAddress(), *pair) + L" [indirect]";
+            if (pair.second != nullptr)
+                return BuildCodeNoteSized(nAddress, nCheckBytes, pair.first, *pair.second) + L" [indirect]";
         }
     }
 
@@ -319,7 +319,7 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
         if (pIter2 == m_mOriginalCodeNotes.end())
         {
             // note wasn't previously modified
-            if (pCodeNote != m_vCodeNotes.end())
+            if (pCodeNote != m_vCodeNotes.end() && pCodeNote->GetAddress() == nAddress)
             {
                 // capture the original value
                 m_mOriginalCodeNotes.insert_or_assign(nAddress,
@@ -381,13 +381,9 @@ std::pair<ra::ByteAddress, const CodeNoteModel*>
 {
     for (const auto& pCodeNote : m_vCodeNotes)
     {
-        const auto* pNote = pCodeNote.GetPointerNoteAtAddress(nAddress);
-        if (pNote != nullptr)
-        {
-            const auto nAdjustedAddress = pCodeNote.GetPointerAddress() + pNote->GetAddress();
-            if (nAdjustedAddress == nAddress) // only match start of note
-                return {pCodeNote.GetAddress(), pNote};
-        }
+        auto pair= pCodeNote.GetPointerNoteAtAddress(nAddress);
+        if (pair.second != nullptr && pair.first == nAddress) // only match start of note
+            return {pCodeNote.GetAddress(), pair.second};
     }
 
     return {0, nullptr};

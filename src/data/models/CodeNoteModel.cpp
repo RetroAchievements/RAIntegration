@@ -152,10 +152,10 @@ const CodeNoteModel* CodeNoteModel::GetPointerNoteAtOffset(int nOffset) const
     return nullptr;
 }
 
-const CodeNoteModel* CodeNoteModel::GetPointerNoteAtAddress(ra::ByteAddress nAddress) const
+std::pair<ra::ByteAddress, const CodeNoteModel*> CodeNoteModel::GetPointerNoteAtAddress(ra::ByteAddress nAddress) const
 {
     if (m_pPointerData == nullptr)
-        return nullptr;
+        return {0, nullptr};
 
     const auto nPointerAddress = m_pPointerData->PointerAddress;
 
@@ -175,7 +175,7 @@ const CodeNoteModel* CodeNoteModel::GetPointerNoteAtAddress(ra::ByteAddress nAdd
         for (const auto& pOffsetNote : m_pPointerData->OffsetNotes)
         {
             if (nOffset == pOffsetNote.GetAddress())
-                return &pOffsetNote;
+                return {nPointerAddress + pOffsetNote.GetAddress(), &pOffsetNote};
         }
 
         // check for trailing bytes in a multi-byte note
@@ -185,7 +185,7 @@ const CodeNoteModel* CodeNoteModel::GetPointerNoteAtAddress(ra::ByteAddress nAdd
             {
                 const auto nBytes = ra::to_signed(pOffsetNote.GetBytes());
                 if (nBytes > 1 && nOffset < pOffsetNote.GetAddress() + nBytes)
-                    return &pOffsetNote;
+                    return {nPointerAddress + pOffsetNote.GetAddress(), &pOffsetNote};
             }
         }
     }
@@ -197,15 +197,15 @@ const CodeNoteModel* CodeNoteModel::GetPointerNoteAtAddress(ra::ByteAddress nAdd
         {
             if (pOffsetNote.IsPointer())
             {
-                const auto* pNestedObject = pOffsetNote.GetPointerNoteAtAddress(nAddress);
-                if (pNestedObject != nullptr)
+                auto pNestedObject = pOffsetNote.GetPointerNoteAtAddress(nAddress);
+                if (pNestedObject.second)
                     return pNestedObject;
             }
         }
     }
 
     // not found
-    return nullptr;
+    return {0, nullptr};
 }
 
 bool CodeNoteModel::GetPointerChain(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pRootNote) const

@@ -834,6 +834,83 @@ public:
         Assert::IsTrue(bDialogShown);
         Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, menu.mockGameContext.GetMode());
     }
+
+    TEST_METHOD(TestShowGameHashUnknownHashCancel)
+    {
+        IntegrationMenuViewModelHarness menu;
+
+        menu.mockConsoleContext.SetId(ConsoleID::Arcade);
+        menu.mockGameContext.SetGameHash("ABCDEF0123456789");
+
+        bool bDialogShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel& vmUnknown) {
+                bDialogShown = true;
+
+                Assert::IsTrue(vmUnknown.IsSelectedGameEnabled());
+
+                return DialogResult::Cancel;
+            });
+
+        menu.ActivateMenuItem(IDM_RA_GETROMCHECKSUM);
+
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, menu.mockGameContext.GetMode());
+        Assert::AreEqual({ 0U }, menu.mockGameContext.GameId());
+    }
+
+    TEST_METHOD(TestShowGameHashUnknownHashAssociate)
+    {
+        IntegrationMenuViewModelHarness menu;
+
+        menu.mockConsoleContext.SetId(ConsoleID::Arcade);
+        menu.mockGameContext.SetGameHash("ABCDEF0123456789");
+
+        bool bDialogShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel& vmUnknown) {
+                bDialogShown = true;
+
+                Assert::IsTrue(vmUnknown.IsSelectedGameEnabled());
+                vmUnknown.SetSelectedGameId(523);
+
+                return DialogResult::OK;
+            });
+
+        menu.ActivateMenuItem(IDM_RA_GETROMCHECKSUM);
+
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, menu.mockGameContext.GetMode());
+        Assert::AreEqual({ 523U }, menu.mockGameContext.GameId());
+        Assert::IsTrue(menu.mockGameContext.WasLoaded());
+    }
+
+    TEST_METHOD(TestShowGameHashUnknownHashTestCompatibility)
+    {
+        IntegrationMenuViewModelHarness menu;
+
+        menu.mockConsoleContext.SetId(ConsoleID::Arcade);
+        menu.mockGameContext.SetGameHash("ABCDEF0123456789");
+
+        bool bDialogShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel& vmUnknown) {
+                bDialogShown = true;
+
+                Assert::IsTrue(vmUnknown.IsSelectedGameEnabled());
+                vmUnknown.SetSelectedGameId(523);
+                vmUnknown.SetTestMode(true);
+
+                return DialogResult::OK;
+            });
+
+        menu.ActivateMenuItem(IDM_RA_GETROMCHECKSUM);
+
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual(ra::data::context::GameContext::Mode::CompatibilityTest, menu.mockGameContext.GetMode());
+        Assert::AreEqual({ 523U }, menu.mockGameContext.GameId());
+        Assert::IsTrue(menu.mockGameContext.WasLoaded());
+    }
 };
 
 } // namespace tests

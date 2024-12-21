@@ -334,25 +334,34 @@ void LeaderboardModel::SyncDefinition()
             return;
         }
 
-        const auto nSize = rc_lboard_size(sMemAddr.c_str());
+        auto* pGame = pRuntime.GetClient()->game;
+        Expects(pGame != nullptr);
+
+        rc_preparse_state_t preparse;
+        rc_init_preparse_state(&preparse, nullptr, 0);
+        preparse.parse.existing_memrefs = pGame->runtime.memrefs;
+
+        rc_lboard_with_memrefs_t* lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
+        rc_parse_lboard_internal(&lboard->lboard, sMemAddr.c_str(), &preparse.parse);
+        rc_preparse_alloc_memrefs(nullptr, &preparse);
+
+        const auto nSize = preparse.parse.offset;
         if (nSize > 0)
         {
             void* lboard_buffer = malloc(nSize);
             if (lboard_buffer)
             {
                 // populate the item, using the communal memrefs pool
-                auto* pGame = pRuntime.GetClient()->game;
+                rc_reset_parse_state(&preparse.parse, lboard_buffer, nullptr, 0);
+                lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
+                rc_preparse_alloc_memrefs(&lboard->memrefs, &preparse);
 
-                rc_parse_state_t parse;
-                rc_init_parse_state(&parse, lboard_buffer, nullptr, 0);
-                parse.first_memref = &pGame->runtime.memrefs;
-                parse.variables = &pGame->runtime.variables;
+                preparse.parse.existing_memrefs = pGame->runtime.memrefs;
+                preparse.parse.memrefs = &lboard->memrefs;
 
-                m_pLeaderboard->lboard = RC_ALLOC(rc_lboard_t, &parse);
-                rc_parse_lboard_internal(m_pLeaderboard->lboard, sMemAddr.c_str(), &parse);
-                rc_destroy_parse_state(&parse);
-
-                m_pLeaderboard->lboard->memrefs = nullptr;
+                m_pLeaderboard->lboard = &lboard->lboard;
+                rc_parse_lboard_internal(m_pLeaderboard->lboard, sMemAddr.c_str(), &preparse.parse);
+                lboard->lboard.has_memrefs = 1;
 
                 pRuntime.AttachMemory(m_pLeaderboard->lboard);
 
@@ -383,6 +392,8 @@ void LeaderboardModel::SyncDefinition()
             // parse error - discard old tracker
             pRuntime.ReleaseLeaderboardTracker(m_pLeaderboard->public_.id);
         }
+
+        rc_destroy_preparse_state(&preparse);
     }
 }
 

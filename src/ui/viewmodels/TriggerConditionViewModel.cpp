@@ -546,11 +546,13 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
 
     rc_condition_t* pFirstCondition = nullptr;
 
-    const auto* pTrigger = pTriggerViewModel->GetTriggerFromString();
+    auto* pTrigger = pTriggerViewModel->GetTriggerFromString();
     if (pTrigger != nullptr)
     {
         // if the trigger is managed by the viewmodel (not the runtime) then we need to update the memrefs
-        rc_update_memref_values(pTrigger->memrefs, rc_peek_callback, nullptr);
+        auto* memrefs = rc_trigger_get_memrefs(pTrigger);
+        if (memrefs)
+            rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
 
         // find the condset associated to the selected group
         if (nIndex == 0)

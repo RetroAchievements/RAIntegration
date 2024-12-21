@@ -26,6 +26,7 @@
 
 #include <rcheevos\src\rapi\rc_api_common.h>
 #include <rcheevos\src\rc_client_internal.h>
+#include <rcheevos\src\rcheevos\rc_internal.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -280,15 +281,30 @@ public:
 
         // MockAchievement generates triggers with their own memrefs - promote to common memref pool
         auto& runtime = GetClient()->game->runtime;
-        Assert::IsNull(runtime.memrefs);
-        auto** next = &runtime.memrefs;
+        rc_parse_state_t parse;
+        rc_init_parse_state(&parse, nullptr, nullptr, 0);
+        parse.memrefs = runtime.memrefs;
+
         for (unsigned i = 0; i < runtime.trigger_count; ++i)
         {
-            *next = runtime.triggers[i].trigger->memrefs;
-            while (*next)
-                next = &(*next)->next;
+            auto* memrefs = rc_trigger_get_memrefs(runtime.triggers[i].trigger);
+            if (memrefs)
+            {
+                for (unsigned j = 0; j < memrefs->memrefs.count; ++j)
+                {
+                    const auto* old_memref = &memrefs->memrefs.items[j];
+                    auto* memref = rc_alloc_memref(&parse, old_memref->address, old_memref->value.size);
 
-            runtime.triggers[i].trigger->memrefs = nullptr;
+                    auto* condition = runtime.triggers[i].trigger->requirement->conditions;
+                    for (; condition; condition = condition->next)
+                    {
+                        if (rc_operand_is_memref(&condition->operand1) && condition->operand1.value.memref == old_memref)
+                            condition->operand1.value.memref = memref;
+                        if (rc_operand_is_memref(&condition->operand2) && condition->operand2.value.memref == old_memref)
+                            condition->operand2.value.memref = memref;
+                    }
+                }
+            }
         }
     }
 
@@ -978,11 +994,11 @@ public:
 
         SetConditionHitCount(runtime, 9U, 0, 0, 2);
         SetConditionHitCount(runtime, 9U, 0, 1, 0);
-        auto pMemRef = pMemRefs; // 0xH1234
+        auto pMemRef = &pMemRefs->memrefs.items[0]; // 0xH1234
         pMemRef->value.value = 0x02;
         pMemRef->value.changed = 0;
         pMemRef->value.prior = 0x03;
-        pMemRef = pMemRef->next; // 0xX1234
+        pMemRef = &pMemRefs->memrefs.items[1]; // 0xX1234
         pMemRef->value.value = 0x020000;
         pMemRef->value.changed = 1;
         pMemRef->value.prior = 0x040000;
@@ -990,11 +1006,11 @@ public:
         runtime.SaveProgressToFile("test.sav");
 
         // modify data so we can see if the persisted data is restored
-        pMemRef = pMemRefs;
+        pMemRef = &pMemRefs->memrefs.items[0];
         pMemRef->value.value = 0;
         pMemRef->value.changed = 0;
         pMemRef->value.prior = 0;
-        pMemRef = pMemRef->next;
+        pMemRef = &pMemRefs->memrefs.items[1];
         pMemRef->value.value = 0;
         pMemRef->value.changed = 0;
         pMemRef->value.prior = 0;
@@ -1007,11 +1023,11 @@ public:
         AssertConditionHitCount(runtime, 9U, 0, 0, 2);
         AssertConditionHitCount(runtime, 9U, 0, 1, 0);
 
-        pMemRef = pMemRefs;
+        pMemRef = &pMemRefs->memrefs.items[0];
         Assert::AreEqual(0x02U, pMemRef->value.value);
         Assert::AreEqual(0, (int)pMemRef->value.changed);
         Assert::AreEqual(0x03U, pMemRef->value.prior);
-        pMemRef = pMemRef->next;
+        pMemRef = &pMemRefs->memrefs.items[1];
         Assert::AreEqual(0x020000U, pMemRef->value.value);
         Assert::AreEqual(1, (int)pMemRef->value.changed);
         Assert::AreEqual(0x040000U, pMemRef->value.prior);

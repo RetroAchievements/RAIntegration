@@ -343,7 +343,7 @@ void LeaderboardModel::SyncDefinition()
 
         rc_lboard_with_memrefs_t* lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
         rc_parse_lboard_internal(&lboard->lboard, sMemAddr.c_str(), &preparse.parse);
-        rc_preparse_alloc_memrefs(NULL, &preparse);
+        rc_preparse_alloc_memrefs(nullptr, &preparse);
 
         const auto nSize = preparse.parse.offset;
         if (nSize > 0)
@@ -356,8 +356,6 @@ void LeaderboardModel::SyncDefinition()
                 lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
                 rc_preparse_alloc_memrefs(&lboard->memrefs, &preparse);
 
-                auto* pGame = pRuntime.GetClient()->game;
-                Expects(pGame != nullptr);
                 preparse.parse.existing_memrefs = pGame->runtime.memrefs;
                 preparse.parse.memrefs = &lboard->memrefs;
 

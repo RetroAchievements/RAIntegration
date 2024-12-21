@@ -425,7 +425,7 @@ void AchievementModel::SyncTrigger()
         rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
         const char* sMemaddr = sTrigger.c_str();
         rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
-        rc_preparse_alloc_memrefs(NULL, &preparse);
+        rc_preparse_alloc_memrefs(nullptr, &preparse);
 
         const auto nSize = preparse.parse.offset;
         if (nSize > 0)

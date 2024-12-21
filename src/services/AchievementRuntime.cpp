@@ -2395,8 +2395,7 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
                     if (tokenizer.PeekChar() == sLineMD5.at(31))
                     {
                         // match! attempt to store it
-                        rc_memref_t* pMemoryReference = rc_alloc_memref(&pParseState.parse,
-                            pMemRef.address, pMemoryReference->value.size);
+                        rc_memref_t* pMemoryReference = rc_alloc_memref(&pParseState.parse, pMemRef.address, pMemRef.value.size);
                         pMemoryReference->value.value = pMemRef.value.value;
                         pMemoryReference->value.changed = pMemRef.value.changed;
                         pMemoryReference->value.prior = pMemRef.value.prior;

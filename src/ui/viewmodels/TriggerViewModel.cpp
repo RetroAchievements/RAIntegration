@@ -894,11 +894,7 @@ static unsigned int ParseNumeric(const std::wstring& sValue)
 {
     unsigned int nValue = 0;
     std::wstring sError;
-
-    if (sValue.length() > 2 && sValue.at(1) == 'x' && ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError))
-        return nValue;
-
-    if (ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, nValue, sError))
+    if (ra::ParseNumeric(sValue, nValue, sError))
         return nValue;
 
     return 0;

@@ -307,24 +307,41 @@ void CodeNoteModel::SetNote(const std::wstring& sNote)
 
     m_sNote = sNote;
 
-    auto nIndex = sNote.find(L'\n');
-    auto sFirstLine = (nIndex == std::string::npos) ? sNote : sNote.substr(0, nIndex);
-    StringMakeLowercase(sFirstLine);
-    ExtractSize(sFirstLine);
-
-    if (sFirstLine.find(L"pointer") != std::string::npos)
+    std::wstring sLine;
+    size_t nIndex = 0;
+    do
     {
-        if (m_nMemSize == MemSize::Unknown)
+        const auto nNextIndex = sNote.find(L'\n', nIndex);
+        sLine = (nNextIndex == std::string::npos) ?
+            sNote.substr(nIndex) : sNote.substr(nIndex, nNextIndex - nIndex);
+        StringMakeLowercase(sLine);
+        ExtractSize(sLine);
+
+        if (sLine.find(L"pointer") != std::string::npos)
         {
-            m_nBytes = 4;
-            m_nMemSize = MemSize::ThirtyTwoBit;
+            if (m_nMemSize == MemSize::Unknown)
+            {
+                // pointer size not specified. assume 32-bit
+                m_nMemSize = MemSize::ThirtyTwoBit;
+                m_nBytes = 4;
+            }
+
+            // if there are any lines starting with a plus sign, extract the indirect code notes
+            nIndex = sNote.find(L"\n+", nIndex + 1);
+            if (nIndex != std::string::npos)
+                ProcessIndirectNotes(sNote, nIndex);
+
+            break;
         }
 
-        // if there are any lines starting with a plus sign, extract the indirect code notes
-        nIndex = sNote.find(L"\n+");
-        if (nIndex != std::string::npos)
-            ProcessIndirectNotes(sNote, nIndex);
-    }
+        if (m_nMemSize != MemSize::Unknown) // found a size. stop processing.
+            break;
+
+        if (nNextIndex == std::string::npos) // end of string
+            break;
+
+        nIndex = nNextIndex + 1;
+    } while (true);
 }
 
 void CodeNoteModel::ExtractSize(const std::wstring& sNote)

@@ -283,6 +283,12 @@ public:
     {
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         rc_client_load_unknown_game(pClient.GetClient(), hash);
+
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+        pGameContext.SetGameHash(hash);
+
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        pClient.GetClient()->game->public_.console_id = ra::etoi(pConsoleContext.Id());
     }
 
     static void unload_game()

@@ -8,6 +8,7 @@
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockUserContext.hh"
 
 #include <rcheevos\src\rc_client_external.h>
@@ -463,6 +464,51 @@ public:
         if (ptr != nullptr)
             *ptr = '\0';
         Assert::AreEqual("Integration/" RA_INTEGRATION_VERSION, buffer);
+    }
+
+    TEST_METHOD(TestLoadUnknownGame)
+    {
+        AchievementRuntimeExportsHarness runtime;
+        ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+        _Rcheevos_GetExternalClient(&pClient, 2);
+
+        pClient.load_unknown_game("ABCDEF0123456789");
+
+        const auto* pGame = rc_client_get_game_info(runtime.GetClient());
+        Assert::IsNotNull(pGame);
+        Ensures(pGame != nullptr);
+        Assert::AreEqual(0U, pGame->id);
+        Assert::AreEqual("Unknown Game", pGame->title);
+        Assert::AreEqual(0U, pGame->console_id);
+
+        Assert::AreEqual(std::string("ABCDEF0123456789"), mockGameContext.GameHash());
+    }
+
+    TEST_METHOD(TestLoadUnknownGameWithConsole)
+    {
+        AchievementRuntimeExportsHarness runtime;
+        ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+        _Rcheevos_GetExternalClient(&pClient, 2);
+
+        mockConsoleContext.SetId(ConsoleID::GBC);
+        pClient.load_unknown_game("ABCDEF0123456789");
+
+        const auto* pGame = rc_client_get_game_info(runtime.GetClient());
+        Assert::IsNotNull(pGame);
+        Ensures(pGame != nullptr);
+        Assert::AreEqual(0U, pGame->id);
+        Assert::AreEqual("Unknown Game", pGame->title);
+        Assert::AreEqual({ RC_CONSOLE_GAMEBOY_COLOR }, pGame->console_id);
+
+        Assert::AreEqual(std::string("ABCDEF0123456789"), mockGameContext.GameHash());
     }
 };
 

@@ -334,8 +334,13 @@ void LeaderboardModel::SyncDefinition()
             return;
         }
 
+        auto* pGame = pRuntime.GetClient()->game;
+        Expects(pGame != nullptr);
+
         rc_preparse_state_t preparse;
         rc_init_preparse_state(&preparse, nullptr, 0);
+        preparse.parse.existing_memrefs = pGame->runtime.memrefs;
+
         rc_lboard_with_memrefs_t* lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
         rc_parse_lboard_internal(&lboard->lboard, sMemAddr.c_str(), &preparse.parse);
         rc_preparse_alloc_memrefs(NULL, &preparse);
@@ -358,6 +363,7 @@ void LeaderboardModel::SyncDefinition()
 
                 m_pLeaderboard->lboard = &lboard->lboard;
                 rc_parse_lboard_internal(m_pLeaderboard->lboard, sMemAddr.c_str(), &preparse.parse);
+                lboard->lboard.has_memrefs = 1;
 
                 pRuntime.AttachMemory(m_pLeaderboard->lboard);
 

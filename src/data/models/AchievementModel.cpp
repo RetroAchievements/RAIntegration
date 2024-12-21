@@ -415,8 +415,13 @@ void AchievementModel::SyncTrigger()
             return;
         }
 
+        auto* pGame = pRuntime.GetClient()->game;
+        Expects(pGame != nullptr);
+
         rc_preparse_state_t preparse;
         rc_init_preparse_state(&preparse, nullptr, 0);
+        preparse.parse.existing_memrefs = pGame->runtime.memrefs;
+
         rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
         const char* sMemaddr = sTrigger.c_str();
         rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
@@ -433,14 +438,13 @@ void AchievementModel::SyncTrigger()
                 trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
                 rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
 
-                auto* pGame = pRuntime.GetClient()->game;
-                Expects(pGame != nullptr);
                 preparse.parse.existing_memrefs = pGame->runtime.memrefs;
                 preparse.parse.memrefs = &trigger->memrefs;
 
                 sMemaddr = sTrigger.c_str();
                 m_pAchievement->trigger = &trigger->trigger;
                 rc_parse_trigger_internal(m_pAchievement->trigger, &sMemaddr, &preparse.parse);
+                trigger->trigger.has_memrefs = 1;
 
                 pRuntime.AttachMemory(m_pAchievement->trigger);
 

@@ -86,6 +86,7 @@
     <ClCompile Include="RA_Json.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
+    <ClCompile Include="services\AchievementLogicSerializer.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
     <ClCompile Include="services\AchievementRuntimeExports.cpp" />
     <ClCompile Include="services\FrameEventQueue.cpp" />
@@ -234,6 +235,7 @@
     <ClInclude Include="RA_md5factory.h" />
     <ClInclude Include="RA_Resource.h" />
     <ClInclude Include="RA_StringUtils.h" />
+    <ClInclude Include="services\AchievementLogicSerializer.hh" />
     <ClInclude Include="services\AchievementRuntime.hh" />
     <ClInclude Include="services\AchievementRuntimeExports.hh" />
     <ClInclude Include="services\FrameEventQueue.hh" />

@@ -102,6 +102,22 @@ public:
     ra::ByteAddress ByteAddressFromRealAddress(ra::ByteAddress nRealAddress) const noexcept;
 
     /// <summary>
+    /// Converts an "RetroAchievements" address into a real address where the data might be found.
+    /// </summary>
+    /// <returns>Converted address, or <c>0xFFFFFFFF</c> if conversion could not be completed.
+    ra::ByteAddress RealAddressFromByteAddress(ra::ByteAddress nRealAddress) const noexcept;
+
+    /// <summary>
+    /// Gets the read size and mask to use for reading a pointer from memory and converting it to
+    /// a RetroAchievements address.
+    /// </summary>
+    /// <param name="nReadSize">[out] the size to read.</param>
+    /// <param name="nMask">[out] the mask to apply (if 0xFFFFFFFF, no mask is necessary).</param>
+    /// <param name="nOffset">[out] the offset to apply (if 0, no offset is necessary).</param>
+    /// <returns><c>true<c> if a mapping was found, <c>false</c> if not.</returns>
+    bool GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMask, uint32_t* nOffset) const;
+
+    /// <summary>
     /// Gets the maximum valid address for the console.
     /// </summary>
     ra::ByteAddress MaxAddress() const noexcept { return m_nMaxAddress; }

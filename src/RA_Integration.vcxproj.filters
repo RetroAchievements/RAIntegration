@@ -417,6 +417,9 @@
     <ClCompile Include="ui\win32\PointerInspectorDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="services\AchievementLogicSerializer.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -994,6 +997,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\GridBookmarkValueColumnBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="services\AchievementLogicSerializer.hh">
+      <Filter>Services</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

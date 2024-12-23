@@ -136,6 +136,11 @@ public:
         bool SetCurrentValue(const std::wstring& sValue, _Out_ std::wstring& sError);
 
         /// <summary>
+        /// Gets the unformatted current value of the bookmarked address.
+        /// </summary>
+        uint32_t GetCurrentValueRaw() const { return m_nValue; }
+
+        /// <summary>
         /// The <see cref="ModelProperty" /> for the previous value of the bookmarked address.
         /// </summary>
         static const StringModelProperty PreviousValueProperty;

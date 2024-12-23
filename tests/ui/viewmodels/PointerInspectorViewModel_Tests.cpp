@@ -8,6 +8,7 @@
 #include "tests\ui\UIAsserts.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -38,6 +39,7 @@ private:
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::services::mocks::MockClipboard mockClipboard;
 
         std::array<unsigned char, 32> memory{};
 
@@ -235,6 +237,55 @@ public:
         inspector.AssertField(0, 0, 0x14U, L"+0000", L"[8-bit] Column 1a", MemSize::EightBit, MemFormat::Hex, L"1c");
         inspector.AssertField(1, 4, 0x18U, L"+0004", L"[8-bit pointer] Column 1b", MemSize::EightBit, MemFormat::Hex, L"20");
         inspector.AssertField(2, 8, 0x1CU, L"+0008", L"[8-bit] Column 1c", MemSize::EightBit, MemFormat::Hex, L"24");
+    }
+
+    TEST_METHOD(TestCopyDefinition)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 4; i < memory.size(); i += 4)
+            memory.at(i) = i + 8;
+        inspector.mockEmulatorContext.MockMemory(memory);
+
+        inspector.SetCurrentAddress({4U});
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+            L"[8-bit pointer] Player data\n"
+            L"+0x00: [8-bit pointer] Row 1\n"
+            L".+0x00: [8-bit] Column 1a\n"
+            L".+0x04: [8-bit pointer] Column 1b\n"
+            L"..+0x00: [8-bit] Column 1a\n"
+            L".+0x08: [8-bit] Column 1c\n"
+            L"+0x08: [8-bit pointer] Row 2\n"
+            L"+0x10: [8-bit pointer] Row 3\n"
+            L"+0x18: Generic data"
+        );
+
+        Assert::AreEqual({4U}, inspector.GetCurrentAddress());
+
+        Assert::AreEqual(RootNodeID, inspector.GetSelectedNode());
+        Assert::AreEqual(std::wstring(L"[8-bit pointer] Player data"), inspector.GetCurrentAddressNote());
+        inspector.AssertField(1, 8, 0x14U, L"+0008", L"[8-bit pointer] Row 2", MemSize::EightBit, MemFormat::Hex, L"1c");
+
+        inspector.CopyDefinition();
+        Assert::AreEqual(std::wstring(), inspector.mockClipboard.GetText());
+
+        inspector.Fields().GetItemAt(1)->SetSelected(true);
+        inspector.CopyDefinition();
+        Assert::AreEqual(std::wstring(L"I:0xH0004_0xH0008=28"), inspector.mockClipboard.GetText());
+
+        inspector.SetSelectedNode(0x01000004);
+        Assert::AreEqual(0x01000004, inspector.GetSelectedNode());
+        Assert::AreEqual(std::wstring(L"[8-bit pointer] Column 1b"), inspector.GetCurrentAddressNote());
+        inspector.AssertField(0, 0, 0x20U, L"+0000", L"[8-bit] Column 1a", MemSize::EightBit, MemFormat::Hex, L"28");
+        inspector.CopyDefinition();
+        Assert::AreEqual(std::wstring(), inspector.mockClipboard.GetText());
+
+        inspector.Fields().GetItemAt(0)->SetSelected(true);
+        inspector.CopyDefinition();
+        Assert::AreEqual(std::wstring(L"I:0xH0004_I:0xH0000_I:0xH0004_0xH0000=40"), inspector.mockClipboard.GetText());
     }
 
     TEST_METHOD(TestDoFrame)

@@ -4,6 +4,8 @@
 
 #include "data\context\ConsoleContext.hh"
 
+#include "services\AchievementLogicSerializer.hh"
+#include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
 
 namespace ra {
@@ -82,7 +84,8 @@ void PointerInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddr
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes != nullptr)
     {
-        SetSelectedNode(RootNodeID);
+        // select an invalid node to force LoadNodes to select the new root node after it's been updated
+        SetSelectedNode(-2);
 
         const auto* pNote = pCodeNotes->FindCodeNoteModel(nNewAddress);
         if (pNote)
@@ -261,7 +264,7 @@ void PointerInspectorViewModel::LoadNodes(const ra::data::models::CodeNoteModel*
 
     // if the selected item is no longer available, select the root node
     if (m_vNodes.FindItemIndex(LookupItemViewModel::IdProperty, nSelectedNode) == -1)
-        SetSelectedNode(0);
+        SetSelectedNode(RootNodeID);
 }
 
 void PointerInspectorViewModel::UpdateValues()
@@ -293,108 +296,66 @@ void PointerInspectorViewModel::DoFrame()
 void PointerInspectorViewModel::CopyDefinition() const
 {
     const auto sDefinition = GetDefinition();
-}
-
-static void AppendMaskedPointer(ra::StringBuilder& builder, uint32_t nMaskBits, MemSize nSize, const std::string& sAddress)
-{
-    const auto nSizeBits = ra::data::MemSizeBits(nSize);
-    if (nSizeBits < nMaskBits)
-        nMaskBits = nSizeBits;
-
-    const auto nBytes = (nMaskBits + 7) / 8;
-    switch (nBytes)
-    {
-        default: builder.Append('H'); break;
-        case 2:  builder.Append(' '); break;
-        case 3:  builder.Append('W'); break;
-        case 4:  builder.Append('X'); break;
-    }
-
-    builder.AppendSubString(sAddress.c_str() + 2, sAddress.length() - 2);
-
-    if (nMaskBits != nBytes * 8)
-    {
-        builder.Append('&');
-        builder.Append((1 << nMaskBits) - 1);
-    }
-}
-
-static void AppendPointer(ra::StringBuilder& builder, const ra::data::models::CodeNoteModel* pNote)
-{
-    MemSize nSize;
-    uint32_t nMask;
-    uint32_t nOffset;
-
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-    if (!pConsoleContext.GetRealAddressConversion(&nSize, &nMask, &nOffset))
-    {
-        nSize = pNote->GetMemSize();
-        nMask = 0xFFFFFFFF;
-        nOffset = pConsoleContext.RealAddressFromByteAddress(0);
-    }
-
-    builder.Append("I:0x");
-    switch (nSize)
-    {
-        case MemSize::ThirtyTwoBit:          builder.Append('X'); break;
-        case MemSize::TwentyFourBit:         builder.Append('W'); break;
-        case MemSize::SixteenBit:            builder.Append(' '); break;
-        case MemSize::EightBit:              builder.Append('H'); break;
-        case MemSize::ThirtyTwoBitBigEndian: builder.Append('G'); break;
-        case MemSize::SixteenBitBigEndian:   builder.Append('I'); break;
-        case MemSize::TwentyFourBitBigEndian:builder.Append('J'); break;
-    }
-
-    const auto sAddress = ra::ByteAddressToString(pNote->GetPointerAddress());
-    builder.Append(sAddress.c_str() + 2, sAddress.length() - 2);
-
-    if (nOffset != 0)
-    {
-        builder.Append('-');
-        builder.Append(nOffset);
-    }
-    else if (nMask != 0xFFFFFFFF && nMask != ((1 << ra::data::MemSizeBits(nSize)) - 1))
-    {
-        builder.Append('&');
-        builder.Append(nMask);
-    }
+    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sDefinition));
 }
 
 std::string PointerInspectorViewModel::GetDefinition() const
 {
-    ra::StringBuilder builder;
+    std::string sBuffer;
+
+    const auto nSelectedFieldIndex = Fields().FindItemIndex(LookupItemViewModel::IsSelectedProperty, true);
+    if (nSelectedFieldIndex == -1)
+        return sBuffer;
+
+    const auto nSelectedNodeIndex = Nodes().FindItemIndex(LookupItemViewModel::IdProperty, GetSelectedNode());
+    if (nSelectedNodeIndex == -1)
+        return sBuffer;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes != nullptr)
+    if (pCodeNotes == nullptr)
+        return sBuffer;
+
+    std::stack<const LookupItemViewModel*> sChain;
+    GetPointerChain(nSelectedNodeIndex, sChain);
+
+    const auto* pRootNote = pCodeNotes->FindCodeNoteModel(GetCurrentAddress());
+    const auto* pParentNote = pRootNote;
+    ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::services::TriggerConditionType::AddAddress);
+    ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address,
+                                                            pRootNote->GetMemSize(), pRootNote->GetAddress());
+    ra::services::AchievementLogicSerializer::AppendConditionSeparator(sBuffer);
+
+    do
     {
-        const auto* pRootNote = pCodeNotes->FindCodeNoteModel(GetCurrentAddress());
+        const auto* pNestedNode = sChain.top();
+        const auto nId = pNestedNode->GetId();
+        if (nId == RootNodeID)
+            break;
 
-        std::stack<const LookupItemViewModel*> sChain;
-        GetPointerChain(GetSelectedNode(), sChain);
+        const auto nOffset = nId & 0x00FFFFFF;
+        const auto* pNestedNote = pParentNote->GetPointerNoteAtOffset(nOffset);
+        if (!pNestedNote)
+            return sBuffer;
 
-        const auto* pParentNote = pRootNote;
-        builder.Append("A:");
-        AppendPointer(builder, pRootNote);
-        do
-        {
-            const auto* pNestedNode = sChain.top();
-            const auto nOffset = pNestedNode->GetId() & 0x00FFFFFF;
+        ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::services::TriggerConditionType::AddAddress);
+        ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address,
+                                                                pNestedNote->GetMemSize(), pNestedNote->GetAddress());
+        ra::services::AchievementLogicSerializer::AppendConditionSeparator(sBuffer);
 
-            const auto* pNestedNote = pParentNote->GetPointerNoteAtOffset(nOffset);
-            if (!pNestedNote)
-                return builder.ToString();
+        pParentNote = pNestedNote;
+        sChain.pop();
+    } while (!sChain.empty());
 
-            AppendPointer(builder, pNestedNote);
+    const auto* vmField = Fields().GetItemAt(nSelectedFieldIndex);
+    Expects(vmField != nullptr);
+    ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address,
+                                                            vmField->GetSize(), ra::to_unsigned(vmField->m_nOffset));
+    ra::services::AchievementLogicSerializer::AppendOperator(sBuffer, ra::services::TriggerOperatorType::Equals);
+    ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Value,
+                                                            MemSize::ThirtyTwoBit, vmField->GetCurrentValueRaw());
 
-            pParentNote = pNestedNote;
-            sChain.pop();
-        } while (!sChain.empty());
-
-        // TODO: append field
-    }
-
-    return builder.ToString();
+    return sBuffer;
 }
 
 } // namespace viewmodels

@@ -317,7 +317,7 @@ std::wstring CodeNoteModel::GetPrimaryNote() const noexcept
     return m_sNote;
 }
 
-void CodeNoteModel::SetNote(const std::wstring& sNote)
+void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
 {
     if (m_sNote == sNote)
         return;
@@ -331,34 +331,53 @@ void CodeNoteModel::SetNote(const std::wstring& sNote)
         const auto nNextIndex = sNote.find(L'\n', nIndex);
         sLine = (nNextIndex == std::string::npos) ?
             sNote.substr(nIndex) : sNote.substr(nIndex, nNextIndex - nIndex);
-        StringMakeLowercase(sLine);
-        ExtractSize(sLine);
 
-        if (sLine.find(L"pointer") != std::string::npos)
+        if (!sLine.empty())
         {
-            if (m_nMemSize == MemSize::Unknown)
+            if (sLine[0] == '+' && bImpliedPointer)
             {
-                // pointer size not specified. assume 32-bit
                 m_nMemSize = MemSize::ThirtyTwoBit;
                 m_nBytes = 4;
+
+                // found a line starting with a plus sign, bit no pointer annotation. bImpliedPointer
+                // must be true. assume the parent note is not described. pass -1 as the note size
+                // because we already skipped over the newline character
+                ProcessIndirectNotes(sNote, gsl::narrow_cast<size_t>(-1));
+                m_pPointerData->HeaderLength = 0;
+                break;
             }
 
-            // if there are any lines starting with a plus sign, extract the indirect code notes
-            nIndex = sNote.find(L"\n+", nIndex + 1);
-            if (nIndex != std::string::npos)
-                ProcessIndirectNotes(sNote, nIndex);
-    
-            // failed to find nested code notes. create a PointerData object so the note still gets treated as a pointer
-            if (!m_pPointerData)
+            StringMakeLowercase(sLine);
+            ExtractSize(sLine);
+
+            if (sLine.find(L"pointer") != std::string::npos)
             {
-                m_pPointerData.reset(new PointerData());
-                m_pPointerData->HeaderLength = gsl::narrow_cast<unsigned>(sNote.length());
-            }
-            break;
-        }
+                if (m_nMemSize == MemSize::Unknown)
+                {
+                    // pointer size not specified. assume 32-bit
+                    m_nMemSize = MemSize::ThirtyTwoBit;
+                    m_nBytes = 4;
+                }
 
-        if (m_nMemSize != MemSize::Unknown) // found a size. stop processing.
-            break;
+                // if there are any lines starting with a plus sign, extract the indirect code notes
+                nIndex = sNote.find(L"\n+", nIndex + 1);
+                if (nIndex != std::string::npos)
+                    ProcessIndirectNotes(sNote, nIndex);
+
+                // failed to find nested code notes. create a PointerData object so the note still
+                // gets treated as a pointer
+                if (!m_pPointerData)
+                {
+                    m_pPointerData.reset(new PointerData());
+                    m_pPointerData->HeaderLength = gsl::narrow_cast<unsigned>(sNote.length());
+                }
+
+                break;
+            }
+
+            if (m_nMemSize != MemSize::Unknown) // found a size. stop processing.
+                break;
+        }
 
         if (nNextIndex == std::string::npos) // end of string
             break;
@@ -687,16 +706,27 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
 
         // skip over [whitespace] [optional separator] [whitespace]
         const wchar_t* pStop = sNextNote.c_str() + sNextNote.length();
-        while (pEnd < pStop && isspace(*pEnd))
-            pEnd++;
-        if (pEnd < pStop && !isalnum(*pEnd))
+        while (pEnd < pStop && isspace(*pEnd) && *pEnd != '\n')
+            ++pEnd;
+
+        if (pEnd < pStop)
         {
-            pEnd++;
-            while (pEnd < pStop && isspace(*pEnd))
-                pEnd++;
+            if (*pEnd == '\n')
+            {
+                // no separator. found an unannotated note
+                ++pEnd;
+            }
+            else if (!isalnum(*pEnd))
+            {
+                // found a separator. skip it and any following whitespace
+                ++pEnd;
+
+                while (pEnd < pStop && isspace(*pEnd))
+                    ++pEnd;
+            }
         }
 
-        offsetNote.SetNote(sNextNote.substr(pEnd - sNextNote.c_str()));
+        offsetNote.SetNote(sNextNote.substr(pEnd - sNextNote.c_str()), true);
         pointerData->HasPointers |= offsetNote.IsPointer();
 
         offsetNote.SetAddress(gsl::narrow_cast<ra::ByteAddress>(nOffset));

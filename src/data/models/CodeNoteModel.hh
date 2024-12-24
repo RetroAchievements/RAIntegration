@@ -28,7 +28,7 @@ public:
 
     void SetAuthor(const std::string& sAuthor) { m_sAuthor = sAuthor; }
     void SetAddress(ra::ByteAddress nAddress) noexcept { m_nAddress = nAddress; }
-    void SetNote(const std::wstring& sNote);
+    void SetNote(const std::wstring& sNote, bool bImpliedPointer = false);
 
     bool IsPointer() const noexcept { return m_pPointerData != nullptr; }
     std::wstring GetPointerDescription() const;

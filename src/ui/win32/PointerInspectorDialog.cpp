@@ -56,6 +56,12 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
       m_bindFields(vmPointerFinder)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Pointer Finder");
+    m_bindWindow.BindLabel(IDC_RA_PAUSE, PointerInspectorViewModel::PauseButtonTextProperty);
+    m_bindWindow.BindLabel(IDC_RA_FREEZE, PointerInspectorViewModel::FreezeButtonTextProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ADDBOOKMARK, PointerInspectorViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, PointerInspectorViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_PAUSE, PointerInspectorViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_FREEZE, PointerInspectorViewModel::HasSelectionProperty);
 
     m_bindAddress.BindText(PointerInspectorViewModel::CurrentAddressTextProperty, ra::ui::win32::bindings::TextBoxBinding::UpdateMode::Typing);
     m_bindNodes.BindItems(vmPointerFinder.Nodes());
@@ -105,16 +111,17 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     pBehaviorColumn->SetReadOnly(false);
     m_bindFields.BindColumn(5, std::move(pBehaviorColumn));
 
-    m_bindFields.BindItems(vmPointerFinder.Fields());
+    m_bindFields.BindItems(vmPointerFinder.Bookmarks());
     m_bindFields.BindIsSelected(PointerInspectorViewModel::StructFieldViewModel::IsSelectedProperty);
+    m_bindFields.BindRowColor(PointerInspectorViewModel::StructFieldViewModel::RowColorProperty);
+    m_bindFields.SetShowGridLines(true);
 
-    // Resize behavior
+
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_ADDRESS, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_DESCRIPTION, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
-
-
     SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_COPY_ALL, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_PAUSE, Anchor::Right | Anchor::Bottom);
@@ -153,21 +160,21 @@ BOOL PointerInspectorDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        //case IDC_RA_PAUSE: {
-        //    auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
-        //    if (vmPointerInspector)
-        //        vmPointerInspector->TogglePause();
+        case IDC_RA_PAUSE: {
+            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
+            if (vmPointerInspector)
+                vmPointerInspector->TogglePauseSelected();
 
-        //    return TRUE;
-        //}
+            return TRUE;
+        }
 
-        //case IDC_RA_FREEZE: {
-        //    const auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
-        //    if (vmPointerInspector)
-        //        vmPointerInspector->ToggleFreeze();
+        case IDC_RA_FREEZE: {
+            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
+            if (vmPointerInspector)
+                vmPointerInspector->ToggleFreezeSelected();
 
-        //    return TRUE;
-        //}
+            return TRUE;
+        }
     }
 
     return DialogBase::OnCommand(nCommand);

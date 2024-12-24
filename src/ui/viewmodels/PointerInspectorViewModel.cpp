@@ -183,10 +183,10 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
 
     m_pCurrentNote = pNote;
     const auto nBaseAddress = m_pCurrentNote->GetPointerAddress();
-    gsl::index nCount = gsl::narrow_cast<gsl::index>(Fields().Count());
+    gsl::index nCount = gsl::narrow_cast<gsl::index>(Bookmarks().Count());
 
     gsl::index nInsertIndex = 0;
-    Fields().BeginUpdate();
+    Bookmarks().BeginUpdate();
     pNote->EnumeratePointerNotes([this, &nCount, &nInsertIndex, nBaseAddress]
         (ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pOffsetNote)
         {
@@ -196,12 +196,12 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
             StructFieldViewModel* pItem;
             if (nInsertIndex < nCount)
             {
-                pItem = Fields().GetItemAt(nInsertIndex);
+                pItem = Bookmarks().GetItemAt<StructFieldViewModel>(nInsertIndex);
             }
             else
             {
                 ++nCount;
-                pItem = &Fields().Add();
+                pItem = &Bookmarks().Add<StructFieldViewModel>();
             }
 
             pItem->m_nOffset = nOffset;
@@ -213,10 +213,10 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
         });
 
     while (nCount > nInsertIndex)
-        Fields().RemoveAt(--nCount);
+        Bookmarks().RemoveAt(--nCount);
 
     UpdateValues();
-    Fields().EndUpdate();
+    Bookmarks().EndUpdate();
 }
 
 static void LoadSubNotes(LookupItemViewModelCollection& vNodes,
@@ -274,10 +274,10 @@ void PointerInspectorViewModel::UpdateValues()
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.RemoveNotifyTarget(*this);
 
-    const auto nCount = gsl::narrow_cast<gsl::index>(Fields().Count());
+    const auto nCount = gsl::narrow_cast<gsl::index>(Bookmarks().Count());
     for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
     {
-        auto* pField = Fields().GetItemAt(nIndex);
+        auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nIndex);
         if (pField != nullptr)
         {
             pField->SetAddress(nBaseAddress + pField->m_nOffset);
@@ -303,7 +303,7 @@ std::string PointerInspectorViewModel::GetDefinition() const
 {
     std::string sBuffer;
 
-    const auto nSelectedFieldIndex = Fields().FindItemIndex(LookupItemViewModel::IsSelectedProperty, true);
+    const auto nSelectedFieldIndex = Bookmarks().FindItemIndex(LookupItemViewModel::IsSelectedProperty, true);
     if (nSelectedFieldIndex == -1)
         return sBuffer;
 
@@ -347,7 +347,7 @@ std::string PointerInspectorViewModel::GetDefinition() const
         sChain.pop();
     } while (!sChain.empty());
 
-    const auto* vmField = Fields().GetItemAt(nSelectedFieldIndex);
+    const auto* vmField = Bookmarks().GetItemAt<StructFieldViewModel>(nSelectedFieldIndex);
     Expects(vmField != nullptr);
     ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address,
                                                             vmField->GetSize(), ra::to_unsigned(vmField->m_nOffset));

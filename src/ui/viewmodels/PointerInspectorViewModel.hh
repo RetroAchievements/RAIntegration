@@ -89,16 +89,6 @@ public:
     };
 
     /// <summary>
-    /// Gets the list of fields.
-    /// </summary>
-    ViewModelCollection<StructFieldViewModel>& Fields() noexcept { return m_vFields; }
-
-    /// <summary>
-    /// Gets the list of fields.
-    /// </summary>
-    const ViewModelCollection<StructFieldViewModel>& Fields() const noexcept { return m_vFields; }
-
-    /// <summary>
     /// Gets the list of available nodes.
     /// </summary>
     LookupItemViewModelCollection& Nodes() noexcept { return m_vNodes; }
@@ -147,7 +137,6 @@ private:
     std::string GetDefinition() const;
 
     LookupItemViewModelCollection m_vNodes;
-    ViewModelCollection<StructFieldViewModel> m_vFields;
     bool m_bSyncingAddress = false;
 
     const ra::data::models::CodeNoteModel* m_pCurrentNote = nullptr;

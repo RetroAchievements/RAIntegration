@@ -47,6 +47,7 @@ private:
     bindings::TextBoxBinding m_bindAddress;
     bindings::ComboBoxBinding m_bindNodes;
     bindings::TextBoxBinding m_bindDescription;
+    bindings::GridBinding m_bindPointerChain;
     bindings::GridBinding m_bindFields;
 };
 

@@ -6,6 +6,7 @@
 
 #include "ui\viewmodels\WindowManager.hh"
 
+#include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridBookmarkFormatColumnBinding.hh"
 #include "ui\win32\bindings\GridBookmarkValueColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
@@ -53,6 +54,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
       m_bindAddress(vmPointerFinder),
       m_bindNodes(vmPointerFinder),
       m_bindDescription(vmPointerFinder),
+      m_bindPointerChain(vmPointerFinder),
       m_bindFields(vmPointerFinder)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Pointer Finder");
@@ -116,18 +118,46 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindFields.BindRowColor(PointerInspectorViewModel::StructFieldViewModel::RowColorProperty);
     m_bindFields.SetShowGridLines(true);
 
+    pOffsetColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        PointerInspectorViewModel::StructFieldViewModel::OffsetProperty);
+    pOffsetColumn->SetHeader(L"Offset");
+    pOffsetColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
+    m_bindPointerChain.BindColumn(0, std::move(pOffsetColumn));
+
+    auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
+        PointerInspectorViewModel::StructFieldViewModel::AddressProperty);
+    pAddressColumn->SetHeader(L"Address");
+    pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
+    m_bindPointerChain.BindColumn(1, std::move(pAddressColumn));
+
+    pValueColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkValueColumnBinding>(
+        PointerInspectorViewModel::StructFieldViewModel::CurrentValueProperty);
+    pValueColumn->SetHeader(L"Value");
+    pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
+    pValueColumn->SetAlignment(ra::ui::RelativePosition::Center);
+    m_bindPointerChain.BindColumn(2, std::move(pValueColumn));
+
+    pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        PointerInspectorViewModel::StructFieldViewModel::DescriptionProperty);
+    pDescriptionColumn->SetHeader(L"Description");
+    pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 80);
+    m_bindPointerChain.BindColumn(3, std::move(pDescriptionColumn));
+
+    m_bindPointerChain.BindItems(vmPointerFinder.PointerChain());
+    m_bindPointerChain.BindRowColor(PointerInspectorViewModel::StructFieldViewModel::RowColorProperty);
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_ADDRESS, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_DESCRIPTION, Anchor::Top | Anchor::Left | Anchor::Right);
+    SetAnchor(IDC_RA_LBX_GROUPS, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_COPY_ALL, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_PAUSE, Anchor::Right | Anchor::Bottom);
     SetAnchor(IDC_RA_FREEZE, Anchor::Right | Anchor::Bottom);
 
-    SetMinimumSize(480, 192);
+    SetMinimumSize(480, 258);
 }
 
 BOOL PointerInspectorDialog::OnInitDialog()
@@ -135,6 +165,7 @@ BOOL PointerInspectorDialog::OnInitDialog()
     m_bindAddress.SetControl(*this, IDC_RA_ADDRESS);
     m_bindNodes.SetControl(*this, IDC_RA_FILTER_VALUE);
     m_bindDescription.SetControl(*this, IDC_RA_DESCRIPTION);
+    m_bindPointerChain.SetControl(*this, IDC_RA_LBX_GROUPS);
     m_bindFields.SetControl(*this, IDC_RA_LBX_ADDRESSES);
 
     return DialogBase::OnInitDialog();

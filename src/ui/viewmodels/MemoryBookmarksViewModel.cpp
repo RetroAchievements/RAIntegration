@@ -89,6 +89,17 @@ void MemoryBookmarksViewModel::InitializeNotifyTargets()
     pEmulatorContext.AddNotifyTarget(*this);
 }
 
+void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetAddressWithoutUpdatingValue(ra::ByteAddress nNewAddress)
+{
+    // set m_bInitialized to false while updating the address to prevent synchronizing the value
+    const bool bInitialized = m_bInitialized;
+    m_bInitialized = false;
+
+    SetAddress(nNewAddress);
+
+    m_bInitialized = bInitialized;
+}
+
 GSL_SUPPRESS_F6
 void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {

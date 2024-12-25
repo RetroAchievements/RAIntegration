@@ -269,6 +269,8 @@ public:
 
         unsigned ReadValue() const;
 
+        void SetAddressWithoutUpdatingValue(ra::ByteAddress nNewAddress);
+
     private:
         std::wstring BuildCurrentValue() const;
 

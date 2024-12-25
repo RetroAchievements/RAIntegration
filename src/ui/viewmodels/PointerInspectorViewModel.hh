@@ -8,6 +8,16 @@
 #include "ui\viewmodels\MemoryBookmarksViewModel.hh"
 
 namespace ra {
+namespace data {
+namespace models {
+
+class CodeNoteModel;
+
+} // namespace models
+} // namespace data
+} // namespace ra
+
+namespace ra {
 namespace ui {
 namespace viewmodels {
 
@@ -85,7 +95,30 @@ public:
         /// </summary>
         void SetOffset(const std::wstring& sValue) { SetValue(OffsetProperty, sValue); }
 
+        using MemoryBookmarkViewModel::SetAddressWithoutUpdatingValue;
+
         int32_t m_nOffset;
+    };
+
+    class PointerNodeViewModel : public LookupItemViewModel
+    {
+    public:
+        static const int RootNodeId = -1;
+
+        PointerNodeViewModel(gsl::index nParentIndex, int32_t nOffset, const std::wstring& sLabel) noexcept
+            : LookupItemViewModel(nParentIndex < 0 ? RootNodeId : gsl::narrow_cast<int>((nParentIndex << 24) | (nOffset & 0x00FFFFFF)), sLabel),
+              m_nParentIndex(nParentIndex),
+              m_nOffset(nOffset)
+        {
+        }
+
+        bool IsRootNode() const { return m_nParentIndex == -1; }
+        gsl::index GetParentIndex() const { return m_nParentIndex; }
+        int32_t GetOffset() const { return m_nOffset; }
+
+    private:
+        gsl::index m_nParentIndex = -1;
+        int32_t m_nOffset = 0;
     };
 
     /// <summary>
@@ -113,6 +146,16 @@ public:
     /// </summary>
     void SetSelectedNode(int nValue) { SetValue(SelectedNodeProperty, nValue); }
 
+    /// <summary>
+    /// Gets the pointer chain list.
+    /// </summary>
+    ViewModelCollection<StructFieldViewModel>& PointerChain() noexcept { return m_vPointerChain; }
+
+    /// <summary>
+    /// Gets the pointer chain list.
+    /// </summary>
+    const ViewModelCollection<StructFieldViewModel>& PointerChain() const noexcept { return m_vPointerChain; }
+
     void DoFrame() override;
 
     void CopyDefinition() const;
@@ -131,12 +174,16 @@ private:
     void LoadNote(const ra::data::models::CodeNoteModel* pNote);
     void LoadNodes(const ra::data::models::CodeNoteModel* pNote);
     const ra::data::models::CodeNoteModel* FindNestedCodeNoteModel(const ra::data::models::CodeNoteModel& pRootNote, int nNewNode);
-    void GetPointerChain(gsl::index nIndex, std::stack<const LookupItemViewModel*>& sChain) const;
+    void GetPointerChain(gsl::index nIndex, std::stack<const PointerNodeViewModel*>& sChain) const;
     void SyncField(StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote);
+    const ra::data::models::CodeNoteModel* UpdatePointerChain(int nNewNode);
+    void UpdatePointerChainRowColor(StructFieldViewModel& pPointer);
+    void UpdatePointerChainValues();
     void UpdateValues();
     std::string GetDefinition() const;
 
     LookupItemViewModelCollection m_vNodes;
+    ViewModelCollection<StructFieldViewModel> m_vPointerChain;
     bool m_bSyncingAddress = false;
 
     const ra::data::models::CodeNoteModel* m_pCurrentNote = nullptr;

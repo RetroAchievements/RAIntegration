@@ -184,7 +184,7 @@ BOOL PointerInspectorDialog::OnCommand(WORD nCommand)
         //}
 
         case IDC_RA_COPY_ALL: {
-            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
+            const auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
             if (vmPointerInspector)
                 vmPointerInspector->CopyDefinition();
 

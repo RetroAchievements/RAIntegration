@@ -97,7 +97,7 @@ public:
 
         using MemoryBookmarkViewModel::SetAddressWithoutUpdatingValue;
 
-        int32_t m_nOffset;
+        int32_t m_nOffset = 0;
     };
 
     class PointerNodeViewModel : public LookupItemViewModel
@@ -112,9 +112,9 @@ public:
         {
         }
 
-        bool IsRootNode() const { return m_nParentIndex == -1; }
-        gsl::index GetParentIndex() const { return m_nParentIndex; }
-        int32_t GetOffset() const { return m_nOffset; }
+        bool IsRootNode() const noexcept { return m_nParentIndex == -1; }
+        gsl::index GetParentIndex() const noexcept { return m_nParentIndex; }
+        int32_t GetOffset() const noexcept { return m_nOffset; }
 
     private:
         gsl::index m_nParentIndex = -1;

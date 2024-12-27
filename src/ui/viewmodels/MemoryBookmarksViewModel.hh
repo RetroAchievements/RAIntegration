@@ -138,7 +138,7 @@ public:
         /// <summary>
         /// Gets the unformatted current value of the bookmarked address.
         /// </summary>
-        uint32_t GetCurrentValueRaw() const { return m_nValue; }
+        uint32_t GetCurrentValueRaw() const noexcept { return m_nValue; }
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the previous value of the bookmarked address.

@@ -305,7 +305,7 @@ bool CodeNoteModel::GetNextAddress(ra::ByteAddress nAfterAddress, ra::ByteAddres
     return bResult;
 }
 
-std::wstring CodeNoteModel::GetPrimaryNote() const noexcept
+std::wstring CodeNoteModel::GetPrimaryNote() const
 {
     if (m_pPointerData != nullptr)
     {
@@ -334,7 +334,7 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
 
         if (!sLine.empty())
         {
-            if (sLine[0] == '+' && bImpliedPointer)
+            if (sLine.at(0) == '+' && bImpliedPointer)
             {
                 m_nMemSize = MemSize::ThirtyTwoBit;
                 m_nBytes = 4;

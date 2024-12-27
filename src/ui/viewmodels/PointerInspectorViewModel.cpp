@@ -119,7 +119,7 @@ void PointerInspectorViewModel::GetPointerChain(gsl::index nIndex, std::stack<co
 const ra::data::models::CodeNoteModel* PointerInspectorViewModel::FindNestedCodeNoteModel(
     const ra::data::models::CodeNoteModel& pRootNote, int nNewNode)
 {
-    auto nIndex = m_vNodes.FindItemIndex(LookupItemViewModel::IdProperty, nNewNode);
+    const auto nIndex = m_vNodes.FindItemIndex(LookupItemViewModel::IdProperty, nNewNode);
     if (nIndex == -1)
         return nullptr;
 
@@ -130,6 +130,7 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::FindNestedCode
     do
     {
         const auto* pNestedNode = sChain.top();
+        Expects(pNestedNode != nullptr);
         const auto nOffset = pNestedNode->GetOffset();
 
         const auto* pNestedNote = pParentNote->GetPointerNoteAtOffset(nOffset);
@@ -169,7 +170,7 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
 
     do
     {
-        StructFieldViewModel* pItem;
+        StructFieldViewModel* pItem = nullptr;
         if (nInsertIndex < nCount)
         {
             pItem = PointerChain().GetItemAt(nInsertIndex);
@@ -180,9 +181,11 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
             pItem = &PointerChain().Add();
         }
 
+        Expects(pItem != nullptr);
         pItem->BeginInitialization();
 
         const auto* pNode = sChain.top();
+        Expects(pNode != nullptr);
         if (pNode->IsRootNode())
         {
             pItem->m_nOffset = nCurrentAddress;
@@ -267,7 +270,7 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
             const auto nOffset = nAddress - nBaseAddress;
             const std::wstring sOffset = ra::StringPrintf(L"+%04x", nOffset);
 
-            StructFieldViewModel* pItem;
+            StructFieldViewModel* pItem = nullptr;
             if (nInsertIndex < nCount)
             {
                 pItem = Bookmarks().GetItemAt<StructFieldViewModel>(nInsertIndex);
@@ -311,7 +314,7 @@ static void LoadSubNotes(LookupItemViewModelCollection& vNodes,
 
         std::wstring sLabel;
         if (nDepth > 1)
-            sLabel = std::wstring(nDepth - 1, ' ');
+            sLabel = std::wstring(gsl::narrow_cast<size_t>(nDepth) - 1, ' ');
         sLabel += ra::StringPrintf(L"+%04x | %s", nOffset, pOffsetNote.GetPointerDescription());
 
         vNodes.Add<PointerInspectorViewModel::PointerNodeViewModel>(nParentIndex, nOffset, sLabel);
@@ -384,7 +387,7 @@ void PointerInspectorViewModel::UpdatePointerChainRowColor(PointerInspectorViewM
     }
 
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-    bool bValid;
+    bool bValid = false;
 
     MemSize nMemSize = MemSize::Unknown;
     uint32_t nMask = 0xFFFFFFFF;
@@ -473,10 +476,12 @@ std::string PointerInspectorViewModel::GetDefinition() const
     GetPointerChain(nSelectedNodeIndex, sChain);
 
     auto* pNote = pCodeNotes->FindCodeNoteModel(GetCurrentAddress());
+    Expects(pNote != nullptr);
 
     do
     {
         const auto* pNode = sChain.top();
+        Expects(pNode != nullptr);
 
         if (!pNode->IsRootNode())
             pNote = pNote->GetPointerNoteAtOffset(pNode->GetOffset());

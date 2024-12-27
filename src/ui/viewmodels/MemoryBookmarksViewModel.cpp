@@ -89,6 +89,17 @@ void MemoryBookmarksViewModel::InitializeNotifyTargets()
     pEmulatorContext.AddNotifyTarget(*this);
 }
 
+void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetAddressWithoutUpdatingValue(ra::ByteAddress nNewAddress)
+{
+    // set m_bInitialized to false while updating the address to prevent synchronizing the value
+    const bool bInitialized = m_bInitialized;
+    m_bInitialized = false;
+
+    SetAddress(nNewAddress);
+
+    m_bInitialized = bInitialized;
+}
+
 GSL_SUPPRESS_F6
 void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
@@ -586,55 +597,58 @@ void MemoryBookmarksViewModel::DoFrame()
     for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
     {
         auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
-        if (pBookmark.MemoryChanged())
-        {
-            if (pBookmark.GetBehavior() == BookmarkBehavior::PauseOnChange)
-            {
-                pBookmark.SetRowColor(ra::ui::Color(0xFFFFC0C0));
-
-                const auto nSizeIndex = m_vSizes.FindItemIndex(LookupItemViewModel::IdProperty, ra::etoi(pBookmark.GetSize()));
-                Expects(nSizeIndex >= 0);
-
-                auto sMessage = ra::StringPrintf(L"%s %s",
-                    m_vSizes.GetItemAt(nSizeIndex)->GetLabel(),
-                    ra::ByteAddressToString(pBookmark.GetAddress()));
-
-                // remove leading space of " 8-bit"
-                if (isspace(sMessage.at(0)))
-                    sMessage.erase(0, 1);
-
-                const auto& pDescription = pBookmark.GetDescription();
-                if (!pDescription.empty())
-                {
-                    auto nDescriptionLength = pDescription.find(L'\n');
-                    if (nDescriptionLength == std::string::npos)
-                    {
-                        if (pDescription.length() < 40)
-                        {
-                            nDescriptionLength = pDescription.length();
-                        }
-                        else
-                        {
-                            nDescriptionLength = pDescription.find_last_of(L' ', 40);
-                            if (nDescriptionLength == std::string::npos)
-                                nDescriptionLength = 40;
-                        }
-                    }
-                    sMessage.append(L": ");
-                    sMessage.append(pDescription, 0, nDescriptionLength);
-                }
-
-                auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                pFrameEventQueue.QueuePauseOnChange(sMessage);
-            }
-        }
-        else if (pBookmark.GetBehavior() == BookmarkBehavior::PauseOnChange)
-        {
-            pBookmark.SetRowColor(ra::ui::Color(ra::to_unsigned(MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue())));
-        }
+        UpdateBookmark(pBookmark);
     }
 
     pEmulatorContext.AddNotifyTarget(*this);
+}
+
+void MemoryBookmarksViewModel::UpdateBookmark(MemoryBookmarksViewModel::MemoryBookmarkViewModel& pBookmark)
+{
+    if (pBookmark.MemoryChanged())
+    {
+        if (pBookmark.GetBehavior() == BookmarkBehavior::PauseOnChange)
+        {
+            pBookmark.SetRowColor(ra::ui::Color(0xFFFFC0C0));
+
+            const auto nSizeIndex = m_vSizes.FindItemIndex(LookupItemViewModel::IdProperty, ra::etoi(pBookmark.GetSize()));
+            Expects(nSizeIndex >= 0);
+
+            auto sMessage = ra::StringPrintf(L"%s %s", m_vSizes.GetItemAt(nSizeIndex)->GetLabel(), ra::ByteAddressToString(pBookmark.GetAddress()));
+
+            // remove leading space of " 8-bit"
+            if (isspace(sMessage.at(0)))
+                sMessage.erase(0, 1);
+
+            const auto& pDescription = pBookmark.GetDescription();
+            if (!pDescription.empty())
+            {
+                auto nDescriptionLength = pDescription.find(L'\n');
+                if (nDescriptionLength == std::string::npos)
+                {
+                    if (pDescription.length() < 40)
+                    {
+                        nDescriptionLength = pDescription.length();
+                    }
+                    else
+                    {
+                        nDescriptionLength = pDescription.find_last_of(L' ', 40);
+                        if (nDescriptionLength == std::string::npos)
+                            nDescriptionLength = 40;
+                    }
+                }
+                sMessage.append(L": ");
+                sMessage.append(pDescription, 0, nDescriptionLength);
+            }
+
+            auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+            pFrameEventQueue.QueuePauseOnChange(sMessage);
+        }
+    }
+    else if (pBookmark.GetBehavior() == BookmarkBehavior::PauseOnChange)
+    {
+        pBookmark.SetRowColor(ra::ui::Color(ra::to_unsigned(MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue())));
+    }
 }
 
 bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const

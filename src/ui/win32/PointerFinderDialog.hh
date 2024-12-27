@@ -21,7 +21,7 @@ namespace win32 {
 class PointerFinderDialog : public DialogBase
 {
 public:
-    explicit PointerFinderDialog(viewmodels::PointerFinderViewModel& vmNewAsset);
+    explicit PointerFinderDialog(viewmodels::PointerFinderViewModel& vmPointerFinder);
     virtual ~PointerFinderDialog() noexcept = default;
     PointerFinderDialog(const PointerFinderDialog&) noexcept = delete;
     PointerFinderDialog& operator=(const PointerFinderDialog&) noexcept = delete;

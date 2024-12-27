@@ -181,6 +181,40 @@ public:
     }
 
     /// <summary>
+    /// Finds the index of the first item where the specified property has the specified value.
+    /// </summary>
+    /// <param name="pProperty">The property to query.</param>
+    /// <param name="sValue">The value to find.</param>
+    /// <returns>Index of the first matching item, <c>-1</c> if not found.</returns>
+    gsl::index FindItemIndex(const StringModelProperty& pProperty, const std::wstring& sValue) const
+    {
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow<gsl::index>(m_nSize); ++nIndex)
+        {
+            if (m_vItems.at(nIndex)->GetValue(pProperty) == sValue)
+                return nIndex;
+        }
+
+        return -1;
+    }
+
+    /// <summary>
+    /// Finds the index of the first item where the specified property has the specified value.
+    /// </summary>
+    /// <param name="pProperty">The property to query.</param>
+    /// <param name="bValue">The value to find.</param>
+    /// <returns>Index of the first matching item, <c>-1</c> if not found.</returns>
+    gsl::index FindItemIndex(const BoolModelProperty& pProperty, bool bValue) const
+    {
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow<gsl::index>(m_nSize); ++nIndex)
+        {
+            if (m_vItems.at(nIndex)->GetValue(pProperty) == bValue)
+                return nIndex;
+        }
+
+        return -1;
+    }
+
+    /// <summary>
     /// Calls the OnBeginModelCollectionUpdate method of any attached NotifyTargets.
     /// </summary>
     void BeginUpdate();

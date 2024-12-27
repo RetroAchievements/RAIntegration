@@ -79,23 +79,23 @@ public:
         Assert::AreEqual(std::wstring(L"test test\r\ntest"), Trim(std::wstring(L"\ttest test\r\ntest\r\n\r\n")));
     }
 
-    TEST_METHOD(TestToString)
+    TEST_METHOD(TestToAString)
     {
-        Assert::AreEqual(std::string("0"), ToString(0));
-        Assert::AreEqual(std::string("1"), ToString(1));
-        Assert::AreEqual(std::string{'a'}, ToString('a'));
-        Assert::AreEqual(std::string{'a'}, ToString(L'a'));
-        Assert::AreEqual(std::string{'3'}, ToString('3'));
-        Assert::AreEqual(std::string{'3'}, ToString(L'3'));
-        Assert::AreEqual(std::string("99"), ToString(99));
-        Assert::AreEqual(std::string("-3"), ToString(-3));
-        Assert::AreEqual(std::string("0"), ToString(0U));
-        Assert::AreEqual(std::string("1"), ToString(1U));
-        Assert::AreEqual(std::string("99"), ToString(99U));
-        Assert::AreEqual(std::string("Apple"), ToString("Apple"));
-        Assert::AreEqual(std::string("Apple"), ToString(std::string("Apple")));
-        Assert::AreEqual(std::string("Apple"), ToString(L"Apple"));
-        Assert::AreEqual(std::string("Apple"), ToString(std::wstring(L"Apple")));
+        Assert::AreEqual(std::string("0"), ToAString(0));
+        Assert::AreEqual(std::string("1"), ToAString(1));
+        Assert::AreEqual(std::string{'a'}, ToAString('a'));
+        Assert::AreEqual(std::string{'a'}, ToAString(L'a'));
+        Assert::AreEqual(std::string{'3'}, ToAString('3'));
+        Assert::AreEqual(std::string{'3'}, ToAString(L'3'));
+        Assert::AreEqual(std::string("99"), ToAString(99));
+        Assert::AreEqual(std::string("-3"), ToAString(-3));
+        Assert::AreEqual(std::string("0"), ToAString(0U));
+        Assert::AreEqual(std::string("1"), ToAString(1U));
+        Assert::AreEqual(std::string("99"), ToAString(99U));
+        Assert::AreEqual(std::string("Apple"), ToAString("Apple"));
+        Assert::AreEqual(std::string("Apple"), ToAString(std::string("Apple")));
+        Assert::AreEqual(std::string("Apple"), ToAString(L"Apple"));
+        Assert::AreEqual(std::string("Apple"), ToAString(std::wstring(L"Apple")));
     }
 
     TEST_METHOD(TestToWString)

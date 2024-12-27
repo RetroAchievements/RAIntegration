@@ -110,6 +110,7 @@ void GridBinding::UpdateLayout()
     for (gsl::index i = 0; ra::to_unsigned(i) < m_vColumns.size(); ++i)
     {
         const auto& pColumn = *m_vColumns.at(i);
+        Expects(&pColumn != nullptr);
         switch (pColumn.GetWidthType())
         {
         case GridColumnBinding::WidthType::Pixels:

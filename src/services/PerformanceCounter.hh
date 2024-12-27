@@ -15,6 +15,8 @@ enum class PerformanceCheckpoint
     MemoryInspectorDoFrame,
     AssetListDoFrame,
     AssetEditorDoFrame,
+    PointerFinderDoFrame,
+    PointerInspectorDoFrame,
 
     NUM_CHECKPOINTS
 };

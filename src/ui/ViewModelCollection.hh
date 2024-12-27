@@ -131,6 +131,18 @@ public:
     /// <summary>
     /// Adds an item to the end of the collection.
     /// </summary>
+    template<class T2, class... Args>
+    T2& Add(Args&&... args)
+    {
+        static_assert(std::is_base_of<T, T2>::value, "T2 not derived from base class T");
+
+        auto pItem = std::make_unique<T2>(std::forward<Args>(args)...);
+        return dynamic_cast<T2&>(ModelCollectionBase::AddItem(std::move(pItem)));
+    }
+
+    /// <summary>
+    /// Adds an item to the end of the collection.
+    /// </summary>
     /// <remarks>
     /// This function is called Append instead of Add to prevent confusion with the templated parameters.
     /// </summary>
@@ -148,6 +160,18 @@ public:
     /// Gets the item at the specified index.
     /// </summary>
     const T* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const T*>(GetModelAt(nIndex)); }
+
+    /// <summary>
+    /// Gets the item at the specified index.
+    /// </summary>
+    template<class T2>
+    T2* GetItemAt(gsl::index nIndex) { return dynamic_cast<T2*>(GetModelAt(nIndex)); }
+
+    /// <summary>
+    /// Gets the item at the specified index.
+    /// </summary>
+    template<class T2>
+    const T2* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const T2*>(GetModelAt(nIndex)); }
 };
 
 } // namespace ui

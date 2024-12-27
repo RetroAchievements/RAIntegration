@@ -122,6 +122,20 @@ std::wstring ToString<ComparisonType>(const ComparisonType& t)
     }
 }
 
+template<>
+std::wstring ToString<ra::MemFormat>(const ra::MemFormat& t)
+{
+    switch (t)
+    {
+        case ra::MemFormat::Hex:
+            return L"Hex";
+        case ra::MemFormat::Dec:
+            return L"Dec";
+        default:
+            return std::to_wstring(ra::etoi(t));
+    }
+}
+
 #pragma warning(pop)
 
 } // namespace CppUnitTestFramework

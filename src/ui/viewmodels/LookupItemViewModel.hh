@@ -84,6 +84,18 @@ public:
     }
 
     /// <summary>
+    /// Adds an item to the end of the collection.
+    /// </summary>
+    template<class T, class... Args>
+    GSL_SUPPRESS_C128 T& Add(Args&&... args)
+    {
+        static_assert(std::is_base_of<LookupItemViewModel, T>::value, "T not derived from base class LookupItemViewModel");
+
+        auto pItem = std::make_unique<T>(std::forward<Args>(args)...);
+        return dynamic_cast<T&>(ViewModelCollectionBase::AddItem(std::move(pItem)));
+    }
+
+    /// <summary>
     /// Gets the item at the specified index.
     /// </summary>
     LookupItemViewModel* GetItemAt(gsl::index nIndex) { return dynamic_cast<LookupItemViewModel*>(GetModelAt(nIndex)); }
@@ -92,6 +104,18 @@ public:
     /// Gets the item at the specified index.
     /// </summary>
     const LookupItemViewModel* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const LookupItemViewModel*>(GetModelAt(nIndex)); }
+
+    /// <summary>
+    /// Gets the item at the specified index.
+    /// </summary>
+    template<class T>
+    T* GetItemAt(gsl::index nIndex) { return dynamic_cast<T*>(GetModelAt(nIndex)); }
+
+    /// <summary>
+    /// Gets the item at the specified index.
+    /// </summary>
+    template<class T>
+    const T* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const T*>(GetModelAt(nIndex)); }
 
     /// <summary>
     /// Gets the label for item specified by the provided ID.

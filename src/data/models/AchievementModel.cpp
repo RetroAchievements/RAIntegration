@@ -415,25 +415,36 @@ void AchievementModel::SyncTrigger()
             return;
         }
 
-        const auto nSize = rc_trigger_size(sTrigger.c_str());
+        auto* pGame = pRuntime.GetClient()->game;
+        Expects(pGame != nullptr);
+
+        rc_preparse_state_t preparse;
+        rc_init_preparse_state(&preparse, nullptr, 0);
+        preparse.parse.existing_memrefs = pGame->runtime.memrefs;
+
+        rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+        const char* sMemaddr = sTrigger.c_str();
+        rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
+        rc_preparse_alloc_memrefs(nullptr, &preparse);
+
+        const auto nSize = preparse.parse.offset;
         if (nSize > 0)
         {
             void* trigger_buffer = malloc(nSize);
             if (trigger_buffer)
             {
                 // populate the item, using the communal memrefs pool
-                auto* pGame = pRuntime.GetClient()->game;
+                rc_reset_parse_state(&preparse.parse, trigger_buffer, nullptr, 0);
+                trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+                rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
 
-                rc_parse_state_t parse;
-                rc_init_parse_state(&parse, trigger_buffer, nullptr, 0);
-                parse.first_memref = &pGame->runtime.memrefs;
-                parse.variables = &pGame->runtime.variables;
+                preparse.parse.existing_memrefs = pGame->runtime.memrefs;
+                preparse.parse.memrefs = &trigger->memrefs;
 
-                const char* sMemaddr = sTrigger.c_str();
-                m_pAchievement->trigger = RC_ALLOC(rc_trigger_t, &parse);
-                rc_parse_trigger_internal(m_pAchievement->trigger, &sMemaddr, &parse);
-                rc_destroy_parse_state(&parse);
-                m_pAchievement->trigger->memrefs = nullptr;
+                sMemaddr = sTrigger.c_str();
+                m_pAchievement->trigger = &trigger->trigger;
+                rc_parse_trigger_internal(m_pAchievement->trigger, &sMemaddr, &preparse.parse);
+                trigger->trigger.has_memrefs = 1;
 
                 pRuntime.AttachMemory(m_pAchievement->trigger);
 
@@ -453,6 +464,8 @@ void AchievementModel::SyncTrigger()
                 }
             }
         }
+
+        rc_destroy_preparse_state(&preparse);
     }
 }
 

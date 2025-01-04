@@ -1034,7 +1034,8 @@ public:
         vmTrigger.InitializeFrom(*pTrigger);
 
         // manually update the memrefs as if rc_runtime_do_frame where called
-        rc_update_memref_values(pTrigger->memrefs, rc_peek_callback, nullptr);
+        auto* memrefs = rc_trigger_get_memrefs(pTrigger);
+        rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
 
         const auto* pCondition1 = vmTrigger.Conditions().GetItemAt(0);
         Expects(pCondition1 != nullptr);
@@ -1057,7 +1058,7 @@ public:
         vmTrigger.SetMemory({ 1 }, 3);
 
         // Manually update the memrefs as if rc_runtime_do_frame where called
-        rc_update_memref_values(pTrigger->memrefs, rc_peek_callback, nullptr);
+        rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
 
         // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008
         Assert::AreEqual(std::wstring(L"0x0001\r\n[No code note]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));

@@ -2,6 +2,7 @@
 
 #include <rcheevos.h>
 #include <rcheevos/src/rcheevos/rc_internal.h>
+#include <rcheevos/src/rc_client_internal.h>
 
 #include "RA_StringUtils.h"
 
@@ -241,17 +242,15 @@ void TriggerViewModel::PasteFromClipboard()
 
     // have to use internal parsing functions to decode conditions without full trigger/value
     // restriction validation (full validation will occur after new conditions are added)
-    rc_parse_state_t parse;
-    rc_init_parse_state(&parse, nullptr, nullptr, 0);
-    rc_memref_t* first_memref;
-    rc_init_parse_state_memrefs(&parse, &first_memref);
-    parse.is_value = IsValue();
+    rc_preparse_state_t preparse;
+    rc_init_preparse_state(&preparse, nullptr, 0);
+    preparse.parse.is_value = IsValue();
     std::string sTrigger = ra::Narrow(sClipboardText);
     const char* memaddr = sTrigger.c_str();
     Expects(memaddr != nullptr);
-    rc_parse_condset(&memaddr, &parse);
+    rc_parse_condset(&memaddr, &preparse.parse);
 
-    const auto nSize = parse.offset;
+    const auto nSize = preparse.parse.offset;
     if (nSize > 0 && *memaddr == 'S')
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
@@ -268,11 +267,21 @@ void TriggerViewModel::PasteFromClipboard()
 
     std::string sTriggerBuffer;
     sTriggerBuffer.resize(nSize);
-    rc_init_parse_state(&parse, sTriggerBuffer.data(), nullptr, 0);
-    rc_init_parse_state_memrefs(&parse, &first_memref);
-    parse.is_value = IsValue();
+    rc_reset_parse_state(&preparse.parse, sTriggerBuffer.data(), nullptr, 0);
+    preparse.parse.is_value = IsValue();
+
+    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+    {
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient()->game->runtime;
+        preparse.parse.memrefs = pRuntime.memrefs;
+    }
+    else
+    {
+        preparse.parse.memrefs = &preparse.memrefs;
+    }
+
     memaddr = sTrigger.c_str();
-    const rc_condset_t* pCondSet = rc_parse_condset(&memaddr, &parse);
+    const rc_condset_t* pCondSet = rc_parse_condset(&memaddr, &preparse.parse);
     Expects(pCondSet != nullptr);
 
     m_vConditions.BeginUpdate();
@@ -489,14 +498,24 @@ rc_trigger_t* TriggerViewModel::ParseTrigger(const std::string& sTrigger)
         const auto nSize = rc_value_size(sTrigger.c_str());
         if (nSize > 0)
         {
-            m_sTriggerBuffer.resize(nSize + sizeof(rc_trigger_t));
+            m_sTriggerBuffer.resize(nSize + sizeof(rc_trigger_with_memrefs_t));
             rc_value_t* pValue = rc_parse_value(m_sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
-            rc_trigger_t* pTrigger;
-            GSL_SUPPRESS_TYPE1 pTrigger = reinterpret_cast<rc_trigger_t*>(m_sTriggerBuffer.data() + nSize);
-            memset(pTrigger, 0, sizeof(rc_trigger_t));
+            rc_trigger_with_memrefs_t* pTriggerWithMemrefs;
+            GSL_SUPPRESS_TYPE1 pTriggerWithMemrefs = reinterpret_cast<rc_trigger_with_memrefs_t*>(m_sTriggerBuffer.data() + nSize);
+            memset(pTriggerWithMemrefs, 0, sizeof(rc_trigger_with_memrefs_t));
+            auto* pTrigger = &pTriggerWithMemrefs->trigger;
             pTrigger->requirement = pValue->conditions;
             pTrigger->alternative = pValue->conditions->next;
-            pTrigger->memrefs = pValue->memrefs;
+
+            if (pValue->has_memrefs)
+            {
+                rc_value_with_memrefs_t* pValueWithMemrefs;
+                GSL_SUPPRESS_TYPE1 pValueWithMemrefs = reinterpret_cast<rc_value_with_memrefs_t*>(pValue);
+                memcpy(&pTriggerWithMemrefs->memrefs, &pValueWithMemrefs->memrefs,
+                       sizeof(pTriggerWithMemrefs->memrefs));
+                pTrigger->has_memrefs = 1;
+            }
+
             return pTrigger;
         }
     }
@@ -543,7 +562,6 @@ void TriggerViewModel::InitializeFrom(const rc_value_t& pValue)
     memset(m_pTrigger, 0, sizeof(rc_trigger_t));
     m_pTrigger->requirement = pValue.conditions;
     m_pTrigger->alternative = (pValue.conditions) ? pValue.conditions->next : nullptr;
-    m_pTrigger->memrefs = pValue.memrefs;
     InitializeGroups(*m_pTrigger);
 }
 

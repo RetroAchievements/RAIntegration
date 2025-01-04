@@ -5,8 +5,11 @@
 #include "data\context\EmulatorContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\PointerInspectorViewModel.hh"
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
+#include "ui\win32\bindings\GridBookmarkFormatColumnBinding.hh"
+#include "ui\win32\bindings\GridBookmarkValueColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
@@ -20,7 +23,8 @@ namespace win32 {
 
 bool MemoryBookmarksDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
 {
-    return (dynamic_cast<const MemoryBookmarksViewModel*>(&vmViewModel) != nullptr);
+    return (dynamic_cast<const MemoryBookmarksViewModel*>(&vmViewModel) != nullptr &&
+            dynamic_cast<const ra::ui::viewmodels::PointerInspectorViewModel*>(&vmViewModel) == nullptr);
 }
 
 void MemoryBookmarksDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND)
@@ -80,100 +84,6 @@ void MemoryBookmarksDialog::BookmarksGridBinding::OnTotalMemorySizeChanged()
 
 // ------------------------------------
 
-class GridBookmarkValueColumnBinding : public ra::ui::win32::bindings::GridTextColumnBinding
-{
-public:
-    GridBookmarkValueColumnBinding(const StringModelProperty& pBoundProperty) noexcept
-        : ra::ui::win32::bindings::GridTextColumnBinding(pBoundProperty)
-    {
-    }
-
-    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
-    {
-        const auto& vmItems = static_cast<ra::ui::win32::bindings::GridBinding*>(pInfo.pGridBinding)->GetItems();
-        if (vmItems.GetItemValue(pInfo.nItemIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadOnlyProperty))
-            return nullptr;
-
-        return ra::ui::win32::bindings::GridTextColumnBinding::CreateInPlaceEditor(hParent, pInfo);
-    }
-
-    bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
-    {
-        auto* vmItem = dynamic_cast<MemoryBookmarksViewModel::MemoryBookmarkViewModel*>(vmItems.GetViewModelAt(nIndex));
-        if (vmItem != nullptr)
-        {
-            std::wstring sError;
-            if (!vmItem->SetCurrentValue(sValue, sError))
-            {
-                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
-                return false;
-            }
-        }
-
-        return true;
-    }
-};
-
-// ------------------------------------
-
-class GridBookmarkFormatColumnBinding : public ra::ui::win32::bindings::GridLookupColumnBinding
-{
-public:
-    GridBookmarkFormatColumnBinding(const IntModelProperty& pBoundProperty, const ra::ui::viewmodels::LookupItemViewModelCollection& vmItems) noexcept
-        : ra::ui::win32::bindings::GridLookupColumnBinding(pBoundProperty, vmItems)
-    {
-    }
-
-    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
-    {
-        if (IsHidden(vmItems, nIndex))
-            return L"";
-
-        return ra::ui::win32::bindings::GridLookupColumnBinding::GetText(vmItems, nIndex);
-    }
-
-    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
-    {
-        if (pProperty == MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty)
-            return true;
-
-        return ra::ui::win32::bindings::GridLookupColumnBinding::DependsOn(pProperty);
-    }
-
-    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
-    {
-        auto* pGridBinding = static_cast<ra::ui::win32::bindings::GridBinding*>(pInfo.pGridBinding);
-        Expects(pGridBinding != nullptr);
-
-        if (IsHidden(pGridBinding->GetItems(), pInfo.nItemIndex))
-            return nullptr;
-
-        return GridLookupColumnBinding::CreateInPlaceEditor(hParent, pInfo);
-    }
-
-private:
-    static bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex)
-    {
-        const auto nSize = ra::itoe<MemSize>(vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty));
-        switch (nSize)
-        {
-            case MemSize::Float:
-            case MemSize::FloatBigEndian:
-            case MemSize::Double32:
-            case MemSize::Double32BigEndian:
-            case MemSize::MBF32:
-            case MemSize::MBF32LE:
-            case MemSize::Text:
-                return true;
-
-            default:
-                return false;
-        }
-    }
-};
-
-// ------------------------------------
-
 MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryBookmarks)
     : DialogBase(vmMemoryBookmarks),
       m_bindBookmarks(vmMemoryBookmarks)
@@ -213,14 +123,14 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pSizeColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(2, std::move(pSizeColumn));
 
-    auto pFormatColumn = std::make_unique<GridBookmarkFormatColumnBinding>(
+    auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkFormatColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty, vmMemoryBookmarks.Formats());
     pFormatColumn->SetHeader(L"Format");
     pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 32);
     pFormatColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(3, std::move(pFormatColumn));
 
-    auto pValueColumn = std::make_unique<GridBookmarkValueColumnBinding>(
+    auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkValueColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::CurrentValueProperty);
     pValueColumn->SetHeader(L"Value");
     pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
@@ -228,7 +138,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pValueColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(4, std::move(pValueColumn));
 
-    auto pPriorColumn = std::make_unique<GridBookmarkValueColumnBinding>(
+    auto pPriorColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkValueColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::PreviousValueProperty);
     pPriorColumn->SetHeader(L"Prior");
     pPriorColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);

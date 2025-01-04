@@ -335,6 +335,29 @@ public:
 
         AssertIndirectNote(note, 0x448, L"[32-bit BE] Not-nested number", MemSize::ThirtyTwoBitBigEndian, 4);
     }
+
+    TEST_METHOD(TestCodeNoteImpliedPointerChain)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"Root Pointer [24 bits]\n"
+            L"\n"
+            L"+0x8318\n"
+            L"++0x8014\n"
+            L"+++0x8004 = First [32-bits]\n"
+            L"+++0x8008 = Second [32-bits]";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(MemSize::TwentyFourBit, note.GetMemSize());
+        Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
+
+        const auto* nestedNote = AssertIndirectNote(note, 0x8318,
+            L"+0x8014\n++0x8004 = First [32-bits]\n++0x8008 = Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+        const auto* nestedNote2 = AssertIndirectNote(*nestedNote, 0x8014,
+            L"+0x8004 = First [32-bits]\n+0x8008 = Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*nestedNote2, 0x8004, L"First [32-bits]", MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*nestedNote2, 0x8008, L"Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+    }
 };
 
 } // namespace tests

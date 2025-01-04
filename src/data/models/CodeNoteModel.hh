@@ -28,12 +28,13 @@ public:
 
     void SetAuthor(const std::string& sAuthor) { m_sAuthor = sAuthor; }
     void SetAddress(ra::ByteAddress nAddress) noexcept { m_nAddress = nAddress; }
-    void SetNote(const std::wstring& sNote);
+    void SetNote(const std::wstring& sNote, bool bImpliedPointer = false);
 
     bool IsPointer() const noexcept { return m_pPointerData != nullptr; }
     std::wstring GetPointerDescription() const;
     ra::ByteAddress GetPointerAddress() const noexcept;
     uint32_t GetRawPointerValue() const noexcept;
+    bool HasNestedPointers() const noexcept;
     const CodeNoteModel* GetPointerNoteAtOffset(int nOffset) const;
     std::pair<ra::ByteAddress, const CodeNoteModel*> GetPointerNoteAtAddress(ra::ByteAddress nAddress) const;
 
@@ -45,6 +46,7 @@ public:
     bool GetPreviousAddress(ra::ByteAddress nBeforeAddress, ra::ByteAddress& nPreviousAddress) const;
     bool GetNextAddress(ra::ByteAddress nAfterAddress, ra::ByteAddress& nNextAddress) const;
 
+    std::wstring GetPrimaryNote() const;
     void EnumeratePointerNotes(ra::ByteAddress nPointerAddress,
                                std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
     void EnumeratePointerNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;

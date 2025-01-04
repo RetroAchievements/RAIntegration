@@ -313,7 +313,7 @@ public:
         const rc_client_raintegration_menu_t* pMenu;
 
         pMenu = _Rcheevos_RAIntegrationGetMenu();
-        Assert::AreEqual(12U, pMenu->num_items);
+        Assert::AreEqual(13U, pMenu->num_items);
         AssertMenuItem(pMenu, 0, IDM_RA_HARDCORE_MODE, "&Hardcore Mode");
         AssertMenuItem(pMenu, 1, IDM_RA_NON_HARDCORE_WARNING, "Non-Hardcore &Warning");
         AssertMenuSeparator(pMenu, 2);
@@ -326,13 +326,14 @@ public:
         AssertMenuItem(pMenu, 9, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
         AssertMenuSeparator(pMenu, 10);
         AssertMenuItem(pMenu, 11, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
+        AssertMenuItem(pMenu, 12, IDM_RA_FILES_POINTERINSPECTOR, "Pointer &Inspector");
 
         runtime.mockUserContext.Initialize("User", "ApiToken");
         runtime.AssertMenuChangedEventSeen();
         runtime.ResetSeenEvents();
 
         pMenu = _Rcheevos_RAIntegrationGetMenu();
-        Assert::AreEqual(18U, pMenu->num_items);
+        Assert::AreEqual(19U, pMenu->num_items);
         AssertMenuItem(pMenu, 0, IDM_RA_OPENUSERPAGE, "Open my &User Page");
         AssertMenuItem(pMenu, 1, IDM_RA_OPENGAMEPAGE, "Open this &Game's Page");
         AssertMenuSeparator(pMenu, 2);
@@ -348,15 +349,16 @@ public:
         AssertMenuItem(pMenu, 12, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
         AssertMenuSeparator(pMenu, 13);
         AssertMenuItem(pMenu, 14, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
-        AssertMenuSeparator(pMenu, 15);
-        AssertMenuItem(pMenu, 16, IDM_RA_REPORTBROKENACHIEVEMENTS, "&Report Achievement Problem");
-        AssertMenuItem(pMenu, 17, IDM_RA_GETROMCHECKSUM, "View Game H&ash");
+        AssertMenuItem(pMenu, 15, IDM_RA_FILES_POINTERINSPECTOR, "Pointer &Inspector");
+        AssertMenuSeparator(pMenu, 16);
+        AssertMenuItem(pMenu, 17, IDM_RA_REPORTBROKENACHIEVEMENTS, "&Report Achievement Problem");
+        AssertMenuItem(pMenu, 18, IDM_RA_GETROMCHECKSUM, "View Game H&ash");
 
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
 
         pMenu = _Rcheevos_RAIntegrationGetMenu();
-        Assert::AreEqual(18U, pMenu->num_items);
+        Assert::AreEqual(19U, pMenu->num_items);
         AssertMenuItem(pMenu, 0, IDM_RA_OPENUSERPAGE, "Open my &User Page");
         AssertMenuItem(pMenu, 1, IDM_RA_OPENGAMEPAGE, "Open this &Game's Page");
         AssertMenuSeparator(pMenu, 2);
@@ -372,9 +374,10 @@ public:
         AssertMenuItem(pMenu, 12, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
         AssertMenuSeparator(pMenu, 13);
         AssertMenuItem(pMenu, 14, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
-        AssertMenuSeparator(pMenu, 15);
-        AssertMenuItem(pMenu, 16, IDM_RA_REPORTBROKENACHIEVEMENTS, "&Report Achievement Problem");
-        AssertMenuItem(pMenu, 17, IDM_RA_GETROMCHECKSUM, "View Game H&ash");
+        AssertMenuItem(pMenu, 15, IDM_RA_FILES_POINTERINSPECTOR, "Pointer &Inspector");
+        AssertMenuSeparator(pMenu, 16);
+        AssertMenuItem(pMenu, 17, IDM_RA_REPORTBROKENACHIEVEMENTS, "&Report Achievement Problem");
+        AssertMenuItem(pMenu, 18, IDM_RA_GETROMCHECKSUM, "View Game H&ash");
     }
 
     

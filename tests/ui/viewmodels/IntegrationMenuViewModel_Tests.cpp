@@ -134,7 +134,7 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(17);
+        menu.AssertMenuSize(18);
         menu.AssertMenuItem(0, IDM_RA_FILES_LOGIN, L"&Login");
         menu.AssertMenuSeparator(1);
         menu.AssertMenuItem(2, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
@@ -152,6 +152,7 @@ public:
         menu.AssertMenuItem(14, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         menu.AssertMenuSeparator(15);
         menu.AssertMenuItem(16, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
+        menu.AssertMenuItem(17, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
     }
 
     TEST_METHOD(TestBuildMenuLoggedIn)
@@ -161,7 +162,7 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(23);
+        menu.AssertMenuSize(24);
         menu.AssertMenuItem(0, IDM_RA_FILES_LOGOUT, L"Log&out");
         menu.AssertMenuSeparator(1);
         menu.AssertMenuItem(2, IDM_RA_OPENUSERPAGE, L"Open my &User Page");
@@ -182,9 +183,10 @@ public:
         menu.AssertMenuItem(17, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         menu.AssertMenuSeparator(18);
         menu.AssertMenuItem(19, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuSeparator(20);
-        menu.AssertMenuItem(21, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
-        menu.AssertMenuItem(22, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+        menu.AssertMenuItem(20, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        menu.AssertMenuSeparator(21);
+        menu.AssertMenuItem(22, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
+        menu.AssertMenuItem(23, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 
     TEST_METHOD(TestBuildMenuOffline)
@@ -194,7 +196,7 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(17);
+        menu.AssertMenuSize(18);
         menu.AssertMenuItem(0, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
         menu.AssertMenuItem(1, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
         menu.AssertMenuSeparator(2);
@@ -210,8 +212,9 @@ public:
         menu.AssertMenuItem(12, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         menu.AssertMenuSeparator(13);
         menu.AssertMenuItem(14, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuSeparator(15);
-        menu.AssertMenuItem(16, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+        menu.AssertMenuItem(15, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        menu.AssertMenuSeparator(16);
+        menu.AssertMenuItem(17, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 
     TEST_METHOD(TestLoginHardcoreValidClient)
@@ -560,6 +563,34 @@ public:
     {
         IntegrationMenuViewModelHarness menu;
         menu.AssertShowWindow<ra::ui::viewmodels::RichPresenceMonitorViewModel>(IDM_RA_PARSERICHPRESENCE, false, "", DialogResult::None);
+    }
+
+    TEST_METHOD(TestShowPointerFinderHardcoreAbort)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.AssertShowWindow<ra::ui::viewmodels::PointerFinderViewModel>(
+            IDM_RA_FILES_POINTERFINDER, true, "find pointers", DialogResult::No);
+    }
+
+    TEST_METHOD(TestShowPointerFinderNonHardcore)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.AssertShowWindow<ra::ui::viewmodels::PointerFinderViewModel>(
+            IDM_RA_FILES_POINTERFINDER, false, "find pointer", DialogResult::None);
+    }
+
+    TEST_METHOD(TestShowPointerInspectorHardcoreAbort)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.AssertShowWindow<ra::ui::viewmodels::PointerInspectorViewModel>(
+            IDM_RA_FILES_POINTERINSPECTOR, true, "inspect pointers", DialogResult::No);
+    }
+
+    TEST_METHOD(TestShowPointerInspectorNonHardcore)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.AssertShowWindow<ra::ui::viewmodels::PointerInspectorViewModel>(
+            IDM_RA_FILES_POINTERINSPECTOR, false, "inspect pointers", DialogResult::None);
     }
 
     TEST_METHOD(TestOpenAllHardcore)

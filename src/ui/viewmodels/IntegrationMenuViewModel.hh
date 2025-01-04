@@ -34,6 +34,7 @@ private:
     static void ShowMemoryInspector();
     static void ShowMemoryBookmarks();
     static void ShowPointerFinder();
+    static void ShowPointerInspector();
     static void ShowCodeNotes();
     static void ShowRichPresenceMonitor();
     static void ShowAllEditors();

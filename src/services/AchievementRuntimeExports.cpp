@@ -561,7 +561,7 @@ public:
             const auto* pItem = vmMenuItems.GetItemAt(nIndex);
             if (!pItem)
                 continue;
-
+            
             switch (pItem->GetId())
             {
                 case IDM_RA_FILES_LOGIN:

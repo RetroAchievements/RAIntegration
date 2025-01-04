@@ -33,7 +33,7 @@ public:
     
     void InitializeNotifyTargets();
 
-    void DoFrame();
+    virtual void DoFrame();
 
     enum class BookmarkBehavior
     {
@@ -134,6 +134,11 @@ public:
         /// Sets the current value of the bookmarked address.
         /// </summary>
         bool SetCurrentValue(const std::wstring& sValue, _Out_ std::wstring& sError);
+
+        /// <summary>
+        /// Gets the unformatted current value of the bookmarked address.
+        /// </summary>
+        uint32_t GetCurrentValueRaw() const noexcept { return m_nValue; }
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the previous value of the bookmarked address.
@@ -263,6 +268,8 @@ public:
         void OnValueChanged();
 
         unsigned ReadValue() const;
+
+        void SetAddressWithoutUpdatingValue(ra::ByteAddress nNewAddress);
 
     private:
         std::wstring BuildCurrentValue() const;
@@ -398,6 +405,8 @@ protected:
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnEndViewModelCollectionUpdate() override;
+
+    void UpdateBookmark(MemoryBookmarkViewModel& pBookmark);
 
     bool IsModified() const;
     size_t m_nUnmodifiedBookmarkCount = 0;

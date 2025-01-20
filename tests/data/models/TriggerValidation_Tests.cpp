@@ -3,7 +3,9 @@
 #include "data\models\TriggerValidation.hh"
 
 #include "tests\mocks\MockConsoleContext.hh"
+#include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -188,8 +190,49 @@ public:
         AssertLeaderboardValidation("N:0xH1234<99_0x2345<50", L"");
         AssertLeaderboardValidation("O:0xH1234<99_0x2345<50", L"");
     }
-};
 
+    TEST_METHOD(TestCodeNoteSizeComparisons)
+    {
+        ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
+        mockGameContext.SetCodeNote(0x0008, L"[8-bit] Byte address");
+        mockGameContext.SetCodeNote(0x0010, L"[16-bit] Word address");
+        mockGameContext.SetCodeNote(0x0018, L"[24-bit] TByte address");
+        mockGameContext.SetCodeNote(0x0020, L"[32-bit] DWord address");
+        mockGameContext.SetCodeNote(0x0028, L"Unsized Byte address");
+        mockGameContext.SetCodeNote(0x0030, L"[16-bit BE] BE Word address");
+        mockGameContext.SetCodeNote(0x0040, L"[40-bytes] array of words");
+
+
+        // valid reads
+        AssertValidation("0xH0008>8", L"");
+        AssertValidation("0x 0010>8", L"");
+        AssertValidation("0xW0018>8", L"");
+        AssertValidation("0xX0020>8", L"");
+        AssertValidation("0xH0028>8", L"");
+        AssertValidation("0xI0030>8", L"");
+
+        // size mismatch
+        AssertValidation("0xH0001>8", L"Condition 1: No code note for address 0001");
+        AssertValidation("0xH0010>8", L"Condition 1: 8-bit read of address 0010 differs from code note size 16-bit");
+        AssertValidation("0x 0030>8", L"Condition 1: 16-bit read of address 0030 differs from code note size 16-bit BE");
+        AssertValidation("0x 0010>0x 0008", L"Condition 1: 16-bit read of address 0008 differs from code note size 8-bit");
+        AssertValidation("0x 0028>8", L"Condition 1: 16-bit read of address 0028 differs from code note size 8-bit");
+
+        // bit sizes only require a note exist
+        AssertValidation("0xN0008=1", L"");
+        AssertValidation("0xS0018=1", L"");
+        AssertValidation("0xK0020=1", L"");
+        AssertValidation("0xN0004=1", L"Condition 1: No code note for address 0004");
+        AssertValidation("0xK0004=1", L"Condition 1: No code note for address 0004");
+
+        // sub-note addresses
+        AssertValidation("0xH0009>8", L"Condition 1: No code note for address 0009");
+        AssertValidation("0xH0011>8", L"Condition 1: 8-bit read of address 0011 differs from code note size 16-bit at 0010");
+        AssertValidation("0xH0052>8", L""); // in array
+    }
+
+};
 
 } // namespace tests
 } // namespace models

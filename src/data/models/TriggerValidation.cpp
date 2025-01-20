@@ -1,8 +1,10 @@
 #include "TriggerValidation.hh"
 
 #include "RA_StringUtils.h"
+#include "RA_Defs.h"
 
 #include "data/context/ConsoleContext.hh"
+#include "data/context/GameContext.hh"
 #include "data/context/EmulatorContext.hh"
 
 #include "services/ServiceLocator.hh"
@@ -89,6 +91,131 @@ static bool ValidateLeaderboardTrigger(const rc_trigger_t* pTrigger, std::wstrin
     return true;
 }
 
+static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::data::models::CodeNotesModel& pNotes,
+                                     std::wstring& sError)
+{
+    const auto nMemRefSize = TriggerValidation::MapRcheevosMemSize(pOperand.size);
+
+    const auto nAddress = pOperand.value.memref->address;
+    auto nNoteSize = pNotes.GetCodeNoteMemSize(nAddress);
+    if (nMemRefSize == nNoteSize)
+        return true;
+
+    const auto nStartAddress = pNotes.FindCodeNoteStart(nAddress);
+    if (nStartAddress != nAddress)
+    {
+        if (nStartAddress == 0xFFFFFFFF)
+        {
+            sError = ra::StringPrintf(L"No code note for address %s", ra::ByteAddressToString(nAddress).substr(2));
+            return false;
+        }
+           
+        nNoteSize = pNotes.GetCodeNoteMemSize(nStartAddress);
+        if (nNoteSize == MemSize::Array)
+        {
+            // ignore addresses in the middle of an array
+            return true;
+        }
+    }
+
+    if (nNoteSize == MemSize::Unknown)
+    {
+        // note exists, but did not specify a size. assume 8-bit
+        if (nMemRefSize == MemSize::EightBit)
+            return true;
+
+        nNoteSize = MemSize::EightBit;
+    }
+
+    // ignore bit reads inside a known address
+    if (nMemRefSize == MemSize::BitCount || MemSizeBits(nMemRefSize) < 8)
+        return true;
+
+    sError = ra::StringPrintf(L"%s read of address %s differs from code note size %s",
+        MemSizeString(nMemRefSize), ra::ByteAddressToString(nAddress).substr(2), MemSizeString(nNoteSize));
+
+    if (nStartAddress != nAddress)
+    {
+        sError.append(L" at ");
+        sError.append(ra::Widen(ra::ByteAddressToString(nStartAddress).substr(2)));
+    }
+
+    return false;
+}
+
+static bool ValidateCodeNotesCondSet(const rc_condset_t* pCondSet, const ra::data::models::CodeNotesModel& pNotes,
+                                     std::wstring& sError)
+{
+    if (!pCondSet)
+        return true;
+
+    bool bIsAddAddressChain = false;
+    size_t nIndex = 0;
+    const auto* pCondition = pCondSet->conditions;
+    for (; pCondition; pCondition = pCondition->next)
+    {
+        ++nIndex;
+        if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
+        {
+            bIsAddAddressChain = true;
+            continue;
+        }
+
+        if (bIsAddAddressChain)
+        {
+            bIsAddAddressChain = false;
+            continue;
+        }
+
+        if (rc_operand_is_memref(&pCondition->operand1) &&
+            !ValidateCodeNotesOperand(pCondition->operand1, pNotes, sError))
+        {
+            sError = ra::StringPrintf(L"Condition %u: %s", nIndex, sError);
+            return false;
+        }
+
+        if (rc_operand_is_memref(&pCondition->operand2) &&
+            !ValidateCodeNotesOperand(pCondition->operand2, pNotes, sError))
+        {
+            sError = ra::StringPrintf(L"Condition %u: %s", nIndex, sError);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool ValidateCodeNotes(const rc_trigger_t* pTrigger, std::wstring& sError)
+{
+    if (!ra::services::ServiceLocator::Exists<ra::data::context::GameContext>())
+        return true;
+
+    const auto* pNotes = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets().FindCodeNotes();
+    if (!pNotes)
+        return true;
+
+    if (!ValidateCodeNotesCondSet(pTrigger->requirement, *pNotes, sError))
+    {
+        if (pTrigger->alternative)
+            sError = L"Core " + sError;
+        return false;
+    }
+
+    size_t nIndex = 0;
+    const auto* pCondSet = pTrigger->alternative;
+    for (; pCondSet; pCondSet = pCondSet->next)
+    {
+        nIndex++;
+        if (!ValidateCodeNotesCondSet(pCondSet, *pNotes, sError))
+        {
+            sError = ra::StringPrintf(L"Alt%u %s", nIndex, sError);
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sError, AssetType nType)
 {
     const auto nSize = rc_trigger_size(sTrigger.c_str());
@@ -137,6 +264,9 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
             if (!ValidateLeaderboardTrigger(pTrigger, sError))
                 return false;
         }
+
+        if (!ValidateCodeNotes(pTrigger, sError))
+            return false;
 
         sError.clear();
         return true;

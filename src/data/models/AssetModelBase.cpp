@@ -9,6 +9,7 @@ const IntModelProperty AssetModelBase::IDProperty("AssetModelBase", "ID", 0);
 const StringModelProperty AssetModelBase::NameProperty("AssetModelBase", "Name", L"");
 const StringModelProperty AssetModelBase::DescriptionProperty("AssetModelBase", "Description", L"");
 const IntModelProperty AssetModelBase::CategoryProperty("AssetModelBase", "Category", ra::etoi(AssetCategory::Core));
+const IntModelProperty AssetModelBase::SubsetIDProperty("AssetModelBase", "SubsetID", 0);
 const StringModelProperty AssetModelBase::AuthorProperty("AssetModelBase", "Author", L"");
 const IntModelProperty AssetModelBase::StateProperty("AssetModelBase", "State", ra::etoi(AssetState::Inactive));
 const IntModelProperty AssetModelBase::ChangesProperty("AssetModelBase", "Changes", ra::etoi(AssetChanges::None));

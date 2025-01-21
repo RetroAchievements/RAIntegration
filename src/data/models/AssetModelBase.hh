@@ -127,6 +127,21 @@ public:
     void SetCategory(AssetCategory nValue) { SetValue(CategoryProperty, ra::etoi(nValue)); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the owning set id.
+    /// </summary>
+    static const IntModelProperty SubsetIDProperty;
+
+    /// <summary>
+    /// Gets the asset id.
+    /// </summary>
+    uint32_t GetSubsetID() const { return ra::to_unsigned(GetValue(SubsetIDProperty)); }
+
+    /// <summary>
+    /// Sets the asset id.
+    /// </summary>
+    void SetSubsetID(uint32_t nValue) { SetValue(SubsetIDProperty, nValue); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the badge.
     /// </summary>
     static const StringModelProperty AuthorProperty;

@@ -16,6 +16,7 @@ const IntModelProperty PointerInspectorViewModel::CurrentAddressProperty("Pointe
 const StringModelProperty PointerInspectorViewModel::CurrentAddressTextProperty("PointerInspectorViewModel", "CurrentAddressText", L"0x0000");
 const StringModelProperty PointerInspectorViewModel::CurrentAddressNoteProperty("PointerInspectorViewModel", "CurrentAddressNote", L"");
 const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::OffsetProperty("StructFieldViewModel", "Offset", L"+0000");
+const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::BodyProperty("StructFieldViewModel", "Body", L"");
 const IntModelProperty PointerInspectorViewModel::SelectedNodeProperty("PointerInspectorViewModel", "SelectedNode", -2);
 
 PointerInspectorViewModel::PointerInspectorViewModel()
@@ -233,6 +234,58 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
     return pNote;
 }
 
+static std::wstring TrimSize(const std::wstring& sNote)
+{
+    size_t nEndIndex;
+    size_t nStartIndex = sNote.find('[');
+    if (nStartIndex != std::string::npos)
+    {
+        nEndIndex = sNote.find(']', nStartIndex + 1);
+        if (nEndIndex == std::string::npos)
+            return sNote;
+    }
+    else
+    {
+        nStartIndex = sNote.find('(');
+        if (nStartIndex == std::string::npos)
+            return sNote;
+
+        nEndIndex = sNote.find(')', nStartIndex + 1);
+        if (nEndIndex == std::string::npos)
+            return sNote;
+    }
+
+    bool bPointer = false;
+    std::wstring sWord;
+    ra::data::models::CodeNoteModel::Parser::TokenType nTokenType;
+    ra::data::models::CodeNoteModel::Parser parser(sNote, nStartIndex + 1, nEndIndex);
+    do
+    {
+        nTokenType = parser.NextToken(sWord);
+        if (nTokenType == ra::data::models::CodeNoteModel::Parser::TokenType::Other)
+        {
+            if (sWord == L"pointer")
+                bPointer = true;
+            else
+                return sNote;
+        }
+    } while (nTokenType != ra::data::models::CodeNoteModel::Parser::TokenType::None);
+
+    while (nStartIndex > 0 && isspace(sNote.at(nStartIndex - 1)))
+        nStartIndex--;
+
+    while (nEndIndex < sNote.length() - 1 && isspace(sNote.at(nEndIndex + 1)))
+        nEndIndex++;
+
+    std::wstring sNoteCopy = sNote;
+    sNoteCopy.erase(nStartIndex, nEndIndex - nStartIndex + 1);
+
+    if (bPointer)
+        sNoteCopy.insert(0, L"[pointer] ");
+
+    return sNoteCopy;
+}
+
 void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote)
 {
     const auto nSize = pOffsetNote.GetMemSize();
@@ -241,9 +294,15 @@ void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructField
     const auto& sDescription = pOffsetNote.GetPrimaryNote();
     const auto nIndex = sDescription.find('\n');
     if (nIndex == std::string::npos)
-        pFieldViewModel.SetDescription(sDescription);
+    {
+        pFieldViewModel.SetDescription(TrimSize(sDescription));
+        pFieldViewModel.SetBody(L"");
+    }
     else
-        pFieldViewModel.SetDescription(sDescription.substr(0, nIndex));
+    {
+        pFieldViewModel.SetDescription(TrimSize(sDescription.substr(0, nIndex)));
+        pFieldViewModel.SetBody(sDescription.substr(nIndex + 1));
+    }
 }
 
 void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* pNote)

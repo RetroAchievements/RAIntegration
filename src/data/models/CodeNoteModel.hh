@@ -51,6 +51,38 @@ public:
                                std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
     void EnumeratePointerNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
 
+    class Parser
+    {
+    public:
+        Parser(const std::wstring& sNote, size_t nStartIndex, size_t nEndIndex) :
+            m_sNote(sNote), m_nIndex(nStartIndex), m_nEndIndex(nEndIndex)
+        {
+        }
+
+        enum TokenType
+        {
+            None = 0,
+            Number,
+            Bits,
+            Bytes,
+            Float,
+            Double,
+            MBF,
+            BigEndian,
+            LittleEndian,
+            Other,
+        };
+
+        TokenType NextToken(std::wstring& sWord) const;
+        wchar_t Peek() const { return (m_nIndex < m_nEndIndex) ? m_sNote.at(m_nIndex) : 0; }
+
+    private:
+        const std::wstring& m_sNote;
+        mutable size_t m_nIndex;
+        size_t m_nEndIndex;
+    };
+
+
 private:
     std::string m_sAuthor;
     std::wstring m_sNote;
@@ -61,7 +93,6 @@ private:
     struct PointerData;
     std::unique_ptr<PointerData> m_pPointerData;
 
-private:
     bool GetPointerChainRecursive(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pParentNote) const;
 
     void ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex);

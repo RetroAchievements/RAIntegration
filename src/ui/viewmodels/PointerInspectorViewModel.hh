@@ -95,6 +95,21 @@ public:
         /// </summary>
         void SetOffset(const std::wstring& sValue) { SetValue(OffsetProperty, sValue); }
 
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the field note body.
+        /// </summary>
+        static const StringModelProperty BodyProperty;
+
+        /// <summary>
+        /// Gets the field note body.
+        /// </summary>
+        const std::wstring& GetBody() const { return GetValue(BodyProperty); }
+
+        /// <summary>
+        /// Sets the field note body.
+        /// </summary>
+        void SetBody(const std::wstring& sValue) { SetValue(BodyProperty, sValue); }
+
         using MemoryBookmarkViewModel::SetAddressWithoutUpdatingValue;
 
         int32_t m_nOffset = 0;

@@ -134,6 +134,8 @@ private:
             Ensures(pPointer != nullptr);
             Assert::AreEqual(ra::ui::Color(0xFFFFC0C0).ARGB, pPointer->GetRowColor().ARGB);
         }
+
+        bool HasSingleSelection() const { return GetValue(HasSingleSelectionProperty); }
     };
 
 
@@ -247,9 +249,9 @@ public:
         Assert::AreEqual({ 2U }, inspector.Bookmarks().Count());
 
         inspector.AssertField(0, 4, 16U, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
-        inspector.AssertFieldBody(0, L"1=Wizard\n2=Fighter");
+        inspector.AssertFieldBody(0, L"[32-bit] Class\n1=Wizard\n2=Fighter");
         inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
-        inspector.AssertFieldBody(1, L"");
+        inspector.AssertFieldBody(1, L"[32-bit] Max HP");
     }
 
     TEST_METHOD(TestSelectedNode)
@@ -325,6 +327,73 @@ public:
         inspector.AssertPointerChain(1, L"+0000", 0x0C, L"[8-bit pointer] Row 1", L"14");
     }
 
+    TEST_METHOD(TestSelectedField)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.SetCurrentAddress({4U});
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+            L"[32-bit pointer] Player data\n"
+            L"+4: [32-bit] Class\n"
+            "1=Wizard\n"
+            "2=Fighter\n"
+            L"+8: [32-bit] Max HP\n"
+            L"+12: [32-bit pointer] Inventory\n"
+            L"++0: [16-bit] First item\n"
+            L"++2: [16-bit] Second item");
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+
+        Assert::AreEqual({ 3U }, inspector.Bookmarks().Count());
+        Assert::IsFalse(inspector.HasSelection());
+        Assert::IsFalse(inspector.HasSingleSelection());
+        Assert::AreEqual(std::wstring(), inspector.GetCurrentFieldNote());
+
+        inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
+        Assert::IsTrue(inspector.HasSelection());
+        Assert::IsTrue(inspector.HasSingleSelection());
+        Assert::AreEqual(std::wstring(L"[32-bit] Class\n1=Wizard\n2=Fighter"), inspector.GetCurrentFieldNote());
+
+        inspector.Bookmarks().GetItemAt(1)->SetSelected(true);
+        Assert::IsTrue(inspector.HasSelection());
+        Assert::IsFalse(inspector.HasSingleSelection());
+        Assert::AreEqual(std::wstring(), inspector.GetCurrentFieldNote());
+
+        inspector.Bookmarks().GetItemAt(0)->SetSelected(false);
+        Assert::IsTrue(inspector.HasSelection());
+        Assert::IsTrue(inspector.HasSingleSelection());
+        Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
+
+        inspector.Bookmarks().GetItemAt(1)->SetSelected(false);
+        Assert::IsFalse(inspector.HasSelection());
+        Assert::IsFalse(inspector.HasSingleSelection());
+        Assert::AreEqual(std::wstring(), inspector.GetCurrentFieldNote());
+
+        inspector.Bookmarks().GetItemAt(1)->SetSelected(true);
+        Assert::IsTrue(inspector.HasSelection());
+        Assert::IsTrue(inspector.HasSingleSelection());
+        Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
+
+        inspector.SetSelectedNode(0x0000000C);
+        Assert::AreEqual({2U}, inspector.Bookmarks().Count());
+        Assert::IsFalse(inspector.HasSelection());
+        Assert::IsFalse(inspector.HasSingleSelection());
+        Assert::AreEqual(std::wstring(), inspector.GetCurrentFieldNote());
+
+        inspector.Bookmarks().GetItemAt(1)->SetSelected(true);
+        Assert::IsTrue(inspector.HasSelection());
+        Assert::IsTrue(inspector.HasSingleSelection());
+        Assert::AreEqual(std::wstring(L"[16-bit] Second item"), inspector.GetCurrentFieldNote());
+    }
+
     TEST_METHOD(TestCopyDefinition)
     {
         PointerInspectorViewModelHarness inspector;
@@ -353,7 +422,7 @@ public:
 
         Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.GetSelectedNode());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Player data"), inspector.GetCurrentAddressNote());
-        inspector.AssertField(1, 8, 0x14U, L"+0008", L"[8-bit pointer] Row 2", MemSize::EightBit, MemFormat::Hex, L"1c");
+        inspector.AssertField(1, 8, 0x14U, L"+0008", L"[pointer] Row 2", MemSize::EightBit, MemFormat::Hex, L"1c");
 
         inspector.CopyDefinition();
         Assert::AreEqual(std::wstring(), inspector.mockClipboard.GetText());

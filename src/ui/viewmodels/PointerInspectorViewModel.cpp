@@ -18,6 +18,7 @@ const StringModelProperty PointerInspectorViewModel::CurrentAddressNoteProperty(
 const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::OffsetProperty("StructFieldViewModel", "Offset", L"+0000");
 const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::BodyProperty("StructFieldViewModel", "Body", L"");
 const IntModelProperty PointerInspectorViewModel::SelectedNodeProperty("PointerInspectorViewModel", "SelectedNode", -2);
+const StringModelProperty PointerInspectorViewModel::CurrentFieldNoteProperty("PointerInspectorViewModel", "CurrentFieldNote", L"");
 
 PointerInspectorViewModel::PointerInspectorViewModel()
     : MemoryBookmarksViewModel()
@@ -40,6 +41,10 @@ void PointerInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     else if (args.Property == SelectedNodeProperty && !m_bSyncingAddress)
     {
         OnSelectedNodeChanged(args.tNewValue);
+    }
+    else if (args.Property == SingleSelectionIndexProperty)
+    {
+        OnSelectedFieldChanged(args.tNewValue);
     }
 
     MemoryBookmarksViewModel::OnValueChanged(args);
@@ -149,6 +154,21 @@ void PointerInspectorViewModel::OnSelectedNodeChanged(int nNewNode)
 {
     const auto* pNote = UpdatePointerChain(nNewNode);
     LoadNote(pNote);
+}
+
+void PointerInspectorViewModel::OnSelectedFieldChanged(int nNewFieldIndex)
+{
+    m_bSyncingNote = true;
+    if (nNewFieldIndex != -1)
+    {
+        const auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nNewFieldIndex);
+        SetCurrentFieldNote(pField->GetBody());
+    }
+    else
+    {
+        SetCurrentFieldNote(L"");
+    }
+    m_bSyncingNote = false;
 }
 
 const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerChain(int nNewNode)
@@ -291,18 +311,14 @@ void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructField
     const auto nSize = pOffsetNote.GetMemSize();
     pFieldViewModel.SetSize((nSize == MemSize::Unknown) ? MemSize::EightBit : nSize);
 
-    const auto& sDescription = pOffsetNote.GetPrimaryNote();
-    const auto nIndex = sDescription.find('\n');
+    const auto& sNote = pOffsetNote.GetPrimaryNote();
+    pFieldViewModel.SetBody(sNote);
+
+    const auto nIndex = sNote.find('\n');
     if (nIndex == std::string::npos)
-    {
-        pFieldViewModel.SetDescription(TrimSize(sDescription));
-        pFieldViewModel.SetBody(L"");
-    }
+        pFieldViewModel.SetDescription(TrimSize(sNote));
     else
-    {
-        pFieldViewModel.SetDescription(TrimSize(sDescription.substr(0, nIndex)));
-        pFieldViewModel.SetBody(sDescription.substr(nIndex + 1));
-    }
+        pFieldViewModel.SetDescription(TrimSize(sNote.substr(0, nIndex)));
 }
 
 void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* pNote)
@@ -360,6 +376,8 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
 
     UpdateValues();
     Bookmarks().EndUpdate();
+
+    OnSelectedFieldChanged(GetValue(SingleSelectionIndexProperty));
 }
 
 static void LoadSubNotes(LookupItemViewModelCollection& vNodes,

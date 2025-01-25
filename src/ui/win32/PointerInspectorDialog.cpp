@@ -55,15 +55,17 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
       m_bindNodes(vmPointerFinder),
       m_bindDescription(vmPointerFinder),
       m_bindPointerChain(vmPointerFinder),
-      m_bindFields(vmPointerFinder)
+      m_bindFields(vmPointerFinder),
+      m_bindFieldNote(vmPointerFinder)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Pointer Finder");
     m_bindWindow.BindLabel(IDC_RA_PAUSE, PointerInspectorViewModel::PauseButtonTextProperty);
     m_bindWindow.BindLabel(IDC_RA_FREEZE, PointerInspectorViewModel::FreezeButtonTextProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADDBOOKMARK, PointerInspectorViewModel::HasSelectionProperty);
-    m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, PointerInspectorViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, PointerInspectorViewModel::HasSingleSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_PAUSE, PointerInspectorViewModel::HasSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_FREEZE, PointerInspectorViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, PointerInspectorViewModel::HasSingleSelectionProperty);
 
     m_bindAddress.BindText(PointerInspectorViewModel::CurrentAddressTextProperty, ra::ui::win32::bindings::TextBoxBinding::UpdateMode::Typing);
     m_bindNodes.BindItems(vmPointerFinder.Nodes());
@@ -152,6 +154,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     SetAnchor(IDC_RA_DESCRIPTION, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_LBX_GROUPS, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_NOTE_TEXT, Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_COPY_ALL, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_PAUSE, Anchor::Right | Anchor::Bottom);
@@ -167,6 +170,7 @@ BOOL PointerInspectorDialog::OnInitDialog()
     m_bindDescription.SetControl(*this, IDC_RA_DESCRIPTION);
     m_bindPointerChain.SetControl(*this, IDC_RA_LBX_GROUPS);
     m_bindFields.SetControl(*this, IDC_RA_LBX_ADDRESSES);
+    m_bindFieldNote.SetControl(*this, IDC_RA_NOTE_TEXT);
 
     return DialogBase::OnInitDialog();
 }

@@ -115,6 +115,21 @@ public:
         int32_t m_nOffset = 0;
     };
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the current field's note.
+    /// </summary>
+    static const StringModelProperty CurrentFieldNoteProperty;
+
+    /// <summary>
+    /// Gets the current field's note.
+    /// </summary>
+    const std::wstring& GetCurrentFieldNote() const { return GetValue(CurrentFieldNoteProperty); }
+
+    /// <summary>
+    /// Sets the current field's note.
+    /// </summary>
+    void SetCurrentFieldNote(const std::wstring& sValue) { SetValue(CurrentFieldNoteProperty, sValue); }
+
     class PointerNodeViewModel : public LookupItemViewModel
     {
     public:
@@ -186,6 +201,7 @@ protected:
 private:
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
     void OnSelectedNodeChanged(int nNode);
+    void OnSelectedFieldChanged(int nNode);
     void LoadNote(const ra::data::models::CodeNoteModel* pNote);
     void LoadNodes(const ra::data::models::CodeNoteModel* pNote);
     const ra::data::models::CodeNoteModel* FindNestedCodeNoteModel(const ra::data::models::CodeNoteModel& pRootNote, int nNewNode);
@@ -200,6 +216,7 @@ private:
     LookupItemViewModelCollection m_vNodes;
     ViewModelCollection<StructFieldViewModel> m_vPointerChain;
     bool m_bSyncingAddress = false;
+    bool m_bSyncingNote = false;
 
     const ra::data::models::CodeNoteModel* m_pCurrentNote = nullptr;
 };

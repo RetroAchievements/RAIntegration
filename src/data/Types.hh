@@ -187,6 +187,68 @@ constexpr unsigned int MemSizeBytes(MemSize nSize)
 
 std::wstring MemSizeFormat(unsigned nValue, MemSize nSize, MemFormat nFormat);
 
+constexpr const wchar_t* MemSizeString(MemSize nSize)
+{
+    switch (nSize)
+    {
+        case MemSize::Bit_0:
+            return L"Bit0";
+        case MemSize::Bit_1:
+            return L"Bit1";
+        case MemSize::Bit_2:
+            return L"Bit2";
+        case MemSize::Bit_3:
+            return L"Bit3";
+        case MemSize::Bit_4:
+            return L"Bit4";
+        case MemSize::Bit_5:
+            return L"Bit5";
+        case MemSize::Bit_6:
+            return L"Bit6";
+        case MemSize::Bit_7:
+            return L"Bit7";
+        case MemSize::Nibble_Lower:
+            return L"Lower4";
+        case MemSize::Nibble_Upper:
+            return L"Upper4";
+        case MemSize::EightBit:
+            return L"8-bit";
+        case MemSize::SixteenBit:
+            return L"16-bit";
+        case MemSize::TwentyFourBit:
+            return L"24-bit";
+        case MemSize::ThirtyTwoBit:
+            return L"32-bit";
+        case MemSize::BitCount:
+            return L"BitCount";
+        case MemSize::SixteenBitBigEndian:
+            return L"16-bit BE";
+        case MemSize::TwentyFourBitBigEndian:
+            return L"24-bit BE";
+        case MemSize::ThirtyTwoBitBigEndian:
+            return L"32-bit BE";
+        case MemSize::Float:
+            return L"Float";
+        case MemSize::MBF32:
+            return L"MBF32";
+        case MemSize::MBF32LE:
+            return L"MBF32 LE";
+        case MemSize::FloatBigEndian:
+            return L"Float BE";
+        case MemSize::Double32:
+            return L"Double32";
+        case MemSize::Double32BigEndian:
+            return L"Double32 BE";
+        case MemSize::Text:
+            return L"ASCII";
+        case MemSize::Array:
+            return L"Array";
+        default:
+        case MemSize::Unknown:
+            return L"Unknown";
+    }
+}
+
 unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept;
 float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept;
 

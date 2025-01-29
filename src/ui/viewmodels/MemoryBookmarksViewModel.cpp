@@ -4,6 +4,7 @@
 #include "RA_Json.h"
 #include "RA_StringUtils.h"
 
+#include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\models\TriggerValidation.hh"
 
@@ -53,22 +54,22 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
     SetWindowTitle(L"Memory Bookmarks");
 
     m_vSizes.Add(ra::etoi(MemSize::EightBit), L" 8-bit"); // leading space for sort order
-    m_vSizes.Add(ra::etoi(MemSize::SixteenBit), L"16-bit");
-    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBit), L"24-bit");
-    m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), L"32-bit");
-    m_vSizes.Add(ra::etoi(MemSize::SixteenBitBigEndian), L"16-bit BE");
-    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBitBigEndian), L"24-bit BE");
-    m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBitBigEndian), L"32-bit BE");
-    m_vSizes.Add(ra::etoi(MemSize::BitCount), L"BitCount");
-    m_vSizes.Add(ra::etoi(MemSize::Nibble_Lower), L"Lower4");
-    m_vSizes.Add(ra::etoi(MemSize::Nibble_Upper), L"Upper4");
-    m_vSizes.Add(ra::etoi(MemSize::Float), L"Float");
-    m_vSizes.Add(ra::etoi(MemSize::FloatBigEndian), L"Float BE");
-    m_vSizes.Add(ra::etoi(MemSize::Double32), L"Double32");
-    m_vSizes.Add(ra::etoi(MemSize::Double32BigEndian), L"Double32 BE");
-    m_vSizes.Add(ra::etoi(MemSize::MBF32), L"MBF32");
-    m_vSizes.Add(ra::etoi(MemSize::MBF32LE), L"MBF32 LE");
-    m_vSizes.Add(ra::etoi(MemSize::Text), L"ASCII");
+    m_vSizes.Add(ra::etoi(MemSize::SixteenBit), ra::data::MemSizeString(MemSize::SixteenBit));
+    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBit), ra::data::MemSizeString(MemSize::TwentyFourBit));
+    m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), ra::data::MemSizeString(MemSize::ThirtyTwoBit));
+    m_vSizes.Add(ra::etoi(MemSize::SixteenBitBigEndian), ra::data::MemSizeString(MemSize::SixteenBitBigEndian));
+    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBitBigEndian), ra::data::MemSizeString(MemSize::TwentyFourBitBigEndian));
+    m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBitBigEndian), ra::data::MemSizeString(MemSize::ThirtyTwoBitBigEndian));
+    m_vSizes.Add(ra::etoi(MemSize::BitCount), ra::data::MemSizeString(MemSize::BitCount));
+    m_vSizes.Add(ra::etoi(MemSize::Nibble_Lower), ra::data::MemSizeString(MemSize::Nibble_Lower));
+    m_vSizes.Add(ra::etoi(MemSize::Nibble_Upper), ra::data::MemSizeString(MemSize::Nibble_Upper));
+    m_vSizes.Add(ra::etoi(MemSize::Float), ra::data::MemSizeString(MemSize::Float));
+    m_vSizes.Add(ra::etoi(MemSize::FloatBigEndian), ra::data::MemSizeString(MemSize::FloatBigEndian));
+    m_vSizes.Add(ra::etoi(MemSize::Double32), ra::data::MemSizeString(MemSize::Double32));
+    m_vSizes.Add(ra::etoi(MemSize::Double32BigEndian), ra::data::MemSizeString(MemSize::Double32BigEndian));
+    m_vSizes.Add(ra::etoi(MemSize::MBF32), ra::data::MemSizeString(MemSize::MBF32));
+    m_vSizes.Add(ra::etoi(MemSize::MBF32LE), ra::data::MemSizeString(MemSize::MBF32LE));
+    m_vSizes.Add(ra::etoi(MemSize::Text), ra::data::MemSizeString(MemSize::Text));
 
     m_vFormats.Add(ra::etoi(MemFormat::Hex), L"Hex");
     m_vFormats.Add(ra::etoi(MemFormat::Dec), L"Dec");

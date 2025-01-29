@@ -92,7 +92,7 @@ public:
     /// Returns the number of bytes associated to the code note at the specified address.
     /// </summary>
     /// <param name="nAddress">Address to query.</param>
-    /// <returns>Number of bytes associated to the code note, or 0 if no note exists at the address.</returns>
+    /// <returns>MemSize associated to the code note, or Unknown if no note exists at the address.</returns>
     /// <remarks>Only works for the first byte of a multi-byte address.</remarks>
     MemSize GetCodeNoteMemSize(ra::ByteAddress nAddress) const
     {

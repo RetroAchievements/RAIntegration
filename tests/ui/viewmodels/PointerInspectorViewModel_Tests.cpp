@@ -135,6 +135,14 @@ private:
             Assert::AreEqual(ra::ui::Color(0xFFFFC0C0).ARGB, pPointer->GetRowColor().ARGB);
         }
 
+        void AssertNote(ra::ByteAddress nAddress, const std::wstring& sExpectedNote)
+        {
+            const auto* pNote = mockGameContext.Assets().FindCodeNotes()->FindCodeNoteModel(nAddress);
+            Assert::IsNotNull(pNote);
+            Ensures(pNote != nullptr);
+            Assert::AreEqual(sExpectedNote, pNote->GetNote());
+        }
+
         bool HasSingleSelection() const { return GetValue(HasSingleSelectionProperty); }
     };
 
@@ -392,6 +400,104 @@ public:
         Assert::IsTrue(inspector.HasSelection());
         Assert::IsTrue(inspector.HasSingleSelection());
         Assert::AreEqual(std::wstring(L"[16-bit] Second item"), inspector.GetCurrentFieldNote());
+    }
+
+    TEST_METHOD(TestUpdateCurrentFieldNoteSimple)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.SetCurrentAddress({4U});
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+            L"[32-bit pointer] Player data\n"
+            L"+8: [32-bit] Max HP");
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
+
+        inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
+
+        inspector.SetCurrentFieldNote(L"[32-bit] Current HP");
+        Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
+
+        inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\n+0x08: [32-bit] Current HP"));
+    }
+    
+    TEST_METHOD(TestUpdateCurrentFieldNoteMultiline)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.SetCurrentAddress({4U});
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+            L"[32-bit pointer] Player data\n"
+            L"+4: [32-bit] Class\n"
+            "1=Wizard\n"
+            "2=Fighter\n"
+            L"+8: [32-bit] Max HP");
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        inspector.AssertField(0, 4, 16, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
+
+        inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[32-bit] Class\n1=Wizard\n2=Fighter"), inspector.GetCurrentFieldNote());
+
+        inspector.SetCurrentFieldNote(L"[32-bit] Class\n1=Mage\n2=Fighter");
+        Assert::AreEqual(std::wstring(L"[32-bit] Class\n1=Mage\n2=Fighter"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 4, 16, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
+
+        inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\n+0x04: [32-bit] Class\n1=Mage\n2=Fighter\n+0x08: [32-bit] Max HP"));
+    }
+
+    TEST_METHOD(TestUpdateCurrentFieldNoteNested)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+            L"[32-bit pointer] Player data\n"
+            L"+8: [32-bit] Max HP\n"//\n"
+            L"+12: [32-bit pointer] Inventory\n"
+            L"++8: [16-bit] First item\n"
+            L"++10: [16-bit] Second item");
+        inspector.SetCurrentAddress({4U});
+        inspector.SetSelectedNode(0x0000000C);
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        inspector.AssertField(0, 8, 32, L"+0008", L"First item", MemSize::SixteenBit, MemFormat::Hex, L"0020");
+
+        inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[16-bit] First item"), inspector.GetCurrentFieldNote());
+
+        inspector.SetCurrentFieldNote(L"[16-bit] 1st item");
+        Assert::AreEqual(std::wstring(L"[16-bit] 1st item"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 8, 32, L"+0008", L"1st item", MemSize::SixteenBit, MemFormat::Hex, L"0020");
+
+        inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\n+0x08: [32-bit] Max HP\n+0x0C: [32-bit pointer] Inventory\n"
+                                                L"++0x08: [16-bit] 1st item\n++0x0A: [16-bit] Second item"));
     }
 
     TEST_METHOD(TestCopyDefinition)

@@ -82,7 +82,6 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
         PointerInspectorViewModel::StructFieldViewModel::DescriptionProperty);
     pDescriptionColumn->SetHeader(L"Description");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 80);
-    pDescriptionColumn->SetReadOnly(false);
     m_bindFields.BindColumn(1, std::move(pDescriptionColumn));
 
     auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
@@ -147,6 +146,9 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
 
     m_bindPointerChain.BindItems(vmPointerFinder.PointerChain());
     m_bindPointerChain.BindRowColor(PointerInspectorViewModel::StructFieldViewModel::RowColorProperty);
+
+    m_bindFieldNote.BindText(PointerInspectorViewModel::CurrentFieldNoteProperty,
+                             ra::ui::win32::bindings::TextBoxBinding::UpdateMode::Typing);
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_ADDRESS, Anchor::Top | Anchor::Left);

@@ -200,6 +200,7 @@ protected:
 
 private:
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
+    void OnCurrentFieldNoteChanged(const std::wstring& sValue);
     void OnSelectedNodeChanged(int nNode);
     void OnSelectedFieldChanged(int nNode);
     void LoadNote(const ra::data::models::CodeNoteModel* pNote);
@@ -212,6 +213,10 @@ private:
     void UpdatePointerChainValues();
     void UpdateValues();
     std::string GetDefinition() const;
+
+    void BuildNote(ra::StringBuilder& builder,
+                   std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain, gsl::index nDepth,
+                   const ra::data::models::CodeNoteModel& pNote);
 
     LookupItemViewModelCollection m_vNodes;
     ViewModelCollection<StructFieldViewModel> m_vPointerChain;

@@ -54,7 +54,7 @@ public:
     class Parser
     {
     public:
-        Parser(const std::wstring& sNote, size_t nStartIndex, size_t nEndIndex) :
+        Parser(const std::wstring& sNote, size_t nStartIndex, size_t nEndIndex) noexcept :
             m_sNote(sNote), m_nIndex(nStartIndex), m_nEndIndex(nEndIndex)
         {
         }

@@ -514,7 +514,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
     Parser::TokenType nLastTokenType = Parser::TokenType::None;
 
     std::wstring sPreviousWord, sWord;
-    Parser parser(sNote, 0, sNote.length());
+    const Parser parser(sNote, 0, sNote.length());
     do
     {
         const auto nTokenType = parser.NextToken(sWord);

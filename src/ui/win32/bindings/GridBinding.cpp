@@ -340,7 +340,7 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
-            InvokeOnUIThread([this, nIndex, nColumnIndex]() noexcept {
+            InvokeOnUIThread([this, nIndex, nColumnIndex]() {
                 UpdateCell(nIndex, nColumnIndex);
             });
         }

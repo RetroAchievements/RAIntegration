@@ -166,6 +166,7 @@ void PointerInspectorViewModel::OnSelectedFieldChanged(int nNewFieldIndex)
     if (nNewFieldIndex != -1)
     {
         const auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nNewFieldIndex);
+        Expects(pField != nullptr);
         SetCurrentFieldNote(pField->GetBody());
     }
     else
@@ -260,7 +261,7 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
 
 static std::wstring TrimSize(const std::wstring& sNote, bool bKeepPointer)
 {
-    size_t nEndIndex;
+    size_t nEndIndex = 0;
     size_t nStartIndex = sNote.find('[');
     if (nStartIndex != std::string::npos)
     {
@@ -282,7 +283,7 @@ static std::wstring TrimSize(const std::wstring& sNote, bool bKeepPointer)
     bool bPointer = false;
     std::wstring sWord;
     ra::data::models::CodeNoteModel::Parser::TokenType nTokenType;
-    ra::data::models::CodeNoteModel::Parser parser(sNote, nStartIndex + 1, nEndIndex);
+    const ra::data::models::CodeNoteModel::Parser parser(sNote, nStartIndex + 1, nEndIndex);
     do
     {
         nTokenType = parser.NextToken(sWord);
@@ -495,6 +496,7 @@ void PointerInspectorViewModel::OnCurrentFieldNoteChanged(const std::wstring&)
     const auto nAddress = GetCurrentAddress();
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    Expects(pCodeNotes != nullptr);
     auto* pNote = pCodeNotes->FindCodeNoteModel(nAddress);
     if (pNote != nullptr)
     {

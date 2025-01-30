@@ -79,9 +79,9 @@ public:
         friendsPage.mockServer.HandleRequest<ra::api::FetchUserFriends>(
             [](const ra::api::FetchUserFriends::Request&, ra::api::FetchUserFriends::Response& response)
         {
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User1", 20, L"Activity1" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User2", 60, L"Activity2" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User3", 40, L"Activity3" });
+            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User1", "", 20, L"Activity1" });
+            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User2", "", 60, L"Activity2" });
+            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User3", "", 40, L"Activity3" });
             response.Result = ra::api::ApiResult::Success;
             return true;
         });
@@ -149,9 +149,9 @@ public:
         friendsPage.mockServer.HandleRequest<ra::api::FetchUserFriends>(
             [](const ra::api::FetchUserFriends::Request&, ra::api::FetchUserFriends::Response& response)
         {
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User1", 20, L"Activity1" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User2", 60, L"Activity2" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User3", 40, L"Activity3" });
+            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User1", "", 20, L"Activity1" });
+            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User2", "", 60, L"Activity2" });
+            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User3", "", 40, L"Activity3" });
             response.Result = ra::api::ApiResult::Success;
             return true;
         });
@@ -169,10 +169,10 @@ public:
         friendsPage.mockServer.HandleRequest<ra::api::FetchUserFriends>(
             [](const ra::api::FetchUserFriends::Request&, ra::api::FetchUserFriends::Response& response)
         {
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User1", 30, L"Activity1b" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User2", 60, L"Activity2" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User3", 45, L"Activity3b" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User4", 90, L"Activity4" });
+            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User1", "", 30, L"Activity1b" });
+            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User2", "", 60, L"Activity2" });
+            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User3", "", 45, L"Activity3b" });
+            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User4", "", 90, L"Activity4" });
             response.Result = ra::api::ApiResult::Success;
             return true;
         });

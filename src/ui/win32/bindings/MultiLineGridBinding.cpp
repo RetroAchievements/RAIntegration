@@ -113,9 +113,15 @@ void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, cons
             if (!m_vmItems->IsUpdating())
             {
                 if (nLinesNeeded != pItemMetrics.nNumLines)
+                {
                     bRebuildAll = true;
+                }
                 else
-                    UpdateCell(nIndex, nColumn);
+                {
+                    InvokeOnUIThread([this, nIndex, nColumn]() {
+                        UpdateCell(nIndex, nColumn);
+                    });
+                }
             }
         }
     }

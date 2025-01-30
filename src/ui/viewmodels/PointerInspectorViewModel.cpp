@@ -509,9 +509,17 @@ void PointerInspectorViewModel::OnCurrentFieldNoteChanged(const std::wstring&)
 
             BuildNote(builder, sChain, 1, *pNote);
 
+            // nested note reference is invalidated in SetCodeNote. temporarily release
+            // the reference and restore it after SetCodeNote completes to prevent the UI
+            // thread from trying to use it while it's invalid (we're most likely on a
+            // background thread kicked off by a timer to support as-you-type changes).
+            m_pCurrentNote = nullptr;
+
             m_bSyncingNote = true;
             pCodeNotes->SetCodeNote(nAddress, builder.ToWString());
             m_bSyncingNote = false;
+
+            m_pCurrentNote = UpdatePointerChain(GetSelectedNode());
         }
     }
 }

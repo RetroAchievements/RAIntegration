@@ -79,6 +79,16 @@ public:
         game->public_.badge_name = "012345";
         game->public_.title = "Game Title";
 
+        auto* core_subset = (rc_client_subset_info_t*)rc_buffer_alloc(&game->buffer, sizeof(rc_client_subset_info_t));
+        memset(core_subset, 0, sizeof(*core_subset));
+        core_subset->public_.id = game->public_.id;
+        core_subset->public_.title = game->public_.title;
+        strcpy_s(core_subset->public_.badge_name, game->public_.badge_name);
+        core_subset->public_.badge_url = game->public_.badge_url;
+        core_subset->active = 1;
+
+        game->subsets = core_subset;
+
         GetClient()->game = game;
     }
 
@@ -587,21 +597,26 @@ public:
         pAchievement->public_.description = "Do something cool";
         pAchievement->public_.points = 25;
 
+        auto* pSubset = runtime.GetClient()->game->subsets;
+        Expects(pSubset != nullptr);
+        pSubset->achievements = pAchievement;
+        pSubset->public_.num_achievements = 1;
+
         auto vmNewAchievement = std::make_unique<ra::data::models::AchievementModel>();
         vmNewAchievement->Attach(*pAchievement, ra::data::models::AssetCategory::Core, "0xH0000=1");
         auto& vmAchievement = reinterpret_cast<ra::data::models::AchievementModel&>(runtime.mockGameContext.Assets().Append(std::move(vmNewAchievement)));
 
-        // SyncAssets should generate the core subset
+        // SyncAssets should generate a new core subset with the merged achievement
         runtime.SyncAssets();
 
-        auto* pSubset = runtime.GetClient()->game->subsets;
+        pSubset = runtime.GetClient()->game->subsets;
         Expects(pSubset != nullptr);
         Assert::AreEqual("Game Title", pSubset->public_.title);
         Assert::AreEqual(1U, pSubset->public_.id);
         Assert::AreEqual("012345", pSubset->public_.badge_name);
         Assert::AreEqual(1U, pSubset->public_.num_achievements);
         Assert::IsTrue(pSubset->active);
-        Assert::IsNull(pSubset->next);
+        Assert::IsNotNull(pSubset->next); // there will be an inactive local subset
         const auto* pOriginalTrigger = pSubset->achievements->trigger;
 
         Assert::AreEqual(std::wstring(L"Achievement Name"), vmAchievement.GetName());

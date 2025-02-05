@@ -941,7 +941,7 @@ void TriggerViewModel::ToggleDecimal()
 
 void TriggerViewModel::UpdateTotalHits()
 {
-    unsigned int nHits = 0;
+    int nHits = 0;
     bool bIsHitsChain = false;
 
     for (size_t nIndex = 0; nIndex < m_vConditions.Count(); ++nIndex)

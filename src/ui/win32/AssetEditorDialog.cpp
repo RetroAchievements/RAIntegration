@@ -377,7 +377,7 @@ public:
         }
 
         const auto nTotalHits = vmItems.GetItemValue(nIndex, TriggerConditionViewModel::TotalHitsProperty);
-        if (nTotalHits > 0)
+        if (nTotalHits != 0)
             return ra::StringPrintf(L"%d (%d) [%d]", nRequiredHits, nCurrentHits, nTotalHits);
 
         return ra::StringPrintf(L"%d (%d)", nRequiredHits, nCurrentHits);

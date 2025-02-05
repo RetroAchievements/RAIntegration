@@ -1251,22 +1251,22 @@ public:
         vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits = 2;
         vmTrigger.DoFrame();
         Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
 
         vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits++;
         vmTrigger.DoFrame();
         Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
 
         vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits++;
         vmTrigger.DoFrame();
         Assert::AreEqual(4U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
 
         vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits = 0;
         vmTrigger.DoFrame();
         Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
     }
 
     TEST_METHOD(TestDoFrameDoesNotUpdateTrigger)
@@ -1310,13 +1310,13 @@ public:
         Assert::AreEqual(24U, vmTrigger.Conditions().GetItemAt(4)->GetCurrentHits());
         Assert::AreEqual(1U, vmTrigger.Conditions().GetItemAt(5)->GetCurrentHits());
         Assert::AreEqual(48U, vmTrigger.Conditions().GetItemAt(6)->GetCurrentHits());
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // non hit-chain
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // middle of hit-chain
-        Assert::AreEqual(9U, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // end of hit-chain (3+6)
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(3)->GetTotalHits()); // new non hit-chain
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(4)->GetTotalHits()); // middle of new hit-chain
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(5)->GetTotalHits()); // middle of new hit-chain
-        Assert::AreEqual(71U, vmTrigger.Conditions().GetItemAt(6)->GetTotalHits()); // end of new hit-chain (24-1+48)
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // non hit-chain
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // middle of hit-chain
+        Assert::AreEqual(9, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // end of hit-chain (3+6)
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(3)->GetTotalHits()); // new non hit-chain
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(4)->GetTotalHits()); // middle of new hit-chain
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(5)->GetTotalHits()); // middle of new hit-chain
+        Assert::AreEqual(71, vmTrigger.Conditions().GetItemAt(6)->GetTotalHits()); // end of new hit-chain (24-1+48)
     }
 
     TEST_METHOD(TestDoFrameHitsChainWithModifiers)
@@ -1341,13 +1341,13 @@ public:
         Assert::AreEqual(24U, vmTrigger.Conditions().GetItemAt(4)->GetCurrentHits());
         Assert::AreEqual(1U, vmTrigger.Conditions().GetItemAt(5)->GetCurrentHits());
         Assert::AreEqual(48U, vmTrigger.Conditions().GetItemAt(6)->GetCurrentHits());
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // start of hit-chain
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // non hit modifier
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // non hit modifier
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(3)->GetTotalHits()); // middle of hits-chain
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(4)->GetTotalHits()); // non hit modifier
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(5)->GetTotalHits()); // non hit modifier
-        Assert::AreEqual(62U, vmTrigger.Conditions().GetItemAt(6)->GetTotalHits()); // end of hit-chain (2+12+48)
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // start of hit-chain
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // non hit modifier
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // non hit modifier
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(3)->GetTotalHits()); // middle of hits-chain
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(4)->GetTotalHits()); // non hit modifier
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(5)->GetTotalHits()); // non hit modifier
+        Assert::AreEqual(62, vmTrigger.Conditions().GetItemAt(6)->GetTotalHits()); // end of hit-chain (2+12+48)
     }
 
     TEST_METHOD(TestDoFrameHitsChainReset)
@@ -1364,9 +1364,9 @@ public:
         Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
         Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
         Assert::AreEqual(6U, vmTrigger.Conditions().GetItemAt(2)->GetCurrentHits());
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // non hit-chain
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // middle of hit-chain
-        Assert::AreEqual(9U, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // end of hit-chain (3+6)
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // non hit-chain
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // middle of hit-chain
+        Assert::AreEqual(9, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // end of hit-chain (3+6)
 
         // mimic a ResetIf clearing all hits
         cond = vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions;
@@ -1377,9 +1377,9 @@ public:
         Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
         Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
         Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(2)->GetCurrentHits());
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // non hit-chain
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // middle of hit-chain
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // end of hit-chain (3+6)
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // non hit-chain
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // middle of hit-chain
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // end of hit-chain (3+6)
     }
 
     TEST_METHOD(TestBuildHitChainTooltip)
@@ -1436,6 +1436,30 @@ public:
         Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(6)); // end of hits-chain
     }
 
+    TEST_METHOD(TestBuildHitChainTooltipNegativeTotal)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "C:0=0.5._D:0=0.10._0=0.20.");
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+
+        auto* cond = vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions;
+        cond->current_hits = 2; cond = cond->next;  // AddHits 0=0 (5)
+        cond->current_hits = 6; cond = cond->next;  // SubHits 0=0 (10)
+        cond->current_hits = 1; cond = cond->next;  //         0=0 (20)
+        vmTrigger.DoFrame();
+
+        const std::wstring sTooltip = L"+2 (condition 1)\n-6 (condition 2)\n+1 (condition 3)\n-3/20 total";
+        Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(0));
+        Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(1));
+        Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(2));
+
+        const auto* vmCondition = vmTrigger.Conditions().GetItemAt(2);
+        Expects(vmCondition != nullptr);
+        Assert::AreEqual(20U, vmCondition->GetRequiredHits());
+        Assert::AreEqual(1U, vmCondition->GetCurrentHits());
+        Assert::AreEqual(-3, vmCondition->GetTotalHits());
+    }
+
     TEST_METHOD(TestAltHitChain)
     {
         TriggerViewModelHarness vmTrigger;
@@ -1447,15 +1471,15 @@ public:
 
         vmTrigger.SetSelectedGroupIndex(2);
         Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits());
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits());
         Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
-        Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits());
+        Assert::AreEqual(3, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits());
 
         vmTrigger.SetSelectedGroupIndex(1);
         Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
-        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits());
+        Assert::AreEqual(0, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits());
         Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
-        Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits());
+        Assert::AreEqual(2, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits());
     }
 };
 

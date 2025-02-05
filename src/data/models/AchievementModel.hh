@@ -184,7 +184,6 @@ private:
     static const std::array<int, 10> s_vValidPoints;
 
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
-    void SetStateFromTrigger(const rc_trigger_t* pTrigger);
     void SyncID();
     void SyncTitle();
     void SyncDescription();

@@ -136,6 +136,14 @@ public:
         m_fRealEventHandler(&event, GetClient());
     }
 
+    void ProcessCapturedEvents()
+    {
+        for (const auto& pEvent : m_vEvents)
+            RaiseEvent(pEvent);
+
+        ResetEvents();
+    }
+
     rc_client_achievement_info_t* MockAchievement(uint32_t nId, const std::string& sTrigger)
     {
         auto* game = GetClient()->game;
@@ -1244,9 +1252,9 @@ public:
         memory.at(0) = 1;
         runtime.DoFrame();
         Assert::AreEqual({1U}, runtime.GetEventCount());
+        runtime.ProcessCapturedEvents();
         Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
         runtime.mockFrameEventQueue.Reset();
-        runtime.ResetEvents();
 
         // already triggered, shouldn't get repeated notification
         runtime.DoFrame();
@@ -2142,6 +2150,42 @@ public:
         Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
         Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredKeepActive)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockWindowManager.AssetList.SetKeepActive(true);
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        pAch6->public_.rarity = 23.45f;
+        pAch6->public_.rarity_hardcore = 12.34f;
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Waiting, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked - 23.45%"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
     }
 
     TEST_METHOD(TestHandleChallengeIndicatorShowEvent)

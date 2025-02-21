@@ -79,8 +79,8 @@ public:
     void SetRequiredHits(unsigned int nValue) { SetValue(RequiredHitsProperty, ra::to_signed(nValue)); }
 
     static const IntModelProperty TotalHitsProperty;
-    unsigned int GetTotalHits() const { return ra::to_unsigned(GetValue(TotalHitsProperty)); }
-    void SetTotalHits(unsigned int nValue) { SetValue(TotalHitsProperty, ra::to_signed(nValue)); }
+    int GetTotalHits() const { return GetValue(TotalHitsProperty); }
+    void SetTotalHits(int nValue) { SetValue(TotalHitsProperty, nValue); }
 
     static const BoolModelProperty IsIndirectProperty;
     bool IsIndirect() const { return GetValue(IsIndirectProperty); }

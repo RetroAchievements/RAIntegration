@@ -1269,7 +1269,6 @@ void AchievementRuntime::ChangeMediaCallback(int nResult, const char* sErrorMess
 
 static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
     std::vector<rc_client_achievement_info_t*>& vAchievementsWithHits,
-    std::vector<rc_client_achievement_info_t*>& vActiveAchievements,
     std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits,
     std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
 {
@@ -1286,26 +1285,6 @@ static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
                 auto* pAchievement = GetAchievementInfo(pClient, vmAchievement->GetID());
                 if (pAchievement && pAchievement->trigger && pAchievement->trigger->has_hits)
                     vAchievementsWithHits.push_back(pAchievement);
-            }
-
-            if (vmAchievement->IsPauseOnTrigger())
-            {
-                auto* pAchievement = GetAchievementInfo(pClient, vmAchievement->GetID());
-                if (pAchievement && pAchievement->trigger)
-                {
-                    switch (pAchievement->trigger->state)
-                    {
-                        case RC_TRIGGER_STATE_DISABLED:
-                        case RC_TRIGGER_STATE_INACTIVE:
-                        case RC_TRIGGER_STATE_PAUSED:
-                        case RC_TRIGGER_STATE_TRIGGERED:
-                            break;
-
-                        default:
-                            vActiveAchievements.push_back(pAchievement);
-                            break;
-                    }
-                }
             }
 
             continue;
@@ -1357,8 +1336,7 @@ static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
     }
 }
 
-static void RaisePauseOnChangeEvents(std::vector<rc_client_achievement_info_t*>& vAchievementsWithHits,
-                                     std::vector<rc_client_achievement_info_t*>& vActiveAchievements)
+static void RaisePauseOnChangeEvents(std::vector<rc_client_achievement_info_t*>& vAchievementsWithHits)
 {
     for (const auto* pAchievement : vAchievementsWithHits)
     {
@@ -1366,15 +1344,6 @@ static void RaisePauseOnChangeEvents(std::vector<rc_client_achievement_info_t*>&
         {
             auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
             pFrameEventQueue.QueuePauseOnReset(ra::Widen(pAchievement->public_.title));
-        }
-    }
-
-    for (const auto* pAchievement : vActiveAchievements)
-    {
-        if (pAchievement && pAchievement->trigger && pAchievement->trigger->state == RC_TRIGGER_STATE_TRIGGERED)
-        {
-            auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-            pFrameEventQueue.QueuePauseOnTrigger(ra::Widen(pAchievement->public_.title));
         }
     }
 }
@@ -1481,16 +1450,15 @@ void AchievementRuntime::DoFrame()
     }
 
     std::vector<rc_client_achievement_info_t*> vAchievementsWithHits;
-    std::vector<rc_client_achievement_info_t*> vActiveAchievements;
     std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mLeaderboardsWithHits;
     std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mActiveLeaderboards;
 
-    PrepareForPauseOnChangeEvents(GetClient(), vAchievementsWithHits, vActiveAchievements, mLeaderboardsWithHits, mActiveLeaderboards);
+    PrepareForPauseOnChangeEvents(GetClient(), vAchievementsWithHits, mLeaderboardsWithHits, mActiveLeaderboards);
 
     rc_client_do_frame(GetClient());
 
-    if (!vAchievementsWithHits.empty() || !vActiveAchievements.empty())
-        RaisePauseOnChangeEvents(vAchievementsWithHits, vActiveAchievements);
+    if (!vAchievementsWithHits.empty())
+        RaisePauseOnChangeEvents(vAchievementsWithHits);
     if (!mLeaderboardsWithHits.empty() || !mActiveLeaderboards.empty())
         RaisePauseOnChangeEvents(mLeaderboardsWithHits, mActiveLeaderboards);
 }
@@ -1518,8 +1486,20 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
         return;
     }
 
-    // immediately set the state to Triggered (instead of waiting for AssetListViewModel::DoFrame to do it).
+    // immediately update the state to Triggered (instead of waiting for AssetListViewModel::DoFrame to do it).
+    // this captures the unlock time and rich presence state, even if KeepActive it selected.
     vmAchievement->SetState(ra::data::models::AssetState::Triggered);
+
+    // if KeepActive is selected, set the achievement back to Waiting
+    const auto& pAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
+    if (pAssetList.KeepActive())
+        vmAchievement->SetState(ra::data::models::AssetState::Waiting);
+
+    if (vmAchievement->IsPauseOnTrigger())
+    {
+        auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+        pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetName());
+    }
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     bool bTakeScreenshot = pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot);

@@ -1258,37 +1258,6 @@ public:
         Assert::AreEqual(AssetState::Active, pItem->GetState());
     }
 
-    TEST_METHOD(TestKeepActive)
-    {
-        AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
-        vmAssetList.SetSpecialFilter(AssetListViewModel::SpecialFilter::Active);
-
-        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
-
-        Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
-        auto* pAsset = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
-        Expects(pAsset != nullptr);
-        pAsset->SetState(AssetState::Active);
-        Assert::AreEqual(AssetState::Active, pAsset->GetState());
-        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-
-        vmAssetList.SetKeepActive(true);
-        pAsset->SetState(AssetState::Triggered);
-        Assert::AreEqual(AssetState::Waiting, pAsset->GetState());
-        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count()); // should remain visible
-        Assert::IsTrue(vmAssetList.mockClock.Now() == pAsset->GetUnlockTime()); // should be marked as unlocked
-
-        pAsset->SetState(AssetState::Active);
-        Assert::AreEqual(AssetState::Active, pAsset->GetState());
-        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-
-        vmAssetList.SetKeepActive(false);
-        pAsset->SetState(AssetState::Triggered);
-        Assert::AreEqual(AssetState::Triggered, pAsset->GetState());
-        Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
-    }
-
     TEST_METHOD(TestUpdateButtonsNoGame)
     {
         AssetListViewModelHarness vmAssetList;

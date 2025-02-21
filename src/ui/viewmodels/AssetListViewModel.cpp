@@ -192,19 +192,6 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
                 }
             }
         }
-
-        const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
-        if (nNewState == ra::data::models::AssetState::Triggered && KeepActive())
-        {
-            // if KeepActive is selected, set a Triggered achievement back to Waiting
-            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-            auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-            if (pAsset != nullptr)
-                pAsset->SetState(ra::data::models::AssetState::Waiting);
-
-            // SetState is re-entrant - we don't want to do any further processing with the previous new value
-            return;
-        }
     }
 
     // these properties potentially affect visibility

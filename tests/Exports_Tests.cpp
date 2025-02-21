@@ -146,7 +146,7 @@ public:
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
         harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
-            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
@@ -160,7 +160,7 @@ public:
         // user context
         Assert::IsTrue(harness.mockUserContext.IsLoggedIn());
         Assert::AreEqual(std::string("User"), harness.mockUserContext.GetUsername());
-        Assert::AreEqual(std::string("UserDisplay"), harness.mockUserContext.GetDisplayName());
+        Assert::AreEqual(std::string("User"), harness.mockUserContext.GetDisplayName());
         Assert::AreEqual(std::string("ApiToken"), harness.mockUserContext.GetApiToken());
         Assert::AreEqual(12345U, harness.mockUserContext.GetScore());
 
@@ -172,7 +172,7 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome UserDisplay"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome User"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
@@ -195,7 +195,7 @@ public:
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
         harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
-            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
@@ -210,7 +210,7 @@ public:
         // user context
         Assert::IsTrue(harness.mockUserContext.IsLoggedIn());
         Assert::AreEqual(std::string("User"), harness.mockUserContext.GetUsername());
-        Assert::AreEqual(std::string("UserDisplay"), harness.mockUserContext.GetDisplayName());
+        Assert::AreEqual(std::string("User"), harness.mockUserContext.GetDisplayName());
         Assert::AreEqual(std::string("ApiToken"), harness.mockUserContext.GetApiToken());
         Assert::AreEqual(12345U, harness.mockUserContext.GetScore());
 
@@ -222,7 +222,7 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome UserDisplay"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome User"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
@@ -232,7 +232,7 @@ public:
         Assert::IsTrue(bWasMenuRebuilt);
 
         // titlebar
-        Assert::AreEqual(std::wstring(L"RATests - 0.1 - UserDisplay []"), harness.mockWindowManager.Emulator.GetWindowTitle());
+        Assert::AreEqual(std::wstring(L"RATests - 0.1 - User []"), harness.mockWindowManager.Emulator.GetWindowTitle());
     }
 
     TEST_METHOD(TestAttemptLoginSuccessWithMessages)
@@ -241,7 +241,7 @@ public:
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
         harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
-            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":0,\"SoftcoreScore\":0,"
             "\"Messages\":3,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
@@ -253,7 +253,7 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome UserDisplay"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome User"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"0 points"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"You have 3 new messages"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
@@ -269,7 +269,7 @@ public:
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
         harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
-            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
@@ -283,7 +283,7 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome back UserDisplay"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome back User"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
@@ -300,7 +300,7 @@ public:
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
 
         harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
-            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
@@ -314,7 +314,7 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome back UserDisplay"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome back User"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"123 points (softcore)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());

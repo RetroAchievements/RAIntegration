@@ -155,10 +155,8 @@ public:
             mockConsoleContext.SetName(ra::Widen(rc_console_name(static_cast<int>(nConsoleID))));
 
             mockAchievementRuntime.MockUser("Username", "ApiToken");
-            mockAchievementRuntime.MockResponse("r=gameid&m=" + sHash,
-                "{\"Success\":true,\"GameID\":" + std::to_string(nGameID) + "}");
             mockAchievementRuntime.MockResponse(
-                "r=patch&u=Username&t=ApiToken&g=" + std::to_string(nGameID),
+                "r=patch&u=Username&t=ApiToken&m=" + sHash,
                 "{\"Success\":true,\"PatchData\":{"
                     "\"ID\":" + std::to_string(nGameID) + ","
                     "\"Title\":\"GameTitle\","
@@ -1098,7 +1096,7 @@ public:
         game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         bool bBeforeResponseCalled = false;
-        game.mockAchievementRuntime.OnBeforeResponse("r=patch&u=Username&t=ApiToken&g=1",
+        game.mockAchievementRuntime.OnBeforeResponse("r=patch&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321",
             [&game, &bBeforeResponseCalled]() {
                 bBeforeResponseCalled = true;
                 Assert::IsTrue(game.mockAchievementRuntime.IsPaused());
@@ -1116,7 +1114,7 @@ public:
         game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         bool bBeforeResponseCalled = false;
-        game.mockAchievementRuntime.OnBeforeResponse("r=patch&u=Username&t=ApiToken&g=1",
+        game.mockAchievementRuntime.OnBeforeResponse("r=patch&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321",
             [&game, &bBeforeResponseCalled]() {
                 bBeforeResponseCalled = true;
                 Assert::IsTrue(game.mockAchievementRuntime.IsPaused());

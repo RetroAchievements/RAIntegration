@@ -1615,7 +1615,7 @@ public:
         ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> pThemeOverride(&pTheme);
         const auto nDefaultColor = ra::to_unsigned(TriggerConditionViewModel::RowColorProperty.GetDefaultValue());
 
-        const std::string sInput = "R:0xH0000=1_P:0xH0001=1_0xH0002=1(2)_0xH0003=1";
+        const std::string sInput = "R:0xH0000=1_P:0xH0001=1_0xH0002=1(2)_0xH0003=1_R:0xH0004=1.2.";
         const auto nSize = rc_trigger_size(sInput.c_str());
         std::string sBuffer;
         sBuffer.resize(nSize);
@@ -1702,6 +1702,36 @@ public:
         Assert::AreEqual(pTheme.ColorTriggerIsTrue().ARGB, condition.GetRowColor().ARGB);
 
         pCondition->is_true = 0;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        // ResetIf with a hit target
+        pCondition = pCondition->next;
+        Expects(pCondition != nullptr);
+        condition.InitializeFrom(*pCondition);
+
+        pCondition->is_true = 0;
+        pCondition->current_hits = 0;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 1;
+        pCondition->current_hits = 1;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(pTheme.ColorTriggerBecomingTrue().ARGB, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 0;
+        pCondition->current_hits = 1;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 3;
+        pCondition->current_hits = 0;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(pTheme.ColorTriggerResetTrue().ARGB, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 0;
+        pCondition->current_hits = 0;
         condition.UpdateRowColor(pCondition);
         Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
     }

@@ -743,8 +743,18 @@ void TriggerConditionViewModel::UpdateRowColor(const rc_condition_t* pCondition)
     }
     else if (pCondition->required_hits != 0 && pCondition->current_hits != pCondition->required_hits)
     {
-        // true this frame, but target hitcount not met
-        SetRowColor(pTheme.ColorTriggerBecomingTrue());
+        if (pCondition->current_hits == 0 && pCondition->type == RC_CONDITION_RESET_IF && (pCondition->is_true & 0x02))
+        {
+            // a ResetIf condition with a hit target may have met the hit target before
+            // being reset. if the second is_true bit is non-zero, the condition was
+            // responsible for resetting the trigger.
+            SetRowColor(pTheme.ColorTriggerResetTrue());
+        }
+        else
+        {
+            // true this frame, but target hitcount not met
+            SetRowColor(pTheme.ColorTriggerBecomingTrue());
+        }
     }
     else
     {

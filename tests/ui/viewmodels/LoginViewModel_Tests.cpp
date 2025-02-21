@@ -94,13 +94,13 @@ public:
     {
         LoginViewModelHarness vmLogin;
         vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
-            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Successfully logged in as UserDisplay"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Successfully logged in as User"), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
             return DialogResult::OK;
         });
@@ -137,13 +137,13 @@ public:
     {
         LoginViewModelHarness vmLogin;
         vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
-            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Successfully logged in as UserDisplay"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Successfully logged in as User"), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
             return DialogResult::OK;
         });
@@ -175,7 +175,7 @@ public:
         Assert::IsTrue(bWasMenuRebuilt);
 
         // app title should be updated as _RA_UpdateAppTitle was previously called
-        Assert::AreEqual(std::wstring(L"RATests - 0.1 - Test - UserDisplay []"), vmLogin.mockWindowManager.Emulator.GetWindowTitle());
+        Assert::AreEqual(std::wstring(L"RATests - 0.1 - Test - User []"), vmLogin.mockWindowManager.Emulator.GetWindowTitle());
     }
 
     TEST_METHOD(TestLoginInvalidPassword)
@@ -202,13 +202,13 @@ public:
     {
         LoginViewModelHarness vmLogin;
         vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
-            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Successfully logged in as UserDisplay"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Successfully logged in as User"), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
             return DialogResult::OK;
         });

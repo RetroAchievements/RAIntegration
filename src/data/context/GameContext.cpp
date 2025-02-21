@@ -119,6 +119,9 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
         if (m_nGameId != 0)
         {
             m_nGameId = 0;
+
+            rc_client_unload_game(pRuntime.GetClient());
+
             OnActiveGameChanged();
         }
         return false;

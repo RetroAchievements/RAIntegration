@@ -926,6 +926,7 @@ public:
 
         game.RemoveNonAchievementAssets();
         Assert::AreEqual({ 2U }, game.Assets().Count());
+        Assert::IsNotNull(rc_client_get_game_info(game.mockAchievementRuntime.GetClient()));
 
         game.LoadGame(0U, "");
 
@@ -933,6 +934,7 @@ public:
         Assert::IsNull(game.Assets().FindAchievement(7U));
 
         Assert::AreEqual({ 0U }, game.Assets().Count());
+        Assert::IsNull(rc_client_get_game_info(game.mockAchievementRuntime.GetClient()));
         Assert::IsFalse(game.Assets().IsUpdating());
     }
 

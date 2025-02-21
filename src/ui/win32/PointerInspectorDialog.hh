@@ -49,6 +49,7 @@ private:
     bindings::TextBoxBinding m_bindDescription;
     bindings::GridBinding m_bindPointerChain;
     bindings::GridBinding m_bindFields;
+    bindings::TextBoxBinding m_bindFieldNote;
 };
 
 } // namespace win32

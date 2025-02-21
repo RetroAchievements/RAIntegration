@@ -44,6 +44,8 @@ const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::RowCol
 const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadOnlyProperty("MemoryBookmarkViewModel", "IsReadOnly", false);
 const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsDirtyProperty("MemoryBookmarkViewModel", "IsDirty", false);
 const BoolModelProperty MemoryBookmarksViewModel::HasSelectionProperty("MemoryBookmarkViewModel", "HasSelection", false);
+const BoolModelProperty MemoryBookmarksViewModel::HasSingleSelectionProperty("MemoryBookmarkViewModel", "HasSingleSelection", false);
+const IntModelProperty MemoryBookmarksViewModel::SingleSelectionIndexProperty("MemoryBookmarkViewModel", "SingleSelectionIndex", -1);
 const StringModelProperty MemoryBookmarksViewModel::FreezeButtonTextProperty("MemoryBookmarksViewModel", "FreezeButtonText", L"Freeze");
 const StringModelProperty MemoryBookmarksViewModel::PauseButtonTextProperty("MemoryBookmarksViewModel", "PauseButtonText", L"Pause");
 
@@ -749,17 +751,36 @@ void MemoryBookmarksViewModel::OnEndViewModelCollectionUpdate()
 
 void MemoryBookmarksViewModel::UpdateHasSelection()
 {
+    gsl::index nSelectedItemIndex = -1;
     for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
     {
         const auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
         if (pBookmark.IsSelected())
         {
-            SetValue(HasSelectionProperty, true);
-            return;
+            if (nSelectedItemIndex != -1)
+            {
+                SetValue(HasSelectionProperty, true);
+                SetValue(HasSingleSelectionProperty, false);
+                SetValue(SingleSelectionIndexProperty, -1);
+                return;
+            }
+
+            nSelectedItemIndex = nIndex;
         }
     }
 
-    SetValue(HasSelectionProperty, false);
+    if (nSelectedItemIndex == -1)
+    {
+        SetValue(HasSelectionProperty, false);
+        SetValue(HasSingleSelectionProperty, false);
+        SetValue(SingleSelectionIndexProperty, -1);
+    }
+    else
+    {
+        SetValue(HasSelectionProperty, true);
+        SetValue(HasSingleSelectionProperty, true);
+        SetValue(SingleSelectionIndexProperty, gsl::narrow_cast<int>(nSelectedItemIndex));
+    }
 }
 
 bool MemoryBookmarksViewModel::ShouldFreeze() const

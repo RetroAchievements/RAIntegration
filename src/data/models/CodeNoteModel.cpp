@@ -386,6 +386,118 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
     } while (true);
 }
 
+CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& sWord) const
+{
+    wchar_t cFirstLetter = '\0';
+    bool bWordIsNumber = false;
+    sWord.clear();
+
+    for (; m_nIndex < m_nEndIndex; ++m_nIndex)
+    {
+        const wchar_t c = m_sNote.at(m_nIndex);
+
+        // find the next word
+        if (c > 255)
+        {
+            // ignore unicode characters - isalpha with the default locale would return false,
+            // but it also likes to pop up asserts in a debug build.
+
+            // if we've found any alphanumeric characters, process them.
+            if (!sWord.empty())
+                break;
+        }
+        else if (isalpha(c))
+        {
+            if (sWord.empty())
+            {
+                // start of word
+                cFirstLetter = gsl::narrow_cast<wchar_t>(tolower(c));
+                sWord.push_back(cFirstLetter);
+                bWordIsNumber = false;
+            }
+            else if (!bWordIsNumber)
+            {
+                // continue word
+                sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
+            }
+            else
+            {
+                // transition from numeric to alpha
+                break;
+            }
+        }
+        else if (isdigit(c))
+        {
+            if (sWord.empty())
+            {
+                // start of number
+                sWord.push_back(c);
+                bWordIsNumber = true;
+            }
+            else if (bWordIsNumber)
+            {
+                // continue number
+                sWord.push_back(c);
+            }
+            else
+            {
+                // transition from alpha to numeric
+                break;
+            }
+        }
+        else
+        {
+            // non alphanumeric character.
+            // if we've found any alphanumeric characters, process them.
+            if (!sWord.empty())
+                break;
+        }
+    }
+
+    if (sWord.empty()) // end of input
+        return TokenType::None;
+
+    if (bWordIsNumber)
+        return TokenType::Number;
+
+    switch (cFirstLetter)
+    {
+        case 'b':
+            if (sWord == L"bit" || sWord == L"bits")
+                return TokenType::Bits;
+            if (sWord == L"byte" || sWord == L"bytes")
+                return TokenType::Bytes;
+            if (sWord == L"be" || sWord == L"bigendian")
+                return TokenType::BigEndian;
+            break;
+
+        case 'd':
+            if (sWord == L"double")
+                return TokenType::Double;
+            break;
+
+        case 'f':
+            if (sWord == L"float")
+                return TokenType::Float;
+            break;
+
+        case 'l':
+            if (sWord == L"le" || sWord == L"littleendian")
+                return TokenType::LittleEndian;
+            break;
+
+        case 'm':
+            if (sWord == L"mbf")
+                return TokenType::MBF;
+            break;
+
+        default:
+            break;
+    }
+
+    return TokenType::Other;
+}
+
 void CodeNoteModel::ExtractSize(const std::wstring& sNote)
 {
     // provide defaults in case no matches are found
@@ -399,61 +511,21 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
     bool bBytesFromBits = false;
     bool bFoundSize = false;
     bool bLastWordIsSize = false;
-    bool bLastWordIsNumber = false;
-    bool bWordIsNumber = false;
+    Parser::TokenType nLastTokenType = Parser::TokenType::None;
 
     std::wstring sPreviousWord, sWord;
-    const size_t nLength = sNote.length();
-    for (size_t nIndex = 0; nIndex <= nLength; ++nIndex)
+    const Parser parser(sNote, 0, sNote.length());
+    do
     {
-        // support reading null terminator so we process the last word in the string
-        const wchar_t c = (nIndex == nLength) ? 0 : sNote.at(nIndex);
-
-        // find the next word
-        if (c > 255)
-        {
-            // ignore unicode characters - isalpha with the default locale would return false,
-            // but also likes to pop up asserts when in a debug build.
-        }
-        else if (isalpha(c))
-        {
-            if (sWord.empty())
-            {
-                sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
-                bWordIsNumber = false;
-                continue;
-            }
-
-            if (!bWordIsNumber)
-            {
-                sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
-                continue;
-            }
-        }
-        else if (isdigit(c))
-        {
-            if (sWord.empty())
-            {
-                sWord.push_back(c);
-                bWordIsNumber = true;
-                continue;
-            }
-
-            if (bWordIsNumber)
-            {
-                sWord.push_back(c);
-                continue;
-            }
-        }
-
-        if (sWord.empty())
-            continue;
+        const auto nTokenType = parser.NextToken(sWord);
+        if (nTokenType == Parser::TokenType::None)
+            break;
 
         // process the word
         bool bWordIsSize = false;
-        if (bWordIsNumber)
+        if (nTokenType == Parser::TokenType::Number)
         {
-            if (sPreviousWord == L"mbf")
+            if (nLastTokenType == Parser::TokenType::MBF)
             {
                 const auto nBits = _wtoi(sWord.c_str());
                 if (nBits == 32)
@@ -471,7 +543,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
                     bFoundSize = true;
                 }
             }
-            else if (sPreviousWord == L"double" && sWord == L"32")
+            else if (nLastTokenType == Parser::TokenType::Double && sWord == L"32")
             {
                 m_nBytes = 4;
                 m_nMemSize = MemSize::Double32;
@@ -481,7 +553,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
         }
         else if (bLastWordIsSize)
         {
-            if (sWord == L"float")
+            if (nTokenType == Parser::TokenType::Float)
             {
                 if (m_nMemSize == MemSize::ThirtyTwoBit)
                 {
@@ -489,7 +561,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
                     bWordIsSize = true; // allow trailing be/bigendian
                 }
             }
-            else if (sWord == L"double")
+            else if (nTokenType == Parser::TokenType::Double)
             {
                 if (m_nMemSize == MemSize::ThirtyTwoBit || m_nBytes == 8)
                 {
@@ -497,7 +569,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
                     bWordIsSize = true; // allow trailing be/bigendian
                 }
             }
-            else if (sWord == L"be" || sWord == L"bigendian")
+            else if (nTokenType == Parser::TokenType::BigEndian)
             {
                 switch (m_nMemSize)
                 {
@@ -509,20 +581,20 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
                     default: break;
                 }
             }
-            else if (sWord == L"le")
+            else if (nTokenType == Parser::TokenType::LittleEndian)
             {
                 if (m_nMemSize == MemSize::MBF32)
                     m_nMemSize = MemSize::MBF32LE;
             }
-            else if (sWord == L"mbf")
+            else if (nTokenType == Parser::TokenType::MBF)
             {
                 if (m_nBytes == 4 || m_nBytes == 5)
                     m_nMemSize = MemSize::MBF32;
             }
         }
-        else if (bLastWordIsNumber)
+        else if (nLastTokenType == Parser::TokenType::Number)
         {
-            if (sWord == L"bit" || sWord == L"bits")
+            if (nTokenType == Parser::TokenType::Bits)
             {
                 if (!bFoundSize)
                 {
@@ -534,7 +606,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
                     bFoundSize = true;
                 }
             }
-            else if (sWord == L"byte" || sWord == L"bytes")
+            else if (nTokenType == Parser::TokenType::Bytes)
             {
                 if (!bFoundSize || bBytesFromBits)
                 {
@@ -559,7 +631,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
                 }
             }
         }
-        else if (sWord == L"float")
+        else if (nTokenType == Parser::TokenType::Float)
         {
             if (!bFoundSize)
             {
@@ -567,11 +639,11 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
                 m_nMemSize = MemSize::Float;
                 bWordIsSize = true; // allow trailing be/bigendian
 
-                if (sPreviousWord == L"be" || sPreviousWord == L"bigendian")
+                if (nLastTokenType == Parser::TokenType::BigEndian)
                     m_nMemSize = MemSize::FloatBigEndian;
             }
         }
-        else if (sWord == L"double")
+        else if (nTokenType == Parser::TokenType::Double)
         {
             if (!bFoundSize)
             {
@@ -579,34 +651,33 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
                 m_nMemSize = MemSize::Double32;
                 bWordIsSize = true; // allow trailing be/bigendian
 
-                if (sPreviousWord == L"be" || sPreviousWord == L"bigendian")
+                if (nLastTokenType == Parser::TokenType::BigEndian)
                     m_nMemSize = MemSize::Double32BigEndian;
             }
         }
 
         // store information about the word for later
         bLastWordIsSize = bWordIsSize;
-        bLastWordIsNumber = bWordIsNumber;
+        nLastTokenType = nTokenType;
 
+        const wchar_t c = parser.Peek();
         if (c < 256 && isalnum(c))
         {
+            // number next to word [32bit]
             std::swap(sPreviousWord, sWord);
-            sWord.clear();
-
-            sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
-            bWordIsNumber = isdigit(c);
+        }
+        else if (c == L' ' || c == L'-')
+        {
+            // spaces or hyphen could be a joined word [32-bit] [32 bit].
+            std::swap(sPreviousWord, sWord);
         }
         else
         {
-            // only join words with spaces or hyphens.
-            if (c == L' ' || c == L'-')
-                std::swap(sPreviousWord, sWord);
-            else
-                sPreviousWord.clear();
-
-            sWord.clear();
+            // everything else starts a new phrase
+            sPreviousWord.clear();
+            nLastTokenType = Parser::TokenType::None;
         }
-    }
+    } while (true);
 }
 
 static void RemoveIndentPrefix(std::wstring& sNote)

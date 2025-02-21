@@ -346,6 +346,9 @@ public:
     static const BoolModelProperty HasSelectionProperty;
     const bool HasSelection() const { return GetValue(HasSelectionProperty); }
 
+    static const BoolModelProperty HasSingleSelectionProperty;
+    static const IntModelProperty SingleSelectionIndexProperty;
+
     static const StringModelProperty FreezeButtonTextProperty;
     const std::wstring& GetFreezeButtonText() const { return GetValue(FreezeButtonTextProperty); }
 

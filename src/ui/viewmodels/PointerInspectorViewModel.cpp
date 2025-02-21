@@ -16,7 +16,9 @@ const IntModelProperty PointerInspectorViewModel::CurrentAddressProperty("Pointe
 const StringModelProperty PointerInspectorViewModel::CurrentAddressTextProperty("PointerInspectorViewModel", "CurrentAddressText", L"0x0000");
 const StringModelProperty PointerInspectorViewModel::CurrentAddressNoteProperty("PointerInspectorViewModel", "CurrentAddressNote", L"");
 const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::OffsetProperty("StructFieldViewModel", "Offset", L"+0000");
+const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::BodyProperty("StructFieldViewModel", "Body", L"");
 const IntModelProperty PointerInspectorViewModel::SelectedNodeProperty("PointerInspectorViewModel", "SelectedNode", -2);
+const StringModelProperty PointerInspectorViewModel::CurrentFieldNoteProperty("PointerInspectorViewModel", "CurrentFieldNote", L"");
 
 PointerInspectorViewModel::PointerInspectorViewModel()
     : MemoryBookmarksViewModel()
@@ -40,13 +42,21 @@ void PointerInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     {
         OnSelectedNodeChanged(args.tNewValue);
     }
+    else if (args.Property == SingleSelectionIndexProperty)
+    {
+        OnSelectedFieldChanged(args.tNewValue);
+    }
 
     MemoryBookmarksViewModel::OnValueChanged(args);
 }
 
 void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (args.Property == CurrentAddressTextProperty && !m_bSyncingAddress)
+    if (args.Property == CurrentFieldNoteProperty && !m_bSyncingNote)
+    {
+        OnCurrentFieldNoteChanged(args.tNewValue);
+    }
+    else if (args.Property == CurrentAddressTextProperty && !m_bSyncingAddress)
     {
         const auto nAddress = ra::ByteAddressFromString(ra::Narrow(args.tNewValue));
 
@@ -72,7 +82,7 @@ void PointerInspectorViewModel::OnActiveGameChanged()
 
 void PointerInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring&)
 {
-    if (nAddress == GetCurrentAddress())
+    if (nAddress == GetCurrentAddress() && !m_bSyncingNote)
         OnCurrentAddressChanged(nAddress); // not really, but causes the note to be reloaded
 }
 
@@ -148,6 +158,22 @@ void PointerInspectorViewModel::OnSelectedNodeChanged(int nNewNode)
 {
     const auto* pNote = UpdatePointerChain(nNewNode);
     LoadNote(pNote);
+}
+
+void PointerInspectorViewModel::OnSelectedFieldChanged(int nNewFieldIndex)
+{
+    m_bSyncingNote = true;
+    if (nNewFieldIndex != -1)
+    {
+        const auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nNewFieldIndex);
+        Expects(pField != nullptr);
+        SetCurrentFieldNote(pField->GetBody());
+    }
+    else
+    {
+        SetCurrentFieldNote(L"");
+    }
+    m_bSyncingNote = false;
 }
 
 const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerChain(int nNewNode)
@@ -233,17 +259,71 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
     return pNote;
 }
 
+static std::wstring TrimSize(const std::wstring& sNote, bool bKeepPointer)
+{
+    size_t nEndIndex = 0;
+    size_t nStartIndex = sNote.find('[');
+    if (nStartIndex != std::string::npos)
+    {
+        nEndIndex = sNote.find(']', nStartIndex + 1);
+        if (nEndIndex == std::string::npos)
+            return sNote;
+    }
+    else
+    {
+        nStartIndex = sNote.find('(');
+        if (nStartIndex == std::string::npos)
+            return sNote;
+
+        nEndIndex = sNote.find(')', nStartIndex + 1);
+        if (nEndIndex == std::string::npos)
+            return sNote;
+    }
+
+    bool bPointer = false;
+    std::wstring sWord;
+    ra::data::models::CodeNoteModel::Parser::TokenType nTokenType;
+    const ra::data::models::CodeNoteModel::Parser parser(sNote, nStartIndex + 1, nEndIndex);
+    do
+    {
+        nTokenType = parser.NextToken(sWord);
+        if (nTokenType == ra::data::models::CodeNoteModel::Parser::TokenType::Other)
+        {
+            if (sWord == L"pointer")
+                bPointer = true;
+            else
+                return sNote;
+        }
+    } while (nTokenType != ra::data::models::CodeNoteModel::Parser::TokenType::None);
+
+    while (nStartIndex > 0 && isspace(sNote.at(nStartIndex - 1)))
+        nStartIndex--;
+
+    while (nEndIndex < sNote.length() - 1 && isspace(sNote.at(nEndIndex + 1)))
+        nEndIndex++;
+
+    std::wstring sNoteCopy = sNote;
+    sNoteCopy.erase(nStartIndex, nEndIndex - nStartIndex + 1);
+
+    if (bPointer && bKeepPointer)
+        sNoteCopy.insert(0, L"[pointer] ");
+
+    return sNoteCopy;
+}
+
 void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote)
 {
     const auto nSize = pOffsetNote.GetMemSize();
     pFieldViewModel.SetSize((nSize == MemSize::Unknown) ? MemSize::EightBit : nSize);
 
-    const auto& sDescription = pOffsetNote.GetPrimaryNote();
-    const auto nIndex = sDescription.find('\n');
+    const auto& sNote = pOffsetNote.GetPrimaryNote();
+    pFieldViewModel.SetBody(sNote);
+
+    const auto nIndex = sNote.find('\n');
     if (nIndex == std::string::npos)
-        pFieldViewModel.SetDescription(sDescription);
+        pFieldViewModel.SetDescription(TrimSize(sNote, true));
     else
-        pFieldViewModel.SetDescription(sDescription.substr(0, nIndex));
+        pFieldViewModel.SetDescription(TrimSize(sNote.substr(0, nIndex), true));
 }
 
 void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* pNote)
@@ -301,6 +381,8 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
 
     UpdateValues();
     Bookmarks().EndUpdate();
+
+    OnSelectedFieldChanged(GetValue(SingleSelectionIndexProperty));
 }
 
 static void LoadSubNotes(LookupItemViewModelCollection& vNodes,
@@ -349,6 +431,99 @@ void PointerInspectorViewModel::LoadNodes(const ra::data::models::CodeNoteModel*
     // if the selected item is no longer available, select the root node
     if (m_vNodes.FindItemIndex(LookupItemViewModel::IdProperty, nSelectedNode) == -1)
         SetSelectedNode(PointerNodeViewModel::RootNodeId);
+}
+
+
+void PointerInspectorViewModel::BuildNote(ra::StringBuilder& builder,
+                      std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain, gsl::index nDepth,
+                      const ra::data::models::CodeNoteModel& pNote)
+{
+    const auto nBaseAddress = pNote.GetPointerAddress();
+
+    pNote.EnumeratePointerNotes([this, &builder, &sChain, nDepth, nBaseAddress](
+                                    ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pOffsetNote) {
+        const auto nOffset = nAddress - nBaseAddress;
+
+        builder.Append(L"\n");
+        builder.Append(std::wstring(nDepth, '+'));
+        builder.Append(ra::StringPrintf(L"0x%02X: ", nOffset));
+
+        bool isCurrentNode = false;
+        if (nDepth == gsl::narrow_cast<gsl::index>(sChain.size()))
+        {
+            const auto nIndex = GetValue(SingleSelectionIndexProperty);
+            auto* pField = dynamic_cast<StructFieldViewModel*>(Bookmarks().GetItemAt(nIndex));
+            if (pField && pField->m_nOffset == ra::to_signed(nOffset))
+            {
+                ra::data::models::CodeNoteModel newNote;
+                newNote.SetNote(GetCurrentFieldNote());
+                SyncField(*pField, newNote);
+
+                isCurrentNode = true;
+            }
+        }
+
+        if (isCurrentNode)
+        {
+            builder.Append(GetCurrentFieldNote());
+        }
+        else
+        {
+            builder.Append("[");
+            builder.Append(ra::data::MemSizeString(pOffsetNote.GetMemSize()));
+
+            if (pOffsetNote.IsPointer())
+            {
+                builder.Append(L" pointer] ");
+                builder.Append(TrimSize(pOffsetNote.GetPointerDescription(), false));
+            }
+            else
+            {
+                builder.Append(L"] ");
+                builder.Append(TrimSize(pOffsetNote.GetNote(), false));
+            }
+        }
+
+        if (pOffsetNote.IsPointer())
+            BuildNote(builder, sChain, nDepth + 1, pOffsetNote);
+
+        return true;
+    });
+}
+
+void PointerInspectorViewModel::OnCurrentFieldNoteChanged(const std::wstring&)
+{
+    const auto nAddress = GetCurrentAddress();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    Expects(pCodeNotes != nullptr);
+    auto* pNote = pCodeNotes->FindCodeNoteModel(nAddress);
+    if (pNote != nullptr)
+    {
+        const auto nIndex = m_vNodes.FindItemIndex(LookupItemViewModel::IdProperty, GetSelectedNode());
+        if (nIndex != -1)
+        {
+            std::stack<const PointerNodeViewModel*> sChain;
+            GetPointerChain(nIndex, sChain);
+
+            ra::StringBuilder builder;
+            builder.Append(pNote->GetPointerDescription());
+
+            BuildNote(builder, sChain, 1, *pNote);
+
+            // nested note reference is invalidated in SetCodeNote. temporarily release
+            // the reference and restore it after SetCodeNote completes to prevent the UI
+            // thread from trying to use it while it's invalid (we're most likely on a
+            // background thread kicked off by a timer to support as-you-type changes).
+            m_pCurrentNote = nullptr;
+
+            m_bSyncingNote = true;
+            pCodeNotes->SetCodeNote(nAddress, builder.ToWString());
+            m_bSyncingNote = false;
+
+            m_pCurrentNote = UpdatePointerChain(GetSelectedNode());
+        }
+    }
 }
 
 void PointerInspectorViewModel::UpdatePointerChainValues()

@@ -425,6 +425,9 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 else
                     vmAchievement->Attach(*pAchievementData, nCategory, "");
 
+                if (pSubset != pClient->game->subsets)
+                    vmAchievement->SetSubsetID(pSubset->public_.id);
+
                 m_vAssets.Append(std::move(vmAchievement));
 
 #ifndef RA_UTEST

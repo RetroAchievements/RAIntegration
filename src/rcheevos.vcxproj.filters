@@ -172,5 +172,6 @@
     <Natvis Include="..\rcheevos\src\rcheevos\rc_runtime_types.natvis">
       <Filter>rcheevos</Filter>
     </Natvis>
+    <Natvis Include="..\rcheevos\src\rc_client_types.natvis" />
   </ItemGroup>
 </Project>

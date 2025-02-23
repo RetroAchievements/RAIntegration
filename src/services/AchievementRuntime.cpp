@@ -450,8 +450,8 @@ private:
 
     typedef struct rc_client_subset_wrapper_t
     {
-        rc_client_subset_info_t pCoreSubset{};
-        rc_client_subset_info_t pLocalSubset{};
+        std::vector<rc_client_subset_info_t> pCoreSubset;
+        std::vector<rc_client_subset_info_t> pLocalSubset;
         rc_buffer_t pBuffer{};
         std::vector<void*> vAllocatedMemory;
     } SubsetWrapper;
@@ -542,9 +542,23 @@ private:
                     if (m_pSubsetWrapper != nullptr)
                     {
                         if (vmAchievement->GetCategory() == ra::data::models::AssetCategory::Local)
-                            pSrcAchievement = FindAchievement(&m_pSubsetWrapper->pLocalSubset, nAchievementId);
+                        {
+                            for (auto& pLocalSubset : m_pSubsetWrapper->pLocalSubset)
+                            {
+                                pSrcAchievement = FindAchievement(&pLocalSubset, nAchievementId);
+                                if (pSrcAchievement)
+                                    break;
+                            }
+                        }
                         else
-                            pSrcAchievement = FindAchievement(&m_pSubsetWrapper->pCoreSubset, nAchievementId);
+                        {
+                            for (auto& pCoreSubset : m_pSubsetWrapper->pCoreSubset)
+                            {
+                                pSrcAchievement = FindAchievement(&pCoreSubset, nAchievementId);
+                                if (pSrcAchievement)
+                                    break;
+                            }
+                        }
                     }
 
                     if (pSrcAchievement != nullptr && pSrcAchievement == vmAchievement->GetAttached())
@@ -616,9 +630,23 @@ private:
                     if (m_pSubsetWrapper != nullptr && vmLeaderboard->GetAttached() != nullptr)
                     {
                         if (vmLeaderboard->GetCategory() == ra::data::models::AssetCategory::Local)
-                            pSrcLeaderboard = FindLeaderboard(&m_pSubsetWrapper->pLocalSubset, nLeaderboardId);
+                        {
+                            for (auto& pLocalSubset : m_pSubsetWrapper->pLocalSubset)
+                            {
+                                pSrcLeaderboard = FindLeaderboard(&pLocalSubset, nLeaderboardId);
+                                if (pSrcLeaderboard)
+                                    break;
+                            }
+                        }
                         else
-                            pSrcLeaderboard = FindLeaderboard(&m_pSubsetWrapper->pCoreSubset, nLeaderboardId);
+                        {
+                            for (auto& pCoreSubset : m_pSubsetWrapper->pCoreSubset)
+                            {
+                                pSrcLeaderboard = FindLeaderboard(&pCoreSubset, nLeaderboardId);
+                                if (pSrcLeaderboard)
+                                    break;
+                            }
+                        }
                     }
 
                     if (pSrcLeaderboard != nullptr && pSrcLeaderboard == vmLeaderboard->GetAttached())
@@ -658,21 +686,12 @@ private:
         }
     }
 
-public:
-    void SyncAssets(rc_client_t* pClient)
+    void BuildSubsetWrapper(SubsetWrapper& pSubsetWrapper,
+                            rc_client_subset_info_t& pCoreSubsetWrapper,
+                            rc_client_subset_info_t& pLocalSubsetWrapper,
+                            const rc_client_subset_info_t* pSubset, uint32_t nSubsetId,
+                            ra::data::context::GameAssets& vAssets)
     {
-        if (!pClient->game)
-            return;
-
-        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-        auto& vAssets = pGameContext.Assets();
-
-        if (m_pClient == nullptr)
-        {
-            m_pClient = pClient;
-            m_pPublishedSubset = pClient->game->subsets;
-        }
-
         std::vector<ra::data::models::AchievementModel*> vCoreAchievements;
         std::vector<ra::data::models::AchievementModel*> vLocalAchievements;
         std::vector<ra::data::models::LeaderboardModel*> vCoreLeaderboards;
@@ -682,6 +701,9 @@ public:
         {
             auto* pAsset = vAssets.GetItemAt(nIndex);
             Expects(pAsset != nullptr);
+            if (pAsset->GetSubsetID() != nSubsetId)
+                continue;
+
             if (pAsset->GetChanges() == ra::data::models::AssetChanges::Deleted)
                 continue;
 
@@ -708,29 +730,66 @@ public:
             }
         }
 
-        std::unique_ptr<SubsetWrapper> pSubsetWrapper;
-        pSubsetWrapper.reset(new SubsetWrapper);
-        memset(&pSubsetWrapper->pCoreSubset, 0, sizeof(pSubsetWrapper->pCoreSubset));
-        memset(&pSubsetWrapper->pLocalSubset, 0, sizeof(pSubsetWrapper->pLocalSubset));
-        rc_buffer_init(&pSubsetWrapper->pBuffer);
+        memset(&pCoreSubsetWrapper, 0, sizeof(pCoreSubsetWrapper));
+        memset(&pLocalSubsetWrapper, 0, sizeof(pLocalSubsetWrapper));
 
-        pSubsetWrapper->pCoreSubset.public_.id = pClient->game->public_.id;
-        pSubsetWrapper->pCoreSubset.public_.title = pClient->game->public_.title;
-        snprintf(pSubsetWrapper->pCoreSubset.public_.badge_name, sizeof(pSubsetWrapper->pCoreSubset.public_.badge_name),
-                 "%s", pClient->game->public_.badge_name);
+        pCoreSubsetWrapper.public_.id = pSubset->public_.id;
+        pCoreSubsetWrapper.public_.title = pSubset->public_.title;
+        snprintf(pCoreSubsetWrapper.public_.badge_name,
+                 sizeof(pCoreSubsetWrapper.public_.badge_name), "%s", pSubset->public_.badge_name);
 
-        SyncSubset(&pSubsetWrapper->pCoreSubset, pSubsetWrapper.get(), vCoreAchievements, vCoreLeaderboards);
+        SyncSubset(&pCoreSubsetWrapper, &pSubsetWrapper, vCoreAchievements, vCoreLeaderboards);
+
+        pLocalSubsetWrapper.public_.id = ra::data::context::GameAssets::LocalSubsetId;
+        pLocalSubsetWrapper.public_.title = "Local";
+        snprintf(pLocalSubsetWrapper.public_.badge_name, sizeof(pLocalSubsetWrapper.public_.badge_name), "%s",
+                 pSubset->public_.badge_name);
 
         if (!vLocalAchievements.empty() || !vLocalLeaderboards.empty())
+            SyncSubset(&pLocalSubsetWrapper, &pSubsetWrapper, vLocalAchievements, vLocalLeaderboards);
+        else
+            pLocalSubsetWrapper.active = false;
+
+        pCoreSubsetWrapper.next = &pLocalSubsetWrapper;
+    }
+
+public:
+    void SyncAssets(rc_client_t* pClient)
+    {
+        if (!pClient->game)
+            return;
+
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+        auto& vAssets = pGameContext.Assets();
+
+        if (m_pClient == nullptr)
         {
-            pSubsetWrapper->pLocalSubset.public_.id = ra::data::context::GameAssets::LocalSubsetId;
-            pSubsetWrapper->pLocalSubset.public_.title = "Local";
-            snprintf(pSubsetWrapper->pLocalSubset.public_.badge_name,
-                     sizeof(pSubsetWrapper->pLocalSubset.public_.badge_name), "%s", pClient->game->public_.badge_name);
+            m_pClient = pClient;
+            m_pPublishedSubset = pClient->game->subsets;
+            Expects(m_pPublishedSubset != nullptr);
+        }
 
-            SyncSubset(&pSubsetWrapper->pLocalSubset, pSubsetWrapper.get(), vLocalAchievements, vLocalLeaderboards);
+        std::unique_ptr<SubsetWrapper> pSubsetWrapper;
+        pSubsetWrapper.reset(new SubsetWrapper);
+        rc_buffer_init(&pSubsetWrapper->pBuffer);
 
-            pSubsetWrapper->pCoreSubset.next = &pSubsetWrapper->pLocalSubset;
+        size_t nSubsets = 0;
+        for (auto* pSubset = m_pPublishedSubset; pSubset; pSubset = pSubset->next)
+            nSubsets++;
+
+        pSubsetWrapper->pCoreSubset.resize(nSubsets);
+        pSubsetWrapper->pLocalSubset.resize(nSubsets);
+
+        BuildSubsetWrapper(*pSubsetWrapper, pSubsetWrapper->pCoreSubset.at(0), pSubsetWrapper->pLocalSubset.at(0),
+                           m_pPublishedSubset, 0, vAssets);
+
+        nSubsets = 1;
+        for (auto* pSubset = m_pPublishedSubset->next; pSubset; pSubset = pSubset->next, nSubsets++)
+        {
+            BuildSubsetWrapper(*pSubsetWrapper, pSubsetWrapper->pCoreSubset.at(nSubsets),
+                               pSubsetWrapper->pLocalSubset.at(nSubsets), pSubset, pSubset->public_.id, vAssets);
+
+            pSubsetWrapper->pLocalSubset.at(nSubsets - 1).next = &pSubsetWrapper->pCoreSubset.at(nSubsets);
         }
 
         std::swap(pSubsetWrapper, m_pSubsetWrapper);
@@ -742,7 +801,7 @@ public:
         }
 
         rc_mutex_lock(&pClient->state.mutex);
-        pClient->game->subsets = &m_pSubsetWrapper->pCoreSubset;
+        pClient->game->subsets = &m_pSubsetWrapper->pCoreSubset.at(0);
         rc_mutex_unlock(&pClient->state.mutex);
     }
 

@@ -42,6 +42,7 @@
 /* STL Stuff */
 #include <array> // algorithm, iterator, tuple
 #include <atomic>
+#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <map>

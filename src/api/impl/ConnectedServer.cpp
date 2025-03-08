@@ -182,27 +182,6 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
     }
 }
 
-static void GetRequiredJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Value& pDocument,
-    _In_ const char* const sField, _Inout_ ApiResponseBase& response)
-{
-    if (!pDocument.HasMember(sField))
-    {
-        nValue = 0;
-
-        response.Result = ApiResult::Error;
-        if (response.ErrorMessage.empty())
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
-    }
-    else
-    {
-        auto& pField = pDocument[sField];
-        if (pField.IsUint())
-            nValue = pField.GetUint();
-        else
-            nValue = 0;
-    }
-}
-
 static void GetOptionalJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Value& pDocument,
     _In_ const char* const sField, _In_ const char* const sDefaultValue = "")
 {
@@ -220,27 +199,6 @@ static void GetOptionalJsonField(_Out_ std::string& sValue, _In_ const rapidjson
     }
 }
 
-static void GetRequiredJsonField(_Out_ std::wstring& sValue, _In_ const rapidjson::Value& pDocument,
-    _In_ const char* const sField, _Inout_ ApiResponseBase& response)
-{
-    if (!pDocument.HasMember(sField))
-    {
-        sValue.clear();
-
-        response.Result = ApiResult::Error;
-        if (response.ErrorMessage.empty())
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
-    }
-    else
-    {
-        auto& pField = pDocument[sField];
-        if (pField.IsString())
-            sValue = ra::Widen(pField.GetString());
-        else
-            sValue.clear();
-    }
-}
-
 static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam, _In_ const std::string& sValue)
 {
     if (!sParams.empty() && sParams.back() != '?')
@@ -249,31 +207,6 @@ static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const 
     sParams.append(sParam);
     sParams.push_back('=');
     ra::services::Http::UrlEncodeAppend(sParams, sValue);
-}
-
-static bool DoRequest(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
-    const std::string& sInputParams, ApiResponseBase& pResponse, rapidjson::Document& document)
-{
-    std::string sPostData;
-
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    AppendUrlParam(sPostData, "u", pUserContext.GetUsername());
-    AppendUrlParam(sPostData, "r", sRequestName);
-    if (!sInputParams.empty())
-    {
-        sPostData.push_back('&');
-        sPostData.append(sInputParams);
-    }
-    RA_LOG_INFO("%s Request: %s", sApiName, sPostData.c_str());
-
-    // append token after log so it's not in the log
-    AppendUrlParam(sPostData, "t", pUserContext.GetApiToken());
-
-    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/dorequest.php", sHost));
-    httpRequest.SetPostData(sPostData);
-
-    const auto httpResponse = httpRequest.Call();
-    return GetJson(sApiName, httpResponse, pResponse, document);
 }
 
 static bool DoRequestWithoutLog(const rc_api_request_t& api_request, _UNUSED const char* sApiName, ra::services::Http::Response& pHttpResponse, ApiResponseBase& pResponse)
@@ -489,41 +422,73 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
 
 // === APIs ===
 
+static void HttpResponseToServerResponse(const ra::services::Http::Response& httpResponse,
+                                         rc_api_server_response_t* server_response) noexcept
+{
+    memset(server_response, 0, sizeof(server_response));
+    server_response->body = httpResponse.Content().c_str();
+    server_response->body_length = httpResponse.Content().length();
+    server_response->http_status_code = ra::etoi(httpResponse.StatusCode());
+}
+
 FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFriends::Request&)
 {
     FetchUserFriends::Response response;
-    rapidjson::Document document;
-    std::string sPostData;
 
-    if (DoRequest(m_sHost, FetchUserFriends::Name(), "getfriendlist", sPostData, response, document))
+    rc_api_fetch_followed_users_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+
+    rc_api_request_t api_request;
+    const int result = rc_api_init_fetch_followed_users_request(&api_request, &api_params);
+    if (result == RC_OK)
     {
-        response.Result = ApiResult::Success;
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchUserFriends::Name(), httpResponse, response))
+        {
+            rc_api_fetch_followed_users_response_t api_response;
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
 
-        if (!document.HasMember("Friends"))
-        {
-            response.Result = ApiResult::Error;
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", "Friends");
-        }
-        else
-        {
-            const auto& pFriends = document["Friends"].GetArray();
-            for (const auto& pFriend : pFriends)
+            const auto nResult = rc_api_process_fetch_followed_users_server_response(&api_response, &server_response);
+            if (ValidateResponse(nResult, api_response.response, ResolveHash::Name(), httpResponse.StatusCode(),
+                                 response))
             {
-                FetchUserFriends::Response::Friend oFriend;
-                GetRequiredJsonField(oFriend.User, pFriend, "Friend", response);
-                GetRequiredJsonField(oFriend.LastActivity, pFriend, "LastSeen", response);
+                response.Friends.resize(api_response.num_users);
+                for (uint32_t i = 0; i < api_response.num_users; ++i)
+                {
+                    auto& pFriend = response.Friends.at(i);
+                    const auto& pUser = api_response.users[i];
+                    pFriend.User = pUser.display_name;
+                    if (pUser.avatar_url)
+                        pFriend.AvatarUrl = pUser.avatar_url;
+                    pFriend.Score = pUser.score;
+                    if (pUser.recent_activity.description)
+                        pFriend.LastActivity = ra::Widen(pUser.recent_activity.description);
+                    pFriend.LastActivityContextId = pUser.recent_activity.context_id;
+                    if (pUser.recent_activity.context)
+                        pFriend.LastActivityContext = ra::Widen(pUser.recent_activity.context);
+                    if (pUser.recent_activity.context_image_url)
+                        pFriend.LastActivityImageUrl = pUser.recent_activity.context_image_url;
+                    pFriend.LastActivityTime = pUser.recent_activity.when;
+                }
 
-                // if server's LastSeen is empty or "Unknown", it returns "_"
-                if (oFriend.LastActivity == L"_")
-                    oFriend.LastActivity.clear();
-
-                GetRequiredJsonField(oFriend.Score, pFriend, "RAPoints", response);
-
-                response.Friends.emplace_back(oFriend);
+                response.Result = ApiResult::Success;
             }
+
+            rc_api_destroy_fetch_followed_users_response(&api_response);
         }
     }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
+    }
 
+    rc_api_destroy_request(&api_request);
     return response;
 }
 
@@ -544,7 +509,10 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
         if (DoRequest(api_request, ResolveHash::Name(), httpResponse, response))
         {
             rc_api_resolve_hash_response_t api_response;
-            const auto nResult = rc_api_process_resolve_hash_response(&api_response, httpResponse.Content().c_str());
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
+
+            const auto nResult = rc_api_process_resolve_hash_server_response(&api_response, &server_response);
 
             if (ValidateResponse(nResult, api_response.response, ResolveHash::Name(), httpResponse.StatusCode(), response))
             {
@@ -582,7 +550,10 @@ FetchCodeNotes::Response ConnectedServer::FetchCodeNotes(const FetchCodeNotes::R
         if (DoRequest(api_request, FetchCodeNotes::Name(), httpResponse, response))
         {
             rc_api_fetch_code_notes_response_t api_response;
-            const auto nResult = rc_api_process_fetch_code_notes_response(&api_response, httpResponse.Content().c_str());
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
+
+            const auto nResult = rc_api_process_fetch_code_notes_server_response(&api_response, &server_response);
 
             if (ValidateResponse(nResult, api_response.response, FetchCodeNotes::Name(), httpResponse.StatusCode(), response))
             {
@@ -729,7 +700,10 @@ UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchie
         if (DoRequest(api_request, UpdateAchievement::Name(), httpResponse, response))
         {
             rc_api_update_achievement_response_t api_response;
-            const auto nResult = rc_api_process_update_achievement_response(&api_response, httpResponse.Content().c_str());
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
+
+            const auto nResult = rc_api_process_update_achievement_server_response(&api_response, &server_response);
 
             if (ValidateResponse(nResult, api_response.response, UpdateAchievement::Name(), httpResponse.StatusCode(), response))
             {
@@ -776,7 +750,10 @@ FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const Fetch
         if (DoRequest(api_request, FetchAchievementInfo::Name(), httpResponse, response))
         {
             rc_api_fetch_achievement_info_response_t api_response;
-            const auto nResult = rc_api_process_fetch_achievement_info_response(&api_response, httpResponse.Content().c_str());
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
+
+            const auto nResult = rc_api_process_fetch_achievement_info_server_response(&api_response, &server_response);
 
             if (ValidateResponse(nResult, api_response.response, FetchAchievementInfo::Name(), httpResponse.StatusCode(), response))
             {
@@ -842,7 +819,10 @@ UpdateLeaderboard::Response ConnectedServer::UpdateLeaderboard(const UpdateLeade
         if (DoRequest(api_request, UpdateLeaderboard::Name(), httpResponse, response))
         {
             rc_api_update_leaderboard_response_t api_response;
-            const auto nResult = rc_api_process_update_leaderboard_response(&api_response, httpResponse.Content().c_str());
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
+
+            const auto nResult = rc_api_process_update_leaderboard_server_response(&api_response, &server_response);
 
             if (ValidateResponse(nResult, api_response.response, UpdateLeaderboard::Name(), httpResponse.StatusCode(), response))
             {
@@ -887,7 +867,10 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
         if (DoRequest(api_request, FetchLeaderboardInfo::Name(), httpResponse, response))
         {
             rc_api_fetch_leaderboard_info_response_t api_response;
-            const auto nResult = rc_api_process_fetch_leaderboard_info_response(&api_response, httpResponse.Content().c_str());
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
+
+            const auto nResult = rc_api_process_fetch_leaderboard_info_server_response(&api_response, &server_response);
 
             if (ValidateResponse(nResult, api_response.response, FetchLeaderboardInfo::Name(), httpResponse.StatusCode(), response))
             {
@@ -965,7 +948,10 @@ FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::R
         if (DoRequest(api_request, FetchGamesList::Name(), httpResponse, response))
         {
             rc_api_fetch_games_list_response_t api_response;
-            const auto nResult = rc_api_process_fetch_games_list_response(&api_response, httpResponse.Content().c_str());
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
+
+            const auto nResult = rc_api_process_fetch_games_list_server_response(&api_response, &server_response);
 
             if (ValidateResponse(nResult, api_response.response, FetchGamesList::Name(), httpResponse.StatusCode(), response))
             {
@@ -1022,7 +1008,10 @@ SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::R
         if (DoRequest(api_request, SubmitNewTitle::Name(), httpResponse, response))
         {
             rc_api_add_game_hash_response_t api_response;
-            const auto nResult = rc_api_process_add_game_hash_response(&api_response, httpResponse.Content().c_str());
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
+
+            const auto nResult = rc_api_process_add_game_hash_server_response(&api_response, &server_response);
 
             if (ValidateResponse(nResult, api_response.response, SubmitNewTitle::Name(), httpResponse.StatusCode(), response))
             {
@@ -1058,7 +1047,10 @@ FetchBadgeIds::Response ConnectedServer::FetchBadgeIds(const FetchBadgeIds::Requ
         if (DoRequest(api_request, FetchBadgeIds::Name(), httpResponse, response))
         {
             rc_api_fetch_badge_range_response_t api_response;
-            const auto nResult = rc_api_process_fetch_badge_range_response(&api_response, httpResponse.Content().c_str());
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
+
+            const auto nResult = rc_api_process_fetch_badge_range_server_response(&api_response, &server_response);
 
             if (ValidateResponse(nResult, api_response.response, FetchBadgeIds::Name(), httpResponse.StatusCode(), response))
             {

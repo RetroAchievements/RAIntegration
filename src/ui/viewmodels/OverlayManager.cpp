@@ -374,7 +374,7 @@ int OverlayManager::QueueMessage(std::unique_ptr<PopupMessageViewModel>& pMessag
         if (ra::services::ServiceLocator::Exists<ra::ui::IImageRepository>())
         {
             auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-            pImageRepository.FetchImage(pMessage->GetImage().Type(), pMessage->GetImage().Name());
+            pImageRepository.FetchImage(pMessage->GetImage().Type(), pMessage->GetImage().Name(), "");
         }
     }
 

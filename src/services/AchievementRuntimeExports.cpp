@@ -99,7 +99,7 @@ public:
         if (pConfiguration != nullptr)
             pConfiguration->SetHost(value);
 
-        const auto* pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient();
+        auto* pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient();
         rc_client_set_host(pClient, value);
     }
 

@@ -30,10 +30,15 @@ void OverlayFriendsPageViewModel::Refresh()
                 return;
             }
 
+            auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+
             for (const auto& pFriend : response.Friends)
             {
                 auto sFriendName = ra::Widen(pFriend.User);
                 sFriendName.push_back(' ');
+
+                if (!pImageRepository.IsImageAvailable(ra::ui::ImageType::UserPic, pFriend.User))
+                    pImageRepository.FetchImage(ra::ui::ImageType::UserPic, pFriend.User, pFriend.AvatarUrl);
 
                 ItemViewModel* pvmFriend = nullptr;
                 for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vItems.Count()); ++nIndex)

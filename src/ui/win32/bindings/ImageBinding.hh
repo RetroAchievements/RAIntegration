@@ -74,7 +74,7 @@ private:
             if (!pImageRepository.IsImageAvailable(m_pImageReference.Type(), m_pImageReference.Name()))
             {
                 pImageRepository.AddNotifyTarget(*this);
-                pImageRepository.FetchImage(m_pImageReference.Type(), m_pImageReference.Name());
+                pImageRepository.FetchImage(m_pImageReference.Type(), m_pImageReference.Name(), "");
             }
         }
     }

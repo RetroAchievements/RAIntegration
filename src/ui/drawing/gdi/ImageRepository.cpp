@@ -26,8 +26,8 @@ static IWICImagingFactory* g_pIWICFactory = nullptr;
 bool ImageRepository::Initialize()
 {
     // pre-fetch the default images
-    FetchImage(ImageType::Badge, DefaultBadge);
-    FetchImage(ImageType::UserPic, DefaultUserPic);
+    FetchImage(ImageType::Badge, DefaultBadge, "");
+    FetchImage(ImageType::UserPic, DefaultUserPic, "");
 
     // Create WIC factory - this lives for the life of the application.
     // NOTE: RPC_E_CHANGED_MODE error indicates something has already initialized COM
@@ -155,7 +155,7 @@ bool ImageRepository::IsImageAvailable(ImageType nType, const std::string& sName
     return (pFileSystem.GetFileSize(sFilename) > 0);
 }
 
-void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
+void ImageRepository::FetchImage(ImageType nType, const std::string& sName, const std::string& sSourceUrl)
 {
     if (sName.empty())
         return;
@@ -179,27 +179,30 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
         return;
 
     // fetch it
-    std::string sUrl;
-    switch (nType)
+    std::string sUrl = sSourceUrl;
+    if (sSourceUrl.empty())
     {
-        case ImageType::Badge:
-            sUrl = pConfiguration.GetImageHostUrl();
-            sUrl += "/Badge/";
-            break;
-        case ImageType::UserPic:
-            sUrl = pConfiguration.GetHostUrl();
-            sUrl += "/UserPic/";
-            break;
-        case ImageType::Icon:
-            sUrl = pConfiguration.GetImageHostUrl();
-            sUrl += "/Images/";
-            break;
-        default:
-            Expects(!"Unsupported image type");
-            return;
+        switch (nType)
+        {
+            case ImageType::Badge:
+                sUrl = pConfiguration.GetImageHostUrl();
+                sUrl += "/Badge/";
+                break;
+            case ImageType::UserPic:
+                sUrl = pConfiguration.GetHostUrl();
+                sUrl += "/UserPic/";
+                break;
+            case ImageType::Icon:
+                sUrl = pConfiguration.GetImageHostUrl();
+                sUrl += "/Images/";
+                break;
+            default:
+                Expects(!"Unsupported image type");
+                return;
+        }
+        sUrl += sName;
+        sUrl += ".png";
     }
-    sUrl += sName;
-    sUrl += ".png";
 
     RA_LOG_INFO("Downloading %s", sUrl.c_str());
 
@@ -505,7 +508,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     if (pFileSystem.GetFileSize(sFilename) <= 0)
     {
-        FetchImage(nType, sName);
+        FetchImage(nType, sName, "");
         return nullptr;
     }
 

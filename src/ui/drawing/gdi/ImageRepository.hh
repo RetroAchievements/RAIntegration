@@ -39,7 +39,7 @@ public:
 
     bool IsImageAvailable(ImageType nType, const std::string& sName) const override;
 
-    void FetchImage(ImageType nType, const std::string& sName) override;
+    void FetchImage(ImageType nType, const std::string& sName, const std::string& sSourceUrl) override;
     std::string StoreImage(ImageType nType, const std::wstring& sPath) override;
 
     void AddReference(const ImageReference& pImage) override;

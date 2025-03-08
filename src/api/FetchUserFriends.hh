@@ -17,8 +17,13 @@ public:
         struct Friend
         {
             std::string User;
-            unsigned int Score{ 0U };
+            std::string AvatarUrl;
+            uint32_t Score{ 0U };
             std::wstring LastActivity;
+            time_t LastActivityTime{ 0 };
+            uint32_t LastActivityContextId{ 0U };
+            std::wstring LastActivityContext;
+            std::string LastActivityImageUrl;
         };
 
         std::vector<Friend> Friends;

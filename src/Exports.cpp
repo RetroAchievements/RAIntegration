@@ -320,6 +320,10 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
         const auto& pSessionTracker = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>();
         const auto* pUser = rc_client_get_user_info(pClient);
 
+        // start fetching the avatar image
+        ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>().FetchImage(
+            ra::ui::ImageType::UserPic, pUser->username, pUser->avatar_url);
+
         // show the welcome message
         std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(
             new ra::ui::viewmodels::PopupMessageViewModel);

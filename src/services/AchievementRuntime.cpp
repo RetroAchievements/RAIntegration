@@ -1203,7 +1203,7 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
 #ifndef RA_UTEST
     // prefetch the game icon
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-    pImageRepository.FetchImage(ra::ui::ImageType::Icon, game_data_response->image_name);
+    pImageRepository.FetchImage(ra::ui::ImageType::Icon, game_data_response->image_name, game_data_response->image_url);
 #endif
 
     const rc_api_achievement_definition_t* pAchievement = game_data_response->achievements;

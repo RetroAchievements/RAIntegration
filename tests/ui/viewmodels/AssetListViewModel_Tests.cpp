@@ -387,6 +387,25 @@ private:
             AssertButtonState(nCloneButtonState);
         }
 
+    private:
+        void EnsureCoreSubset() const
+        {
+            auto* pGame = mockRuntime.GetClient()->game;
+            if (!pGame->subsets)
+            {
+                // populate a minimal core subset just to prevent a null reference error
+                auto* pSubset =
+                    (rc_client_subset_info_t*)rc_buffer_alloc(&pGame->buffer, sizeof(rc_client_subset_info_t));
+                memset(pSubset, 0, sizeof(*pSubset));
+                pSubset->public_.id = pGame->public_.id;
+                pSubset->public_.title = pGame->public_.title;
+                pSubset->active = true;
+
+                pGame->subsets = pSubset;
+            }
+        }
+
+    public:
         void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle)
         {
             auto vmAchievement = std::make_unique<MockAchievementModel>();
@@ -398,6 +417,8 @@ private:
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
             mockGameContext.Assets().Append(std::move(vmAchievement));
+
+            EnsureCoreSubset();
         }
 
         void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle,
@@ -415,6 +436,8 @@ private:
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
             mockGameContext.Assets().Append(std::move(vmAchievement));
+
+            EnsureCoreSubset();
         }
 
         void AddNewAchievement(unsigned nPoints, const std::wstring& sTitle,
@@ -433,6 +456,8 @@ private:
             vmAchievement->SetNew();
             vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
             mockGameContext.Assets().Append(std::move(vmAchievement));
+
+            EnsureCoreSubset();
         }
 
         void AddThreeAchievements()
@@ -451,6 +476,8 @@ private:
             vmLeaderboard->CreateServerCheckpoint();
             vmLeaderboard->CreateLocalCheckpoint();
             mockGameContext.Assets().Append(std::move(vmLeaderboard));
+
+            EnsureCoreSubset();
         }
 
         void AddLeaderboard()
@@ -465,6 +492,8 @@ private:
             vmRichPresence->CreateServerCheckpoint();
             vmRichPresence->CreateLocalCheckpoint();
             mockGameContext.Assets().Append(std::move(vmRichPresence));
+
+            EnsureCoreSubset();
         }
 
         void ForceUpdateButtons()

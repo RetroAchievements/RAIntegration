@@ -14,6 +14,7 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockServer.hh"
@@ -44,6 +45,7 @@ using ra::services::mocks::MockConfiguration;
 using ra::services::mocks::MockFrameEventQueue;
 using ra::services::mocks::MockThreadPool;
 using ra::ui::mocks::MockDesktop;
+using ra::ui::mocks::MockImageRepository;
 using ra::ui::mocks::MockOverlayTheme;
 using ra::ui::drawing::mocks::MockSurfaceFactory;
 using ra::ui::viewmodels::MessageBoxViewModel;
@@ -109,6 +111,7 @@ private:
         MockDesktop mockDesktop;
         MockThreadPool mockThreadPool;
         MockWindowManager mockWindowManager;
+        MockImageRepository mockImageRepository;
     };
 
 public:

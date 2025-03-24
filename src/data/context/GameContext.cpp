@@ -432,10 +432,11 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
 
 #ifndef RA_UTEST
                 // prefetch the achievement image
-                pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData->public_.badge_name);
+                pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData->public_.badge_name, "");
 
                 if (!pAchievementData->public_.unlocked)
-                    pImageRepository.FetchImage(ra::ui::ImageType::Badge, std::string(pAchievementData->public_.badge_name) + "_lock");
+                    pImageRepository.FetchImage(ra::ui::ImageType::Badge,
+                                                std::string(pAchievementData->public_.badge_name) + "_lock", "");
 #endif
             }
         }

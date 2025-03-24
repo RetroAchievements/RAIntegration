@@ -51,11 +51,11 @@ void OverlayRecentGamesPageViewModel::Refresh()
         }
         else if (bOffline)
         {
-            UpdateGameEntry(pvmItem, L"Unknown", "00000", pGameStats.TotalPlayTime);
+            UpdateGameEntry(pvmItem, L"Unknown", "", pGameStats.TotalPlayTime);
         }
         else
         {
-            UpdateGameEntry(pvmItem, L"Loading", "00000", pGameStats.TotalPlayTime);
+            UpdateGameEntry(pvmItem, L"Loading", "", pGameStats.TotalPlayTime);
             vPendingGames.push_back(pGameStats.GameId);
         }
 

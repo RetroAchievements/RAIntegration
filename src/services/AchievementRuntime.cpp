@@ -188,6 +188,10 @@ AchievementRuntime::AchievementRuntime()
 {
     m_pClient.reset(rc_client_create(AchievementRuntime::ReadMemory, AchievementRuntime::ServerCallAsync));
 
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsCustomHost())
+        rc_client_set_host(m_pClient.get(), pConfiguration.GetHostUrl().c_str());
+
     m_pClient->callbacks.can_submit_achievement_unlock = CanSubmitAchievementUnlock;
     m_pClient->callbacks.can_submit_leaderboard_entry = CanSubmitLeaderboardEntry;
     m_pClient->callbacks.rich_presence_override = RichPresenceOverride;
@@ -196,7 +200,6 @@ AchievementRuntime::AchievementRuntime()
 #ifndef RA_UTEST
     rc_client_enable_logging(m_pClient.get(), RC_CLIENT_LOG_LEVEL_VERBOSE, AchievementRuntime::LogMessage);
 
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
     rc_client_set_hardcore_enabled(m_pClient.get(), bHardcore ? 1 : 0);
 #endif

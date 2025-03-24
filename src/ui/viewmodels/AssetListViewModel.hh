@@ -97,6 +97,14 @@ public:
     void SetKeepActive(bool bValue) { SetValue(KeepActiveProperty, bValue); }
 
     /// <summary>
+    /// Gets the list of asset subsets.
+    /// </summary>
+    const LookupItemViewModelCollection& Subsets() const noexcept 
+    {
+        return m_vSubsets;
+    }
+
+    /// <summary>
     /// Gets the list of asset states.
     /// </summary>
     const LookupItemViewModelCollection& States() const noexcept
@@ -269,8 +277,8 @@ public:
 protected:
     virtual void Publish(std::vector<ra::data::models::AssetModelBase*>& vAssets);
     bool ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly);
-    virtual void ValidateAchievementForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::AchievementModel& pAchievement) const noexcept(false);
-    virtual void ValidateLeaderboardForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::LeaderboardModel& pAchievement) const noexcept(false);
+    virtual void ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const noexcept(false);
+    virtual void ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pAchievement) const noexcept(false);
     virtual bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const;
 
 private:
@@ -320,6 +328,7 @@ private:
 
     ra::AchievementID m_nNextLocalId = FirstLocalId;
 
+    LookupItemViewModelCollection m_vSubsets;
     LookupItemViewModelCollection m_vStates;
     LookupItemViewModelCollection m_vCategories;
     LookupItemViewModelCollection m_vSpecialFilters;

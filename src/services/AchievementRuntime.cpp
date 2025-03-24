@@ -808,6 +808,13 @@ public:
         rc_mutex_unlock(&pClient->state.mutex);
     }
 
+    void GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const
+    {
+        const auto* pSubset = m_pPublishedSubset;
+        for (; pSubset; pSubset = pSubset->next)
+            vSubsets.emplace_back(pSubset->public_.id, ra::Widen(pSubset->public_.title));
+    }
+
     void AttachMemory(void* pMemory)
     {
         if (m_pSubsetWrapper)
@@ -854,6 +861,12 @@ void AchievementRuntime::SyncAssets()
     if (m_pClientSynchronizer == nullptr)
         m_pClientSynchronizer.reset(new ClientSynchronizer());
     m_pClientSynchronizer->SyncAssets(GetClient());
+}
+
+void AchievementRuntime::GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const
+{
+    if (m_pClientSynchronizer != nullptr)
+        m_pClientSynchronizer->GetSubsets(vSubsets);
 }
 
 void AchievementRuntime::AttachMemory(void* pMemory)

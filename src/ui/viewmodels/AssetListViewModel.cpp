@@ -17,6 +17,8 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
+#include "rcheevos\src\rc_client_internal.h"
+
 #include "Exports.hh"
 #include "RA_BuildVer.h"
 #include "RA_Log.h"
@@ -117,6 +119,18 @@ void AssetListViewModel::OnActiveGameChanged()
             SetFilterCategory(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
             break;
     }
+
+    const auto& pAchievementRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+
+    m_vSubsets.BeginUpdate();
+    m_vSubsets.Clear();
+
+    std::vector<std::pair<uint32_t, std::wstring>> vSubsets;
+    pAchievementRuntime.GetSubsets(vSubsets);
+    for (const auto& pair : vSubsets)
+        m_vSubsets.Add(pair.first, pair.second);
+
+    m_vSubsets.EndUpdate();
 }
 
 void AssetListViewModel::OnDataModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)

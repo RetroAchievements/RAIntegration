@@ -42,18 +42,18 @@ namespace VisualStudio {
 namespace CppUnitTestFramework {
 
 template<>
-std::wstring ToString<ra::ui::viewmodels::AssetListViewModel::FilterCategory>(
-    const ra::ui::viewmodels::AssetListViewModel::FilterCategory& category)
+std::wstring ToString<ra::ui::viewmodels::AssetListViewModel::CategoryFilter>(
+    const ra::ui::viewmodels::AssetListViewModel::CategoryFilter& category)
 {
     switch (category)
     {
-        case ra::ui::viewmodels::AssetListViewModel::FilterCategory::Core:
+        case ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Core:
             return L"Core";
-        case ra::ui::viewmodels::AssetListViewModel::FilterCategory::Unofficial:
+        case ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Unofficial:
             return L"Unofficial";
-        case ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local:
+        case ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Local:
             return L"Local";
-        case ra::ui::viewmodels::AssetListViewModel::FilterCategory::All:
+        case ra::ui::viewmodels::AssetListViewModel::CategoryFilter::All:
             return L"All";
         default:
             return std::to_wstring(ra::etoi(category));
@@ -639,15 +639,15 @@ public:
         Assert::AreEqual(std::wstring(L"Disabled"), vmAssetList.States().GetItemAt(6)->GetLabel());
 
         Assert::AreEqual({ 4U }, vmAssetList.Categories().Count());
-        Assert::AreEqual((int)AssetListViewModel::FilterCategory::All, vmAssetList.Categories().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)AssetListViewModel::CategoryFilter::All, vmAssetList.Categories().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"All"), vmAssetList.Categories().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)AssetListViewModel::FilterCategory::Core, vmAssetList.Categories().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)AssetListViewModel::CategoryFilter::Core, vmAssetList.Categories().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Core"), vmAssetList.Categories().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)AssetListViewModel::FilterCategory::Unofficial, vmAssetList.Categories().GetItemAt(2)->GetId());
+        Assert::AreEqual((int)AssetListViewModel::CategoryFilter::Unofficial, vmAssetList.Categories().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"Unofficial"), vmAssetList.Categories().GetItemAt(2)->GetLabel());
-        Assert::AreEqual((int)AssetListViewModel::FilterCategory::Local, vmAssetList.Categories().GetItemAt(3)->GetId());
+        Assert::AreEqual((int)AssetListViewModel::CategoryFilter::Local, vmAssetList.Categories().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Local"), vmAssetList.Categories().GetItemAt(3)->GetLabel());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         Assert::AreEqual({ 6U }, vmAssetList.SpecialFilters().Count());
         Assert::AreEqual((int)AssetListViewModel::SpecialFilter::All, vmAssetList.SpecialFilters().GetItemAt(0)->GetId());
@@ -694,12 +694,12 @@ public:
         vmAssetList.MockGameId(1U);
 
         Assert::AreEqual(1U, vmAssetList.GetGameId());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
         Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
 
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.MockGameId(2U);
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
         Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
     }
 
@@ -710,7 +710,7 @@ public:
         vmAssetList.MockGameId(1U);
 
         Assert::AreEqual(1U, vmAssetList.GetGameId());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
         Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
     }
 
@@ -721,7 +721,7 @@ public:
         vmAssetList.MockGameId(1U);
 
         Assert::AreEqual(1U, vmAssetList.GetGameId());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Unofficial, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Unofficial, vmAssetList.GetCategoryFilter());
         Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
     }
 
@@ -732,7 +732,7 @@ public:
         vmAssetList.MockGameId(1U);
 
         Assert::AreEqual(1U, vmAssetList.GetGameId());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
         Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
     }
 
@@ -880,7 +880,7 @@ public:
     TEST_METHOD(TestAddItemWithFilter)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
 
@@ -907,7 +907,7 @@ public:
     TEST_METHOD(TestAddItemWithFilterUpdateSuspended)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.mockGameContext.Assets().BeginUpdate();
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
@@ -940,7 +940,7 @@ public:
     TEST_METHOD(TestRemoveItemWithFilter)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
@@ -973,7 +973,7 @@ public:
     TEST_METHOD(TestRemoveItemWithFilterUpdateSuspended)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
@@ -1011,7 +1011,7 @@ public:
     TEST_METHOD(TestChangeItemForFilter)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
@@ -1048,7 +1048,7 @@ public:
     TEST_METHOD(TestChangeFilter)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 10, L"Ach2");
@@ -1060,7 +1060,7 @@ public:
         Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
         Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
 
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
 
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
@@ -1071,7 +1071,7 @@ public:
     TEST_METHOD(TestChangeAssetTypeFilter)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.SetAssetTypeFilter(AssetType::None);
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
@@ -1104,7 +1104,7 @@ public:
     TEST_METHOD(TestSpecialFilterActive)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
         Assert::AreEqual({1U}, vmAssetList.mockGameContext.Assets().Count());
@@ -1125,7 +1125,7 @@ public:
     TEST_METHOD(TestSpecialFilterInactive)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
         Assert::AreEqual({1U}, vmAssetList.mockGameContext.Assets().Count());
@@ -1146,7 +1146,7 @@ public:
     TEST_METHOD(TestSpecialFilterModified)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
         Assert::AreEqual({1U}, vmAssetList.mockGameContext.Assets().Count());
@@ -1167,7 +1167,7 @@ public:
     TEST_METHOD(TestSpecialFilterUnpublished)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
         Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
@@ -1190,7 +1190,7 @@ public:
     TEST_METHOD(TestSpecialFilterAuthored)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.mockUserContext.Initialize("me", "Me", "ABCDEFGH");
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
@@ -1210,10 +1210,140 @@ public:
         Assert::AreEqual(std::wstring(L"Ach1"), vmAssetList.FilteredAssets().GetItemAt(0)->GetLabel());
     }
 
+    TEST_METHOD(TestSubsetFilter)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetSubsetFilter(0);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
+
+        // create core achievements first so core subset gets created
+        vmAssetList.mockRuntime.MockAchievement(1, "Ach1")->public_.points = 5;
+        vmAssetList.mockRuntime.MockAchievement(2, "Ach2")->public_.points = 10;
+        // create subset and subset achievements
+        vmAssetList.mockRuntime.MockSubset(555, "Bonus");
+        vmAssetList.mockRuntime.MockSubsetAchievement(555, 3, "Ach3")->public_.points = 25;
+        auto* pAch4 = vmAssetList.mockRuntime.MockSubsetAchievement(555, 4, "Ach4");
+        pAch4->public_.points = 50;
+        pAch4->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+
+        vmAssetList.mockGameContext.InitializeFromAchievementRuntime();
+        vmAssetList.mockRuntime.SyncAssets();
+        vmAssetList.mockGameContext.NotifyActiveGameChanged();
+
+        Assert::AreEqual({2U}, vmAssetList.Subsets().Count());
+        Assert::AreEqual({0U}, vmAssetList.Subsets().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"Game Title"), vmAssetList.Subsets().GetItemAt(0)->GetLabel());
+        Assert::AreEqual({555U}, vmAssetList.Subsets().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Bonus"), vmAssetList.Subsets().GetItemAt(1)->GetLabel());
+
+        Assert::AreEqual({2U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual({2U}, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
+        Assert::AreEqual({2U}, vmAssetList.GetAchievementCount());
+        Assert::AreEqual({15U}, vmAssetList.GetTotalPoints());
+
+        vmAssetList.SetSubsetFilter(555);
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual({3U}, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual({1U}, vmAssetList.GetAchievementCount());
+        Assert::AreEqual({25U}, vmAssetList.GetTotalPoints());
+
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual({4U}, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual({1U}, vmAssetList.GetAchievementCount());
+        Assert::AreEqual({50U}, vmAssetList.GetTotalPoints());
+
+        vmAssetList.SetSubsetFilter(0);
+        Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestCreateNewAchievementSubset)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockUserContext.Initialize("User1", "FOO");
+        vmAssetList.SetSubsetFilter(0);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
+
+        vmAssetList.mockRuntime.MockAchievement(1, "Ach1")->public_.points = 5;
+        vmAssetList.mockRuntime.MockSubset(555, "Bonus");
+        vmAssetList.mockRuntime.MockSubsetAchievement(555, 3, "Ach3")->public_.points = 25;
+
+        vmAssetList.mockGameContext.InitializeFromAchievementRuntime();
+        vmAssetList.mockRuntime.SyncAssets();
+        vmAssetList.mockGameContext.NotifyActiveGameChanged();
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::AreEqual({2U}, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&) {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual({3U}, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
+        Assert::AreEqual(0U, vmAssetList.GetSubsetFilter());
+
+        const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({111000001U}, pAsset->GetId());
+        Assert::AreEqual(0, pAsset->GetPoints());
+
+        // and loaded in the editor, which should be shown (local achievement will always have ID 0)
+        Assert::AreEqual({0U}, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsTrue(bEditorShown);
+        bEditorShown = false;
+
+        // achievement should be associated to core subset
+        const auto* pAch = vmAssetList.mockGameContext.Assets().FindAchievement({111000001U});
+        Expects(pAch != nullptr);
+        Assert::AreEqual(0U, pAch->GetSubsetID());
+
+        // reset the filter for the subset
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
+        vmAssetList.SetSubsetFilter(555U);
+
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual({3U}, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        // achievement should be associated to bonus subset
+        pAch = vmAssetList.mockGameContext.Assets().FindAchievement({111000002U});
+        Expects(pAch != nullptr);
+        Assert::AreEqual(555U, pAch->GetSubsetID());
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual({4U}, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
+        Assert::AreEqual(555U, vmAssetList.GetSubsetFilter());
+
+        pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+    }
+
     TEST_METHOD(TestSyncFilteredItem)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         auto pAchievement = std::make_unique<ra::data::models::AchievementModel>();
         pAchievement->SetID(1U);
@@ -1259,7 +1389,7 @@ public:
     TEST_METHOD(TestSyncAddItem)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         // between this test and TestSyncFilteredItem, we can validate each of the synced properties are
         // correctly handled when an item is added to the list. TestSyncFilteredItem will also test to make
@@ -1290,7 +1420,7 @@ public:
     TEST_METHOD(TestUpdateButtonsNoGame)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
         vmAssetList.ForceUpdateButtons();
@@ -1317,7 +1447,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
         vmAssetList.ForceUpdateButtons();
@@ -1333,7 +1463,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -1352,7 +1482,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -1373,7 +1503,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Active);
 
@@ -1395,7 +1525,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Active);
 
@@ -1419,7 +1549,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
@@ -1439,7 +1569,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Active);
 
@@ -1497,7 +1627,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Active);
 
@@ -1550,7 +1680,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Active);
 
@@ -1567,7 +1697,7 @@ public:
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
         Assert::IsFalse(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
         vmAssetList.ForceUpdateButtons();
@@ -1583,7 +1713,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetName(L"Modified");       
 
@@ -1605,7 +1735,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(0)->SetName(L"Modified");
 
@@ -1628,7 +1758,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -1666,7 +1796,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.AddNewAchievement(5, L"Ach1", L"Test1", L"12345", "0xH1234=1");
         vmAssetList.AddNewAchievement(10, L"Ach2", L"Test2", L"12345", "0xH1234=2");
 
@@ -1688,7 +1818,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetName(L"Modified");
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->UpdateLocalCheckpoint();
@@ -1711,7 +1841,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(0)->SetName(L"Modified");
         vmAssetList.mockGameContext.Assets().GetItemAt(0)->UpdateLocalCheckpoint();
@@ -1734,7 +1864,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -1774,7 +1904,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
 
@@ -1796,7 +1926,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetName(L"Modified");
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->UpdateLocalCheckpoint();
@@ -1820,7 +1950,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
 
@@ -1841,7 +1971,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -1868,7 +1998,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Active);
 
@@ -1900,7 +2030,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -1929,7 +2059,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Active);
 
@@ -1965,7 +2095,7 @@ public:
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(0)->SetState(AssetState::Active);
 
@@ -1990,7 +2120,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -2018,7 +2148,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         auto* pAsset = vmAssetList.mockGameContext.Assets().GetItemAt(2); // second achievement is unofficial
@@ -2059,7 +2189,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         auto* pAsset = vmAssetList.mockGameContext.Assets().GetItemAt(2); // second achievement is unofficial
@@ -2101,7 +2231,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
 
         auto* pAsset = vmAssetList.mockGameContext.Assets().GetItemAt(2); // second achievement is unofficial
@@ -2142,7 +2272,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.AddThreeAchievements();
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Primed);
         const auto nAchievementId = vmAssetList.mockGameContext.Assets().GetItemAt(2)->GetID();
@@ -2178,7 +2308,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.SetAssetTypeFilter(AssetType::Leaderboard);
         vmAssetList.AddLeaderboard();
         vmAssetList.mockGameContext.Assets().GetItemAt(0)->SetState(AssetState::Primed);
@@ -2223,7 +2353,7 @@ public:
     TEST_METHOD(TestSaveSelectedLocalModified)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.MockGameId(22U);
         vmAssetList.AddNewAchievement(5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddNewAchievement(7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
@@ -2289,7 +2419,7 @@ public:
     TEST_METHOD(TestSaveSelectedUnofficialModified)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
@@ -2711,7 +2841,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
 
         bool bDialogSeen = false;
         vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -2751,7 +2881,7 @@ public:
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 6, L"Test2", L"Desc2", L"12345", "0xH1234=2");
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 7, L"Test3", L"Desc3", L"12345", "0xH1234=3");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
 
         bool bDialogSeen = false;
         vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -2800,7 +2930,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
         vmAssetList.SetValidationError(1U, L"Test excuse");
 
         bool bDialogSeen = false;
@@ -2833,7 +2963,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
         vmAssetList.SetPublishServerError(1U, "Not allowed.");
 
         bool bDialogSeen = false;
@@ -2867,7 +2997,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "P:P:0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
 
         bool bDialogSeen = false;
         vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -2936,7 +3066,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.SetPublishServerError(1U, "Not allowed.");
 
         bool bDialogSeen = false;
@@ -3069,7 +3199,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.mockGameContext.SetGameTitle(L"GameName");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
 
         vmAssetList.MockUserFileContents("111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
 
@@ -3141,7 +3271,7 @@ public:
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         bool bEditorShown = false;
         vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
@@ -3156,7 +3286,7 @@ public:
         // new Local achievement should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -3178,7 +3308,7 @@ public:
         vmAssetList.CreateNew();
         Assert::AreEqual({ 4U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
         pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -3213,7 +3343,7 @@ public:
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         bool bEditorShown = false;
         vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
@@ -3242,7 +3372,7 @@ public:
         // new Local achievement should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -3268,19 +3398,19 @@ public:
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::All);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::All);
         vmAssetList.ForceUpdateButtons();
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::All, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::All, vmAssetList.GetCategoryFilter());
 
         vmAssetList.CreateNew();
 
         // new Local achievement should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 3U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::All, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::All, vmAssetList.GetCategoryFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(2);
         Expects(pAsset != nullptr);
@@ -3353,7 +3483,7 @@ public:
         // new Local achievement should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
         Assert::AreEqual(ra::data::models::AssetType::Achievement, vmAssetList.GetAssetTypeFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
@@ -3400,7 +3530,7 @@ public:
         // new Local leaderboard should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
         Assert::AreEqual(ra::data::models::AssetType::Leaderboard, vmAssetList.GetAssetTypeFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
@@ -3457,7 +3587,7 @@ public:
         // new Local achievement should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
         Assert::AreEqual(ra::data::models::AssetType::None, vmAssetList.GetAssetTypeFilter());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
@@ -3504,7 +3634,7 @@ public:
         // new Local leaderboard should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
         Assert::AreEqual(ra::data::models::AssetType::None, vmAssetList.GetAssetTypeFilter());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
@@ -3550,7 +3680,7 @@ public:
         // no new item should have been created. existing filters should be maintained
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
         Assert::AreEqual(ra::data::models::AssetType::None, vmAssetList.GetAssetTypeFilter());
 
         // editor should not be opened
@@ -3580,7 +3710,7 @@ public:
         // new Local rich presence should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
         Assert::AreEqual(ra::data::models::AssetType::RichPresence, vmAssetList.GetAssetTypeFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
@@ -3622,7 +3752,7 @@ public:
         // existing Local rich presence should be focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
         Assert::AreEqual(ra::data::models::AssetType::RichPresence, vmAssetList.GetAssetTypeFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
@@ -3649,7 +3779,7 @@ public:
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
@@ -3666,7 +3796,7 @@ public:
         // new Local achievement should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -3694,7 +3824,7 @@ public:
         vmAssetList.CloneSelected();
         Assert::AreEqual({ 4U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
         pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -3715,7 +3845,7 @@ public:
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
@@ -3747,7 +3877,7 @@ public:
         // new Local achievement should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -3780,7 +3910,7 @@ public:
         const std::wstring sLocalBadgeName = L"local\\1234.png";
 
         vmAssetList.SetGameId(22U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         auto* pSourceAchievement = vmAssetList.mockGameContext.Assets().FindAchievement(2);
         Expects(pSourceAchievement != nullptr);
@@ -3804,7 +3934,7 @@ public:
         // new Local achievement should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(1);
         Expects(pAsset != nullptr);
@@ -3837,11 +3967,11 @@ public:
         vmAssetList.SetGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::All);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::All);
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::All, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::All, vmAssetList.GetCategoryFilter());
 
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
@@ -3851,7 +3981,7 @@ public:
         // new Local achievement should be created and focused without changing the filter category
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 3U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::All, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::All, vmAssetList.GetCategoryFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -3870,7 +4000,7 @@ public:
         AssetListViewModelHarness vmAssetList;
 
         vmAssetList.SetGameId(22U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         auto* pSourceAchievement = vmAssetList.mockGameContext.Assets().FindAchievement(1);
         Expects(pSourceAchievement != nullptr);
@@ -3889,7 +4019,7 @@ public:
         // new Local achievement should be created and focused
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
         Assert::AreEqual(AssetListViewModel::SpecialFilter::All, vmAssetList.GetSpecialFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
@@ -3917,7 +4047,7 @@ public:
 
         Assert::AreEqual({ 4U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 4U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         vmAssetList.FilteredAssets().GetItemAt(3)->SetSelected(true);
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
@@ -3928,7 +4058,7 @@ public:
         // new Local achievements should be created and focused
         Assert::AreEqual({ 6U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
         auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -3979,7 +4109,7 @@ public:
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
         vmAssetList.SetValidationError(vmAssetList.FilteredAssets().GetItemAt(1)->GetId(), L"Error message goes here.");
@@ -4011,7 +4141,7 @@ public:
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
@@ -4028,7 +4158,7 @@ public:
         // new Local achievement should be created and focused
         Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
         auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -4089,7 +4219,7 @@ public:
         vmAssetList.CloneSelected();
 
         // new Local achievement should be created and focused
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
 
         // new achievement should have updated uncommitted reference count to badge
@@ -4181,7 +4311,7 @@ public:
         vmAssetList.CloneSelected();
 
         // new Local achievement should be created and focused
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
 
         // new achievement should have updated uncommitted reference count to badge
@@ -4273,7 +4403,7 @@ public:
 
         Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
@@ -4290,7 +4420,7 @@ public:
         // new Local leaderboard should be created and focused
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -4564,7 +4694,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(ResetButtonState::Reset);
@@ -4591,7 +4721,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(ResetButtonState::Reset);
@@ -4627,7 +4757,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(ResetButtonState::Reset);
@@ -4666,7 +4796,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Local, L"Leaderboard1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::Leaderboard);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
@@ -4707,7 +4837,7 @@ public:
         vmAssetList.MockGameId(22U);
         vmAssetList.AddNewAchievement(5, L"Ach1", L"Test1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test2", L"Desc2", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
 
@@ -4743,7 +4873,7 @@ public:
         vmAssetList.MockGameId(22U);
         vmAssetList.AddNewAchievement(5, L"Ach1", L"Test1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test2", L"Desc2", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
 
         // if new and non-new items are selected, allow the user to reset. new items will be discarded
         vmAssetList.ForceUpdateButtons();
@@ -4962,7 +5092,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(RevertButtonState::DeleteAll);
@@ -4997,7 +5127,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(RevertButtonState::Delete);
@@ -5032,7 +5162,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(RevertButtonState::Delete);
@@ -5064,7 +5194,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
 
         auto* vmAsset = vmAssetList.mockGameContext.Assets().GetItemAt(0);
@@ -5126,7 +5256,7 @@ public:
         });
 
         // deleting first asset should update badge reference counts
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
         auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -5254,7 +5384,7 @@ public:
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(RevertButtonState::DeleteAll);
 
@@ -5302,7 +5432,7 @@ public:
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         auto* pItem = vmAssetList.FilteredAssets().GetItemAt(1);
         Expects(pItem != nullptr);
@@ -5328,7 +5458,7 @@ public:
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         auto* pItem = vmAssetList.FilteredAssets().GetItemAt(1);
         Expects(pItem != nullptr);
@@ -5355,7 +5485,7 @@ public:
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
-        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
         auto* pItem = vmAssetList.FilteredAssets().GetItemAt(1);
         Expects(pItem != nullptr);
@@ -5402,7 +5532,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
         vmAssetList.AddRichPresence("Display:\nTest\n");
 
@@ -5421,7 +5551,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.SetAssetTypeFilter(AssetType::None);
         vmAssetList.AddRichPresence("Display:\nTest\n");
         vmAssetList.AddThreeAchievements();
@@ -5442,7 +5572,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
         vmAssetList.AddRichPresence("Display:\nTest\n");
         vmAssetList.mockGameContext.Assets().FindRichPresence()->SetCategory(AssetCategory::Local);
@@ -5462,7 +5592,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
-        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
         vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
 
         vmAssetList.AddRichPresence("Display:\nTest\n");

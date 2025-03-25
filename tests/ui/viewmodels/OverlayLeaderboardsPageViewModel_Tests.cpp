@@ -57,11 +57,11 @@ private:
             return nullptr;
         }
 
-        void SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::FilterCategory nCategory)
+        void SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter nCategory)
         {
             auto& pAssetList = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
             pAssetList.SetAssetTypeFilter(ra::data::models::AssetType::Leaderboard);
-            pAssetList.SetFilterCategory(nCategory);
+            pAssetList.SetCategoryFilter(nCategory);
         }
 
         void AssertHeader(gsl::index nIndex, const std::wstring& sExpectedLabel)
@@ -157,7 +157,7 @@ public:
         auto* pLbd2 = leaderboardsPage.mockAchievementRuntime.MockLocalLeaderboard(2);
         auto* pLbd3 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(3);
 
-        leaderboardsPage.SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
+        leaderboardsPage.SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Local);
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
@@ -259,7 +259,7 @@ public:
         pLbd2->public_.state = RC_CLIENT_LEADERBOARD_STATE_DISABLED;
         auto* pLbd3 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(3);
 
-        leaderboardsPage.SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
+        leaderboardsPage.SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Local);
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 

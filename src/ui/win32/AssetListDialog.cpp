@@ -178,6 +178,7 @@ public:
 AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     : DialogBase(vmAssetList),
       m_bindAssets(vmAssetList),
+      m_bindSubsets(vmAssetList),
       m_bindCategories(vmAssetList),
       m_bindSpecialFilters(vmAssetList),
       m_bindAssetTypeFilters(vmAssetList),
@@ -186,9 +187,13 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Near, RelativePosition::After, "Achievements");
 
+    m_bindSubsets.BindItems(vmAssetList.Subsets(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
+        ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
+    m_bindSubsets.BindSelectedItem(AssetListViewModel::SubsetFilterProperty);
+
     m_bindCategories.BindItems(vmAssetList.Categories(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
         ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
-    m_bindCategories.BindSelectedItem(AssetListViewModel::FilterCategoryProperty);
+    m_bindCategories.BindSelectedItem(AssetListViewModel::CategoryFilterProperty);
 
     m_bindSpecialFilters.BindItems(vmAssetList.SpecialFilters(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
        ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
@@ -271,6 +276,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindKeepActive.BindCheck(AssetListViewModel::KeepActiveProperty);
 
     using namespace ra::bitwise_ops;
+    SetAnchor(IDC_RA_GAMENAME, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_CATEGORY, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_SPECIAL_FILTER, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_LBL_ID, Anchor::Top | Anchor::Right);
@@ -283,13 +289,13 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     SetAnchor(IDC_RA_LISTACHIEVEMENTS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_RESET_ACH, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_CHK_ACTIVE, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_COMMIT_ACH, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_DOWNLOAD_ACH, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_REVERTSELECTED, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_NEW_ASSET, Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_CLONE_ASSET, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_NEW_ASSET, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_CLONE_ASSET, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_COMMIT_ACH, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_DOWNLOAD_ACH, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_REVERTSELECTED, Anchor::Bottom | Anchor::Right);
 
-    SetMinimumSize(640, 293);
+    SetMinimumSize(570, 293);
 }
 
 BOOL AssetListDialog::OnInitDialog()
@@ -298,6 +304,7 @@ BOOL AssetListDialog::OnInitDialog()
     m_bindProcessingActive.SetControl(*this, IDC_RA_CHKACHPROCESSINGACTIVE);
     m_bindKeepActive.SetControl(*this, IDC_RA_CHK_ACTIVE);
 
+    m_bindSubsets.SetControl(*this, IDC_RA_GAMENAME);
     m_bindCategories.SetControl(*this, IDC_RA_CATEGORY);
     m_bindSpecialFilters.SetControl(*this, IDC_RA_SPECIAL_FILTER);
     m_bindAssetTypeFilters.SetControl(*this, IDC_RA_TYPE_FILTER);

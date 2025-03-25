@@ -43,10 +43,13 @@ public:
 
     void MockGame();
 
+    void MockSubset(uint32_t nSubsetId, const std::string& sName);
+
     rc_client_achievement_info_t* MockAchievement(uint32_t nId, const char* sTitle = nullptr);
     rc_client_achievement_info_t* MockAchievementWithTrigger(uint32_t nId, const char* sTitle = nullptr);
     rc_client_achievement_info_t* MockUnofficialAchievement(uint32_t nId, const char* sTitle = nullptr);
     rc_client_achievement_info_t* MockLocalAchievement(uint32_t nId, const char* sTitle = nullptr);
+    rc_client_achievement_info_t* MockSubsetAchievement(uint32_t nSubsetId, uint32_t nId, const char* sTitle = nullptr);
 
     rc_client_achievement_info_t* ActivateAchievement(uint32_t nId, const std::string& sTrigger);
     void UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode);

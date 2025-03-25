@@ -497,8 +497,8 @@ public:
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 
-        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(
-            ra::ui::viewmodels::AssetListViewModel::FilterCategory::Core);
+        achievementsPage.mockWindowManager.AssetList.SetCategoryFilter(
+            ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Core);
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
@@ -541,8 +541,8 @@ public:
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 
-        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(
-            ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
+        achievementsPage.mockWindowManager.AssetList.SetCategoryFilter(
+            ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Local);
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
@@ -768,7 +768,7 @@ public:
     TEST_METHOD(TestFetchItemDetailLocal)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        achievementsPage.mockWindowManager.AssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         achievementsPage.mockAchievementRuntime.MockGame();
         const auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(ra::data::context::GameAssets::FirstLocalId);
 

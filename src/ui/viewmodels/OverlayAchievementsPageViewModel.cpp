@@ -116,7 +116,7 @@ void OverlayAchievementsPageViewModel::Refresh()
     std::vector<rc_client_subset_info_t*> vDeactivatedSubsets;
     int nCategory = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE_AND_UNOFFICIAL;
     const auto& pAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
-    if (pAssetList.GetFilterCategory() == ra::ui::viewmodels::AssetListViewModel::FilterCategory::Core)
+    if (pAssetList.GetCategoryFilter() == ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Core)
     {
         nCategory = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
 

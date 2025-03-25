@@ -107,7 +107,7 @@ public:
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.mockGameContext.SetGameId(1U);
         vmBrokenAchievements.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
-        vmBrokenAchievements.mockWindowManager.AssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmBrokenAchievements.mockWindowManager.AssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)

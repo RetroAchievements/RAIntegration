@@ -97,6 +97,14 @@ public:
     void SetKeepActive(bool bValue) { SetValue(KeepActiveProperty, bValue); }
 
     /// <summary>
+    /// Gets the list of asset subsets.
+    /// </summary>
+    const LookupItemViewModelCollection& Subsets() const noexcept 
+    {
+        return m_vSubsets;
+    }
+
+    /// <summary>
     /// Gets the list of asset states.
     /// </summary>
     const LookupItemViewModelCollection& States() const noexcept
@@ -168,7 +176,23 @@ public:
     bool CanClone() const { return GetValue(CanCloneProperty); }
     void CloneSelected();
 
-    enum class FilterCategory
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the subset filter.
+    /// </summary>
+    static const IntModelProperty SubsetFilterProperty;
+
+    /// <summary>
+    /// Gets the subset filter.
+    /// </summary>
+    uint32_t GetSubsetFilter() const { return ra::to_unsigned(GetValue(SubsetFilterProperty)); }
+
+    /// <summary>
+    /// Sets the subset filter.
+    /// </summary>
+    void SetSubsetFilter(uint32_t nValue) { SetValue(SubsetFilterProperty, ra::to_signed(nValue)); }
+
+
+    enum class CategoryFilter
     {
         Local = ra::etoi(ra::data::models::AssetCategory::Local),
         All = -1,
@@ -177,19 +201,19 @@ public:
     };
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the filter category.
+    /// The <see cref="ModelProperty" /> for the category filter.
     /// </summary>
-    static const IntModelProperty FilterCategoryProperty;
+    static const IntModelProperty CategoryFilterProperty;
 
     /// <summary>
     /// Gets the filter category.
     /// </summary>
-    FilterCategory GetFilterCategory() const { return ra::itoe<FilterCategory>(GetValue(FilterCategoryProperty)); }
+    CategoryFilter GetCategoryFilter() const { return ra::itoe<CategoryFilter>(GetValue(CategoryFilterProperty)); }
 
     /// <summary>
     /// Sets the filter category.
     /// </summary>
-    void SetFilterCategory(FilterCategory nValue) { SetValue(FilterCategoryProperty, ra::etoi(nValue)); }
+    void SetCategoryFilter(CategoryFilter nValue) { SetValue(CategoryFilterProperty, ra::etoi(nValue)); }
 
     enum class SpecialFilter
     {
@@ -269,8 +293,8 @@ public:
 protected:
     virtual void Publish(std::vector<ra::data::models::AssetModelBase*>& vAssets);
     bool ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly);
-    virtual void ValidateAchievementForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::AchievementModel& pAchievement) const noexcept(false);
-    virtual void ValidateLeaderboardForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::LeaderboardModel& pAchievement) const noexcept(false);
+    virtual void ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const noexcept(false);
+    virtual void ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pAchievement) const noexcept(false);
     virtual bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const;
 
 private:
@@ -320,6 +344,7 @@ private:
 
     ra::AchievementID m_nNextLocalId = FirstLocalId;
 
+    LookupItemViewModelCollection m_vSubsets;
     LookupItemViewModelCollection m_vStates;
     LookupItemViewModelCollection m_vCategories;
     LookupItemViewModelCollection m_vSpecialFilters;

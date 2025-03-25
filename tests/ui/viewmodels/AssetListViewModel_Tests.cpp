@@ -1258,6 +1258,88 @@ public:
         Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
     }
 
+    TEST_METHOD(TestCreateNewAchievementSubset)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockUserContext.Initialize("User1", "FOO");
+        vmAssetList.SetSubsetFilter(0);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
+
+        vmAssetList.mockRuntime.MockAchievement(1, "Ach1")->public_.points = 5;
+        vmAssetList.mockRuntime.MockSubset(555, "Bonus");
+        vmAssetList.mockRuntime.MockSubsetAchievement(555, 3, "Ach3")->public_.points = 25;
+
+        vmAssetList.mockGameContext.InitializeFromAchievementRuntime();
+        vmAssetList.mockRuntime.SyncAssets();
+        vmAssetList.mockGameContext.NotifyActiveGameChanged();
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::AreEqual({2U}, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&) {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual({3U}, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
+        Assert::AreEqual(0U, vmAssetList.GetSubsetFilter());
+
+        const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({111000001U}, pAsset->GetId());
+        Assert::AreEqual(0, pAsset->GetPoints());
+
+        // and loaded in the editor, which should be shown (local achievement will always have ID 0)
+        Assert::AreEqual({0U}, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsTrue(bEditorShown);
+        bEditorShown = false;
+
+        // achievement should be associated to core subset
+        const auto* pAch = vmAssetList.mockGameContext.Assets().FindAchievement({111000001U});
+        Expects(pAch != nullptr);
+        Assert::AreEqual(0U, pAch->GetSubsetID());
+
+        // reset the filter for the subset
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
+        vmAssetList.SetSubsetFilter(555U);
+
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual({3U}, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        // achievement should be associated to bonus subset
+        pAch = vmAssetList.mockGameContext.Assets().FindAchievement({111000002U});
+        Expects(pAch != nullptr);
+        Assert::AreEqual(555U, pAch->GetSubsetID());
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual({4U}, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
+        Assert::AreEqual(555U, vmAssetList.GetSubsetFilter());
+
+        pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+    }
+
     TEST_METHOD(TestSyncFilteredItem)
     {
         AssetListViewModelHarness vmAssetList;

@@ -132,11 +132,14 @@ void AssetListViewModel::OnActiveGameChanged()
         std::vector<std::pair<uint32_t, std::wstring>> vSubsets;
         pAchievementRuntime.GetSubsets(vSubsets);
 
-        // Core asset have SubsetId of 0, even though core subset is the game id.
-        vSubsets.at(0).first = 0;
+        if (!vSubsets.empty())
+        {
+            // Core asset have SubsetId of 0, even though core subset is the game id.
+            vSubsets.at(0).first = 0;
 
-        for (const auto& pair : vSubsets)
-            m_vSubsets.Add(pair.first, pair.second);
+            for (const auto& pair : vSubsets)
+                m_vSubsets.Add(pair.first, pair.second);
+        }
     }
 
     m_vSubsets.EndUpdate();
@@ -1728,11 +1731,13 @@ void AssetListViewModel::CreateNew()
         case ra::data::models::AssetType::Achievement:
             RA_LOG_INFO("Creating new achievement");
             pNewAsset = &pGameContext.Assets().NewAchievement();
+            pNewAsset->SetSubsetID(GetSubsetFilter());
             break;
 
         case ra::data::models::AssetType::Leaderboard:
             RA_LOG_INFO("Creating new leaderboard");
             pNewAsset = &pGameContext.Assets().NewLeaderboard();
+            pNewAsset->SetSubsetID(GetSubsetFilter());
             break;
 
         case ra::data::models::AssetType::RichPresence:

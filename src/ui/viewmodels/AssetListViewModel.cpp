@@ -133,7 +133,7 @@ void AssetListViewModel::OnActiveGameChanged()
         pAchievementRuntime.GetSubsets(vSubsets);
 
         // Core asset have SubsetId of 0, even though core subset is the game id.
-        vSubsets[0].first = 0;
+        vSubsets.at(0).first = 0;
 
         for (const auto& pair : vSubsets)
             m_vSubsets.Add(pair.first, pair.second);

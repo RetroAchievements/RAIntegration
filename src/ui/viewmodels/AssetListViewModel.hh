@@ -176,7 +176,23 @@ public:
     bool CanClone() const { return GetValue(CanCloneProperty); }
     void CloneSelected();
 
-    enum class FilterCategory
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the subset filter.
+    /// </summary>
+    static const IntModelProperty SubsetFilterProperty;
+
+    /// <summary>
+    /// Gets the subset filter.
+    /// </summary>
+    uint32_t GetSubsetFilter() const { return ra::to_unsigned(GetValue(SubsetFilterProperty)); }
+
+    /// <summary>
+    /// Sets the subset filter.
+    /// </summary>
+    void SetSubsetFilter(uint32_t nValue) { SetValue(SubsetFilterProperty, ra::to_signed(nValue)); }
+
+
+    enum class CategoryFilter
     {
         Local = ra::etoi(ra::data::models::AssetCategory::Local),
         All = -1,
@@ -185,19 +201,19 @@ public:
     };
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the filter category.
+    /// The <see cref="ModelProperty" /> for the category filter.
     /// </summary>
-    static const IntModelProperty FilterCategoryProperty;
+    static const IntModelProperty CategoryFilterProperty;
 
     /// <summary>
     /// Gets the filter category.
     /// </summary>
-    FilterCategory GetFilterCategory() const { return ra::itoe<FilterCategory>(GetValue(FilterCategoryProperty)); }
+    CategoryFilter GetCategoryFilter() const { return ra::itoe<CategoryFilter>(GetValue(CategoryFilterProperty)); }
 
     /// <summary>
     /// Sets the filter category.
     /// </summary>
-    void SetFilterCategory(FilterCategory nValue) { SetValue(FilterCategoryProperty, ra::etoi(nValue)); }
+    void SetCategoryFilter(CategoryFilter nValue) { SetValue(CategoryFilterProperty, ra::etoi(nValue)); }
 
     enum class SpecialFilter
     {

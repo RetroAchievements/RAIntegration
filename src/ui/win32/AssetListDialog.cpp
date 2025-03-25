@@ -189,11 +189,11 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
 
     m_bindSubsets.BindItems(vmAssetList.Subsets(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
         ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
-    //m_bindSubsets.BindSelectedItem(AssetListViewModel::FilterSubsetProperty);
+    m_bindSubsets.BindSelectedItem(AssetListViewModel::SubsetFilterProperty);
 
     m_bindCategories.BindItems(vmAssetList.Categories(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
         ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
-    m_bindCategories.BindSelectedItem(AssetListViewModel::FilterCategoryProperty);
+    m_bindCategories.BindSelectedItem(AssetListViewModel::CategoryFilterProperty);
 
     m_bindSpecialFilters.BindItems(vmAssetList.SpecialFilters(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
        ra::ui::viewmodels::LookupItemViewModel::LabelProperty);

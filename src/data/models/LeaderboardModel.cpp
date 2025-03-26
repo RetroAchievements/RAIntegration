@@ -198,17 +198,18 @@ void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
     if (!bIsActive && bWasActive)
     {
         const auto* pLeaderboard = m_pLeaderboard->lboard;
-        Expects(pLeaderboard != nullptr);
-
-        m_pCapturedStartTriggerHits.Capture(&pLeaderboard->start, GetStartTrigger());
-        m_pCapturedSubmitTriggerHits.Capture(&pLeaderboard->submit, GetSubmitTrigger());
-        m_pCapturedCancelTriggerHits.Capture(&pLeaderboard->cancel, GetCancelTrigger());
-        m_pCapturedValueDefinitionHits.Capture(&pLeaderboard->value, GetValueDefinition());
-
-        if (pLeaderboard->state == RC_LBOARD_STATE_STARTED)
+        if (pLeaderboard != nullptr)
         {
-            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-            pRuntime.ReleaseLeaderboardTracker(m_pLeaderboard->public_.id);
+            m_pCapturedStartTriggerHits.Capture(&pLeaderboard->start, GetStartTrigger());
+            m_pCapturedSubmitTriggerHits.Capture(&pLeaderboard->submit, GetSubmitTrigger());
+            m_pCapturedCancelTriggerHits.Capture(&pLeaderboard->cancel, GetCancelTrigger());
+            m_pCapturedValueDefinitionHits.Capture(&pLeaderboard->value, GetValueDefinition());
+
+            if (pLeaderboard->state == RC_LBOARD_STATE_STARTED)
+            {
+                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+                pRuntime.ReleaseLeaderboardTracker(m_pLeaderboard->public_.id);
+            }
         }
     }
     else if (bIsActive && !bWasActive)

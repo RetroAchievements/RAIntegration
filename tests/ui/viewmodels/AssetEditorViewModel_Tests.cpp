@@ -775,6 +775,53 @@ public:
         Assert::AreEqual(std::wstring(L"No Cancel condition"), editor.GetAssetValidationWarning());
     }
 
+    TEST_METHOD(TestActivateNewLeaderboard)
+    {
+        AssetEditorViewModelHarness editor;
+
+        editor.mockRuntime.MockLocalLeaderboard(111000001U, "Leaderboard");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* leaderboard = editor.mockGameContext.Assets().FindLeaderboard(111000001U);
+        Expects(leaderboard != nullptr);
+
+        editor.LoadAsset(leaderboard);
+
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
+
+        // attempt to start incomplete leaderboard should fail
+        bool bDialogSeen = false;
+        editor.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](MessageBoxViewModel& vmMessageBox) {
+            Assert::AreEqual(std::wstring(L"Activation failed."), vmMessageBox.GetMessage());
+            bDialogSeen = true;
+            return DialogResult::OK;
+        });
+
+        editor.SetState(AssetState::Waiting);
+        Assert::IsTrue(bDialogSeen);
+
+        // rely on leaderboard to deactivate itself
+        leaderboard->DoFrame();
+        Assert::AreEqual(AssetState::Inactive, editor.GetState());
+
+        // set additional properties so leaderboard is valid and attempt to activate again
+        leaderboard->SetStartTrigger("0=1");
+        leaderboard->SetCancelTrigger("0=1");
+        leaderboard->SetSubmitTrigger("0=1");
+        leaderboard->SetValueDefinition("0=1");
+        leaderboard->Validate();
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+
+        bDialogSeen = false;
+        editor.SetState(AssetState::Waiting);
+        Assert::IsFalse(bDialogSeen);
+
+        leaderboard->DoFrame();
+        Assert::AreEqual(AssetState::Waiting, editor.GetState());
+    }
+
     TEST_METHOD(TestSyncId)
     {
         AssetEditorViewModelHarness editor;

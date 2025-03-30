@@ -36,6 +36,7 @@ public:
 
     void DoFrame();
 
+    void Redraw();
     bool NeedsRedraw() const noexcept { return (m_nNeedsRedraw != 0); }
 
     class RepaintNotifyTarget

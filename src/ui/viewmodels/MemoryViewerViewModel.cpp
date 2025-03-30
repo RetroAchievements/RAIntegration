@@ -1091,6 +1091,11 @@ void MemoryViewerViewModel::DoFrame()
         m_nNeedsRedraw |= REDRAW_MEMORY;
     }
 
+    Redraw();
+}
+
+void MemoryViewerViewModel::Redraw()
+{
     if (m_nNeedsRedraw)
     {
         if (m_pRepaintNotifyTarget != nullptr)

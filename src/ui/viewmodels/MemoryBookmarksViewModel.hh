@@ -99,12 +99,12 @@ public:
         /// Gets the indirect bookmark address.
         /// </summary>
         /// <returns></returns>
-        const std::string& GetIndirectAddress() const { return m_sIndirectAddress; }
+        const std::string& GetIndirectAddress() const noexcept { return m_sIndirectAddress; }
 
         /// <summary>
         /// Gets whether or not the bookmark has an indirect bookmark address.
         /// </summary>
-        bool HasIndirectAddress() const { return !m_sIndirectAddress.empty(); }
+        bool HasIndirectAddress() const noexcept { return !m_sIndirectAddress.empty(); }
 
         /// <summary>
         /// Updates the current address from the indirect address chain.

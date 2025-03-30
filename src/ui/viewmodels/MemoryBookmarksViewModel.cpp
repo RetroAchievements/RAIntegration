@@ -195,7 +195,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Str
     LookupItemViewModel::OnValueChanged(args);
 }
 
-static const rc_operand_t* FindMeasuredOperand(const rc_value_t* pValue)
+static const rc_operand_t* FindMeasuredOperand(const rc_value_t* pValue) noexcept
 {
     const rc_condition_t* condition = pValue->conditions->conditions;
     for (; condition; condition = condition->next)
@@ -367,15 +367,16 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentAddress()
         const auto* pOperand = FindMeasuredOperand(m_pValue);
         if (pOperand != nullptr && pOperand->value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
         {
-            rc_modified_memref_t* pModifiedMemref = (rc_modified_memref_t*)pOperand->value.memref;
+            GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
+                reinterpret_cast<rc_modified_memref_t*>(pOperand->value.memref);
             if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
             {
                 rc_typed_value_t address, offset;
-                rc_evaluate_operand(&address, &pModifiedMemref->parent, NULL);
-                rc_evaluate_operand(&offset, &pModifiedMemref->modifier, NULL);
+                rc_evaluate_operand(&address, &pModifiedMemref->parent, nullptr);
+                rc_evaluate_operand(&offset, &pModifiedMemref->modifier, nullptr);
                 rc_typed_value_add(&address, &offset);
                 rc_typed_value_convert(&address, RC_VALUE_TYPE_UNSIGNED);
-                const auto nNewAddress = static_cast<ra::ByteAddress>(address.value.u32);
+                const auto nNewAddress = gsl::narrow_cast<ra::ByteAddress>(address.value.u32);
 
                 if (m_nAddress != nNewAddress)
                 {
@@ -829,8 +830,8 @@ void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::Memo
     // if there's no condition separator, it's a simple memref
     if (sSerialized.find('_') == std::string::npos)
     {
-        uint8_t size;
-        uint32_t address;
+        uint8_t size = 0;
+        uint32_t address = 0;
         const char* memaddr = sSerialized.c_str();
         if (rc_parse_memref(&memaddr, &size, &address) == RC_OK)
         {

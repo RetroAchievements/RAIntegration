@@ -696,7 +696,9 @@ void PointerInspectorViewModel::BookmarkCurrentField() const
 
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.MemoryBookmarks.AddBookmark(sDefinition);
-    pWindowManager.MemoryBookmarks.Show();
+
+    if (!pWindowManager.MemoryBookmarks.IsVisible())
+        pWindowManager.MemoryBookmarks.Show();
 }
 
 } // namespace viewmodels

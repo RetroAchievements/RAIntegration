@@ -243,7 +243,7 @@ void TriggerViewModel::PasteFromClipboard()
     // have to use internal parsing functions to decode conditions without full trigger/value
     // restriction validation (full validation will occur after new conditions are added)
     rc_preparse_state_t preparse;
-    rc_init_preparse_state(&preparse, nullptr, 0);
+    rc_init_preparse_state(&preparse);
     preparse.parse.is_value = IsValue();
     std::string sTrigger = ra::Narrow(sClipboardText);
     const char* memaddr = sTrigger.c_str();
@@ -267,7 +267,7 @@ void TriggerViewModel::PasteFromClipboard()
 
     std::string sTriggerBuffer;
     sTriggerBuffer.resize(nSize);
-    rc_reset_parse_state(&preparse.parse, sTriggerBuffer.data(), nullptr, 0);
+    rc_reset_parse_state(&preparse.parse, sTriggerBuffer.data());
     preparse.parse.is_value = IsValue();
 
     if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())

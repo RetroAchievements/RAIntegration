@@ -300,7 +300,7 @@ public:
         // MockAchievement generates triggers with their own memrefs - promote to common memref pool
         auto& runtime = GetClient()->game->runtime;
         rc_parse_state_t parse;
-        rc_init_parse_state(&parse, nullptr, nullptr, 0);
+        rc_init_parse_state(&parse, nullptr);
         parse.memrefs = runtime.memrefs;
 
         for (unsigned i = 0; i < runtime.trigger_count; ++i)

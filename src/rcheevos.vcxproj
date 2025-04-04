@@ -205,6 +205,8 @@
     <ClCompile Include="..\rcheevos\src\rhash\hash.c">
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rhash\hash_encrypted.c" />
+    <ClCompile Include="..\rcheevos\src\rhash\hash_zip.c" />
     <ClCompile Include="..\rcheevos\src\rhash\md5.c" />
   </ItemGroup>
   <ItemGroup>

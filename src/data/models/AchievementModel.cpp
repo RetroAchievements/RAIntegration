@@ -419,7 +419,7 @@ void AchievementModel::SyncTrigger()
         Expects(pGame != nullptr);
 
         rc_preparse_state_t preparse;
-        rc_init_preparse_state(&preparse, nullptr, 0);
+        rc_init_preparse_state(&preparse);
         preparse.parse.existing_memrefs = pGame->runtime.memrefs;
 
         rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
@@ -434,7 +434,7 @@ void AchievementModel::SyncTrigger()
             if (trigger_buffer)
             {
                 // populate the item, using the communal memrefs pool
-                rc_reset_parse_state(&preparse.parse, trigger_buffer, nullptr, 0);
+                rc_reset_parse_state(&preparse.parse, trigger_buffer);
                 trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
                 rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
 

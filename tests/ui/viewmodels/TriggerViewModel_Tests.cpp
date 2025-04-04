@@ -39,9 +39,14 @@ private:
             mockEmulatorContext.MockMemory(pMemory, nMemorySize);
         }
 
-        int GetEnsureVisibleConditionIndex() const
+        const std::set<unsigned int>& GetSelectedItems() const
         {
-            return GetValue(EnsureVisibleConditionIndexProperty);
+            return m_vSelectedConditions;
+        }
+
+        int GetScrollOffset() const
+        {
+            return GetValue(ScrollOffsetProperty);
         }
 
         int GetEnsureVisibleGroupIndex() const
@@ -302,17 +307,23 @@ public:
 
         TriggerMonitor pMonitor(vmTrigger);
         vmTrigger.SetSelectedGroupIndex(0);
-        vmTrigger.Conditions().Add();
+        vmTrigger.NewCondition();
         Assert::AreEqual(std::string("0xH1234=0xH2345_0xH0000=0S0xX5555=1"), pMonitor.sNewTrigger);
 
-        vmTrigger.Conditions().RemoveAt(0);
+        vmTrigger.SelectRange(1, 1, false); // deselect new condition
+        vmTrigger.SelectRange(0, 0, true); // select first condition
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [](ra::ui::viewmodels::MessageBoxViewModel&) { return DialogResult::Yes; });
+        vmTrigger.RemoveSelectedConditions();
         Assert::AreEqual(std::string("0xH0000=0S0xX5555=1"), pMonitor.sNewTrigger);
 
         vmTrigger.SetSelectedGroupIndex(1);
-        vmTrigger.Conditions().Add();
+        vmTrigger.NewCondition();
         Assert::AreEqual(std::string("0xH0000=0S0xX5555=1_0xH0000=0"), pMonitor.sNewTrigger);
 
-        vmTrigger.Conditions().RemoveAt(0);
+        vmTrigger.SelectRange(1, 1, false); // deselect new condition
+        vmTrigger.SelectRange(0, 0, true);  // select first condition
+        vmTrigger.RemoveSelectedConditions();
         Assert::AreEqual(std::string("0xH0000=0S0xH0000=0"), pMonitor.sNewTrigger);
     }
 
@@ -323,7 +334,7 @@ public:
 
         TriggerMonitor pMonitor(vmTrigger);
         vmTrigger.SetSelectedGroupIndex(0);
-        vmTrigger.Conditions().Add();
+        vmTrigger.NewCondition();
         Assert::AreEqual(std::string("0xH1234=0xH2345_0xH0000=0S0xX5555=1"), pMonitor.sNewTrigger);
 
         vmTrigger.Conditions().GetItemAt(1)->SetSourceValue(1234U);
@@ -357,7 +368,7 @@ public:
 
         TriggerMonitor pMonitor(vmTrigger);
         vmTrigger.SetSelectedGroupIndex(0);
-        vmTrigger.Conditions().Add();
+        vmTrigger.NewCondition();
         Assert::AreEqual(std::string("0xH1234=1_0xH0000=0"), pMonitor.sNewTrigger);
         Assert::AreEqual(std::string("0xH1234=1_0xH0000=0"), vmTrigger.Serialize());
 
@@ -365,7 +376,7 @@ public:
         Assert::AreEqual({ 1 }, vmTrigger.Conditions().Count());
         Assert::AreEqual(std::string("0xH1234=1"), vmTrigger.Serialize());
 
-        vmTrigger.Conditions().Add();
+        vmTrigger.NewCondition();
         Assert::AreEqual(std::string("0xH1234=1_0xH0000=0"), pMonitor.sNewTrigger);
         Assert::AreEqual(std::string("0xH1234=1_0xH0000=0"), vmTrigger.Serialize());
     }
@@ -395,17 +406,16 @@ public:
         Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
 
         Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
-        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
-        vmTrigger.Conditions().GetItemAt(2)->SetSelected(true);
+        vmTrigger.SelectRange(1, 2, true);
 
         vmTrigger.CopySelectedConditionsToClipboard();
         Assert::AreEqual(std::wstring(L"0xL65ff=11.1._R:0xT3333=1"), vmTrigger.mockClipboard.GetText());
 
-        vmTrigger.Conditions().GetItemAt(3)->SetSelected(true);
+        vmTrigger.SelectRange(3, 3, true);
         vmTrigger.CopySelectedConditionsToClipboard();
         Assert::AreEqual(std::wstring(L"0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.mockClipboard.GetText());
 
-        vmTrigger.Conditions().GetItemAt(2)->SetSelected(false);
+        vmTrigger.SelectRange(2, 2, false);
         vmTrigger.CopySelectedConditionsToClipboard();
         Assert::AreEqual(std::wstring(L"0xL65ff=11.1._0xW5555=16"), vmTrigger.mockClipboard.GetText());
     }
@@ -420,11 +430,11 @@ public:
         vmTrigger.CopySelectedConditionsToClipboard();
         Assert::AreEqual(std::wstring(L"0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.mockClipboard.GetText());
 
-        vmTrigger.Conditions().GetItemAt(2)->SetSelected(true);
+        vmTrigger.SelectRange(2, 2, true);
         vmTrigger.CopySelectedConditionsToClipboard();
         Assert::AreEqual(std::wstring(L"R:0xT3333=1"), vmTrigger.mockClipboard.GetText());
 
-        vmTrigger.Conditions().GetItemAt(2)->SetSelected(false);
+        vmTrigger.SelectRange(2, 2, false);
         vmTrigger.CopySelectedConditionsToClipboard();
         Assert::AreEqual(std::wstring(L"0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.mockClipboard.GetText());
     }
@@ -574,9 +584,9 @@ public:
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=16");
         Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
-        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+        vmTrigger.SelectRange(0, 0, true);
 
-        vmTrigger.mockClipboard.SetText(L"0xL65FF=11.1._R:0xT3333=1");
+        vmTrigger.mockClipboard.SetText(L"0xL65ff=11.1._R:0xT3333=1");
         vmTrigger.PasteFromClipboard();
 
         Assert::IsFalse(vmTrigger.mockDesktop.WasDialogShown());
@@ -596,8 +606,7 @@ public:
         Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
 
         Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
-        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
-        vmTrigger.Conditions().GetItemAt(2)->SetSelected(true);
+        vmTrigger.SelectRange(1, 2, true);
 
         // two items selected
         bool bDialogShown = false;
@@ -631,7 +640,7 @@ public:
             return DialogResult::Yes;
         });
 
-        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+        vmTrigger.SelectRange(0, 0, true);
         vmTrigger.RemoveSelectedConditions();
         Assert::IsTrue(bDialogShown);
         Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
@@ -655,8 +664,7 @@ public:
         Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
 
         Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
-        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
-        vmTrigger.Conditions().GetItemAt(2)->SetSelected(true);
+        vmTrigger.SelectRange(1, 2, true);
 
         // two items selected
         bool bDialogShown = false;
@@ -674,11 +682,6 @@ public:
         Assert::IsTrue(bDialogShown);
 
         Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
-        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
-        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
-        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
-        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
-
         Assert::AreEqual(std::string("0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.Serialize());
     }
 
@@ -688,8 +691,7 @@ public:
         Parse(vmTrigger, "0xH1234=16_0xL65FF=11");
 
         Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
-        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
-        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
+        vmTrigger.SelectRange(0, 1, true);
         // DO NOT test Serialize() response here. We need to validate that it can go TO empty from uninitialized
         Assert::AreEqual(0, vmTrigger.GetVersion());
 
@@ -718,7 +720,7 @@ public:
         Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
 
         Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
-        vmTrigger.Conditions().GetItemAt(2)->SetSelected(true);
+        vmTrigger.SelectRange(2, 2, true);
 
         // one item selected - move item 3 to position 2
         vmTrigger.MoveSelectedConditionsUp();
@@ -738,11 +740,8 @@ public:
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
 
-        // seleted item should be kept visible
-        Assert::AreEqual(vmTrigger.GetEnsureVisibleConditionIndex(), 1);
-
         // items 1 and 3 are selected, they should get moved into slots 0 and 1
-        vmTrigger.Conditions().GetItemAt(3)->SetSelected(true);
+        vmTrigger.SelectRange(3, 3, true);
         vmTrigger.MoveSelectedConditionsUp();
 
         Assert::AreEqual(std::string("R:0xT3333=1_0xW5555=16_0xH1234=16_0xL65ff=11.1."), vmTrigger.Serialize());
@@ -758,9 +757,6 @@ public:
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
-
-        // seleted item should be kept visible
-        Assert::AreEqual(vmTrigger.GetEnsureVisibleConditionIndex(), 0);
     }
 
     TEST_METHOD(TestMoveSelectedConditionsDown)
@@ -769,7 +765,7 @@ public:
         Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
 
         Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
-        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
+        vmTrigger.SelectRange(1, 1, true);
 
         // one item selected - move item 2 to position 3
         vmTrigger.MoveSelectedConditionsDown();
@@ -789,11 +785,8 @@ public:
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
 
-        // seleted item should be kept visible
-        Assert::AreEqual(vmTrigger.GetEnsureVisibleConditionIndex(), 2);
-
         // items 0 and 2 are selected, they should get moved into slots 2 and 3
-        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+        vmTrigger.SelectRange(0, 0, true);
         vmTrigger.MoveSelectedConditionsDown();
 
         Assert::AreEqual(std::string("R:0xT3333=1_0xW5555=16_0xH1234=16_0xL65ff=11.1."), vmTrigger.Serialize());
@@ -809,9 +802,6 @@ public:
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
-
-        // seleted item should be kept visible
-        Assert::AreEqual(vmTrigger.GetEnsureVisibleConditionIndex(), 2);
     }
 
     TEST_METHOD(TestNewCondition)
@@ -820,7 +810,7 @@ public:
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=16");
         Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
-        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+        vmTrigger.SelectRange(0, 0, true);
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
@@ -828,6 +818,7 @@ public:
         vmTrigger.NewCondition();
 
         Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(1, vmTrigger.GetVersion());
 
         // new condition should be selected, any previously selected items should be deselected
         Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
@@ -951,9 +942,11 @@ public:
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
 
         vmTrigger.NewCondition();
+        Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
         vmTrigger.Conditions().GetItemAt(1)->SetType(TriggerConditionType::AddAddress);
         vmTrigger.Conditions().GetItemAt(1)->SetSourceValue(2);
         vmTrigger.NewCondition();
+        Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
         vmTrigger.Conditions().GetItemAt(2)->SetSourceValue(5);
         vmTrigger.Conditions().GetItemAt(2)->SetTargetValue(6U);
 
@@ -994,7 +987,7 @@ public:
         Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
         Assert::IsTrue(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
 
-        Assert::AreEqual(std::string("M:0xH0008_0x 0004=1284"), vmTrigger.Serialize());
+        Assert::AreEqual(std::string("M:0xH0008_N:0x 0004=1284"), vmTrigger.Serialize());
     }
 
     TEST_METHOD(TestAddGroupNoAlts)

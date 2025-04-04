@@ -193,6 +193,29 @@ void GridBinding::UpdateLayout()
     // retrieve that number doesn't always work.
     m_nColumnsCreated = m_vColumns.size();
     m_vColumnWidths.swap(vWidths);
+
+    if (m_pVisibleItemCountProperty)
+        UpdateVisibleItemCount();
+}
+
+void GridBinding::BindVisibleItemCount(const IntModelProperty& pVisibleItemCountProperty) noexcept
+{
+    m_pVisibleItemCountProperty = &pVisibleItemCountProperty;
+    UpdateVisibleItemCount();
+}
+
+void GridBinding::UpdateVisibleItemCount() noexcept
+{
+    RECT rcItem;
+    if (ListView_GetItemRect(m_hWnd, 0, &rcItem, LVIR_BOUNDS))
+    {
+        RECT rcList;
+        GetClientRect(m_hWnd, &rcList);
+
+        const int nItemHeight = (rcItem.bottom - rcItem.top);
+        const int nVisibleRows = (rcList.bottom - rcList.top) / nItemHeight + 1;
+        SetValue(*m_pVisibleItemCountProperty, nVisibleRows);
+    }
 }
 
 void GridBinding::UpdateAllItems()
@@ -866,15 +889,12 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 {
     if (pnmListView->iItem == -1)
     {
-        if (m_pUpdateSelectedItems)
-        {
-            NMLVODSTATECHANGE pnmStateChange{};
-            pnmStateChange.iFrom = 0;
-            pnmStateChange.iTo = GetValue(*m_pScrollMaximumProperty) - 1;
-            pnmStateChange.uNewState = pnmListView->uNewState;
-            pnmStateChange.uOldState = pnmListView->uOldState;
-            OnLvnOwnerDrawStateChanged(&pnmStateChange);
-        }
+        NMLVODSTATECHANGE pnmStateChange{};
+        pnmStateChange.iFrom = 0;
+        pnmStateChange.iTo = GetValue(*m_pScrollMaximumProperty) - 1;
+        pnmStateChange.uNewState = pnmListView->uNewState;
+        pnmStateChange.uOldState = pnmListView->uOldState;
+        OnLvnOwnerDrawStateChanged(&pnmStateChange);
 
         return;
     }
@@ -926,15 +946,15 @@ void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateC
 {
     // when virtualizing, notify the view model of the entire change, then update the
     // selected property on the visible items
-    if (m_pUpdateSelectedItems &&
-        (pnmStateChanged->uNewState ^ pnmStateChanged->uOldState) & LVIS_SELECTED)
+    if ((pnmStateChanged->uNewState ^ pnmStateChanged->uOldState) & LVIS_SELECTED)
     {
         const bool bSelected = pnmStateChanged->uNewState & LVIS_SELECTED;
         gsl::index nFrom = pnmStateChanged->iFrom;
         gsl::index nTo = pnmStateChanged->iTo;
 
         // notify the view model of all the changed items
-        m_pUpdateSelectedItems(nFrom, nTo, bSelected);
+        if (m_pUpdateSelectedItems)
+            m_pUpdateSelectedItems(nFrom, nTo, bSelected);
 
         // explicitly update the items in the virtualization window
         if (m_pIsSelectedProperty)

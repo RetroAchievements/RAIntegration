@@ -84,6 +84,28 @@ void MemoryBookmarksDialog::BookmarksGridBinding::OnTotalMemorySizeChanged()
 
 // ------------------------------------
 
+class GridIndirectAddressColumnBinding : public ra::ui::win32::bindings::GridAddressColumnBinding
+{
+public:
+    GridIndirectAddressColumnBinding(const IntModelProperty& pBoundProperty) :
+        ra::ui::win32::bindings::GridAddressColumnBinding(pBoundProperty)
+    {
+    }
+
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto* pItem = dynamic_cast<const MemoryBookmarksViewModel::MemoryBookmarkViewModel*>(vmItems.GetViewModelAt(nIndex));
+        if (!pItem)
+            return ra::ui::win32::bindings::GridAddressColumnBinding::GetText(vmItems, nIndex);
+
+        const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+        if (pItem->HasIndirectAddress())
+            return ra::StringPrintf(L"(%s)", ra::ByteAddressToString(nValue).substr(2));
+
+        return ra::Widen(ra::ByteAddressToString(nValue));
+    }
+};
+
 MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryBookmarks)
     : DialogBase(vmMemoryBookmarks),
       m_bindBookmarks(vmMemoryBookmarks)
@@ -108,7 +130,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pDescriptionColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(0, std::move(pDescriptionColumn));
 
-    auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
+    auto pAddressColumn = std::make_unique<GridIndirectAddressColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty);
     pAddressColumn->SetHeader(L"Address");
     pAddressColumn->UpdateWidth();

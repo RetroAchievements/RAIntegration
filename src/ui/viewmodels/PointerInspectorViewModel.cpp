@@ -8,6 +8,8 @@
 #include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\WindowManager.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -679,6 +681,24 @@ std::string PointerInspectorViewModel::GetDefinition() const
                                                             MemSize::ThirtyTwoBit, vmField->GetCurrentValueRaw());
 
     return sBuffer;
+}
+
+void PointerInspectorViewModel::BookmarkCurrentField() const
+{
+    // change "I:0xX1234_0xH0010=0" to "I:0xX1234_M:0xH0010"
+    auto sDefinition = GetDefinition();
+    auto nIndex = sDefinition.find_last_of('=');
+    Expects(nIndex != std::string::npos);
+    sDefinition.erase(nIndex);
+    nIndex = sDefinition.find_last_of('_');
+    Expects(nIndex != std::string::npos);
+    sDefinition.insert(nIndex + 1, "M:");
+
+    auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+    pWindowManager.MemoryBookmarks.AddBookmark(sDefinition);
+
+    if (!pWindowManager.MemoryBookmarks.IsVisible())
+        pWindowManager.MemoryBookmarks.Show();
 }
 
 } // namespace viewmodels

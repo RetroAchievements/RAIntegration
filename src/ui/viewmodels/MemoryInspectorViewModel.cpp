@@ -300,9 +300,34 @@ void MemoryInspectorViewModel::BookmarkCurrentAddress() const
     // if the code note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    auto nSize = (pCodeNotes != nullptr) ? pCodeNotes->GetCodeNoteMemSize(nAddress) : MemSize::Unknown;
+    const auto* pNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress) : nullptr;
+    auto nSize = pNote ? pNote->GetMemSize() : MemSize::Unknown;
     if (nSize >= MemSize::Unknown)
         nSize = Viewer().GetSize();
+
+    if (m_bNoteIsIndirect && pNote) // pNote being not null implies pCodeNotes is not null
+    {
+        const auto nIndirectSource = pCodeNotes->GetIndirectSource(nAddress);
+        if (nIndirectSource != 0xFFFFFFFF)
+        {
+            const auto* pRootNote = pCodeNotes->FindCodeNoteModel(nIndirectSource);
+            Expects(pRootNote != nullptr);
+
+            std::string sIndirectAddress;
+            ra::services::AchievementLogicSerializer::AppendConditionType(
+                sIndirectAddress, ra::services::TriggerConditionType::AddAddress);
+            ra::services::AchievementLogicSerializer::AppendOperand(
+                sIndirectAddress, ra::services::TriggerOperandType::Address, pRootNote->GetMemSize(), nIndirectSource);
+            ra::services::AchievementLogicSerializer::AppendConditionSeparator(sIndirectAddress);
+            ra::services::AchievementLogicSerializer::AppendConditionType(
+                sIndirectAddress, ra::services::TriggerConditionType::Measured);
+            ra::services::AchievementLogicSerializer::AppendOperand(
+                sIndirectAddress, ra::services::TriggerOperandType::Address, nSize, pNote->GetAddress());
+
+            pBookmarks.AddBookmark(sIndirectAddress);
+            return;
+        }
+    }
 
     pBookmarks.AddBookmark(nAddress, nSize);
 }

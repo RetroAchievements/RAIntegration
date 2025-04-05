@@ -197,6 +197,9 @@ AchievementRuntime::AchievementRuntime()
     rc_client_enable_logging(m_pClient.get(), RC_CLIENT_LOG_LEVEL_VERBOSE, AchievementRuntime::LogMessage);
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsCustomHost())
+        rc_client_set_host(m_pClient.get(), pConfiguration.GetHostUrl().c_str());
+
     const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
     rc_client_set_hardcore_enabled(m_pClient.get(), bHardcore ? 1 : 0);
 
@@ -808,6 +811,13 @@ public:
         rc_mutex_unlock(&pClient->state.mutex);
     }
 
+    void GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const
+    {
+        const auto* pSubset = m_pPublishedSubset;
+        for (; pSubset; pSubset = pSubset->next)
+            vSubsets.emplace_back(pSubset->public_.id, ra::Widen(pSubset->public_.title));
+    }
+
     void AttachMemory(void* pMemory)
     {
         if (m_pSubsetWrapper)
@@ -854,6 +864,12 @@ void AchievementRuntime::SyncAssets()
     if (m_pClientSynchronizer == nullptr)
         m_pClientSynchronizer.reset(new ClientSynchronizer());
     m_pClientSynchronizer->SyncAssets(GetClient());
+}
+
+void AchievementRuntime::GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const
+{
+    if (m_pClientSynchronizer != nullptr)
+        m_pClientSynchronizer->GetSubsets(vSubsets);
 }
 
 void AchievementRuntime::AttachMemory(void* pMemory)

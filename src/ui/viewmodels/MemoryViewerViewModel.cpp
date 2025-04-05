@@ -122,8 +122,6 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);
 
-    m_bReadOnly = (pGameContext.GameId() == 0);
-
     m_pBookmarkMonitor.reset(new MemoryBookmarkMonitor(*this));
 }
 
@@ -710,9 +708,6 @@ void MemoryViewerViewModel::OnActiveGameChanged()
     m_nNeedsRedraw |= REDRAW_ADDRESSES;
 
     UpdateColors();
-
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    m_bReadOnly = (pGameContext.GameId() == 0);
 }
 
 void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote)
@@ -1091,6 +1086,11 @@ void MemoryViewerViewModel::DoFrame()
         m_nNeedsRedraw |= REDRAW_MEMORY;
     }
 
+    Redraw();
+}
+
+void MemoryViewerViewModel::Redraw()
+{
     if (m_nNeedsRedraw)
     {
         if (m_pRepaintNotifyTarget != nullptr)

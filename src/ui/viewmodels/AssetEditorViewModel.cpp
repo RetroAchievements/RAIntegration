@@ -276,6 +276,8 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
         ra::data::models::CapturedTriggerHits pCapturedHits;
         Trigger().InitializeFrom("", pCapturedHits);
     }
+
+    OnTriggerChanged();
 }
 
 static constexpr ra::data::models::LeaderboardModel::LeaderboardParts LeaderboardPartToParts(AssetEditorViewModel::LeaderboardPart nPart) noexcept
@@ -626,7 +628,24 @@ void AssetEditorViewModel::HandleStateChanged(ra::data::models::AssetState nOldS
     const bool bIsActive = ra::data::models::AssetModelBase::IsActive(nNewState);
     const bool bWasActive = ra::data::models::AssetModelBase::IsActive(nOldState);
     if (bIsActive && !bWasActive)
+    {
         UpdateTriggerBinding();
+
+        const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        const auto bActivateSucceeded = IsAchievement()
+            ? (pRuntime.GetAchievementTrigger(m_pAsset->GetID()) != nullptr)
+            : (pRuntime.GetLeaderboardDefinition(m_pAsset->GetID()) != nullptr);
+
+        if (!bActivateSucceeded)
+        {
+            MessageBoxViewModel::ShowErrorMessage(*this, L"Activation failed.");
+            // NOTE: cannot set State back to Inactive here as the this code is triggered
+            // by the binding and the binding disables watching the model while it's firing
+            // its notifications. Instead, let Asset.DoFrame() deactivate the asset and
+            // that will fire events that will cause the binding to uncheck itself.
+            return;
+        }
+    }
 
     // if the state changed to/from Waiting, update the Waiting label
     if (nNewState == ra::data::models::AssetState::Waiting)
@@ -679,25 +698,25 @@ void AssetEditorViewModel::OnTriggerChanged()
 
         std::string sDefinition = "STA:";
         if (nSelectedPart == LeaderboardPart::Start)
-            sDefinition += sTrigger;
+            AppendTrigger(sDefinition, sTrigger);
         else
             AppendTrigger(sDefinition, pLeaderboard->GetStartTrigger());
 
         sDefinition.append("::SUB:");
         if (nSelectedPart == LeaderboardPart::Submit)
-            sDefinition += sTrigger;
+            AppendTrigger(sDefinition, sTrigger);
         else
             AppendTrigger(sDefinition, pLeaderboard->GetSubmitTrigger());
 
         sDefinition.append("::CAN:");
         if (nSelectedPart == LeaderboardPart::Cancel)
-            sDefinition += sTrigger;
+            AppendTrigger(sDefinition, sTrigger);
         else
             AppendTrigger(sDefinition, pLeaderboard->GetCancelTrigger());
 
         sDefinition.append("::VAL:");
         if (nSelectedPart == LeaderboardPart::Value)
-            sDefinition += sTrigger;
+            AppendTrigger(sDefinition, sTrigger);
         else
             AppendTrigger(sDefinition, pLeaderboard->GetValueDefinition());
 

@@ -189,6 +189,7 @@ public:
     void DoFrame() override;
 
     void CopyDefinition() const;
+    void BookmarkCurrentField() const;
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;

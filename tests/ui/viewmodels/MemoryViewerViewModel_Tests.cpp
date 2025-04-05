@@ -683,6 +683,7 @@ public:
         Assert::IsFalse(viewer.NeedsRedraw());
 
         // ignore if readonly
+        viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         Assert::IsFalse(viewer.OnChar('6'));
 
@@ -1486,6 +1487,7 @@ public:
         Assert::IsFalse(viewer.NeedsRedraw());
 
         // ignore if readonly
+        viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         Assert::IsFalse(viewer.OnChar('6'));
 
@@ -1552,6 +1554,7 @@ public:
         Assert::IsFalse(viewer.NeedsRedraw());
 
         // ignore if readonly
+        viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         Assert::IsFalse(viewer.OnChar('6'));
 
@@ -1621,6 +1624,7 @@ public:
         Assert::IsFalse(viewer.NeedsRedraw());
 
         // ignore if readonly
+        viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         Assert::IsFalse(viewer.OnChar('6'));
 
@@ -1925,6 +1929,7 @@ public:
         viewer.InitializeMemory(256);
 
         // ignore if readonly
+        viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         Assert::IsFalse(viewer.IncreaseCurrentValue(1));
 
@@ -1965,6 +1970,7 @@ public:
         viewer.InitializeMemory(256);
 
         // ignore if readonly
+        viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         Assert::IsFalse(viewer.IncreaseCurrentValue(16));
 
@@ -2005,6 +2011,7 @@ public:
         viewer.InitializeMemory(256);
 
         // ignore if readonly
+        viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         Assert::IsFalse(viewer.DecreaseCurrentValue(1));
 
@@ -2046,6 +2053,7 @@ public:
         viewer.InitializeMemory(256);
 
         // ignore if readonly
+        viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         Assert::IsFalse(viewer.DecreaseCurrentValue(16));
 

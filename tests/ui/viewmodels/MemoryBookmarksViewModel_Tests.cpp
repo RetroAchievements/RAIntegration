@@ -1560,6 +1560,153 @@ public:
 
         g_pMemoryBookmarksViewModel = nullptr;
     }
+
+    TEST_METHOD(TestAddBookmarkIndirect)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 0; i < memory.size(); i += 2)
+            memory.at(i) = i;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.SetCodeNote(0x0020U, L"[16-bit pointer]\n+8: data here");
+
+        bookmarks.AddBookmark("I:0x 0020_M:0xW0008");
+
+        Assert::AreEqual({1U}, bookmarks.Bookmarks().Count());
+        const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"data here"), bookmark.GetDescription());
+        Assert::AreEqual(0x28U, bookmark.GetAddress()); // $0020=0x20, 0x20+8 = 0x28
+        Assert::AreEqual(MemSize::TwentyFourBit, bookmark.GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+        Assert::AreEqual(std::wstring(L"2a0028"), bookmark.GetCurrentValue());
+        Assert::IsTrue(bookmark.HasIndirectAddress());
+        Assert::AreEqual(std::string("I:0x 0020_M:0xW0008"), bookmark.GetIndirectAddress());
+
+        memory.at(0x20) = 0x10;
+        memory.at(0x18) = 0xAB;
+        bookmarks.DoFrame();
+
+        Assert::AreEqual(std::wstring(L"data here"), bookmark.GetDescription());
+        Assert::AreEqual(0x18U, bookmark.GetAddress()); // $0020=0x10, 0x10+8 = 0x18
+        Assert::AreEqual(std::wstring(L"1a00ab"), bookmark.GetCurrentValue());
+    }
+
+    TEST_METHOD(TestLoadBookmarkFileIndirect)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.SetCodeNote(0x0020U, L"[16-bit pointer]\n+8: data here");
+        bookmarks.mockFileSystem.MockFile(L"E:\\Data\\3-Bookmarks.json",
+                                          "{\"Bookmarks\":[{\"MemAddr\":\"I:0x 0020_M:0xW0008\"}]}");
+
+        bool bDialogSeen = false;
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"Import Bookmark File"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({2U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"json"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-Bookmarks.json"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-Bookmarks.json");
+
+                return DialogResult::OK;
+            });
+
+        bookmarks.LoadBookmarkFile();
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual({1U}, bookmarks.Bookmarks().Count());
+        const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"data here"), bookmark.GetDescription());
+        Assert::AreEqual(8U, bookmark.GetAddress());
+        Assert::AreEqual(MemSize::TwentyFourBit, bookmark.GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+        Assert::IsTrue(bookmark.HasIndirectAddress());
+        Assert::AreEqual(std::string("I:0x 0020_M:0xW0008"), bookmark.GetIndirectAddress());
+    }
+
+    TEST_METHOD(TestSaveBookmarkFileIndirect)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
+                                                  "{\"Bookmarks\":[{\"MemAddr\":\"0xH04d2\"}]}");
+
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+
+        bookmarks.AddBookmark("I:0x 0020_M:0xW0008");
+        Assert::IsTrue(bookmarks.IsModified());
+
+        bool bDialogSeen = false;
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"Export Bookmark File"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({1U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"json"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-Bookmarks.json"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-Bookmarks.json");
+
+                return DialogResult::OK;
+            });
+
+        bookmarks.SaveBookmarkFile();
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::IsTrue(bookmarks.IsModified()); // export does not update modified flag
+        const std::string& sContents = bookmarks.mockFileSystem.GetFileContents(L"E:\\Data\\3-Bookmarks.json");
+        Assert::AreEqual(std::string("{\"Bookmarks\":[{\"MemAddr\":\"0xH04d2\"},{\"MemAddr\":\"I:0x 0020_M:0xW0008\"}]}"), sContents);
+    }
+
+    TEST_METHOD(TestPauseOnChangeIndirect)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 0; i < memory.size(); i += 2)
+            memory.at(i) = i;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.AddBookmark("I:0x 0020_M:0xH0008");
+        bookmarks.DoFrame(); // initialize current and previous values
+        Assert::AreEqual({0U}, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+
+        auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
+
+        // no change, dialog should not be shown
+        bookmarks.DoFrame();
+        Assert::AreEqual({0U}, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+
+        // value change, dialog should be shown and emulator should be paused
+        memory.at(0x28) = 0x10;
+        bookmarks.DoFrame();
+        Assert::AreEqual({1U}, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+        Assert::IsTrue(bookmarks.mockFrameEventQueue.ContainsMemoryChange(L"8-bit 0x0028"));
+        bookmarks.mockFrameEventQueue.Reset();
+
+        // pointer change, dialog should be shown
+        memory.at(0x20) = 0x10;
+        bookmarks.DoFrame();
+        Assert::AreEqual({1U}, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+        Assert::IsTrue(bookmarks.mockFrameEventQueue.ContainsMemoryChange(L"8-bit 0x0018"));
+        bookmarks.mockFrameEventQueue.Reset();
+
+        // pointer change, but value doesn't change, dialog should not be shown
+        memory.at(0x20) = 0x00;
+        memory.at(0x08) = 0x18;
+        bookmarks.DoFrame();
+        Assert::AreEqual({0U}, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+    }
 };
 
 } // namespace tests

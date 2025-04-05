@@ -8,6 +8,7 @@
 #include "tests\ui\UIAsserts.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -721,6 +722,33 @@ public:
         Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(1)->GetSize());
         Assert::AreEqual({12U}, pBookmarks.GetItemAt(2)->GetAddress());
         Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, pBookmarks.GetItemAt(2)->GetSize());
+    }
+
+    TEST_METHOD(TestBookmarkCurrentAddressIndirect)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+            L"[32-bit pointer] Player data\n"
+            L"+4: [32-bit] Current HP\n"
+            L"+8: [32-bit] Max HP");
+
+        inspector.SetCurrentAddress(16U);
+        inspector.BookmarkCurrentAddress();
+
+        const auto& pBookmarks = inspector.mockWindowManager.MemoryBookmarks.Bookmarks();
+        Assert::AreEqual({1U}, pBookmarks.Count());
+        Assert::AreEqual({16U}, pBookmarks.GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(0)->GetSize());
+        Assert::AreEqual(std::string("I:0xX0004_M:0xX0004"), pBookmarks.GetItemAt(0)->GetIndirectAddress());
+        Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), pBookmarks.GetItemAt(0)->GetDescription());
     }
 };
 

@@ -135,10 +135,24 @@ static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
     return achievement;
 }
 
+void MockAchievementRuntime::MockSubset(uint32_t nSubsetId, const std::string& sName)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    auto* pSubset = GetSubset(game, nSubsetId, sName.c_str());
+    // create a copy of the name in case it goes out of scope
+    pSubset->public_.title = rc_buffer_strcpy(&game->buffer, sName.c_str());
+}
+
 rc_client_achievement_info_t* MockAchievementRuntime::MockAchievement(uint32_t nId, const char* sTitle)
 {
     rc_client_game_info_t* game = GetClient()->game;
     return AddAchievement(game, GetCoreSubset(game), nId, sTitle);
+}
+
+rc_client_achievement_info_t* MockAchievementRuntime::MockSubsetAchievement(uint32_t nSubsetId, uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    return AddAchievement(game, GetSubset(game, nSubsetId, sTitle), nId, sTitle);
 }
 
 rc_client_achievement_info_t* MockAchievementRuntime::MockAchievementWithTrigger(uint32_t nId, const char* sTitle)

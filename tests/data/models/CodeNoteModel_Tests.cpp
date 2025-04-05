@@ -284,6 +284,31 @@ public:
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
     }
 
+    TEST_METHOD(TestCodeNoteUnannotatedPointerChain)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"Pointer [32bit]\n"
+            L"+0x428 | Award - Tee Hee Two\n"
+            L"++0x24C | Flag\n"
+            L"+0x438 | Award - Pretty Woman\n"
+            L"++0x24C | Flag";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
+
+        const auto* offsetNote = AssertIndirectNote(
+            note, 0x428, L"Award - Tee Hee Two\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+        Assert::AreEqual(std::wstring(L"Award - Tee Hee Two"), offsetNote->GetPointerDescription());
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+
+        offsetNote = AssertIndirectNote(note, 0x438, L"Award - Pretty Woman\n+0x24C | Flag",
+                                        MemSize::ThirtyTwoBit, 4);
+        Assert::AreEqual(std::wstring(L"Award - Pretty Woman"), offsetNote->GetPointerDescription());
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+    }
+
     TEST_METHOD(TestCodeNoteNestedAlternateFormat)
     {
         CodeNoteModelHarness note;
@@ -353,8 +378,10 @@ public:
 
         const auto* nestedNote = AssertIndirectNote(note, 0x8318,
             L"+0x8014\n++0x8004 = First [32-bits]\n++0x8008 = Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+        Assert::AreEqual(std::wstring(L""), nestedNote->GetPointerDescription());
         const auto* nestedNote2 = AssertIndirectNote(*nestedNote, 0x8014,
             L"+0x8004 = First [32-bits]\n+0x8008 = Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+        Assert::AreEqual(std::wstring(L""), nestedNote2->GetPointerDescription());
         AssertIndirectNote(*nestedNote2, 0x8004, L"First [32-bits]", MemSize::ThirtyTwoBit, 4);
         AssertIndirectNote(*nestedNote2, 0x8008, L"Second [32-bits]", MemSize::ThirtyTwoBit, 4);
     }

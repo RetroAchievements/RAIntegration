@@ -12,7 +12,6 @@
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
-using ra::ui::viewmodels::MemoryViewerViewModel;
 using ra::ui::viewmodels::PointerInspectorViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;
 
@@ -181,13 +180,13 @@ BOOL PointerInspectorDialog::OnCommand(WORD nCommand)
 {
     switch (nCommand)
     {
-        //case IDC_RA_ADDBOOKMARK: {
-        //    auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
-        //    if (vmPointerInspector)
-        //        vmPointerInspector->AddBookmark();
+        case IDC_RA_ADDBOOKMARK: {
+            const auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
+            if (vmPointerInspector)
+                vmPointerInspector->BookmarkCurrentField();
 
-        //    return TRUE;
-        //}
+            return TRUE;
+        }
 
         case IDC_RA_COPY_ALL: {
             const auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);

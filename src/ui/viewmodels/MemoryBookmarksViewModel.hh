@@ -91,6 +91,27 @@ public:
         void SetAddress(ByteAddress value) { SetValue(AddressProperty, value); }
 
         /// <summary>
+        /// Sets an indirect bookmark address.
+        /// </summary>
+        void SetIndirectAddress(const std::string& sSerialized);
+
+        /// <summary>
+        /// Gets the indirect bookmark address.
+        /// </summary>
+        /// <returns></returns>
+        const std::string& GetIndirectAddress() const noexcept { return m_sIndirectAddress; }
+
+        /// <summary>
+        /// Gets whether or not the bookmark has an indirect bookmark address.
+        /// </summary>
+        bool HasIndirectAddress() const noexcept { return !m_sIndirectAddress.empty(); }
+
+        /// <summary>
+        /// Updates the current address from the indirect address chain.
+        /// </summary>
+        void UpdateCurrentAddress();
+
+        /// <summary>
         /// The <see cref="ModelProperty" /> for the bookmark size.
         /// </summary>
         static const IntModelProperty SizeProperty;
@@ -280,6 +301,10 @@ public:
         MemSize m_nSize = MemSize::EightBit;
         bool m_bModified = false;
         bool m_bInitialized = false;
+
+        std::string m_sIndirectAddress;
+        std::unique_ptr<uint8_t[]> m_pBuffer;
+        rc_value_t* m_pValue = nullptr;
     };
 
     /// <summary>
@@ -336,6 +361,11 @@ public:
     /// Adds a bookmark to the list.
     /// </summary>
     void AddBookmark(ra::ByteAddress nAddress, MemSize nSize);
+
+    /// <summary>
+    /// Adds a bookmark to the list.
+    /// </summary>
+    void AddBookmark(const std::string& sSerialized);
 
     /// <summary>
     /// Removes any bookmarks that are currently selected.
@@ -420,6 +450,9 @@ private:
 
     bool ShouldPause() const;
     void UpdatePauseButtonText();
+
+    static void InitializeBookmark(MemoryBookmarkViewModel& vmBookmark, const std::string& sSerialized);
+    static void InitializeBookmark(MemoryBookmarkViewModel& vmBookmark);
 
     void UpdateHasSelection();
 

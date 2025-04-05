@@ -437,9 +437,9 @@ void AchievementModel::SyncTrigger()
                 rc_reset_parse_state(&preparse.parse, trigger_buffer);
                 trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
                 rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
+                Expects(preparse.parse.memrefs == &trigger->memrefs);
 
                 preparse.parse.existing_memrefs = pGame->runtime.memrefs;
-                preparse.parse.memrefs = &trigger->memrefs;
 
                 sMemaddr = sTrigger.c_str();
                 m_pAchievement->trigger = &trigger->trigger;

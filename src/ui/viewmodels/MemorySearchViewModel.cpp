@@ -667,21 +667,33 @@ void MemorySearchViewModel::ApplyContinuousFilter()
 {
     const SearchResult& pResult = *m_vSearchResults.back().get();
 
-    // if there are more than 1000 results, only apply the filter periodically.
-    // formula is "number of results / 100" ms between filterings
-    // for 10000 results, only filter every 100ms
-    // for 50000 results, only filter every 500ms
-    // for 100000 results, only filter every second
-    // up to a max of one filter every ten seconds at 1000000 or more results
+    // if there are more than 1000 results, don't filter every frame.
     const auto nResults = pResult.pResults.MatchingAddressCount();
     if (nResults > 1000)
     {
         const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
-        const auto nElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tNow - m_tLastContinuousFilter);
-        const auto nElapsedMilliseconds = gsl::narrow_cast<size_t>(nElapsed.count());
 
-        if (nElapsedMilliseconds < 10000 && nElapsedMilliseconds < nResults / 100)
-            return;
+        auto nElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tNow - m_tLastContinuousFilterCheck);
+        m_tLastContinuousFilterCheck = tNow;
+
+        auto nElapsedMilliseconds = gsl::narrow_cast<size_t>(nElapsed.count());
+        if (nElapsedMilliseconds >= 200)
+        {
+            // if at least 200ms have passed since the last check, assume the user is
+            // frame-stepping and just allow the continuous filter to be applied.
+        }
+        else
+        {
+            // formula is "number of results / 100" ms between filterings. i.e.:
+            // * for 10000 results, only filter every 100ms
+            // * for 50000 results, only filter every 500ms
+            // * for 100000 results, only filter every second
+            // up to a max of one filter every ten seconds at 1000000 or more results
+            nElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tNow - m_tLastContinuousFilter);
+            nElapsedMilliseconds = gsl::narrow_cast<size_t>(nElapsed.count());
+            if (nElapsedMilliseconds < 10000 && nElapsedMilliseconds < nResults / 100)
+                return;
+        }
 
         m_tLastContinuousFilter = tNow;
     }

@@ -17,6 +17,8 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
+#include "rcheevos\src\rc_client_internal.h"
+
 #include "Exports.hh"
 #include "RA_BuildVer.h"
 #include "RA_Log.h"
@@ -40,7 +42,8 @@ const BoolModelProperty AssetListViewModel::CanResetProperty("AssetListViewModel
 const BoolModelProperty AssetListViewModel::CanRevertProperty("AssetListViewModel", "CanRevert", false);
 const BoolModelProperty AssetListViewModel::CanCreateProperty("AssetListViewModel", "CanCreate", false);
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", false);
-const IntModelProperty AssetListViewModel::FilterCategoryProperty("AssetListViewModel", "FilterCategory", ra::etoi(AssetListViewModel::FilterCategory::Core));
+const IntModelProperty AssetListViewModel::SubsetFilterProperty("AssetListViewModel", "SubsetFilter", 0);
+const IntModelProperty AssetListViewModel::CategoryFilterProperty("AssetListViewModel", "FilterCategory", ra::etoi(AssetListViewModel::CategoryFilter::Core));
 const IntModelProperty AssetListViewModel::SpecialFilterProperty("AssetListViewModel", "SpecialFilter", ra::etoi(AssetListViewModel::SpecialFilter::All));
 const IntModelProperty AssetListViewModel::AssetTypeFilterProperty("AssetListViewModel", "AssetTypeFilter", ra::etoi(ra::data::models::AssetType::Achievement));
 const IntModelProperty AssetListViewModel::EnsureVisibleAssetIndexProperty("AssetListViewModel", "EnsureVisibleAssetIndex", -1);
@@ -57,10 +60,10 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Triggered), L"Triggered");
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Disabled), L"Disabled");
 
-    m_vCategories.Add(ra::etoi(FilterCategory::All), L"All");
-    m_vCategories.Add(ra::etoi(FilterCategory::Core), L"Core");
-    m_vCategories.Add(ra::etoi(FilterCategory::Unofficial), L"Unofficial");
-    m_vCategories.Add(ra::etoi(FilterCategory::Local), L"Local");
+    m_vCategories.Add(ra::etoi(CategoryFilter::All), L"All");
+    m_vCategories.Add(ra::etoi(CategoryFilter::Core), L"Core");
+    m_vCategories.Add(ra::etoi(CategoryFilter::Unofficial), L"Unofficial");
+    m_vCategories.Add(ra::etoi(CategoryFilter::Local), L"Local");
 
     m_vSpecialFilters.Add(ra::etoi(SpecialFilter::All), L"All");
     m_vSpecialFilters.Add(ra::etoi(SpecialFilter::Active), L"Active");
@@ -102,21 +105,46 @@ void AssetListViewModel::OnActiveGameChanged()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     SetGameId(pGameContext.GameId());
+    SetSubsetFilter(0);
 
     switch (pGameContext.Assets().MostPublishedAssetCategory())
     {
         case ra::data::models::AssetCategory::Core:
-            SetFilterCategory(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Core);
+            SetCategoryFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Core);
             break;
 
         case ra::data::models::AssetCategory::Unofficial:
-            SetFilterCategory(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Unofficial);
+            SetCategoryFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Unofficial);
             break;
 
         case ra::data::models::AssetCategory::Local:
-            SetFilterCategory(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
+            SetCategoryFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Local);
             break;
     }
+
+    m_vSubsets.BeginUpdate();
+    m_vSubsets.Clear();
+
+    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+    {
+        const auto& pAchievementRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+
+        std::vector<std::pair<uint32_t, std::wstring>> vSubsets;
+        pAchievementRuntime.GetSubsets(vSubsets);
+
+        if (!vSubsets.empty())
+        {
+            // Core asset have SubsetId of 0, even though core subset is the game id.
+            vSubsets.at(0).first = 0;
+
+            for (const auto& pair : vSubsets)
+                m_vSubsets.Add(pair.first, pair.second);
+        }
+    }
+
+    m_vSubsets.EndUpdate();
+
+    ApplyFilter();
 }
 
 void AssetListViewModel::OnDataModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
@@ -206,7 +234,7 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
 
         UpdateTotals();
 
-        if (GetFilterCategory() != FilterCategory::All)
+        if (GetCategoryFilter() != CategoryFilter::All)
             AddOrRemoveFilteredItem(nIndex);
     }
     else if (args.Property == ra::data::models::AssetModelBase::StateProperty ||
@@ -336,9 +364,10 @@ void AssetListViewModel::UpdateTotals()
 
 void AssetListViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == FilterCategoryProperty ||
+    if (args.Property == CategoryFilterProperty ||
         args.Property == SpecialFilterProperty ||
-        args.Property == AssetTypeFilterProperty)
+        args.Property == AssetTypeFilterProperty ||
+        args.Property == SubsetFilterProperty)
     {
         ApplyFilter();
     }
@@ -397,12 +426,12 @@ void AssetListViewModel::ApplyFilter()
 void AssetListViewModel::EnsureAppearsInFilteredList(const ra::data::models::AssetModelBase& pAsset)
 {
     // if the filter category is not all, ensure it matches the asset
-    const auto nFilterCategory = GetFilterCategory();
-    if (nFilterCategory != FilterCategory::All)
+    const auto nCategoryFilter = GetCategoryFilter();
+    if (nCategoryFilter != CategoryFilter::All)
     {
-        const auto nAssetCategory = ra::itoe<ra::data::models::AssetCategory>(ra::etoi(nFilterCategory));
+        const auto nAssetCategory = ra::itoe<ra::data::models::AssetCategory>(ra::etoi(nCategoryFilter));
         if (pAsset.GetCategory() != nAssetCategory)
-            SetValue(FilterCategoryProperty, ra::etoi(pAsset.GetCategory()));
+            SetValue(CategoryFilterProperty, ra::etoi(pAsset.GetCategory()));
     }
 
     // if there's a special filter and it doesn't match, clear the special filter
@@ -412,13 +441,16 @@ void AssetListViewModel::EnsureAppearsInFilteredList(const ra::data::models::Ass
 
 bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& pAsset) const
 {
-    const auto nFilterCategory = GetFilterCategory();
-    if (nFilterCategory != FilterCategory::All)
+    const auto nCategoryFilter = GetCategoryFilter();
+    if (nCategoryFilter != CategoryFilter::All)
     {
-        const auto nAssetCategory = ra::itoe<ra::data::models::AssetCategory>(ra::etoi(nFilterCategory));
+        const auto nAssetCategory = ra::itoe<ra::data::models::AssetCategory>(ra::etoi(nCategoryFilter));
         if (pAsset.GetCategory() != nAssetCategory)
             return false;
     }
+
+    if (pAsset.GetSubsetID() != GetSubsetFilter())
+        return false;
 
     const auto nAssetTypeFilter = GetAssetTypeFilter();
     if (nAssetTypeFilter != ra::data::models::AssetType::None)
@@ -1699,11 +1731,13 @@ void AssetListViewModel::CreateNew()
         case ra::data::models::AssetType::Achievement:
             RA_LOG_INFO("Creating new achievement");
             pNewAsset = &pGameContext.Assets().NewAchievement();
+            pNewAsset->SetSubsetID(GetSubsetFilter());
             break;
 
         case ra::data::models::AssetType::Leaderboard:
             RA_LOG_INFO("Creating new leaderboard");
             pNewAsset = &pGameContext.Assets().NewLeaderboard();
+            pNewAsset->SetSubsetID(GetSubsetFilter());
             break;
 
         case ra::data::models::AssetType::RichPresence:

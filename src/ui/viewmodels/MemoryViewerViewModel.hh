@@ -36,6 +36,7 @@ public:
 
     void DoFrame();
 
+    void Redraw();
     bool NeedsRedraw() const noexcept { return (m_nNeedsRedraw != 0); }
 
     class RepaintNotifyTarget
@@ -197,7 +198,7 @@ protected:
 
     int m_nSelectedNibble = 0;
     ra::ByteAddress m_nTotalMemorySize = 0;
-    bool m_bReadOnly = true;
+    bool m_bReadOnly = false;
     bool m_bAddressFixed = false;
     bool m_bHasFocus = false;
     bool m_bWideEnoughForASCII = false;

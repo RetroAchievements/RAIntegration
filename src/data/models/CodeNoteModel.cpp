@@ -342,8 +342,11 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
                 // found a line starting with a plus sign, bit no pointer annotation. bImpliedPointer
                 // must be true. assume the parent note is not described. pass -1 as the note size
                 // because we already skipped over the newline character
-                ProcessIndirectNotes(sNote, gsl::narrow_cast<size_t>(-1));
-                m_pPointerData->HeaderLength = 0;
+                ProcessIndirectNotes(sNote, nIndex - 1);
+
+                // if nIndex is 0, HeaderLength may get set to -1, force it back to 0.
+                if (m_pPointerData && nIndex == 0)
+                    m_pPointerData->HeaderLength = 0;
                 break;
             }
 

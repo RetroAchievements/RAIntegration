@@ -8,7 +8,6 @@
 
 #include "ui/win32/bindings/GridTextColumnBinding.hh"
 
-using ra::ui::viewmodels::MemoryViewerViewModel;
 using ra::ui::viewmodels::PointerFinderViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;
 

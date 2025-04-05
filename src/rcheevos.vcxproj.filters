@@ -145,6 +145,9 @@
     <ClCompile Include="..\rcheevos\src\rhash\hash_zip.c">
       <Filter>rhash</Filter>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rhash\hash_rom.c">
+      <Filter>rhash</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="lua">

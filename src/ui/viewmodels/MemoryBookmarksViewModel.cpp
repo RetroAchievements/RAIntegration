@@ -212,7 +212,7 @@ unsigned MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadValue() const
     if (m_pValue)
     {
         rc_typed_value_t value;
-        rc_evaluate_value_typed(m_pValue, &value, rc_peek_callback, nullptr, nullptr);
+        rc_evaluate_value_typed(m_pValue, &value, rc_peek_callback, nullptr);
         rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
         return value.value.u32;
     }
@@ -394,7 +394,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetIndirectAddress(const
     auto* pGame = pRuntime.GetClient()->game;
 
     rc_preparse_state_t preparse;
-    rc_init_preparse_state(&preparse, nullptr, 0);
+    rc_init_preparse_state(&preparse);
     preparse.parse.existing_memrefs = pGame ? pGame->runtime.memrefs : nullptr;
 
     rc_value_with_memrefs_t* value = RC_ALLOC(rc_value_with_memrefs_t, &preparse.parse);
@@ -410,7 +410,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetIndirectAddress(const
     if (!m_pBuffer)
         return;
 
-    rc_reset_parse_state(&preparse.parse, m_pBuffer.get(), nullptr, 0);
+    rc_reset_parse_state(&preparse.parse, m_pBuffer.get());
     value = RC_ALLOC(rc_value_with_memrefs_t, &preparse.parse);
     rc_preparse_alloc_memrefs(&value->memrefs, &preparse);
     Expects(preparse.parse.memrefs == &value->memrefs);

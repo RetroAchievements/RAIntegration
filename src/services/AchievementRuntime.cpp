@@ -202,6 +202,9 @@ AchievementRuntime::AchievementRuntime()
 
     const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
     rc_client_set_hardcore_enabled(m_pClient.get(), bHardcore ? 1 : 0);
+
+    if (pConfiguration.IsCustomHost())
+        rc_client_set_host(m_pClient.get(), pConfiguration.GetHostUrl().c_str());
 #endif
 
     rc_client_set_event_handler(m_pClient.get(), EventHandler);
@@ -2393,7 +2396,7 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
 {
     auto& pRuntime = pClient->game->runtime;
     rc_preparse_state_t pParseState;
-    rc_init_preparse_state(&pParseState, nullptr, 0);
+    rc_init_preparse_state(&pParseState);
     pParseState.parse.existing_memrefs = pRuntime.memrefs;
 
     std::string sLine;

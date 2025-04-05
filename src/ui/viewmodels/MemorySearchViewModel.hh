@@ -489,6 +489,7 @@ private:
     ViewModelCollection<SearchResultViewModel> m_vResults;
     bool m_bIsContinuousFiltering = false;
     std::chrono::steady_clock::time_point m_tLastContinuousFilter;
+    std::chrono::steady_clock::time_point m_tLastContinuousFilterCheck;
     bool m_bScrolling = false;
     bool m_bSelectingFilter = false;
     bool m_bUpdateResultsPending = false;

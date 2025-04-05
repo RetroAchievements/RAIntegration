@@ -206,16 +206,8 @@ void GridBinding::BindVisibleItemCount(const IntModelProperty& pVisibleItemCount
 
 void GridBinding::UpdateVisibleItemCount() noexcept
 {
-    RECT rcItem;
-    if (ListView_GetItemRect(m_hWnd, 0, &rcItem, LVIR_BOUNDS))
-    {
-        RECT rcList;
-        GetClientRect(m_hWnd, &rcList);
-
-        const int nItemHeight = (rcItem.bottom - rcItem.top);
-        const int nVisibleRows = (rcList.bottom - rcList.top) / nItemHeight + 1;
-        SetValue(*m_pVisibleItemCountProperty, nVisibleRows);
-    }
+    const auto nPerPage = ListView_GetCountPerPage(m_hWnd);
+    SetValue(*m_pVisibleItemCountProperty, nPerPage + 1);
 }
 
 void GridBinding::UpdateAllItems()

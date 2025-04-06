@@ -454,6 +454,9 @@ API void CCONV _RA_ActivateGame(unsigned int nGameId)
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.ClearPopups();
         pOverlayManager.HideOverlayImmediately();
+
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        pRuntime.UnloadGame();
     }
 
     ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().ActivateGame(nGameId);

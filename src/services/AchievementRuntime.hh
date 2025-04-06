@@ -48,6 +48,7 @@ public:
 
     void BeginLoadGame(const std::string& sHash, unsigned id,
                        rc_client_callback_t fCallback, void* pCallbackData);
+    void UnloadGame() noexcept;
 
     /// <summary>
     /// Syncs data in Assets to rc_client.

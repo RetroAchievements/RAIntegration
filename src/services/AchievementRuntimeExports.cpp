@@ -295,8 +295,8 @@ public:
     {
         _RA_ActivateGame(0);
 
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return rc_client_unload_game(pClient.GetClient());
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        return pRuntime.UnloadGame();
     }
 
     static const rc_client_game_t* get_game_info()

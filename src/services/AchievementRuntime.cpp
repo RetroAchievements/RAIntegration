@@ -1244,9 +1244,8 @@ rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, u
     auto* client = GetClient();
 
     // unload the game and free any additional memory we allocated for local changes
-    rc_client_unload_game(client);
-    m_pClientSynchronizer.reset();
-    s_mAchievementPopups.clear();
+    UnloadGame();
+
 
     // if an ID was provided, store the hash->id mapping
     if (id != 0)
@@ -1342,6 +1341,12 @@ void AchievementRuntime::ChangeMediaCallback(int nResult, const char* sErrorMess
     delete wrapper;
 }
 
+void AchievementRuntime::UnloadGame() noexcept
+{
+    rc_client_unload_game(GetClient());
+    m_pClientSynchronizer.reset();
+    s_mAchievementPopups.clear();
+}
 
 /* ---- DoFrame ----- */
 

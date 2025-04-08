@@ -191,21 +191,6 @@ void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sVa
 void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty,
     const IntModelProperty& pSizeProperty, const StringModelProperty& pValueProperty, const rc_operand_t& operand)
 {
-    if (rc_operand_is_memref(&operand) && operand.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
-    {
-        GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref = reinterpret_cast<rc_modified_memref_t*>(operand.value.memref);
-        if (pModifiedMemref->modifier_type != RC_OPERATOR_INDIRECT_READ)
-        {
-            // if the modified memref is not an indirect read, the size and address are stored in the modifier.
-            SetOperand(pTypeProperty, pSizeProperty, pValueProperty, pModifiedMemref->modifier);
-            return;
-        }
-
-        // if the modified memref is an indirect read, the modifier is just a constant with the offset.
-        // the size is local to the operand, and the offset is also stored in the local address field.
-        // just proceed normally.
-    }
-
     rc_typed_value_t pValue{};
 
     const auto nType = static_cast<TriggerOperandType>(operand.type);
@@ -256,7 +241,9 @@ void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
 {
     SetType(static_cast<TriggerConditionType>(pCondition.type));
 
-    SetOperand(SourceTypeProperty, SourceSizeProperty, SourceValueProperty, pCondition.operand1);
+    const auto* pOperand = rc_condition_get_real_operand1(&pCondition);
+    Expects(pOperand != nullptr);
+    SetOperand(SourceTypeProperty, SourceSizeProperty, SourceValueProperty, *pOperand);
     SetOperand(TargetTypeProperty, TargetSizeProperty, TargetValueProperty, pCondition.operand2);
 
     SetOperator(static_cast<TriggerOperatorType>(pCondition.oper));

@@ -271,6 +271,7 @@ public:
     {
         ParseAndRegenerateValue(""); // empty
         ParseAndRegenerateValue("A:0xH1234*10_M:0xH1235"); // multiplication
+        ParseAndRegenerateValue("A:0xH1234*10_M:0xH1235*5"); // multiplication
         ParseAndRegenerateValue("M:0xH1234$M:0xX5555"); // one alt
         ParseAndRegenerateValue("M:0xH1234$M:0xX5555$M:b0xL3333"); // several alts
         ParseAndRegenerateValue("M:0xH1234$I:0x 1234_A:0xH2345_M:0xH7777"); // addsource/addaddress chain

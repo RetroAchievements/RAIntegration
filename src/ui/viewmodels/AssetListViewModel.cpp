@@ -125,7 +125,7 @@ void AssetListViewModel::OnActiveGameChanged()
     m_vSubsets.BeginUpdate();
     m_vSubsets.Clear();
 
-    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+    if (pGameContext.GameId() != 0 && ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
     {
         const auto& pAchievementRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
 

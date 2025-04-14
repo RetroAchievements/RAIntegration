@@ -214,6 +214,7 @@ private:
     };
 
     mutable ConditionsMonitor m_pConditionsMonitor;
+    std::mutex m_pMutex;
     bool m_bInitializingConditions = false;
 
     LookupItemViewModelCollection m_vConditionTypes;

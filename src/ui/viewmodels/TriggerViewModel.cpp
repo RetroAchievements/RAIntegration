@@ -1111,6 +1111,8 @@ void TriggerViewModel::InitializeConditions(const GroupViewModel* pGroup)
 
 void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 {
+    std::lock_guard<std::mutex> lock(m_pMutex);
+
     const auto nVisibleConditions = GetValue(VisibleItemCountProperty);
 
     m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
@@ -1321,6 +1323,8 @@ void TriggerViewModel::RemoveGroup()
 
 void TriggerViewModel::DoFrame()
 {
+    std::lock_guard<std::mutex> lock(m_pMutex);
+
     auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
     if (pGroup != nullptr && pGroup->m_pConditionSet)
     {
@@ -1536,7 +1540,12 @@ void TriggerViewModel::UpdateGroupColors(const rc_trigger_t* pTrigger)
 
 void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
 {
+    std::lock_guard<std::mutex> lock(m_pMutex);
+
     // update the condition rows for the currently selected group
+    const auto nFirstCondition = GetValue(ScrollOffsetProperty);
+    const auto nVisibleConditions = GetValue(VisibleItemCountProperty);
+
     gsl::index nConditionIndex = 0;
     if (pTrigger)
     {
@@ -1553,7 +1562,12 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
                 rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
                 for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
                 {
-                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex);
+                    if (nConditionIndex < nFirstCondition)
+                        continue;
+                    if (nConditionIndex - nFirstCondition >= nVisibleConditions)
+                        break;
+
+                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex - nFirstCondition);
                     if (vmCondition != nullptr)
                     {
                         if (pCondition < pEndPauseConditions && pCondition > pPauseConditions && bFirstPause)
@@ -1579,7 +1593,12 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
                 rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
                 for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
                 {
-                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex);
+                    if (nConditionIndex < nFirstCondition)
+                        continue;
+                    if (nConditionIndex - nFirstCondition >= nVisibleConditions)
+                        break;
+
+                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex - nFirstCondition);
                     if (vmCondition != nullptr)
                         vmCondition->UpdateRowColor(pCondition);
                 }
@@ -1589,7 +1608,12 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
 
     for (; nConditionIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nConditionIndex)
     {
-        auto* pCondition = m_vConditions.GetItemAt(nConditionIndex);
+        if (nConditionIndex < nFirstCondition)
+            continue;
+        if (nConditionIndex - nFirstCondition >= nVisibleConditions)
+            break;
+
+        auto* pCondition = m_vConditions.GetItemAt(nConditionIndex - nFirstCondition);
         if (pCondition != nullptr)
             pCondition->UpdateRowColor(nullptr);
     }

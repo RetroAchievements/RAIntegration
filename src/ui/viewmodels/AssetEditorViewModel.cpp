@@ -441,8 +441,11 @@ void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::Ch
 void AssetEditorViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == TriggerViewModel::VersionProperty)
+    {
         OnTriggerChanged();
-    else if (args.Property == TriggerViewModel::SelectedGroupIndexProperty)
+    }
+    else if (args.Property == TriggerViewModel::SelectedGroupIndexProperty ||
+             args.Property == TriggerViewModel::ScrollOffsetProperty)
     {
         if (m_pAsset && AreDebugHighlightsEnabled())
             UpdateDebugHighlights();

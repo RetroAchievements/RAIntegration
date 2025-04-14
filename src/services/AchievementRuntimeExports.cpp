@@ -1017,6 +1017,23 @@ static void GetExternalClientV2(rc_client_external_t* pClientExternal) noexcept
     pClientExternal->load_unknown_game = ra::services::AchievementRuntimeExports::load_unknown_game;
 }
 
+static void GetExternalClientV3(rc_client_external_t* pClientExternal) noexcept
+{
+    // ASSERT: all of the v3 info structures are supersets of the v1 info structures with all
+    //         fields at the same offset, so we can pass pointers to a v3 info structure to
+    //         the client as either a v3 info structure of v1 info structure and the client
+    //         will be able to find the data they're looking for.
+    // ASSERT: we can also pass a pointer to a v3 achievement list info as a v1 achievement list
+    //         info because it's just an array of v3 achievement info pointers which can be
+    //         processed as v1 achievement info pointers per the previous assertion.
+    // As a result, we can use the same functions to retrieve v3 structures as v1 structures
+    pClientExternal->get_user_info_v3 = ra::services::AchievementRuntimeExports::get_user_info;
+    pClientExternal->get_game_info_v3 = ra::services::AchievementRuntimeExports::get_game_info;
+    pClientExternal->get_subset_info_v3 = ra::services::AchievementRuntimeExports::get_subset_info;
+    pClientExternal->get_achievement_info_v3 = ra::services::AchievementRuntimeExports::get_achievement_info;
+    pClientExternal->create_achievement_list_v3 = ra::services::AchievementRuntimeExports::create_achievement_list;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1027,6 +1044,10 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal,
     {
         default:
             RA_LOG_WARN("Unknown rc_client_external interface version: %s", nVersion);
+            __fallthrough;
+
+        case 3:
+            GetExternalClientV3(pClientExternal);
             __fallthrough;
 
         case 2:

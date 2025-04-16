@@ -289,6 +289,21 @@ private:
         Assert::IsNotNull((void*)pClient.deserialize_progress, L"deserialize_progress not set");
     }
 
+    static void AssertV2Exports(rc_client_external_t & pClient)
+    {
+        Assert::IsNotNull((void*)pClient.add_game_hash, L"add_game_hash not set");
+        Assert::IsNotNull((void*)pClient.load_unknown_game, L"load_unknown_game not set");
+    }
+
+    static void AssertV3Exports(rc_client_external_t & pClient)
+    {
+        Assert::IsNotNull((void*)pClient.get_user_info_v3, L"get_user_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.get_game_info_v3, L"get_game_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.get_subset_info_v3, L"get_subset_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.get_achievement_info_v3, L"get_achievement_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.create_achievement_list_v3, L"create_achievement_list_v3 not set");
+    }
+
 public:
     TEST_METHOD(TestGetExternalClientV1)
     {
@@ -300,6 +315,37 @@ public:
         _Rcheevos_GetExternalClient(&pClient, 1);
 
         AssertV1Exports(pClient);
+
+        Assert::IsTrue(IsExternalRcheevosClient());
+    }
+
+    TEST_METHOD(TestGetExternalClientV2)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 2);
+
+        AssertV1Exports(pClient);
+        AssertV2Exports(pClient);
+
+        Assert::IsTrue(IsExternalRcheevosClient());
+    }
+
+    TEST_METHOD(TestGetExternalClientV3)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 3);
+
+        AssertV1Exports(pClient);
+        AssertV2Exports(pClient);
+        AssertV3Exports(pClient);
 
         Assert::IsTrue(IsExternalRcheevosClient());
     }

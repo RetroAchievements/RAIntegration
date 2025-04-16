@@ -1296,7 +1296,6 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
                 pClient->game->public_.console_id != 0)
             {
                 _RA_SetConsoleID(pClient->game->public_.console_id);
-                ResetEmulatorMemoryRegionsForRcheevosClient();
             }
         }
 

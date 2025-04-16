@@ -7,8 +7,6 @@
 #include "data/context/GameContext.hh"
 #include "data/context/UserContext.hh"
 
-#include "services/AchievementRuntime.hh"
-#include "services/AchievementRuntimeExports.hh"
 #include "services/IConfiguration.hh"
 #include "services/ServiceLocator.hh"
 
@@ -22,8 +20,6 @@
 #include "ui/viewmodels/OverlaySettingsViewModel.hh"
 #include "ui/viewmodels/UnknownGameViewModel.hh"
 #include "ui/viewmodels/WindowManager.hh"
-
-#include "rcheevos/src/rc_client_external.h"
 
 namespace ra {
 namespace ui {
@@ -425,10 +421,6 @@ void IntegrationMenuViewModel::ShowGameHash()
 
                 if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
                 {
-                    // register the hash so the dialog doesn't immediately reappear
-                    auto* pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient();
-                    rc_client_add_game_hash(pClient, pGameContext.GameHash().c_str(), vmUnknownGame.GetSelectedGameId());
-
                     // attempt to load the newly associated game
                     pGameContext.LoadGame(vmUnknownGame.GetSelectedGameId(), pGameContext.GameHash(),
                                           vmUnknownGame.GetTestMode()

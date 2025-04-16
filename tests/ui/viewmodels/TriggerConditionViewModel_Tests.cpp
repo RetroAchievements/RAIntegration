@@ -84,7 +84,10 @@ private:
         Assert::IsNotNull(pValue);
         Ensures(pValue != nullptr);
 
+        TriggerViewModel vmTrigger;
+        vmTrigger.SetIsValue(true);
         TriggerConditionViewModelHarness vmCondition;
+        vmCondition.SetTriggerViewModel(&vmTrigger);
         vmCondition.InitializeFrom(*pValue->conditions->conditions);
 
         const std::string sOutput = vmCondition.Serialize();
@@ -650,12 +653,13 @@ public:
         ParseAndRegenerate("T:0xH1234=5"); // trigger
     }
 
-    TEST_METHOD(TestRequiredHits)
+    TEST_METHOD(TestParseAndRegenerate)
     {
-        ParseAndRegenerate("0xH1234=5"); // none
-        ParseAndRegenerate("R:0xH1234=5.100."); // 100
+        ParseAndRegenerate("0xH1234=5"); // simple
+        ParseAndRegenerate("R:0xH1234=5.100."); // flag and 100 hits
         ParseAndRegenerateValue("M:0xH1234=5"); // measured without hit target
         ParseAndRegenerateValue("M:0xH1234"); // measured without comparison
+        ParseAndRegenerateValue("M:0xH1234/5"); // measured with modifier
     }
 
     TEST_METHOD(TestTooltipAddress)

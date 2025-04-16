@@ -1278,12 +1278,12 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
                     auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex);
                     if (vmCondition != nullptr)
                     {
-                        if (pCondition < pEndPauseConditions && pCondition > pPauseConditions && bFirstPause)
+                        if (pCondition < pEndPauseConditions && pCondition >= pPauseConditions && bFirstPause)
                         {
                             vmCondition->UpdateRowColor(pCondition);
 
                             // processing stops when a PauseIf has met its hit target
-                            if (pCondition->type == RC_CONDITION_PAUSE_IF)
+                            if (pCondition->type == RC_CONDITION_PAUSE_IF && pCondition->is_true)
                             {
                                 if (pCondition->required_hits == 0 || pCondition->current_hits == pCondition->required_hits)
                                     bFirstPause = false;

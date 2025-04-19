@@ -234,8 +234,7 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
 
         UpdateTotals();
 
-        if (GetCategoryFilter() != CategoryFilter::All)
-            AddOrRemoveFilteredItem(nIndex);
+        AddOrRemoveFilteredItem(nIndex);
     }
     else if (args.Property == ra::data::models::AssetModelBase::StateProperty ||
              args.Property == ra::data::models::AssetModelBase::ChangesProperty)
@@ -288,6 +287,8 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
 
             if (nFilteredIndex != -1)
                 m_vFilteredAssets.SetItemValue(nFilteredIndex, AssetSummaryViewModel::IdProperty, args.tNewValue);
+
+            AddOrRemoveFilteredItem(*pAsset);
         }
     }
 }

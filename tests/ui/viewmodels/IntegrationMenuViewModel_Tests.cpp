@@ -788,6 +788,7 @@ public:
         menu.mockGameContext.SetGameId(1234);
         auto& pAch = menu.mockGameContext.Assets().NewAchievement();
         pAch.SetCategory(ra::data::models::AssetCategory::Core);
+        pAch.SetID(1);
         menu.mockWindowManager.AssetList.SetCategoryFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter::All);
 
         menu.AssertShowWindow<ra::ui::viewmodels::BrokenAchievementsViewModel>(IDM_RA_REPORTBROKENACHIEVEMENTS, false, "", DialogResult::None);

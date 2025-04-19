@@ -69,8 +69,11 @@ public:
         BindItems(const_cast<const ViewModelCollectionBase&>(pViewModels), pIdProperty, pTextProperty);
 #pragma warning(pop)
 
-        m_pMutableViewModelCollection = &pViewModels;
-        pViewModels.AddNotifyTarget(*this);
+        if (!pViewModels.IsFrozen()) // TODO: move this to BindItems(const pViewModels) and Freeze immutable collections
+        {
+            m_pMutableViewModelCollection = &pViewModels;
+            pViewModels.AddNotifyTarget(*this);
+        }
     }
 
     void BindItems(const ViewModelCollectionBase& pViewModels, const IntModelProperty& pIdProperty, const StringModelProperty& pTextProperty)
@@ -141,6 +144,11 @@ protected:
         InvokeOnUIThread([this, nIndex]() noexcept {
             ComboBox_DeleteString(m_hWnd, nIndex);
         });
+    }
+
+    void OnEndViewModelCollectionUpdate() override
+    {
+        InvokeOnUIThread([this]() { UpdateSelectedItem(); });
     }
 
     virtual void PopulateComboBox()

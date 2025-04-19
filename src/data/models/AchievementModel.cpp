@@ -151,6 +151,15 @@ void AchievementModel::CommitTransaction()
     AssetModelBase::CommitTransaction();
 }
 
+bool AchievementModel::IsShownInList() const
+{
+    // don't show warning achievements in asset list
+    if (GetID() > 101000000 && GetCategory() == AssetCategory::Core)
+        return false;
+
+    return true;
+}
+
 bool AchievementModel::ValidateAsset(std::wstring& sError)
 {
     const auto pIter = std::find(s_vValidPoints.begin(), s_vValidPoints.end(), GetPoints());

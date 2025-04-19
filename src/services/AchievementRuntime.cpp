@@ -1287,6 +1287,49 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
 
     if (nResult == RC_OK || nResult == RC_NO_GAME_LOADED)
     {
+        if (pClient->game && pClient->game->public_.id > 1000000000)
+        {
+            ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
+
+            // ids above 1 billion are incompatible. the 100 millions place indicates how.
+            // mask off the part above 100 million to get the actual game id
+            const auto nGameId = pClient->game->public_.id % 100000000;
+            if (pClient->game->public_.id / 100000000 == 11)
+                vmUnknownGame.SetProblemHeader(L"The compatibility of the provided game is unknown.");
+            else
+                vmUnknownGame.SetProblemHeader(L"The provided game has been marked as incompatible.");
+            RA_LOG_INFO("Hash %s identified as unsupported for game %u", pClient->game->public_.hash, nGameId);
+
+            // we don't have the actual game title, so we can't just call InitializeTestCompatibilityMode
+            vmUnknownGame.InitializeGameTitles(ra::itoe<ConsoleID>(pClient->game->public_.console_id));
+            vmUnknownGame.SetSystemName(ra::Widen(rc_console_name(pClient->game->public_.console_id)));
+            vmUnknownGame.SetChecksum(ra::Widen(pClient->game->public_.hash));
+            vmUnknownGame.SetSelectedGameId(nGameId);
+
+            const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+            auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+            vmUnknownGame.SetEstimatedGameName(sEstimatedGameTitle);
+
+            if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
+            {
+                if (vmUnknownGame.GetTestMode())
+                {
+                    ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().SetMode(
+                        ra::data::context::GameContext::Mode::CompatibilityTest);
+
+                    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+
+                    // create the virtual association so rc_client will fetch by game id instead of by hash
+                    auto* client_hash = rc_client_find_game_hash(pRuntime.GetClient(), pClient->game->public_.hash);
+                    client_hash->game_id = nGameId;
+                    client_hash->is_unknown = 1;
+
+                    pRuntime.BeginLoadGame(pClient->game->public_.hash, nGameId, wrapper);
+                    return;
+                }
+            }
+        }
+
         // this has to be done before calling InitializeFromAchievementRuntime so the address validation
         // doesn't flag every achievement as invalid.
         if (IsExternalRcheevosClient() && pClient->game)

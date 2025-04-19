@@ -22,6 +22,7 @@ const IntModelProperty UnknownGameViewModel::SelectedGameIdProperty("UnknownGame
 const BoolModelProperty UnknownGameViewModel::IsSelectedGameEnabledProperty("UnknownGameViewModel", "IsSelectedGameEnabled", true);
 const BoolModelProperty UnknownGameViewModel::IsAssociateEnabledProperty("UnknownGameViewModel", "IsAssociateEnabled", true);
 const StringModelProperty UnknownGameViewModel::NewGameNameProperty("UnknownGameViewModel", "NewGameName", L"");
+const StringModelProperty UnknownGameViewModel::ProblemHeaderProperty("UnknownGameViewModel", "ProblemHeader", L"The provided game could not be identified.");
 const StringModelProperty UnknownGameViewModel::ChecksumProperty("UnknownGameViewModel", "Checksum", L"");
 const StringModelProperty UnknownGameViewModel::EstimatedGameNameProperty("UnknownGameViewModel", "EstimatedGameName", L"");
 const StringModelProperty UnknownGameViewModel::SystemNameProperty("UnknownGameViewModel", "SystemName", L"");
@@ -79,7 +80,9 @@ void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
         SetValue(IsAssociateEnabledProperty, true);
         SetValue(IsSelectedGameEnabledProperty, true);
 
-        CheckForPreviousAssociation();
+        const auto nSelectedGameId = GetSelectedGameId();
+        if (nSelectedGameId == 0)
+            CheckForPreviousAssociation();
     });
 }
 

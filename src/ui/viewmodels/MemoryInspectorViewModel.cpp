@@ -313,16 +313,8 @@ void MemoryInspectorViewModel::BookmarkCurrentAddress() const
             const auto* pRootNote = pCodeNotes->FindCodeNoteModel(nIndirectSource);
             Expects(pRootNote != nullptr);
 
-            std::string sIndirectAddress;
-            ra::services::AchievementLogicSerializer::AppendConditionType(
-                sIndirectAddress, ra::services::TriggerConditionType::AddAddress);
-            ra::services::AchievementLogicSerializer::AppendOperand(
-                sIndirectAddress, ra::services::TriggerOperandType::Address, pRootNote->GetMemSize(), nIndirectSource);
-            ra::services::AchievementLogicSerializer::AppendConditionSeparator(sIndirectAddress);
-            ra::services::AchievementLogicSerializer::AppendConditionType(
-                sIndirectAddress, ra::services::TriggerConditionType::Measured);
-            ra::services::AchievementLogicSerializer::AppendOperand(
-                sIndirectAddress, ra::services::TriggerOperandType::Address, nSize, pNote->GetAddress());
+            std::string sIndirectAddress =
+                ra::services::AchievementLogicSerializer::BuildMemRefChain(*pRootNote, *pNote);
 
             pBookmarks.AddBookmark(sIndirectAddress);
             return;

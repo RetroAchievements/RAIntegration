@@ -104,7 +104,7 @@ public:
         const std::wstring sNote =
             L"Pointer [32bit]\n"
             L"+0x428 | Obj1 pointer\n"
-            L"++0x24C | [16-bit] State";
+            L"++0x24C | [16-bit BE] State";
         note.SetNote(sNote);
         note.SetAddress(0x1234);
         note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
@@ -115,7 +115,31 @@ public:
         Assert::IsNotNull(note3);
 
         std::string sSerialized = AchievementLogicSerializer::BuildMemRefChain(note, *note3);
-        Assert::AreEqual(std::string("I:0xG1234&33554431_I:0xG0428&33554431_M:0x 024c"), sSerialized);
+        Assert::AreEqual(std::string("I:0xG1234&33554431_I:0xG0428&33554431_M:0xI024c"), sSerialized);
+    }
+
+    TEST_METHOD(TestBuildMemRefChain25BitOverflowOffset)
+    {
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockConsoleContext.SetId(ConsoleID::GameCube); // 25-bit BE read
+
+        ra::data::models::CodeNoteModel note;
+        const std::wstring sNote =
+            L"Pointer [32bit]\n"
+            L"+0x80000428 | Obj1 pointer\n" // pointer at 80123456 + offset 0x80000428 = address 0012387E 
+            L"++0x8000024C | [16-bit BE] State";
+        note.SetNote(sNote);
+        note.SetAddress(0x1234);
+        note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
+
+        const auto* note2 = note.GetPointerNoteAtOffset(0x80000428);
+        Assert::IsNotNull(note2);
+        const auto* note3 = note2->GetPointerNoteAtOffset(0x8000024C);
+        Assert::IsNotNull(note3);
+
+        std::string sSerialized = AchievementLogicSerializer::BuildMemRefChain(note, *note3);
+        Assert::AreEqual(std::string("I:0xG1234_I:0xG80000428_M:0xI8000024c"), sSerialized);
     }
 };
 

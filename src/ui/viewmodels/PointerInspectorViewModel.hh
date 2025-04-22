@@ -213,7 +213,7 @@ private:
     void UpdatePointerChainRowColor(StructFieldViewModel& pPointer);
     void UpdatePointerChainValues();
     void UpdateValues();
-    std::string GetDefinition() const;
+    std::string GetMemRefChain(bool bMeasured) const;
 
     void BuildNote(ra::StringBuilder& builder,
                    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain, gsl::index nDepth,

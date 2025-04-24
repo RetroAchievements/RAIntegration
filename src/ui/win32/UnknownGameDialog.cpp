@@ -31,6 +31,7 @@ UnknownGameDialog::UnknownGameDialog(ra::ui::viewmodels::UnknownGameViewModel& v
     m_bindNewTitle(vmUnknownGame)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Center, RelativePosition::Center);
+    m_bindWindow.BindLabel(IDC_RA_PROBLEMHEADER, ra::ui::viewmodels::UnknownGameViewModel::ProblemHeaderProperty);
 
     m_bindExistingTitle.BindItems(vmUnknownGame.GameTitles());
     m_bindExistingTitle.BindSelectedItem(ra::ui::viewmodels::UnknownGameViewModel::SelectedGameIdProperty);

@@ -143,6 +143,11 @@ protected:
         });
     }
 
+    void OnEndViewModelCollectionUpdate() override
+    {
+        InvokeOnUIThread([this]() { UpdateSelectedItem(); });
+    }
+
     virtual void PopulateComboBox()
     {
         SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);

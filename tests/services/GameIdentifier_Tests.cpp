@@ -5,6 +5,7 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
@@ -77,6 +78,7 @@ public:
     ra::data::context::mocks::MockGameContext mockGameContext;
     ra::data::context::mocks::MockSessionTracker mockSessionTracker;
     ra::data::context::mocks::MockUserContext mockUserContext;
+    ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
     ra::services::mocks::MockConfiguration mockConfiguration;
     ra::ui::mocks::MockDesktop mockDesktop;
     ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;

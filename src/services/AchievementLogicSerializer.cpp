@@ -312,14 +312,27 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
     }
 
     std::string sBuffer;
-    ra::ByteAddress nPointerBase = 0;
+    size_t nBitmaskOffset = std::string::npos;
+    ra::ByteAddress nPointerBase = 0, nAddress = 0;
     for (size_t i = 0; i < vChain.size() - 1; ++i)
     {
         const auto* pNote = vChain.at(i);
         Expects(pNote != nullptr);
 
+        nAddress = pNote->GetAddress();
+        if (nBitmaskOffset != std::string::npos)
+        {
+            if (nAddress > nMask)
+            {
+                sBuffer.erase(nBitmaskOffset, sBuffer.length() - nBitmaskOffset);
+                AppendConditionSeparator(sBuffer);
+            }
+
+            nBitmaskOffset = std::string::npos;
+        }
+
         AppendConditionType(sBuffer, ra::services::TriggerConditionType::AddAddress);
-        AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, pNote->GetAddress());
+        AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, nAddress);
         nPointerBase = pNote->GetPointerAddress();
 
         if (nOffset != 0)
@@ -332,6 +345,7 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
             const auto nBitsMask = ra::to_unsigned((1 << ra::data::MemSizeBits(nSize)) - 1);
             if (nMask != nBitsMask)
             {
+                nBitmaskOffset = sBuffer.length();
                 AppendOperator(sBuffer, ra::services::TriggerOperatorType::BitwiseAnd);
                 AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, MemSize::ThirtyTwoBit, nMask);
             }
@@ -340,12 +354,20 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
         AppendConditionSeparator(sBuffer);
     }
 
+    nAddress = pLeafNote.GetAddress();
+    if (nAddress > nMask && nBitmaskOffset != std::string::npos)
+    {
+        sBuffer.erase(nBitmaskOffset, sBuffer.length() - nBitmaskOffset);
+        AppendConditionSeparator(sBuffer);
+    }
+
     AppendConditionType(sBuffer, ra::services::TriggerConditionType::Measured);
 
     nSize = pLeafNote.GetMemSize();
     if (nSize == MemSize::Unknown)
         nSize = MemSize::EightBit;
-    AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, pLeafNote.GetAddress());
+
+    AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, nAddress);
 
     return sBuffer;
 }

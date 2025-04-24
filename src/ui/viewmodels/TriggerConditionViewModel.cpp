@@ -485,6 +485,9 @@ static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperan
         return pOperand->value.memref->value.value;
     }
 
+    if (!rc_operand_is_memref(pOperand))
+        return nAddress;
+
     if (pOperand->value.memref->value.memref_type != RC_MEMREF_TYPE_MODIFIED_MEMREF)
         return nAddress;
 
@@ -500,7 +503,7 @@ static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperan
         if (rc_operand_is_memref(&pModifiedMemref->parent))
             sPointerChain = ra::Widen(ra::ByteAddressToString(pModifiedMemref->parent.value.memref->address));
         else
-            sPointerChain = L"????";
+            sPointerChain = ra::Widen(ra::ByteAddressToString(pModifiedMemref->parent.value.num));
     }
 
     if (pModifiedMemref->modifier_type != RC_OPERATOR_INDIRECT_READ)

@@ -137,14 +137,6 @@ ValueFormat ValueFormatFromString(const std::string& sFormat) noexcept
     return ra::itoe<ValueFormat>(rc_parse_format(sFormat.c_str()));
 }
 
-static unsigned ReverseBytes(unsigned nValue) noexcept
-{
-    return ((nValue & 0xFF000000) >> 24) |
-           ((nValue & 0x00FF0000) >> 8) |
-           ((nValue & 0x0000FF00) << 8) |
-           ((nValue & 0x000000FF) << 24);
-}
-
 unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
 {
     // this leverages the fact that Windows uses IEE754 floats

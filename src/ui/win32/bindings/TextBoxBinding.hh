@@ -22,6 +22,7 @@ public:
         ControlBinding::SetHWND(pDialog, hControl);
 
         UpdateBoundText();
+        UpdateReadOnly();
 
         if (!m_mKeyHandlers.empty())
             SubclassWndProc();

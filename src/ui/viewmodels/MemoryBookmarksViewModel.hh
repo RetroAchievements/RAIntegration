@@ -287,6 +287,7 @@ public:
         void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
 
         void OnValueChanged();
+        void OnSizeChanged();
 
         unsigned ReadValue() const;
 

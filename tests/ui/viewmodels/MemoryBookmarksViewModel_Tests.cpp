@@ -1707,6 +1707,96 @@ public:
         bookmarks.DoFrame();
         Assert::AreEqual({0U}, bookmarks.mockFrameEventQueue.NumMemoryChanges());
     }
+
+    TEST_METHOD(TestUpdateCurrentValue)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        std::array<uint8_t, 64> memory = {};
+        memory.at(4) = 8;
+        // 0x42883EFA => 68.123
+        memory.at(0x10) = 0xFA;
+        memory.at(0x11) = 0x3E;
+        memory.at(0x12) = 0x88;
+        memory.at(0x13) = 0x42;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+
+        bookmarks.AddBookmark("0xX0010");
+
+        Assert::AreEqual({1U}, bookmarks.Bookmarks().Count());
+        auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+
+        bookmark.UpdateCurrentValue();
+        Assert::AreEqual(std::wstring(L"42883efa"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::Float);
+        Assert::AreEqual(std::wstring(L"68.123001"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::ThirtyTwoBitBigEndian);
+        Assert::AreEqual(std::wstring(L"fa3e8842"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::TwentyFourBitBigEndian);
+        Assert::AreEqual(std::wstring(L"fa3e88"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::SixteenBitBigEndian);
+        Assert::AreEqual(std::wstring(L"fa3e"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::EightBit);
+        Assert::AreEqual(std::wstring(L"fa"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::SixteenBit);
+        Assert::AreEqual(std::wstring(L"3efa"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::TwentyFourBit);
+        Assert::AreEqual(std::wstring(L"883efa"), bookmark.GetCurrentValue());
+    }
+
+    TEST_METHOD(TestUpdateCurrentValueIndirect)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        std::array<uint8_t, 64> memory = {};
+        memory.at(4) = 8;
+        // 0x42883EFA => 68.123
+        memory.at(0x10) = 0xFA;
+        memory.at(0x11) = 0x3E;
+        memory.at(0x12) = 0x88;
+        memory.at(0x13) = 0x42;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+
+        bookmarks.AddBookmark("I:0xX0004_M:0xX0008"); // 4=8 $(8+8)= $16
+
+        Assert::AreEqual({1U}, bookmarks.Bookmarks().Count());
+        auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+
+        bookmark.UpdateCurrentValue();
+        Assert::AreEqual(std::wstring(L"42883efa"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::Float);
+        Assert::AreEqual(std::wstring(L"68.123001"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::ThirtyTwoBitBigEndian);
+        Assert::AreEqual(std::wstring(L"fa3e8842"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::TwentyFourBitBigEndian);
+        Assert::AreEqual(std::wstring(L"fa3e88"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::SixteenBitBigEndian);
+        Assert::AreEqual(std::wstring(L"fa3e"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::EightBit);
+        Assert::AreEqual(std::wstring(L"fa"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::SixteenBit);
+        Assert::AreEqual(std::wstring(L"3efa"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::TwentyFourBit);
+        Assert::AreEqual(std::wstring(L"883efa"), bookmark.GetCurrentValue());
+    }
 };
 
 } // namespace tests

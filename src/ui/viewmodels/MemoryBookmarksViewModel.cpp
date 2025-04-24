@@ -119,24 +119,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Int
     else if (args.Property == MemoryBookmarkViewModel::SizeProperty)
     {
         m_nSize = ra::itoe<MemSize>(args.tNewValue);
-        switch (m_nSize)
-        {
-            case MemSize::BitCount:
-            case MemSize::Text:
-                SetReadOnly(true);
-                break;
-
-            default:
-                SetReadOnly(false);
-                break;
-        }
-
-        if (m_bInitialized)
-        {
-            m_bModified = true;
-            m_nValue = ReadValue();
-            SetValue(CurrentValueProperty, BuildCurrentValue());
-        }
+        OnSizeChanged();
     }
     else if (args.Property == MemoryBookmarkViewModel::AddressProperty)
     {
@@ -195,9 +178,9 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Str
     LookupItemViewModel::OnValueChanged(args);
 }
 
-static const rc_operand_t* FindMeasuredOperand(const rc_value_t* pValue) noexcept
+static rc_operand_t* FindMeasuredOperand(rc_value_t* pValue) noexcept
 {
-    const rc_condition_t* condition = pValue->conditions->conditions;
+    rc_condition_t* condition = pValue->conditions->conditions;
     for (; condition; condition = condition->next)
     {
         if (condition->type == RC_CONDITION_MEASURED && rc_operand_is_memref(&condition->operand1))
@@ -207,13 +190,57 @@ static const rc_operand_t* FindMeasuredOperand(const rc_value_t* pValue) noexcep
     return nullptr;
 }
 
+void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnSizeChanged()
+{
+    switch (m_nSize)
+    {
+        case MemSize::BitCount:
+        case MemSize::Text:
+            SetReadOnly(true);
+            break;
+
+        default:
+            SetReadOnly(false);
+            break;
+    }
+
+    if (m_bInitialized)
+    {
+        m_bModified = true;
+
+        if (m_pValue)
+        {
+            auto* pOperand = FindMeasuredOperand(m_pValue);
+            if (pOperand)
+            {
+                std::string sSerialized;
+                ra::services::AchievementLogicSerializer::AppendOperand(
+                    sSerialized, ra::services::TriggerOperandType::Address, m_nSize, 0U);
+
+                const char* memaddr = sSerialized.c_str();
+                uint32_t unused;
+                rc_parse_memref(&memaddr, &pOperand->size, &unused);
+            }
+        }
+
+        m_nValue = ReadValue();
+        SetValue(CurrentValueProperty, BuildCurrentValue());
+    }
+}
+
 unsigned MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadValue() const
 {
     if (m_pValue)
     {
         rc_typed_value_t value;
         rc_evaluate_value_typed(m_pValue, &value, rc_peek_callback, nullptr);
-        rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
+
+        // floats will be returned as their u32 equivalent and converted back to
+        // a float by BuildCurrentValue, but we need to reverse the byte order
+        // for big endian floats
+        if (value.type == RC_VALUE_TYPE_FLOAT && ra::data::IsBigEndian(m_nSize))
+            return ra::data::ReverseBytes(value.value.u32);
+
         return value.value.u32;
     }
 

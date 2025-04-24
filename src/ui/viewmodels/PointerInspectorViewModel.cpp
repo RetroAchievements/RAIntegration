@@ -628,11 +628,23 @@ void PointerInspectorViewModel::DoFrame()
 
 void PointerInspectorViewModel::CopyDefinition() const
 {
-    const auto sDefinition = GetDefinition();
+    const auto sDefinition = GetMemRefChain(false);
     ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sDefinition));
 }
 
-std::string PointerInspectorViewModel::GetDefinition() const
+class VirtualCodeNoteModel : public ra::data::models::CodeNoteModel
+{
+    bool GetPointerChain(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pRootNote) const override
+    {
+        if (!ra::data::models::CodeNoteModel::GetPointerChain(vChain, pRootNote))
+            return false;
+
+        vChain.push_back(this);
+        return true;
+    }
+};
+
+std::string PointerInspectorViewModel::GetMemRefChain(bool bMeasured) const
 {
     std::string sBuffer;
 
@@ -640,59 +652,47 @@ std::string PointerInspectorViewModel::GetDefinition() const
     if (nSelectedFieldIndex == -1)
         return sBuffer;
 
-    const auto nSelectedNodeIndex = Nodes().FindItemIndex(LookupItemViewModel::IdProperty, GetSelectedNode());
-    if (nSelectedNodeIndex == -1)
-        return sBuffer;
-
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes == nullptr)
         return sBuffer;
 
-    std::stack<const PointerNodeViewModel*> sChain;
-    GetPointerChain(nSelectedNodeIndex, sChain);
-
-    auto* pNote = pCodeNotes->FindCodeNoteModel(GetCurrentAddress());
-    Expects(pNote != nullptr);
-
-    do
-    {
-        const auto* pNode = sChain.top();
-        Expects(pNode != nullptr);
-
-        if (!pNode->IsRootNode())
-            pNote = pNote->GetPointerNoteAtOffset(pNode->GetOffset());
-        Expects(pNote != nullptr);
-
-        ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::services::TriggerConditionType::AddAddress);
-        ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address,
-                                                                pNote->GetMemSize(), pNote->GetAddress());
-        ra::services::AchievementLogicSerializer::AppendConditionSeparator(sBuffer);
-
-        sChain.pop();
-    } while (!sChain.empty());
-
     const auto* vmField = Bookmarks().GetItemAt<StructFieldViewModel>(nSelectedFieldIndex);
     Expects(vmField != nullptr);
-    ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address,
-                                                            vmField->GetSize(), ra::to_unsigned(vmField->m_nOffset));
+
+    auto* pRootNote = pCodeNotes->FindCodeNoteModel(GetCurrentAddress());
+    Expects(pRootNote != nullptr);
+
+    VirtualCodeNoteModel oLeafNote;
+    auto* pLeafNote = m_pCurrentNote->GetPointerNoteAtOffset(vmField->m_nOffset);
+    if (pLeafNote == nullptr)
+    {
+        oLeafNote.SetMemSize(vmField->GetSize());
+        oLeafNote.SetAddress(vmField->m_nOffset);
+        pLeafNote = &oLeafNote;
+    }
+
+    sBuffer = ra::services::AchievementLogicSerializer::BuildMemRefChain(*pRootNote, *pLeafNote);
+
+    if (bMeasured) // BuildMemRefChain returns a Measured value. If that's what's wanted, return it.
+        return sBuffer;
+
+    // remove Measured flag
+    const auto nIndex = sBuffer.rfind("M:");
+    if (nIndex != std::string::npos)
+        sBuffer.erase(nIndex, 2);
+
+    // add comparison to current value
     ra::services::AchievementLogicSerializer::AppendOperator(sBuffer, ra::services::TriggerOperatorType::Equals);
     ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Value,
-                                                            MemSize::ThirtyTwoBit, vmField->GetCurrentValueRaw());
+                                                            vmField->GetSize(), vmField->GetCurrentValueRaw());
 
     return sBuffer;
 }
 
 void PointerInspectorViewModel::BookmarkCurrentField() const
 {
-    // change "I:0xX1234_0xH0010=0" to "I:0xX1234_M:0xH0010"
-    auto sDefinition = GetDefinition();
-    auto nIndex = sDefinition.find_last_of('=');
-    Expects(nIndex != std::string::npos);
-    sDefinition.erase(nIndex);
-    nIndex = sDefinition.find_last_of('_');
-    Expects(nIndex != std::string::npos);
-    sDefinition.insert(nIndex + 1, "M:");
+    auto sDefinition = GetMemRefChain(true);
 
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.MemoryBookmarks.AddBookmark(sDefinition);

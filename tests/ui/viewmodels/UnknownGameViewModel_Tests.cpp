@@ -4,6 +4,7 @@
 
 #include "services\ServiceLocator.hh"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -32,6 +33,7 @@ private:
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -499,7 +501,57 @@ public:
         Assert::IsTrue(vmUnknownGame.Associate());
         Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
         Assert::IsFalse(vmUnknownGame.GetTestMode());
-    }};
+    }
+
+    TEST_METHOD(TestUpdatesRuntime)
+    {
+        UnknownGameViewModelHarness vmUnknownGame;
+        vmUnknownGame.mockConsoleContext.SetId(ConsoleID::PSP);
+        vmUnknownGame.mockGameContext.SetGameId(40U);
+        vmUnknownGame.mockGameContext.SetGameTitle(L"Game 40");
+        vmUnknownGame.mockGameContext.SetGameHash("CHECKSUM");
+        vmUnknownGame.SetEstimatedGameName(L"GAME40");
+        vmUnknownGame.InitializeTestCompatibilityMode();
+
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [](ra::ui::viewmodels::MessageBoxViewModel&) {
+                return ra::ui::DialogResult::Yes;
+            });
+
+        vmUnknownGame.mockServer.HandleRequest<ra::api::SubmitNewTitle>(
+            [](const ra::api::SubmitNewTitle::Request& request, ra::api::SubmitNewTitle::Response& response) {
+                Assert::AreEqual(41U, request.ConsoleId);
+                Assert::AreEqual(std::string("CHECKSUM"), request.Hash);
+                Assert::AreEqual(std::wstring(L"Game 40"), request.GameName);
+                Assert::AreEqual(std::wstring(L"GAME40"), request.Description);
+                Assert::AreEqual(40U, request.GameId);
+
+                response.Result = ra::api::ApiResult::Success;
+                response.GameId = 40U;
+
+                return true;
+            });
+
+        Assert::IsTrue(vmUnknownGame.BeginTest());
+        Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
+        Assert::IsTrue(vmUnknownGame.GetTestMode());
+
+        auto* pClient = vmUnknownGame.mockAchievementRuntime.GetClient();
+        const auto* pGameHash = rc_client_find_game_hash(pClient, "CHECKSUM");
+        Assert::IsNotNull(pGameHash);
+        Assert::AreEqual(40U, pGameHash->game_id);
+        Assert::AreEqual({1}, pGameHash->is_unknown);
+
+        Assert::IsTrue(vmUnknownGame.Associate());
+        Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
+        Assert::IsFalse(vmUnknownGame.GetTestMode());
+
+        pGameHash = rc_client_find_game_hash(pClient, "CHECKSUM");
+        Assert::IsNotNull(pGameHash);
+        Assert::AreEqual(40U, pGameHash->game_id);
+        Assert::AreEqual({0}, pGameHash->is_unknown);
+    }
+};
 
 } // namespace tests
 } // namespace viewmodels

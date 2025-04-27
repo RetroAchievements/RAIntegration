@@ -5,6 +5,7 @@
 #include "tests\ui\UIAsserts.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConfiguration.hh"
+#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -466,7 +467,7 @@ public:
                 bDialogShown = true;
 
                 Assert::AreEqual(std::wstring(L"Paste failed."), vmMessageBox.GetHeader());
-                Assert::AreEqual(std::wstring(L"Clipboard did not contain valid value conditions."),
+                Assert::AreEqual(std::wstring(L"Clipboard did not contain valid trigger conditions."),
                                  vmMessageBox.GetMessage());
 
                 return DialogResult::OK;
@@ -478,11 +479,14 @@ public:
 
         Assert::IsFalse(bDialogShown);
 
-        // Values do not allow conditions without flags
-        vmTrigger.SetIsValue(true);
-        bDialogShown = false;
+        // Measured requires a comparison for triggers - but allow the paste so the user can add one
+        vmTrigger.mockClipboard.SetText(L"M:0xH1234");
+        vmTrigger.PasteFromClipboard();
 
-        vmTrigger.mockClipboard.SetText(L"0xH1234=7");
+        Assert::IsFalse(bDialogShown);
+
+        // cannot paste unparseable value
+        vmTrigger.mockClipboard.SetText(L"banana");
         vmTrigger.PasteFromClipboard();
 
         Assert::IsTrue(bDialogShown);
@@ -493,6 +497,7 @@ public:
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "A:0xH1235*100");
         Assert::AreEqual({1U}, vmTrigger.Conditions().Count());
+        vmTrigger.SetIsValue(true);
 
         // Measured requires a comparison for triggers
         bool bDialogShown = false;
@@ -501,25 +506,29 @@ public:
                 bDialogShown = true;
 
                 Assert::AreEqual(std::wstring(L"Paste failed."), vmMessageBox.GetHeader());
-                Assert::AreEqual(std::wstring(L"Clipboard did not contain valid trigger conditions."),
+                Assert::AreEqual(std::wstring(L"Clipboard did not contain valid value conditions."),
                                  vmMessageBox.GetMessage());
 
                 return DialogResult::OK;
             });
 
-        vmTrigger.mockClipboard.SetText(L"M:0xH1234");
-        vmTrigger.PasteFromClipboard();
-
-        Assert::IsTrue(bDialogShown);
-
         // Measured does not require a comparison for values
-        vmTrigger.SetIsValue(true);
-        bDialogShown = false;
-
         vmTrigger.mockClipboard.SetText(L"M:0xH1234");
         vmTrigger.PasteFromClipboard();
 
         Assert::IsFalse(bDialogShown);
+
+        // Values do not allow conditions without flags - but allow the paste so the user can add a flag
+        vmTrigger.mockClipboard.SetText(L"0xH1234=7");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsFalse(bDialogShown);
+
+        // cannot paste unparseable value
+        vmTrigger.mockClipboard.SetText(L"banana");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsTrue(bDialogShown);
     }
 
     TEST_METHOD(TestPasteFromClipboardInvalidSyntax)
@@ -964,6 +973,30 @@ public:
 
         Assert::AreEqual(std::wstring(L"0x0007 (indirect 0x0002+0x05)\r\n[No code note]"),
             vmTrigger.Conditions().GetItemAt(2)->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
+    TEST_METHOD(TestNewConditionFromIndirectNote)
+    {
+        std::array<uint8_t, 10> pMemory = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16");
+        Assert::AreEqual({1U}, vmTrigger.Conditions().Count());
+        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+
+        vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
+        vmTrigger.mockGameContext.SetCodeNote({4U}, L"[8-bit pointer] test\n+4=[16-bit] note");
+        vmTrigger.mockGameContext.DoFrame();
+
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        Assert::AreEqual(
+            std::wstring(L"[Indirect from 0x0004]\r\n[16-bit] note"),
+            vmTrigger.mockWindowManager.MemoryInspector.GetCurrentAddressNote());
+
+        vmTrigger.NewCondition();
+        Assert::AreEqual({3U}, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_I:0xH0004_0x 0004=2312"), vmTrigger.Serialize());
     }
 
     TEST_METHOD(TestNewConditionValue)

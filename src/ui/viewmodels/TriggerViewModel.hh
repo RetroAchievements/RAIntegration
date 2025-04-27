@@ -166,6 +166,8 @@ private:
     void UpdateConditions(const GroupViewModel* pGroup);
     void UpdateTotalHits();
 
+    int AppendMemRefChain(const std::string& sTrigger);
+
     void DeselectAllConditions();
     void UpdateIndicesAndEnsureSelectionVisible();
     rc_trigger_t* ParseTrigger(const std::string& sTrigger);

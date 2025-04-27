@@ -6,6 +6,8 @@
 
 #include "RA_StringUtils.h"
 
+#include "data\models\TriggerValidation.hh"
+
 #include "services\AchievementRuntime.hh"
 #include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
@@ -231,6 +233,8 @@ void TriggerViewModel::DeselectAllConditions()
         m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty, false);
 }
 
+static constexpr int RC_MULTIPLE_GROUPS = -99;
+
 void TriggerViewModel::PasteFromClipboard()
 {
     const std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
@@ -240,35 +244,54 @@ void TriggerViewModel::PasteFromClipboard()
         return;
     }
 
+    const auto nResult = AppendMemRefChain(ra::Narrow(sClipboardText));
+    if (nResult != RC_OK)
+    {
+        if (nResult == RC_MULTIPLE_GROUPS)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                L"Paste failed.", L"Clipboard contained multiple groups.");
+        }
+        else
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                L"Paste failed.", ra::StringPrintf(L"Clipboard did not contain valid %s conditions.", IsValue() ? "value" : "trigger"));
+        }
+    }
+}
+
+int TriggerViewModel::AppendMemRefChain(const std::string& sTrigger)
+{
     // have to use internal parsing functions to decode conditions without full trigger/value
     // restriction validation (full validation will occur after new conditions are added)
     rc_preparse_state_t preparse;
     rc_init_preparse_state(&preparse);
     preparse.parse.is_value = IsValue();
-    std::string sTrigger = ra::Narrow(sClipboardText);
+    preparse.parse.ignore_non_parse_errors = 1;
     const char* memaddr = sTrigger.c_str();
     Expects(memaddr != nullptr);
     rc_parse_condset(&memaddr, &preparse.parse);
 
     const auto nSize = preparse.parse.offset;
-    if (nSize > 0 && *memaddr == 'S')
-    {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-            L"Paste failed.", L"Clipboard contained multiple groups.");
-        return;
-    }
+    if (nSize == 0) // nothing to do
+        return RC_OK;
 
-    if (nSize <= 0 || *memaddr != '\0')
+    if (nSize < 0) // error occurred
+        return nSize;
+
+    if (*memaddr != '\0')
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Paste failed.",
-            ra::StringPrintf(L"Clipboard did not contain valid %s conditions.", IsValue() ? "value" : "trigger"));
-        return;
+        if (nSize > 0 && *memaddr == 'S') // alts detected
+            return RC_MULTIPLE_GROUPS;
+
+        return RC_INVALID_STATE; // additional test that was not parsed
     }
 
     std::string sTriggerBuffer;
     sTriggerBuffer.resize(nSize);
     rc_reset_parse_state(&preparse.parse, sTriggerBuffer.data());
     preparse.parse.is_value = IsValue();
+    preparse.parse.ignore_non_parse_errors = 1;
 
     if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
     {
@@ -301,6 +324,7 @@ void TriggerViewModel::PasteFromClipboard()
     m_vConditions.EndUpdate();
 
     SetValue(EnsureVisibleConditionIndexProperty, gsl::narrow_cast<int>(m_vConditions.Count()) - 1);
+    return RC_OK;
 }
 
 void TriggerViewModel::RemoveSelectedConditions()
@@ -377,71 +401,55 @@ void TriggerViewModel::UpdateIndicesAndEnsureSelectionVisible()
 
 void TriggerViewModel::NewCondition()
 {
-    m_vConditions.BeginUpdate();
-
-    DeselectAllConditions();
-
-    auto& vmCondition = m_vConditions.Add();
-    vmCondition.SetTriggerViewModel(this);
-    vmCondition.SetIndex(gsl::narrow_cast<int>(m_vConditions.Count()));
-
     // assume the user wants to create a condition for the currently watched memory address.
     const auto& pMemoryInspector = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryInspector;
-    const auto nAddress = pMemoryInspector.Viewer().GetAddress();
+    auto sMemRef = pMemoryInspector.GetCurrentAddressMemRefChain();
 
-    // if the code note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    auto nSize = (pCodeNotes != nullptr) ? pCodeNotes->GetCodeNoteMemSize(nAddress) : MemSize::Unknown;
-    if (nSize >= MemSize::Unknown)
-        nSize = pMemoryInspector.Viewer().GetSize();
-
-    vmCondition.SetSourceType(TriggerOperandType::Address);
-    vmCondition.SetSourceSize(nSize);
-    vmCondition.SetSourceValue(nAddress);
-
-    if (m_bIsValue && m_vConditions.Count() == 1)
+    if (m_bIsValue && m_vConditions.Count() == 0)
     {
         // first condition added to a value should be Measured and not have a operator/target.
-        vmCondition.SetType(TriggerConditionType::Measured);
-
-        // if the operator is None when changing to a non-modifying type, the operator is
-        // automatically changed to Equals. change it back.
-        vmCondition.SetOperator(TriggerOperatorType::None);
+#ifndef NDEBUG
+        const auto nIndex = sMemRef.find_last_of('_');
+        assert(sMemRef.find_first_of("M:", (nIndex == std::string::npos) ? 0 : nIndex + 1) != std::string::npos);
+#endif
     }
     else
     {
+        MemSize nSize = MemSize::EightBit;
+        const auto nIndex = sMemRef.find_last_of('_');
+        const auto nIndex2 = (nIndex == std::string::npos) ? 0 : nIndex + 1;
+        uint8_t nMemRefSize = RC_MEMSIZE_8_BITS;
+        uint32_t nAddress = 0;
+
+        // last condition of memref chain should be Measured. remove the Measured
+        if (sMemRef.at(nIndex2) == 'M' && sMemRef.at(nIndex2 + 1) == ':')
+            sMemRef.erase(nIndex2, 2);
+
+        // extract the size
+        const char* sMemRefPtr = &sMemRef.at(nIndex2);
+        if (rc_parse_memref(&sMemRefPtr, &nMemRefSize, &nAddress) == RC_OK)
+            nSize = ra::data::models::TriggerValidation::MapRcheevosMemSize(nMemRefSize);
+
         // assume the user wants to compare to the current value of the watched memory address
-        vmCondition.SetOperator(TriggerOperatorType::Equals);
+        ra::services::AchievementLogicSerializer::AppendOperator(sMemRef, ra::services::TriggerOperatorType::Equals);
 
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        const auto nValue = pEmulatorContext.ReadMemory(nAddress, nSize);
+        const auto nValue = pEmulatorContext.ReadMemory(pMemoryInspector.GetCurrentAddress(), nSize);
 
-        vmCondition.SetTargetSize(nSize);
-        switch (nSize)
+        if (ra::data::MemSizeIsFloat(nSize))
         {
-            case MemSize::Float:
-            case MemSize::FloatBigEndian:
-            case MemSize::Double32:
-            case MemSize::Double32BigEndian:
-            case MemSize::MBF32:
-            case MemSize::MBF32LE:
-                vmCondition.SetTargetType(TriggerOperandType::Float);
-                vmCondition.SetTargetValue(ra::data::U32ToFloat(nValue, nSize));
-                break;
-
-            default:
-                vmCondition.SetTargetType(TriggerOperandType::Value);
-                vmCondition.SetTargetValue(nValue);
-                break;
+            ra::services::AchievementLogicSerializer::AppendOperand(sMemRef,
+                ra::services::TriggerOperandType::Float,
+                nSize, ra::data::U32ToFloat(nValue, nSize));
+        }
+        else
+        {
+            ra::services::AchievementLogicSerializer::AppendOperand(sMemRef,
+                ra::services::TriggerOperandType::Value, nSize, nValue);
         }
     }
 
-    vmCondition.SetSelected(true);
-
-    m_vConditions.EndUpdate();
-
-    SetValue(EnsureVisibleConditionIndexProperty, gsl::narrow_cast<int>(m_vConditions.Count()) - 1);
+    AppendMemRefChain(sMemRef);
 }
 
 static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& vGroups,

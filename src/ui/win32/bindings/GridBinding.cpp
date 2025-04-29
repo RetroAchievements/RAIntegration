@@ -617,7 +617,7 @@ void GridBinding::OnEndViewModelCollectionUpdate()
     {
         if (!WindowBinding::IsOnUIThread())
         {
-            WindowBinding::InvokeOnUIThread([this]() { OnEndViewModelCollectionUpdate(); });
+            WindowBinding::InvokeOnUIThread([this]() { OnEndViewModelCollectionUpdate(); }, this);
             return;
         }
 

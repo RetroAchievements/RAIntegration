@@ -63,6 +63,12 @@ private:
 /// <summary>
 /// Helper class for validating existance of "this" pointer in an asynchronous callback
 /// </summary>
+/// <remarks>
+/// Inheriting from <see cref="AsyncObject"> does not inherently prevent destruction of the
+/// "this" pointer unless used in conjunction with an <see cref="AsyncKeepAlive"> object.
+/// While an AsyncKeepAlive object has a reference to the AsyncObject's <see cref="AsyncHandle">,
+/// he AsyncObject's destructor will wait until the code guarded by the AsyncKeepAlive completes.
+/// </remarks>
 /// <example>
 ///     run_async([this, asyncHandle = CreateAsyncHandle()]{
 ///         AsyncKeepAlive keepAlive(*asyncHandle); // prevents destroying the object while we're in the callback
@@ -88,23 +94,6 @@ public:
     AsyncObject(AsyncObject&&) noexcept = default;
     AsyncObject& operator=(AsyncObject&&) noexcept = default;
 
-protected:    
-    /// <summary>
-    /// Updates the <see cref="AsyncHandle" /> to indicate that the destruction process has begun. 
-    /// Should be called by the destructor of the class that inherits from <see cref="AsyncObject" />
-    /// so any default destruction of member fields is delayed while other thread may be running.
-    /// </summary>
-    void BeginDestruction() noexcept
-    {
-        if (m_pAsyncHandle)
-        {
-            m_pAsyncHandle->SetDestroyed();
-            m_pAsyncHandle.reset();
-        }
-
-        assert(m_pAsyncHandle == nullptr);
-    }
-        
     /// <summary>
     /// Creates a handle to be passed to an async function so the function can validate that
     /// the <see cref="AsyncObject"/> is still valid when it runs.
@@ -116,6 +105,26 @@ protected:
             m_pAsyncHandle = std::make_shared<AsyncHandle>();
 
         return m_pAsyncHandle;
+    }
+
+protected:    
+    /// <summary>
+    /// Updates the <see cref="AsyncHandle" /> to indicate that the destruction process has begun
+    /// and then waits while any <see cref="AsyncKeepAlive" /> objects have hold of the AsyncHandle. 
+    /// </summary>
+    /// <remarks>
+    /// Should be called by the destructor of a class that inherits from <see cref="AsyncObject" />
+    /// so any default destruction of member fields is delayed while another thread may be running.
+    /// </remarks>
+    void BeginDestruction() noexcept
+    {
+        if (m_pAsyncHandle)
+        {
+            m_pAsyncHandle->SetDestroyed();
+            m_pAsyncHandle.reset();
+        }
+
+        assert(m_pAsyncHandle == nullptr);
     }
 
     /// <summary>

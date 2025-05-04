@@ -66,7 +66,9 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindWindow.BindEnabled(IDC_RA_FREEZE, PointerInspectorViewModel::HasSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, PointerInspectorViewModel::HasSingleSelectionProperty);
 
-    m_bindAddress.BindText(PointerInspectorViewModel::CurrentAddressTextProperty, ra::ui::win32::bindings::TextBoxBinding::UpdateMode::Typing);
+    m_bindAddress.BindItems(vmPointerFinder.KnownPointers());
+    m_bindAddress.BindSelectedItem(PointerInspectorViewModel::CurrentAddressProperty);
+    m_bindAddress.SetDropDownWidth(300);
     m_bindNodes.BindItems(vmPointerFinder.Nodes());
     m_bindNodes.BindSelectedItem(PointerInspectorViewModel::SelectedNodeProperty);
     m_bindDescription.BindText(PointerInspectorViewModel::CurrentAddressNoteProperty);

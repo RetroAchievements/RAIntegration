@@ -216,8 +216,8 @@ public:
 
         inspector.SetCurrentAddress({4U});
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
-            L"[32-bit pointer] Player data\n"
-            L"+4: [32-bit] Current HP\n"
+            L"[32-bit pointer] Player data\r\n"
+            L"+4: [32-bit] Current HP\r\n"
             L"+8: [32-bit] Max HP");
 
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
@@ -244,10 +244,10 @@ public:
 
         inspector.SetCurrentAddress({4U});
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
-            L"[32-bit pointer] Player data\n"
-            L"+4: [32-bit] Class\n"
-            "1=Wizard\n"
-            "2=Fighter\n"
+            L"[32-bit pointer] Player data\r\n"
+            L"+4: [32-bit] Class\r\n"
+            "1=Wizard\r\n"
+            "2=Fighter\r\n"
             L"+8: [32-bit] Max HP");
 
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
@@ -257,9 +257,97 @@ public:
         Assert::AreEqual({ 2U }, inspector.Bookmarks().Count());
 
         inspector.AssertField(0, 4, 16U, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
-        inspector.AssertFieldBody(0, L"[32-bit] Class\n1=Wizard\n2=Fighter");
+        inspector.AssertFieldBody(0, L"[32-bit] Class\r\n1=Wizard\r\n2=Fighter");
         inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
         inspector.AssertFieldBody(1, L"[32-bit] Max HP");
+    }
+
+    TEST_METHOD(TestKnownPointers)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({1U}, L"Simple note");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+            L"[32-bit pointer] Player data\r\n"
+            L"+4: [32-bit] Current HP\r\n"
+            L"+8: [32-bit] Max HP");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({8U}, L"Something here");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({16U},
+            L"[32-bit pointer] Level data\r\n"
+            L"+4: [32-bit] Current world\r\n"
+            L"+8: [32-bit] Current stage");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({20U}, L"Read this");
+
+        inspector.mockGameContext.NotifyGameLoad();
+
+        Assert::AreEqual({0U}, inspector.GetCurrentAddress());
+
+        Assert::AreEqual({2U}, inspector.KnownPointers().Count());
+        Assert::AreEqual(4, inspector.KnownPointers().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0004 | Player data"), inspector.KnownPointers().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(16, inspector.KnownPointers().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0010 | Level data"), inspector.KnownPointers().GetItemAt(1)->GetLabel());
+    }
+
+        TEST_METHOD(TestKnownPointersUpdateOnCodeNoteChange)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({1U}, L"Simple note");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+            L"[32-bit pointer] Player data\r\n"
+            L"+4: [32-bit] Current HP\r\n"
+            L"+8: [32-bit] Max HP");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({8U}, L"Something here");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({16U},
+            L"[32-bit pointer] Level data\r\n"
+            L"+4: [32-bit] Current world\r\n"
+            L"+8: [32-bit] Current stage");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({20U}, L"Read this");
+
+        inspector.mockGameContext.NotifyGameLoad();
+
+        Assert::AreEqual({0U}, inspector.GetCurrentAddress());
+
+        Assert::AreEqual({2U}, inspector.KnownPointers().Count());
+        Assert::AreEqual(4, inspector.KnownPointers().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0004 | Player data"), inspector.KnownPointers().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(16, inspector.KnownPointers().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0010 | Level data"), inspector.KnownPointers().GetItemAt(1)->GetLabel());
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({12U},
+            L"[32-bit pointer] New pointer");
+
+        Assert::AreEqual({3U}, inspector.KnownPointers().Count());
+        Assert::AreEqual(4, inspector.KnownPointers().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0004 | Player data"), inspector.KnownPointers().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(12, inspector.KnownPointers().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"0x000c | New pointer"), inspector.KnownPointers().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(16, inspector.KnownPointers().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0010 | Level data"), inspector.KnownPointers().GetItemAt(2)->GetLabel());
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U}, L"Normal note");
+        Assert::AreEqual({2U}, inspector.KnownPointers().Count());
+        Assert::AreEqual(12, inspector.KnownPointers().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"0x000c | New pointer"), inspector.KnownPointers().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(16, inspector.KnownPointers().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0010 | Level data"), inspector.KnownPointers().GetItemAt(1)->GetLabel());
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({16U}, L"Wrong again");
+        Assert::AreEqual({1U}, inspector.KnownPointers().Count());
+        Assert::AreEqual(12, inspector.KnownPointers().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"0x000c | New pointer"), inspector.KnownPointers().GetItemAt(0)->GetLabel());
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({20U}, L"[32-bit pointer] Should be here instead");
+        Assert::AreEqual({2U}, inspector.KnownPointers().Count());
+        Assert::AreEqual(12, inspector.KnownPointers().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"0x000c | New pointer"), inspector.KnownPointers().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(20, inspector.KnownPointers().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0014 | Should be here instead"), inspector.KnownPointers().GetItemAt(1)->GetLabel());
     }
 
     TEST_METHOD(TestSelectedNode)
@@ -275,14 +363,14 @@ public:
 
         inspector.SetCurrentAddress({4U});
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
-            L"[8-bit pointer] Player data\n"
-            L"+0x00: [8-bit pointer] Row 1\n"
-            L".+0x00: [8-bit] Column 1a\n"
-            L".+0x04: [8-bit pointer] Column 1b\n"
-            L"..+0x00: [8-bit] Column 1a\n"
-            L".+0x08: [8-bit] Column 1c\n"
-            L"+0x08: [8-bit pointer] Row 2\n"
-            L"+0x10: [8-bit pointer] Row 3\n"
+            L"[8-bit pointer] Player data\r\n"
+            L"+0x00: [8-bit pointer] Row 1\r\n"
+            L".+0x00: [8-bit] Column 1a\r\n"
+            L".+0x04: [8-bit pointer] Column 1b\r\n"
+            L"..+0x00: [8-bit] Column 1a\r\n"
+            L".+0x08: [8-bit] Column 1c\r\n"
+            L"+0x08: [8-bit pointer] Row 2\r\n"
+            L"+0x10: [8-bit pointer] Row 3\r\n"
             L"+0x18: Generic data"
         );
 
@@ -349,13 +437,13 @@ public:
 
         inspector.SetCurrentAddress({4U});
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
-            L"[32-bit pointer] Player data\n"
-            L"+4: [32-bit] Class\n"
-            "1=Wizard\n"
-            "2=Fighter\n"
-            L"+8: [32-bit] Max HP\n"
-            L"+12: [32-bit pointer] Inventory\n"
-            L"++0: [16-bit] First item\n"
+            L"[32-bit pointer] Player data\r\n"
+            L"+4: [32-bit] Class\r\n"
+            "1=Wizard\r\n"
+            "2=Fighter\r\n"
+            L"+8: [32-bit] Max HP\r\n"
+            L"+12: [32-bit pointer] Inventory\r\n"
+            L"++0: [16-bit] First item\r\n"
             L"++2: [16-bit] Second item");
 
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
@@ -368,7 +456,7 @@ public:
         inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
         Assert::IsTrue(inspector.HasSelection());
         Assert::IsTrue(inspector.HasSingleSelection());
-        Assert::AreEqual(std::wstring(L"[32-bit] Class\n1=Wizard\n2=Fighter"), inspector.GetCurrentFieldNote());
+        Assert::AreEqual(std::wstring(L"[32-bit] Class\r\n1=Wizard\r\n2=Fighter"), inspector.GetCurrentFieldNote());
 
         inspector.Bookmarks().GetItemAt(1)->SetSelected(true);
         Assert::IsTrue(inspector.HasSelection());
@@ -416,7 +504,7 @@ public:
 
         inspector.SetCurrentAddress({4U});
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
-            L"[32-bit pointer] Player data\n"
+            L"[32-bit pointer] Player data\r\n"
             L"+8: [32-bit] Max HP");
 
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
@@ -429,7 +517,7 @@ public:
         Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), inspector.GetCurrentFieldNote());
         inspector.AssertField(0, 8, 20, L"+0008", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
 
-        inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\n+0x08: [32-bit] Current HP"));
+        inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\r\n+0x08: [32-bit] Current HP"));
     }
     
     TEST_METHOD(TestUpdateCurrentFieldNoteMultiline)
@@ -446,23 +534,23 @@ public:
 
         inspector.SetCurrentAddress({4U});
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
-            L"[32-bit pointer] Player data\n"
-            L"+4: [32-bit] Class\n"
-            "1=Wizard\n"
-            "2=Fighter\n"
+            L"[32-bit pointer] Player data\r\n"
+            L"+4: [32-bit] Class\r\n"
+            "1=Wizard\r\n"
+            "2=Fighter\r\n"
             L"+8: [32-bit] Max HP");
 
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
         inspector.AssertField(0, 4, 16, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
 
         inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
-        Assert::AreEqual(std::wstring(L"[32-bit] Class\n1=Wizard\n2=Fighter"), inspector.GetCurrentFieldNote());
+        Assert::AreEqual(std::wstring(L"[32-bit] Class\r\n1=Wizard\r\n2=Fighter"), inspector.GetCurrentFieldNote());
 
-        inspector.SetCurrentFieldNote(L"[32-bit] Class\n1=Mage\n2=Fighter");
-        Assert::AreEqual(std::wstring(L"[32-bit] Class\n1=Mage\n2=Fighter"), inspector.GetCurrentFieldNote());
+        inspector.SetCurrentFieldNote(L"[32-bit] Class\r\n1=Mage\r\n2=Fighter");
+        Assert::AreEqual(std::wstring(L"[32-bit] Class\r\n1=Mage\r\n2=Fighter"), inspector.GetCurrentFieldNote());
         inspector.AssertField(0, 4, 16, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
 
-        inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\n+0x04: [32-bit] Class\n1=Mage\n2=Fighter\n+0x08: [32-bit] Max HP"));
+        inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\r\n+0x04: [32-bit] Class\r\n1=Mage\r\n2=Fighter\r\n+0x08: [32-bit] Max HP"));
     }
 
     TEST_METHOD(TestUpdateCurrentFieldNoteNested)
@@ -478,10 +566,10 @@ public:
         memory.at(4) = 12;
 
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
-            L"[32-bit pointer] Player data\n"
-            L"+8: [32-bit] Max HP\n"//\n"
-            L"+12: [32-bit pointer] Inventory\n"
-            L"++8: [16-bit] First item\n"
+            L"[32-bit pointer] Player data\r\n"
+            L"+8: [32-bit] Max HP\r\n"//\r\n"
+            L"+12: [32-bit pointer] Inventory\r\n"
+            L"++8: [16-bit] First item\r\n"
             L"++10: [16-bit] Second item");
         inspector.SetCurrentAddress({4U});
         inspector.SetSelectedNode(0x0000000C);
@@ -496,8 +584,8 @@ public:
         Assert::AreEqual(std::wstring(L"[16-bit] 1st item"), inspector.GetCurrentFieldNote());
         inspector.AssertField(0, 8, 32, L"+0008", L"1st item", MemSize::SixteenBit, MemFormat::Hex, L"0020");
 
-        inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\n+0x08: [32-bit] Max HP\n+0x0C: [32-bit pointer] Inventory\n"
-                                                L"++0x08: [16-bit] 1st item\n++0x0A: [16-bit] Second item"));
+        inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\r\n+0x08: [32-bit] Max HP\r\n+0x0C: [32-bit pointer] Inventory\r\n"
+                                                L"++0x08: [16-bit] 1st item\r\n++0x0A: [16-bit] Second item"));
     }
 
     TEST_METHOD(TestCopyDefinition)
@@ -513,14 +601,14 @@ public:
 
         inspector.SetCurrentAddress({4U});
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
-            L"[8-bit pointer] Player data\n"
-            L"+0x00: [8-bit pointer] Row 1\n"
-            L".+0x00: [8-bit] Column 1a\n"
-            L".+0x04: [8-bit pointer] Column 1b\n"
-            L"..+0x00: [8-bit] Column 1a\n"
-            L".+0x08: [8-bit] Column 1c\n"
-            L"+0x08: [8-bit pointer] Row 2\n"
-            L"+0x10: [8-bit pointer] Row 3\n"
+            L"[8-bit pointer] Player data\r\n"
+            L"+0x00: [8-bit pointer] Row 1\r\n"
+            L".+0x00: [8-bit] Column 1a\r\n"
+            L".+0x04: [8-bit pointer] Column 1b\r\n"
+            L"..+0x00: [8-bit] Column 1a\r\n"
+            L".+0x08: [8-bit] Column 1c\r\n"
+            L"+0x08: [8-bit pointer] Row 2\r\n"
+            L"+0x10: [8-bit pointer] Row 3\r\n"
             L"+0x18: Generic data"
         );
 
@@ -563,8 +651,8 @@ public:
 
         inspector.SetCurrentAddress({4U});
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
-            L"[32-bit pointer] Player data\n"
-            L"+4: [32-bit] Current HP\n"
+            L"[32-bit pointer] Player data\r\n"
+            L"+4: [32-bit] Current HP\r\n"
             L"+8: [32-bit] Max HP");
 
         Assert::AreEqual({4U}, inspector.GetCurrentAddress());
@@ -609,10 +697,10 @@ public:
         inspector.mockEmulatorContext.MockMemory(memory);
 
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
-            L"[32-bit pointer] Player data\n"
-            L"+4: [32-bit pointer] 1st player\n"
-            L"++8: [32-bit pointer] Health\n"
-            L"+++0: [32-bit] Current HP\n"
+            L"[32-bit pointer] Player data\r\n"
+            L"+4: [32-bit pointer] 1st player\r\n"
+            L"++8: [32-bit pointer] Health\r\n"
+            L"+++0: [32-bit] Current HP\r\n"
             L"+++8: [32-bit] Max HP");
 
         memory.at(0x0004) = 0x0C;

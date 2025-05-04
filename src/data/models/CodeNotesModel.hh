@@ -139,6 +139,14 @@ public:
     }
 
     /// <summary>
+    /// Enumerates the code notes
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="callback" /> is called for each known code note. If it returns <c>false</c> enumeration stops.
+    /// </remarks>
+    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel& pCodeNote)> callback, bool bIncludeDerived = false) const;
+
+    /// <summary>
     /// Sets the note to associate with the specified address.
     /// </summary>
     /// <param name="nAddress">The address to set the note for.</param>
@@ -201,8 +209,6 @@ protected:
     std::map<ra::ByteAddress, std::wstring> m_mPendingCodeNotes;
 
     std::pair<ra::ByteAddress, const CodeNoteModel*> FindIndirectCodeNoteInternal(ra::ByteAddress nAddress) const;
-    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel& pCodeNote)> callback,
-                            bool bIncludeDerived) const;
 
     unsigned int m_nGameId = 0;
     bool m_bHasPointers = false;

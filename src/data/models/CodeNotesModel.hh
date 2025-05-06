@@ -48,7 +48,7 @@ public:
     /// Returns the note model associated with the specified address.
     /// </summary>
     /// <returns>The note model associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    const CodeNoteModel* FindCodeNoteModel(ra::ByteAddress nAddress) const;
+    const CodeNoteModel* FindCodeNoteModel(ra::ByteAddress nAddress, bool bIncludeDerived = true) const;
     
     /// <summary>
     /// Returns the address of the first byte containing the specified code note.

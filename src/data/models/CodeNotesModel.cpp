@@ -361,7 +361,7 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
     }
 }
 
-const CodeNoteModel* CodeNotesModel::FindCodeNoteModel(ra::ByteAddress nAddress) const
+const CodeNoteModel* CodeNotesModel::FindCodeNoteModel(ra::ByteAddress nAddress, bool bIncludeDerived) const
 {
     CodeNoteModel searchNote;
     searchNote.SetAddress(nAddress);
@@ -370,7 +370,7 @@ const CodeNoteModel* CodeNotesModel::FindCodeNoteModel(ra::ByteAddress nAddress)
     if (pCodeNote != m_vCodeNotes.end() && pCodeNote->GetAddress() == nAddress)
         return &(*pCodeNote);
 
-    if (m_bHasPointers)
+    if (m_bHasPointers && bIncludeDerived)
         return FindIndirectCodeNoteInternal(nAddress).second;
 
     return nullptr;

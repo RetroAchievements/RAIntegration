@@ -413,12 +413,12 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
 
 MemSize CodeNoteModel::GetImpliedPointerSize()
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
 
     MemSize nSize;
     uint32_t nMask;
     uint32_t nOffset;
-    if (pEmulatorContext.GetRealAddressConversion(&nSize, &nMask, &nOffset))
+    if (pConsoleContext.GetRealAddressConversion(&nSize, &nMask, &nOffset))
         return nSize;
 
     return MemSize::ThirtyTwoBit;

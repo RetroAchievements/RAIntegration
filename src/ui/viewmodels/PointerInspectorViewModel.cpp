@@ -142,7 +142,7 @@ void PointerInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, cons
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes != nullptr)
     {
-        const auto* pNote = pCodeNotes->FindCodeNoteModel(nAddress);
+        const auto* pNote = pCodeNotes->FindCodeNoteModel(nAddress, false);
         UpdatePointerVisibility(nAddress, pNote);
     }
 }
@@ -656,6 +656,8 @@ void PointerInspectorViewModel::UpdatePointerChainValues()
     ra::ByteAddress nAddress = 0;
     const auto nCount = gsl::narrow_cast<gsl::index>(PointerChain().Count());
 
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+
     PointerChain().BeginUpdate();
 
     for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
@@ -670,6 +672,8 @@ void PointerInspectorViewModel::UpdatePointerChainValues()
                 UpdatePointerChainRowColor(*pPointer);
 
             nAddress = pPointer->GetCurrentValueRaw();
+            if (nAddress > 0)
+                nAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
         }
     }
 

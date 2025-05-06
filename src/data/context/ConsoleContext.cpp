@@ -208,6 +208,10 @@ bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMas
                     return true;
                 }
             }
+
+            *nReadSize = MemSize::ThirtyTwoBit;
+            *nMask = 0xFFFFFFFF;
+            *nOffset = 0;
             return false;
     }
 }

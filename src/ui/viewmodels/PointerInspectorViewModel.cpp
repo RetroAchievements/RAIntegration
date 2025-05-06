@@ -673,7 +673,11 @@ void PointerInspectorViewModel::UpdatePointerChainValues()
 
             nAddress = pPointer->GetCurrentValueRaw();
             if (nAddress > 0)
-                nAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
+            {
+                const auto nAdjustedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
+                if (nAdjustedAddress != 0xFFFFFFFF)
+                    nAddress = nAdjustedAddress;
+            }
         }
     }
 

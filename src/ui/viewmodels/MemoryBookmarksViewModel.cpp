@@ -178,13 +178,13 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Str
     LookupItemViewModel::OnValueChanged(args);
 }
 
-static rc_operand_t* FindMeasuredOperand(rc_value_t* pValue) noexcept
+static rc_condition_t* FindMeasuredCondition(rc_value_t* pValue) noexcept
 {
     rc_condition_t* condition = pValue->conditions->conditions;
     for (; condition; condition = condition->next)
     {
         if (condition->type == RC_CONDITION_MEASURED && rc_operand_is_memref(&condition->operand1))
-            return &condition->operand1;
+            return condition;
     }
 
     return nullptr;
@@ -210,8 +210,8 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnSizeChanged()
 
         if (m_pValue)
         {
-            auto* pOperand = FindMeasuredOperand(m_pValue);
-            if (pOperand)
+            auto* pCondition = FindMeasuredCondition(m_pValue);
+            if (pCondition)
             {
                 std::string sSerialized;
                 ra::services::AchievementLogicSerializer::AppendOperand(
@@ -219,7 +219,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnSizeChanged()
 
                 const char* memaddr = sSerialized.c_str();
                 uint32_t unused;
-                rc_parse_memref(&memaddr, &pOperand->size, &unused);
+                rc_parse_memref(&memaddr, &pCondition->operand1.size, &unused);
             }
         }
 
@@ -391,11 +391,11 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentAddress()
 {
     if (m_pValue)
     {
-        const auto* pOperand = FindMeasuredOperand(m_pValue);
-        if (pOperand != nullptr && pOperand->value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+        const auto* pCondition = FindMeasuredCondition(m_pValue);
+        if (pCondition != nullptr && pCondition->operand1.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
         {
             GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
-                reinterpret_cast<rc_modified_memref_t*>(pOperand->value.memref);
+                reinterpret_cast<rc_modified_memref_t*>(pCondition->operand1.value.memref);
             if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
             {
                 rc_typed_value_t address, offset;
@@ -452,9 +452,9 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetIndirectAddress(const
     m_pValue = &value->value;
     m_sIndirectAddress = sSerialized;
 
-    const rc_operand_t* pOperand = FindMeasuredOperand(m_pValue);
-    if (pOperand != nullptr)
-        SetSize(ra::data::models::TriggerValidation::MapRcheevosMemSize(pOperand->size));
+    const auto* pCondition = FindMeasuredCondition(m_pValue);
+    if (pCondition != nullptr)
+        SetSize(ra::data::models::TriggerValidation::MapRcheevosMemSize(rc_condition_get_real_operand1(pCondition)->size));
 
     UpdateCurrentValue(); // value must be updated first to populate memrefs
     UpdateCurrentAddress();

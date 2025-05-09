@@ -504,6 +504,9 @@ void GameContext::EndLoad()
 {
     if (m_nLoadCount.fetch_sub(1) == 1)
     {
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+            m_vAssets.GetItemAt(nIndex)->Validate();
+
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)

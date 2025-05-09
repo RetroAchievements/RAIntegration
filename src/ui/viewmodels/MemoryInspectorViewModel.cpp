@@ -289,12 +289,8 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddre
     m_pViewer.SetAddress(nNewAddress);
 }
 
-void MemoryInspectorViewModel::BookmarkCurrentAddress() const
+std::string MemoryInspectorViewModel::GetCurrentAddressMemRefChain() const
 {
-    auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-    if (!pBookmarks.IsVisible())
-        pBookmarks.Show();
-
     const auto nAddress = GetCurrentAddress();
 
     // if the code note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
@@ -313,15 +309,25 @@ void MemoryInspectorViewModel::BookmarkCurrentAddress() const
             const auto* pRootNote = pCodeNotes->FindCodeNoteModel(nIndirectSource);
             Expects(pRootNote != nullptr);
 
-            std::string sIndirectAddress =
-                ra::services::AchievementLogicSerializer::BuildMemRefChain(*pRootNote, *pNote);
-
-            pBookmarks.AddBookmark(sIndirectAddress);
-            return;
+            return ra::services::AchievementLogicSerializer::BuildMemRefChain(*pRootNote, *pNote);
         }
     }
 
-    pBookmarks.AddBookmark(nAddress, nSize);
+    std::string sMemRef;
+    ra::services::AchievementLogicSerializer::AppendConditionType(
+        sMemRef, ra::services::TriggerConditionType::Measured);
+    ra::services::AchievementLogicSerializer::AppendOperand(
+        sMemRef, ra::services::TriggerOperandType::Address, nSize, nAddress);
+    return sMemRef;
+}
+
+void MemoryInspectorViewModel::BookmarkCurrentAddress() const
+{
+    auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    if (!pBookmarks.IsVisible())
+        pBookmarks.Show();
+
+    pBookmarks.AddBookmark(GetCurrentAddressMemRefChain());
 }
 
 void MemoryInspectorViewModel::PublishCurrentAddressNote()

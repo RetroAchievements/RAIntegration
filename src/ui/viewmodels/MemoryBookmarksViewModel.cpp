@@ -860,6 +860,9 @@ void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::Memo
         uint8_t size = 0;
         uint32_t address = 0;
         const char* memaddr = sSerialized.c_str();
+        if (ra::StringStartsWith(sSerialized, "M:"))
+            memaddr += 2;
+
         if (rc_parse_memref(&memaddr, &size, &address) == RC_OK)
         {
             vmBookmark.SetAddress(address);

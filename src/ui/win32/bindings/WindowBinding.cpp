@@ -570,7 +570,7 @@ void WindowBinding::EnableInvokeOnUIThread()
     }
 }
 
-void WindowBinding::InvokeOnUIThread(std::function<void()> fAction)
+void WindowBinding::InvokeOnUIThread(std::function<void()> fAction, ra::data::AsyncObject* pAsyncObject)
 {
     if (s_pDispatchingWindow == nullptr)
     {
@@ -581,6 +581,14 @@ void WindowBinding::InvokeOnUIThread(std::function<void()> fAction)
     {
         // already on the UI thread
         fAction();
+    }
+    else if (pAsyncObject)
+    {
+        s_pDispatchingWindow->QueueFunction([fAction, pAsyncHandle = pAsyncObject->CreateAsyncHandle()] {
+            ra::data::AsyncKeepAlive asyncKeepAlive(*pAsyncHandle);
+            if (!pAsyncHandle->IsDestroyed())
+                fAction();
+        });
     }
     else
     {

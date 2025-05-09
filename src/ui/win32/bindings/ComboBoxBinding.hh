@@ -48,6 +48,14 @@ public:
 
         if (m_pSelectedIdProperty)
             UpdateSelectedItem();
+
+        if (m_nDropDownWidth > 0)
+            SendMessage(hControl, CB_SETDROPPEDWIDTH, m_nDropDownWidth, 0);
+    }
+
+    void SetDropDownWidth(int nWidth) noexcept
+    {
+        m_nDropDownWidth = nWidth;
     }
 
     void BindItems(ra::ui::viewmodels::LookupItemViewModelCollection& pViewModels)
@@ -190,6 +198,7 @@ private:
     const IntModelProperty* m_pItemIdProperty = nullptr;
     const StringModelProperty* m_pItemTextProperty = nullptr;
     gsl::index m_nSelectedIndex = -1;
+    int m_nDropDownWidth = 0;
 };
 
 } // namespace bindings

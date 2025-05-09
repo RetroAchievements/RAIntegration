@@ -154,16 +154,16 @@ public:
         TestCodeNoteSize(L"100 32-bit pointers [400 bytes]", 400U, MemSize::Array);
         TestCodeNoteSize(L"[400 bytes] 100 32-bit pointers", 400U, MemSize::Array);
 
-        TestCodeNoteSize(L"[NTSCU]\n[16-bit] Test\n", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"[24-bit]\nIt's really 32-bit, but the top byte will never be non-zero\n", 3U, MemSize::TwentyFourBit);
+        TestCodeNoteSize(L"[NTSCU]\r\n[16-bit] Test\r\n", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[24-bit]\r\nIt's really 32-bit, but the top byte will never be non-zero\r\n", 3U, MemSize::TwentyFourBit);
     }
 
     TEST_METHOD(TestGetPointerNoteAtOffset)
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
-            L"Bomb Timer Pointer (24-bit)\n"
-            L"+03 - Bombs Defused\n"
+            L"Bomb Timer Pointer (24-bit)\r\n"
+            L"+03 - Bombs Defused\r\n"
             L"+04 - Bomb Timer";
         note.SetNote(sNote);
 
@@ -179,9 +179,9 @@ public:
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
-            L"Pointer [32bit]\n"
-            L"+0x1BC | Equipment - Head - String[24 Bytes]\n"
-            L"---DEFAULT_HEAD = Barry's Head\n"
+            L"Pointer [32bit]\r\n"
+            L"+0x1BC | Equipment - Head - String[24 Bytes]\r\n"
+            L"---DEFAULT_HEAD = Barry's Head\r\n"
             L"---FRAGGER_HEAD = Fragger Helmet";
         note.SetNote(sNote);
 
@@ -190,20 +190,20 @@ public:
 
         // extracted notes for offset fields
         AssertIndirectNote(note, 0x1BCU,
-                           L"Equipment - Head - String[24 Bytes]\n"
-                           L"---DEFAULT_HEAD = Barry's Head\n"
+                           L"Equipment - Head - String[24 Bytes]\r\n"
+                           L"---DEFAULT_HEAD = Barry's Head\r\n"
                            L"---FRAGGER_HEAD = Fragger Helmet",
                            MemSize::Array, 24);
     }
 
-        TEST_METHOD(TestGetPointerNoteAtOffsetMultilineWithHeader)
+    TEST_METHOD(TestGetPointerNoteAtOffsetMultilineWithHeader)
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
-            L"[PAL]\n"
-            L"Pointer [32bit]\n"
-            L"+0x1BC | Equipment - Head - String[24 Bytes]\n"
-            L"---DEFAULT_HEAD = Barry's Head\n"
+            L"[PAL]\r\n"
+            L"Pointer [32bit]\r\n"
+            L"+0x1BC | Equipment - Head - String[24 Bytes]\r\n"
+            L"---DEFAULT_HEAD = Barry's Head\r\n"
             L"---FRAGGER_HEAD = Fragger Helmet";
         note.SetNote(sNote);
 
@@ -212,8 +212,8 @@ public:
 
         // extracted notes for offset fields
         AssertIndirectNote(note, 0x1BCU,
-                           L"Equipment - Head - String[24 Bytes]\n"
-                           L"---DEFAULT_HEAD = Barry's Head\n"
+                           L"Equipment - Head - String[24 Bytes]\r\n"
+                           L"---DEFAULT_HEAD = Barry's Head\r\n"
                            L"---FRAGGER_HEAD = Fragger Helmet",
                            MemSize::Array, 24);
     }
@@ -222,12 +222,12 @@ public:
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
-            L"Pointer (16bit because negative)\n\n"
-            L"Circuit:\n"
-            L"+0x1B56E = Current Position\n"
-            L"+0x1B57E = Total Racers\n\n"
-            L"Free Run:\n"
-            L"+0x1B5BE = Seconds 0x\n"
+            L"Pointer (16bit because negative)\r\n\r\n"
+            L"Circuit:\r\n"
+            L"+0x1B56E = Current Position\r\n"
+            L"+0x1B57E = Total Racers\r\n\r\n"
+            L"Free Run:\r\n"
+            L"+0x1B5BE = Seconds 0x\r\n"
             L"+0x1B5CE = Lap";
         note.SetNote(sNote);
 
@@ -236,7 +236,7 @@ public:
 
         // extracted notes for offset fields (note: pointer base default is $0000)
         AssertIndirectNote(note, 0x1B56EU, L"Current Position", MemSize::Unknown, 1);
-        AssertIndirectNote(note, 0x1B57EU, L"Total Racers\n\nFree Run:", MemSize::Unknown, 1);
+        AssertIndirectNote(note, 0x1B57EU, L"Total Racers\r\n\r\nFree Run:", MemSize::Unknown, 1);
         AssertIndirectNote(note, 0x1B5BEU, L"Seconds 0x", MemSize::Unknown, 1);
         AssertIndirectNote(note, 0x1B5CEU, L"Lap", MemSize::Unknown, 1);
     }
@@ -245,10 +245,10 @@ public:
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
-            L"Pointer\r\n"
-            L"[OFFSETS]\r\n"
-            L"+2 = EXP (32-bit)\r\n"
-            L"+5 = Base Level (8-bit)\r\n" // 32-bit value at 2 continues into 5
+            L"Pointer\r\r\n"
+            L"[OFFSETS]\r\r\n"
+            L"+2 = EXP (32-bit)\r\r\n"
+            L"+5 = Base Level (8-bit)\r\r\n" // 32-bit value at 2 continues into 5
             L"+6 = Job Level (8-bit)";
         note.SetNote(sNote);
 
@@ -265,10 +265,10 @@ public:
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
-            L"Pointer [32bit]\n"
-            L"+0x428 | Pointer - Award - Tee Hee Two (32bit)\n"
-            L"--- +0x24C | Flag\n"
-            L"+0x438 | Pointer - Award - Pretty Woman (32bit)\n"
+            L"Pointer [32bit]\r\n"
+            L"+0x428 | Pointer - Award - Tee Hee Two (32bit)\r\n"
+            L"--- +0x24C | Flag\r\n"
+            L"+0x438 | Pointer - Award - Pretty Woman (32bit)\r\n"
             L"--- +0x24C | Flag";
         note.SetNote(sNote);
 
@@ -276,11 +276,11 @@ public:
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         const auto* offsetNote = AssertIndirectNote(note, 0x428,
-            L"Pointer - Award - Tee Hee Two (32bit)\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+            L"Pointer - Award - Tee Hee Two (32bit)\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
 
         offsetNote = AssertIndirectNote(note, 0x438,
-            L"Pointer - Award - Pretty Woman (32bit)\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+            L"Pointer - Award - Pretty Woman (32bit)\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
     }
 
@@ -288,10 +288,10 @@ public:
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
-            L"Pointer [32bit]\n"
-            L"+0x428 | Award - Tee Hee Two\n"
-            L"++0x24C | Flag\n"
-            L"+0x438 | Award - Pretty Woman\n"
+            L"Pointer [32bit]\r\n"
+            L"+0x428 | Award - Tee Hee Two\r\n"
+            L"++0x24C | Flag\r\n"
+            L"+0x438 | Award - Pretty Woman\r\n"
             L"++0x24C | Flag";
         note.SetNote(sNote);
 
@@ -299,11 +299,11 @@ public:
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         const auto* offsetNote = AssertIndirectNote(
-            note, 0x428, L"Award - Tee Hee Two\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+            note, 0x428, L"Award - Tee Hee Two\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
         Assert::AreEqual(std::wstring(L"Award - Tee Hee Two"), offsetNote->GetPointerDescription());
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
 
-        offsetNote = AssertIndirectNote(note, 0x438, L"Award - Pretty Woman\n+0x24C | Flag",
+        offsetNote = AssertIndirectNote(note, 0x438, L"Award - Pretty Woman\r\n+0x24C | Flag",
                                         MemSize::ThirtyTwoBit, 4);
         Assert::AreEqual(std::wstring(L"Award - Pretty Woman"), offsetNote->GetPointerDescription());
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
@@ -313,10 +313,10 @@ public:
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
-            L"Pointer [32bit]\n"
-            L"+0x428 | (32-bit pointer) Award - Tee Hee Two\n"
-            L"++0x24C | Flag\n"
-            L"+0x438 | (32-bit pointer) Award - Pretty Woman\n"
+            L"Pointer [32bit]\r\n"
+            L"+0x428 | (32-bit pointer) Award - Tee Hee Two\r\n"
+            L"++0x24C | Flag\r\n"
+            L"+0x438 | (32-bit pointer) Award - Pretty Woman\r\n"
             L"++0x24C | Flag";
         note.SetNote(sNote);
 
@@ -324,11 +324,11 @@ public:
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         const auto* offsetNote = AssertIndirectNote(note, 0x428,
-            L"(32-bit pointer) Award - Tee Hee Two\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+            L"(32-bit pointer) Award - Tee Hee Two\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
 
         offsetNote = AssertIndirectNote(note, 0x438,
-            L"(32-bit pointer) Award - Pretty Woman\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+            L"(32-bit pointer) Award - Pretty Woman\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
     }
 
@@ -336,27 +336,27 @@ public:
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
-            L"Pointer [32bit]\n"
-            L"+0x428 | Obj1 pointer\n"
-            L"++0x24C | [16-bit] State\n"
-            L"-- Increments\n"
-            L"+0x438 | Obj2 pointer\n"
-            L"++0x08 | Flag\n"
-            L"-- b0=quest1 complete\n"
-            L"-- b1=quest2 complete\n"
+            L"Pointer [32bit]\r\n"
+            L"+0x428 | Obj1 pointer\r\n"
+            L"++0x24C | [16-bit] State\r\n"
+            L"-- Increments\r\n"
+            L"+0x438 | Obj2 pointer\r\n"
+            L"++0x08 | Flag\r\n"
+            L"-- b0=quest1 complete\r\n"
+            L"-- b1=quest2 complete\r\n"
             L"+0x448 | [32-bit BE] Not-nested number";
         note.SetNote(sNote);
 
         Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
-        const auto* offsetNote = AssertIndirectNote(note, 0x428, L"Obj1 pointer\n+0x24C | [16-bit] State\n-- Increments",
+        const auto* offsetNote = AssertIndirectNote(note, 0x428, L"Obj1 pointer\r\n+0x24C | [16-bit] State\r\n-- Increments",
                                                     MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"[16-bit] State\n-- Increments", MemSize::SixteenBit, 2);
+        AssertIndirectNote(*offsetNote, 0x24C, L"[16-bit] State\r\n-- Increments", MemSize::SixteenBit, 2);
 
-        offsetNote = AssertIndirectNote(note, 0x438, L"Obj2 pointer\n+0x08 | Flag\n-- b0=quest1 complete\n-- b1=quest2 complete",
+        offsetNote = AssertIndirectNote(note, 0x438, L"Obj2 pointer\r\n+0x08 | Flag\r\n-- b0=quest1 complete\r\n-- b1=quest2 complete",
                                         MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x08, L"Flag\n-- b0=quest1 complete\n-- b1=quest2 complete", MemSize::Unknown, 1);
+        AssertIndirectNote(*offsetNote, 0x08, L"Flag\r\n-- b0=quest1 complete\r\n-- b1=quest2 complete", MemSize::Unknown, 1);
 
         AssertIndirectNote(note, 0x448, L"[32-bit BE] Not-nested number", MemSize::ThirtyTwoBitBigEndian, 4);
     }
@@ -365,11 +365,11 @@ public:
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
-            L"Root Pointer [24 bits]\n"
-            L"\n"
-            L"+0x8318\n"
-            L"++0x8014\n"
-            L"+++0x8004 = First [32-bits]\n"
+            L"Root Pointer [24 bits]\r\n"
+            L"\r\n"
+            L"+0x8318\r\n"
+            L"++0x8014\r\n"
+            L"+++0x8004 = First [32-bits]\r\n"
             L"+++0x8008 = Second [32-bits]";
         note.SetNote(sNote);
 
@@ -377,13 +377,37 @@ public:
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         const auto* nestedNote = AssertIndirectNote(note, 0x8318,
-            L"+0x8014\n++0x8004 = First [32-bits]\n++0x8008 = Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+            L"+0x8014\r\n++0x8004 = First [32-bits]\r\n++0x8008 = Second [32-bits]", MemSize::ThirtyTwoBit, 4);
         Assert::AreEqual(std::wstring(L""), nestedNote->GetPointerDescription());
         const auto* nestedNote2 = AssertIndirectNote(*nestedNote, 0x8014,
-            L"+0x8004 = First [32-bits]\n+0x8008 = Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+            L"+0x8004 = First [32-bits]\r\n+0x8008 = Second [32-bits]", MemSize::ThirtyTwoBit, 4);
         Assert::AreEqual(std::wstring(L""), nestedNote2->GetPointerDescription());
         AssertIndirectNote(*nestedNote2, 0x8004, L"First [32-bits]", MemSize::ThirtyTwoBit, 4);
         AssertIndirectNote(*nestedNote2, 0x8008, L"Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+    }
+
+    TEST_METHOD(TestCodeNoteNestedArray)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"Pointer [32bit] (80 bytes)\r\n"
+            L"+0x428 | Pointer - Award - Tee Hee Two (32bit)\r\n"
+            L"--- +0x24C | Flag\r\n"
+            L"+0x438 | Pointer - Award - Pretty Woman (32bit)\r\n"
+            L"--- +0x24C | Flag";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
+        Assert::AreEqual(std::wstring(L"Pointer [32bit] (80 bytes)"), note.GetPointerDescription());
+
+        const auto* offsetNote = AssertIndirectNote(
+            note, 0x428, L"Pointer - Award - Tee Hee Two (32bit)\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+
+        offsetNote = AssertIndirectNote(note, 0x438, L"Pointer - Award - Pretty Woman (32bit)\r\n+0x24C | Flag",
+                                        MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
     }
 };
 

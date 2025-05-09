@@ -97,7 +97,8 @@ private:
     bool GetPointerChainRecursive(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pParentNote) const;
 
     void ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex);
-    void ExtractSize(const std::wstring& sNote);
+    void ExtractSize(const std::wstring& sNote, bool bIsPointer);
+    static MemSize GetImpliedPointerSize();
 };
 
 } // namespace models

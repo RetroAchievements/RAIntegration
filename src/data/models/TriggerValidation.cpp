@@ -10,6 +10,7 @@
 #include "services/ServiceLocator.hh"
 
 #include <rcheevos/src/rcheevos/rc_validate.h>
+#include <rcheevos/src/rcheevos/rc_internal.h>
 
 namespace ra {
 namespace data {
@@ -111,12 +112,11 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
         }
            
         nNoteSize = pNotes.GetCodeNoteMemSize(nStartAddress);
-        if (nNoteSize == MemSize::Array)
-        {
-            // ignore addresses in the middle of an array
-            return true;
-        }
     }
+
+    // "array" and "text" are not real sizes to validate against
+    if (nNoteSize == MemSize::Array || nNoteSize == MemSize::Text)
+        return true;
 
     if (nNoteSize == MemSize::Unknown)
     {
@@ -124,15 +124,18 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
         if (nMemRefSize == MemSize::EightBit)
             return true;
 
-        nNoteSize = MemSize::EightBit;
+        sError = ra::StringPrintf(L"%s read of address %s differs from implied code note size %s", MemSizeString(nMemRefSize),
+                                  ra::ByteAddressToString(nAddress).substr(2), MemSizeString(MemSize::EightBit));
     }
+    else
+    {
+        // ignore bit/nibble reads inside a known address
+        if (nMemRefSize == MemSize::BitCount || MemSizeBits(nMemRefSize) < 8)
+            return true;
 
-    // ignore bit reads inside a known address
-    if (nMemRefSize == MemSize::BitCount || MemSizeBits(nMemRefSize) < 8)
-        return true;
-
-    sError = ra::StringPrintf(L"%s read of address %s differs from code note size %s",
-        MemSizeString(nMemRefSize), ra::ByteAddressToString(nAddress).substr(2), MemSizeString(nNoteSize));
+        sError = ra::StringPrintf(L"%s read of address %s differs from code note size %s", MemSizeString(nMemRefSize),
+                                  ra::ByteAddressToString(nAddress).substr(2), MemSizeString(nNoteSize));
+    }
 
     if (nStartAddress != nAddress)
     {
@@ -167,8 +170,9 @@ static bool ValidateCodeNotesCondSet(const rc_condset_t* pCondSet, const ra::dat
             continue;
         }
 
-        if (rc_operand_is_memref(&pCondition->operand1) &&
-            !ValidateCodeNotesOperand(pCondition->operand1, pNotes, sError))
+        const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
+        if (pOperand1 && rc_operand_is_memref(pOperand1) &&
+            !ValidateCodeNotesOperand(*pOperand1, pNotes, sError))
         {
             sError = ra::StringPrintf(L"Condition %u: %s", nIndex, sError);
             return false;

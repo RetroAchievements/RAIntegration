@@ -203,7 +203,6 @@ public:
         mockGameContext.SetCodeNote(0x0030, L"[16-bit BE] BE Word address");
         mockGameContext.SetCodeNote(0x0040, L"[40-bytes] array of words");
 
-
         // valid reads
         AssertValidation("0xH0008>8", L"");
         AssertValidation("0x 0010>8", L"");
@@ -217,7 +216,7 @@ public:
         AssertValidation("0xH0010>8", L"Condition 1: 8-bit read of address 0010 differs from code note size 16-bit");
         AssertValidation("0x 0030>8", L"Condition 1: 16-bit read of address 0030 differs from code note size 16-bit BE");
         AssertValidation("0x 0010>0x 0008", L"Condition 1: 16-bit read of address 0008 differs from code note size 8-bit");
-        AssertValidation("0x 0028>8", L"Condition 1: 16-bit read of address 0028 differs from code note size 8-bit");
+        AssertValidation("0x 0028>8", L"Condition 1: 16-bit read of address 0028 differs from implied code note size 8-bit");
 
         // bit sizes only require a note exist
         AssertValidation("0xN0008=1", L"");
@@ -229,9 +228,12 @@ public:
         // sub-note addresses
         AssertValidation("0xH0009>8", L"Condition 1: No code note for address 0009");
         AssertValidation("0xH0011>8", L"Condition 1: 8-bit read of address 0011 differs from code note size 16-bit at 0010");
+        AssertValidation("0xH0040>8", L""); // start of array
         AssertValidation("0xH0052>8", L""); // in array
-    }
 
+        // chained value note
+        AssertValidation("A:0xH0008_1=6", L""); // 1 is not an address so it shouldn't matter that it doesn't have a note
+    }
 };
 
 } // namespace tests

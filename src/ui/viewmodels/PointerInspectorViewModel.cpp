@@ -136,7 +136,11 @@ void PointerInspectorViewModel::OnEndGameLoad()
 void PointerInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring&)
 {
     if (nAddress == GetCurrentAddress() && !m_bSyncingNote)
+    {
+        m_bSyncingAddress = true;
         OnCurrentAddressChanged(nAddress); // not really, but causes the note to be reloaded
+        m_bSyncingAddress = false;
+    }
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();

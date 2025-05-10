@@ -466,6 +466,25 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
     return L"";
 }
 
+std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProperty) const
+{
+    if (nProperty == SourceTypeProperty)
+    {
+        const auto nType = GetSourceType();
+        if (nType == TriggerOperandType::Recall)
+            return GetRecallTooltip(false);
+    }
+
+    if (nProperty == TargetTypeProperty)
+    {
+        const auto nType = GetTargetType();
+        if (nType == TriggerOperandType::Recall)
+            return GetRecallTooltip(true);
+    }
+
+    return L"";
+}
+
 std::wstring TriggerConditionViewModel::GetValueTooltip(unsigned int nValue)
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -475,64 +494,145 @@ std::wstring TriggerConditionViewModel::GetValueTooltip(unsigned int nValue)
     return std::to_wstring(nValue);
 }
 
-static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperand, ra::ByteAddress nAddress, std::wstring& sPointerChain)
+static void BuildOperandTooltip(std::wstring& sTooltip, const rc_operand_t& pOperand)
+{
+    rc_typed_value_t pValue;
+    rc_evaluate_operand(&pValue, &pOperand, nullptr);
+    switch (pValue.type)
+    {
+        case RC_VALUE_TYPE_FLOAT:
+            sTooltip += FormatTypedValue(pValue, ra::services::TriggerOperandType::Float);
+            break;
+        case RC_VALUE_TYPE_SIGNED:
+            sTooltip += ra::StringPrintf(L"%d", pValue.value.i32);
+            break;
+        default:
+            sTooltip += ra::StringPrintf(L"0x%08x", pValue.value.u32);
+            break;
+    }
+}
+
+static void BuildOperatorTooltip(std::wstring& sTooltip, uint8_t nOperatorType)
+{
+    switch (nOperatorType)
+    {
+        case RC_OPERATOR_MULT:
+            sTooltip.append(L" * ");
+            break;
+        case RC_OPERATOR_DIV:
+            sTooltip.append(L" / ");
+            break;
+        case RC_OPERATOR_AND:
+            sTooltip.append(L" & ");
+            break;
+        case RC_OPERATOR_XOR:
+            sTooltip.append(L" ^ ");
+            break;
+        case RC_OPERATOR_MOD:
+            sTooltip.append(L" % ");
+            break;
+        case RC_OPERATOR_ADD:
+            sTooltip.append(L" + ");
+            break;
+        case RC_OPERATOR_SUB:
+            sTooltip.append(L" - ");
+            break;
+        default:
+            break;
+    }
+}
+
+static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperand, std::wstring& sPointerChain)
 {
     if (pOperand->type == RC_OPERAND_RECALL)
     {
-        if (sPointerChain.empty())
-            sPointerChain = L"{recall}";
-
+        sPointerChain += ra::StringPrintf(L"{recall:0x%02x}", pOperand->value.memref->value.value);
         return pOperand->value.memref->value.value;
     }
 
     if (!rc_operand_is_memref(pOperand))
-        return nAddress;
+    {
+        sPointerChain += ra::StringPrintf(L"0x%02x", pOperand->value.num);
+        return pOperand->value.num;
+    }
 
     if (pOperand->value.memref->value.memref_type != RC_MEMREF_TYPE_MODIFIED_MEMREF)
-        return nAddress;
+    {
+        sPointerChain += ra::Widen(ra::ByteAddressToString(pOperand->value.memref->address));
+        return pOperand->value.memref->address;
+    }
 
     GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
         reinterpret_cast<const rc_modified_memref_t*>(pOperand->value.memref);
-    if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
-        GetIndirectAddressFromOperand(&pModifiedMemref->parent, nAddress, sPointerChain);
-    else if (!rc_operator_is_modifying(pModifiedMemref->modifier_type))
-        return nAddress;
-
-    if (sPointerChain.empty())
-    {
-        if (rc_operand_is_memref(&pModifiedMemref->parent))
-            sPointerChain = ra::Widen(ra::ByteAddressToString(pModifiedMemref->parent.value.memref->address));
-        else
-            sPointerChain = ra::Widen(ra::ByteAddressToString(pModifiedMemref->parent.value.num));
-    }
 
     if (pModifiedMemref->modifier_type != RC_OPERATOR_INDIRECT_READ)
-        return pModifiedMemref->memref.value.value;
+    {
+        const auto sAddress = ra::ByteAddressToString(rc_operand_is_memref(&pModifiedMemref->parent)
+                                                          ? pModifiedMemref->parent.value.memref->address
+                                                          : pModifiedMemref->parent.value.num);
+
+        sPointerChain.append(ra::Widen(sAddress));
+        return pOperand->value.memref->value.value;
+    }
+
+    rc_typed_value_t value{}, parentValue{};
+    rc_evaluate_operand(&parentValue, &pModifiedMemref->parent, nullptr);
+    rc_typed_value_convert(&parentValue, RC_VALUE_TYPE_UNSIGNED);
+
+    rc_evaluate_operand(&value, &pModifiedMemref->modifier, nullptr);
+    rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
+
+    const rc_operand_t* pParentOperand = &pModifiedMemref->parent;
+    GetIndirectAddressFromOperand(pParentOperand, sPointerChain);
+
+    if (rc_operand_is_memref(pParentOperand) && pParentOperand->value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+    {
+        std::wstring sTemp;
+        GSL_SUPPRESS_TYPE1 const auto* pParentModifiedMemref =
+            reinterpret_cast<const rc_modified_memref_t*>(pParentOperand->value.memref);
+        switch (pParentModifiedMemref->modifier_type)
+        {
+            case RC_OPERATOR_ADD:
+            case RC_OPERATOR_SUB:
+                sPointerChain.append(L"+(");
+                GetIndirectAddressFromOperand(&pModifiedMemref->modifier, sPointerChain);
+
+                BuildOperatorTooltip(sTemp, pParentModifiedMemref->modifier_type);
+                sPointerChain.push_back(sTemp.at(1));
+
+                GetIndirectAddressFromOperand(&pParentModifiedMemref->modifier, sPointerChain);
+                sPointerChain.push_back(')');
+
+                rc_typed_value_combine(&parentValue, &value, RC_OPERATOR_ADD);
+                return parentValue.value.u32;
+
+            default:
+                break;
+        }
+    }
 
     sPointerChain.push_back('+');
 
-    rc_typed_value_t value{}, parentValue{};
-    rc_evaluate_operand(&value, &pModifiedMemref->modifier, nullptr);
-    rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
-    sPointerChain += ra::StringPrintf(L"0x%02x", value.value.u32);
+    const auto sOffset = ra::StringPrintf(L"0x%02x",
+                                          (rc_operand_is_memref(&pModifiedMemref->modifier)
+                                               ? pModifiedMemref->modifier.value.memref->address
+                                               : pModifiedMemref->modifier.value.num));
+    sPointerChain.append(ra::Widen(sOffset));
 
-    rc_evaluate_operand(&parentValue, &pModifiedMemref->parent, nullptr);
-    rc_typed_value_add(&value, &parentValue);
-    rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
+    rc_typed_value_combine(&value, &parentValue, RC_OPERATOR_ADD);
     return value.value.u32;
 }
 
-ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress,
-    std::wstring& sPointerChain) const
+const rc_condition_t* TriggerConditionViewModel::GetFirstCondition() const
 {
     const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
     if (pTriggerViewModel == nullptr)
-        return nAddress;
+        return nullptr;
 
     const auto nIndex = pTriggerViewModel->GetSelectedGroupIndex();
     const auto* pGroup = pTriggerViewModel->Groups().GetItemAt(nIndex);
     if (pGroup == nullptr)
-        return nAddress;
+        return nullptr;
 
     rc_condition_t* pFirstCondition = nullptr;
 
@@ -556,7 +656,7 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
                 pAlt = pAlt->next;
 
             if (!pAlt)
-                return nAddress;
+                return nullptr;
 
             pFirstCondition = pAlt->conditions;
         }
@@ -567,7 +667,16 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
         pFirstCondition = pGroup->m_pConditionSet->conditions;
     }
 
-    rc_condition_t* pCondition = pFirstCondition;
+    return pFirstCondition;
+}
+
+const rc_condition_t* TriggerConditionViewModel::GetCondition() const
+{
+    const rc_condition_t* pCondition = GetFirstCondition();
+    if (!pCondition)
+        return nullptr;
+
+    const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
     gsl::index nConditionIndex = 0;
     for (; pCondition != nullptr; pCondition = pCondition->next)
     {
@@ -576,15 +685,23 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
             break;
 
         if (vmCondition == this)
-        {
-            if (rc_operand_is_memref(&pCondition->operand1) && nAddress == pCondition->operand1.value.memref->address)
-                return GetIndirectAddressFromOperand(&pCondition->operand1, nAddress, sPointerChain);
+            return pCondition;
+    }
 
-            if (rc_operand_is_memref(&pCondition->operand2) && nAddress == pCondition->operand2.value.memref->address)
-                return GetIndirectAddressFromOperand(&pCondition->operand2, nAddress, sPointerChain);
+    return nullptr;
+}
 
-            break;
-        }
+ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress, std::wstring& sPointerChain) const
+{
+    const auto* pCondition = GetCondition();
+    if (pCondition)
+    {
+        const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
+        if (rc_operand_is_memref(pOperand1) && nAddress == pOperand1->value.memref->address)
+            return GetIndirectAddressFromOperand(pOperand1, sPointerChain);
+
+        if (rc_operand_is_memref(&pCondition->operand2) && nAddress == pCondition->operand2.value.memref->address)
+            return GetIndirectAddressFromOperand(&pCondition->operand2, sPointerChain);
     }
 
     return nAddress;
@@ -643,6 +760,118 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::ByteAddress nAddre
     }
 
     return ra::StringPrintf(L"%s\r\n%s", sAddress, sNote);
+}
+
+static void BuildRecallTooltip(std::wstring& sTooltip,
+    const std::map<gsl::index, std::pair<gsl::index, const rc_condition_t*>>& mRememberRef,
+    gsl::index nConditionIndex, const rc_condition_t& pCondition, const rc_operand_t& pOperand)
+{
+    const auto pOperand1 = rc_condition_get_real_operand1(&pCondition);
+    if ((pOperand1 && pOperand1->type == RC_OPERAND_RECALL) || pCondition.operand2.type == RC_OPERAND_RECALL)
+    {
+        const auto pIter = mRememberRef.find(nConditionIndex);
+        if (pIter != mRememberRef.end())
+        {
+            BuildRecallTooltip(sTooltip, mRememberRef, pIter->second.first, *pIter->second.second,
+                               pOperand1->type == RC_OPERAND_RECALL ? *pOperand1 : pCondition.operand2);
+        }
+    }
+
+    sTooltip += ra::StringPrintf(L"\r\n%u: ", gsl::narrow_cast<uint32_t>(nConditionIndex + 1));
+
+    if (pOperand.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+    {
+        GSL_SUPPRESS_TYPE1 const rc_modified_memref_t* combining_memref =
+            reinterpret_cast<rc_modified_memref_t*>(pOperand.value.memref);
+        if (combining_memref->modifier_type == RC_OPERATOR_INDIRECT_READ)
+        {
+            if (rc_operand_is_memref(&combining_memref->parent))
+                sTooltip += ra::StringPrintf(L"$(%s+", ra::ByteAddressToString(combining_memref->parent.value.memref->value.value));
+            else
+                sTooltip += ra::StringPrintf(L"$(%s+", ra::ByteAddressToString(combining_memref->parent.value.num));
+
+            BuildOperandTooltip(sTooltip, combining_memref->modifier);
+            sTooltip.push_back(')');
+        }
+        else
+        {
+            BuildOperandTooltip(sTooltip, combining_memref->parent);
+            if (combining_memref->modifier_type == RC_OPERATOR_NONE)
+                return;
+
+            BuildOperatorTooltip(sTooltip, combining_memref->modifier_type);
+            BuildOperandTooltip(sTooltip, combining_memref->modifier);
+        }
+
+        sTooltip.append(L" -> ");
+        sTooltip += ra::StringPrintf(L"0x%08x", pOperand.value.memref->value.value);
+    }
+}
+
+std::wstring TriggerConditionViewModel::GetRecallTooltip(bool bOperand2) const
+{
+    const auto* pCondition = GetFirstCondition();
+    if (!pCondition)
+        return L"";
+
+    const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
+    std::map<gsl::index, std::pair<gsl::index, const rc_condition_t*>> mRememberRef;
+    const rc_condition_t* pLastRememberCondition = nullptr;
+    gsl::index nLastRememberIndex = -1;
+
+    gsl::index nConditionIndex = 0;
+    for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
+    {
+        auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex);
+        if (!vmCondition)
+            return L"";
+
+        if (vmCondition == this)
+            break;
+
+        const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
+        if ((pOperand1 && pOperand1->type == RC_OPERAND_RECALL) || pCondition->operand2.type == RC_OPERAND_RECALL)
+            mRememberRef[nConditionIndex] = { nLastRememberIndex, pLastRememberCondition };
+
+        if (pCondition->type == RC_CONDITION_REMEMBER)
+        {
+            nLastRememberIndex = nConditionIndex;
+            pLastRememberCondition = pCondition;
+        }
+    }
+
+    if (!pCondition)
+        return L"";
+
+    std::wstring sTooltip;
+
+    const rc_operand_t* pOperand = nullptr;
+    if (bOperand2)
+    {
+        pOperand = &pCondition->operand2;
+    }
+    else
+    {
+        pOperand = &pCondition->operand1;
+
+        if (pCondition->oper != RC_OPERATOR_NONE &&
+            pOperand->value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+        {
+            GSL_SUPPRESS_TYPE1 const rc_modified_memref_t* combining_memref =
+                reinterpret_cast<rc_modified_memref_t*>(pOperand->value.memref);
+            pOperand = &combining_memref->parent;
+        }
+    }
+
+    BuildOperandTooltip(sTooltip, *pOperand);
+    sTooltip.append(L" (recall)");
+
+    if (pLastRememberCondition)
+        BuildRecallTooltip(sTooltip, mRememberRef, nLastRememberIndex, *pLastRememberCondition, *pOperand);
+    else
+        sTooltip += L"???";
+
+    return sTooltip;
 }
 
 bool TriggerConditionViewModel::IsModifying(TriggerConditionType nType) noexcept

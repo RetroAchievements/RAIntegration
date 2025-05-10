@@ -164,7 +164,7 @@ public:
     /// </summary>
     ra::ByteAddress FirstCodeNoteAddress() const noexcept
     {
-        return (m_vCodeNotes.empty()) ? 0U : m_vCodeNotes.front().GetAddress();
+        return (m_vCodeNotes.empty()) ? 0U : m_vCodeNotes.front()->GetAddress();
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ protected:
     void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
 
-    std::vector<CodeNoteModel> m_vCodeNotes;
+    std::vector<std::unique_ptr<CodeNoteModel>> m_vCodeNotes;
     std::map<ra::ByteAddress, std::pair<std::string, std::wstring>> m_mOriginalCodeNotes;
 
     std::map<ra::ByteAddress, std::wstring> m_mPendingCodeNotes;

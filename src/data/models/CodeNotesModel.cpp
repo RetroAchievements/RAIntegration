@@ -86,10 +86,12 @@ void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCode
     });
 }
 
+GSL_SUPPRESS_R30 // left has to be a const ref to the unique_ptr because the function is used in lower_bound
+GSL_SUPPRESS_R32 // left has to be a const ref to the unique_ptr because the function is used in lower_bound
 static int CompareNoteAddresses(const std::unique_ptr<CodeNoteModel>& left,
-                                const std::unique_ptr<CodeNoteModel>& right) noexcept
+                                ra::ByteAddress nAddress) noexcept
 {
-    return left->GetAddress() < right->GetAddress();
+    return left->GetAddress() < nAddress;
 }
 
 void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
@@ -111,7 +113,7 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
 
     {
         std::unique_lock<std::mutex> lock(m_oMutex);
-        auto iter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), note, CompareNoteAddresses);
+        auto iter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
         if (iter != m_vCodeNotes.end() && (*iter)->GetAddress() == note->GetAddress())
             iter->swap(note);
         else
@@ -147,9 +149,7 @@ void CodeNotesModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstr
 
 ra::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::ByteAddress nAddress) const
 {
-    std::unique_ptr<CodeNoteModel> searchNote = std::make_unique<CodeNoteModel>();
-    searchNote->SetAddress(nAddress);
-    auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), searchNote, CompareNoteAddresses);
+    auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
 
     // exact match, return it
     if (pIter != m_vCodeNotes.end() && (*pIter)->GetAddress() == nAddress)
@@ -165,7 +165,7 @@ ra::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::ByteAddress nAddress) cons
             --pIter;
             const auto* pCodeNote = pIter->get();
 
-            if (pCodeNote->GetBytes() > 1 && pCodeNote->GetBytes() + pCodeNote->GetAddress() > nAddress)
+            if (pCodeNote && pCodeNote->GetBytes() > 1 && pCodeNote->GetBytes() + pCodeNote->GetAddress() > nAddress)
                 return pCodeNote->GetAddress();
 
         } while (pIter != m_vCodeNotes.begin());
@@ -223,12 +223,11 @@ std::wstring CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, MemSize nSiz
     const unsigned int nCheckBytes = ra::data::MemSizeBytes(nSize);
 
     // lower_bound will return the item if it's an exact match, or the *next* item otherwise
-    std::unique_ptr<CodeNoteModel> searchNote = std::make_unique<CodeNoteModel>();
-    searchNote->SetAddress(nAddress);
-    auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), searchNote, CompareNoteAddresses);
+    auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
     if (pIter != m_vCodeNotes.end())
     {
         const auto* pCodeNote = pIter->get();
+        Expects(pCodeNote != nullptr);
         if (nAddress == pCodeNote->GetAddress())
         {
             // exact match
@@ -247,7 +246,7 @@ std::wstring CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, MemSize nSiz
         --pIter;
 
         const auto* pCodeNote = pIter->get();
-        if (pCodeNote->GetAddress() + pCodeNote->GetBytes() - 1 >= nAddress)
+        if (pCodeNote && pCodeNote->GetAddress() + pCodeNote->GetBytes() - 1 >= nAddress)
         {
             // previous item overlaps with requested address
             return BuildCodeNoteSized(nAddress, nCheckBytes, pCodeNote->GetAddress(), *pCodeNote);
@@ -278,13 +277,11 @@ std::wstring CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, MemSize nSiz
 
 const std::wstring* CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, _Inout_ std::string& sAuthor) const
 {
-    std::unique_ptr<CodeNoteModel> searchNote = std::make_unique<CodeNoteModel>();
-    searchNote->SetAddress(nAddress);
-    const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), searchNote, CompareNoteAddresses);
+    const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
     if (pIter != m_vCodeNotes.end())
     {
         const auto* pCodeNote = pIter->get();
-        if (pCodeNote->GetAddress() == nAddress)
+        if (pCodeNote && pCodeNote->GetAddress() == nAddress)
         {
             sAuthor = pCodeNote->GetAuthor();
             return &pCodeNote->GetNote();
@@ -307,9 +304,7 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
             return;
         }
 
-        std::unique_ptr<CodeNoteModel> searchNote = std::make_unique<CodeNoteModel>();
-        searchNote->SetAddress(nAddress);
-        const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), searchNote, CompareNoteAddresses);
+        const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
         if (pIter != m_vCodeNotes.end() && (*pIter)->GetAddress() == nAddress)
         {
             if ((*pIter)->GetNote() == sNote)
@@ -332,6 +327,7 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
             {
                 // capture the original value
                 const auto* pCodeNote = pIter->get();
+                Expects(pCodeNote != nullptr);
                 m_mOriginalCodeNotes.insert_or_assign(nAddress,
                     std::make_pair(pCodeNote->GetAuthor(), pCodeNote->GetNote()));
             }
@@ -373,10 +369,7 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
 
 const CodeNoteModel* CodeNotesModel::FindCodeNoteModel(ra::ByteAddress nAddress, bool bIncludeDerived) const
 {
-    std::unique_ptr<CodeNoteModel> searchNote = std::make_unique<CodeNoteModel>();
-    searchNote->SetAddress(nAddress);
-
-    const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), searchNote, CompareNoteAddresses);
+    const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
     if (pIter != m_vCodeNotes.end() && (*pIter)->GetAddress() == nAddress)
         return pIter->get();
 
@@ -416,9 +409,7 @@ ra::ByteAddress CodeNotesModel::GetNextNoteAddress(ra::ByteAddress nAfterAddress
     ra::ByteAddress nBestAddress = 0xFFFFFFFF;
 
     // lower_bound will return the item if it's an exact match, or the *next* item otherwise
-    std::unique_ptr<CodeNoteModel> searchNote = std::make_unique<CodeNoteModel>();
-    searchNote->SetAddress(nAfterAddress + 1);
-    const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), searchNote, CompareNoteAddresses);
+    const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAfterAddress + 1, CompareNoteAddresses);
     if (pIter != m_vCodeNotes.end())
         nBestAddress = (*pIter)->GetAddress();
 
@@ -440,9 +431,7 @@ ra::ByteAddress CodeNotesModel::GetPreviousNoteAddress(ra::ByteAddress nBeforeAd
     unsigned nBestAddress = 0xFFFFFFFF;
 
     // lower_bound will return the item if it's an exact match, or the *next* item otherwise
-    std::unique_ptr<CodeNoteModel> searchNote = std::make_unique<CodeNoteModel>();
-    searchNote->SetAddress(nBeforeAddress - 1);
-    auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), searchNote, CompareNoteAddresses);
+    auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nBeforeAddress - 1, CompareNoteAddresses);
     if (pIter != m_vCodeNotes.end() && (*pIter)->GetAddress() == nBeforeAddress - 1)
     {
         // exact match for 1 byte lower, return it.
@@ -541,9 +530,7 @@ void CodeNotesModel::SetServerCodeNote(ra::ByteAddress nAddress, const std::wstr
     }
 
     // if we're just committing the current value, we're done
-    std::unique_ptr<CodeNoteModel> searchNote = std::make_unique<CodeNoteModel>();
-    searchNote->SetAddress(nAddress);
-    const auto pIter2 = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), searchNote, CompareNoteAddresses);
+    const auto pIter2 = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
     if (pIter2 != m_vCodeNotes.end() && (*pIter2)->GetAddress() == nAddress && (*pIter2)->GetNote() == sNote)
     {
         if (sNote.empty())
@@ -598,9 +585,7 @@ void CodeNotesModel::Serialize(ra::services::TextWriter& pWriter) const
 
         pWriter.Write(ra::ByteAddressToString(pIter.first));
 
-        std::unique_ptr<CodeNoteModel> searchNote = std::make_unique<CodeNoteModel>();
-        searchNote->SetAddress(pIter.first);
-        const auto pIter2 = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), searchNote, CompareNoteAddresses);
+        const auto pIter2 = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), pIter.first, CompareNoteAddresses);
         if (pIter2 != m_vCodeNotes.end() && (*pIter2)->GetAddress() == pIter.first)
             WriteQuoted(pWriter, (*pIter2)->GetNote());
         else

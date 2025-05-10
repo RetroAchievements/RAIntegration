@@ -677,15 +677,18 @@ const rc_condition_t* TriggerConditionViewModel::GetCondition() const
         return nullptr;
 
     const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
-    gsl::index nConditionIndex = 0;
-    for (; pCondition != nullptr; pCondition = pCondition->next)
+    if (pTriggerViewModel != nullptr)
     {
-        auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);
-        if (!vmCondition)
-            break;
+        gsl::index nConditionIndex = 0;
+        for (; pCondition != nullptr; pCondition = pCondition->next)
+        {
+            auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);
+            if (!vmCondition)
+                break;
 
-        if (vmCondition == this)
-            return pCondition;
+            if (vmCondition == this)
+                return pCondition;
+        }
     }
 
     return nullptr;
@@ -766,15 +769,15 @@ static void BuildRecallTooltip(std::wstring& sTooltip,
     const std::map<gsl::index, std::pair<gsl::index, const rc_condition_t*>>& mRememberRef,
     gsl::index nConditionIndex, const rc_condition_t& pCondition, const rc_operand_t& pOperand)
 {
-    const auto pOperand1 = rc_condition_get_real_operand1(&pCondition);
-    if ((pOperand1 && pOperand1->type == RC_OPERAND_RECALL) || pCondition.operand2.type == RC_OPERAND_RECALL)
+    const auto* pOperand1 = rc_condition_get_real_operand1(&pCondition);
+    const rc_operand_t* pRecallOperand =
+        (pOperand1 && pOperand1->type == RC_OPERAND_RECALL) ? pOperand1 :
+        (pCondition.operand2.type == RC_OPERAND_RECALL) ? &pCondition.operand2 : nullptr;
+    if (pRecallOperand)
     {
         const auto pIter = mRememberRef.find(nConditionIndex);
         if (pIter != mRememberRef.end())
-        {
-            BuildRecallTooltip(sTooltip, mRememberRef, pIter->second.first, *pIter->second.second,
-                               pOperand1->type == RC_OPERAND_RECALL ? *pOperand1 : pCondition.operand2);
-        }
+            BuildRecallTooltip(sTooltip, mRememberRef, pIter->second.first, *pIter->second.second, *pRecallOperand);
     }
 
     sTooltip += ra::StringPrintf(L"\r\n%u: ", gsl::narrow_cast<uint32_t>(nConditionIndex + 1));
@@ -815,6 +818,9 @@ std::wstring TriggerConditionViewModel::GetRecallTooltip(bool bOperand2) const
         return L"";
 
     const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
+    if (!pTriggerViewModel)
+        return L"";
+
     std::map<gsl::index, std::pair<gsl::index, const rc_condition_t*>> mRememberRef;
     const rc_condition_t* pLastRememberCondition = nullptr;
     gsl::index nLastRememberIndex = -1;
@@ -862,6 +868,7 @@ std::wstring TriggerConditionViewModel::GetRecallTooltip(bool bOperand2) const
             pOperand = &combining_memref->parent;
         }
     }
+    Expects(pOperand != nullptr);
 
     BuildOperandTooltip(sTooltip, *pOperand);
     sTooltip.append(L" (recall)");

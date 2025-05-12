@@ -90,6 +90,36 @@ public:
     }
 
     /// <summary>
+    /// Determines if the provided game identifier is virtual
+    /// </summary>
+    /// <remarks>
+    /// IDs above 1 billion are incompatible. The 100 millions place indicates how.
+    /// Mask off the part above 100 million to get the actual game id.
+    /// </remarks>
+    static constexpr bool IsVirtualGameId(uint32_t nGameId) noexcept { return nGameId > 1000000000; }
+
+    /// <summary>
+    /// Gets the real game identifier from a virtual one
+    /// </summary>
+    static constexpr uint32_t GetRealGameId(uint32_t nGameId) noexcept { return nGameId % 100000000; }
+
+    enum HashCompatibility
+    {
+        Compatible = 0,
+        Incompatible = 10,
+        Untested = 11,
+        PatchRequired = 12,
+    };
+
+    /// <summary>
+    /// Extracts the hash compatibility information from a virtual game identifier
+    /// </summary>
+    static constexpr HashCompatibility GetHashCompatibility(uint32_t nGameId) noexcept
+    {
+        return ra::itoe<HashCompatibility>(nGameId / 100000000);
+    }
+
+    /// <summary>
     /// Gets the assets for the current game.
     /// </summary>
     GameAssets& Assets() noexcept { return m_vAssets; }

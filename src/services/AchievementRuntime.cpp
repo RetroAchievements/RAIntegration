@@ -1235,7 +1235,8 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
     for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
         wrapper->m_mLeaderboardDefinitions[pLeaderboard->id] = pLeaderboard->definition;
 
-    ExtractPatchData(server_response, game_data_response->id);
+    if (!ra::data::context::GameContext::IsVirtualGameId(game_data_response->id))
+        ExtractPatchData(server_response, game_data_response->id);
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, unsigned id,
@@ -1287,14 +1288,13 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
 
     if (nResult == RC_OK || nResult == RC_NO_GAME_LOADED)
     {
-        if (pClient->game && pClient->game->public_.id > 1000000000)
+        if (pClient->game && ra::data::context::GameContext::IsVirtualGameId(pClient->game->public_.id))
         {
             ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
 
-            // ids above 1 billion are incompatible. the 100 millions place indicates how.
-            // mask off the part above 100 million to get the actual game id
-            const auto nGameId = pClient->game->public_.id % 100000000;
-            if (pClient->game->public_.id / 100000000 == 11)
+            const auto nGameId = ra::data::context::GameContext::GetRealGameId(pClient->game->public_.id);
+            const auto nHashCompatibility = ra::data::context::GameContext::GetHashCompatibility(pClient->game->public_.id);
+            if (nHashCompatibility == ra::data::context::GameContext::HashCompatibility::Untested)
                 vmUnknownGame.SetProblemHeader(L"The compatibility of the provided game is unknown.");
             else
                 vmUnknownGame.SetProblemHeader(L"The provided game has been marked as incompatible.");

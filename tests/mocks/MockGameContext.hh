@@ -119,7 +119,12 @@ public:
 
     void MockSubset(uint32_t nSubsetId, const std::string& sName, SubsetType nType = SubsetType::Bonus)
     {
-        m_vSubsets.emplace_back(nSubsetId, nSubsetId, ra::Widen(sName), nType);
+        MockSubset(nSubsetId, nSubsetId, sName, nType);
+    }
+
+    void MockSubset(uint32_t nGameId, uint32_t nAchievementSetId, const std::string& sName, SubsetType nType = SubsetType::Bonus)
+    {
+        m_vSubsets.emplace_back(nAchievementSetId, nGameId, ra::Widen(sName), nType);
     }
 
 private:

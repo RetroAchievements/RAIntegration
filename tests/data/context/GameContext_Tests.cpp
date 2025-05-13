@@ -932,6 +932,8 @@ public:
                                         "111000002:R:1=1:Ach6:Desc6::::Auth6:10:1234511111:1234500000:::556\n");
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+        Assert::AreEqual({2U}, game.Subsets().size());
+        Assert::AreEqual(2U, game.GetGameId(3U));
 
         // local achievement data for 5 should be merged with server achievement data
         auto* pAch = game.Assets().FindAchievement(5U);

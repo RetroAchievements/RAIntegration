@@ -643,6 +643,17 @@ void GameContext::MigrateSubsetUserFiles()
     }
 }
 
+uint32_t GameContext::GetGameId(uint32_t nSubsetId) const
+{
+    for (const auto& pSubset : m_vSubsets)
+    {
+        if (pSubset.ID() == nSubsetId)
+            return pSubset.GameID();
+    }
+
+    return GameId();
+}
+
 void GameContext::OnBeforeActiveGameChanged()
 {
     // create a copy of the list of pointers in case it's modified by one of the callbacks

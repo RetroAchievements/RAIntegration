@@ -187,6 +187,7 @@ public:
     };
     const std::vector<Subset>& Subsets() const noexcept { return m_vSubsets; }
     void InitializeSubsets(const char* pPatchData, size_t nPatchDataLength);
+    uint32_t GetGameId(uint32_t nSubsetId) const;
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;

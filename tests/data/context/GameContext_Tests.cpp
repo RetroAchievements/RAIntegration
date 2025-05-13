@@ -1507,6 +1507,118 @@ public:
         // hardcore should remain disabled
         Assert::IsFalse(game.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     }
+
+    TEST_METHOD(TestInitializeSubsetsCoreOnly)
+    {
+        GameContextHarness game;
+        std::string sPatchData = "{\"ID\":2222,\"ParentID\":2222,\"Title\":\"Game Title\"}";
+        game.InitializeSubsets(sPatchData.c_str(), sPatchData.length());
+
+        Assert::AreEqual(2222U, game.GameId());
+        Assert::AreEqual(2222U, game.ActiveGameId());
+
+        Assert::AreEqual({1}, game.Subsets().size());
+
+        const auto& pSubset = game.Subsets().front();
+        Assert::AreEqual(0U, pSubset.ID());
+        Assert::AreEqual(0U, pSubset.AchievementSetID());
+        Assert::AreEqual(2222U, pSubset.GameID());
+        Assert::AreEqual(GameContext::SubsetType::Core, pSubset.Type());
+        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.Title());
+    }
+
+    TEST_METHOD(TestInitializeSubsetsCoreWithBonus)
+    {
+        GameContextHarness game;
+        std::string sPatchData =
+            "{\"ID\":2222,\"ParentID\":2222,\"Title\":\"Game Title\",\"Sets\":["
+            "{\"GameID\":3333,\"GameAchievementSetID\":4444,\"SetTitle\":\"Bonus\",\"Type\":\"bonus\"},"
+            "{\"GameID\":5555,\"GameAchievementSetID\":6666,\"SetTitle\":\"Perfect Play\",\"Type\":\"bonus\"}"
+            "]}";
+        game.InitializeSubsets(sPatchData.c_str(), sPatchData.length());
+
+        Assert::AreEqual(2222U, game.GameId());
+        Assert::AreEqual(2222U, game.ActiveGameId());
+
+        Assert::AreEqual({3}, game.Subsets().size());
+
+        const auto& pSubset = game.Subsets().at(0);
+        Assert::AreEqual(0U, pSubset.ID());
+        Assert::AreEqual(0U, pSubset.AchievementSetID());
+        Assert::AreEqual(2222U, pSubset.GameID());
+        Assert::AreEqual(GameContext::SubsetType::Core, pSubset.Type());
+        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.Title());
+
+        const auto& pSubset2 = game.Subsets().at(1);
+        Assert::AreEqual(4444U, pSubset2.ID());
+        Assert::AreEqual(4444U, pSubset2.AchievementSetID());
+        Assert::AreEqual(3333U, pSubset2.GameID());
+        Assert::AreEqual(GameContext::SubsetType::Bonus, pSubset2.Type());
+        Assert::AreEqual(std::wstring(L"Bonus"), pSubset2.Title());
+
+        const auto& pSubset3 = game.Subsets().at(2);
+        Assert::AreEqual(6666U, pSubset3.ID());
+        Assert::AreEqual(6666U, pSubset3.AchievementSetID());
+        Assert::AreEqual(5555U, pSubset3.GameID());
+        Assert::AreEqual(GameContext::SubsetType::Bonus, pSubset3.Type());
+        Assert::AreEqual(std::wstring(L"Perfect Play"), pSubset3.Title());
+    }
+
+    TEST_METHOD(TestInitializeSubsetsExclusive)
+    {
+        GameContextHarness game;
+        std::string sPatchData = "{\"ID\":2222,\"ParentID\":3333,\"Title\":\"Game Title\"}";
+        game.InitializeSubsets(sPatchData.c_str(), sPatchData.length());
+
+        Assert::AreEqual(2222U, game.GameId());
+        Assert::AreEqual(2222U, game.ActiveGameId());
+
+        Assert::AreEqual({1}, game.Subsets().size());
+
+        const auto& pSubset = game.Subsets().at(0);
+        Assert::AreEqual(0U, pSubset.ID());
+        Assert::AreEqual(0U, pSubset.AchievementSetID());
+        Assert::AreEqual(2222U, pSubset.GameID());
+        Assert::AreEqual(GameContext::SubsetType::Exclusive, pSubset.Type());
+        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.Title());
+    }
+
+    TEST_METHOD(TestInitializeSubsetsSpecialtyWithBonus)
+    {
+        GameContextHarness game;
+        std::string sPatchData =
+            "{\"ID\":5555,\"ParentID\":2222,\"Title\":\"Game Title\",\"Sets\":["
+            "{\"GameID\":2222,\"GameAchievementSetID\":6666,\"SetTitle\":\"Game Title\",\"Type\":\"core\"},"
+            "{\"GameID\":3333,\"GameAchievementSetID\":4444,\"SetTitle\":\"Bonus\",\"Type\":\"bonus\"}"
+            "]}";
+        game.InitializeSubsets(sPatchData.c_str(), sPatchData.length());
+
+        Assert::AreEqual(2222U, game.GameId());
+        Assert::AreEqual(5555U, game.ActiveGameId());
+
+        Assert::AreEqual({3}, game.Subsets().size());
+
+        const auto& pSubset = game.Subsets().at(0);
+        Assert::AreEqual(0U, pSubset.ID());
+        Assert::AreEqual(6666U, pSubset.AchievementSetID());
+        Assert::AreEqual(2222U, pSubset.GameID());
+        Assert::AreEqual(GameContext::SubsetType::Core, pSubset.Type());
+        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.Title());
+
+        const auto& pSubset2 = game.Subsets().at(1);
+        Assert::AreEqual(0U, pSubset2.ID()); // TODO
+        Assert::AreEqual(0U, pSubset2.AchievementSetID()); // TODO
+        Assert::AreEqual(5555U, pSubset2.GameID());
+        Assert::AreEqual(GameContext::SubsetType::Specialty, pSubset2.Type());
+        Assert::AreEqual(std::wstring(L"Game Title"), pSubset2.Title()); // TODO
+
+        const auto& pSubset3 = game.Subsets().at(2);
+        Assert::AreEqual(4444U, pSubset3.ID());
+        Assert::AreEqual(4444U, pSubset3.AchievementSetID());
+        Assert::AreEqual(3333U, pSubset3.GameID());
+        Assert::AreEqual(GameContext::SubsetType::Bonus, pSubset3.Type());
+        Assert::AreEqual(std::wstring(L"Bonus"), pSubset3.Title());
+    }
 };
 
 } // namespace tests

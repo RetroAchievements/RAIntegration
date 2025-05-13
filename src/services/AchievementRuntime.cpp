@@ -837,13 +837,6 @@ public:
         rc_mutex_unlock(&pClient->state.mutex);
     }
 
-    void GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const
-    {
-        const auto* pSubset = m_pPublishedSubset;
-        for (; pSubset; pSubset = pSubset->next)
-            vSubsets.emplace_back(pSubset->public_.id, ra::Widen(pSubset->public_.title));
-    }
-
     void AttachMemory(void* pMemory)
     {
         if (m_pSubsetWrapper)
@@ -890,12 +883,6 @@ void AchievementRuntime::SyncAssets()
     if (m_pClientSynchronizer == nullptr)
         m_pClientSynchronizer.reset(new ClientSynchronizer());
     m_pClientSynchronizer->SyncAssets(GetClient());
-}
-
-void AchievementRuntime::GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const
-{
-    if (m_pClientSynchronizer != nullptr)
-        m_pClientSynchronizer->GetSubsets(vSubsets);
 }
 
 void AchievementRuntime::AttachMemory(void* pMemory)
@@ -1190,20 +1177,42 @@ void AchievementRuntime::BeginLoadGame(const std::string& sHash, unsigned id, rc
     BeginLoadGame(sHash.c_str(), id, pCallbackWrapper);
 }
 
-static void ExtractPatchData(const rc_api_server_response_t* server_response, uint32_t nGameId)
+static void ProcessPatchData(const rc_api_server_response_t* server_response)
 {
-    // extract the PatchData and store a copy in the cache for offline mode
+    // manually process the patch data response to get to data rapi doesn't expose
     rc_api_response_t api_response{};
     GSL_SUPPRESS_ES47
-    rc_json_field_t fields[] = {RC_JSON_NEW_FIELD("Success"), RC_JSON_NEW_FIELD("Error"),
-                                RC_JSON_NEW_FIELD("PatchData")};
+    rc_json_field_t fields[] = {
+        RC_JSON_NEW_FIELD("Success"),
+        RC_JSON_NEW_FIELD("Error"),
+        RC_JSON_NEW_FIELD("PatchData")
+    };
 
-    if (rc_json_parse_server_response(&api_response, server_response, fields, sizeof(fields) / sizeof(fields[0])) ==
-            RC_OK &&
+    if (rc_json_parse_server_response(&api_response, server_response, fields, sizeof(fields) / sizeof(fields[0])) == RC_OK &&
         fields[2].value_start && fields[2].value_end)
     {
+        // determine the active game ID and any identify any provided subsets
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+        pGameContext.InitializeSubsets(fields[2].value_start, fields[2].value_end - fields[2].value_start);
+
+        // extract the old rich presence script from the last cached server response so we can tell if the
+        // local value has changed. store it as the local value, and we'll merge in the real local value later.
         auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-        auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
+        auto pOldData = pLocalStorage.ReadText(StorageItemType::GameData, std::to_wstring(pGameContext.ActiveGameId()));
+        if (pOldData != nullptr)
+        {
+            rapidjson::Document pDocument;
+            if (LoadDocument(pDocument, *pOldData) && pDocument.HasMember("RichPresencePatch") &&
+                pDocument["RichPresencePatch"].IsString())
+            {
+                auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+                pRichPresence->SetScript(pDocument["RichPresencePatch"].GetString());
+                pRichPresence->UpdateLocalCheckpoint();
+            }
+        }
+
+        // cache the patchdata so it can be used in offline mode or by external tools
+        auto pData = pLocalStorage.WriteText(StorageItemType::GameData, std::to_wstring(pGameContext.ActiveGameId()));
         if (pData != nullptr)
         {
             std::string sPatchData;
@@ -1226,22 +1235,6 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
     auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
     pRichPresence->SetScript(game_data_response->rich_presence_script);
     pRichPresence->CreateServerCheckpoint();
-
-    // extract the old rich presence script from the last cached server response so we can tell if the
-    // local value has changed. store it as the local value, and we'll merge in the real local value later.
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(game_data_response->id));
-    if (pData != nullptr)
-    {
-        rapidjson::Document pDocument;
-        if (LoadDocument(pDocument, *pData) &&
-            pDocument.HasMember("RichPresencePatch") &&
-            pDocument["RichPresencePatch"].IsString())
-        {
-            pRichPresence->SetScript(pDocument["RichPresencePatch"].GetString());
-        }
-    }
-
     pRichPresence->CreateLocalCheckpoint();
     pGameContext.Assets().Append(std::move(pRichPresence));
 
@@ -1262,7 +1255,7 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
         wrapper->m_mLeaderboardDefinitions[pLeaderboard->id] = pLeaderboard->definition;
 
     if (!ra::data::context::GameContext::IsVirtualGameId(game_data_response->id))
-        ExtractPatchData(server_response, game_data_response->id);
+        ProcessPatchData(server_response);
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, unsigned id,

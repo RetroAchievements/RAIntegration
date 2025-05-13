@@ -34,6 +34,7 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\src\rc_client_internal.h>
+#include <rcheevos\src\rapi\rc_api_common.h> // for parsing patchdata
 
 namespace ra {
 namespace data {
@@ -113,6 +114,7 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
     // reset the GameContext
     m_nMode = nMode;
     m_sGameTitle.clear();
+    m_vSubsets.clear();
     m_vAssets.ResetLocalId();
 
     m_vAssets.BeginUpdate();
@@ -125,6 +127,7 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
         m_vAssets.EndUpdate();
 
         m_sGameHash.clear();
+        m_nActiveGameId = 0;
 
         if (m_nGameId != 0)
         {
@@ -139,7 +142,7 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
 
     // start the load process
     BeginLoad();
-    m_nGameId = GetRealGameId(nGameId);
+    m_nGameId = m_nActiveGameId = GetRealGameId(nGameId);
 
     // create a model for managing badges
     auto pLocalBadges = std::make_unique<ra::data::models::LocalBadgesModel>();
@@ -195,14 +198,14 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
         if (pGame == nullptr || pGame->id == 0)
         {
             // invalid hash
-            m_nGameId = 0;
+            m_nGameId = m_nActiveGameId = 0;
             m_sGameTitle.clear();
             m_sGameHash.clear();
             nResult = RC_NO_GAME_LOADED;
         }
         else if (!ValidateConsole(pGame->console_id))
         {
-            m_nGameId = 0;
+            m_nGameId = m_nActiveGameId = 0;
             m_sGameTitle.clear();
             m_sGameHash.clear();
             nResult = RC_INVALID_STATE;
@@ -472,6 +475,96 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
             }
         }
     }
+}
+
+void GameContext::InitializeSubsets(const char* pPatchData, size_t nPatchDataLength)
+{
+    GSL_SUPPRESS_ES47
+    rc_json_field_t patchdata_fields[] = {
+        RC_JSON_NEW_FIELD("ID"),
+        RC_JSON_NEW_FIELD("ParentID"), /* parent game of exclusive/specialty subset, or just ID */
+        RC_JSON_NEW_FIELD("Title"),
+        RC_JSON_NEW_FIELD("Sets")      /* array */
+    };
+
+    rc_api_response_t response;
+    memset(&response, 0, sizeof(response));
+    rc_buffer_init(&response.buffer);
+
+    rc_json_field_t field = RC_JSON_NEW_FIELD("PatchData");
+    Expects(pPatchData != nullptr);
+    field.value_start = pPatchData;
+    field.value_end = pPatchData + nPatchDataLength;
+
+    if (rc_json_get_required_object(patchdata_fields, sizeof(patchdata_fields) / sizeof(patchdata_fields[0]),
+                                    &response, &field, "PatchData"))
+    {
+        uint32_t nGameId, nParentId, nAchievementSetId, nNumSubsets;
+        const char* sTitle, *sType;
+        rc_json_field_t array_field;
+
+        rc_json_get_optional_unum(&nGameId, &patchdata_fields[0], "ID", 0);
+        rc_json_get_optional_unum(&nParentId, &patchdata_fields[1], "ParentID", 0);
+        rc_json_get_optional_string(&sTitle, &response, &patchdata_fields[2], "Title", "");
+
+        m_vSubsets.clear();
+        // if the ParentID matches the game ID, it's a core set. otherwise assume it's an
+        // exclusive subset unless we see a core set later.
+        m_vSubsets.emplace_back(0, nGameId, ra::Widen(sTitle),
+                                (nGameId == nParentId) ? SubsetType::Core : SubsetType::Exclusive);
+
+        // GameID dictates which game is loaded for purposes of local achievement storage and code notes
+        m_nGameId = nParentId;
+        // ActiveGameID dictates which game is running for purposes of rich presence and pings
+        m_nActiveGameId = nGameId;
+
+        if (rc_json_get_optional_array(&nNumSubsets, &array_field, &patchdata_fields[3], "Sets") && nNumSubsets > 0)
+        {
+            GSL_SUPPRESS_ES47
+            rc_json_field_t subset_fields[] = {
+                RC_JSON_NEW_FIELD("GameAchievementSetID"),
+                RC_JSON_NEW_FIELD("GameID"),
+                RC_JSON_NEW_FIELD("SetTitle"),
+                RC_JSON_NEW_FIELD("Type"),
+            };
+
+            rc_json_iterator_t iterator;
+            memset(&iterator, 0, sizeof(iterator));
+            iterator.json = array_field.value_start;
+            iterator.end = array_field.value_end;
+
+            while (rc_json_get_array_entry_object(subset_fields, sizeof(subset_fields) / sizeof(subset_fields[0]),
+                                                  &iterator))
+            {
+                rc_json_get_optional_unum(&nAchievementSetId, &subset_fields[0], "GameAchievementSetID", 0);
+                rc_json_get_optional_unum(&nGameId, &subset_fields[1], "GameID", 0);
+                rc_json_get_optional_string(&sTitle, &response, &subset_fields[2], "SetTitle", "");
+                rc_json_get_optional_string(&sType, &response, &subset_fields[3], "Type", "bonus");
+
+                if (strcmp(sType, "core") == 0)
+                {
+                    // if a "core" subset exists, then the root subset is a specialty subset
+                    // change the root subset, then insert the core subset in front of it
+                    const auto& pActiveSet = m_vSubsets.front();
+                    m_vSubsets.front() = Subset(pActiveSet.AchievementSetID(), pActiveSet.GameID(), pActiveSet.Title(),
+                                                SubsetType::Specialty);
+                    m_vSubsets.insert(m_vSubsets.begin(), Subset(nAchievementSetId, nGameId, ra::Widen(sTitle), SubsetType::Core));
+                }
+                else
+                {
+                    // specialty and exclusive subsets will always be root level items as they have to be
+                    // loaded with a unique hash. assume all subsets returned as nested subsets are bonus
+                    m_vSubsets.emplace_back(nAchievementSetId, nGameId, ra::Widen(sTitle), SubsetType::Bonus);
+                }
+            }
+        }
+    }
+
+    rc_buffer_destroy(&response.buffer);
+
+    // exclusive subset has its own achievement storage and core notes
+    if (m_vSubsets.front().Type() == SubsetType::Exclusive)
+        m_nGameId = m_nActiveGameId;
 }
 
 void GameContext::OnBeforeActiveGameChanged()

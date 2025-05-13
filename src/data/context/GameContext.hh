@@ -191,6 +191,7 @@ public:
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
     void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused);
+    void MigrateSubsetUserFiles();
 
     friend class ra::services::AchievementRuntimeExports;
     bool BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaused);
@@ -209,6 +210,8 @@ protected:
     std::string m_sGameHash;
     Mode m_nMode{};
 
+    std::vector<Subset> m_vSubsets;
+
 private:
     /// <summary>
     /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's
@@ -217,7 +220,6 @@ private:
     NotifyTargetSet m_vNotifyTargets;
 
     GameAssets m_vAssets;
-    std::vector<Subset> m_vSubsets;
 
     std::atomic<int> m_nLoadCount = 0;
     int m_nMasteryPopupId = 0;

@@ -158,6 +158,11 @@ std::unique_ptr<TextWriter> FileLocalStorage::AppendText(StorageItemType nType, 
     return m_pFileSystem.AppendTextFile(GetPath(nType, sKey));
 }
 
+bool FileLocalStorage::Delete(StorageItemType nType, const std::wstring& sKey)
+{
+    return m_pFileSystem.DeleteFile(GetPath(nType, sKey));
+}
+
 } // namespace impl
 } // namespace services
 } // namespace ra

@@ -32,7 +32,7 @@ public:
     /// <summary>
     /// Sets the unique identifier of the currently loaded game.
     /// </summary>
-    void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
+    void SetGameId(unsigned int nGameId) noexcept { m_nGameId = m_nActiveGameId = nGameId; }
 
     void NotifyActiveGameChanged() { OnActiveGameChanged(); }
 
@@ -116,6 +116,11 @@ public:
     }
 
     void InitializeFromAchievementRuntime();
+
+    void MockSubset(uint32_t nSubsetId, const std::string& sName, SubsetType nType = SubsetType::Bonus)
+    {
+        m_vSubsets.emplace_back(nSubsetId, nSubsetId, ra::Widen(sName), nType);
+    }
 
 private:
     class MockCodeNotesModel : public ra::data::models::CodeNotesModel

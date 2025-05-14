@@ -34,7 +34,7 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\src\rc_client_internal.h>
-#include <rcheevos\src\rapi\rc_api_common.h> // for parsing patchdata
+#include <rcheevos\include\rc_api_runtime.h>
 
 namespace ra {
 namespace data {
@@ -477,101 +477,42 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
     }
 }
 
-void GameContext::InitializeSubsets(const char* pPatchData, size_t nPatchDataLength)
+void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response)
 {
-    GSL_SUPPRESS_ES47
-    rc_json_field_t patchdata_fields[] = {
-        RC_JSON_NEW_FIELD("ID"),
-        RC_JSON_NEW_FIELD("ParentID"), /* parent game of exclusive/specialty subset, or just ID */
-        RC_JSON_NEW_FIELD("Title"),
-        RC_JSON_NEW_FIELD("Sets") /* array */
-    };
-
-    rc_api_response_t response;
-    memset(&response, 0, sizeof(response));
-    rc_buffer_init(&response.buffer);
-
-    rc_json_field_t field = RC_JSON_NEW_FIELD("PatchData");
-    Expects(pPatchData != nullptr);
-    field.value_start = pPatchData;
-    field.value_end = pPatchData + nPatchDataLength;
-
-    if (!rc_json_get_required_object(patchdata_fields, sizeof(patchdata_fields) / sizeof(patchdata_fields[0]),
-                                     &response, &field, "PatchData"))
-    {
-        rc_buffer_destroy(&response.buffer);
-        return;
-    }
-
-    uint32_t nGameId, nParentId, nAchievementSetId, nNumSubsets;
-    const char *sTitle, *sType;
-    rc_json_field_t array_field;
-
-    rc_json_get_optional_unum(&nGameId, &patchdata_fields[0], "ID", 0);
-    rc_json_get_optional_unum(&nParentId, &patchdata_fields[1], "ParentID", 0);
-    rc_json_get_optional_string(&sTitle, &response, &patchdata_fields[2], "Title", "");
-
     m_vSubsets.clear();
-    // if the ParentID matches the game ID, it's a core set. otherwise assume it's an
-    // exclusive subset unless we see a core set later.
-    m_vSubsets.emplace_back(0, nGameId, ra::Widen(sTitle),
-                            (nGameId == nParentId) ? SubsetType::Core : SubsetType::Exclusive);
 
     // GameID dictates which game is loaded for purposes of local achievement storage and code notes
-    m_nGameId = nParentId;
+    m_nGameId = game_data_response->id;
     // ActiveGameID dictates which game is running for purposes of rich presence and pings
-    m_nActiveGameId = nGameId;
+    m_nActiveGameId = game_data_response->session_game_id;
 
-    if (rc_json_get_optional_array(&nNumSubsets, &array_field, &patchdata_fields[3], "Sets") && nNumSubsets > 0)
+    for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
     {
-        GSL_SUPPRESS_ES47
-        rc_json_field_t subset_fields[] = {
-            RC_JSON_NEW_FIELD("GameAchievementSetID"),
-            RC_JSON_NEW_FIELD("GameID"),
-            RC_JSON_NEW_FIELD("SetTitle"),
-            RC_JSON_NEW_FIELD("Type"),
-        };
-
-        rc_json_iterator_t iterator;
-        memset(&iterator, 0, sizeof(iterator));
-        iterator.json = array_field.value_start;
-        iterator.end = array_field.value_end;
-
-        while (rc_json_get_array_entry_object(subset_fields, sizeof(subset_fields) / sizeof(subset_fields[0]), &iterator))
+        const auto* pSet = &game_data_response->sets[i];
+        if (pSet->type == RC_ACHIEVEMENT_SET_TYPE_CORE)
         {
-            rc_json_get_optional_unum(&nAchievementSetId, &subset_fields[0], "GameAchievementSetID", 0);
-            rc_json_get_optional_unum(&nGameId, &subset_fields[1], "GameID", 0);
-            rc_json_get_optional_string(&sTitle, &response, &subset_fields[2], "SetTitle", "");
-            rc_json_get_optional_string(&sType, &response, &subset_fields[3], "Type", "bonus");
-
-            if (strcmp(sType, "core") == 0)
+            // core subset should always be first and have a subset id of 0
+            m_vSubsets.insert(m_vSubsets.begin(),
+                              Subset(0, pSet->game_id, ra::Widen(pSet->title), SubsetType::Core));
+        }
+        else
+        {
+            SubsetType nType;
+            switch (pSet->type)
             {
-                // if a "core" subset exists, then the root subset is a specialty subset
-                // change the root subset, then insert the core subset in front of it
-                const auto& pActiveSet = m_vSubsets.front();
-                m_vSubsets.front() = Subset(pActiveSet.AchievementSetID(), pActiveSet.GameID(), pActiveSet.Title(),
-                                            SubsetType::Specialty);
-                m_vSubsets.insert(m_vSubsets.begin(),
-                                  Subset(nAchievementSetId, nGameId, ra::Widen(sTitle), SubsetType::Core));
+                case RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE:
+                    nType = SubsetType::Exclusive;
+                    break;
+                case RC_ACHIEVEMENT_SET_TYPE_SPECIALTY:
+                    nType = SubsetType::Specialty;
+                    break;
+                default:
+                    nType = SubsetType::Bonus;
+                    break;
             }
-            else
-            {
-                // specialty and exclusive subsets will always be root level items as they have to be
-                // loaded with a unique hash. assume all subsets returned as nested subsets are bonus
-                m_vSubsets.emplace_back(nAchievementSetId, nGameId, ra::Widen(sTitle), SubsetType::Bonus);
-            }
+            m_vSubsets.emplace_back(pSet->id, pSet->game_id, ra::Widen(pSet->title), nType);
         }
     }
-
-    rc_buffer_destroy(&response.buffer);
-
-    // exclusive subset has its own achievement storage and core notes
-    if (m_vSubsets.front().Type() == SubsetType::Exclusive)
-        m_nGameId = m_nActiveGameId;
-
-    // if subsets were found, migrate any SUBSET-User.txt files into the the GAME-User.txt file
-    if (m_vSubsets.size() > 1)
-        MigrateSubsetUserFiles();
 }
 
 void GameContext::MigrateSubsetUserFiles()
@@ -643,7 +584,7 @@ void GameContext::MigrateSubsetUserFiles()
     }
 }
 
-uint32_t GameContext::GetGameId(uint32_t nSubsetId) const
+uint32_t GameContext::GetGameId(uint32_t nSubsetId) const noexcept
 {
     for (const auto& pSubset : m_vSubsets)
     {

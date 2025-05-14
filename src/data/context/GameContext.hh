@@ -7,6 +7,8 @@
 #include <string>
 #include <atomic>
 
+struct rc_api_fetch_game_sets_response_t;
+
 namespace ra { namespace services { class AchievementRuntimeExports; } }
 
 namespace ra {
@@ -186,8 +188,8 @@ public:
         uint32_t m_nGameId;
     };
     const std::vector<Subset>& Subsets() const noexcept { return m_vSubsets; }
-    void InitializeSubsets(const char* pPatchData, size_t nPatchDataLength);
-    uint32_t GetGameId(uint32_t nSubsetId) const;
+    void InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response);
+    uint32_t GetGameId(uint32_t nSubsetId) const noexcept;
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;

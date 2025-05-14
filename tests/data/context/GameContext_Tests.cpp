@@ -9,6 +9,7 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include <rcheevos\src\rc_version.h>
+#include <rcheevos\include\rc_api_runtime.h>
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
@@ -1642,8 +1643,22 @@ public:
     TEST_METHOD(TestInitializeSubsetsCoreOnly)
     {
         GameContextHarness game;
-        std::string sPatchData = "{\"ID\":2222,\"ParentID\":2222,\"Title\":\"Game Title\"}";
-        game.InitializeSubsets(sPatchData.c_str(), sPatchData.length());
+        rc_api_achievement_set_definition_t subsets[1];
+        rc_api_fetch_game_sets_response_t sets;
+
+        memset(&subsets, 0, sizeof(subsets));
+        memset(&sets, 0, sizeof(sets));
+
+        subsets[0].id = 11111;
+        subsets[0].game_id = 2222;
+        subsets[0].title = "Game Title";
+        subsets[0].type = RC_ACHIEVEMENT_SET_TYPE_CORE;
+
+        sets.id = sets.session_game_id = subsets[0].id;
+        sets.sets = subsets;
+        sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
+
+        game.InitializeSubsets(&sets);
 
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
@@ -1661,12 +1676,32 @@ public:
     TEST_METHOD(TestInitializeSubsetsCoreWithBonus)
     {
         GameContextHarness game;
-        std::string sPatchData =
-            "{\"ID\":2222,\"ParentID\":2222,\"Title\":\"Game Title\",\"Sets\":["
-            "{\"GameID\":3333,\"GameAchievementSetID\":4444,\"SetTitle\":\"Bonus\",\"Type\":\"bonus\"},"
-            "{\"GameID\":5555,\"GameAchievementSetID\":6666,\"SetTitle\":\"Perfect Play\",\"Type\":\"bonus\"}"
-            "]}";
-        game.InitializeSubsets(sPatchData.c_str(), sPatchData.length());
+        rc_api_achievement_set_definition_t subsets[3];
+        rc_api_fetch_game_sets_response_t sets;
+
+        memset(&subsets, 0, sizeof(subsets));
+        memset(&sets, 0, sizeof(sets));
+
+        subsets[0].id = 11111;
+        subsets[0].game_id = 2222;
+        subsets[0].title = "Game Title";
+        subsets[0].type = RC_ACHIEVEMENT_SET_TYPE_CORE;
+
+        subsets[1].id = 4444;
+        subsets[1].game_id = 3333;
+        subsets[1].title = "Bonus";
+        subsets[1].type = RC_ACHIEVEMENT_SET_TYPE_BONUS;
+
+        subsets[2].id = 6666;
+        subsets[2].game_id = 5555;
+        subsets[2].title = "Perfect Play";
+        subsets[2].type = RC_ACHIEVEMENT_SET_TYPE_BONUS;
+
+        sets.id = sets.session_game_id = subsets[0].id;
+        sets.sets = subsets;
+        sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
+
+        game.InitializeSubsets(&sets);
 
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
@@ -1698,8 +1733,23 @@ public:
     TEST_METHOD(TestInitializeSubsetsExclusive)
     {
         GameContextHarness game;
-        std::string sPatchData = "{\"ID\":2222,\"ParentID\":3333,\"Title\":\"Game Title\"}";
-        game.InitializeSubsets(sPatchData.c_str(), sPatchData.length());
+        rc_api_achievement_set_definition_t subsets[1];
+        rc_api_fetch_game_sets_response_t sets;
+
+        memset(&subsets, 0, sizeof(subsets));
+        memset(&sets, 0, sizeof(sets));
+
+        subsets[0].id = 1111;
+        subsets[0].game_id = 2222;
+        subsets[0].title = "Game Title";
+        subsets[0].type = RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE;
+
+        sets.id = subsets[0].game_id;
+        sets.session_game_id = 3333;
+        sets.sets = subsets;
+        sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
+
+        game.InitializeSubsets(&sets);
 
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
@@ -1717,12 +1767,32 @@ public:
     TEST_METHOD(TestInitializeSubsetsSpecialtyWithBonus)
     {
         GameContextHarness game;
-        std::string sPatchData =
-            "{\"ID\":5555,\"ParentID\":2222,\"Title\":\"Game Title\",\"Sets\":["
-            "{\"GameID\":2222,\"GameAchievementSetID\":6666,\"SetTitle\":\"Game Title\",\"Type\":\"core\"},"
-            "{\"GameID\":3333,\"GameAchievementSetID\":4444,\"SetTitle\":\"Bonus\",\"Type\":\"bonus\"}"
-            "]}";
-        game.InitializeSubsets(sPatchData.c_str(), sPatchData.length());
+        rc_api_achievement_set_definition_t subsets[3];
+        rc_api_fetch_game_sets_response_t sets;
+
+        memset(&subsets, 0, sizeof(subsets));
+        memset(&sets, 0, sizeof(sets));
+
+        subsets[0].id = 6666;
+        subsets[0].game_id = 2222;
+        subsets[0].title = "Game Title";
+        subsets[0].type = RC_ACHIEVEMENT_SET_TYPE_CORE;
+
+        subsets[1].id = 6666;
+        subsets[1].game_id = 5555;
+        subsets[1].title = "Perfect Play";
+        subsets[1].type = RC_ACHIEVEMENT_SET_TYPE_SPECIALTY;
+
+        subsets[2].id = 4444;
+        subsets[2].game_id = 3333;
+        subsets[2].title = "Bonus";
+        subsets[2].type = RC_ACHIEVEMENT_SET_TYPE_BONUS;
+
+        sets.id = sets.session_game_id = subsets[0].id;
+        sets.sets = subsets;
+        sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
+
+        game.InitializeSubsets(&sets);
 
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(5555U, game.ActiveGameId());

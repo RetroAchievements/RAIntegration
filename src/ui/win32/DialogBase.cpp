@@ -27,7 +27,6 @@ DialogBase::~DialogBase() noexcept
     Destroy();
 }
 
-_Use_decl_annotations_
 _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     DialogBase* pDialog{};
@@ -88,7 +87,6 @@ _Use_decl_annotations_ HWND DialogBase::CreateDialogWindow(const TCHAR* restrict
 // to the HWND's DWLP_USER attribute, then switch back to using the normal StaticDialogProc.
 static DialogBase* s_pModalDialog = nullptr;
 
-_Use_decl_annotations_
 static INT_PTR CALLBACK StaticModalDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if (s_pModalDialog == nullptr)

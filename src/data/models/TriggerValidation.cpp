@@ -99,7 +99,7 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
 
     const auto nAddress = pOperand.value.memref->address;
     ra::ByteAddress nStartAddress = nAddress;
-    MemSize nNoteSize;
+    MemSize nNoteSize = MemSize::Unknown;
 
     const auto* pNote = pNotes.FindCodeNoteModel(nAddress, false);
     if (pNote)

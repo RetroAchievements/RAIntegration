@@ -462,7 +462,7 @@ protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     void UpdateTriggerBinding();
-    void OnTriggerChanged();
+    void OnTriggerChanged(bool bIsLoading);
 
     void UpdateAssetFrameValues();
     void UpdateDebugHighlights();

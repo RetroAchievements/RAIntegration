@@ -277,7 +277,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
         Trigger().InitializeFrom("", pCapturedHits);
     }
 
-    OnTriggerChanged();
+    OnTriggerChanged(true);
 }
 
 static constexpr ra::data::models::LeaderboardModel::LeaderboardParts LeaderboardPartToParts(AssetEditorViewModel::LeaderboardPart nPart) noexcept
@@ -441,7 +441,7 @@ void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::Ch
 void AssetEditorViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == TriggerViewModel::VersionProperty)
-        OnTriggerChanged();
+        OnTriggerChanged(false);
     else if (args.Property == TriggerViewModel::SelectedGroupIndexProperty)
     {
         if (m_pAsset && AreDebugHighlightsEnabled())
@@ -679,7 +679,7 @@ static void AppendTrigger(std::string& sDefinition, const std::string& sTrigger)
         sDefinition += sTrigger;
 }
 
-void AssetEditorViewModel::OnTriggerChanged()
+void AssetEditorViewModel::OnTriggerChanged(bool bIsLoading)
 {
     const std::string& sTrigger = Trigger().Serialize();
     int nSize = 0;
@@ -741,26 +741,29 @@ void AssetEditorViewModel::OnTriggerChanged()
         SetValue(AssetValidationErrorProperty, L"");
     }
 
-    if (pAchievement != nullptr)
+    if (!bIsLoading)
     {
-        pAchievement->SetTrigger(sTrigger);
-    }
-    else if (pLeaderboard != nullptr)
-    {
-        switch (GetSelectedLeaderboardPart())
+        if (pAchievement != nullptr)
         {
-            case LeaderboardPart::Start:
-                pLeaderboard->SetStartTrigger(sTrigger);
-                break;
-            case LeaderboardPart::Submit:
-                pLeaderboard->SetSubmitTrigger(sTrigger);
-                break;
-            case LeaderboardPart::Cancel:
-                pLeaderboard->SetCancelTrigger(sTrigger);
-                break;
-            case LeaderboardPart::Value:
-                pLeaderboard->SetValueDefinition(sTrigger);
-                break;
+            pAchievement->SetTrigger(sTrigger);
+        }
+        else if (pLeaderboard != nullptr)
+        {
+            switch (GetSelectedLeaderboardPart())
+            {
+                case LeaderboardPart::Start:
+                    pLeaderboard->SetStartTrigger(sTrigger);
+                    break;
+                case LeaderboardPart::Submit:
+                    pLeaderboard->SetSubmitTrigger(sTrigger);
+                    break;
+                case LeaderboardPart::Cancel:
+                    pLeaderboard->SetCancelTrigger(sTrigger);
+                    break;
+                case LeaderboardPart::Value:
+                    pLeaderboard->SetValueDefinition(sTrigger);
+                    break;
+            }
         }
     }
 

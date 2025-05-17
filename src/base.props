@@ -8,8 +8,7 @@
     <RAInterface_IncludePath>$(RA_DIR)RAInterface</RAInterface_IncludePath>
     <RA_SourceDir>$(RA_DIR)src\</RA_SourceDir>
     <GSL_IncludeDir>$(RA_DIR)GSL\include\</GSL_IncludeDir>
-    <Lua_Dir>$(RA_DIR)lua\</Lua_Dir>
-    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RAInterface_IncludePath);$(RapidJSON_IncludeDir);$(rcheevos_IncludePath);$(Lua_Dir);$(GSL_IncludeDir)</RA_IncludePath>
+    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RAInterface_IncludePath);$(RapidJSON_IncludeDir);$(rcheevos_IncludePath);$(GSL_IncludeDir)</RA_IncludePath>
     <XPDeprecationWarning>true</XPDeprecationWarning>
   </PropertyGroup>
   <PropertyGroup>
@@ -33,7 +32,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <PreprocessorDefinitions>_ARCH=$(PlatformArchitecture);RC_CLIENT_SUPPORTS_HASH;RC_DISABLE_LUA;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_ARCH=$(PlatformArchitecture);RC_CLIENT_SUPPORTS_HASH;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
@@ -77,10 +76,6 @@
     </BuildMacro>
     <BuildMacro Include="GSL_IncludeDir">
       <Value>$(GSL_IncludeDir)</Value>
-      <EnvironmentVariable>true</EnvironmentVariable>
-    </BuildMacro>
-    <BuildMacro Include="Lua_Dir">
-      <Value>$(Lua_Dir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
     <BuildMacro Include="RA_IncludePath">

@@ -129,7 +129,7 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
 
     // start the load process
     BeginLoad();
-    m_nGameId = nGameId;
+    m_nGameId = GetRealGameId(nGameId);
 
     // create a model for managing badges
     auto pLocalBadges = std::make_unique<ra::data::models::LocalBadgesModel>();
@@ -368,7 +368,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
 {
     const auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
     const auto* pGame = rc_client_get_game_info(pClient);
-    m_nGameId = pGame->id;
+    m_nGameId = GetRealGameId(pGame->id);
     m_sGameTitle = ra::Widen(pGame->title);
     m_sGameHash = pGame->hash ? pGame->hash : "";
 

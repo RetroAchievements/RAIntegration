@@ -98,21 +98,33 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
     const auto nMemRefSize = TriggerValidation::MapRcheevosMemSize(pOperand.size);
 
     const auto nAddress = pOperand.value.memref->address;
-    auto nNoteSize = pNotes.GetCodeNoteMemSize(nAddress);
-    if (nMemRefSize == nNoteSize)
-        return true;
+    ra::ByteAddress nStartAddress = nAddress;
+    MemSize nNoteSize = MemSize::Unknown;
 
-    const auto nStartAddress = pNotes.FindCodeNoteStart(nAddress);
-    if (nStartAddress != nAddress)
+    const auto* pNote = pNotes.FindCodeNoteModel(nAddress, false);
+    if (pNote)
     {
+        // ignore bit/nibble reads inside a known address
+        if (nMemRefSize == MemSize::BitCount || MemSizeBits(nMemRefSize) < 8)
+            return true;
+
+        nNoteSize = pNote->GetMemSize();
+    }
+    else
+    {
+        // no note at address. see if it's included in a larger container note
+        nStartAddress = pNotes.FindCodeNoteStart(nAddress);
         if (nStartAddress == 0xFFFFFFFF)
         {
             sError = ra::StringPrintf(L"No code note for address %s", ra::ByteAddressToString(nAddress).substr(2));
             return false;
         }
-           
+
         nNoteSize = pNotes.GetCodeNoteMemSize(nStartAddress);
     }
+
+    if (nMemRefSize == nNoteSize)
+        return true;
 
     // "array" and "text" are not real sizes to validate against
     if (nNoteSize == MemSize::Array || nNoteSize == MemSize::Text)
@@ -121,7 +133,7 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
     if (nNoteSize == MemSize::Unknown)
     {
         // note exists, but did not specify a size. assume 8-bit
-        if (nMemRefSize == MemSize::EightBit)
+        if (MemSizeBits(nMemRefSize) <= 8)
             return true;
 
         sError = ra::StringPrintf(L"%s read of address %s differs from implied code note size %s", MemSizeString(nMemRefSize),
@@ -129,10 +141,6 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
     }
     else
     {
-        // ignore bit/nibble reads inside a known address
-        if (nMemRefSize == MemSize::BitCount || MemSizeBits(nMemRefSize) < 8)
-            return true;
-
         sError = ra::StringPrintf(L"%s read of address %s differs from code note size %s", MemSizeString(nMemRefSize),
                                   ra::ByteAddressToString(nAddress).substr(2), MemSizeString(nNoteSize));
     }

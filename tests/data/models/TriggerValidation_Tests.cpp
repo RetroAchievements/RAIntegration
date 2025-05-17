@@ -222,6 +222,7 @@ public:
         AssertValidation("0xN0008=1", L"");
         AssertValidation("0xS0018=1", L"");
         AssertValidation("0xK0020=1", L"");
+        AssertValidation("0xR0028=1", L"");
         AssertValidation("0xN0004=1", L"Condition 1: No code note for address 0004");
         AssertValidation("0xK0004=1", L"Condition 1: No code note for address 0004");
 

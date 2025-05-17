@@ -65,9 +65,9 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;RC_DISABLE_LUA;RC_CLIENT_SUPPORTS_HASH;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;RC_CLIENT_SUPPORTS_HASH;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
-      <AdditionalIncludeDirectories>$(SolutionDir)lua;$(SolutionDir)rcheevos\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rcheevos\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <ConformanceMode>true</ConformanceMode>
       <WarningLevel>Level3</WarningLevel>
@@ -89,9 +89,9 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;RC_DISABLE_LUA;RC_CLIENT_SUPPORTS_HASH;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;RC_CLIENT_SUPPORTS_HASH;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
-      <AdditionalIncludeDirectories>$(SolutionDir)lua;$(SolutionDir)rcheevos\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rcheevos\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <ConformanceMode>true</ConformanceMode>
       <WarningLevel>Level3</WarningLevel>
@@ -112,9 +112,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;RC_DISABLE_LUA;RC_CLIENT_SUPPORTS_HASH;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;RC_CLIENT_SUPPORTS_HASH;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
-      <AdditionalIncludeDirectories>$(SolutionDir)lua;$(SolutionDir)rcheevos\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rcheevos\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ConformanceMode>true</ConformanceMode>
@@ -130,9 +130,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;RC_DISABLE_LUA;RC_CLIENT_SUPPORTS_HASH;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;RC_CLIENT_SUPPORTS_HASH;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
-      <AdditionalIncludeDirectories>$(SolutionDir)lua;$(SolutionDir)rcheevos\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rcheevos\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ConformanceMode>true</ConformanceMode>
@@ -166,27 +166,6 @@
     <ClInclude Include="..\rcheevos\src\rcheevos\rc_internal.h" />
     <ClInclude Include="..\rcheevos\src\rc_client_external.h" />
     <ClInclude Include="..\rcheevos\src\rhash\md5.h" />
-    <ClCompile Include="..\lua\lapi.c" />
-    <ClCompile Include="..\lua\lauxlib.c" />
-    <ClCompile Include="..\lua\lcode.c" />
-    <ClCompile Include="..\lua\lctype.c" />
-    <ClCompile Include="..\lua\ldebug.c" />
-    <ClCompile Include="..\lua\ldo.c" />
-    <ClCompile Include="..\lua\ldump.c" />
-    <ClCompile Include="..\lua\lfunc.c" />
-    <ClCompile Include="..\lua\lgc.c" />
-    <ClCompile Include="..\lua\llex.c" />
-    <ClCompile Include="..\lua\lmem.c" />
-    <ClCompile Include="..\lua\lobject.c" />
-    <ClCompile Include="..\lua\lopcodes.c" />
-    <ClCompile Include="..\lua\lparser.c" />
-    <ClCompile Include="..\lua\lstate.c" />
-    <ClCompile Include="..\lua\lstring.c" />
-    <ClCompile Include="..\lua\ltable.c" />
-    <ClCompile Include="..\lua\ltm.c" />
-    <ClCompile Include="..\lua\lundump.c" />
-    <ClCompile Include="..\lua\lvm.c" />
-    <ClCompile Include="..\lua\lzio.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\condition.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\condset.c" />

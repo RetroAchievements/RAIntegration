@@ -530,6 +530,7 @@ private:
                 const auto nAchievementId = vmAchievement->GetID();
                 if (vmAchievement->GetChanges() == ra::data::models::AssetChanges::None)
                 {
+                    // reset to server state
                     rc_client_subset_info_t* pPublishedSubset = m_pPublishedSubset;
                     for (; pPublishedSubset; pPublishedSubset = pPublishedSubset->next)
                     {
@@ -618,6 +619,7 @@ private:
                 const auto nLeaderboardId = vmLeaderboard->GetID();
                 if (vmLeaderboard->GetChanges() == ra::data::models::AssetChanges::None)
                 {
+                    // reset to server state
                     rc_client_subset_info_t* pPublishedSubset = m_pPublishedSubset;
                     for (; pPublishedSubset; pPublishedSubset = pPublishedSubset->next)
                     {
@@ -625,6 +627,30 @@ private:
                         if (pSrcLeaderboard != nullptr)
                         {
                             memcpy(pLeaderboard, pSrcLeaderboard, sizeof(*pLeaderboard));
+
+                            // if the leaderboard is running, we have to also copy the current value and tracker reference
+                            if (pSrcLeaderboard->lboard->state == RC_LBOARD_STATE_STARTED)
+                            {
+                                pPublishedSubset = m_pClient->game->subsets;
+                                for (; pPublishedSubset; pPublishedSubset = pPublishedSubset->next)
+                                {
+                                    pSrcLeaderboard = FindLeaderboard(pPublishedSubset, nLeaderboardId);
+                                    if (pSrcLeaderboard != nullptr)
+                                    {
+                                        if (pSrcLeaderboard->lboard == pLeaderboard->lboard)
+                                        {
+                                            pLeaderboard->tracker = pSrcLeaderboard->tracker;
+                                            pLeaderboard->value = pSrcLeaderboard->value;
+                                        }
+                                        else
+                                        {
+                                            rc_client_release_leaderboard_tracker(m_pClient->game, pSrcLeaderboard);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+
                             vmLeaderboard->ReplaceAttached(*pLeaderboard++);
                             break;
                         }

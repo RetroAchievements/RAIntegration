@@ -533,9 +533,9 @@ void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstrin
                 ::EnableWindow(m_hWndSpinner, false);
 
                 ra::api::FetchBadgeIds::Request request;
-                request.CallAsync([this](const ra::api::FetchBadgeIds::Response& response) noexcept {
+                request.CallAsync([this](const ra::api::FetchBadgeIds::Response& response) {
                     SetRange(ra::to_signed(response.FirstID), ra::to_signed(response.NextID) - 1);
-                    ::EnableWindow(m_hWndSpinner, true);
+                    InvokeOnUIThread([hWnd = m_hWndSpinner]() noexcept { ::EnableWindow(hWnd, true); });
                 });
             }
             else

@@ -230,7 +230,15 @@ static bool ValidateCodeNotes(const rc_trigger_t* pTrigger, std::wstring& sError
 
 bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sError, AssetType nType)
 {
-    const auto nSize = rc_trigger_size(sTrigger.c_str());
+    rc_preparse_state_t preparse;
+    rc_init_preparse_state(&preparse);
+
+    rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+    const char* sMemaddr = sTrigger.c_str();
+    rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
+    rc_preparse_alloc_memrefs(nullptr, &preparse);
+
+    const auto nSize = preparse.parse.offset;
     if (nSize < 0)
     {
         sError = ra::Widen(rc_error_str(nSize));
@@ -239,7 +247,14 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
 
     std::string sTriggerBuffer;
     sTriggerBuffer.resize(nSize);
-    const auto* pTrigger = rc_parse_trigger(sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
+
+    rc_reset_parse_state(&preparse.parse, sTriggerBuffer.data());
+    trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+    rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
+
+    sMemaddr = sTrigger.c_str();
+    rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
+    trigger->trigger.has_memrefs = 1;
 
     char sErrorBuffer[256] = "";
     int nResult = 1;
@@ -255,29 +270,30 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
             const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
             nMaxAddress = gsl::narrow_cast<unsigned>(pEmulatorContext.TotalMemorySize()) - 1;
 
-            nResult = rc_validate_trigger(pTrigger, sErrorBuffer, sizeof(sErrorBuffer), nMaxAddress);
+            nResult = rc_validate_trigger(&trigger->trigger, sErrorBuffer, sizeof(sErrorBuffer), nMaxAddress);
         }
         else
         {
             // if console definition does specify a max address, call the console-specific validator for additional validation
-            nResult = rc_validate_trigger_for_console(pTrigger, sErrorBuffer, sizeof(sErrorBuffer), ra::etoi(pConsoleContext.Id()));
+            nResult = rc_validate_trigger_for_console(&trigger->trigger, sErrorBuffer, sizeof(sErrorBuffer),
+                                                      ra::etoi(pConsoleContext.Id()));
         }
     }
     else
     {
         // shouldn't get here, but if we do (unit tests), validate the logic but not the addresses.
-        nResult = rc_validate_trigger(pTrigger, sErrorBuffer, sizeof(sErrorBuffer), 0xFFFFFFFF);
+        nResult = rc_validate_trigger(&trigger->trigger, sErrorBuffer, sizeof(sErrorBuffer), 0xFFFFFFFF);
     }
 
     if (nResult)
     {
         if (nType == AssetType::Leaderboard)
         {
-            if (!ValidateLeaderboardTrigger(pTrigger, sError))
+            if (!ValidateLeaderboardTrigger(&trigger->trigger, sError))
                 return false;
         }
 
-        if (!ValidateCodeNotes(pTrigger, sError))
+        if (!ValidateCodeNotes(&trigger->trigger, sError))
             return false;
 
         sError.clear();

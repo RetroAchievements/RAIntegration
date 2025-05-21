@@ -3,6 +3,7 @@
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
@@ -510,6 +511,11 @@ void MemorySearchViewModel::BeginNewSearch()
     if (m_bIsContinuousFiltering)
         ToggleContinuousFilter();
 
+    DispatchMemoryRead([this, nStart, nEnd]() { BeginNewSearch(nStart, nEnd); });
+}
+
+void MemorySearchViewModel::BeginNewSearch(ra::ByteAddress nStart, ra::ByteAddress nEnd)
+{
     std::unique_ptr<SearchResult> pResult;
     pResult.reset(new SearchResult());
     pResult->pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, GetSearchType());
@@ -556,11 +562,29 @@ void MemorySearchViewModel::AddNewPage(std::unique_ptr<SearchResult>&& pNewPage)
     }
 }
 
+void MemorySearchViewModel::DispatchMemoryRead(std::function<void()>&& fFunction)
+{
+    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+    {
+        const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        pRuntime.QueueMemoryRead(std::move(fFunction));
+    }
+    else
+    {
+        fFunction();
+    }
+}
+
 void MemorySearchViewModel::ApplyFilter()
 {
     if (m_vSearchResults.empty())
         return;
 
+    DispatchMemoryRead([this]() { DoApplyFilter(); });
+}
+
+void MemorySearchViewModel::DoApplyFilter()
+{
     const std::wstring sEmptyString;
     const auto* sValue = GetValue(CanEditFilterValueProperty) ? &GetFilterValue() : &sEmptyString;
 
@@ -652,14 +676,16 @@ void MemorySearchViewModel::ToggleContinuousFilter()
     }
     else
     {
-        // apply the filter before disabling CanFilter or the filter value will be ignored
-        ApplyFilter();
+        DispatchMemoryRead([this]() {
+            // apply the filter before disabling CanFilter or the filter value will be ignored
+            ApplyFilter();
 
-        m_bIsContinuousFiltering = true;
-        m_tLastContinuousFilter = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+            m_bIsContinuousFiltering = true;
+            m_tLastContinuousFilter = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
 
-        SetValue(CanFilterProperty, false);
-        SetValue(ContinuousFilterLabelProperty, L"Stop Filtering");
+            SetValue(CanFilterProperty, false);
+            SetValue(ContinuousFilterLabelProperty, L"Stop Filtering");
+        });
     }
 }
 
@@ -756,21 +782,6 @@ void MemorySearchViewModel::UpdateResults()
         // assume DoFrame is updating the results list from another thread and just
         // queue the UpdateResults
         m_bUpdateResultsPending = true;
-        return;
-    }
-
-    const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-    if (!pDesktop.IsOnUIThread())
-    {
-        m_bUpdateResultsPending = true;
-        pDesktop.InvokeOnUIThread([this]() {
-            if (m_bUpdateResultsPending)
-            {
-                m_bUpdateResultsPending = false;
-                UpdateResults();
-            }
-        });
-
         return;
     }
 
@@ -927,7 +938,7 @@ void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
         auto* pRow = m_vResults.GetItemAt(i);
         if (pRow != nullptr && pRow->nAddress == nAddress)
         {
-            UpdateResults();
+            DispatchMemoryRead([this]() { UpdateResults(); });
             break;
         }
     }
@@ -978,7 +989,7 @@ void MemorySearchViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
     if (args.Property == ScrollOffsetProperty)
     {
         if (!m_bScrolling)
-            UpdateResults();
+            DispatchMemoryRead([this]() { UpdateResults(); });
     }
     else if (args.Property == ResultCountProperty)
     {
@@ -1028,7 +1039,7 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const
 void MemorySearchViewModel::NextPage()
 {
     if (m_nSelectedSearchResult < m_vSearchResults.size() - 1)
-        ChangePage(m_nSelectedSearchResult + 1);
+        DispatchMemoryRead([this]() { ChangePage(m_nSelectedSearchResult + 1); });
 }
 
 void MemorySearchViewModel::PreviousPage()
@@ -1039,7 +1050,7 @@ void MemorySearchViewModel::PreviousPage()
         if (m_bIsContinuousFiltering)
             ToggleContinuousFilter();
 
-        ChangePage(m_nSelectedSearchResult - 1);
+        DispatchMemoryRead([this]() { ChangePage(m_nSelectedSearchResult - 1); });
     }
 }
 
@@ -1104,6 +1115,11 @@ void MemorySearchViewModel::ExcludeSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
+    DispatchMemoryRead([this]() { DoExcludeSelected(); });
+}
+
+void MemorySearchViewModel::DoExcludeSelected()
+{
     const auto& pCurrentResults = *m_vSearchResults.at(m_nSelectedSearchResult).get();
     std::unique_ptr<SearchResult> pResult;
     pResult.reset(new SearchResult(pCurrentResults)); // clone current item

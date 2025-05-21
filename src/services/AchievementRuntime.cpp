@@ -432,6 +432,36 @@ void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_cl
     }
 }
 
+typedef struct QueueMemoryReadData
+{
+    std::function<void()> fCallback;
+} QueueMemoryReadData;
+
+static void DispatchMemoryRead(struct rc_client_scheduled_callback_data_t* callback_data,
+                               rc_client_t* client, rc_clock_t now)
+{
+    QueueMemoryReadData* data = (QueueMemoryReadData*)callback_data->data;
+    data->fCallback();
+
+    delete data;
+    free(callback_data);
+}
+
+void AchievementRuntime::QueueMemoryRead(std::function<void()>&& fCallback) const
+{
+    QueueMemoryReadData* data = new QueueMemoryReadData();
+    Expects(data != nullptr);
+    data->fCallback = std::move(fCallback);
+
+    rc_client_scheduled_callback_data_t* scheduled_callback =
+        (rc_client_scheduled_callback_data_t*)calloc(1, sizeof(rc_client_scheduled_callback_data_t));
+    Expects(scheduled_callback != nullptr);
+    scheduled_callback->callback = DispatchMemoryRead;
+    scheduled_callback->data = data;
+
+    rc_client_schedule_callback(GetClient(), scheduled_callback);
+}
+
 /* ---- ClientSynchronizer ----- */
 
 class AchievementRuntime::ClientSynchronizer

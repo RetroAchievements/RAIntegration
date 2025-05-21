@@ -429,6 +429,7 @@ public:
     void ToggleContinuousFilter();
     static const BoolModelProperty CanContinuousFilterProperty;
     static const StringModelProperty ContinuousFilterLabelProperty;
+    bool IsContinuousFiltering() const noexcept { return m_bIsContinuousFiltering; }
 
     /// <summary>
     /// Excludes the currently selected items from the search results.
@@ -471,15 +472,20 @@ protected:
 
 private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
+    void BeginNewSearch(ra::ByteAddress nStart, ra::ByteAddress nEnd);
     void ApplyContinuousFilter();
     void UpdateResults();
     void DoUpdateResults();
+    void DoApplyFilter();
+    void DoExcludeSelected();
     void UpdateResult(SearchResultViewModel& pRow, const ra::services::SearchResults& pResults,
         ra::services::SearchResults::Result& pResult, bool bForceFilterCheck,
         const ra::data::context::EmulatorContext& pEmulatorContext);
 
     void OnPredefinedFilterRangeChanged();
     void OnFilterRangeChanged();
+
+    void DispatchMemoryRead(std::function<void()>&& fFunction);
 
     ViewModelCollection<PredefinedFilterRangeViewModel> m_vPredefinedFilterRanges;
     LookupItemViewModelCollection m_vSearchTypes;

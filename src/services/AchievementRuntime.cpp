@@ -1634,7 +1634,33 @@ void AchievementRuntime::DoFrame()
 
 void AchievementRuntime::Idle() noexcept
 {
-    rc_client_idle(GetClient());
+    auto* pClient = GetClient();
+    if (!pClient)
+        return;
+
+    const auto* pScheduledCallback = pClient->state.scheduled_callbacks;
+    if (!pScheduledCallback)
+        return;
+
+    const rc_clock_t now = pClient->callbacks.get_time_millisecs(pClient);
+    bool bShouldIdle = false;
+    {
+        rc_mutex_lock(&pClient->state.mutex);
+        pScheduledCallback = pClient->state.scheduled_callbacks;
+        while (pScheduledCallback && pScheduledCallback->when == 0)
+            pScheduledCallback = pScheduledCallback->next;
+
+        if (pScheduledCallback && pScheduledCallback->when < now - 5000)
+        {
+            // pending callback has been waiting for more than five
+            // seconds. force a call to rc_client_idle
+            bShouldIdle = true;
+        }
+        rc_mutex_unlock(&pClient->state.mutex);
+    }
+
+    if (bShouldIdle)
+        rc_client_idle(pClient);
 }
 
 void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress) noexcept

@@ -475,9 +475,7 @@ private:
     void BeginNewSearch(ra::ByteAddress nStart, ra::ByteAddress nEnd);
     void ApplyContinuousFilter();
     void UpdateResults();
-    void DoUpdateResults();
     void DoApplyFilter();
-    void DoExcludeSelected();
     void UpdateResult(SearchResultViewModel& pRow, const ra::services::SearchResults& pResults,
         ra::services::SearchResults::Result& pResult, bool bForceFilterCheck,
         const ra::data::context::EmulatorContext& pEmulatorContext);
@@ -485,7 +483,7 @@ private:
     void OnPredefinedFilterRangeChanged();
     void OnFilterRangeChanged();
 
-    void DispatchMemoryRead(std::function<void()>&& fFunction);
+    static void DispatchMemoryRead(std::function<void()>&& fFunction);
 
     ViewModelCollection<PredefinedFilterRangeViewModel> m_vPredefinedFilterRanges;
     LookupItemViewModelCollection m_vSearchTypes;
@@ -498,7 +496,6 @@ private:
     std::chrono::steady_clock::time_point m_tLastContinuousFilterCheck;
     bool m_bScrolling = false;
     bool m_bSelectingFilter = false;
-    bool m_bUpdateResultsPending = false;
 
     std::mutex m_oMutex;
 

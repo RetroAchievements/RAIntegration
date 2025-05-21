@@ -384,14 +384,6 @@ void MemorySearchViewModel::DoFrame()
 
     // EndUpdate has to be outside the lock as it may raise UI events
     m_vResults.EndUpdate();
-
-    // If another thread tried to update the results while we were updating the results,
-    // let that happen now
-    if (m_bUpdateResultsPending)
-    {
-        m_bUpdateResultsPending = false;
-        UpdateResults();
-    }
 }
 
 inline static constexpr auto ParseAddress(const wchar_t* ptr, ra::ByteAddress& address) noexcept
@@ -648,7 +640,7 @@ void MemorySearchViewModel::DoApplyFilter()
     SetValue(FilterSummaryProperty, pResult->sSummary);
 
     AddNewPage(std::move(pResult));
-    ChangePage(m_nSelectedSearchResult);
+    DispatchMemoryRead([this]() { ChangePage(m_nSelectedSearchResult); });
 }
 
 bool MemorySearchViewModel::ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult,
@@ -749,6 +741,9 @@ void MemorySearchViewModel::ApplyContinuousFilter()
 
 void MemorySearchViewModel::ChangePage(size_t nNewPage)
 {
+    // NOTE: UpdateResults reads memory from the emulator. As such, this function should
+    //       only be called from the thread that calls DoFrame(). That can be managed
+    //       by using DispatchMemoryRead().
     {
         std::lock_guard lock(m_oMutex);
         m_nSelectedSearchResult = nNewPage;
@@ -777,21 +772,10 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
 
 void MemorySearchViewModel::UpdateResults()
 {
-    if (m_vResults.IsUpdating())
-    {
-        // assume DoFrame is updating the results list from another thread and just
-        // queue the UpdateResults
-        m_bUpdateResultsPending = true;
-        return;
-    }
+    // NOTE: UpdateResult reads memory from the emulator. As such, this function should
+    //       only be called from the thread that calls DoFrame(). That can be managed
+    //       by using DispatchMemoryRead().
 
-    // inlining this code was causing an analysis warning suggesting the lock was being released from
-    // the early returns above
-    DoUpdateResults();
-}
-
-void MemorySearchViewModel::DoUpdateResults()
-{
     // intentionally release the lock before calling EndUpdate to ensure callbacks aren't within the lock scope
     {
         std::lock_guard lock(m_oMutex);
@@ -1115,11 +1099,6 @@ void MemorySearchViewModel::ExcludeSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
-    DispatchMemoryRead([this]() { DoExcludeSelected(); });
-}
-
-void MemorySearchViewModel::DoExcludeSelected()
-{
     const auto& pCurrentResults = *m_vSearchResults.at(m_nSelectedSearchResult).get();
     std::unique_ptr<SearchResult> pResult;
     pResult.reset(new SearchResult(pCurrentResults)); // clone current item
@@ -1161,13 +1140,15 @@ void MemorySearchViewModel::DoExcludeSelected()
     SetValue(HasSelectionProperty, false);
 
     const size_t nMatchingAddressCount = pResult->pResults.MatchingAddressCount();
-    AddNewPage(std::move(pResult));
-    ChangePage(m_nSelectedSearchResult);
-
     if (nMatchingAddressCount < gsl::narrow_cast<size_t>(nScrollOffset) + SEARCH_ROWS_DISPLAYED)
         nScrollOffset = 0;
 
-    SetValue(ScrollOffsetProperty, nScrollOffset);
+    AddNewPage(std::move(pResult));
+    DispatchMemoryRead([this, nScrollOffset]() {
+        ChangePage(m_nSelectedSearchResult);
+
+        SetValue(ScrollOffsetProperty, nScrollOffset);
+    });
 }
 
 void MemorySearchViewModel::BookmarkSelected()
@@ -1404,7 +1385,7 @@ void MemorySearchViewModel::ImportResults()
                     m_vSearchResults.push_back(std::move(pResult2));
                 }
 
-                ChangePage(1);
+                DispatchMemoryRead([this]() { ChangePage(1); });
             }
         }
     }

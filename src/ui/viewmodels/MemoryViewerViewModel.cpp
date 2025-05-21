@@ -5,6 +5,9 @@
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
+#include "services\AchievementRuntime.hh"
+#include "services\ServiceLocator.hh"
+
 #include "ui\EditorTheme.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -425,10 +428,7 @@ void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
     {
         m_nNeedsRedraw |= REDRAW_ADDRESSES;
 
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        pEmulatorContext.ReadMemory(args.tNewValue, m_pMemory, gsl::narrow_cast<size_t>(GetNumVisibleLines()) * 16);
-
-        UpdateColors();
+        ReadMemory(args.tNewValue, GetNumVisibleLines());
     }
     else if (args.Property == SizeProperty)
     {
@@ -443,19 +443,37 @@ void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
     {
         if (args.tNewValue > args.tOldValue)
         {
-            const auto nFirstAddress = GetFirstAddress();
-
-            const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-            pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(args.tNewValue) * 16);
-
-            UpdateInvalidRegions();
-            UpdateColors();
+            ReadMemory(GetFirstAddress(), args.tNewValue);
         }
 
         ResetSurface();
     }
 
     ViewModelBase::OnValueChanged(args);
+}
+
+void MemoryViewerViewModel::DispatchMemoryRead(std::function<void()>&& fFunction)
+{
+    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+    {
+        const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        pRuntime.QueueMemoryRead(std::move(fFunction));
+    }
+    else
+    {
+        fFunction();
+    }
+}
+
+void MemoryViewerViewModel::ReadMemory(ra::ByteAddress nFirstAddress, int nNumVisibleLines)
+{
+    DispatchMemoryRead([this, nFirstAddress, nNumVisibleLines]() {
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+        pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(nNumVisibleLines) * 16);
+
+        UpdateInvalidRegions();
+        UpdateColors();
+    });
 }
 
 void MemoryViewerViewModel::AdvanceCursor()
@@ -664,43 +682,64 @@ void MemoryViewerViewModel::RetreatCursorPage()
     }
 }
 
-bool MemoryViewerViewModel::IncreaseCurrentValue(uint32_t nModifier)
+uint8_t MemoryViewerViewModel::GetValueAtAddress(ra::ByteAddress nAddress) const
 {
-    if (m_bReadOnly)
-        return false;
+    const auto nFirstAddress = GetFirstAddress();
+    if (nAddress < nFirstAddress)
+        return 0;
+    const auto nOffset = nAddress - nFirstAddress;
+    const auto nVisibleLines = GetNumVisibleLines();
+    if (nOffset >= nVisibleLines * 16)
+        return 0;
 
-    const auto nAddress = GetAddress();
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    auto nMem = pEmulatorContext.ReadMemory(GetAddress(), GetSize());
-    auto const nMaxValue = ra::data::MemSizeMax(GetSize());
-
-    if (nMem >= nMaxValue)
-        return false;
-    if ((nMaxValue - nMem) < nModifier)
-        nModifier = (nMaxValue - nMem);
-    nMem += nModifier;
-
-    pEmulatorContext.WriteMemory(nAddress, GetSize(), nMem);
-    return true;
+    return m_pMemory[nOffset];
 }
 
-bool MemoryViewerViewModel::DecreaseCurrentValue(uint32_t nModifier)
+void MemoryViewerViewModel::IncreaseCurrentValue(uint32_t nModifier)
 {
     if (m_bReadOnly)
-        return false;
+        return;
 
-    auto const nAddress = GetAddress();
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    auto nMem = pEmulatorContext.ReadMemory(GetAddress(), GetSize());
+    DispatchMemoryRead([this, nModifier]() {
+        const auto nAddress = GetAddress();
+        const auto nSize = GetSize();
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+        auto nMem = pEmulatorContext.ReadMemory(nAddress, nSize);
 
-    if (nMem == 0)
-        return false;
-    if (nMem < nModifier)
-        nModifier = nMem;
-    nMem -= nModifier;
+        auto const nMaxValue = ra::data::MemSizeMax(nSize);
+        if (nMem >= nMaxValue)
+            return;
 
-    pEmulatorContext.WriteMemory(nAddress, GetSize(), nMem);
-    return true;
+        if ((nMaxValue - nMem) < nModifier)
+            nMem = nMaxValue;
+        else
+            nMem += nModifier;
+
+        pEmulatorContext.WriteMemory(nAddress, nSize, nMem);
+    });
+}
+
+void MemoryViewerViewModel::DecreaseCurrentValue(uint32_t nModifier)
+{
+    if (m_bReadOnly)
+        return;
+
+    DispatchMemoryRead([this, nModifier]() {
+        const auto nAddress = GetAddress();
+        const auto nSize = GetSize();
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+        auto nMem = pEmulatorContext.ReadMemory(nAddress, nSize);
+
+        if (nMem == 0)
+            return;
+
+        if (nMem < nModifier)
+            nMem = 0;
+        else
+            nMem -= nModifier;
+
+        pEmulatorContext.WriteMemory(nAddress, nSize, nMem);
+    });
 }
 
 void MemoryViewerViewModel::OnActiveGameChanged()

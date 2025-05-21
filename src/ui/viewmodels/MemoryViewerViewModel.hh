@@ -176,8 +176,9 @@ public:
     void AdvanceCursorPage();
     void RetreatCursorPage();
 
-    bool IncreaseCurrentValue(uint32_t nModifier);
-    bool DecreaseCurrentValue(uint32_t nModifier);
+    uint8_t GetValueAtAddress(ra::ByteAddress nAddress) const;
+    void IncreaseCurrentValue(uint32_t nModifier);
+    void DecreaseCurrentValue(uint32_t nModifier);
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
@@ -227,6 +228,8 @@ private:
     void UpdateInvalidRegions();
     void UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength);
 
+    static void DispatchMemoryRead(std::function<void()>&& fFunction);
+    void ReadMemory(ra::ByteAddress nFirstAddress, int nNumVisibleLines);
     int NibblesPerWord() const;
     int GetSelectedNibbleOffset() const;
     void UpdateSelectedNibble(int nNewNibble);

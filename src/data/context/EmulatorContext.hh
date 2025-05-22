@@ -235,6 +235,12 @@ public:
     /// </summary>
     void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const;
 
+    class DispatchesReadMemory
+    {
+    protected:
+        static void DispatchMemoryRead(std::function<void()>&& fFunction);
+    };
+
     /// <summary>
     /// Converts an address to a displayable string.
     /// </summary>

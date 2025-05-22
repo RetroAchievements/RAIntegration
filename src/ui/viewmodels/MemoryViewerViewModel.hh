@@ -18,7 +18,8 @@ namespace viewmodels {
 
 class MemoryViewerViewModel : public ViewModelBase,
                               protected ra::data::context::GameContext::NotifyTarget,
-                              protected ra::data::context::EmulatorContext::NotifyTarget
+                              protected ra::data::context::EmulatorContext::NotifyTarget,
+                              protected ra::data::context::EmulatorContext::DispatchesReadMemory
 {
 public:
     GSL_SUPPRESS_F6 MemoryViewerViewModel();
@@ -228,7 +229,6 @@ private:
     void UpdateInvalidRegions();
     void UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength);
 
-    static void DispatchMemoryRead(std::function<void()>&& fFunction);
     void ReadMemory(ra::ByteAddress nFirstAddress, int nNumVisibleLines);
     int NibblesPerWord() const;
     int GetSelectedNibbleOffset() const;

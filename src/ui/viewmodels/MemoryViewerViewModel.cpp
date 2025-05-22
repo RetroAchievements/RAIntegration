@@ -5,9 +5,6 @@
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
-#include "services\AchievementRuntime.hh"
-#include "services\ServiceLocator.hh"
-
 #include "ui\EditorTheme.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -450,19 +447,6 @@ void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
     }
 
     ViewModelBase::OnValueChanged(args);
-}
-
-void MemoryViewerViewModel::DispatchMemoryRead(std::function<void()>&& fFunction)
-{
-    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
-    {
-        const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        pRuntime.QueueMemoryRead(std::move(fFunction));
-    }
-    else
-    {
-        fFunction();
-    }
 }
 
 void MemoryViewerViewModel::ReadMemory(ra::ByteAddress nFirstAddress, int nNumVisibleLines)

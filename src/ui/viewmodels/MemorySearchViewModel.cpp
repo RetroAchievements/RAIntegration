@@ -3,7 +3,6 @@
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 
-#include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
@@ -551,19 +550,6 @@ void MemorySearchViewModel::AddNewPage(std::unique_ptr<SearchResult>&& pNewPage)
     else
     {
         ++m_nSelectedSearchResult;
-    }
-}
-
-void MemorySearchViewModel::DispatchMemoryRead(std::function<void()>&& fFunction)
-{
-    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
-    {
-        const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        pRuntime.QueueMemoryRead(std::move(fFunction));
-    }
-    else
-    {
-        fFunction();
     }
 }
 

@@ -21,6 +21,7 @@ namespace viewmodels {
 class MemorySearchViewModel : public ViewModelBase,
     protected ViewModelCollectionBase::NotifyTarget,
     protected ra::data::context::EmulatorContext::NotifyTarget,
+    protected ra::data::context::EmulatorContext::DispatchesReadMemory,
     protected ra::data::context::GameContext::NotifyTarget
 {
 public:
@@ -482,8 +483,6 @@ private:
 
     void OnPredefinedFilterRangeChanged();
     void OnFilterRangeChanged();
-
-    static void DispatchMemoryRead(std::function<void()>&& fFunction);
 
     ViewModelCollection<PredefinedFilterRangeViewModel> m_vPredefinedFilterRanges;
     LookupItemViewModelCollection m_vSearchTypes;

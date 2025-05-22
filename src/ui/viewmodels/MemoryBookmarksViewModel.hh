@@ -20,6 +20,7 @@ namespace viewmodels {
 class MemoryBookmarksViewModel : public WindowViewModelBase,
     protected ra::data::context::GameContext::NotifyTarget,
     protected ra::data::context::EmulatorContext::NotifyTarget,
+    protected ra::data::context::EmulatorContext::DispatchesReadMemory,
     protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
 public:

@@ -1085,6 +1085,20 @@ void EmulatorContext::Unpause() const
         ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread(m_fUnpauseEmulator);
 }
 
+void EmulatorContext::DispatchesReadMemory::DispatchMemoryRead(std::function<void()>&& fFunction)
+{
+    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+    {
+        const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        pRuntime.QueueMemoryRead(std::move(fFunction));
+    }
+    else
+    {
+        fFunction();
+    }
+}
+
+
 } // namespace context
 } // namespace data
 } // namespace ra

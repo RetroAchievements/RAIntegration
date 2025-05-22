@@ -789,11 +789,11 @@ public:
         Assert::IsTrue(pCondition->IsIndirect());
 
         // $0001 = 1, 1+2 = $0003
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect 0x0001+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // $0001 = 3, 3+2 = $0005
         vmTrigger.SetMemory({ 1 }, 3);
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
     TEST_METHOD(TestTooltipIndirectAddressCodeNote)
@@ -808,12 +808,12 @@ public:
         Assert::IsTrue(pCondition->IsIndirect());
 
         // $0001 = 1, 1+2 = $0003
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect 0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // $0001 = 3, 3+2 = $0005
         vmTrigger.SetMemory({ 1 }, 3);
         vmTrigger.CodeNotesDoFrame();
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
     TEST_METHOD(TestTooltipIndirectAddressMultiNote)
@@ -828,14 +828,14 @@ public:
         Assert::IsTrue(pCondition->IsIndirect());
 
         // $0001 = 1, 1+2 = $0003, 1+4 = $0005
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect 0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x04)\r\nThis is another note."), pCondition->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x04)\r\nThis is another note."), pCondition->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
 
         // $0001 = 3, 3+2 = $0005, 3+4 = $0007
         vmTrigger.SetMemory({ 1 }, 3);
         vmTrigger.CodeNotesDoFrame();
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0007 (indirect 0x0001+0x04)\r\nThis is another note."), pCondition->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0007 (indirect $0x0001+0x04)\r\nThis is another note."), pCondition->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 
     TEST_METHOD(TestTooltipIndirectAddressMultiByteNote)
@@ -850,8 +850,8 @@ public:
         Assert::IsTrue(pCondition->IsIndirect());
 
         // $0001 = 1, 1+2 = $0003, 1+5 = $0006
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect 0x0001+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0006 (indirect 0x0001+0x05)\r\n[8 bytes] This is a note."), pCondition->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0006 (indirect $0x0001+0x05)\r\n[8 bytes] This is a note."), pCondition->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 
     TEST_METHOD(TestTooltipIndirectAddressMultiplyNoCodeNote)
@@ -865,12 +865,12 @@ public:
         Assert::IsTrue(pCondition->IsIndirect());
 
         // $0001 = 1, 1*3+2 = $0005
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001*0x03+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // $0001 = 3, 3*3+2 = $000B
         vmTrigger.SetMemory({ 1 }, 3);
         vmTrigger.CodeNotesDoFrame();
-        Assert::AreEqual(std::wstring(L"0x000b (indirect 0x0001+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x000b (indirect $0x0001*0x03+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
     TEST_METHOD(TestTooltipIndirectAddressWithAltCodeNote)
@@ -885,12 +885,12 @@ public:
         Assert::IsTrue(pCondition->IsIndirect());
 
         // $0001 = 1, 1+2 = $0003
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect 0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // $0001 = 3, 3+2 = $0005
         vmTrigger.SetMemory({ 1 }, 3);
         vmTrigger.CodeNotesDoFrame();
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x02)\r\nThis is a note."),
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x02)\r\nThis is a note."),
                          pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
@@ -907,12 +907,12 @@ public:
         Assert::IsTrue(pCondition->IsIndirect());
 
         // $0001 = 1, 1+2 = $0003
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect 0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // $0001 = 3, 3+2 = $0005
         vmTrigger.SetMemory({ 1 }, 3);
         vmTrigger.CodeNotesDoFrame();
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
     TEST_METHOD(TestTooltipIndirectAddressInAlt2CodeNote)
@@ -928,12 +928,12 @@ public:
         Assert::IsTrue(pCondition->IsIndirect());
 
         // $0001 = 1, 1+2 = $0003
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect 0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // $0001 = 3, 3+2 = $0005
         vmTrigger.SetMemory({ 1 }, 3);
         vmTrigger.CodeNotesDoFrame();
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x02)\r\nThis is a note."),
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x02)\r\nThis is a note."),
                          pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
@@ -955,13 +955,13 @@ public:
         vmTrigger.SetMemory({2}, 0x00);
         vmTrigger.SetMemory({3}, 0x80);
         vmTrigger.CodeNotesDoFrame();
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0000+0x80000002)\r\nThis is a note."),
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0000+0x80000002)\r\nThis is a note."),
                          pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // $0001 = 0x80000004, 0x8000004+0x80000002 = 0x100000006 (too big for uint32_t) -> truncated to $0006
         vmTrigger.SetMemory({0}, 4);
         vmTrigger.CodeNotesDoFrame();
-        Assert::AreEqual(std::wstring(L"0x0006 (indirect 0x0000+0x80000002)\r\nThis is a note."),
+        Assert::AreEqual(std::wstring(L"0x0006 (indirect $0x0000+0x80000002)\r\nThis is a note."),
                          pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
@@ -983,13 +983,13 @@ public:
         vmTrigger.SetMemory({2}, 0x00);
         vmTrigger.SetMemory({3}, 0x08);
         vmTrigger.CodeNotesDoFrame();
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0000+0x02)\r\nThis is a note."),
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0000+0x02)\r\nThis is a note."),
                          pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // $0001 = 0x80000004, 0x8000004+0x80000002 = 0x100000006 (too big for uint32_t) -> truncated to $0006
         vmTrigger.SetMemory({0}, 4);
         vmTrigger.CodeNotesDoFrame();
-        Assert::AreEqual(std::wstring(L"0x0006 (indirect 0x0000+0x02)\r\nThis is a note."),
+        Assert::AreEqual(std::wstring(L"0x0006 (indirect $0x0000+0x02)\r\nThis is a note."),
                          pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
@@ -1015,15 +1015,15 @@ public:
 
         // $0001 = 1, 1+2 = $0003, $0003 = 3, 3+3 = $0006
         Assert::AreEqual(std::wstring(L"0x0001\r\n[8-bit pointer]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect 0x0001+0x02)\r\nFirst Level [8-bit pointer]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0006 (indirect 0x0001+0x02+0x03)\r\nSecond Level."), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\nFirst Level [8-bit pointer]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0006 (indirect $0x0001+0x02+0x03)\r\nSecond Level."), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008
         vmTrigger.SetMemory({ 1 }, 3);
         vmTrigger.CodeNotesDoFrame();
         Assert::AreEqual(std::wstring(L"0x0001\r\n[8-bit pointer]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x02)\r\nFirst Level [8-bit pointer]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0008 (indirect 0x0001+0x02+0x03)\r\nSecond Level."), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x02)\r\nFirst Level [8-bit pointer]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0008 (indirect $0x0001+0x02+0x03)\r\nSecond Level."), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
     TEST_METHOD(TestTooltipDoubleIndirectAddressExternal)
@@ -1057,8 +1057,8 @@ public:
 
         // $0001 = 1, 1+2 = $0003, $0003 = 3, 3+3 = $0006
         Assert::AreEqual(std::wstring(L"0x0001\r\n[No code note]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect 0x0001+0x02)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0006 (indirect 0x0001+0x02+0x03)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0006 (indirect $0x0001+0x02+0x03)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // Calling GetTooltip on a viewmodel attached to an external trigger should not evaluate the memrefs.
         // External memrefs should only be updated by the runtime to ensure delta values are correct.
@@ -1069,8 +1069,8 @@ public:
 
         // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008
         Assert::AreEqual(std::wstring(L"0x0001\r\n[No code note]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x02)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0008 (indirect 0x0001+0x02+0x03)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x02)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0008 (indirect $0x0001+0x02+0x03)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
     TEST_METHOD(TestTooltipDoubleIndirectAddressValue)
@@ -1094,16 +1094,16 @@ public:
 
         // $0001 = 1, 1+2 = $0003, $0003 = 3, 3+3 = $0006
         Assert::AreEqual(std::wstring(L"0x0001\r\n[No code note]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0003 (indirect 0x0001+0x02)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0006 (indirect 0x0001+0x02+0x03)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0006 (indirect $0x0001+0x02+0x03)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
 
         // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008
         vmTrigger.SetMemory({ 1 }, 3);
         vmTrigger.CodeNotesDoFrame();
         Assert::AreEqual(std::wstring(L"0x0001\r\n[No code note]"),
                          pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0005 (indirect 0x0001+0x02)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0008 (indirect 0x0001+0x02+0x03)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x02)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0008 (indirect $0x0001+0x02+0x03)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
     TEST_METHOD(TestTooltipRecallBasic)
@@ -1362,7 +1362,7 @@ public:
         Expects(pCondition6 != nullptr);
         Assert::IsTrue(pCondition6->IsIndirect());
         Assert::AreEqual(std::wstring(L""), pCondition6->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
-        Assert::AreEqual(std::wstring(L"0x020c (indirect 0x0010+(0x04+{recall:0x208}))\r\n[No code note]"),
+        Assert::AreEqual(std::wstring(L"0x020c (indirect $0x0010+{recall:0x208}+0x04)\r\n[No code note]"),
                          pCondition6->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L""), pCondition6->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
         Assert::AreEqual(std::wstring(L""), pCondition6->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
@@ -1371,7 +1371,7 @@ public:
         Expects(pCondition7 != nullptr);
         Assert::IsFalse(pCondition7->IsIndirect());
         Assert::AreEqual(std::wstring(L"0x00000000 (recall)\r\n"
-                                      L"6: $(0x0208+0x00000004) -> 0x00000000"),
+                                      L"6: $0x020c -> 0x00000000"),
                          pCondition7->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
         Assert::AreEqual(std::wstring(L""), pCondition7->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L""), pCondition7->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
@@ -1385,6 +1385,132 @@ public:
                          pCondition8->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L""), pCondition8->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
         Assert::AreEqual(std::wstring(L""), pCondition8->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipRecallChainWithAddAddress)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.mockGameContext.InitializeCodeNotes();
+
+        // with prefer decimal off, hex constants will have decimal tooltips
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
+
+        vmTrigger.Parse(
+            "I:0xG1234&33554431_K:0xJ0009_"
+            "I:{recall}+0xJ2222_N:0xI0010=6_"
+            "I:{recall}+0xJ2222_C:0xH0018=1_"
+            "I:{recall}+0xJ2222_K:0xJ0009_"
+            "I:{recall}+0xJ2222_N:0xI0010=6");
+        //  1 AddAddress 32-bit BE 0x1234 & 33554431          Global pointer    ($001234 => b65ba0)
+        //  2 Remember   24-bit BE 0x0009                     Linked list root  ($b65ba8 => 392ec0)
+        //  3 AddAddress {recall}         + 24-bit BE 0x2222  $002222 => acd6c0 + 392ec0 => e60580              
+        //  4 AndNext    16-bit BE 0x0010 = 6                 Node value check  ($e60590 => 0)
+        //  5 AddAddress {recall}         + 24-bit BE 0x2222
+        //  6 AddHits    8-bit     0x0018 = 1                 Node value check  ($e60598 => 0)
+        //  7 AddAddress {recall}         + 24-bit BE 0x2222
+        //  8 Remember   24-bit BE 0x0009                     Linked list next  ($e60589 => 000000)
+        //  9 AddAddress {recall}         + 24-bit BE 0x2222
+        // 10 AndNext    16-bit BE 0x0010 = 6                 Node value check
+        //    ...                                             ...
+
+        // Parse registers the default memory. Replace it with specific values
+        vmTrigger.mockEmulatorContext.MockMemoryValue(0x001234, 0xa05bb680);
+        vmTrigger.mockEmulatorContext.MockMemoryValue(0x002222, 0x00c0d6ac);
+        vmTrigger.mockEmulatorContext.MockMemoryValue(0xb65ba8, 0xc02e3980);
+
+        auto* pTrigger = vmTrigger.GetTriggerFromString();
+        auto* pMemrefs = rc_trigger_get_memrefs(pTrigger);
+        rc_update_memref_values(pMemrefs, rc_peek_callback, nullptr);
+
+        // start validation
+        const auto* pCondition1 = vmTrigger.Conditions().GetItemAt(0);
+        Expects(pCondition1 != nullptr);
+        Assert::IsFalse(pCondition1->IsIndirect());
+        Assert::AreEqual(std::wstring(L""), pCondition1->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L"0x1234\r\n[No code note]"),
+                         pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition1->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+        Assert::AreEqual(std::wstring(L"33554431"), pCondition1->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+
+        const auto* pCondition2 = vmTrigger.Conditions().GetItemAt(1);
+        Expects(pCondition2 != nullptr);
+        Assert::IsTrue(pCondition2->IsIndirect());
+        Assert::AreEqual(std::wstring(L""), pCondition2->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L"0xb65ba9 (indirect $0x1234+0x09)\r\n[No code note]"),
+                         pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition2->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition2->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+
+        const auto* pCondition3 = vmTrigger.Conditions().GetItemAt(2);
+        Expects(pCondition3 != nullptr);
+        Assert::IsFalse(pCondition3->IsIndirect());
+        Assert::AreEqual(std::wstring(L"0x00392ec0 (recall)\r\n2: $0xb65ba9 -> 0x00392ec0"),
+                         pCondition3->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition3->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+        Assert::AreEqual(std::wstring(L"0x2222\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+
+        const auto* pCondition4 = vmTrigger.Conditions().GetItemAt(3);
+        Expects(pCondition4 != nullptr);
+        Assert::IsTrue(pCondition4->IsIndirect());
+        Assert::AreEqual(std::wstring(L""), pCondition4->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L"0xe60590 (indirect {recall:0x392ec0}+$0x2222+0x10)\r\n[No code note]"), pCondition4->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition4->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+        Assert::AreEqual(std::wstring(L"6"), pCondition4->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+
+        const auto* pCondition5 = vmTrigger.Conditions().GetItemAt(4);
+        Expects(pCondition5 != nullptr);
+        Assert::IsFalse(pCondition5->IsIndirect());
+        Assert::AreEqual(std::wstring(L"0x00392ec0 (recall)\r\n2: $0xb65ba9 -> 0x00392ec0"), pCondition5->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition5->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition5->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+        Assert::AreEqual(std::wstring(L"0x2222\r\n[No code note]"), pCondition5->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+
+        const auto* pCondition6 = vmTrigger.Conditions().GetItemAt(5);
+        Expects(pCondition6 != nullptr);
+        Assert::IsTrue(pCondition6->IsIndirect());
+        Assert::AreEqual(std::wstring(L""), pCondition6->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L"0xe60598 (indirect {recall:0x392ec0}+$0x2222+0x18)\r\n[No code note]"),
+                         pCondition6->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition6->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+        Assert::AreEqual(std::wstring(L"1"), pCondition6->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+
+        const auto* pCondition7 = vmTrigger.Conditions().GetItemAt(6);
+        Expects(pCondition7 != nullptr);
+        Assert::IsFalse(pCondition7->IsIndirect());
+        Assert::AreEqual(std::wstring(L"0x00392ec0 (recall)\r\n2: $0xb65ba9 -> 0x00392ec0"),
+                         pCondition7->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition7->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition7->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+        Assert::AreEqual(std::wstring(L"0x2222\r\n[No code note]"), pCondition7->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+
+        const auto* pCondition8 = vmTrigger.Conditions().GetItemAt(7);
+        Expects(pCondition8 != nullptr);
+        Assert::IsTrue(pCondition8->IsIndirect());
+        Assert::AreEqual(std::wstring(L""), pCondition8->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L"0xe60589 (indirect {recall:0x392ec0}+$0x2222+0x09)\r\n[No code note]"),
+                         pCondition8->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition8->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition8->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+
+        const auto* pCondition9 = vmTrigger.Conditions().GetItemAt(8);
+        Expects(pCondition9 != nullptr);
+        Assert::IsFalse(pCondition9->IsIndirect());
+        Assert::AreEqual(std::wstring(L"0x00000000 (recall)\r\n8: $0xe60589 -> 0x00000000"),
+                         pCondition9->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition9->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition9->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+        Assert::AreEqual(std::wstring(L"0x2222\r\n[No code note]"),
+                         pCondition9->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+
+        const auto* pCondition10 = vmTrigger.Conditions().GetItemAt(9);
+        Expects(pCondition8 != nullptr);
+        Assert::IsTrue(pCondition10->IsIndirect());
+        Assert::AreEqual(std::wstring(L""), pCondition10->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L"0xacd6d0 (indirect {recall:0x00}+$0x2222+0x10)\r\n[No code note]"),
+                         pCondition10->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition10->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+        Assert::AreEqual(std::wstring(L"6"), pCondition10->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 
     TEST_METHOD(TestIsModifying)

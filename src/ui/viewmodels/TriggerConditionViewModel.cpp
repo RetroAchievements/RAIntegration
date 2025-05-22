@@ -450,7 +450,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
         return GetAddressTooltip(GetSourceAddress(), L"");
     }
 
-    if (nProperty == TargetValueProperty)
+    if (nProperty == TargetValueProperty && GetValue(HasTargetValueProperty))
     {
         const auto nType = GetTargetType();
         if (nType == TriggerOperandType::Value)
@@ -554,83 +554,56 @@ static void BuildOperatorTooltip(std::wstring& sTooltip, uint8_t nOperatorType)
 
 static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperand, std::wstring& sPointerChain)
 {
+    rc_typed_value_t pValue;
+    rc_evaluate_operand(&pValue, pOperand, nullptr);
+    rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
+
     if (pOperand->type == RC_OPERAND_RECALL)
     {
-        sPointerChain += ra::StringPrintf(L"{recall:0x%02x}", pOperand->value.memref->value.value);
-        return pOperand->value.memref->value.value;
+        sPointerChain += ra::StringPrintf(L"{recall:0x%02x}", pValue.value.u32);
+        return pValue.value.u32;
     }
 
     if (!rc_operand_is_memref(pOperand))
     {
-        sPointerChain += ra::StringPrintf(L"0x%02x", pOperand->value.num);
-        return pOperand->value.num;
+        sPointerChain += ra::StringPrintf(L"0x%02x", pValue.value.u32);
+        return pValue.value.u32;
     }
 
     if (pOperand->value.memref->value.memref_type != RC_MEMREF_TYPE_MODIFIED_MEMREF)
     {
+        sPointerChain += '$';
         sPointerChain += ra::Widen(ra::ByteAddressToString(pOperand->value.memref->address));
-        return pOperand->value.memref->address;
+        return pValue.value.u32;
     }
 
     GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
         reinterpret_cast<const rc_modified_memref_t*>(pOperand->value.memref);
+    GetIndirectAddressFromOperand(&pModifiedMemref->parent, sPointerChain);
 
-    if (pModifiedMemref->modifier_type != RC_OPERATOR_INDIRECT_READ)
+    if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
     {
-        const auto sAddress = ra::ByteAddressToString(rc_operand_is_memref(&pModifiedMemref->parent)
-                                                          ? pModifiedMemref->parent.value.memref->address
-                                                          : pModifiedMemref->parent.value.num);
+        sPointerChain.push_back('+');
+        GetIndirectAddressFromOperand(&pModifiedMemref->modifier, sPointerChain);
 
-        sPointerChain.append(ra::Widen(sAddress));
-        return pOperand->value.memref->value.value;
+        rc_evaluate_operand(&pValue, &pModifiedMemref->parent, nullptr);
+        rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
+
+        rc_typed_value_t pModifier{};
+        rc_evaluate_operand(&pModifier, &pModifiedMemref->modifier, nullptr);
+        rc_typed_value_convert(&pModifier, RC_VALUE_TYPE_UNSIGNED);
+
+        rc_typed_value_combine(&pValue, &pModifier, RC_OPERATOR_ADD);
     }
-
-    rc_typed_value_t value{}, parentValue{};
-    rc_evaluate_operand(&parentValue, &pModifiedMemref->parent, nullptr);
-    rc_typed_value_convert(&parentValue, RC_VALUE_TYPE_UNSIGNED);
-
-    rc_evaluate_operand(&value, &pModifiedMemref->modifier, nullptr);
-    rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
-
-    const rc_operand_t* pParentOperand = &pModifiedMemref->parent;
-    GetIndirectAddressFromOperand(pParentOperand, sPointerChain);
-
-    if (rc_operand_is_memref(pParentOperand) && pParentOperand->value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+    else if (pModifiedMemref->modifier_type != RC_OPERATOR_AND)
     {
         std::wstring sTemp;
-        GSL_SUPPRESS_TYPE1 const auto* pParentModifiedMemref =
-            reinterpret_cast<const rc_modified_memref_t*>(pParentOperand->value.memref);
-        switch (pParentModifiedMemref->modifier_type)
-        {
-            case RC_OPERATOR_ADD:
-            case RC_OPERATOR_SUB:
-                sPointerChain.append(L"+(");
-                GetIndirectAddressFromOperand(&pModifiedMemref->modifier, sPointerChain);
-
-                BuildOperatorTooltip(sTemp, pParentModifiedMemref->modifier_type);
-                sPointerChain.push_back(sTemp.at(1));
-
-                GetIndirectAddressFromOperand(&pParentModifiedMemref->modifier, sPointerChain);
-                sPointerChain.push_back(')');
-
-                rc_typed_value_combine(&parentValue, &value, RC_OPERATOR_ADD);
-                return parentValue.value.u32;
-
-            default:
-                break;
-        }
+        BuildOperatorTooltip(sTemp, pModifiedMemref->modifier_type);
+        sPointerChain.push_back(sTemp.empty() ? '?' : sTemp.at(1));
+        GetIndirectAddressFromOperand(&pModifiedMemref->modifier, sPointerChain);
     }
 
-    sPointerChain.push_back('+');
-
-    const auto sOffset = ra::StringPrintf(L"0x%02x",
-                                          (rc_operand_is_memref(&pModifiedMemref->modifier)
-                                               ? pModifiedMemref->modifier.value.memref->address
-                                               : pModifiedMemref->modifier.value.num));
-    sPointerChain.append(ra::Widen(sOffset));
-
-    rc_typed_value_combine(&value, &parentValue, RC_OPERATOR_ADD);
-    return value.value.u32;
+    return pValue.value.u32;
 }
 
 const rc_condition_t* TriggerConditionViewModel::GetFirstCondition() const
@@ -798,13 +771,16 @@ static void BuildRecallTooltip(std::wstring& sTooltip,
             reinterpret_cast<rc_modified_memref_t*>(pOperand.value.memref);
         if (combining_memref->modifier_type == RC_OPERATOR_INDIRECT_READ)
         {
-            if (rc_operand_is_memref(&combining_memref->parent))
-                sTooltip += ra::StringPrintf(L"$(%s+", ra::ByteAddressToString(combining_memref->parent.value.memref->value.value));
-            else
-                sTooltip += ra::StringPrintf(L"$(%s+", ra::ByteAddressToString(combining_memref->parent.value.num));
+            rc_typed_value_t pValue{}, pModifier{};
+            rc_evaluate_operand(&pValue, &combining_memref->parent, nullptr);
+            rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
 
-            BuildOperandTooltip(sTooltip, combining_memref->modifier);
-            sTooltip.push_back(')');
+            rc_evaluate_operand(&pModifier, &combining_memref->modifier, nullptr);
+            rc_typed_value_convert(&pModifier, RC_VALUE_TYPE_UNSIGNED);
+
+            rc_typed_value_combine(&pValue, &pModifier, RC_OPERATOR_ADD);
+            sTooltip.push_back('$');
+            sTooltip.append(ra::Widen(ra::ByteAddressToString(pValue.value.u32)));
         }
         else
         {
@@ -817,7 +793,7 @@ static void BuildRecallTooltip(std::wstring& sTooltip,
         }
 
         sTooltip.append(L" -> ");
-        sTooltip += ra::StringPrintf(L"0x%08x", pOperand.value.memref->value.value);
+        BuildOperandTooltip(sTooltip, pOperand);
     }
 }
 
@@ -863,21 +839,9 @@ std::wstring TriggerConditionViewModel::GetRecallTooltip(bool bOperand2) const
 
     const rc_operand_t* pOperand = nullptr;
     if (bOperand2)
-    {
         pOperand = &pCondition->operand2;
-    }
     else
-    {
-        pOperand = &pCondition->operand1;
-
-        if (pCondition->oper != RC_OPERATOR_NONE &&
-            pOperand->value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
-        {
-            GSL_SUPPRESS_TYPE1 const rc_modified_memref_t* combining_memref =
-                reinterpret_cast<rc_modified_memref_t*>(pOperand->value.memref);
-            pOperand = &combining_memref->parent;
-        }
-    }
+        pOperand = rc_condition_get_real_operand1(pCondition);
     Expects(pOperand != nullptr);
 
     BuildOperandTooltip(sTooltip, *pOperand);

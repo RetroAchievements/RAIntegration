@@ -268,6 +268,15 @@ public:
         ParseAndRegenerate("0xH1234=0xH2345SI:0x 1234_A:0xH2345_0xH7777=345"); // addsource/addaddress chain
     }
 
+    TEST_METHOD(TestParseAndRegenerateComplex)
+    {
+        ParseAndRegenerate("R:0xH1234=5.100.");                               // flag and 100 hits
+        ParseAndRegenerate("A:0xH1234_A:0xH1236_A:0xH1237_M:0xH1238=99");     // addsource chain
+        ParseAndRegenerate("A:d0xH1234_A:d0xH1236_A:d0xH1237_M:d0xH1238=99"); // addsource delta chain
+        ParseAndRegenerate("A:p0xH1234_A:p0xH1236_A:p0xH1237_M:p0xH1238=99"); // addsource prior chain
+        ParseAndRegenerate("I:0xX1234_0xH0010=1");                            // addaddress chain
+    }
+
     TEST_METHOD(TestParseAndRegenerateValue)
     {
         ParseAndRegenerateValue(""); // empty

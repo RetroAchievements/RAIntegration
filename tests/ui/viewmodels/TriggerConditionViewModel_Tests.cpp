@@ -59,7 +59,7 @@ private:
 
     void ParseAndRegenerate(const std::string& sInput)
     {
-        unsigned char pBuffer[512] = {0};
+        unsigned char pBuffer[2048] = {0};
         const auto nSize = rc_trigger_size(sInput.c_str());
         Assert::IsTrue(nSize > 0 && nSize < sizeof(pBuffer));
 
@@ -580,7 +580,7 @@ public:
         Assert::AreEqual(std::string("K:0xH1234"), sSerialized);
     }
 
-    TEST_METHOD(TestSizes)
+    TEST_METHOD(TestParseAndRegenerateSizes)
     {
         ParseAndRegenerate("0xH1234=0xH2345"); // 8-bit
         ParseAndRegenerate("0x 1234=0x 2345"); // 16-bit
@@ -605,7 +605,7 @@ public:
         ParseAndRegenerate("fL1234=fL2345"); // mbf32le
     }
 
-    TEST_METHOD(TestOperandTypes)
+    TEST_METHOD(TestParseAndRegenerateOperandTypes)
     {
         ParseAndRegenerate("0xH1234=0xH1234"); // address
         ParseAndRegenerate("0xH1234=d0xH1234"); // delta
@@ -617,7 +617,7 @@ public:
         ParseAndRegenerate("0xH1234=f12.34"); // float
     }
 
-    TEST_METHOD(TestOperators)
+    TEST_METHOD(TestParseAndRegenerateOperators)
     {
         ParseAndRegenerate("0xH1234=5"); // equals
         ParseAndRegenerate("0xH1234!=5"); // not equals
@@ -634,7 +634,7 @@ public:
         ParseAndRegenerate("A:0xH1234&5"); // bitwise and
     }
 
-    TEST_METHOD(TestConditionTypes)
+    TEST_METHOD(TestParseAndRegenerateConditionTypes)
     {
         ParseAndRegenerate("0xH1234=5"); // none
         ParseAndRegenerate("R:0xH1234=5"); // reset if
@@ -653,10 +653,13 @@ public:
         ParseAndRegenerate("T:0xH1234=5"); // trigger
     }
 
-    TEST_METHOD(TestParseAndRegenerate)
+    TEST_METHOD(TestParseAndRegenerateHits)
     {
-        ParseAndRegenerate("0xH1234=5"); // simple
         ParseAndRegenerate("R:0xH1234=5.100."); // flag and 100 hits
+    }
+
+    TEST_METHOD(TestParseAndRegenerateValue)
+    {
         ParseAndRegenerateValue("M:0xH1234=5"); // measured without hit target
         ParseAndRegenerateValue("M:0xH1234"); // measured without comparison
         ParseAndRegenerateValue("M:0xH1234/5"); // measured with modifier

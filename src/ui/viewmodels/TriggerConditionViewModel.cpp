@@ -244,6 +244,16 @@ void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
     const auto* pOperand = rc_condition_get_real_operand1(&pCondition);
     Expects(pOperand != nullptr);
     SetOperand(SourceTypeProperty, SourceSizeProperty, SourceValueProperty, *pOperand);
+
+    // if the runtime has optimized a delta into a delta read of a non-delta chain, we
+    // have to select the delta value manually
+    if (pOperand != &pCondition.operand1 &&
+        (pCondition.operand1.type == RC_OPERAND_DELTA || pCondition.operand1.type == RC_OPERAND_PRIOR))
+    {
+        const auto nType = static_cast<TriggerOperandType>(pCondition.operand1.type);
+        SetSourceType(nType);
+    }
+
     SetOperand(TargetTypeProperty, TargetSizeProperty, TargetValueProperty, pCondition.operand2);
 
     SetOperator(static_cast<TriggerOperatorType>(pCondition.oper));

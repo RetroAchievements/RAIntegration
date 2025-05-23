@@ -467,8 +467,40 @@ void AchievementRuntime::QueueMemoryRead(std::function<void()>&& fCallback) cons
 
     rc_client_schedule_callback(GetClient(), scheduled_callback);
 
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().
-        ScheduleAsync(std::chrono::milliseconds(50), [this]() { Idle(); });
+    // schedule an rc_client_idle() call for 200ms from now. if another read gets queued
+    // before rc_client_idle() is called, it'll use the same queued rc_client_idle().
+    // if no "when=0" items are queued when the callback is called, rc_client_idle will
+    // not be called
+    static std::atomic<bool> bIdleQueued = false;
+    bool bWantToQueue = true;
+    const bool bWasQueued = bIdleQueued.exchange(bWantToQueue);
+    if (!bWasQueued)
+    {
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().
+            ScheduleAsync(std::chrono::milliseconds(200), [this]()
+            {
+                bIdleQueued = false;
+
+                auto* pClient = GetClient();
+                if (!pClient)
+                    return;
+
+                const auto* pScheduledCallback = pClient->state.scheduled_callbacks;
+                if (pScheduledCallback)
+                {
+                    bool bShouldIdle = false;
+                    {
+                        rc_mutex_lock(&pClient->state.mutex);
+                        pScheduledCallback = pClient->state.scheduled_callbacks;
+                        bShouldIdle = pScheduledCallback && pScheduledCallback->when == 0;
+                        rc_mutex_unlock(&pClient->state.mutex);
+                    }
+
+                    if (bShouldIdle)
+                        rc_client_idle(pClient);
+                }
+            });
+    }
 }
 
 /* ---- ClientSynchronizer ----- */

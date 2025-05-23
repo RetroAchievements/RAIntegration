@@ -711,14 +711,15 @@ bool EmulatorContext::IsValidAddress(ra::ByteAddress nAddress) const noexcept
     return false;
 }
 
-static int g_threadId = 0;
-
 uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const noexcept
 {
-    if (g_threadId > 1000)
+#if !defined(_NDEBUG) && !defined(RA_UTEST)
+    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+    if (!pRuntime.IsOnDoFrameThread())
     {
-        Expects(g_threadId == __threadid());
+        Expects(ra::services::ServiceLocator::Get<ra::data::context::GameContext>().IsGameLoading());
     }
+#endif
 
     for (const auto& pBlock : m_vMemoryBlocks)
     {
@@ -739,14 +740,13 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const noexcept
 _Use_decl_annotations_
 uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
 {
-    if (g_threadId < 1000)
-        g_threadId++;
-    else if (g_threadId == 1000)
-        g_threadId = __threadid();
-    if (g_threadId > 1000)
+#if !defined(_NDEBUG) && !defined(RA_UTEST)
+    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+    if (!pRuntime.IsOnDoFrameThread())
     {
-        Expects(g_threadId == __threadid());
+        Expects(ra::services::ServiceLocator::Get<ra::data::context::GameContext>().IsGameLoading());
     }
+#endif
 
     uint32_t nBytesRead = 0;
     Expects(pBuffer != nullptr);

@@ -449,6 +449,12 @@ static void DispatchMemoryRead(struct rc_client_scheduled_callback_data_t* callb
 
 void AchievementRuntime::QueueMemoryRead(std::function<void()>&& fCallback) const
 {
+    if (m_hDoFrameThread == 0 || IsOnDoFrameThread())
+    {
+        fCallback();
+        return;
+    }
+
     QueueMemoryReadData* data = new QueueMemoryReadData();
     Expects(data != nullptr);
     data->fCallback = std::move(fCallback);
@@ -460,6 +466,9 @@ void AchievementRuntime::QueueMemoryRead(std::function<void()>&& fCallback) cons
     scheduled_callback->data = data;
 
     rc_client_schedule_callback(GetClient(), scheduled_callback);
+
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().
+        ScheduleAsync(std::chrono::milliseconds(50), [this]() { Idle(); });
 }
 
 /* ---- ClientSynchronizer ----- */
@@ -1612,6 +1621,8 @@ static void RaisePauseOnChangeEvents(
 
 void AchievementRuntime::DoFrame()
 {
+    m_hDoFrameThread = GetCurrentThreadId();
+
     if (m_bPaused)
     {
         rc_client_idle(GetClient());
@@ -1632,7 +1643,7 @@ void AchievementRuntime::DoFrame()
         RaisePauseOnChangeEvents(mLeaderboardsWithHits, mActiveLeaderboards);
 }
 
-void AchievementRuntime::Idle() noexcept
+void AchievementRuntime::Idle() const noexcept
 {
     auto* pClient = GetClient();
     if (!pClient)

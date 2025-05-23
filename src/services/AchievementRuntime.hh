@@ -110,7 +110,7 @@ public:
     /// <summary>
     /// Processes stuff not related to a frame.
     /// </summary>
-    void Idle() noexcept;
+    void Idle() const noexcept;
 
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.
@@ -161,6 +161,7 @@ public:
     void AsyncServerCall(const rc_api_request_t* pRequest, AsyncServerCallCallback fCallback, void* pCallbackData) const;
 
     void QueueMemoryRead(std::function<void()>&& fCallback) const;
+    bool IsOnDoFrameThread() const { return GetCurrentThreadId() == m_hDoFrameThread; }
 
     class Synchronizer
     {
@@ -211,6 +212,7 @@ public:
 
 private:
     bool m_bPaused = false;
+    DWORD m_hDoFrameThread = 0;
     std::unique_ptr<rc_client_t> m_pClient;
 
     class ClientSynchronizer;

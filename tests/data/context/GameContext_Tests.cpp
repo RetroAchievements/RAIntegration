@@ -408,6 +408,70 @@ public:
         Assert::IsFalse(bDialogShown);
     }
 
+    TEST_METHOD(TestLoadGameTitleConsoleMismatchNESvFDS)
+    {
+        // Emulator updated after server, or is out-of-date
+        // Emulator sets mode to NES, server says game is FDS. Allow
+        GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", "",
+                              static_cast<ConsoleID>(RC_CONSOLE_FAMICOM_DISK_SYSTEM));
+
+        game.mockConsoleContext.SetId(ConsoleID::NES);
+        game.mockConsoleContext.SetName(L"Nintendo");
+
+        bool bDialogShown = false;
+        game.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&) {
+                bDialogShown = true;
+                return ra::ui::DialogResult::OK;
+            });
+
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(std::wstring(L"Overlay\\info.wav")));
+
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"0 achievements, 0 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
+
+        Assert::IsFalse(bDialogShown);
+    }
+
+    TEST_METHOD(TestLoadGameTitleConsoleMismatchFDSvNES)
+    {
+        // Emulator updated before server
+        // Emulator sets mode to FDS, server says game is NES. Allow
+        GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", "",
+                              static_cast<ConsoleID>(RC_CONSOLE_NINTENDO));
+
+        game.mockConsoleContext.SetId(ConsoleID::FamicomDiskSystem);
+        game.mockConsoleContext.SetName(L"Famicom Disk System");
+
+        bool bDialogShown = false;
+        game.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&) {
+                bDialogShown = true;
+                return ra::ui::DialogResult::OK;
+            });
+
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(std::wstring(L"Overlay\\info.wav")));
+
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"0 achievements, 0 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
+
+        Assert::IsFalse(bDialogShown);
+    }
+
     TEST_METHOD(TestLoadGameNotify)
     {
         class NotifyHarness : public GameContext::NotifyTarget

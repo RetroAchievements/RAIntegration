@@ -491,9 +491,9 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
         const auto* pSet = &game_data_response->sets[i];
         if (pSet->type == RC_ACHIEVEMENT_SET_TYPE_CORE)
         {
-            // core subset should always be first and have a subset id of 0
+            // core subset should always be first
             m_vSubsets.insert(m_vSubsets.begin(),
-                              Subset(0, pSet->game_id, ra::Widen(pSet->title), SubsetType::Core));
+                              Subset(pSet->id, pSet->game_id, ra::Widen(pSet->title), SubsetType::Core));
         }
         else
         {
@@ -513,6 +513,10 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
             m_vSubsets.emplace_back(pSet->id, pSet->game_id, ra::Widen(pSet->title), nType);
         }
     }
+
+    // if subsets were found, migrate any SUBSET-User.txt files into the the GAME-User.txt file
+    if (m_vSubsets.size() > 1)
+        MigrateSubsetUserFiles();
 }
 
 void GameContext::MigrateSubsetUserFiles()

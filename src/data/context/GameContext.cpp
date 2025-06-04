@@ -479,6 +479,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
 
 void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response)
 {
+    Expects(game_data_response != nullptr);
     m_vSubsets.clear();
 
     // GameID dictates which game is loaded for purposes of local achievement storage and code notes
@@ -497,7 +498,7 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
         }
         else
         {
-            SubsetType nType;
+            SubsetType nType = SubsetType::Bonus;
             switch (pSet->type)
             {
                 case RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE:

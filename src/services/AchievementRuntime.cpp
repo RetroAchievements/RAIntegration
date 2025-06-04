@@ -1178,8 +1178,9 @@ void AchievementRuntime::BeginLoadGame(const std::string& sHash, unsigned id, rc
 }
 
 static void ProcessPatchData(const rc_api_server_response_t* server_response,
-                             rc_api_fetch_game_sets_response_t* game_data_response)
+                             const rc_api_fetch_game_sets_response_t* game_data_response)
 {
+    Expects(game_data_response != nullptr);
     // determine the active game ID and any identify any provided subsets
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.InitializeSubsets(game_data_response);
@@ -1217,6 +1218,7 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
 {
     auto* wrapper = static_cast<LoadGameCallbackWrapper*>(pUserdata);
     Expects(wrapper != nullptr);
+    Expects(game_data_response != nullptr);
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 

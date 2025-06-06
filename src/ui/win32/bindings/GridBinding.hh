@@ -52,6 +52,10 @@ public:
     void OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo);
     void OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo);
     virtual void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
+    void OpenIPE(
+        std::unique_ptr<ra::ui::win32::bindings::GridColumnBinding::InPlaceEditorInfo,
+                        std::default_delete<ra::ui::win32::bindings::GridColumnBinding::InPlaceEditorInfo>>& pInfo,
+        ra::ui::win32::bindings::GridColumnBinding& pColumn);
     virtual void OnNmRClick(const NMITEMACTIVATE* pnmItemActivate);
     virtual void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);
     LRESULT OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw) override;

@@ -3,6 +3,7 @@
 #include "RA_StringUtils.h"
 
 #include "GridCheckBoxColumnBinding.hh"
+#include "GridTextColumnBinding.hh"
 
 #include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
@@ -1272,8 +1273,6 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
         if (!pColumn->IsReadOnly())
         {
             auto pInfo = std::make_unique<GridColumnBinding::InPlaceEditorInfo>();
-            pInfo->bIgnoreLostFocus = false;
-            pInfo->bForceWmChar = false;
 
             if (pnmItemActivate->iItem >= 0)
             {
@@ -1290,39 +1289,49 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
             if (pInfo->nItemIndex >= 0)
             {
                 pInfo->nColumnIndex = pnmItemActivate->iSubItem;
-                pInfo->pGridBinding = this;
-                pInfo->pColumnBinding = pColumn.get();
-
-                RECT rcOffset{};
-                GetWindowRect(m_hWnd, &rcOffset);
-
-                GSL_SUPPRESS_ES47 ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex,
-                    gsl::narrow_cast<int>(pInfo->nColumnIndex), LVIR_BOUNDS, &pInfo->rcSubItem);
-                pInfo->rcSubItem.left += rcOffset.left + 1;
-                pInfo->rcSubItem.right += rcOffset.left + 1;
-                pInfo->rcSubItem.top += rcOffset.top + 1;
-                pInfo->rcSubItem.bottom += rcOffset.top + 1;
-
-                // the SubItemRect for the first column contains the entire row, adjust to just the first column
-                if (pInfo->nColumnIndex == 0 && m_vColumns.size() > 1)
-                {
-                    RECT rcSecondColumn{};
-                    GSL_SUPPRESS_ES47 ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, 1, LVIR_BOUNDS, &rcSecondColumn);
-                    pInfo->rcSubItem.right = rcSecondColumn.left + rcOffset.left + 1;
-                }
-
-                pInfo->nItemIndex -= m_nScrollOffset;
-
-                const HWND hParent = GetAncestor(m_hWnd, GA_ROOT);
-                m_hInPlaceEditor = pColumn->CreateInPlaceEditor(hParent, *pInfo);
-                if (m_hInPlaceEditor)
-                {
-                    GSL_SUPPRESS_TYPE1 SetWindowLongPtr(m_hInPlaceEditor, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pInfo.release()));
-                    SetFocus(m_hInPlaceEditor);
-                    return;
-                }
+                OpenIPE(pInfo, *pColumn);
             }
         }
+    }
+}
+
+void GridBinding::OpenIPE(
+    std::unique_ptr<ra::ui::win32::bindings::GridColumnBinding::InPlaceEditorInfo,
+                    std::default_delete<ra::ui::win32::bindings::GridColumnBinding::InPlaceEditorInfo>>& pInfo,
+    ra::ui::win32::bindings::GridColumnBinding& pColumn)
+{
+    pInfo->bIgnoreLostFocus = false;
+    pInfo->bForceWmChar = false;
+    pInfo->pGridBinding = this;
+    pInfo->pColumnBinding = &pColumn;
+
+    RECT rcOffset{};
+    GetWindowRect(m_hWnd, &rcOffset);
+
+    GSL_SUPPRESS_ES47 ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, gsl::narrow_cast<int>(pInfo->nColumnIndex),
+                                              LVIR_BOUNDS, &pInfo->rcSubItem);
+    pInfo->rcSubItem.left += rcOffset.left + 1;
+    pInfo->rcSubItem.right += rcOffset.left + 1;
+    pInfo->rcSubItem.top += rcOffset.top + 1;
+    pInfo->rcSubItem.bottom += rcOffset.top + 1;
+
+    // the SubItemRect for the first column contains the entire row, adjust to just the first column
+    if (pInfo->nColumnIndex == 0 && m_vColumns.size() > 1)
+    {
+        RECT rcSecondColumn{};
+        GSL_SUPPRESS_ES47 ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, 1, LVIR_BOUNDS, &rcSecondColumn);
+        pInfo->rcSubItem.right = rcSecondColumn.left + rcOffset.left + 1;
+    }
+
+    pInfo->nItemIndex -= m_nScrollOffset;
+
+    const HWND hParent = GetAncestor(m_hWnd, GA_ROOT);
+    m_hInPlaceEditor = pColumn.CreateInPlaceEditor(hParent, *pInfo);
+    if (m_hInPlaceEditor)
+    {
+        GSL_SUPPRESS_TYPE1 SetWindowLongPtr(m_hInPlaceEditor, GWLP_USERDATA,
+                                            reinterpret_cast<LONG_PTR>(pInfo.release()));
+        SetFocus(m_hInPlaceEditor);
     }
 }
 
@@ -1371,6 +1380,25 @@ void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown)
             const int nFirstSelectedItem = ListView_GetNextItem(m_hWnd, -1, LVNI_SELECTED);
             if (nFirstSelectedItem != -1)
                 m_pDoubleClickHandler(gsl::narrow_cast<gsl::index>(nFirstSelectedItem));
+        }
+
+        // if F2 is pressed, and the first column is a text column, open the in-place editor
+        if (pnmKeyDown->wVKey == VK_F2)
+        {
+            const auto pTextColumn = dynamic_cast<const GridTextColumnBinding*>(m_vColumns.at(0).get());
+            if (pTextColumn && !pTextColumn->IsReadOnly())
+            {
+                const int nFirstSelectedItem = ListView_GetNextItem(m_hWnd, -1, LVNI_SELECTED);
+                if (nFirstSelectedItem != -1)
+                {
+                    auto pInfo = std::make_unique<GridColumnBinding::InPlaceEditorInfo>();
+                    pInfo->nItemIndex = gsl::narrow_cast<gsl::index>(nFirstSelectedItem);
+                    pInfo->nColumnIndex = 0;
+
+                    const auto& pColumn = m_vColumns.at(0);
+                    OpenIPE(pInfo, *pColumn);
+                }
+            }
         }
 
         return;

@@ -837,13 +837,6 @@ public:
         rc_mutex_unlock(&pClient->state.mutex);
     }
 
-    void GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const
-    {
-        const auto* pSubset = m_pPublishedSubset;
-        for (; pSubset; pSubset = pSubset->next)
-            vSubsets.emplace_back(pSubset->public_.id, ra::Widen(pSubset->public_.title));
-    }
-
     void AttachMemory(void* pMemory)
     {
         if (m_pSubsetWrapper)
@@ -890,12 +883,6 @@ void AchievementRuntime::SyncAssets()
     if (m_pClientSynchronizer == nullptr)
         m_pClientSynchronizer.reset(new ClientSynchronizer());
     m_pClientSynchronizer->SyncAssets(GetClient());
-}
-
-void AchievementRuntime::GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const
-{
-    if (m_pClientSynchronizer != nullptr)
-        m_pClientSynchronizer->GetSubsets(vSubsets);
 }
 
 void AchievementRuntime::AttachMemory(void* pMemory)
@@ -1190,58 +1177,54 @@ void AchievementRuntime::BeginLoadGame(const std::string& sHash, unsigned id, rc
     BeginLoadGame(sHash.c_str(), id, pCallbackWrapper);
 }
 
-static void ExtractPatchData(const rc_api_server_response_t* server_response, uint32_t nGameId)
+static void ProcessPatchData(const rc_api_server_response_t* server_response,
+                             const rc_api_fetch_game_sets_response_t* game_data_response)
 {
-    // extract the PatchData and store a copy in the cache for offline mode
-    rc_api_response_t api_response{};
-    GSL_SUPPRESS_ES47
-    rc_json_field_t fields[] = {RC_JSON_NEW_FIELD("Success"), RC_JSON_NEW_FIELD("Error"),
-                                RC_JSON_NEW_FIELD("PatchData")};
+    Expects(game_data_response != nullptr);
+    // determine the active game ID and any identify any provided subsets
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    pGameContext.InitializeSubsets(game_data_response);
 
-    if (rc_json_parse_server_response(&api_response, server_response, fields, sizeof(fields) / sizeof(fields[0])) ==
-            RC_OK &&
-        fields[2].value_start && fields[2].value_end)
+    // extract the old rich presence script from the last cached server response so we can tell if the
+    // local value has changed. store it as the local value, and we'll merge in the real local value later.
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pOldData = pLocalStorage.ReadText(StorageItemType::GameData, std::to_wstring(pGameContext.ActiveGameId()));
+    if (pOldData != nullptr)
     {
-        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-        auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
-        if (pData != nullptr)
+        rapidjson::Document pDocument;
+        if (LoadDocument(pDocument, *pOldData) && pDocument.HasMember("RichPresencePatch") &&
+            pDocument["RichPresencePatch"].IsString())
         {
-            std::string sPatchData;
-            sPatchData.append(fields[2].value_start, fields[2].value_end - fields[2].value_start);
-            pData->Write(sPatchData);
+            auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+            Expects(pRichPresence != nullptr);
+            pRichPresence->SetScript(pDocument["RichPresencePatch"].GetString());
+            pRichPresence->UpdateLocalCheckpoint();
         }
+    }
+
+    // cache the patchdata so it can be used in offline mode or by external tools
+    auto pData = pLocalStorage.WriteText(StorageItemType::GameData, std::to_wstring(pGameContext.ActiveGameId()));
+    if (pData != nullptr)
+    {
+        std::string sPatchData(server_response->body, server_response->body_length);
+        pData->Write(sPatchData);
     }
 }
 
 GSL_SUPPRESS_CON3
 void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
-                                                 struct rc_api_fetch_game_data_response_t* game_data_response,
+                                                 rc_api_fetch_game_sets_response_t* game_data_response,
                                                  rc_client_t*, void* pUserdata)
 {
     auto* wrapper = static_cast<LoadGameCallbackWrapper*>(pUserdata);
     Expects(wrapper != nullptr);
+    Expects(game_data_response != nullptr);
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 
     auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
     pRichPresence->SetScript(game_data_response->rich_presence_script);
     pRichPresence->CreateServerCheckpoint();
-
-    // extract the old rich presence script from the last cached server response so we can tell if the
-    // local value has changed. store it as the local value, and we'll merge in the real local value later.
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(game_data_response->id));
-    if (pData != nullptr)
-    {
-        rapidjson::Document pDocument;
-        if (LoadDocument(pDocument, *pData) &&
-            pDocument.HasMember("RichPresencePatch") &&
-            pDocument["RichPresencePatch"].IsString())
-        {
-            pRichPresence->SetScript(pDocument["RichPresencePatch"].GetString());
-        }
-    }
-
     pRichPresence->CreateLocalCheckpoint();
     pGameContext.Assets().Append(std::move(pRichPresence));
 
@@ -1251,18 +1234,23 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
     pImageRepository.FetchImage(ra::ui::ImageType::Icon, game_data_response->image_name, game_data_response->image_url);
 #endif
 
-    const rc_api_achievement_definition_t* pAchievement = game_data_response->achievements;
-    const rc_api_achievement_definition_t* pAchievementStop = pAchievement + game_data_response->num_achievements;
-    for (; pAchievement < pAchievementStop; ++pAchievement)
-        wrapper->m_mAchievementDefinitions[pAchievement->id] = pAchievement->definition;
+    for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
+    {
+        const auto* pSet = &game_data_response->sets[i];
 
-    const rc_api_leaderboard_definition_t* pLeaderboard = game_data_response->leaderboards;
-    const rc_api_leaderboard_definition_t* pLeaderboardStop = pLeaderboard + game_data_response->num_leaderboards;
-    for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
-        wrapper->m_mLeaderboardDefinitions[pLeaderboard->id] = pLeaderboard->definition;
+        const auto* pAchievement = pSet->achievements;
+        const auto* pAchievementStop = pAchievement + pSet->num_achievements;
+        for (; pAchievement < pAchievementStop; ++pAchievement)
+            wrapper->m_mAchievementDefinitions[pAchievement->id] = pAchievement->definition;
+
+        const auto* pLeaderboard = pSet->leaderboards;
+        const auto* pLeaderboardStop = pLeaderboard + pSet->num_leaderboards;
+        for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
+            wrapper->m_mLeaderboardDefinitions[pLeaderboard->id] = pLeaderboard->definition;
+    }
 
     if (!ra::data::context::GameContext::IsVirtualGameId(game_data_response->id))
-        ExtractPatchData(server_response, game_data_response->id);
+        ProcessPatchData(server_response, game_data_response);
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, unsigned id,
@@ -1283,7 +1271,7 @@ rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, u
     }
 
     // start the load process
-    client->callbacks.post_process_game_data_response = PostProcessGameDataResponse;
+    client->callbacks.post_process_game_sets_response = PostProcessGameDataResponse;
 
     return rc_client_begin_load_game(client, sHash, AchievementRuntime::LoadGameCallback, pCallbackWrapper);
 }
@@ -1300,7 +1288,7 @@ rc_client_async_handle_t* AchievementRuntime::BeginIdentifyAndLoadGame(uint32_t 
     s_mAchievementPopups.clear();
 
     // start the load process
-    client->callbacks.post_process_game_data_response = PostProcessGameDataResponse;
+    client->callbacks.post_process_game_sets_response = PostProcessGameDataResponse;
 
     return rc_client_begin_identify_and_load_game(client, console_id, file_path, data, data_size,
                                                   AchievementRuntime::LoadGameCallback, pCallbackWrapper);

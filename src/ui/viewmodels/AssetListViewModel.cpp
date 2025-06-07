@@ -125,22 +125,8 @@ void AssetListViewModel::OnActiveGameChanged()
     m_vSubsets.BeginUpdate();
     m_vSubsets.Clear();
 
-    if (pGameContext.GameId() != 0 && ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
-    {
-        const auto& pAchievementRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-
-        std::vector<std::pair<uint32_t, std::wstring>> vSubsets;
-        pAchievementRuntime.GetSubsets(vSubsets);
-
-        if (!vSubsets.empty())
-        {
-            // Core asset have SubsetId of 0, even though core subset is the game id.
-            vSubsets.at(0).first = 0;
-
-            for (const auto& pair : vSubsets)
-                m_vSubsets.Add(pair.first, pair.second);
-        }
-    }
+    for (const auto& pSubset : pGameContext.Subsets())
+        m_vSubsets.Add(pSubset.ID(), pSubset.Title());
 
     m_vSubsets.EndUpdate();
 

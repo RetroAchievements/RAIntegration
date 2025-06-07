@@ -15,7 +15,7 @@
 
 #include <rcheevos\include\rc_client.h>
 
-struct rc_api_fetch_game_data_response_t;
+struct rc_api_fetch_game_sets_response_t;
 
 namespace ra {
 namespace services {
@@ -283,7 +283,7 @@ private:
     static void ChangeMediaCallback(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata);
 
     static void PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
-                                            struct rc_api_fetch_game_data_response_t* game_data_response,
+                                            struct rc_api_fetch_game_sets_response_t* game_data_response,
                                             rc_client_t* client, void* pUserdata);
 };
 

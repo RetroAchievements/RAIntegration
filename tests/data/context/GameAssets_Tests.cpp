@@ -210,6 +210,18 @@ public:
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
+    TEST_METHOD(TestSaveLocalSubset)
+    {
+        GameAssetsHarness gameAssets;
+        auto& pAch = gameAssets.AddAchievement(AssetCategory::Local, 5, L"Ach2", L"Desc2", L"22222", "2=2");
+        pAch.SetSubsetID(77U);
+
+        gameAssets.SaveAllAssets();
+
+        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\n%u|77:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId);
+        Assert::AreEqual(sExpected, gameAssets.GetUserFile());
+    }
+
     TEST_METHOD(TestSaveLocalBadges)
     {
         GameAssetsHarness gameAssets;
@@ -436,6 +448,35 @@ public:
 
         const auto& pLocalBadges = gameAssets.GetLocalBadgesModel();
         Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-A.png", true));
+    }
+
+    TEST_METHOD(TestMergeLocalAssetsTwoLocalAchievementsWithSubsetInfo)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.AddThreeAchievements();
+        gameAssets.MockUserFileContents(
+            "111000001:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n"
+            "111000002|2223:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
+
+        gameAssets.ReloadAllAssets();
+
+        Assert::AreEqual({5U}, gameAssets.Count());
+
+        const auto* pAsset = gameAssets.FindAchievement({111000001U});
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(0U, pAsset->GetSubsetID());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        const auto* pAsset2 = gameAssets.FindAchievement({111000002U});
+        Assert::IsNotNull(pAsset2);
+        Ensures(pAsset2 != nullptr);
+        Assert::AreEqual(std::string("0xH2345=0"), pAsset2->GetTrigger());
+        Assert::AreEqual(AssetCategory::Local, pAsset2->GetCategory());
+        Assert::AreEqual(2223U, pAsset2->GetSubsetID());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset2->GetChanges());
     }
 
     TEST_METHOD(TestReloadModifiedFromFile)

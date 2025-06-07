@@ -55,6 +55,14 @@ void MockAchievementRuntime::MockGame()
     game->public_.title = "Game Title";
 
     GetClient()->game = game;
+
+    if (ra::services::ServiceLocator::Exists<ra::data::context::GameContext>())
+    {
+        auto* mockGameContext = dynamic_cast<ra::data::context::mocks::MockGameContext*>(
+            &ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>());
+        if (mockGameContext != nullptr)
+            mockGameContext->MockSubset(0, game->public_.title, ra::data::context::GameContext::SubsetType::Core);
+    }
 }
 
 static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name)
@@ -141,6 +149,14 @@ void MockAchievementRuntime::MockSubset(uint32_t nSubsetId, const std::string& s
     auto* pSubset = GetSubset(game, nSubsetId, sName.c_str());
     // create a copy of the name in case it goes out of scope
     pSubset->public_.title = rc_buffer_strcpy(&game->buffer, sName.c_str());
+
+    if (ra::services::ServiceLocator::Exists<ra::data::context::GameContext>())
+    {
+        auto* mockGameContext = dynamic_cast<ra::data::context::mocks::MockGameContext*>(
+            &ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>());
+        if (mockGameContext != nullptr)
+            mockGameContext->MockSubset(nSubsetId, sName);
+    }
 }
 
 rc_client_achievement_info_t* MockAchievementRuntime::MockAchievement(uint32_t nId, const char* sTitle)

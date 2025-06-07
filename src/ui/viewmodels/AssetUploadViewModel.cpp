@@ -236,8 +236,10 @@ void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
 
 void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel& pAchievement)
 {
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+
     ra::api::UpdateAchievement::Request request;
-    request.GameId = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
+    request.GameId = pGameContext.GetGameId(pAchievement.GetSubsetID());
     request.Title = pAchievement.GetName();
     request.Description = pAchievement.GetDescription();
     request.Trigger = pAchievement.GetTrigger();
@@ -321,8 +323,10 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
 
 void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard)
 {
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+
     ra::api::UpdateLeaderboard::Request request;
-    request.GameId = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
+    request.GameId = pGameContext.GetGameId(pLeaderboard.GetSubsetID());
     request.Title = pLeaderboard.GetName();
     request.Description = pLeaderboard.GetDescription();
     request.StartTrigger = pLeaderboard.GetStartTrigger();

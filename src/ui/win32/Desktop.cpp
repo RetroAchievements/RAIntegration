@@ -62,7 +62,7 @@ Desktop::Desktop() noexcept
 void Desktop::ShowWindow(WindowViewModelBase& vmViewModel) const
 {
     if (m_pWindowBinding)
-        m_pWindowBinding->EnableInvokeOnUIThread();
+        ra::ui::win32::bindings::WindowBinding::EnableInvokeOnUIThread();
 
     auto* pPresenter = GetDialogPresenter(vmViewModel);
     if (pPresenter != nullptr)
@@ -87,7 +87,7 @@ ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel) const
 ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase& vmParentViewModel) const
 {
     if (m_pWindowBinding)
-        m_pWindowBinding->EnableInvokeOnUIThread();
+        ra::ui::win32::bindings::WindowBinding::EnableInvokeOnUIThread();
 
     auto* pPresenter = GetDialogPresenter(vmViewModel);
     if (pPresenter != nullptr)
@@ -187,8 +187,8 @@ void Desktop::SetMainHWnd(HWND hWnd)
     }
 
     m_pWindowBinding->SetHWND(nullptr, hWnd);
-    m_pWindowBinding->SetUIThread(::GetWindowThreadProcessId(hWnd, nullptr));
-    m_pWindowBinding->EnableInvokeOnUIThread();
+    ra::ui::win32::bindings::WindowBinding::SetUIThread(::GetWindowThreadProcessId(hWnd, nullptr));
+    ra::ui::win32::bindings::WindowBinding::EnableInvokeOnUIThread();
 
     g_RAMainWnd = hWnd;
 }

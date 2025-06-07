@@ -72,7 +72,8 @@ void OverlayRecentGamesPageViewModel::Refresh()
             auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
             for (const auto nGameId : vPendingGames)
             {
-                auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
+                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+                auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(pGameContext.ActiveGameId()));
                 if (pData != nullptr)
                 {
                     // found patchdata. extract title and badge

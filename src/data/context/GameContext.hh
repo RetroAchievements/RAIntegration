@@ -7,6 +7,8 @@
 #include <string>
 #include <atomic>
 
+struct rc_api_fetch_game_sets_response_t;
+
 namespace ra { namespace services { class AchievementRuntimeExports; } }
 
 namespace ra {
@@ -49,6 +51,14 @@ public:
     /// Gets the unique identifier of the currently loaded game.
     /// </summary>
     unsigned int GameId() const noexcept { return m_nGameId; }
+
+    /// <summary>
+    /// Gets the unique identifier of the currently loaded subset game.
+    /// </summary>
+    /// <remarks>
+    /// Will match <see cref="GameId"/> unless an exclusive or specialty subset is loaded.
+    /// </remarks>
+    unsigned int ActiveGameId() const noexcept { return m_nActiveGameId; }
 
     /// <summary>
     /// Gets the title of the currently loaded game.
@@ -147,9 +157,44 @@ public:
 
     void DoFrame();
 
+    enum SubsetType
+    {
+        Core,
+        Bonus,
+        Specialty,
+        Exclusive,
+    };
+
+    class Subset
+    {
+    public:
+        Subset(uint32_t nAchievementSetId, uint32_t nGameId, const std::wstring& sTitle, SubsetType nType) :
+            m_sTitle(sTitle), m_nType(nType), m_nAchievementSetId(nAchievementSetId), m_nGameId(nGameId)
+        {
+        }
+
+        const std::wstring& Title() const noexcept { return m_sTitle; }
+        SubsetType Type() const noexcept { return m_nType; }
+        uint32_t AchievementSetID() const noexcept { return m_nAchievementSetId; }
+        uint32_t GameID() const noexcept { return m_nGameId; }
+
+        // Core assets have SubsetId of 0
+        uint32_t ID() const noexcept { return (m_nType == SubsetType::Core) ? 0 : m_nAchievementSetId; }
+
+    private:
+        std::wstring m_sTitle;
+        SubsetType m_nType;
+        uint32_t m_nAchievementSetId;
+        uint32_t m_nGameId;
+    };
+    const std::vector<Subset>& Subsets() const noexcept { return m_vSubsets; }
+    void InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response);
+    uint32_t GetGameId(uint32_t nSubsetId) const noexcept;
+
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
     void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused);
+    void MigrateSubsetUserFiles();
 
     friend class ra::services::AchievementRuntimeExports;
     bool BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaused);
@@ -163,9 +208,12 @@ protected:
     void EndLoad();
 
     unsigned int m_nGameId = 0;
+    unsigned int m_nActiveGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
     Mode m_nMode{};
+
+    std::vector<Subset> m_vSubsets;
 
 private:
     /// <summary>

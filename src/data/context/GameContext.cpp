@@ -34,6 +34,7 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\src\rc_client_internal.h>
+#include <rcheevos\include\rc_api_runtime.h>
 
 namespace ra {
 namespace data {
@@ -113,6 +114,7 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
     // reset the GameContext
     m_nMode = nMode;
     m_sGameTitle.clear();
+    m_vSubsets.clear();
     m_vAssets.ResetLocalId();
 
     m_vAssets.BeginUpdate();
@@ -125,6 +127,7 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
         m_vAssets.EndUpdate();
 
         m_sGameHash.clear();
+        m_nActiveGameId = 0;
 
         if (m_nGameId != 0)
         {
@@ -139,7 +142,7 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
 
     // start the load process
     BeginLoad();
-    m_nGameId = GetRealGameId(nGameId);
+    m_nGameId = m_nActiveGameId = GetRealGameId(nGameId);
 
     // create a model for managing badges
     auto pLocalBadges = std::make_unique<ra::data::models::LocalBadgesModel>();
@@ -195,14 +198,14 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
         if (pGame == nullptr || pGame->id == 0)
         {
             // invalid hash
-            m_nGameId = 0;
+            m_nGameId = m_nActiveGameId = 0;
             m_sGameTitle.clear();
             m_sGameHash.clear();
             nResult = RC_NO_GAME_LOADED;
         }
         else if (!ValidateConsole(pGame->console_id))
         {
-            m_nGameId = 0;
+            m_nGameId = m_nActiveGameId = 0;
             m_sGameTitle.clear();
             m_sGameHash.clear();
             nResult = RC_INVALID_STATE;
@@ -472,6 +475,129 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
             }
         }
     }
+}
+
+void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response)
+{
+    Expects(game_data_response != nullptr);
+    m_vSubsets.clear();
+
+    // GameID dictates which game is loaded for purposes of local achievement storage and code notes
+    m_nGameId = game_data_response->id;
+    // ActiveGameID dictates which game is running for purposes of rich presence and pings
+    m_nActiveGameId = game_data_response->session_game_id;
+
+    for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
+    {
+        const auto* pSet = &game_data_response->sets[i];
+        if (pSet->type == RC_ACHIEVEMENT_SET_TYPE_CORE)
+        {
+            // core subset should always be first
+            m_vSubsets.insert(m_vSubsets.begin(),
+                              Subset(pSet->id, pSet->game_id, ra::Widen(pSet->title), SubsetType::Core));
+        }
+        else
+        {
+            SubsetType nType = SubsetType::Bonus;
+            switch (pSet->type)
+            {
+                case RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE:
+                    nType = SubsetType::Exclusive;
+                    break;
+                case RC_ACHIEVEMENT_SET_TYPE_SPECIALTY:
+                    nType = SubsetType::Specialty;
+                    break;
+                default:
+                    nType = SubsetType::Bonus;
+                    break;
+            }
+            m_vSubsets.emplace_back(pSet->id, pSet->game_id, ra::Widen(pSet->title), nType);
+        }
+    }
+
+    // if subsets were found, migrate any SUBSET-User.txt files into the the GAME-User.txt file
+    if (m_vSubsets.size() > 1)
+        MigrateSubsetUserFiles();
+}
+
+void GameContext::MigrateSubsetUserFiles()
+{
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    std::unique_ptr<ra::services::TextWriter> pGameData;
+
+    for (size_t i = 1; i < m_vSubsets.size(); ++i)
+    {
+        const auto& pSubset = m_vSubsets.at(i);
+        Expects(pSubset.GameID() != m_nGameId);
+
+        auto pSubsetData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements,
+                                                  std::to_wstring(pSubset.GameID()));
+        if (pSubsetData)
+        {
+            // replace ID with "0|SUBSETID" so new IDs will be generated
+            std::string sSubsetReplace = "0|" + std::to_string(pSubset.AchievementSetID());
+
+            if (!pGameData)
+            {
+                pGameData = pLocalStorage.AppendText(ra::services::StorageItemType::UserAchievements,
+                                                     std::to_wstring(m_nGameId));
+                if (!pGameData)
+                {
+                    RA_LOG_ERR("Could not append to %u-User.txt", m_nGameId);
+                    break;
+                }
+            }
+
+            std::string sLine;
+            pSubsetData->GetLine(sLine); // version
+            pSubsetData->GetLine(sLine); // game name
+            while (pSubsetData->GetLine(sLine))
+            {
+                if (!sLine.empty())
+                {
+                    if (isdigit(sLine.at(0)) || sLine.at(0) == 'L')
+                    {
+                        // found a local achievement or leaderboard. inject subset id
+                        const auto nIndex = sLine.find(':');
+                        if (nIndex != std::string::npos && nIndex > 8)
+                        {
+                            if (sLine.at(0) == 'L')
+                                sLine.replace(1, nIndex - 1, sSubsetReplace);
+                            else
+                                sLine.replace(0, nIndex, sSubsetReplace);
+                        }
+                    }
+                    else if (sLine.at(0) == 'N')
+                    {
+                        // found a note, just copy it over
+                    }
+                    else
+                    {
+                        // unexpected. ignore
+                        continue;
+                    }
+                }
+
+                pGameData->WriteLine(sLine);
+            }
+
+            // release the file so it can be deleted, then delete it.
+            pSubsetData.reset();
+            pLocalStorage.Delete(ra::services::StorageItemType::UserAchievements,
+                                 std::to_wstring(pSubset.GameID()));
+        }
+    }
+}
+
+uint32_t GameContext::GetGameId(uint32_t nSubsetId) const noexcept
+{
+    for (const auto& pSubset : m_vSubsets)
+    {
+        if (pSubset.ID() == nSubsetId)
+            return pSubset.GameID();
+    }
+
+    return GameId();
 }
 
 void GameContext::OnBeforeActiveGameChanged()

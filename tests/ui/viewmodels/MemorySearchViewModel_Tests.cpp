@@ -614,6 +614,63 @@ public:
         AssertRow(search, 0, 12U, L"0x000c", L"0x07");
     }
 
+    TEST_METHOD(TestApplyFilterEightBitPreserveScrollOffset)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+
+        search.ApplyFilter();
+        Assert::AreEqual({0}, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
+        Assert::AreEqual({32U}, search.GetResultCount());
+        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(std::wstring(L"= Last Known"), search.GetFilterSummary());
+
+        Assert::AreEqual({9U}, search.Results().Count());
+        search.SetScrollOffset(12);
+        Assert::AreEqual({12U}, search.Results().GetItemAt(0)->nAddress);
+        const auto sFirstItem = search.Results().GetItemAt(0)->GetCurrentValue();
+
+        // filter item after scroll offset - scroll offset should not change
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(std::wstring(L"15"));
+        search.ApplyFilter();
+        Assert::AreEqual({12}, search.GetScrollOffset());
+        Assert::AreEqual({31U}, search.GetResultCount());
+        Assert::AreEqual(sFirstItem, search.Results().GetItemAt(0)->GetCurrentValue());
+
+        // filter item before scroll offset - scroll offset should change so first item doesn't
+        search.SetFilterValue(std::wstring(L"6"));
+        search.ApplyFilter();
+        Assert::AreEqual({11}, search.GetScrollOffset());
+        Assert::AreEqual({30U}, search.GetResultCount());
+        Assert::AreEqual(sFirstItem, search.Results().GetItemAt(0)->GetCurrentValue());
+
+        // filter item at scroll offset - scroll offset should change
+        search.SetFilterValue(sFirstItem);
+        search.ApplyFilter();
+        Assert::AreEqual({10}, search.GetScrollOffset());
+        Assert::AreEqual({29U}, search.GetResultCount());
+        Assert::AreNotEqual(sFirstItem, search.Results().GetItemAt(0)->GetCurrentValue());
+
+        // filter item after scroll offset when scroll offset at maximum
+        search.SetScrollOffset(20);
+        search.SetFilterValue(std::wstring(L"30"));
+        search.ApplyFilter();
+        Assert::AreEqual({19}, search.GetScrollOffset());
+        Assert::AreEqual({28U}, search.GetResultCount());
+
+        // go to previous results page does not change offset
+        search.PreviousPage();
+        Assert::AreEqual({19}, search.GetScrollOffset());
+        Assert::AreEqual({29U}, search.GetResultCount());
+    }
+
     TEST_METHOD(TestApplyFilterAsciiTextConstant)
     {
         MemorySearchViewModelHarness search;

@@ -1383,7 +1383,7 @@ void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown)
         }
 
         // if F2 is pressed, and a primary edit column is specified, open the in-place editor for that column
-        if (pnmKeyDown->wVKey == VK_F2 && m_nPrimaryEditColumn != -1 && m_nPrimaryEditColumn < m_vColumns.size())
+        if (pnmKeyDown->wVKey == VK_F2 && m_nPrimaryEditColumn != -1 && ra::to_unsigned(m_nPrimaryEditColumn) < m_vColumns.size())
         {
             const auto& pColumn = m_vColumns.at(m_nPrimaryEditColumn);
             if (!pColumn->IsReadOnly())
@@ -1395,7 +1395,6 @@ void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown)
                     pInfo->nItemIndex = gsl::narrow_cast<gsl::index>(nFirstSelectedItem);
                     pInfo->nColumnIndex = 0;
 
-                    const auto& pColumn = m_vColumns.at(0);
                     OpenIPE(pInfo, *pColumn);
                 }
             }

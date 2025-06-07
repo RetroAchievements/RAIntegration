@@ -41,6 +41,7 @@ public:
     void SetDoubleClickHandler(std::function<void(gsl::index)> pHandler);
     void SetCopyHandler(std::function<void()> pHandler);
     void SetPasteHandler(std::function<void()> pHandler);
+    void SetPrimaryEditColumn(gsl::index nIndex) noexcept { m_nPrimaryEditColumn = nIndex; }
 
     void InitializeTooltips(std::chrono::milliseconds nDisplayTime);
 
@@ -146,6 +147,7 @@ private:
     std::function<void()> m_pPasteHandler = nullptr;
 
     gsl::index m_nSortIndex = -1;
+    gsl::index m_nPrimaryEditColumn = -1;
 
     std::chrono::steady_clock::time_point m_tFocusTime{};
     std::chrono::steady_clock::time_point m_tIPECloseTime{};

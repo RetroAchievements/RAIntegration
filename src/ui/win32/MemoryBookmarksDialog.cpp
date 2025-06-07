@@ -122,6 +122,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     m_bindBookmarks.SetShowGridLines(true);
     m_bindBookmarks.BindIsSelected(MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsSelectedProperty);
     m_bindBookmarks.BindRowColor(MemoryBookmarksViewModel::MemoryBookmarkViewModel::RowColorProperty);
+    m_bindBookmarks.SetPrimaryEditColumn(0);
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::DescriptionProperty);

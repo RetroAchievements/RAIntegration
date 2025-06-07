@@ -1382,11 +1382,11 @@ void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown)
                 m_pDoubleClickHandler(gsl::narrow_cast<gsl::index>(nFirstSelectedItem));
         }
 
-        // if F2 is pressed, and the first column is a text column, open the in-place editor
-        if (pnmKeyDown->wVKey == VK_F2)
+        // if F2 is pressed, and a primary edit column is specified, open the in-place editor for that column
+        if (pnmKeyDown->wVKey == VK_F2 && m_nPrimaryEditColumn != -1 && m_nPrimaryEditColumn < m_vColumns.size())
         {
-            const auto pTextColumn = dynamic_cast<const GridTextColumnBinding*>(m_vColumns.at(0).get());
-            if (pTextColumn && !pTextColumn->IsReadOnly())
+            const auto& pColumn = m_vColumns.at(m_nPrimaryEditColumn);
+            if (!pColumn->IsReadOnly())
             {
                 const int nFirstSelectedItem = ListView_GetNextItem(m_hWnd, -1, LVNI_SELECTED);
                 if (nFirstSelectedItem != -1)

@@ -734,11 +734,16 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(nMatches));
     SetValue(FilterSummaryProperty, pResult.sSummary);
 
+    // attempt to keep the current results in the results window
+    const auto nNewScrollOffset = (nMatches <= SEARCH_ROWS_DISPLAYED) ? 0
+        : std::min(CalculatePreserveResultsScrollOffset(pResult),
+                   gsl::narrow_cast<unsigned>(nMatches - SEARCH_ROWS_DISPLAYED));
+
     // prevent scrolling from triggering a call to UpdateResults - we'll do that in a few lines.
     m_bScrolling = true;
     // note: update maximum first - it can affect offset. then update offset to the value we want.
     SetValue(ScrollMaximumProperty, gsl::narrow_cast<int>(nMatches));
-    SetValue(ScrollOffsetProperty, 0);
+    SetValue(ScrollOffsetProperty, nNewScrollOffset);
     m_bScrolling = false;
 
     m_vSelectedAddresses.clear();
@@ -747,6 +752,70 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
 
     SetValue(CanGoToPreviousPageProperty, (nNewPage > 1));
     SetValue(CanGoToNextPageProperty, (nNewPage < m_vSearchResults.size() - 1));
+}
+
+unsigned MemorySearchViewModel::CalculatePreserveResultsScrollOffset(const SearchResult& pResult) const
+{
+    const auto nScrollOffset = GetScrollOffset();
+    if (nScrollOffset == 0)
+        return 0;
+
+    // Results() is virtualizing. The first item in Results() is the item at the scroll offset
+    const auto* nItemAtScrollOffset = m_vResults.GetItemAt(0);
+    if (nItemAtScrollOffset == nullptr)
+        return 0;
+
+    const auto nAddressAtScrollOffset = nItemAtScrollOffset->nAddress;
+
+    ra::services::SearchResults::Result pSearchResult;
+    if (pResult.pResults.GetMatchingAddress(nScrollOffset, pSearchResult) &&
+        pSearchResult.nAddress == nAddressAtScrollOffset)
+    {
+        // item offset didn't change
+        return nScrollOffset;
+    }
+
+    // find new offset of item (or nearest item)
+    // assume a non-match means the item was filtered out and will be at an index
+    // lower than nScrollOffset
+    gsl::index nLow = 0;
+    gsl::index nHigh = nScrollOffset;
+
+    // if the found item is lower than the search item, search forward instead of back
+    if (pSearchResult.nAddress < nAddressAtScrollOffset)
+    {
+        nLow = gsl::narrow_cast<gsl::index>(nScrollOffset + 1);
+        nHigh = gsl::narrow_cast<gsl::index>(pResult.pResults.MatchingAddressCount());
+    }
+
+    do
+    {
+        const gsl::index nMid = (nLow + nHigh) / 2;
+        if (!pResult.pResults.GetMatchingAddress(nMid, pSearchResult))
+        {
+            // nMid outside results range, set new upper limit
+            nHigh = gsl::narrow_cast<gsl::index>(pResult.pResults.MatchingAddressCount());
+        }
+        else if (pSearchResult.nAddress == nAddressAtScrollOffset)
+        {
+            // found a match
+            return gsl::narrow_cast<unsigned int>(nMid);
+        }
+        else
+        {
+            // apply bsearch algorithm
+            if (pSearchResult.nAddress > nAddressAtScrollOffset)
+                nHigh = nMid;
+            else
+                nLow = nMid + 1;
+        }
+    } while (nLow < nHigh);
+
+    // no match found, return the closest item before the search item (if one exists)
+    if (nHigh < 1)
+        return 0;
+
+    return gsl::narrow_cast<unsigned int>(nHigh - 1);
 }
 
 void MemorySearchViewModel::UpdateResults()

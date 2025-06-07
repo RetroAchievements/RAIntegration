@@ -4,5 +4,5 @@ contact_links:
     url: https://github.com/RetroAchievements/RAIntegration/discussions/new?category=ideas
     about: Share ideas for new features or enhancements to the toolkit
   - name: Report a bug
-    url: https://github.com/RetroAchievements/RAIntegration/issues/new
+    url: https://github.com/RetroAchievements/RAIntegration/issues/new/choose
     about: Report an issue with one of the toolkit features

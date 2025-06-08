@@ -167,6 +167,12 @@ public:
         return rc_client_get_spectator_mode_enabled(pClient.GetClient());
     }
 
+    static void set_allow_background_memory_reads(int value)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_set_allow_background_memory_reads(pClient.GetClient(), value);
+    }
+
     static void abort_async(rc_client_async_handle_t* handle)
     {
         const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
@@ -317,26 +323,26 @@ public:
         return rc_client_get_user_game_summary(pClient.GetClient(), summary);
     }
 
-    static rc_client_async_handle_t* begin_change_media(rc_client_t* client, const char* file_path,
-                                                        const uint8_t* data, size_t data_size,
-                                                        rc_client_callback_t callback, void* callback_userdata)
+    static rc_client_async_handle_t* begin_identify_and_change_media(rc_client_t* client, const char* file_path,
+                                                                     const uint8_t* data, size_t data_size,
+                                                                     rc_client_callback_t callback, void* callback_userdata)
     {
         GSL_SUPPRESS_R3
         auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return pClient.BeginChangeMedia(file_path, data, data_size, pCallbackData);
+        return pClient.BeginIdentifyAndChangeMedia(file_path, data, data_size, pCallbackData);
     }
 
-    static rc_client_async_handle_t* begin_change_media_from_hash(rc_client_t* client,
-                                                                  const char* hash, rc_client_callback_t callback,
-                                                                  void* callback_userdata)
+    static rc_client_async_handle_t* begin_change_media(rc_client_t* client,
+                                                        const char* hash, rc_client_callback_t callback,
+                                                        void* callback_userdata)
     {
         GSL_SUPPRESS_R3
         auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return pClient.BeginChangeMediaFromHash(hash, pCallbackData);
+        return pClient.BeginChangeMedia(hash, pCallbackData);
     }
 
     static rc_client_achievement_list_info_t* create_achievement_list(int category, int grouping)
@@ -844,7 +850,10 @@ private:
     
     static void RaisePauseEvent() noexcept
     {
-        RaiseIntegrationEvent(RC_CLIENT_RAINTEGRATION_EVENT_PAUSE);
+        // not actually a memory read, but we want it to occur in the DoFrame loop
+        ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().QueueMemoryRead([]() {
+            RaiseIntegrationEvent(RC_CLIENT_RAINTEGRATION_EVENT_PAUSE);
+        });
     }
 
     static void RaiseResetEvent() noexcept
@@ -983,8 +992,8 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal) noexcept
     pClientExternal->get_subset_info = ra::services::AchievementRuntimeExports::get_subset_info;
     pClientExternal->unload_game = ra::services::AchievementRuntimeExports::unload_game;
     pClientExternal->get_user_game_summary = ra::services::AchievementRuntimeExports::get_user_game_summary;
+    pClientExternal->begin_identify_and_change_media = ra::services::AchievementRuntimeExports::begin_identify_and_change_media;
     pClientExternal->begin_change_media = ra::services::AchievementRuntimeExports::begin_change_media;
-    pClientExternal->begin_change_media_from_hash = ra::services::AchievementRuntimeExports::begin_change_media_from_hash;
 
     pClientExternal->create_achievement_list = ra::services::AchievementRuntimeExports::create_achievement_list;
     pClientExternal->has_achievements = ra::services::AchievementRuntimeExports::has_achievements;
@@ -1034,6 +1043,12 @@ static void GetExternalClientV3(rc_client_external_t* pClientExternal) noexcept
     pClientExternal->create_achievement_list_v3 = ra::services::AchievementRuntimeExports::create_achievement_list;
 }
 
+static void GetExternalClientV4(rc_client_external_t* pClientExternal) noexcept
+{
+    pClientExternal->set_allow_background_memory_reads =
+        ra::services::AchievementRuntimeExports::set_allow_background_memory_reads;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1044,6 +1059,10 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal,
     {
         default:
             RA_LOG_WARN("Unknown rc_client_external interface version: %s", nVersion);
+            __fallthrough;
+
+        case 4:
+            GetExternalClientV4(pClientExternal);
             __fallthrough;
 
         case 3:

@@ -163,6 +163,11 @@ public:
         uint32_t GetCurrentValueRaw() const noexcept { return m_nValue; }
 
         /// <summary>
+        /// Sets the current value of the bookmarked address.
+        /// </summary>
+        void SetCurrentValueRaw(unsigned nValue);
+
+        /// <summary>
         /// The <see cref="ModelProperty" /> for the previous value of the bookmarked address.
         /// </summary>
         static const StringModelProperty PreviousValueProperty;

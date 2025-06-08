@@ -744,7 +744,8 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[]
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     if (!pRuntime.IsOnDoFrameThread())
     {
-        Expects(ra::services::ServiceLocator::Get<ra::data::context::GameContext>().IsGameLoading());
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        Expects(pGameContext.GameId() == 0 || pGameContext.IsGameLoading());
     }
 #endif
 
@@ -1070,13 +1071,23 @@ void EmulatorContext::RebuildMenu() const
 void EmulatorContext::Reset() const
 {
     if (m_fResetEmulator)
-        ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread(m_fResetEmulator);
+    {
+        if (IsExternalRcheevosClient()) // AchievementRuntimeExports will determine which thread to notify
+            m_fResetEmulator();
+        else
+            ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread(m_fResetEmulator);
+    }
 }
 
 void EmulatorContext::Pause() const
 {
     if (m_fPauseEmulator)
-        ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread(m_fPauseEmulator);
+    {
+        if (IsExternalRcheevosClient()) // AchievementRuntimeExports will determine which thread to notify
+            m_fPauseEmulator();
+        else
+            ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread(m_fPauseEmulator);
+    }
 }
 
 void EmulatorContext::Unpause() const

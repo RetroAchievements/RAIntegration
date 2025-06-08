@@ -453,7 +453,7 @@ void MemoryInspectorViewModel::ToggleBit(int nBit)
 
     // push the updated value to the emulator
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    pEmulatorContext.WriteMemoryByte(nAddress, nValue);
+    pEmulatorContext.WriteMemoryByte(nAddress, gsl::narrow_cast<uint8_t>(nValue));
 
     // update the local value, which will cause the bits string to get updated
     SetValue(CurrentAddressValueProperty, nValue);

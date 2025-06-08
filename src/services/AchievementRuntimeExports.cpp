@@ -848,10 +848,10 @@ private:
         return 0;
     }
     
-    static void RaisePauseEvent() noexcept
+    static void RaisePauseEvent()
     {
         // not actually a memory read, but we want it to occur in the DoFrame loop
-        ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().QueueMemoryRead([]() {
+        ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().QueueMemoryRead([]() noexcept {
             RaiseIntegrationEvent(RC_CLIENT_RAINTEGRATION_EVENT_PAUSE);
         });
     }

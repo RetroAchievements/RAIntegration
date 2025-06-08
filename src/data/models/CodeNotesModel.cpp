@@ -521,7 +521,7 @@ void CodeNotesModel::DoFrame()
             {
                 // pointer hasn't been read before, only raise event for new address
                 pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext,
-                    [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
+                    [this](ra::ByteAddress, ra::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
                         m_fCodeNoteChanged(nNewAddress, pOffsetNote.GetNote());
                     });
             }

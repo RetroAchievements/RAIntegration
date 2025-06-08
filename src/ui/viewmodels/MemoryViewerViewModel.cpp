@@ -672,7 +672,7 @@ uint8_t MemoryViewerViewModel::GetValueAtAddress(ra::ByteAddress nAddress) const
     if (nAddress < nFirstAddress)
         return 0;
     const auto nOffset = nAddress - nFirstAddress;
-    const auto nVisibleLines = GetNumVisibleLines();
+    const auto nVisibleLines = ra::to_unsigned(GetNumVisibleLines());
     if (nOffset >= nVisibleLines * 16)
         return 0;
 

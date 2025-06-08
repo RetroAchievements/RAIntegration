@@ -161,7 +161,7 @@ public:
     void AsyncServerCall(const rc_api_request_t* pRequest, AsyncServerCallCallback fCallback, void* pCallbackData) const;
 
     void QueueMemoryRead(std::function<void()>&& fCallback) const;
-    bool IsOnDoFrameThread() const { return m_hDoFrameThread && GetCurrentThreadId() == m_hDoFrameThread; }
+    bool IsOnDoFrameThread() const noexcept { return m_hDoFrameThread && GetCurrentThreadId() == m_hDoFrameThread; }
 
     class Synchronizer
     {

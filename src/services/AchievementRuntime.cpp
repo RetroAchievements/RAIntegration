@@ -440,7 +440,7 @@ typedef struct QueueMemoryReadData
 static void DispatchMemoryRead(struct rc_client_scheduled_callback_data_t* callback_data,
                                rc_client_t*, rc_clock_t)
 {
-    QueueMemoryReadData* data = (QueueMemoryReadData*)callback_data->data;
+    QueueMemoryReadData* data = static_cast<QueueMemoryReadData*>(callback_data->data);
     data->fCallback();
 
     delete data;
@@ -466,7 +466,7 @@ void AchievementRuntime::QueueMemoryRead(std::function<void()>&& fCallback) cons
     data->fCallback = std::move(fCallback);
 
     rc_client_scheduled_callback_data_t* scheduled_callback =
-        (rc_client_scheduled_callback_data_t*)calloc(1, sizeof(rc_client_scheduled_callback_data_t));
+        static_cast<rc_client_scheduled_callback_data_t*>(calloc(1, sizeof(rc_client_scheduled_callback_data_t)));
     Expects(scheduled_callback != nullptr);
     scheduled_callback->callback = DispatchMemoryRead;
     scheduled_callback->data = data;

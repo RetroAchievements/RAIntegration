@@ -82,6 +82,20 @@ public:
         auto pCodeNotes = std::make_unique<MockCodeNotesModel>();
         pCodeNotes->Initialize(1U,
             [this](ra::ByteAddress nAddress, const std::wstring& sNote) {
+                // a note with pointer notation is expected to keep track of where each
+                // pointed-at note exists. this normally occurs in DoFrame, but for
+                // the unit tests, force the update immediately after the note is updated
+                auto* pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
+                if (pCodeNotes)
+                {
+                    auto* pNote = const_cast<ra::data::models::CodeNoteModel*>(pCodeNotes->FindCodeNoteModel(nAddress, false));
+                    if (pNote && pNote->IsPointer())
+                    {
+                        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+                        pNote->UpdateRawPointerValue(nAddress, pEmulatorContext, nullptr);
+                    }
+                }
+
                 OnCodeNoteChanged(nAddress, sNote);
             });
         Assets().Append(std::move(pCodeNotes));

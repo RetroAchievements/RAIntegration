@@ -264,8 +264,10 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::FindNestedCode
 
 void PointerInspectorViewModel::OnSelectedNodeChanged(int nNewNode)
 {
-    const auto* pNote = UpdatePointerChain(nNewNode);
-    LoadNote(pNote);
+    DispatchMemoryRead([this, nNewNode]() {
+        const auto* pNote = UpdatePointerChain(nNewNode);
+        LoadNote(pNote);
+    });
 }
 
 void PointerInspectorViewModel::OnSelectedFieldChanged(int nNewFieldIndex)
@@ -357,8 +359,7 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
             pItem->SetSize(MemSize::EightBit);
         }
 
-        UpdatePointerChainRowColor(*pItem);
-        pItem->EndInitialization();
+        // EndInitialization does memory reads, so it must be dispatched. we'll do it in a bit
 
         ++nInsertIndex;
 
@@ -368,7 +369,12 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
     while (nCount > nInsertIndex)
         PointerChain().RemoveAt(--nCount);
 
-    UpdatePointerChainValues();
+    DispatchMemoryRead([this]() {
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(PointerChain().Count()); i++)
+            PointerChain().GetItemAt(i)->EndInitialization();
+
+        UpdatePointerChainValues();
+    });
 
     PointerChain().EndUpdate();
 
@@ -495,7 +501,7 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
             pItem->SetOffset(sOffset);
             SyncField(*pItem, pOffsetNote);
 
-            pItem->EndInitialization();
+            // EndInitialization does memory reads, so it must be dispatched. we'll do it in a bit
 
             ++nInsertIndex;
             return true;
@@ -504,7 +510,13 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
     while (nCount > nInsertIndex)
         Bookmarks().RemoveAt(--nCount);
 
-    UpdateValues();
+    DispatchMemoryRead([this]() {
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(Bookmarks().Count()); i++)
+            Bookmarks().GetItemAt(i)->EndInitialization();
+
+        UpdateValues();
+    });
+
     Bookmarks().EndUpdate();
 
     OnSelectedFieldChanged(GetValue(SingleSelectionIndexProperty));

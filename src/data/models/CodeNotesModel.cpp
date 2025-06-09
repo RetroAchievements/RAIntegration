@@ -26,6 +26,7 @@ void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCode
 {
     m_nGameId = nGameId;
     m_vCodeNotes.clear();
+    m_bHasPointers = false;
 
     if (nGameId == 0)
     {
@@ -82,6 +83,15 @@ void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCode
         for (const auto pNote : mPendingCodeNotes)
             SetCodeNote(pNote.first, pNote.second);
 
+        for (const auto& pNote : m_vCodeNotes)
+        {
+            if (pNote->IsPointer())
+            {
+                m_bHasPointers = true;
+                break;
+            }
+        }
+
         callback();
     });
 }
@@ -102,14 +112,8 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
     note->SetAddress(nAddress);
 
     const bool bIsPointer = note->IsPointer();
-    if (bIsPointer)
-    {
+    if (bIsPointer && !m_bRefreshing)
         m_bHasPointers = true;
-
-        // capture the initial value of the pointer
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        note->UpdateRawPointerValue(nAddress, pEmulatorContext, nullptr);
-    }
 
     {
         std::unique_lock<std::mutex> lock(m_oMutex);
@@ -122,18 +126,7 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
 
     OnCodeNoteChanged(nAddress, sNote);
 
-    // also raise CodeNoteChanged events for each indirect child note
-    if (bIsPointer && m_fCodeNoteChanged)
-    {
-        const auto* pCodeNote = FindCodeNoteModel(nAddress);
-        if (pCodeNote != nullptr)
-        {
-            pCodeNote->EnumeratePointerNotes([this](ra::ByteAddress nAddress, const CodeNoteModel& pOffsetNote) {
-                m_fCodeNoteChanged(nAddress, pOffsetNote.GetNote());
-                return true;
-            });
-        }
-    }
+    // CodeNoteChanged events for indirect child notes will be raised by first call to DoFrame
 }
 
 void CodeNotesModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
@@ -511,11 +504,27 @@ void CodeNotesModel::DoFrame()
     {
         if (pCodeNote->IsPointer())
         {
-            pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext,
-                [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
-                    m_fCodeNoteChanged(nOldAddress, L"");
-                    m_fCodeNoteChanged(nNewAddress, pOffsetNote.GetNote());
-                });
+            if (!m_fCodeNoteChanged)
+            {
+                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext, nullptr);
+            }
+            else if (pCodeNote->HasRawPointerValue())
+            {
+                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext,
+                    [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
+                        const auto* pNote = FindCodeNoteModel(nOldAddress, false);
+                        m_fCodeNoteChanged(nOldAddress, pNote ? pNote->GetNote() : L"");
+                        m_fCodeNoteChanged(nNewAddress, pOffsetNote.GetNote());
+                    });
+            }
+            else
+            {
+                // pointer hasn't been read before, only raise event for new address
+                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext,
+                    [this](ra::ByteAddress, ra::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
+                        m_fCodeNoteChanged(nNewAddress, pOffsetNote.GetNote());
+                    });
+            }
         }
     }
 }

@@ -34,6 +34,7 @@ public:
     bool IsPointer() const noexcept { return m_pPointerData != nullptr; }
     std::wstring GetPointerDescription() const;
     ra::ByteAddress GetPointerAddress() const noexcept;
+    bool HasRawPointerValue() const noexcept;
     uint32_t GetRawPointerValue() const noexcept;
     bool HasNestedPointers() const noexcept;
     const CodeNoteModel* GetPointerNoteAtOffset(int nOffset) const;

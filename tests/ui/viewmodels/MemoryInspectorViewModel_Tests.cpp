@@ -60,6 +60,8 @@ private:
             mockUserContext.SetUsername("Author");
 
             mockGameContext.InitializeCodeNotes();
+
+            Viewer().DoFrame(); // load memory into viewer so CurrentAddress value can be read
         }
 
         ~MemoryInspectorViewModelHarness()
@@ -739,6 +741,7 @@ public:
             L"[32-bit pointer] Player data\n"
             L"+4: [32-bit] Current HP\n"
             L"+8: [32-bit] Max HP");
+        inspector.mockGameContext.DoFrame(); // force indirect code note initialization
 
         inspector.SetCurrentAddress(16U);
         inspector.BookmarkCurrentAddress();

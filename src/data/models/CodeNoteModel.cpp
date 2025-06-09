@@ -16,10 +16,10 @@ struct CodeNoteModel::PointerData
 {
     uint32_t RawPointerValue = 0xFFFFFFFF;       // last raw value of pointer captured
     ra::ByteAddress PointerAddress = 0xFFFFFFFF; // raw pointer value converted to RA address
-    ra::ByteAddress NoteAddress = 0xFFFFFFFF;    // RA address where RawPointerValue was read from
     unsigned int OffsetRange = 0;                // highest offset captured within pointer block
     unsigned int HeaderLength = 0;               // length of note text not associated to OffsetNotes
     bool HasPointers = false;                    // true if there are nested pointers
+    bool PointerRead = false;                    // true the first time RawPointerValue is updated
 
     enum OffsetType
     {
@@ -65,6 +65,11 @@ ra::ByteAddress CodeNoteModel::GetPointerAddress() const noexcept
     return m_pPointerData != nullptr ? m_pPointerData->PointerAddress : 0xFFFFFFFF;
 }
 
+bool CodeNoteModel::HasRawPointerValue() const noexcept
+{
+    return m_pPointerData != nullptr ? m_pPointerData->PointerRead : false;
+}
+
 uint32_t CodeNoteModel::GetRawPointerValue() const noexcept
 {
     return m_pPointerData != nullptr ? m_pPointerData->RawPointerValue : 0xFFFFFFFF;
@@ -91,7 +96,7 @@ void CodeNoteModel::UpdateRawPointerValue(ra::ByteAddress nAddress, const ra::da
     if (m_pPointerData == nullptr)
         return;
 
-    m_pPointerData->NoteAddress = nAddress;
+    m_pPointerData->PointerRead = true;
 
     const uint32_t nValue = pEmulatorContext.ReadMemory(nAddress, GetMemSize());
     if (nValue != m_pPointerData->RawPointerValue)

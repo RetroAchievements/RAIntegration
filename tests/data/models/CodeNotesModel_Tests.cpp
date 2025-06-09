@@ -394,6 +394,7 @@ public:
             L"+03 - Bombs Defused\n"
             L"+04 - Bomb Timer";
         notes.AddCodeNote(1234, "Author", sNote);
+        notes.DoFrame();
 
         notes.AssertNote(1234U, sNote, MemSize::TwentyFourBit); // full note for pointer address
 
@@ -411,6 +412,7 @@ public:
             L"---DEFAULT_HEAD = Barry's Head\n"
             L"---FRAGGER_HEAD = Fragger Helmet";
         notes.AddCodeNote(1234, "Author", sNote);
+        notes.DoFrame();
 
         notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit); // full note for pointer address
 
@@ -429,6 +431,7 @@ public:
             L"+0x8000 = [8-bit] Current lap\n"
             L"+0x8033 = [16-bit] Total race time";
         notes.AddCodeNote(1234, "Author", sNote);
+        notes.DoFrame();
 
         notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit); // full note for pointer address
 
@@ -450,6 +453,7 @@ public:
             L"+0x1B5BE = Seconds 0x\n"
             L"+0x1B5CE = Lap";
         notes.AddCodeNote(1234, "Author", sNote);
+        notes.DoFrame();
 
         notes.AssertNote(1234U, sNote, MemSize::SixteenBit); // full note for pointer address
 
@@ -472,6 +476,7 @@ public:
             L"+20 = Stat Points (16-bit)\r\n"
             L"+22 = Skill Points (8-bit)";
         notes.AddCodeNote(1234, "Author", sNote);
+        notes.DoFrame();
 
         notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit, 4); // full note for pointer address (assume 32-bit if not specified)
 
@@ -493,6 +498,7 @@ public:
             L"+0x438 | Pointer - Award - Pretty Woman (32bit)\n"
             L"--- +0x24C | Flag";
         notes.AddCodeNote(1234, "Author", sNote);
+        notes.DoFrame();
 
         notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit); // full note for pointer address
 
@@ -513,6 +519,7 @@ public:
             L"+5C = Right Leg Health {16-bit}\n"
             L"+5E = Left Leg Health {16-bit}";
         notes.AddCodeNote(1234, "Author", sNote);
+        notes.DoFrame();
 
         // offset parse failure results in a non-pointer note
         notes.AssertNote(1234U, sNote, MemSize::TwentyFourBit);
@@ -531,6 +538,7 @@ public:
             L"+0x1B56E = Seconds 0x\n"
             L"+0x1B5CE = Lap";
         notes.AddCodeNote(1234, "Author", sNote);
+        notes.DoFrame();
 
         notes.AssertNote(1234U, sNote, MemSize::SixteenBit); // full note for pointer address
 
@@ -552,6 +560,7 @@ public:
             L"+6 = Large (32-bit)\n"
             L"+10 = Very Large (8 bytes)";
         notes.AddCodeNote(1234, "Author", sNote);
+        notes.DoFrame();
 
         Assert::AreEqual(std::wstring(), notes.FindCodeNote(0, MemSize::EightBit));
         Assert::AreEqual(std::wstring(L"Unknown [indirect]"), notes.FindCodeNote(1, MemSize::EightBit));
@@ -594,6 +603,7 @@ public:
         notes.AddCodeNote(40, "Author", L"After [32-bit]");
         notes.AddCodeNote(1, "Author", L"Before");
         notes.AddCodeNote(20, "Author", L"In the middle");
+        notes.DoFrame();
 
         Assert::AreEqual(std::wstring(), notes.FindCodeNote(0, MemSize::EightBit));
         Assert::AreEqual(std::wstring(L"Before"), notes.FindCodeNote(1, MemSize::EightBit));
@@ -627,6 +637,7 @@ public:
         notes.AddCodeNote(20, "Author", L"After [32-bit]");
         notes.AddCodeNote(4, "Author", L"Before");
         notes.AddCodeNote(12, "Author", L"In the middle");
+        notes.DoFrame();
 
         int i = 0;
         notes.EnumerateCodeNotes([&i, &sPointerNote](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
@@ -671,6 +682,7 @@ public:
         notes.AddCodeNote(20, "Author", L"After [32-bit]");
         notes.AddCodeNote(4, "Author", L"Before");
         notes.AddCodeNote(12, "Author", L"In the middle");
+        notes.DoFrame();
 
         int i = 0;
         notes.EnumerateCodeNotes([&i, &sPointerNote](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
@@ -731,6 +743,7 @@ public:
         notes.AddCodeNote(40, "Author", L"After [32-bit]");
         notes.AddCodeNote(1, "Author", L"Before");
         notes.AddCodeNote(20, "Author", L"In the middle");
+        notes.DoFrame();
 
         int i = 0;
         notes.EnumerateCodeNotes([&i, &sPointerNote](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
@@ -796,6 +809,7 @@ public:
             L"+2 = Medium (16-bit)\n"
             L"+4 = Large (32-bit)";
         notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.DoFrame();
 
         // should receive notifications for the pointer note, and for each subnote
         Assert::AreEqual({4U}, notes.mNewNotes.size());
@@ -868,6 +882,7 @@ public:
             L"+2 = Medium (16-bit)\n"
             L"+4 = Large (32-bit)";
         notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.DoFrame();
 
         // should receive notifications for the pointer note, and for each subnote
         Assert::AreEqual({4U}, notes.mNewNotes.size());
@@ -915,6 +930,7 @@ public:
             L"+2 = Medium (16-bit)\n"
             L"+4 = Large (32-bit)";
         notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.DoFrame();
 
         // should receive notifications for the pointer note, and for each subnote
         Assert::AreEqual({4U}, notes.mNewNotes.size());
@@ -962,6 +978,7 @@ public:
             L"+0xFFFFFF82 = Medium (16-bit)\n"
             L"+0xFFFFFF84 = Large (32-bit)";
         notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.DoFrame();
 
         // should receive notifications for the pointer note, and for each subnote
         Assert::AreEqual({4U}, notes.mNewNotes.size());
@@ -1008,6 +1025,7 @@ public:
             L"+2 = Medium (16-bit)\n"
             L"+4 = Large (32-bit)";
         notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.DoFrame();
 
         // indirect notes are at 0x11 (byte), 0x12 (word), and 0x14 (dword)
         Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(0x10));
@@ -1035,6 +1053,7 @@ public:
             L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
             L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
         notes.AddCodeNote(4, "Author", sPointerNote);
+        notes.DoFrame();
 
         // indirect notes are at 16 (byte), 24 (word), and 32 (dword)
         Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(15));
@@ -1069,6 +1088,7 @@ public:
             L"+4 = Large (32-bit)";
         notes.AddCodeNote(0x0000, "Author", sNote);
         notes.AddCodeNote(0x0008, "Author", L"Not indirect");
+        notes.DoFrame();
 
         // indirect notes are at 0x11 (byte), 0x12 (word), and 0x14 (dword)
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x10));
@@ -1100,6 +1120,7 @@ public:
             L"+0xFFFFFF84 = Large (32-bit)";
         notes.AddCodeNote(0x0004, "Author", sNote);
         notes.AddCodeNote(0x0008, "Author", L"Not indirect");
+        notes.DoFrame();
 
         // indirect notes are at 0x11 (byte), 0x12 (word), and 0x14 (dword)
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x10));
@@ -1253,6 +1274,7 @@ public:
         notes.AddCodeNote(20, "Author", L"After [32-bit]");
         notes.AddCodeNote(4, "Author", L"Before");
         notes.AddCodeNote(12, "Author", L"In the middle");
+        notes.DoFrame();
 
         Assert::AreEqual({4U}, notes.GetNextNoteAddress({0U}));
         Assert::AreEqual({12U}, notes.GetNextNoteAddress({4U}));
@@ -1286,6 +1308,7 @@ public:
         notes.AddCodeNote(40, "Author", L"After [32-bit]");
         notes.AddCodeNote(1, "Author", L"Before");
         notes.AddCodeNote(20, "Author", L"In the middle");
+        notes.DoFrame();
 
         Assert::AreEqual({1U}, notes.GetNextNoteAddress({0U}));
         Assert::AreEqual({4U}, notes.GetNextNoteAddress({1U}));
@@ -1314,6 +1337,7 @@ public:
         notes.AddCodeNote(20, "Author", L"After [32-bit]");
         notes.AddCodeNote(4, "Author", L"Before");
         notes.AddCodeNote(12, "Author", L"In the middle");
+        notes.DoFrame();
 
         Assert::AreEqual({1234U}, notes.GetPreviousNoteAddress({0xFFFFFFFFU}));
         Assert::AreEqual({20U}, notes.GetPreviousNoteAddress({1234U}));
@@ -1347,6 +1371,7 @@ public:
         notes.AddCodeNote(40, "Author", L"After [32-bit]");
         notes.AddCodeNote(1, "Author", L"Before");
         notes.AddCodeNote(20, "Author", L"In the middle");
+        notes.DoFrame();
 
         Assert::AreEqual({40U}, notes.GetPreviousNoteAddress({0xFFFFFFFFU}));
         Assert::AreEqual({20U}, notes.GetPreviousNoteAddress({40U}));

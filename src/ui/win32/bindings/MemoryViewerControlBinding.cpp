@@ -258,9 +258,10 @@ bool MemoryViewerControlBinding::HandleShortcut(UINT nChar)
                 nModifier *= 16;
 
             if (nChar == VK_ADD)
-                return m_pViewModel.IncreaseCurrentValue(nModifier);
+                m_pViewModel.IncreaseCurrentValue(nModifier);
             else
-                return m_pViewModel.DecreaseCurrentValue(nModifier);
+                m_pViewModel.DecreaseCurrentValue(nModifier);
+            return true;
         }
 
         default:

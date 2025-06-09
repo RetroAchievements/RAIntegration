@@ -218,7 +218,7 @@ public:
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const noexcept;
+    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const;
 
     /// <summary>
     /// Reads memory from the emulator.
@@ -234,6 +234,12 @@ public:
     /// Writes memory to the emulator.
     /// </summary>
     void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const;
+
+    class DispatchesReadMemory
+    {
+    protected:
+        static void DispatchMemoryRead(std::function<void()>&& fFunction);
+    };
 
     /// <summary>
     /// Converts an address to a displayable string.

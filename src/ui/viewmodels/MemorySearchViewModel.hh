@@ -21,6 +21,7 @@ namespace viewmodels {
 class MemorySearchViewModel : public ViewModelBase,
     protected ViewModelCollectionBase::NotifyTarget,
     protected ra::data::context::EmulatorContext::NotifyTarget,
+    protected ra::data::context::EmulatorContext::DispatchesReadMemory,
     protected ra::data::context::GameContext::NotifyTarget
 {
 public:
@@ -429,6 +430,7 @@ public:
     void ToggleContinuousFilter();
     static const BoolModelProperty CanContinuousFilterProperty;
     static const StringModelProperty ContinuousFilterLabelProperty;
+    bool IsContinuousFiltering() const noexcept { return m_bIsContinuousFiltering; }
 
     /// <summary>
     /// Excludes the currently selected items from the search results.
@@ -471,9 +473,10 @@ protected:
 
 private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
+    void BeginNewSearch(ra::ByteAddress nStart, ra::ByteAddress nEnd);
     void ApplyContinuousFilter();
     void UpdateResults();
-    void DoUpdateResults();
+    void DoApplyFilter();
     void UpdateResult(SearchResultViewModel& pRow, const ra::services::SearchResults& pResults,
         ra::services::SearchResults::Result& pResult, bool bForceFilterCheck,
         const ra::data::context::EmulatorContext& pEmulatorContext);
@@ -492,7 +495,6 @@ private:
     std::chrono::steady_clock::time_point m_tLastContinuousFilterCheck;
     bool m_bScrolling = false;
     bool m_bSelectingFilter = false;
-    bool m_bUpdateResultsPending = false;
 
     std::mutex m_oMutex;
 

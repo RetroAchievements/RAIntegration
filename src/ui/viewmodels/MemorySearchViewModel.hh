@@ -505,6 +505,7 @@ private:
     };
 
     void LoadResults(ra::services::TextReader& sFile, SearchResult& pResult) const;
+    unsigned CalculatePreserveResultsScrollOffset(const SearchResult& pResult) const;
 
     void AddNewPage(std::unique_ptr<SearchResult>&& pNewPage);
     void ChangePage(size_t nNewPage);

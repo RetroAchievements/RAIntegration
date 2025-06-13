@@ -226,7 +226,6 @@ private:
     void UpdatePointerChainValues();
     void UpdateValues();
     std::string GetMemRefChain(bool bMeasured) const;
-    static std::wstring TrimSize(const std::wstring& sNote, bool bKeepPointer);
 
     void BuildNote(ra::StringBuilder& builder,
                    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain, gsl::index nDepth,

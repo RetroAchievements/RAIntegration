@@ -748,7 +748,7 @@ public:
         Assert::AreEqual({16U}, pBookmarks.GetItemAt(0)->GetAddress());
         Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(0)->GetSize());
         Assert::AreEqual(std::string("I:0xX0004_M:0xX0004"), pBookmarks.GetItemAt(0)->GetIndirectAddress());
-        Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), pBookmarks.GetItemAt(0)->GetDescription());
+        Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), pBookmarks.GetItemAt(0)->GetRealNote());
     }
 };
 

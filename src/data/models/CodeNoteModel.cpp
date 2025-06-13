@@ -878,6 +878,58 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
     m_pPointerData = std::move(pointerData);
 }
 
+std::wstring CodeNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPointer)
+{
+    size_t nEndIndex = 0;
+    size_t nStartIndex = sNote.find('[');
+    if (nStartIndex != std::string::npos)
+    {
+        nEndIndex = sNote.find(']', nStartIndex + 1);
+        if (nEndIndex == std::string::npos)
+            return sNote;
+    }
+    else
+    {
+        nStartIndex = sNote.find('(');
+        if (nStartIndex == std::string::npos)
+            return sNote;
+
+        nEndIndex = sNote.find(')', nStartIndex + 1);
+        if (nEndIndex == std::string::npos)
+            return sNote;
+    }
+
+    bool bPointer = false;
+    std::wstring sWord;
+    ra::data::models::CodeNoteModel::Parser::TokenType nTokenType;
+    const ra::data::models::CodeNoteModel::Parser parser(sNote, nStartIndex + 1, nEndIndex);
+    do
+    {
+        nTokenType = parser.NextToken(sWord);
+        if (nTokenType == ra::data::models::CodeNoteModel::Parser::TokenType::Other)
+        {
+            if (sWord == L"pointer")
+                bPointer = true;
+            else
+                return sNote;
+        }
+    } while (nTokenType != ra::data::models::CodeNoteModel::Parser::TokenType::None);
+
+    while (nStartIndex > 0 && isspace(sNote.at(nStartIndex - 1)))
+        nStartIndex--;
+
+    while (nEndIndex < sNote.length() - 1 && isspace(sNote.at(nEndIndex + 1)))
+        nEndIndex++;
+
+    std::wstring sNoteCopy = sNote;
+    sNoteCopy.erase(nStartIndex, nEndIndex - nStartIndex + 1);
+
+    if (bPointer && bKeepPointer)
+        sNoteCopy.insert(0, L"[pointer] ");
+
+    return sNoteCopy;
+}
+
 void CodeNoteModel::EnumeratePointerNotes(
     std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const
 {

@@ -80,7 +80,15 @@ void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::Change
 void PointerInspectorViewModel::OnActiveGameChanged()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    if (pGameContext.GameId() == 0)
+    ra::ByteAddress nAddress = 0;
+
+    if (pGameContext.GameId() != 0)
+    {
+        if (m_vPointers.Count() > 0)
+            nAddress = gsl::narrow_cast<ra::ByteAddress>(m_vPointers.GetItemAt(0)->GetId());
+    }
+
+    if (nAddress == 0)
     {
 
         m_vPointers.Clear();
@@ -102,7 +110,7 @@ void PointerInspectorViewModel::OnActiveGameChanged()
     }
     else
     {
-        OnCurrentAddressChanged(GetCurrentAddress());
+        OnCurrentAddressChanged(nAddress);
     }
 }
 

@@ -5,6 +5,7 @@
 #include "RA_StringUtils.h"
 
 #include "data\Types.hh"
+#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\models\TriggerValidation.hh"
 
@@ -281,8 +282,21 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::MemoryChanged()
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nValue = ReadValue();
 
-    if (HasIndirectAddress()) // address must be updated after calling ReadValue as ReadValue updates local memrefs
-        UpdateCurrentAddress();
+    if (HasIndirectAddress())
+    {
+        // address must be updated after calling ReadValue as ReadValue updates local memrefs
+        const bool bAddressChainValid = UpdateCurrentAddress();
+
+        if (GetBehavior() == BookmarkBehavior::Frozen)
+        {
+            SetValue(RowColorProperty, bAddressChainValid ? 0xFFFFFFC0 : 0xFFFFF0C0);
+
+            // if there's a null in the indirect chain, don't write the frozen value back
+            // and don't update the current value or notify that it changed.
+            if (!bAddressChainValid)
+                return false;
+        }
+    }
 
     if (nValue == m_nValue)
         return false;
@@ -387,32 +401,62 @@ std::wstring MemoryBookmarksViewModel::MemoryBookmarkViewModel::BuildCurrentValu
     return ra::data::MemSizeFormat(m_nValue, m_nSize, GetFormat());
 }
 
-void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentAddress()
+bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentAddress()
 {
-    if (m_pValue)
-    {
-        const auto* pCondition = FindMeasuredCondition(m_pValue);
-        if (pCondition != nullptr && pCondition->operand1.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
-        {
-            GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
-                reinterpret_cast<rc_modified_memref_t*>(pCondition->operand1.value.memref);
-            if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
-            {
-                rc_typed_value_t address, offset;
-                rc_evaluate_operand(&address, &pModifiedMemref->parent, nullptr);
-                rc_evaluate_operand(&offset, &pModifiedMemref->modifier, nullptr);
-                rc_typed_value_add(&address, &offset);
-                rc_typed_value_convert(&address, RC_VALUE_TYPE_UNSIGNED);
-                const auto nNewAddress = gsl::narrow_cast<ra::ByteAddress>(address.value.u32);
+    if (!m_pValue)
+        return true;
 
-                if (m_nAddress != nNewAddress)
-                {
-                    m_nAddress = nNewAddress;
-                    SetAddressWithoutUpdatingValue(nNewAddress);
-                }
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+
+    bool bIsValid = true;
+    for (const auto* pCondition = m_pValue->conditions->conditions; pCondition; pCondition = pCondition->next)
+    {
+        if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
+        {
+            if (bIsValid) // don't need to check validity if we've already found a problem
+            {
+                rc_typed_value_t address;
+                rc_evaluate_operand(&address, &pCondition->operand1, nullptr);
+                rc_typed_value_convert(&address, RC_VALUE_TYPE_UNSIGNED);
+
+                if (address.value.u32 == 0) // pointer is null
+                    bIsValid = false;
+
+                const auto nAdjustedAddress = pConsoleContext.ByteAddressFromRealAddress(address.value.u32);
+                if (nAdjustedAddress == 0xFFFFFFFF) // pointer is invalid
+                    bIsValid = false;
             }
         }
+        else if (pCondition->type == RC_CONDITION_MEASURED)
+        {
+            if (rc_operand_is_memref(&pCondition->operand1) &&
+                pCondition->operand1.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+            {
+                GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
+                    reinterpret_cast<rc_modified_memref_t*>(pCondition->operand1.value.memref);
+                if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
+                {
+                    // calculate the new address and update the local reference if it changed
+                    rc_typed_value_t address, offset;
+                    rc_evaluate_operand(&address, &pModifiedMemref->parent, nullptr);
+                    rc_evaluate_operand(&offset, &pModifiedMemref->modifier, nullptr);
+                    rc_typed_value_add(&address, &offset);
+                    rc_typed_value_convert(&address, RC_VALUE_TYPE_UNSIGNED);
+                    const auto nNewAddress = gsl::narrow_cast<ra::ByteAddress>(address.value.u32);
+
+                    if (m_nAddress != nNewAddress)
+                    {
+                        m_nAddress = nNewAddress;
+                        SetAddressWithoutUpdatingValue(nNewAddress);
+                    }
+                }
+            }
+
+            break;
+        }
     }
+
+    return bIsValid;
 }
 
 void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetIndirectAddress(const std::string& sSerialized)

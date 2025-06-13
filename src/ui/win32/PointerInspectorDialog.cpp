@@ -57,7 +57,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
       m_bindFields(vmPointerFinder),
       m_bindFieldNote(vmPointerFinder)
 {
-    m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Pointer Finder");
+    m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Pointer Inspector");
     m_bindWindow.BindLabel(IDC_RA_PAUSE, PointerInspectorViewModel::PauseButtonTextProperty);
     m_bindWindow.BindLabel(IDC_RA_FREEZE, PointerInspectorViewModel::FreezeButtonTextProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADDBOOKMARK, PointerInspectorViewModel::HasSelectionProperty);

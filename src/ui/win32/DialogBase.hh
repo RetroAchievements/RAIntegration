@@ -55,7 +55,12 @@ public:
         if (!m_hWnd)
             return false;
 
-        ::ShowWindow(m_hWnd, SW_SHOW);
+        if (::ShowWindow(m_hWnd, SW_SHOW) != 0)
+        {
+            // nonzero return value means the window was already visible. attempt to focus it.
+            ::SetForegroundWindow(m_hWnd);
+        }
+
         return true;
     }
 

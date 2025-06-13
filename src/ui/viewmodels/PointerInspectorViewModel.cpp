@@ -746,7 +746,29 @@ void PointerInspectorViewModel::UpdateValues()
         auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nIndex);
         if (pField != nullptr)
         {
-            pField->SetAddress(nBaseAddress + pField->m_nOffset);
+            if (pField->GetBehavior() == BookmarkBehavior::Frozen)
+            {
+                pField->SetAddressWithoutUpdatingValue(nBaseAddress + pField->m_nOffset);
+
+                bool bIsPointerChainValid = true;
+                for (gsl::index nChainIndex = 0; nChainIndex < gsl::narrow_cast<gsl::index>(PointerChain().Count()); ++nChainIndex)
+                {
+                    if (PointerChain().GetItemValue(nChainIndex, MemoryBookmarkViewModel::RowColorProperty) != MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue())
+                    {
+                        bIsPointerChainValid = false;
+                        break;
+                    }
+                }
+
+                pField->SetRowColor(ra::ui::Color(bIsPointerChainValid ? 0xFFFFFFC0 : 0xFFFFF0C0));
+                if (!bIsPointerChainValid)
+                    continue;
+            }
+            else
+            {
+                pField->SetAddress(nBaseAddress + pField->m_nOffset);
+            }
+
             UpdateBookmark(*pField);
         }
     }

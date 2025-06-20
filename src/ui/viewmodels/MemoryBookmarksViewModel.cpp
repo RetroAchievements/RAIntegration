@@ -33,8 +33,9 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const StringModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::DescriptionProperty("MemoryBookmarkViewModel", "Description", L"");
+const StringModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::DescriptionProperty("MemoryBookmarkViewModel", "DescriptionHeader", L"");
 const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsCustomDescriptionProperty("MemoryBookmarkViewModel", "IsCustomDescription", false);
+const StringModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::RealNoteProperty("MemoryBookmarkViewModel", "Description", L"");
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty("MemoryBookmarkViewModel", "Address", 0);
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty("MemoryBookmarkViewModel", "Size", ra::etoi(MemSize::EightBit));
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty("MemoryBookmarkViewModel", "Format", ra::etoi(MemFormat::Hex));
@@ -151,31 +152,55 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Int
 
 void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (args.Property == MemoryBookmarkViewModel::DescriptionProperty)
+    if (args.Property == MemoryBookmarkViewModel::RealNoteProperty)
     {
-        if (m_bInitialized)
+        const auto sNewHeader = ExtractDescriptionHeader(args.tNewValue);
+        if (sNewHeader == GetDescription())
         {
-            m_bModified = true;
-
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-            const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-            const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(m_nAddress) : nullptr;
-
-            bool bIsCustomDescription = false;
-            if (pNote)
-            {
-                if (*pNote != args.tNewValue)
-                    bIsCustomDescription = true;
-            }
-            else if (!args.tNewValue.empty())
-            {
-                bIsCustomDescription = true;
-            }
-            SetIsCustomDescription(bIsCustomDescription);
+            SetIsCustomDescription(false);
+        }
+        else if (!IsCustomDescription())
+        {
+            m_bSyncingDescriptionHeader = true;
+            SetDescription(sNewHeader);
+            m_bSyncingDescriptionHeader = false;
+        }
+    }
+    else if (args.Property == MemoryBookmarkViewModel::DescriptionProperty && !m_bSyncingDescriptionHeader)
+    {
+        const auto& sFullNote = GetRealNote();
+        const auto sHeader = ExtractDescriptionHeader(sFullNote);
+        if (args.tNewValue.empty() && !sHeader.empty())
+        {
+            // custom description was cleared out - reset to default
+            m_bSyncingDescriptionHeader = true;
+            SetDescription(sHeader);
+            m_bSyncingDescriptionHeader = false;
+            SetIsCustomDescription(false);
+        }
+        else
+        {
+            SetIsCustomDescription(sHeader != args.tNewValue);
         }
     }
 
     LookupItemViewModel::OnValueChanged(args);
+}
+
+std::wstring MemoryBookmarksViewModel::MemoryBookmarkViewModel::ExtractDescriptionHeader(const std::wstring& sFullNote)
+{
+    // extract the first line into DescriptionHeader
+    const auto nIndex = sFullNote.find('\n');
+    if (nIndex == std::string::npos)
+        return ra::data::models::CodeNoteModel::TrimSize(sFullNote, true);
+
+    std::wstring sNote = sFullNote;
+    sNote.resize(nIndex);
+
+    if (sNote.back() == '\r')
+        sNote.pop_back();
+
+    return ra::data::models::CodeNoteModel::TrimSize(sNote, true);
 }
 
 static rc_condition_t* FindMeasuredCondition(rc_value_t* pValue) noexcept
@@ -519,23 +544,14 @@ void MemoryBookmarksViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const
     {
         auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
         if (pBookmark && pBookmark->GetAddress() == nAddress)
-        {
-            if (!pBookmark->IsCustomDescription())
-            {
-                pBookmark->SetDescription(sNewNote);
-            }
-            else
-            {
-                if (pBookmark->GetDescription() == sNewNote)
-                    pBookmark->SetIsCustomDescription(false);
-            }
-        }
+            pBookmark->SetRealNote(sNewNote);
     }
 }
 
 void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmarksFile)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     gsl::index nIndex = 0;
 
     m_vBookmarks.BeginUpdate();
@@ -607,22 +623,16 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     vmBookmark->SetAddress(bookmark["Address"].GetUint());
                 }
 
-                const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-                const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(vmBookmark->GetAddress()) : nullptr;
 
                 std::wstring sDescription;
+                const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(vmBookmark->GetAddress()) : nullptr;
+                vmBookmark->SetRealNote(pNote ? *pNote : std::wstring(L""));
+
                 if (bookmark.HasMember("Description"))
                 {
                     sDescription = ra::Widen(bookmark["Description"].GetString());
-                    vmBookmark->SetIsCustomDescription(!pNote || sDescription != *pNote);
+                    vmBookmark->SetDescription(sDescription);
                 }
-                else
-                {
-                    vmBookmark->SetIsCustomDescription(false);
-                    if (pNote)
-                        sDescription = *pNote;
-                }
-                vmBookmark->SetDescription(sDescription);
 
                 if (bookmark.HasMember("Decimal") && bookmark["Decimal"].GetBool())
                     vmBookmark->SetFormat(ra::MemFormat::Dec);
@@ -766,7 +776,7 @@ void MemoryBookmarksViewModel::UpdateBookmark(MemoryBookmarksViewModel::MemoryBo
             if (isspace(sMessage.at(0)))
                 sMessage.erase(0, 1);
 
-            const auto& pDescription = pBookmark.GetDescription();
+            const auto& pDescription = pBookmark.GetRealNote();
             if (!pDescription.empty())
             {
                 auto nDescriptionLength = pDescription.find(L'\n');
@@ -853,7 +863,7 @@ void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::Memo
     const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
     if (pNote)
     {
-        vmBookmark.SetDescription(*pNote);
+        vmBookmark.SetRealNote(*pNote);
 
         // if bookmarking an 8-byte double, automatically adjust the bookmark for the significant bytes
         if (vmBookmark.GetSize() == MemSize::Double32 && pCodeNotes->GetCodeNoteBytes(nAddress) == 8)

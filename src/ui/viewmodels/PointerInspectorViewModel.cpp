@@ -82,7 +82,6 @@ void PointerInspectorViewModel::OnActiveGameChanged()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (pGameContext.GameId() == 0)
     {
-
         m_vPointers.Clear();
         m_vNodes.Clear();
         m_vPointerChain.Clear();
@@ -123,7 +122,8 @@ void PointerInspectorViewModel::OnEndGameLoad()
                 {
                     m_vPointers.Add(nAddress,
                                     ra::StringPrintf(L"%s | %s", pEmulatorContext.FormatAddress(nAddress),
-                                                     TrimSize(pNote.GetPointerDescription(), false)));
+                                                     ra::data::models::CodeNoteModel::TrimSize(
+                                                         pNote.GetPointerDescription(), false)));
                 }
 
                 return true;
@@ -188,7 +188,7 @@ void PointerInspectorViewModel::UpdatePointerVisibility(ra::ByteAddress nAddress
         m_vPointers.BeginUpdate();
         m_vPointers.Add(nAddress,
                         ra::StringPrintf(L"%s | %s", pEmulatorContext.FormatAddress(nAddress),
-                                         TrimSize(pNote->GetPointerDescription(), false)));
+                             ra::data::models::CodeNoteModel::TrimSize(pNote->GetPointerDescription(), false)));
         m_vPointers.MoveItem(nCount, nIndex);
         m_vPointers.EndUpdate();
     }
@@ -350,12 +350,12 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
 
         if (pNote)
         {
-            pItem->SetDescription(pNote->GetPointerDescription());
+            pItem->SetRealNote(pNote->GetPointerDescription());
             pItem->SetSize(pNote->GetMemSize());
         }
         else
         {
-            pItem->SetDescription(L"");
+            pItem->SetRealNote(L"");
             pItem->SetSize(MemSize::EightBit);
         }
 
@@ -381,58 +381,6 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
     return pNote;
 }
 
-std::wstring PointerInspectorViewModel::TrimSize(const std::wstring& sNote, bool bKeepPointer)
-{
-    size_t nEndIndex = 0;
-    size_t nStartIndex = sNote.find('[');
-    if (nStartIndex != std::string::npos)
-    {
-        nEndIndex = sNote.find(']', nStartIndex + 1);
-        if (nEndIndex == std::string::npos)
-            return sNote;
-    }
-    else
-    {
-        nStartIndex = sNote.find('(');
-        if (nStartIndex == std::string::npos)
-            return sNote;
-
-        nEndIndex = sNote.find(')', nStartIndex + 1);
-        if (nEndIndex == std::string::npos)
-            return sNote;
-    }
-
-    bool bPointer = false;
-    std::wstring sWord;
-    ra::data::models::CodeNoteModel::Parser::TokenType nTokenType;
-    const ra::data::models::CodeNoteModel::Parser parser(sNote, nStartIndex + 1, nEndIndex);
-    do
-    {
-        nTokenType = parser.NextToken(sWord);
-        if (nTokenType == ra::data::models::CodeNoteModel::Parser::TokenType::Other)
-        {
-            if (sWord == L"pointer")
-                bPointer = true;
-            else
-                return sNote;
-        }
-    } while (nTokenType != ra::data::models::CodeNoteModel::Parser::TokenType::None);
-
-    while (nStartIndex > 0 && isspace(sNote.at(nStartIndex - 1)))
-        nStartIndex--;
-
-    while (nEndIndex < sNote.length() - 1 && isspace(sNote.at(nEndIndex + 1)))
-        nEndIndex++;
-
-    std::wstring sNoteCopy = sNote;
-    sNoteCopy.erase(nStartIndex, nEndIndex - nStartIndex + 1);
-
-    if (bPointer && bKeepPointer)
-        sNoteCopy.insert(0, L"[pointer] ");
-
-    return sNoteCopy;
-}
-
 void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote)
 {
     const auto nSize = pOffsetNote.GetMemSize();
@@ -444,14 +392,14 @@ void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructField
     auto nIndex = sNote.find('\n');
     if (nIndex == std::string::npos)
     {
-        pFieldViewModel.SetDescription(TrimSize(sNote, true));
+        pFieldViewModel.SetRealNote(ra::data::models::CodeNoteModel::TrimSize(sNote, true));
     }
     else
     {
         if (nIndex > 0 && sNote.at(nIndex - 1) == '\r')
             --nIndex;
 
-        pFieldViewModel.SetDescription(TrimSize(sNote.substr(0, nIndex), true));
+        pFieldViewModel.SetRealNote(ra::data::models::CodeNoteModel::TrimSize(sNote.substr(0, nIndex), true));
     }
 }
 
@@ -613,13 +561,13 @@ void PointerInspectorViewModel::BuildNote(ra::StringBuilder& builder,
         }
 
         if (isCurrentField)
-            builder.Append(TrimSize(GetCurrentFieldNote(), false));
+            builder.Append(ra::data::models::CodeNoteModel::TrimSize(GetCurrentFieldNote(), false));
         else if (!pOffsetNote.IsPointer())
-            builder.Append(TrimSize(pOffsetNote.GetNote(), false));
+            builder.Append(ra::data::models::CodeNoteModel::TrimSize(pOffsetNote.GetNote(), false));
         else if (&pOffsetNote == m_pCurrentNote)
-            builder.Append(TrimSize(GetCurrentAddressNote(), false));
+            builder.Append(ra::data::models::CodeNoteModel::TrimSize(GetCurrentAddressNote(), false));
         else
-            builder.Append(TrimSize(pOffsetNote.GetPointerDescription(), false));
+            builder.Append(ra::data::models::CodeNoteModel::TrimSize(pOffsetNote.GetPointerDescription(), false));
 
         if (pOffsetNote.IsPointer())
             BuildNote(builder, sChain, nDepth + 1, pOffsetNote);

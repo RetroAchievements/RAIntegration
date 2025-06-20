@@ -84,7 +84,7 @@ private:
             Assert::AreEqual(nOffset, pField->m_nOffset);
             Assert::AreEqual(nAddress, pField->GetAddress());
             Assert::AreEqual(sOffset, pField->GetOffset());
-            Assert::AreEqual(sDescription, pField->GetDescription());
+            Assert::AreEqual(sDescription, pField->GetRealNote());
             Assert::AreEqual(nSize, pField->GetSize());
             Assert::AreEqual(nFormat, pField->GetFormat());
             Assert::AreEqual(sCurrentValue, pField->GetCurrentValue());
@@ -107,7 +107,7 @@ private:
             Ensures(pPointer != nullptr);
             Assert::AreEqual(sOffset, pPointer->GetOffset());
             Assert::AreEqual(nAddress, pPointer->GetAddress());
-            Assert::AreEqual(sDescription, pPointer->GetDescription());
+            Assert::AreEqual(sDescription, pPointer->GetRealNote());
             Assert::AreEqual(sValue, pPointer->GetCurrentValue());
         }
 

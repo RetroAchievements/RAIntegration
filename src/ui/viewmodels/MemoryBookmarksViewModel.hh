@@ -47,17 +47,17 @@ public:
     {
     public:
         /// <summary>
-        /// The <see cref="ModelProperty" /> for the bookmark description.
+        /// The <see cref="ModelProperty" /> for bookmark summary.
         /// </summary>
         static const StringModelProperty DescriptionProperty;
 
         /// <summary>
-        /// Gets the bookmark description.
+        /// Gets the bookmark summary.
         /// </summary>
         const std::wstring& GetDescription() const { return GetValue(DescriptionProperty); }
 
         /// <summary>
-        /// Sets the bookmark description.
+        /// Sets the bookmark summary.
         /// </summary>
         void SetDescription(const std::wstring& sValue) { SetValue(DescriptionProperty, sValue); }
 
@@ -75,6 +75,21 @@ public:
         /// Sets whether the bookmark description is custom.
         /// </summary>
         void SetIsCustomDescription(bool bValue) { SetValue(IsCustomDescriptionProperty, bValue); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the note supporting the bookmark.
+        /// </summary>
+        static const StringModelProperty RealNoteProperty;
+
+        /// <summary>
+        /// Gets the note supporting the bookmark.
+        /// </summary>
+        const std::wstring& GetRealNote() const { return GetValue(RealNoteProperty); }
+
+        /// <summary>
+        /// Sets the note supporting the bookmark.
+        /// </summary>
+        void SetRealNote(const std::wstring& sValue) { SetValue(RealNoteProperty, sValue); }
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the bookmark address.
@@ -301,6 +316,7 @@ public:
 
     private:
         std::wstring BuildCurrentValue() const;
+        static std::wstring ExtractDescriptionHeader(const std::wstring& sFullNote);
 
         // keep address/size/value fields directly accessible for speed - also keep in ValueProperty for binding
         ra::ByteAddress m_nAddress = 0;
@@ -308,6 +324,7 @@ public:
         MemSize m_nSize = MemSize::EightBit;
         bool m_bModified = false;
         bool m_bInitialized = false;
+        bool m_bSyncingDescriptionHeader = false;
 
         std::string m_sIndirectAddress;
         std::unique_ptr<uint8_t[]> m_pBuffer;

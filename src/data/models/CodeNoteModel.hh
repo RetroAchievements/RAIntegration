@@ -84,6 +84,7 @@ public:
         size_t m_nEndIndex;
     };
 
+    static std::wstring TrimSize(const std::wstring& sNote, bool bKeepPointer);
 
 private:
     std::string m_sAuthor;

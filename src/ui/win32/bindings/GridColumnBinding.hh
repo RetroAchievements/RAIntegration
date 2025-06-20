@@ -46,7 +46,14 @@ public:
         return GetText(vmItems, nIndex);
     }
 
-    virtual std::wstring GetTooltip(_UNUSED const ra::ui::ViewModelCollectionBase& vmItems, _UNUSED gsl::index nIndex) const { return L""; }
+    void BindTooltip(const ra::ui::StringModelProperty& pProperty) noexcept { m_pBoundTooltipProperty = &pProperty; }
+    virtual std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
+    {
+        if (m_pBoundTooltipProperty)
+            return vmItems.GetItemValue(nIndex, *m_pBoundTooltipProperty);
+
+        return L"";
+    }
 
     virtual bool DependsOn(const ra::ui::BoolModelProperty&) const noexcept(false) { return false; }
     virtual bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept(false)
@@ -91,6 +98,7 @@ protected:
     ra::ui::RelativePosition m_nAlignment = ra::ui::RelativePosition::Near;
     bool m_bReadOnly = true;
     const IntModelProperty* m_pTextColorProperty = nullptr;
+    const StringModelProperty* m_pBoundTooltipProperty = nullptr;
 };
 
 } // namespace bindings

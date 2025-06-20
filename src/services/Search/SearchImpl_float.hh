@@ -86,7 +86,7 @@ protected:
 
         rc_typed_value_t value;
         value.type = RC_VALUE_TYPE_UNSIGNED;
-        value.value.u32 = *reinterpret_cast<const uint32_t*>(ptr);
+        GSL_SUPPRESS_TYPE1 value.value.u32 = *reinterpret_cast<const uint32_t*>(ptr);
         rc_transform_memref_value(&value, size);
 
         return value.value.f32;

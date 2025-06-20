@@ -267,8 +267,10 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::EndInitialization()
     m_nValue = 0;
     SetPreviousValue(BuildCurrentValue());
 
-    m_nValue = ReadValue();
-    SetValue(CurrentValueProperty, BuildCurrentValue());
+    ra::data::context::EmulatorContext::DispatchesReadMemory::DispatchMemoryRead([this]() {
+        m_nValue = ReadValue();
+        SetValue(CurrentValueProperty, BuildCurrentValue());
+    });
 
     SetChanges(0);
 
@@ -368,6 +370,11 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValue(const st
 void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentValue()
 {
     const auto nValue = ReadValue();
+    SetCurrentValueRaw(nValue);
+}
+
+void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValueRaw(unsigned nValue)
+{
     if (nValue != m_nValue)
     {
         m_nValue = nValue;
@@ -714,15 +721,17 @@ void MemoryBookmarksViewModel::EndWritingMemory()
 {
     if (--m_nWritingMemoryCount == 0)
     {
-        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
-        {
-            auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
-            if (pBookmark.IsDirty())
+        ra::data::context::EmulatorContext::DispatchesReadMemory::DispatchMemoryRead([this]() {
+            for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
             {
-                pBookmark.SetDirty(false);
-                pBookmark.UpdateCurrentValue();
+                auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
+                if (pBookmark.IsDirty())
+                {
+                    pBookmark.SetDirty(false);
+                    pBookmark.UpdateCurrentValue();
+                }
             }
-        }
+        });
     }
 }
 

@@ -67,7 +67,8 @@ public:
     /// </summary>
     void BookmarkSelected();
 
-    class StateViewModel : public ViewModelBase
+    class StateViewModel : public ViewModelBase,
+                           protected ra::data::context::EmulatorContext::DispatchesReadMemory
     {
     public:
         /// <summary>

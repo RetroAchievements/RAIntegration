@@ -20,6 +20,7 @@ namespace viewmodels {
 class MemoryBookmarksViewModel : public WindowViewModelBase,
     protected ra::data::context::GameContext::NotifyTarget,
     protected ra::data::context::EmulatorContext::NotifyTarget,
+    protected ra::data::context::EmulatorContext::DispatchesReadMemory,
     protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
 public:
@@ -160,6 +161,11 @@ public:
         /// Gets the unformatted current value of the bookmarked address.
         /// </summary>
         uint32_t GetCurrentValueRaw() const noexcept { return m_nValue; }
+
+        /// <summary>
+        /// Sets the current value of the bookmarked address.
+        /// </summary>
+        void SetCurrentValueRaw(unsigned nValue);
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the previous value of the bookmarked address.

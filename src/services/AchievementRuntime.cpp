@@ -432,6 +432,51 @@ void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_cl
     }
 }
 
+typedef struct QueueMemoryReadData
+{
+    std::function<void()> fCallback;
+} QueueMemoryReadData;
+
+static void DispatchMemoryRead(struct rc_client_scheduled_callback_data_t* callback_data,
+                               rc_client_t*, rc_clock_t)
+{
+    QueueMemoryReadData* data = static_cast<QueueMemoryReadData*>(callback_data->data);
+    data->fCallback();
+
+    delete data;
+    free(callback_data);
+}
+
+void AchievementRuntime::QueueMemoryRead(std::function<void()>&& fCallback) const
+{
+    if (GetClient()->state.allow_background_memory_reads)
+    {
+        fCallback();
+        return;
+    }
+
+    if (m_hDoFrameThread == 0 || IsOnDoFrameThread())
+    {
+        fCallback();
+        return;
+    }
+
+    QueueMemoryReadData* data = new QueueMemoryReadData();
+    Expects(data != nullptr);
+    data->fCallback = std::move(fCallback);
+
+    rc_client_scheduled_callback_data_t* scheduled_callback =
+        static_cast<rc_client_scheduled_callback_data_t*>(calloc(1, sizeof(rc_client_scheduled_callback_data_t)));
+    Expects(scheduled_callback != nullptr);
+    scheduled_callback->callback = DispatchMemoryRead;
+    scheduled_callback->data = data;
+
+    rc_client_schedule_callback(GetClient(), scheduled_callback);
+
+    // We have to assume the client will call rc_client_do_frame or rc_client_idle in a
+    // timely manner or the callback won't get called and the UI will appear unresponsive.
+}
+
 /* ---- ClientSynchronizer ----- */
 
 class AchievementRuntime::ClientSynchronizer
@@ -1370,17 +1415,17 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
     delete wrapper;
 }
 
-rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* file_path,
+rc_client_async_handle_t* AchievementRuntime::BeginIdentifyAndChangeMedia(const char* file_path,
     const uint8_t* data, size_t data_size, CallbackWrapper* pCallbackWrapper) noexcept
 {
     auto* client = GetClient();
-    return rc_client_begin_change_media(client, file_path, data, data_size, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
+    return rc_client_begin_identify_and_change_media(client, file_path, data, data_size, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
 }
 
-rc_client_async_handle_t* AchievementRuntime::BeginChangeMediaFromHash(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept
+rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept
 {
     auto* client = GetClient();
-    return rc_client_begin_change_media_from_hash(client, sHash, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
+    return rc_client_begin_change_media(client, sHash, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
 }
 
 GSL_SUPPRESS_CON3
@@ -1582,6 +1627,8 @@ static void RaisePauseOnChangeEvents(
 
 void AchievementRuntime::DoFrame()
 {
+    m_hDoFrameThread = GetCurrentThreadId();
+
     if (m_bPaused)
     {
         rc_client_idle(GetClient());
@@ -1602,9 +1649,35 @@ void AchievementRuntime::DoFrame()
         RaisePauseOnChangeEvents(mLeaderboardsWithHits, mActiveLeaderboards);
 }
 
-void AchievementRuntime::Idle() noexcept
+void AchievementRuntime::Idle() const noexcept
 {
-    rc_client_idle(GetClient());
+    auto* pClient = GetClient();
+    if (!pClient)
+        return;
+
+    const auto* pScheduledCallback = pClient->state.scheduled_callbacks;
+    if (!pScheduledCallback)
+        return;
+
+    const rc_clock_t now = pClient->callbacks.get_time_millisecs(pClient);
+    bool bShouldIdle = false;
+    {
+        rc_mutex_lock(&pClient->state.mutex);
+        pScheduledCallback = pClient->state.scheduled_callbacks;
+        while (pScheduledCallback && pScheduledCallback->when == 0)
+            pScheduledCallback = pScheduledCallback->next;
+
+        if (pScheduledCallback && pScheduledCallback->when < now - 5000)
+        {
+            // pending callback has been waiting for more than five
+            // seconds. force a call to rc_client_idle
+            bShouldIdle = true;
+        }
+        rc_mutex_unlock(&pClient->state.mutex);
+    }
+
+    if (bShouldIdle)
+        rc_client_idle(pClient);
 }
 
 void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress) noexcept

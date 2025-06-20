@@ -282,8 +282,7 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddre
 
     UpdateNoteButtons();
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto nValue = pEmulatorContext.ReadMemoryByte(nNewAddress);
+    const auto nValue = Viewer().GetValueAtAddress(nNewAddress);
     SetValue(CurrentAddressValueProperty, nValue);
 
     m_pViewer.SetAddress(nNewAddress);
@@ -449,12 +448,12 @@ bool MemoryInspectorViewModel::PreviousNote()
 void MemoryInspectorViewModel::ToggleBit(int nBit)
 {
     const auto nAddress = GetCurrentAddress();
+    auto nValue = GetValue(CurrentAddressValueProperty);
+    nValue ^= (1 << nBit);
 
     // push the updated value to the emulator
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    auto nValue = pEmulatorContext.ReadMemoryByte(nAddress);
-    nValue ^= (1 << nBit);
-    pEmulatorContext.WriteMemoryByte(nAddress, nValue);
+    pEmulatorContext.WriteMemoryByte(nAddress, gsl::narrow_cast<uint8_t>(nValue));
 
     // update the local value, which will cause the bits string to get updated
     SetValue(CurrentAddressValueProperty, nValue);

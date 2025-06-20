@@ -1283,6 +1283,11 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
     {
         const auto* pSet = &game_data_response->sets[i];
 
+#ifndef RA_UTEST
+        // prefetch the subset icon
+        pImageRepository.FetchImage(ra::ui::ImageType::Icon, pSet->image_name, pSet->image_url);
+#endif
+
         const auto* pAchievement = pSet->achievements;
         const auto* pAchievementStop = pAchievement + pSet->num_achievements;
         for (; pAchievement < pAchievementStop; ++pAchievement)

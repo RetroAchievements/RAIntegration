@@ -80,7 +80,15 @@ void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::Change
 void PointerInspectorViewModel::OnActiveGameChanged()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    if (pGameContext.GameId() == 0)
+    ra::ByteAddress nAddress = 0;
+
+    if (pGameContext.GameId() != 0)
+    {
+        if (m_vPointers.Count() > 0)
+            nAddress = gsl::narrow_cast<ra::ByteAddress>(m_vPointers.GetItemAt(0)->GetId());
+    }
+
+    if (nAddress == 0)
     {
         m_vPointers.Clear();
         m_vNodes.Clear();
@@ -101,7 +109,7 @@ void PointerInspectorViewModel::OnActiveGameChanged()
     }
     else
     {
-        OnCurrentAddressChanged(GetCurrentAddress());
+        OnCurrentAddressChanged(nAddress);
     }
 }
 
@@ -706,7 +714,29 @@ void PointerInspectorViewModel::UpdateValues()
         auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nIndex);
         if (pField != nullptr)
         {
-            pField->SetAddress(nBaseAddress + pField->m_nOffset);
+            if (pField->GetBehavior() == BookmarkBehavior::Frozen)
+            {
+                pField->SetAddressWithoutUpdatingValue(nBaseAddress + pField->m_nOffset);
+
+                bool bIsPointerChainValid = true;
+                for (gsl::index nChainIndex = 0; nChainIndex < gsl::narrow_cast<gsl::index>(PointerChain().Count()); ++nChainIndex)
+                {
+                    if (PointerChain().GetItemValue(nChainIndex, MemoryBookmarkViewModel::RowColorProperty) != MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue())
+                    {
+                        bIsPointerChainValid = false;
+                        break;
+                    }
+                }
+
+                pField->SetRowColor(ra::ui::Color(bIsPointerChainValid ? 0xFFFFFFC0 : 0xFFFFF0C0));
+                if (!bIsPointerChainValid)
+                    continue;
+            }
+            else
+            {
+                pField->SetAddress(nBaseAddress + pField->m_nOffset);
+            }
+
             UpdateBookmark(*pField);
         }
     }

@@ -8,6 +8,7 @@
 
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
+#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
@@ -58,6 +59,7 @@ private:
     {
     public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
@@ -1851,6 +1853,69 @@ public:
 
         bookmark.SetSize(MemSize::TwentyFourBit);
         Assert::AreEqual(std::wstring(L"883efa"), bookmark.GetCurrentValue());
+    }
+
+    TEST_METHOD(TestDoFrameFrozenBookmarks)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        std::array<unsigned char, 32> memory{};
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+        bookmarks.mockConsoleContext.AddMemoryRegion(0U, 16,
+                                                     ra::data::context::ConsoleContext::AddressType::SystemRAM);
+
+        bookmarks.AddBookmark("M:0xX0000");
+        bookmarks.AddBookmark("I:0xX0004_M:0xH0008");
+        auto* pBookmark1 = bookmarks.Bookmarks().GetItemAt(0);
+        Expects(pBookmark1 != nullptr);
+        auto* pBookmark2 = bookmarks.Bookmarks().GetItemAt(1);
+        Expects(pBookmark2 != nullptr);
+
+        memory.at(0) = 6;
+        memory.at(1) = 1;
+        memory.at(4) = 4;
+        memory.at(12) = 7;
+        bookmarks.DoFrame();
+
+        Assert::AreEqual(0U, pBookmark1->GetAddress());
+        Assert::IsFalse(pBookmark1->HasIndirectAddress());
+        Assert::AreEqual(std::wstring(L"00000106"), pBookmark1->GetCurrentValue());
+
+        Assert::AreEqual(12U, pBookmark2->GetAddress());
+        Assert::IsTrue(pBookmark2->HasIndirectAddress());
+        Assert::AreEqual(std::wstring(L"07"), pBookmark2->GetCurrentValue());
+
+        pBookmark1->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+        pBookmark2->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+
+        memory.at(0) = 3;
+        memory.at(12) = 4;
+
+        bookmarks.DoFrame();
+
+        // frozen values should be written back to memory
+        Assert::AreEqual(0U, pBookmark1->GetAddress());
+        Assert::AreEqual(std::wstring(L"00000106"), pBookmark1->GetCurrentValue());
+        Assert::AreEqual({6}, memory.at(0));
+
+        Assert::AreEqual(12U, pBookmark2->GetAddress());
+        Assert::AreEqual(std::wstring(L"07"), pBookmark2->GetCurrentValue());
+        Assert::AreEqual({7}, memory.at(12));
+
+        // console says only 16 bytes are valid. if pointer points beyond that, it shouldn't write
+        memory.at(4) = 20;
+        Assert::AreEqual({0}, memory.at(28));
+
+        bookmarks.DoFrame();
+        Assert::AreEqual({28}, pBookmark2->GetAddress()); // address updated
+        Assert::AreEqual({0}, memory.at(28));             // but not memory
+
+        // null is implicitly invalid
+        memory.at(4) = 0;
+        Assert::AreEqual({0}, memory.at(8));
+
+        bookmarks.DoFrame();
+        Assert::AreEqual({8}, pBookmark2->GetAddress()); // address updated
+        Assert::AreEqual({0}, memory.at(8));             // but not memory
     }
 };
 

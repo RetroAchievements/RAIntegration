@@ -125,7 +125,9 @@ public:
         /// <summary>
         /// Updates the current address from the indirect address chain.
         /// </summary>
-        void UpdateCurrentAddress();
+        /// <returns><c>true</c> if the indirect address chain was valid, <c>false</c> if not.</returns>
+        /// <remarks>Address will be updated to whatever the chain evaluates to, regardless of the chain's validity</remarks>
+        bool UpdateCurrentAddress();
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the bookmark size.

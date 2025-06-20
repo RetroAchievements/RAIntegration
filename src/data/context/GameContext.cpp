@@ -389,6 +389,10 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
 #endif
 
+    const auto nPrimarySubsetId = m_vSubsets.empty() ? 0 :
+        m_vSubsets.front().Type() == GameContext::SubsetType::Core ?
+        m_vSubsets.front().AchievementSetID() : 0;
+
     for (auto* pSubset = pClient->game->subsets; pSubset; pSubset = pSubset->next)
     {
         // achievements
@@ -438,7 +442,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 else
                     vmAchievement->Attach(*pAchievementData, nCategory, "");
 
-                if (pSubset != pClient->game->subsets)
+                if (pSubset->public_.id != nPrimarySubsetId)
                     vmAchievement->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmAchievement));
@@ -517,7 +521,14 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
 
     // if subsets were found, migrate any SUBSET-User.txt files into the the GAME-User.txt file
     if (m_vSubsets.size() > 1)
+    {
         MigrateSubsetUserFiles();
+    }
+    else if (m_nActiveGameId != m_nGameId)
+    {
+        m_vSubsets.front().SetTitle(ra::StringPrintf(L"%s (%s)",
+            m_vSubsets.front().Title(), game_data_response->title));
+    }
 }
 
 void GameContext::MigrateSubsetUserFiles()

@@ -33,6 +33,7 @@ public:
     /// Sets the unique identifier of the currently loaded game.
     /// </summary>
     void SetGameId(unsigned int nGameId) noexcept { m_nGameId = m_nActiveGameId = nGameId; }
+    void SetActiveGameId(unsigned int nGameId) noexcept { m_nActiveGameId = nGameId; }
 
     void NotifyActiveGameChanged() { OnActiveGameChanged(); }
 

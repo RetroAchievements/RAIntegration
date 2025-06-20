@@ -104,7 +104,7 @@ void AssetListViewModel::InitializeNotifyTargets()
 void AssetListViewModel::OnActiveGameChanged()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    SetGameId(pGameContext.GameId());
+    SetGameId(pGameContext.ActiveGameId());
     SetSubsetFilter(0);
 
     switch (pGameContext.Assets().MostPublishedAssetCategory())
@@ -129,6 +129,18 @@ void AssetListViewModel::OnActiveGameChanged()
         m_vSubsets.Add(pSubset.ID(), pSubset.Title());
 
     m_vSubsets.EndUpdate();
+
+    if (pGameContext.ActiveGameId() != pGameContext.GameId())
+    {
+        for (size_t nIndex = 0; nIndex < pGameContext.Subsets().size(); ++nIndex)
+        {
+            if (pGameContext.Subsets().at(nIndex).GameID() == pGameContext.ActiveGameId())
+            {
+                SetSubsetFilter(pGameContext.Subsets().at(nIndex).ID());
+                break;
+            }
+        }
+    }
 
     ApplyFilter();
 }

@@ -144,6 +144,7 @@ void GameAssets::OnBeforeItemRemoved(ModelBase& pModel)
 void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase*>& vAssetsToReload)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto nPrimarySubsetId = pGameContext.Subsets().front().AchievementSetID();
 
     auto* pRichPresence = dynamic_cast<ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0));
     if (pRichPresence != nullptr)
@@ -237,7 +238,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
         }
 
         nId = pTokenizer.ReadNumber();
-        nSubsetId = pTokenizer.Consume('|') ? pTokenizer.ReadNumber() : 0;
+        nSubsetId = pTokenizer.Consume('|') ? pTokenizer.ReadNumber() : nPrimarySubsetId;
 
         if (!pTokenizer.Consume(':'))
             continue;
@@ -371,7 +372,9 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
     pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
 #endif
 
-    pData->WriteLine(pGameContext.GameTitle());
+    pData->WriteLine(pGameContext.Subsets().front().Title());
+
+    const auto nPrimarySubsetId = pGameContext.Subsets().front().AchievementSetID();
 
     bool bHasDeleted = false;
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
@@ -457,7 +460,7 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
         pData->Write(std::to_string(pItem->GetID()));
 
         const auto nSubsetId = pItem->GetSubsetID();
-        if (nSubsetId > 0)
+        if (nSubsetId > 0 && nSubsetId != nPrimarySubsetId)
         {
             pData->Write("|");
             pData->Write(std::to_string(nSubsetId));

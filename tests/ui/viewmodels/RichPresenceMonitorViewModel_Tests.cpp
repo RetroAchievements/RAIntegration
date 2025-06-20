@@ -182,6 +182,42 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
         Assert::AreEqual(std::wstring(L"No game loaded."), vmRichPresence.GetDisplayString());
         Assert::AreEqual(std::wstring(L"Rich Presence Monitor"), vmRichPresence.GetWindowTitle());
     }
+
+    TEST_METHOD(TestUpdateDisplayStringNewFileExclusiveSubset)
+    {
+        RichPresenceMonitorViewModelHarness vmRichPresence;
+        vmRichPresence.mockGameContext.SetGameId(1U);
+        vmRichPresence.mockGameContext.SetActiveGameId(2U);
+
+        vmRichPresence.UpdateDisplayString();
+        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), vmRichPresence.GetDisplayString());
+        Assert::AreEqual(std::wstring(L"Rich Presence Monitor"), vmRichPresence.GetWindowTitle());
+
+        // create new file
+        const auto now = std::chrono::system_clock::now();
+        vmRichPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"2", "Display:\nHello, world!");
+        vmRichPresence.mockLocalStorage.MockLastModified(ra::services::StorageItemType::RichPresence, L"2", now);
+
+        vmRichPresence.UpdateDisplayString();
+        Assert::AreEqual(std::wstring(L"Hello, world!"), vmRichPresence.GetDisplayString());
+        Assert::AreEqual(std::wstring(L"Rich Presence Monitor (local)"), vmRichPresence.GetWindowTitle());
+
+        // update new file
+        vmRichPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"2", "Display:\nHello, world 2!");
+        vmRichPresence.mockLocalStorage.MockLastModified(ra::services::StorageItemType::RichPresence, L"2", now + std::chrono::minutes(2));
+
+        vmRichPresence.UpdateDisplayString();
+        Assert::AreEqual(std::wstring(L"Hello, world 2!"), vmRichPresence.GetDisplayString());
+        Assert::AreEqual(std::wstring(L"Rich Presence Monitor (local)"), vmRichPresence.GetWindowTitle());
+
+        // update file for core game
+        vmRichPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nYou're not supposed to see this!");
+        vmRichPresence.mockLocalStorage.MockLastModified(ra::services::StorageItemType::RichPresence, L"1", now + std::chrono::minutes(2));
+
+        vmRichPresence.UpdateDisplayString();
+        Assert::AreEqual(std::wstring(L"Hello, world 2!"), vmRichPresence.GetDisplayString());
+        Assert::AreEqual(std::wstring(L"Rich Presence Monitor (local)"), vmRichPresence.GetWindowTitle());
+    }
 };
 
 } // namespace tests

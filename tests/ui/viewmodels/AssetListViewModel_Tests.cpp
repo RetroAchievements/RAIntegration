@@ -5509,6 +5509,7 @@ public:
 
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
+        vmAssetList.mockGameContext.SetGameId(22U);
         vmAssetList.SetGameId(22U);
         vmAssetList.AddRichPresence("Display\nTest\n");
         vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
@@ -5525,7 +5526,38 @@ public:
         vmAssetList.OpenEditor(pItem);
         Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
 
-        Assert::AreEqual(std::string("file://localhost/./RACache/Data/0-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
+        Assert::AreEqual(std::string("file://localhost/./RACache/Data/22-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
+    }
+
+    TEST_METHOD(TestOpenEditorRichPresenceExclusiveSubset)
+    {
+        AssetListViewModelHarness vmAssetList;
+        ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::services::impl::FileLocalStorage storage(mockFileSystem);
+        ra::services::ServiceLocator::ServiceOverride<ra::services::ILocalStorage> storageOverride(&storage);
+
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
+        vmAssetList.mockGameContext.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(33U);
+        vmAssetList.SetGameId(22U);
+        vmAssetList.AddRichPresence("Display\nTest\n");
+        vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
+
+        Assert::AreEqual({1U}, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+
+        auto* pItem = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pItem != nullptr);
+        pItem->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        vmAssetList.OpenEditor(pItem);
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+
+        Assert::AreEqual(std::string("file://localhost/./RACache/Data/33-Rich.txt"),
+                         vmAssetList.mockDesktop.LastOpenedUrl());
     }
 
     TEST_METHOD(TestUpdateButtonsRichPresenceSelection)

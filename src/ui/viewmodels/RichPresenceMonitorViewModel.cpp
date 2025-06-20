@@ -29,7 +29,7 @@ void RichPresenceMonitorViewModel::InitializeNotifyTargets()
 void RichPresenceMonitorViewModel::UpdateDisplayString()
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    const auto nGameId = pGameContext.GameId();
+    const auto nGameId = pGameContext.ActiveGameId();
     if (nGameId == 0)
     {
         SetDisplayString(L"No game loaded.");

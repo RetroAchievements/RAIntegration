@@ -105,7 +105,6 @@ void AssetListViewModel::OnActiveGameChanged()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     SetGameId(pGameContext.ActiveGameId());
-    SetSubsetFilter(0);
 
     switch (pGameContext.Assets().MostPublishedAssetCategory())
     {
@@ -126,21 +125,14 @@ void AssetListViewModel::OnActiveGameChanged()
     m_vSubsets.Clear();
 
     for (const auto& pSubset : pGameContext.Subsets())
-        m_vSubsets.Add(pSubset.ID(), pSubset.Title());
+        m_vSubsets.Add(pSubset.AchievementSetID(), pSubset.Title());
 
     m_vSubsets.EndUpdate();
 
-    if (pGameContext.ActiveGameId() != pGameContext.GameId())
-    {
-        for (size_t nIndex = 0; nIndex < pGameContext.Subsets().size(); ++nIndex)
-        {
-            if (pGameContext.Subsets().at(nIndex).GameID() == pGameContext.ActiveGameId())
-            {
-                SetSubsetFilter(pGameContext.Subsets().at(nIndex).ID());
-                break;
-            }
-        }
-    }
+    if (pGameContext.Subsets().empty())
+        SetSubsetFilter(0);
+    else
+        SetSubsetFilter(pGameContext.Subsets().front().AchievementSetID());
 
     ApplyFilter();
 }
@@ -590,7 +582,7 @@ void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
     {
         const auto& pLocalStorage = dynamic_cast<const ra::services::impl::FileLocalStorage&>(ra::services::ServiceLocator::Get<ra::services::ILocalStorage>());
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-        const auto sFilePath = pLocalStorage.GetPath(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
+        const auto sFilePath = pLocalStorage.GetPath(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.ActiveGameId()));
         auto sUrl = ra::StringPrintf("file://localhost/%s", sFilePath);
         std::replace(sUrl.begin(), sUrl.end(), '\\', '/');
         ra::services::ServiceLocator::Get<ra::ui::IDesktop>().OpenUrl(sUrl);

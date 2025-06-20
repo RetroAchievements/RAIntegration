@@ -843,8 +843,8 @@ public:
         {
             m_pClient = pClient;
             m_pPublishedSubset = pClient->game->subsets;
-            Expects(m_pPublishedSubset != nullptr);
         }
+        Expects(m_pPublishedSubset != nullptr);
 
         std::unique_ptr<SubsetWrapper> pSubsetWrapper;
         pSubsetWrapper.reset(new SubsetWrapper);
@@ -858,7 +858,7 @@ public:
         pSubsetWrapper->pLocalSubset.resize(nSubsets);
 
         BuildSubsetWrapper(*pSubsetWrapper, pSubsetWrapper->pCoreSubset.at(0), pSubsetWrapper->pLocalSubset.at(0),
-                           m_pPublishedSubset, 0, vAssets);
+                           m_pPublishedSubset, m_pPublishedSubset->public_.id, vAssets);
 
         nSubsets = 1;
         for (auto* pSubset = m_pPublishedSubset->next; pSubset; pSubset = pSubset->next, nSubsets++)

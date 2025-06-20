@@ -277,6 +277,8 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
         // activate rich presence (or remove if not defined)
         if (pRichPresence && nResult == RC_OK)
         {
+            pRichPresence->SetSubsetID(m_vSubsets.front().AchievementSetID());
+
             // if the server value differs from the local value, the model will appear as Unpublished
             if (pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
             {
@@ -389,10 +391,6 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
 #endif
 
-    const auto nPrimarySubsetId = m_vSubsets.empty() ? 0 :
-        m_vSubsets.front().Type() == GameContext::SubsetType::Core ?
-        m_vSubsets.front().AchievementSetID() : 0;
-
     for (auto* pSubset = pClient->game->subsets; pSubset; pSubset = pSubset->next)
     {
         // achievements
@@ -442,8 +440,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 else
                     vmAchievement->Attach(*pAchievementData, nCategory, "");
 
-                if (pSubset->public_.id != nPrimarySubsetId)
-                    vmAchievement->SetSubsetID(pSubset->public_.id);
+                vmAchievement->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmAchievement));
 
@@ -474,6 +471,8 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                     vmLeaderboard->Attach(*pLeaderboardData, nCategory, sDefinition->second);
                 else
                     vmLeaderboard->Attach(*pLeaderboardData, nCategory, "");
+
+                vmLeaderboard->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmLeaderboard));
             }

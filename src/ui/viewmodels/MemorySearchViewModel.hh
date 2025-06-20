@@ -478,7 +478,7 @@ private:
     void UpdateResults();
     void DoApplyFilter();
     void UpdateResult(SearchResultViewModel& pRow, const ra::services::SearchResults& pResults,
-        ra::services::SearchResults::Result& pResult, bool bForceFilterCheck,
+        ra::services::SearchResult& pResult, bool bForceFilterCheck,
         const ra::data::context::EmulatorContext& pEmulatorContext);
 
     void OnPredefinedFilterRangeChanged();

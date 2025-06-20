@@ -1,6 +1,7 @@
 #include "PointerFinderViewModel.hh"
 
 #include "RA_Defs.h"
+#include "RA_StringUtils.h"
 
 #include "data/context/EmulatorContext.hh"
 #include "data/context/GameContext.hh"
@@ -202,7 +203,7 @@ void PointerFinderViewModel::Find()
             gsl::index nResultIndex = 0;
             for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pResults.MatchingAddressCount()); nIndex++)
             {
-                ra::services::SearchResults::Result pResult;
+                ra::services::SearchResult pResult;
                 if (pResults.GetMatchingAddress(nIndex, pResult))
                 {
                     PotentialPointerViewModel* pPointer = nullptr;

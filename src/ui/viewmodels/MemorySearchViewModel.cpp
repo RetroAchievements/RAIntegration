@@ -356,7 +356,7 @@ void MemorySearchViewModel::DoFrame()
         m_vResults.BeginUpdate();
 
         // NOTE: only processes the visible items
-        ra::services::SearchResults::Result pResult;
+        ra::services::SearchResult pResult;
         std::wstring sFormattedValue;
 
         gsl::index nIndex = GetScrollOffset();
@@ -774,7 +774,7 @@ unsigned MemorySearchViewModel::CalculatePreserveResultsScrollOffset(const Searc
 
     const auto nAddressAtScrollOffset = nItemAtScrollOffset->nAddress;
 
-    ra::services::SearchResults::Result pSearchResult;
+    ra::services::SearchResult pSearchResult;
     if (pResult.pResults.GetMatchingAddress(nScrollOffset, pSearchResult) &&
         pSearchResult.nAddress == nAddressAtScrollOffset)
     {
@@ -839,7 +839,7 @@ void MemorySearchViewModel::UpdateResults()
             return;
 
         const auto& pCurrentResults = *m_vSearchResults.at(m_nSelectedSearchResult).get();
-        ra::services::SearchResults::Result pResult;
+        ra::services::SearchResult pResult;
         const auto nIndex = gsl::narrow_cast<gsl::index>(GetScrollOffset());
 
         const auto& vmBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
@@ -926,7 +926,7 @@ void MemorySearchViewModel::UpdateResults()
 }
 
 void MemorySearchViewModel::UpdateResult(SearchResultViewModel& vmResult,
-    const ra::services::SearchResults& pResults, ra::services::SearchResults::Result& pResult,
+    const ra::services::SearchResults& pResults, ra::services::SearchResult& pResult,
     bool bForceFilterCheck, const ra::data::context::EmulatorContext& pEmulatorContext)
 {
     std::wstring sFormattedValue;
@@ -1105,7 +1105,7 @@ void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool b
         return;
     }
 
-    ra::services::SearchResults::Result pResult;
+    ra::services::SearchResult pResult;
 
     // ignore IsSelectedProperty events - we'll update the lists directly
     m_vResults.RemoveNotifyTarget(*this);
@@ -1157,7 +1157,7 @@ void MemorySearchViewModel::ExcludeSelected()
     const auto& pCurrentResults = *m_vSearchResults.at(m_nSelectedSearchResult).get();
     std::unique_ptr<SearchResult> pResult;
     pResult.reset(new SearchResult(pCurrentResults)); // clone current item
-    ra::services::SearchResults::Result pItem {};
+    ra::services::SearchResult pItem {};
 
     const auto nSize = pCurrentResults.pResults.GetSize();
     if (nSize == MemSize::Nibble_Lower)
@@ -1299,7 +1299,7 @@ void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::fu
     const auto& pResults = m_vSearchResults.at(m_nSelectedSearchResult)->pResults;
     const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult - 1)->pResults;
     const auto& pInitialResults = m_vSearchResults.front()->pResults;
-    ra::services::SearchResults::Result pResult;
+    ra::services::SearchResult pResult;
 
     const auto nResults = pResults.MatchingAddressCount();
 
@@ -1449,8 +1449,8 @@ void MemorySearchViewModel::ImportResults()
 void MemorySearchViewModel::LoadResults(ra::services::TextReader& pTextReader,
                                         MemorySearchViewModel::SearchResult& vmResult) const
 {
-    std::vector<ra::services::SearchResults::Result> vEntries;
-    ra::services::SearchResults::Result pResult{};
+    std::vector<ra::services::SearchResult> vEntries;
+    ra::services::SearchResult pResult{};
 
     ra::services::SearchResults pTemp;
     pTemp.Initialize(0, 0, GetSearchType());

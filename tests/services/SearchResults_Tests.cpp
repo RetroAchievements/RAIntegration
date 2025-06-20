@@ -20,7 +20,7 @@ public:
         SearchResults results;
         Assert::AreEqual({ 0U }, results.MatchingAddressCount());
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsFalse(results.GetMatchingAddress(0, result));
     }
 
@@ -41,7 +41,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -74,7 +74,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(2U));
         Assert::IsFalse(results.ContainsAddress(3U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBit, result.nSize);
@@ -101,7 +101,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsFalse(results.ContainsAddress(2U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
@@ -125,7 +125,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBit, result.nSize);
@@ -157,7 +157,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(6U));
         Assert::IsFalse(results.ContainsAddress(7U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
@@ -185,7 +185,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(2U));
         Assert::IsFalse(results.ContainsAddress(3U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBitBigEndian, result.nSize);
@@ -212,7 +212,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsFalse(results.ContainsAddress(2U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, result.nSize);
@@ -236,7 +236,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBitBigEndian, result.nSize);
@@ -268,7 +268,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(6U));
         Assert::IsFalse(results.ContainsAddress(7U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, result.nSize);
@@ -298,7 +298,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(4U));
 
         // lower nibble always returned first
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
@@ -347,7 +347,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBit, result.nSize);
@@ -384,7 +384,7 @@ public:
         Assert::IsTrue(results2.ContainsAddress(3U));
         Assert::IsFalse(results2.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(3U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -437,7 +437,7 @@ public:
         Assert::IsFalse(results3.ContainsAddress(4U));
         Assert::IsTrue(results3.ContainsAddress(5U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results3.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -474,7 +474,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -506,7 +506,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -538,7 +538,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(3U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -565,7 +565,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -597,7 +597,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -624,7 +624,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -659,7 +659,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -699,7 +699,7 @@ public:
         Assert::IsTrue(results3.ContainsAddress(3U));
         Assert::IsTrue(results3.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(1U, result));
         Assert::AreEqual(3U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -745,7 +745,7 @@ public:
         Assert::IsFalse(results2.ContainsAddress(3U));
         Assert::IsFalse(results2.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -790,7 +790,7 @@ public:
         Assert::IsTrue(results2.ContainsAddress(99U));
         Assert::IsTrue(results2.ContainsAddress(700U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -839,7 +839,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -873,7 +873,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -907,7 +907,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -934,7 +934,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(2U));
         Assert::IsFalse(results.ContainsAddress(3U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBit, result.nSize);
@@ -964,7 +964,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
@@ -990,7 +990,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(2U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBit, result.nSize);
@@ -1034,7 +1034,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
@@ -1081,7 +1081,7 @@ public:
         Assert::IsTrue(results1.ContainsAddress(0x000000U));
         Assert::IsTrue(results1.ContainsAddress(0x010000U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results1.GetMatchingAddress(0U, result));
         Assert::AreEqual(0x000000U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
@@ -1136,7 +1136,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(4U));
         Assert::IsTrue(results.ContainsAddress(8U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(8U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
@@ -1163,7 +1163,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(2U));
         Assert::IsFalse(results.ContainsAddress(3U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBitBigEndian, result.nSize);
@@ -1193,7 +1193,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, result.nSize);
@@ -1218,7 +1218,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, result.nSize);
@@ -1244,7 +1244,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(2U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBitBigEndian, result.nSize);
@@ -1288,7 +1288,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, result.nSize);
@@ -1335,7 +1335,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
@@ -1366,7 +1366,7 @@ public:
         filtered1.Initialize(results, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"1");
         Assert::AreEqual({ 1U }, filtered1.MatchingAddressCount());
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(filtered1.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::Nibble_Upper, result.nSize);
@@ -1422,7 +1422,7 @@ public:
         Assert::IsTrue(results3.ContainsAddress(3U));
         Assert::IsFalse(results3.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results3.GetMatchingAddress(0U, result));
         Assert::AreEqual(3U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -1440,7 +1440,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
-        const SearchResults::Result excludeResult{ 1U, 0U, MemSize::EightBit };
+        const SearchResult excludeResult{ 1U, 0U, MemSize::EightBit };
         results1.ExcludeResult(excludeResult);
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
@@ -1464,7 +1464,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -1482,7 +1482,7 @@ public:
         Assert::AreEqual({ 6U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
-        SearchResults::Result excludeResult{ 1U, 0U, MemSize::Nibble_Lower };
+        SearchResult excludeResult{ 1U, 0U, MemSize::Nibble_Lower };
         results1.ExcludeResult(excludeResult);
         Assert::AreEqual({ 6U }, results1.MatchingAddressCount());
 
@@ -1506,7 +1506,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
@@ -1539,7 +1539,7 @@ public:
         Assert::AreEqual({ 2U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
-        const SearchResults::Result excludeResult{ 0U, 0U, MemSize::EightBit };
+        const SearchResult excludeResult{ 0U, 0U, MemSize::EightBit };
         results1.ExcludeResult(excludeResult);
         Assert::AreEqual({ 2U }, results1.MatchingAddressCount());
 
@@ -1563,7 +1563,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBit, result.nSize);
@@ -1588,7 +1588,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(BIG_BLOCK_SIZE - 1));
         Assert::IsFalse(results.ContainsAddress(BIG_BLOCK_SIZE));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(MAX_BLOCK_SIZE - 1, result));
         Assert::AreEqual(MAX_BLOCK_SIZE - 1, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -1625,7 +1625,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(BIG_BLOCK_SIZE - 2));
         Assert::IsFalse(results.ContainsAddress(BIG_BLOCK_SIZE - 1));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(MAX_BLOCK_SIZE - 1, result));
         Assert::AreEqual(MAX_BLOCK_SIZE - 1, result.nAddress);
         Assert::AreEqual(MemSize::SixteenBit, result.nSize);
@@ -1678,7 +1678,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(36U));
 
         // nValue for ASCII text is the first byte of the string. use FormattedValue to get the whole string
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::Text, result.nSize);
@@ -1710,7 +1710,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(7U));
 
         // nValue is an IEE-754 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::Float, result.nSize);
@@ -1742,7 +1742,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(7U));
 
         // nValue is an BigEndian IEE-754 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::FloatBigEndian, result.nSize);
@@ -1777,7 +1777,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(15U));
 
         // nValue is the four most signifcant bytes of an IEE-754 encoded double
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(4U, result));
         Assert::AreEqual(4U, result.nAddress);
         Assert::AreEqual(MemSize::Double32, result.nSize);
@@ -1812,7 +1812,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(15U));
 
         // nValue is the four most signifcant bytes of an BigEndian IEE-754 encoded double
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::Double32BigEndian, result.nSize);
@@ -1844,7 +1844,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(7U));
 
         // nValue is an MBF32 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::MBF32, result.nSize);
@@ -1876,7 +1876,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(7U));
 
         // nValue is an MBF32 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::MBF32LE, result.nSize);
@@ -1911,7 +1911,7 @@ public:
         Assert::IsTrue(results2.ContainsAddress(14U));
         Assert::IsTrue(results2.ContainsAddress(24U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
 
@@ -1955,7 +1955,7 @@ public:
         Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
         Assert::IsTrue(results2.ContainsAddress(20U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(20U, result.nAddress);
     }
@@ -1978,7 +1978,7 @@ public:
         results2.Initialize(results1, ComparisonType::GreaterThanOrEqual, ra::services::SearchFilterType::Constant, L"se");
         Assert::AreEqual({ 7U }, results2.MatchingAddressCount());
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(4U, result.nAddress); // sells
 
@@ -2050,7 +2050,7 @@ public:
         Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
 
         // nValue is an IEE-754 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::Float, result.nSize);
@@ -2075,7 +2075,7 @@ public:
         Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
 
         // nValue is an IEE-754 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::Float, result.nSize);
@@ -2100,7 +2100,7 @@ public:
         Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
 
         // nValue is an BigEndian IEE-754 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(MemSize::FloatBigEndian, result.nSize);
@@ -2122,7 +2122,7 @@ public:
         Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
 
         // nValue is an MBF32 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(4U, result.nAddress);
         Assert::AreEqual(MemSize::MBF32, result.nSize);
@@ -2146,7 +2146,7 @@ public:
         Assert::AreEqual({ 2U }, results2.MatchingAddressCount());
 
         // nValue is an MBF32 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(1U, result));
         Assert::AreEqual(4U, result.nAddress);
         Assert::AreEqual(MemSize::MBF32, result.nSize);
@@ -2168,7 +2168,7 @@ public:
         Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
 
         // nValue is an MBF32 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(4U, result.nAddress);
         Assert::AreEqual(MemSize::MBF32LE, result.nSize);
@@ -2192,7 +2192,7 @@ public:
         Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
 
         // nValue is an MBF32 encoded float
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(4U, result.nAddress);
         Assert::AreEqual(MemSize::MBF32LE, result.nSize);
@@ -2210,7 +2210,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
-        const SearchResults::Result excludeResult{ 0U, 0U, MemSize::EightBit };
+        const SearchResult excludeResult{ 0U, 0U, MemSize::EightBit };
         results1.ExcludeResult(excludeResult);
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
@@ -2229,7 +2229,7 @@ public:
         Assert::IsFalse(results3.ContainsAddress(3U));
         Assert::IsFalse(results3.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results3.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -2336,7 +2336,7 @@ public:
         SearchResults results1, results2;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
 
-        SearchResults::Result result1, result2, result3;
+        SearchResult result1, result2, result3;
         results1.GetMatchingAddress(0, result1);
         results1.GetMatchingAddress(1, result2);
         results1.GetMatchingAddress(2, result3);
@@ -2365,7 +2365,7 @@ public:
         SearchResults results1, results2;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
 
-        SearchResults::Result result1, result2, result3;
+        SearchResult result1, result2, result3;
         results1.GetMatchingAddress(0, result1);
         results1.GetMatchingAddress(1, result2);
         results1.GetMatchingAddress(2, result3);
@@ -2394,7 +2394,7 @@ public:
         SearchResults results1, results2;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
 
-        SearchResults::Result result1, result2, result3;
+        SearchResult result1, result2, result3;
         results1.GetMatchingAddress(0, result1);
         results1.GetMatchingAddress(1, result2);
         results1.GetMatchingAddress(2, result3);
@@ -2423,7 +2423,7 @@ public:
         SearchResults results1, results2;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
 
-        SearchResults::Result result1, result2, result3;
+        SearchResult result1, result2, result3;
         results1.GetMatchingAddress(0, result1);
         results1.GetMatchingAddress(1, result2);
         results1.GetMatchingAddress(2, result3);
@@ -2465,7 +2465,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(MemSize::BitCount, result.nSize);
@@ -2504,7 +2504,7 @@ public:
         Assert::IsTrue(results2.ContainsAddress(3U));
         Assert::IsTrue(results2.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(2U, result));
         Assert::AreEqual(3U, result.nAddress);
         Assert::AreEqual(MemSize::BitCount, result.nSize);
@@ -2551,7 +2551,7 @@ public:
         Assert::IsFalse(results2.ContainsAddress(3U));
         Assert::IsFalse(results2.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results2.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(MemSize::BitCount, result.nSize);
@@ -2577,7 +2577,7 @@ public:
         memory.at(3) = 0x3B; // still 5 bits, but different value
 
         std::wstring sFormattedValue;
-        SearchResults::Result pResult;
+        SearchResult pResult;
         results1.GetMatchingAddress(3, pResult);
         Assert::IsTrue(results1.UpdateValue(pResult, &sFormattedValue, mockEmulatorContext));
         Assert::AreEqual(std::wstring(L"5 (00111011)"), sFormattedValue);
@@ -2589,7 +2589,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockMemory(memory);
 
-        std::vector<SearchResults::Result> vResults;
+        std::vector<SearchResult> vResults;
         vResults.push_back({2, 0x07, MemSize::Unknown});
         vResults.push_back({3, 0x16, MemSize::Unknown});
 
@@ -2604,7 +2604,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
@@ -2622,7 +2622,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockMemory(memory);
 
-        std::vector<SearchResults::Result> vResults;
+        std::vector<SearchResult> vResults;
         vResults.push_back({2, 0x12345678, MemSize::Unknown});
         vResults.push_back({4, 0x55551234, MemSize::Unknown});
         vResults.push_back({12, 0xdeadbeef, MemSize::Unknown});
@@ -2638,7 +2638,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(5U));
         Assert::IsTrue(results.ContainsAddress(12U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
@@ -2661,7 +2661,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockMemory(memory);
 
-        std::vector<SearchResults::Result> vResults;
+        std::vector<SearchResult> vResults;
         vResults.push_back({2, 0x12345678, MemSize::Unknown}); // not aligned - should be ignored
         vResults.push_back({4, 0x55551234, MemSize::Unknown});
         vResults.push_back({12, 0xdeadbeef, MemSize::Unknown});
@@ -2677,7 +2677,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(5U));
         Assert::IsTrue(results.ContainsAddress(12U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(4U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
@@ -2695,7 +2695,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockMemory(memory);
 
-        std::vector<SearchResults::Result> vResults;
+        std::vector<SearchResult> vResults;
         vResults.push_back({2, 0x12345678, MemSize::Unknown});
         vResults.push_back({4, 0x56785555, MemSize::Unknown});
         vResults.push_back({12, 0xdeadbeef, MemSize::Unknown});
@@ -2711,7 +2711,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(5U));
         Assert::IsTrue(results.ContainsAddress(12U));
 
-        SearchResults::Result result;
+        SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, result.nSize);

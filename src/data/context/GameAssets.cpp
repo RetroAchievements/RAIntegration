@@ -372,9 +372,16 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
     pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
 #endif
 
-    pData->WriteLine(pGameContext.Subsets().front().Title());
-
-    const auto nPrimarySubsetId = pGameContext.Subsets().front().AchievementSetID();
+    uint32_t nPrimarySubsetId = 0;
+    if (pGameContext.Subsets().empty())
+    {
+        pData->WriteLine(pGameContext.GameTitle());
+    }
+    else
+    {
+        nPrimarySubsetId = pGameContext.Subsets().front().AchievementSetID();
+        pData->WriteLine(pGameContext.Subsets().front().Title());
+    }
 
     bool bHasDeleted = false;
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)

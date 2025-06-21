@@ -1722,13 +1722,11 @@ void AssetListViewModel::CreateNew()
         case ra::data::models::AssetType::Achievement:
             RA_LOG_INFO("Creating new achievement");
             pNewAsset = &pGameContext.Assets().NewAchievement();
-            pNewAsset->SetSubsetID(GetSubsetFilter());
             break;
 
         case ra::data::models::AssetType::Leaderboard:
             RA_LOG_INFO("Creating new leaderboard");
             pNewAsset = &pGameContext.Assets().NewLeaderboard();
-            pNewAsset->SetSubsetID(GetSubsetFilter());
             break;
 
         case ra::data::models::AssetType::RichPresence:
@@ -1752,6 +1750,7 @@ void AssetListViewModel::CreateNew()
     }
 
     Expects(pNewAsset != nullptr);
+    pNewAsset->SetSubsetID(GetSubsetFilter());
 
     if (bUpdateAsset)
     {

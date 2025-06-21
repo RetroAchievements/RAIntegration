@@ -109,7 +109,7 @@ void RichPresenceModel::ReloadRichPresenceScript()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
+    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.ActiveGameId()));
 
     if (pRich == nullptr)
     {
@@ -164,7 +164,7 @@ void RichPresenceModel::WriteRichPresenceScript()
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
 
     auto pWriter = pLocalStorage.WriteText(ra::services::StorageItemType::RichPresence,
-                                           std::to_wstring(pGameContext.GameId()));
+                                           std::to_wstring(pGameContext.ActiveGameId()));
     const auto& pScript = GetScript();
     pWriter->Write(pScript);
 }

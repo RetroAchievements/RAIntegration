@@ -262,6 +262,52 @@ public:
 
         Assert::AreEqual(std::string("Display:\nTest\n"), richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
     }
+
+    TEST_METHOD(TestReloadWritesFileExclusiveSubset)
+    {
+        RichPresenceModelHarness richPresence;
+        richPresence.mockGameContext.SetGameId(1);
+        richPresence.mockGameContext.SetActiveGameId(2);
+        richPresence.SetScript("Display:\nTest\n");
+        richPresence.CreateServerCheckpoint();
+        richPresence.CreateLocalCheckpoint();
+
+        Assert::AreEqual(AssetChanges::None, richPresence.GetChanges());
+        Assert::AreEqual(std::string(), richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"2"));
+
+        richPresence.ReloadRichPresenceScript();
+        Assert::AreEqual(AssetChanges::None, richPresence.GetChanges());
+
+        // file is written using ActiveGameId
+        Assert::AreEqual(std::string("Display:\nTest\n"),
+            richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"2"));
+
+        // file is not written using GameId
+        Assert::AreEqual(std::string(""),
+            richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
+    }
+
+    TEST_METHOD(TestReloadReadsFileExclusiveSubset)
+    {
+        RichPresenceModelHarness richPresence;
+        richPresence.mockGameContext.SetGameId(1);
+        richPresence.mockGameContext.SetActiveGameId(2);
+        richPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"2",
+                                                     "Display:\nFrom file\n");
+        richPresence.SetScript("Display:\nTest\n");
+        richPresence.CreateServerCheckpoint();
+        richPresence.CreateLocalCheckpoint();
+
+        Assert::AreEqual(AssetChanges::None, richPresence.GetChanges());
+
+        richPresence.ReloadRichPresenceScript();
+        Assert::AreEqual(std::string("Display:\nFrom file\n"), richPresence.GetScript());
+        Assert::AreEqual(AssetChanges::Unpublished, richPresence.GetChanges());
+        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+
+        Assert::AreEqual(std::string("Display:\nFrom file\n"),
+            richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"2"));
+    }
 };
 
 } // namespace tests

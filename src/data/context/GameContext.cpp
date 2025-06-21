@@ -277,6 +277,8 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
         // activate rich presence (or remove if not defined)
         if (pRichPresence && nResult == RC_OK)
         {
+            pRichPresence->SetSubsetID(m_vSubsets.front().AchievementSetID());
+
             // if the server value differs from the local value, the model will appear as Unpublished
             if (pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
             {
@@ -438,8 +440,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 else
                     vmAchievement->Attach(*pAchievementData, nCategory, "");
 
-                if (pSubset != pClient->game->subsets)
-                    vmAchievement->SetSubsetID(pSubset->public_.id);
+                vmAchievement->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmAchievement));
 
@@ -470,6 +471,8 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                     vmLeaderboard->Attach(*pLeaderboardData, nCategory, sDefinition->second);
                 else
                     vmLeaderboard->Attach(*pLeaderboardData, nCategory, "");
+
+                vmLeaderboard->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmLeaderboard));
             }
@@ -517,7 +520,14 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
 
     // if subsets were found, migrate any SUBSET-User.txt files into the the GAME-User.txt file
     if (m_vSubsets.size() > 1)
+    {
         MigrateSubsetUserFiles();
+    }
+    else if (m_nActiveGameId != m_nGameId)
+    {
+        m_vSubsets.front().SetTitle(ra::StringPrintf(L"%s (%s)",
+            m_vSubsets.front().Title(), game_data_response->title));
+    }
 }
 
 void GameContext::MigrateSubsetUserFiles()

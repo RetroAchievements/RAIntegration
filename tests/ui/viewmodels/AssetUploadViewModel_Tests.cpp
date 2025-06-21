@@ -34,6 +34,11 @@ private:
     class AssetUploadViewModelHarness : public AssetUploadViewModel
     {
     public:
+        AssetUploadViewModelHarness()
+        {
+            mockGameContext.SetGameId(GameId);
+        }
+
         static constexpr unsigned GameId = 22U;
 
         ra::api::mocks::MockServer mockServer;
@@ -45,8 +50,6 @@ private:
 
         void DoUpload(int nExpectedProgress = 100)
         {
-            mockGameContext.SetGameId(GameId);
-
             Assert::AreEqual(std::wstring(), GetMessage());
             Assert::AreEqual(0, GetProgress());
             Assert::AreEqual({ 0U }, mockThreadPool.PendingTasks());
@@ -383,6 +386,7 @@ public:
     TEST_METHOD(TestSingleLocalAchievementSubset)
     {
         AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockGameContext.SetGameId(11U);
         vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
         auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Local, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
         pAchievement.SetSubsetID(22U);

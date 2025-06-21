@@ -32,7 +32,17 @@ public:
     /// <summary>
     /// Sets the unique identifier of the currently loaded game.
     /// </summary>
-    void SetGameId(unsigned int nGameId) noexcept { m_nGameId = m_nActiveGameId = nGameId; }
+    void SetGameId(unsigned int nGameId) noexcept 
+    {
+        m_nGameId = m_nActiveGameId = nGameId;
+
+        if (!m_vSubsets.empty())
+        {
+            const auto& pSubset = m_vSubsets.front();
+            m_vSubsets.front() = Subset(nGameId, nGameId, pSubset.Title(), pSubset.Type());
+        }
+    }
+    void SetActiveGameId(unsigned int nGameId) noexcept { m_nActiveGameId = nGameId; }
 
     void NotifyActiveGameChanged() { OnActiveGameChanged(); }
 

@@ -15,7 +15,7 @@
 
 #include <rcheevos\include\rc_client.h>
 
-struct rc_api_fetch_game_data_response_t;
+struct rc_api_fetch_game_sets_response_t;
 
 namespace ra {
 namespace services {
@@ -48,6 +48,7 @@ public:
 
     void BeginLoadGame(const std::string& sHash, unsigned id,
                        rc_client_callback_t fCallback, void* pCallbackData);
+    void UnloadGame() noexcept;
 
     /// <summary>
     /// Syncs data in Assets to rc_client.
@@ -109,7 +110,7 @@ public:
     /// <summary>
     /// Processes stuff not related to a frame.
     /// </summary>
-    void Idle() noexcept;
+    void Idle() const noexcept;
 
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.
@@ -158,6 +159,9 @@ public:
     /// Makes an asynchronous rc_api server call
     /// </summary>
     void AsyncServerCall(const rc_api_request_t* pRequest, AsyncServerCallCallback fCallback, void* pCallbackData) const;
+
+    void QueueMemoryRead(std::function<void()>&& fCallback) const;
+    bool IsOnDoFrameThread() const noexcept { return m_hDoFrameThread && GetCurrentThreadId() == m_hDoFrameThread; }
 
     class Synchronizer
     {
@@ -208,6 +212,7 @@ public:
 
 private:
     bool m_bPaused = false;
+    DWORD m_hDoFrameThread = 0;
     std::unique_ptr<rc_client_t> m_pClient;
 
     class ClientSynchronizer;
@@ -276,13 +281,13 @@ private:
                                                        const uint8_t* data, size_t data_size,
                                                        CallbackWrapper* pCallbackWrapper) noexcept;
 
-    rc_client_async_handle_t* BeginChangeMedia(const char* file_path, const uint8_t* data, size_t data_size,
-                                               CallbackWrapper* pCallbackWrapper) noexcept;
-    rc_client_async_handle_t* BeginChangeMediaFromHash(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept;
+    rc_client_async_handle_t* BeginIdentifyAndChangeMedia(const char* file_path, const uint8_t* data, size_t data_size,
+                                                          CallbackWrapper* pCallbackWrapper) noexcept;
+    rc_client_async_handle_t* BeginChangeMedia(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept;
     static void ChangeMediaCallback(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata);
 
     static void PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
-                                            struct rc_api_fetch_game_data_response_t* game_data_response,
+                                            struct rc_api_fetch_game_sets_response_t* game_data_response,
                                             rc_client_t* client, void* pUserdata);
 };
 

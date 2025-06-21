@@ -98,6 +98,7 @@ public:
     void SetTriggerViewModel(const ViewModelBase* pTriggerViewModel) noexcept { m_pTriggerViewModel = pTriggerViewModel; }
 
     std::wstring GetTooltip(const StringModelProperty& nProperty) const;
+    std::wstring GetTooltip(const IntModelProperty& nProperty) const;
 
     bool IsModifying() const { return IsModifying(GetType()); }
 
@@ -118,8 +119,11 @@ private:
 
     static std::wstring GetValueTooltip(unsigned int nValue);
     std::wstring GetAddressTooltip(ra::ByteAddress nAddress, const std::wstring& sPointerChain) const;
+    std::wstring GetRecallTooltip(bool bOperand2) const;
     ra::ByteAddress GetSourceAddress() const;
     ra::ByteAddress GetTargetAddress() const;
+    const rc_condition_t* GetFirstCondition() const;
+    const rc_condition_t* GetCondition() const;
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,
         const StringModelProperty& pValueProperty, const rc_operand_t& operand);
     void ChangeOperandType(const StringModelProperty& sValueProperty, TriggerOperandType nOldType, TriggerOperandType nNewType);

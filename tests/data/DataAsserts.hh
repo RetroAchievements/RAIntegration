@@ -29,6 +29,24 @@ std::wstring ToString<ra::data::context::GameContext::Mode>(const ra::data::cont
 }
 
 template<>
+std::wstring ToString<ra::data::context::GameContext::SubsetType>(const ra::data::context::GameContext::SubsetType& nSubsetType)
+{
+    switch (nSubsetType)
+    {
+        case ra::data::context::GameContext::SubsetType::Core:
+            return L"Core";
+        case ra::data::context::GameContext::SubsetType::Bonus:
+            return L"Bonus";
+        case ra::data::context::GameContext::SubsetType::Specialty:
+            return L"Specialty";
+        case ra::data::context::GameContext::SubsetType::Exclusive:
+            return L"Exclusive";
+        default:
+            return std::to_wstring(static_cast<int>(nSubsetType));
+    }
+}
+
+template<>
 std::wstring ToString<ra::data::models::AssetType>(
     const ra::data::models::AssetType& nAssetType)
 {

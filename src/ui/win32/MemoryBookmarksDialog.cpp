@@ -122,6 +122,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     m_bindBookmarks.SetShowGridLines(true);
     m_bindBookmarks.BindIsSelected(MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsSelectedProperty);
     m_bindBookmarks.BindRowColor(MemoryBookmarksViewModel::MemoryBookmarkViewModel::RowColorProperty);
+    m_bindBookmarks.SetPrimaryEditColumn(0);
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::DescriptionProperty);
@@ -135,6 +136,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pAddressColumn->SetHeader(L"Address");
     pAddressColumn->UpdateWidth();
     pAddressColumn->SetAlignment(ra::ui::RelativePosition::Far);
+    pAddressColumn->BindTooltip(MemoryBookmarksViewModel::MemoryBookmarkViewModel::RealNoteProperty);
     m_bindBookmarks.BindColumn(1, std::move(pAddressColumn));
 
     auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
@@ -200,6 +202,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
 BOOL MemoryBookmarksDialog::OnInitDialog()
 {
     m_bindBookmarks.SetControl(*this, IDC_RA_LBX_ADDRESSES);
+    m_bindBookmarks.InitializeTooltips(std::chrono::seconds(30));
 
     return DialogBase::OnInitDialog();
 }

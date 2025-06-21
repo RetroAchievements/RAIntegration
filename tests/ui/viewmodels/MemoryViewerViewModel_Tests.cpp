@@ -1928,11 +1928,6 @@ public:
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
 
-        // ignore if readonly
-        viewer.SetReadOnly(true);
-        Assert::IsTrue(viewer.IsReadOnly());
-        Assert::IsFalse(viewer.IncreaseCurrentValue(1));
-
         viewer.SetReadOnly(false);
         Assert::IsFalse(viewer.IsReadOnly());
 
@@ -1940,28 +1935,35 @@ public:
         Assert::AreEqual({ 0U }, viewer.GetAddress());
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
-        // Increase by 1 from 0x0 should result to 0X1
-        Assert::IsTrue(viewer.IncreaseCurrentValue(1));
+        // Increase by 1 from 0x0 should result to 0x1
+        viewer.IncreaseCurrentValue(1);
         Assert::AreEqual({ 0x1U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
-        // Increase by 1 from 0xFE should result to 0XFF
+        // Increase by 1 from 0xFE should result to 0xFF
         viewer.mockEmulatorContext.WriteMemoryByte(0x0U, 0XFEU);
-        Assert::IsTrue(viewer.IncreaseCurrentValue(1));
+        viewer.IncreaseCurrentValue(1);
         Assert::AreEqual({ 0xFFU }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Increase by 1 from 0xFF should not change the value
-        Assert::IsFalse(viewer.IncreaseCurrentValue(1));
+        viewer.IncreaseCurrentValue(1);
         Assert::AreEqual({ 0xFFU }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
-        // Increase by 1 from 0x0 should result to 0X0001
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0X0U);
-        Assert::IsTrue(viewer.IncreaseCurrentValue(1));
+        // Increase by 1 from 0x0 should result to 0x0001
+        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0x0U);
+        viewer.IncreaseCurrentValue(1);
         Assert::AreEqual({ 0x1U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
 
         // Increase by 1 from 0xFFFF should not change the value
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0XFFFFU);
-        Assert::IsFalse(viewer.IncreaseCurrentValue(1));
+        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0xFFFFU);
+        viewer.IncreaseCurrentValue(1);
         Assert::AreEqual({ 0xFFFFU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+
+        // ignore if readonly
+        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0x0U);
+        viewer.SetReadOnly(true);
+        Assert::IsTrue(viewer.IsReadOnly());
+        viewer.IncreaseCurrentValue(1);
+        Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
     }
 
     TEST_METHOD(TestIncreaseCurrentValueBySixTeen)
@@ -1969,11 +1971,6 @@ public:
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
 
-        // ignore if readonly
-        viewer.SetReadOnly(true);
-        Assert::IsTrue(viewer.IsReadOnly());
-        Assert::IsFalse(viewer.IncreaseCurrentValue(16));
-
         viewer.SetReadOnly(false);
         Assert::IsFalse(viewer.IsReadOnly());
 
@@ -1981,28 +1978,35 @@ public:
         Assert::AreEqual({ 0U }, viewer.GetAddress());
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
-        // Increase by 16 from 0x0 should result to 0X10
-        Assert::IsTrue(viewer.IncreaseCurrentValue(16));
+        // Increase by 16 from 0x0 should result to 0x10
+        viewer.IncreaseCurrentValue(16);
         Assert::AreEqual({ 0x10U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
-        // Increase by 16 from 0xFE should result to 0XFF
+        // Increase by 16 from 0xFE should result to 0xFF
         viewer.mockEmulatorContext.WriteMemoryByte(0x0U, 0XFEU);
-        Assert::IsTrue(viewer.IncreaseCurrentValue(16));
+        viewer.IncreaseCurrentValue(16);
         Assert::AreEqual({ 0xFFU }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Increase by 16 from 0xFF should not change the value
-        Assert::IsFalse(viewer.IncreaseCurrentValue(16));
+        viewer.IncreaseCurrentValue(16);
         Assert::AreEqual({ 0xFFU }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
-        // Increase by 16 from 0x0 should result to 0X0010
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0X0U);
-        Assert::IsTrue(viewer.IncreaseCurrentValue(16));
+        // Increase by 16 from 0x0 should result to 0x0010
+        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0x0U);
+        viewer.IncreaseCurrentValue(16);
         Assert::AreEqual({ 0x10U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
 
         // Increase by 16 from 0xFFFF should not change the value
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0XFFFFU);
-        Assert::IsFalse(viewer.IncreaseCurrentValue(16));
+        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0xFFFFU);
+        viewer.IncreaseCurrentValue(16);
         Assert::AreEqual({ 0xFFFFU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+
+        // ignore if readonly
+        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0x0U);
+        viewer.SetReadOnly(true);
+        Assert::IsTrue(viewer.IsReadOnly());
+        viewer.IncreaseCurrentValue(16);
+        Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
     }
 
     TEST_METHOD(TestDecreaseCurrentValueByOne)
@@ -2010,11 +2014,6 @@ public:
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
 
-        // ignore if readonly
-        viewer.SetReadOnly(true);
-        Assert::IsTrue(viewer.IsReadOnly());
-        Assert::IsFalse(viewer.DecreaseCurrentValue(1));
-
         viewer.SetReadOnly(false);
         Assert::IsFalse(viewer.IsReadOnly());
 
@@ -2023,27 +2022,33 @@ public:
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Decrease by 1 from 0x0 should not change the value
-        Assert::IsFalse(viewer.DecreaseCurrentValue(1));
+        viewer.DecreaseCurrentValue(1);
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Decrease by 1 from 0xFF should result to 0XFE
         viewer.mockEmulatorContext.WriteMemoryByte(0x0U, 0XFFU);
-        Assert::IsTrue(viewer.DecreaseCurrentValue(1));
+        viewer.DecreaseCurrentValue(1);
         Assert::AreEqual({ 0xFEU }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Decrease by 1 from 0x1 should result to 0X0
         viewer.mockEmulatorContext.WriteMemoryByte(0x0U, 0X1U);
-        Assert::IsTrue(viewer.DecreaseCurrentValue(1));
+        viewer.DecreaseCurrentValue(1);
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Decrease by 1 from 0x0 should not change the value
         viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0X0U);
-        Assert::IsFalse(viewer.DecreaseCurrentValue(1));
+        viewer.DecreaseCurrentValue(1);
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
 
         // Decrease by 1 from 0xFFFF should result to 0XFFFE
         viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0XFFFFU);
-        Assert::IsTrue(viewer.DecreaseCurrentValue(1));
+        viewer.DecreaseCurrentValue(1);
+        Assert::AreEqual({ 0xFFFEU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+
+        // ignore if readonly
+        viewer.SetReadOnly(true);
+        Assert::IsTrue(viewer.IsReadOnly());
+        viewer.DecreaseCurrentValue(1);
         Assert::AreEqual({ 0xFFFEU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
     }
 
@@ -2052,11 +2057,6 @@ public:
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
 
-        // ignore if readonly
-        viewer.SetReadOnly(true);
-        Assert::IsTrue(viewer.IsReadOnly());
-        Assert::IsFalse(viewer.DecreaseCurrentValue(16));
-
         viewer.SetReadOnly(false);
         Assert::IsFalse(viewer.IsReadOnly());
 
@@ -2065,27 +2065,33 @@ public:
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Decrease by 16 from 0x0 should not change the value
-        Assert::IsFalse(viewer.DecreaseCurrentValue(16));
+        viewer.DecreaseCurrentValue(16);
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Decrease by 16 from 0xFF should result to 0XEF
-        viewer.mockEmulatorContext.WriteMemoryByte(0x0U, 0XFFU);
-        Assert::IsTrue(viewer.DecreaseCurrentValue(16));
+        viewer.mockEmulatorContext.WriteMemoryByte(0x0U, 0xFFU);
+        viewer.DecreaseCurrentValue(16);
         Assert::AreEqual({ 0xEFU }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Decrease by 16 from 0x1 should result to 0X0
-        viewer.mockEmulatorContext.WriteMemoryByte(0x0U, 0X1U);
-        Assert::IsTrue(viewer.DecreaseCurrentValue(16));
+        viewer.mockEmulatorContext.WriteMemoryByte(0x0U, 0x1U);
+        viewer.DecreaseCurrentValue(16);
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Decrease by 16 from 0x0 should not change the value
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0X0U);
-        Assert::IsFalse(viewer.DecreaseCurrentValue(16));
+        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0x0U);
+        viewer.DecreaseCurrentValue(16);
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
 
         // Decrease by 16 from 0xFFFF should result to 0XFFEF
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0XFFFFU);
-        Assert::IsTrue(viewer.DecreaseCurrentValue(16));
+        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0xFFFFU);
+        viewer.DecreaseCurrentValue(16);
+        Assert::AreEqual({ 0xFFEFU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+
+        // ignore if readonly
+        viewer.SetReadOnly(true);
+        Assert::IsTrue(viewer.IsReadOnly());
+        viewer.DecreaseCurrentValue(16);
         Assert::AreEqual({ 0xFFEFU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
     }
 };

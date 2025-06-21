@@ -4,6 +4,7 @@
 
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
+#include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockLocalStorage.hh"
@@ -29,6 +30,7 @@ private:
     public:
         ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockSessionTracker mockSessions;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
@@ -152,6 +154,7 @@ public:
     TEST_METHOD(TestRefreshOneGameDataCached)
     {
         OverlayRecentGamesPageViewModelHarness gamesPage;
+        gamesPage.mockGameContext.SetGameId(3U);
         gamesPage.mockSessions.MockSession(3U, 1234567890U, std::chrono::seconds(5000));
 
         bool bHttpRequesterCalled = false;

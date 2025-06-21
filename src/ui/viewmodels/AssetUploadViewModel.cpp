@@ -236,8 +236,10 @@ void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
 
 void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel& pAchievement)
 {
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+
     ra::api::UpdateAchievement::Request request;
-    request.GameId = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
+    request.GameId = pGameContext.GetGameId(pAchievement.GetSubsetID());
     request.Title = pAchievement.GetName();
     request.Description = pAchievement.GetDescription();
     request.Trigger = pAchievement.GetTrigger();
@@ -301,6 +303,18 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
         if (pScan.pAsset == &pAchievement)
         {
             pScan.sErrorMessage = response.ErrorMessage;
+
+            if (response.ErrorMessage == "Invalid state")
+            {
+                // generic API failure. Try to guess what went wrong
+                if (pAchievement.GetName().empty())
+                    pScan.sErrorMessage = "Title is required";
+                else if (pAchievement.GetDescription().empty())
+                    pScan.sErrorMessage = "Description is required";
+                else if (pAchievement.GetTrigger().empty())
+                    pScan.sErrorMessage = "At least one condition is required";
+            }
+
             pScan.nState = response.Succeeded() ? UploadState::Success : UploadState::Failed;
             break;
         }
@@ -309,8 +323,10 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
 
 void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard)
 {
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+
     ra::api::UpdateLeaderboard::Request request;
-    request.GameId = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
+    request.GameId = pGameContext.GetGameId(pLeaderboard.GetSubsetID());
     request.Title = pLeaderboard.GetName();
     request.Description = pLeaderboard.GetDescription();
     request.StartTrigger = pLeaderboard.GetStartTrigger();
@@ -351,6 +367,24 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
         if (pScan.pAsset == &pLeaderboard)
         {
             pScan.sErrorMessage = response.ErrorMessage;
+
+            if (response.ErrorMessage == "Invalid state")
+            {
+                // generic API failure. Try to guess what went wrong
+                if (pLeaderboard.GetName().empty())
+                    pScan.sErrorMessage = "Title is required";
+                else if (pLeaderboard.GetDescription().empty())
+                    pScan.sErrorMessage = "Description is required";
+                else if (pLeaderboard.GetStartTrigger().empty())
+                    pScan.sErrorMessage = "At least one start condition is required";
+                else if (pLeaderboard.GetSubmitTrigger().empty())
+                    pScan.sErrorMessage = "At least one submit condition is required";
+                else if (pLeaderboard.GetCancelTrigger().empty())
+                    pScan.sErrorMessage = "At least one cancel condition is required";
+                else if (pLeaderboard.GetValueDefinition().empty())
+                    pScan.sErrorMessage = "At least one value condition is required";
+            }
+
             pScan.nState = response.Succeeded() ? UploadState::Success : UploadState::Failed;
             break;
         }

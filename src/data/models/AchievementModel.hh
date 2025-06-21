@@ -144,6 +144,12 @@ public:
     /// <remarks>For unit testing - should not be called in the code</remarks>
     void SetUnlockRichPresence(const std::wstring& sValue) { SetValue(UnlockRichPresenceProperty, sValue); }
 
+    /// <summary>
+    /// Gets whether the asset should not be displayed in the asset list.
+    /// </summary>
+    /// <returns><c>true</c> to display the asset in the asset list, <c>false</c> otherwise.</returns>
+    bool IsShownInList() const override;
+
     void Activate() override;
     void Deactivate() override;
 

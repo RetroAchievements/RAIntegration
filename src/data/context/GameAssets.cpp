@@ -211,6 +211,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
     {
         ra::data::models::AssetType nType = ra::data::models::AssetType::None;
         unsigned nId = 0;
+        unsigned nSubsetId = 0;
 
         ra::Tokenizer pTokenizer(sLine);
         switch (pTokenizer.PeekChar())
@@ -230,12 +231,14 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 nType = ra::data::models::AssetType::CodeNotes;
                 pTokenizer.Consume('N');
                 break;
+
+            default:
+                continue;
         }
 
         nId = pTokenizer.ReadNumber();
+        nSubsetId = pTokenizer.Consume('|') ? pTokenizer.ReadNumber() : 0;
 
-        if (nType == ra::data::models::AssetType::None)
-            continue;
         if (!pTokenizer.Consume(':'))
             continue;
 
@@ -312,6 +315,9 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     vUnnumberedAssets.push_back(pAsset);
             }
         }
+
+        if (pAsset)
+            pAsset->SetSubsetID(nSubsetId);
     }
 
     // assign IDs for any assets where one was not available
@@ -449,6 +455,14 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
         }
 
         pData->Write(std::to_string(pItem->GetID()));
+
+        const auto nSubsetId = pItem->GetSubsetID();
+        if (nSubsetId > 0)
+        {
+            pData->Write("|");
+            pData->Write(std::to_string(nSubsetId));
+        }
+
         pItem->Serialize(*pData);
         pData->WriteLine();
     }

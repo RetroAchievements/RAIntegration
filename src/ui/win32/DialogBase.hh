@@ -55,7 +55,12 @@ public:
         if (!m_hWnd)
             return false;
 
-        ::ShowWindow(m_hWnd, SW_SHOW);
+        if (::ShowWindow(m_hWnd, SW_SHOW) != 0)
+        {
+            // nonzero return value means the window was already visible. attempt to focus it.
+            ::SetForegroundWindow(m_hWnd);
+        }
+
         return true;
     }
 
@@ -71,14 +76,17 @@ public:
 
     void Destroy() noexcept;
 
-protected:
-    explicit DialogBase(_Inout_ ra::ui::WindowViewModelBase& vmWindow) noexcept;
-    ~DialogBase() noexcept;
-
     /// <summary>
     /// Callback for processing <c>WINAPI</c> messages - do not call directly!
     /// </summary>
+    /// <remarks>
+    /// Must be public to allow static dispatcher to call into instance.
+    /// </remarks>
     _NODISCARD virtual INT_PTR CALLBACK DialogProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
+
+protected:
+    explicit DialogBase(_Inout_ ra::ui::WindowViewModelBase& vmWindow) noexcept;
+    ~DialogBase() noexcept;
 
     /// <summary>
     /// Called when the window is created, but before it is shown.
@@ -145,16 +153,6 @@ protected:
     }
 
 private:
-    // Allows access to `DialogProc` from static helper
-    friend static INT_PTR CALLBACK StaticDialogProc(_In_ HWND hDlg,
-                                                    _In_ UINT uMsg,
-                                                    _In_ WPARAM wParam,
-                                                    _In_ LPARAM lParam);
-    friend static INT_PTR CALLBACK StaticModalDialogProc(_In_ HWND hDlg,
-                                                         _In_ UINT uMsg,
-                                                         _In_ WPARAM wParam,
-                                                         _In_ LPARAM lParam);
-
     HWND m_hWnd = nullptr;
     IDialogPresenter* m_pDialogPresenter = nullptr; // nullable reference, not allocated
     ra::ui::Size m_oMinimumSize{};

@@ -87,11 +87,13 @@ void PointerFinderViewModel::StateViewModel::Capture()
         }
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    const auto nMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    DispatchMemoryRead([this]() {
+        const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        const auto nMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
-    m_pCapture.reset(new ra::services::SearchResults());
-    m_pCapture->Initialize(0, nMemorySize, m_pOwner->GetSearchType());
+        m_pCapture.reset(new ra::services::SearchResults());
+        m_pCapture->Initialize(0, nMemorySize, m_pOwner->GetSearchType());
+    });
 
     SetValue(CaptureButtonTextProperty, L"Release");
     SetValue(CanCaptureProperty, false);

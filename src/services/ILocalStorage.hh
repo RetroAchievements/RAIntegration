@@ -59,6 +59,14 @@ public:
     /// </returns>
     virtual std::unique_ptr<TextWriter> AppendText(StorageItemType nType, const std::wstring& sKey) = 0;
 
+    /// <summary>
+    ///   Deletes the stored data for the specified <paramref name="nType" /> and <paramref name="sKey" />.
+    /// </summary>
+    /// <returns>
+    ///   <c>true</c> if data was deleted, <c>false</c> if the data didn't exist.
+    /// </returns>
+    virtual bool Delete(StorageItemType nType, const std::wstring& sKey) = 0;
+
 protected:
     ILocalStorage() noexcept = default;
 };

@@ -48,7 +48,7 @@ public:
     /// Returns the note model associated with the specified address.
     /// </summary>
     /// <returns>The note model associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    const CodeNoteModel* FindCodeNoteModel(ra::ByteAddress nAddress) const;
+    const CodeNoteModel* FindCodeNoteModel(ra::ByteAddress nAddress, bool bIncludeDerived = true) const;
     
     /// <summary>
     /// Returns the address of the first byte containing the specified code note.
@@ -139,6 +139,14 @@ public:
     }
 
     /// <summary>
+    /// Enumerates the code notes
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="callback" /> is called for each known code note. If it returns <c>false</c> enumeration stops.
+    /// </remarks>
+    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel& pCodeNote)> callback, bool bIncludeDerived = false) const;
+
+    /// <summary>
     /// Sets the note to associate with the specified address.
     /// </summary>
     /// <param name="nAddress">The address to set the note for.</param>
@@ -156,7 +164,7 @@ public:
     /// </summary>
     ra::ByteAddress FirstCodeNoteAddress() const noexcept
     {
-        return (m_vCodeNotes.empty()) ? 0U : m_vCodeNotes.front().GetAddress();
+        return (m_vCodeNotes.empty()) ? 0U : m_vCodeNotes.front()->GetAddress();
     }
 
     /// <summary>
@@ -195,14 +203,12 @@ protected:
     void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
 
-    std::vector<CodeNoteModel> m_vCodeNotes;
+    std::vector<std::unique_ptr<CodeNoteModel>> m_vCodeNotes;
     std::map<ra::ByteAddress, std::pair<std::string, std::wstring>> m_mOriginalCodeNotes;
 
     std::map<ra::ByteAddress, std::wstring> m_mPendingCodeNotes;
 
     std::pair<ra::ByteAddress, const CodeNoteModel*> FindIndirectCodeNoteInternal(ra::ByteAddress nAddress) const;
-    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel& pCodeNote)> callback,
-                            bool bIncludeDerived) const;
 
     unsigned int m_nGameId = 0;
     bool m_bHasPointers = false;

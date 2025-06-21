@@ -60,6 +60,8 @@ private:
             mockUserContext.SetUsername("Author");
 
             mockGameContext.InitializeCodeNotes();
+
+            Viewer().DoFrame(); // load memory into viewer so CurrentAddress value can be read
         }
 
         ~MemoryInspectorViewModelHarness()
@@ -739,6 +741,7 @@ public:
             L"[32-bit pointer] Player data\n"
             L"+4: [32-bit] Current HP\n"
             L"+8: [32-bit] Max HP");
+        inspector.mockGameContext.DoFrame(); // force indirect code note initialization
 
         inspector.SetCurrentAddress(16U);
         inspector.BookmarkCurrentAddress();
@@ -748,7 +751,7 @@ public:
         Assert::AreEqual({16U}, pBookmarks.GetItemAt(0)->GetAddress());
         Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(0)->GetSize());
         Assert::AreEqual(std::string("I:0xX0004_M:0xX0004"), pBookmarks.GetItemAt(0)->GetIndirectAddress());
-        Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), pBookmarks.GetItemAt(0)->GetDescription());
+        Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), pBookmarks.GetItemAt(0)->GetRealNote());
     }
 };
 

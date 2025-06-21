@@ -2,6 +2,7 @@
 #define RA_UI_WIN32_CONTROLBINDING_H
 #pragma once
 
+#include "data\AsyncObject.hh"
 #include "ui\BindingBase.hh"
 #include "ui\win32\DialogBase.hh"
 
@@ -10,7 +11,7 @@ namespace ui {
 namespace win32 {
 namespace bindings {
 
-class ControlBinding : protected BindingBase
+class ControlBinding : protected BindingBase, protected ra::data::AsyncObject
 {
 public:
     explicit ControlBinding(ViewModelBase& vmViewModel) noexcept : BindingBase(vmViewModel) {}
@@ -153,7 +154,7 @@ protected:
 
     void InvokeOnUIThread(std::function<void()> fAction)
     {
-        WindowBinding::InvokeOnUIThread(fAction);
+        WindowBinding::InvokeOnUIThread(fAction, this);
     }
 
     void InvokeOnUIThreadAndWait(std::function<void()> fAction)

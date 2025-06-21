@@ -282,19 +282,14 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddre
 
     UpdateNoteButtons();
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto nValue = pEmulatorContext.ReadMemoryByte(nNewAddress);
+    const auto nValue = Viewer().GetValueAtAddress(nNewAddress);
     SetValue(CurrentAddressValueProperty, nValue);
 
     m_pViewer.SetAddress(nNewAddress);
 }
 
-void MemoryInspectorViewModel::BookmarkCurrentAddress() const
+std::string MemoryInspectorViewModel::GetCurrentAddressMemRefChain() const
 {
-    auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-    if (!pBookmarks.IsVisible())
-        pBookmarks.Show();
-
     const auto nAddress = GetCurrentAddress();
 
     // if the code note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
@@ -313,23 +308,25 @@ void MemoryInspectorViewModel::BookmarkCurrentAddress() const
             const auto* pRootNote = pCodeNotes->FindCodeNoteModel(nIndirectSource);
             Expects(pRootNote != nullptr);
 
-            std::string sIndirectAddress;
-            ra::services::AchievementLogicSerializer::AppendConditionType(
-                sIndirectAddress, ra::services::TriggerConditionType::AddAddress);
-            ra::services::AchievementLogicSerializer::AppendOperand(
-                sIndirectAddress, ra::services::TriggerOperandType::Address, pRootNote->GetMemSize(), nIndirectSource);
-            ra::services::AchievementLogicSerializer::AppendConditionSeparator(sIndirectAddress);
-            ra::services::AchievementLogicSerializer::AppendConditionType(
-                sIndirectAddress, ra::services::TriggerConditionType::Measured);
-            ra::services::AchievementLogicSerializer::AppendOperand(
-                sIndirectAddress, ra::services::TriggerOperandType::Address, nSize, pNote->GetAddress());
-
-            pBookmarks.AddBookmark(sIndirectAddress);
-            return;
+            return ra::services::AchievementLogicSerializer::BuildMemRefChain(*pRootNote, *pNote);
         }
     }
 
-    pBookmarks.AddBookmark(nAddress, nSize);
+    std::string sMemRef;
+    ra::services::AchievementLogicSerializer::AppendConditionType(
+        sMemRef, ra::services::TriggerConditionType::Measured);
+    ra::services::AchievementLogicSerializer::AppendOperand(
+        sMemRef, ra::services::TriggerOperandType::Address, nSize, nAddress);
+    return sMemRef;
+}
+
+void MemoryInspectorViewModel::BookmarkCurrentAddress() const
+{
+    auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    if (!pBookmarks.IsVisible())
+        pBookmarks.Show();
+
+    pBookmarks.AddBookmark(GetCurrentAddressMemRefChain());
 }
 
 void MemoryInspectorViewModel::PublishCurrentAddressNote()
@@ -451,12 +448,12 @@ bool MemoryInspectorViewModel::PreviousNote()
 void MemoryInspectorViewModel::ToggleBit(int nBit)
 {
     const auto nAddress = GetCurrentAddress();
+    auto nValue = GetValue(CurrentAddressValueProperty);
+    nValue ^= (1 << nBit);
 
     // push the updated value to the emulator
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    auto nValue = pEmulatorContext.ReadMemoryByte(nAddress);
-    nValue ^= (1 << nBit);
-    pEmulatorContext.WriteMemoryByte(nAddress, nValue);
+    pEmulatorContext.WriteMemoryByte(nAddress, gsl::narrow_cast<uint8_t>(nValue));
 
     // update the local value, which will cause the bits string to get updated
     SetValue(CurrentAddressValueProperty, nValue);

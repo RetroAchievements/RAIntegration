@@ -26,6 +26,8 @@ ControlBinding::~ControlBinding() noexcept
     DisableBinding();
 
     UnsubclassWndProc();
+
+    BeginDestruction();
 }
 
 void ControlBinding::ForceRepaint(HWND hWnd)

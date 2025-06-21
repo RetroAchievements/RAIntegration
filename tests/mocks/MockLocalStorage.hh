@@ -37,11 +37,16 @@ public:
         return sEmpty;
     }
 
-    void DeleteStoredData(ra::services::StorageItemType nType, const std::wstring& sKey)
+    bool Delete(ra::services::StorageItemType nType, const std::wstring& sKey) override
     {
         const auto pMap = m_mStoredData.find(nType);
         if (pMap != m_mStoredData.end())
+        {
             pMap->second.erase(sKey);
+            return true;
+        }
+
+        return false;
     }
 
     void MockLastModified(StorageItemType nType, const std::wstring& sKey,

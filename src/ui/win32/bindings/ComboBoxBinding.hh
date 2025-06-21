@@ -48,6 +48,14 @@ public:
 
         if (m_pSelectedIdProperty)
             UpdateSelectedItem();
+
+        if (m_nDropDownWidth > 0)
+            SendMessage(hControl, CB_SETDROPPEDWIDTH, m_nDropDownWidth, 0);
+    }
+
+    void SetDropDownWidth(int nWidth) noexcept
+    {
+        m_nDropDownWidth = nWidth;
     }
 
     void BindItems(ra::ui::viewmodels::LookupItemViewModelCollection& pViewModels)
@@ -69,8 +77,11 @@ public:
         BindItems(const_cast<const ViewModelCollectionBase&>(pViewModels), pIdProperty, pTextProperty);
 #pragma warning(pop)
 
-        m_pMutableViewModelCollection = &pViewModels;
-        pViewModels.AddNotifyTarget(*this);
+        if (!pViewModels.IsFrozen()) // TODO: move this to BindItems(const pViewModels) and Freeze immutable collections
+        {
+            m_pMutableViewModelCollection = &pViewModels;
+            pViewModels.AddNotifyTarget(*this);
+        }
     }
 
     void BindItems(const ViewModelCollectionBase& pViewModels, const IntModelProperty& pIdProperty, const StringModelProperty& pTextProperty)
@@ -143,6 +154,11 @@ protected:
         });
     }
 
+    void OnEndViewModelCollectionUpdate() override
+    {
+        InvokeOnUIThread([this]() { UpdateSelectedItem(); });
+    }
+
     virtual void PopulateComboBox()
     {
         SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
@@ -182,6 +198,7 @@ private:
     const IntModelProperty* m_pItemIdProperty = nullptr;
     const StringModelProperty* m_pItemTextProperty = nullptr;
     gsl::index m_nSelectedIndex = -1;
+    int m_nDropDownWidth = 0;
 };
 
 } // namespace bindings

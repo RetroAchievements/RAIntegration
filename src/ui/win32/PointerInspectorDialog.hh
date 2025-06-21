@@ -44,7 +44,7 @@ protected:
     BOOL OnCommand(WORD nCommand) override;
 
 private:
-    bindings::TextBoxBinding m_bindAddress;
+    bindings::ComboBoxBinding m_bindAddress;
     bindings::ComboBoxBinding m_bindNodes;
     bindings::TextBoxBinding m_bindDescription;
     bindings::GridBinding m_bindPointerChain;

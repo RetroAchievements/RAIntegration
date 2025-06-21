@@ -9,10 +9,15 @@
 #include "data\context\GameContext.hh"
 #include "data\context\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
+#include "services\AchievementRuntimeExports.hh"
 #include "services\IClipboard.hh"
 #include "services\ILocalStorage.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+
+#include "rcheevos\src\rc_client_external.h"
+#include "rcheevos\src\rc_client_internal.h"
 
 namespace ra {
 namespace ui {
@@ -22,6 +27,7 @@ const IntModelProperty UnknownGameViewModel::SelectedGameIdProperty("UnknownGame
 const BoolModelProperty UnknownGameViewModel::IsSelectedGameEnabledProperty("UnknownGameViewModel", "IsSelectedGameEnabled", true);
 const BoolModelProperty UnknownGameViewModel::IsAssociateEnabledProperty("UnknownGameViewModel", "IsAssociateEnabled", true);
 const StringModelProperty UnknownGameViewModel::NewGameNameProperty("UnknownGameViewModel", "NewGameName", L"");
+const StringModelProperty UnknownGameViewModel::ProblemHeaderProperty("UnknownGameViewModel", "ProblemHeader", L"The provided game could not be identified.");
 const StringModelProperty UnknownGameViewModel::ChecksumProperty("UnknownGameViewModel", "Checksum", L"");
 const StringModelProperty UnknownGameViewModel::EstimatedGameNameProperty("UnknownGameViewModel", "EstimatedGameName", L"");
 const StringModelProperty UnknownGameViewModel::SystemNameProperty("UnknownGameViewModel", "SystemName", L"");
@@ -79,7 +85,9 @@ void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
         SetValue(IsAssociateEnabledProperty, true);
         SetValue(IsSelectedGameEnabledProperty, true);
 
-        CheckForPreviousAssociation();
+        const auto nSelectedGameId = GetSelectedGameId();
+        if (nSelectedGameId == 0)
+            CheckForPreviousAssociation();
     });
 }
 
@@ -157,6 +165,14 @@ std::string UnknownGameViewModel::EncodeID(unsigned nId, const std::wstring& sHa
     return ra::StringPrintf("%08x", nEncodedId);
 }
 
+static void AddClientHash(const std::string& sHash, uint32_t nGameId, bool isUnknown)
+{
+    auto* pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient();
+    rc_client_add_game_hash(pClient, sHash.c_str(), nGameId);
+    auto* game_hash = rc_client_find_game_hash(pClient, sHash.c_str());
+    game_hash->is_unknown = isUnknown ? 1 : 0;
+}
+
 bool UnknownGameViewModel::Associate()
 {
     ra::api::SubmitNewTitle::Request request;
@@ -202,6 +218,8 @@ bool UnknownGameViewModel::Associate()
     if (response.Succeeded())
     {
         SetSelectedGameId(ra::to_signed(response.GameId));
+        SetTestMode(false);
+        AddClientHash(request.Hash, response.GameId, 0);
         return true;
     }
 
@@ -233,6 +251,8 @@ bool UnknownGameViewModel::BeginTest()
     sMapping->WriteLine(sValue);
 
     SetTestMode(true);
+    AddClientHash(ra::Narrow(GetChecksum()), nGameId, 1);
+
     return true;
 }
 

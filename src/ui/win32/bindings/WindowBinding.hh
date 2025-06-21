@@ -2,6 +2,8 @@
 #define RA_UI_WIN32_WINDOWBINDING_H
 #pragma once
 
+#include "data/AsyncObject.hh"
+
 #include "ui/BindingBase.hh"
 #include "ui/WindowViewModelBase.hh"
 
@@ -145,7 +147,7 @@ public:
     /// <summary>
     /// Dispatches a function to the UI thread.
     /// </summary>
-    static void InvokeOnUIThread(std::function<void()> fAction);
+    static void InvokeOnUIThread(std::function<void()> fAction, ra::data::AsyncObject* pAsyncObject = nullptr);
 
     /// <summary>
     /// Executes a function on the UI thread and waits for it to complete.

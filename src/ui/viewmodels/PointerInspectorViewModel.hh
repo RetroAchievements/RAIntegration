@@ -154,6 +154,16 @@ public:
     /// <summary>
     /// Gets the list of available nodes.
     /// </summary>
+    LookupItemViewModelCollection& KnownPointers() noexcept { return m_vPointers; }
+
+    /// <summary>
+    /// Gets the list of available nodes.
+    /// </summary>
+    const LookupItemViewModelCollection& KnownPointers() const noexcept { return m_vPointers; }
+
+    /// <summary>
+    /// Gets the list of available nodes.
+    /// </summary>
     LookupItemViewModelCollection& Nodes() noexcept { return m_vNodes; }
 
     /// <summary>
@@ -197,6 +207,7 @@ protected:
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
+    void OnEndGameLoad() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
 private:
@@ -209,16 +220,18 @@ private:
     const ra::data::models::CodeNoteModel* FindNestedCodeNoteModel(const ra::data::models::CodeNoteModel& pRootNote, int nNewNode);
     void GetPointerChain(gsl::index nIndex, std::stack<const PointerNodeViewModel*>& sChain) const;
     void SyncField(StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote);
+    void UpdatePointerVisibility(ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel* pNote);
     const ra::data::models::CodeNoteModel* UpdatePointerChain(int nNewNode);
     void UpdatePointerChainRowColor(StructFieldViewModel& pPointer);
     void UpdatePointerChainValues();
     void UpdateValues();
-    std::string GetDefinition() const;
+    std::string GetMemRefChain(bool bMeasured) const;
 
     void BuildNote(ra::StringBuilder& builder,
                    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain, gsl::index nDepth,
                    const ra::data::models::CodeNoteModel& pNote);
 
+    LookupItemViewModelCollection m_vPointers;
     LookupItemViewModelCollection m_vNodes;
     ViewModelCollection<StructFieldViewModel> m_vPointerChain;
     bool m_bSyncingAddress = false;

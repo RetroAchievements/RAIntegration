@@ -380,6 +380,48 @@ public:
         vmUpload.AssertSuccess(1);
     }
 
+    TEST_METHOD(TestSingleLocalAchievementSubset)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
+        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Local, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+        pAchievement.SetSubsetID(22U);
+        Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
+
+        vmUpload.QueueAsset(pAchievement);
+        Assert::AreEqual({1U}, vmUpload.TaskCount());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>(
+            [&bApiCalled](const ra::api::UpdateAchievement::Request& pRequest,
+                          ra::api::UpdateAchievement::Response& pResponse) {
+                bApiCalled = true;
+                Assert::AreEqual(33U, pRequest.GameId);
+                Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
+                Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
+                Assert::AreEqual(std::string("0xH1234=1"), pRequest.Trigger);
+                Assert::AreEqual(5U, pRequest.Points);
+                Assert::AreEqual(std::string("12345"), pRequest.Badge);
+                Assert::AreEqual(5U, pRequest.Category);
+                Assert::AreEqual(0U, pRequest.AchievementId);
+
+                pResponse.AchievementId = 7716U;
+                pResponse.Result = ra::api::ApiResult::Success;
+                return true;
+            });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+
+        // published local achievement should be changed to unofficial and have it's ID updated
+        Assert::AreEqual(AssetCategory::Unofficial, pAchievement.GetCategory());
+        Assert::AreEqual(7716U, pAchievement.GetID());
+        Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
+
+        vmUpload.AssertSuccess(1);
+    }
+
     TEST_METHOD(TestSingleCoreAchievementError)
     {
         AssetUploadViewModelHarness vmUpload;
@@ -407,7 +449,7 @@ public:
         vmUpload.AssertFailed(0, 1, L"* Title1: You must be a developer to modify values in Core!");
     }
 
-    TEST_METHOD(TestSingleCoreAchievementApiError)
+    TEST_METHOD(TestSingleCoreAchievementApiErrorTrigger)
     {
         AssetUploadViewModelHarness vmUpload;
         auto& pAchievement =
@@ -415,7 +457,7 @@ public:
         pAchievement.UpdateServerCheckpoint();
         Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
 
-        pAchievement.SetTrigger("");
+        pAchievement.SetTrigger(""); // trigger is a required field at the API level
         pAchievement.UpdateLocalCheckpoint();
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
@@ -438,13 +480,42 @@ public:
         Assert::IsTrue(bApiCalled);
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
-        vmUpload.AssertFailed(0, 1, L"* Title1: Invalid state");
+        vmUpload.AssertFailed(0, 1, L"* Title1: At least one condition is required");
 
         // This simulates the failure code in AssetListViewModel::Publish. The test can't be in
         // AssetListViewModel_Tests, because AssetListViewModel_Tests overrides Publish to avoid
         // using the AssetUploadViewModel.
         pAchievement.RestoreLocalCheckpoint();
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
+    }
+
+    TEST_METHOD(TestSingleCoreAchievementApiErrorDescription)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        auto& pAchievement = // description is a required field at the API level
+            vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"", L"12345", "0xH1234=1");
+        Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
+
+        vmUpload.QueueAsset(pAchievement);
+        Assert::AreEqual({1U}, vmUpload.TaskCount());
+
+        // mockServer doesn't call the API that would return Error/Invalid state, so update the mockServer
+        // to behave as if the failure happened at the API level.
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>(
+            [&bApiCalled](const ra::api::UpdateAchievement::Request&, ra::api::UpdateAchievement::Response& pResponse) {
+                bApiCalled = true;
+                pResponse.Result = ra::api::ApiResult::Error;
+                pResponse.ErrorMessage = "Invalid state";
+                return true;
+            });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+        Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
+
+        vmUpload.AssertFailed(0, 1, L"* Title1: Description is required");
     }
 
     TEST_METHOD(TestMultipleCoreAchievements)
@@ -1016,6 +1087,51 @@ public:
         vmUpload.AssertSuccess(1);
     }
 
+    TEST_METHOD(TestSingleLocalLeaderboardSubset)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
+        auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1",
+                                                     "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::ValueFormat::Score);
+        pLeaderboard.SetSubsetID(22U);
+        Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
+
+        vmUpload.QueueAsset(pLeaderboard);
+        Assert::AreEqual({1U}, vmUpload.TaskCount());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateLeaderboard>(
+            [&bApiCalled](const ra::api::UpdateLeaderboard::Request& pRequest,
+                          ra::api::UpdateLeaderboard::Response& pResponse) {
+                bApiCalled = true;
+                Assert::AreEqual(33U, pRequest.GameId);
+                Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
+                Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
+                Assert::AreEqual(std::string("0xH1234=1"), pRequest.StartTrigger);
+                Assert::AreEqual(std::string("0xH1234=2"), pRequest.SubmitTrigger);
+                Assert::AreEqual(std::string("0xH1234=3"), pRequest.CancelTrigger);
+                Assert::AreEqual(std::string("0xH2345"), pRequest.ValueDefinition);
+                Assert::AreEqual(ra::data::ValueFormat::Score, pRequest.Format);
+                Assert::IsFalse(pRequest.LowerIsBetter);
+                Assert::AreEqual(0U, pRequest.LeaderboardId);
+
+                pResponse.LeaderboardId = 7716U;
+                pResponse.Result = ra::api::ApiResult::Success;
+                return true;
+            });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+
+        // published local leaderboard should be changed to core and have it's ID updated
+        Assert::AreEqual(AssetCategory::Core, pLeaderboard.GetCategory());
+        Assert::AreEqual(7716U, pLeaderboard.GetID());
+        Assert::AreEqual(AssetChanges::None, pLeaderboard.GetChanges());
+
+        vmUpload.AssertSuccess(1);
+    }
+
     TEST_METHOD(TestSingleCodeNoteNew)
     {
         AssetUploadViewModelHarness vmUpload;
@@ -1038,6 +1154,38 @@ public:
             pResponse.Result = ra::api::ApiResult::Success;
             return true;
         });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestSingleCodeNoteNewSubset)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
+        vmUpload.CodeNotes().SetCodeNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        Assert::AreEqual({1U}, vmUpload.TaskCount());
+        Assert::IsFalse(vmUpload.mockDesktop.WasDialogShown());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>(
+            [&bApiCalled](const ra::api::UpdateCodeNote::Request& pRequest,
+                          ra::api::UpdateCodeNote::Response& pResponse) {
+                bApiCalled = true;
+                Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+                Assert::AreEqual(0x1234U, pRequest.Address);
+                Assert::AreEqual(std::wstring(L"This is a note."), pRequest.Note);
+
+                pResponse.Result = ra::api::ApiResult::Success;
+                return true;
+            });
 
         vmUpload.DoUpload();
 

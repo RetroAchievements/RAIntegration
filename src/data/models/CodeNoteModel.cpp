@@ -16,10 +16,10 @@ struct CodeNoteModel::PointerData
 {
     uint32_t RawPointerValue = 0xFFFFFFFF;       // last raw value of pointer captured
     ra::ByteAddress PointerAddress = 0xFFFFFFFF; // raw pointer value converted to RA address
-    ra::ByteAddress NoteAddress = 0xFFFFFFFF;    // RA address where RawPointerValue was read from
     unsigned int OffsetRange = 0;                // highest offset captured within pointer block
     unsigned int HeaderLength = 0;               // length of note text not associated to OffsetNotes
     bool HasPointers = false;                    // true if there are nested pointers
+    bool PointerRead = false;                    // true the first time RawPointerValue is updated
 
     enum OffsetType
     {
@@ -65,6 +65,11 @@ ra::ByteAddress CodeNoteModel::GetPointerAddress() const noexcept
     return m_pPointerData != nullptr ? m_pPointerData->PointerAddress : 0xFFFFFFFF;
 }
 
+bool CodeNoteModel::HasRawPointerValue() const noexcept
+{
+    return m_pPointerData != nullptr ? m_pPointerData->PointerRead : false;
+}
+
 uint32_t CodeNoteModel::GetRawPointerValue() const noexcept
 {
     return m_pPointerData != nullptr ? m_pPointerData->RawPointerValue : 0xFFFFFFFF;
@@ -91,7 +96,7 @@ void CodeNoteModel::UpdateRawPointerValue(ra::ByteAddress nAddress, const ra::da
     if (m_pPointerData == nullptr)
         return;
 
-    m_pPointerData->NoteAddress = nAddress;
+    m_pPointerData->PointerRead = true;
 
     const uint32_t nValue = pEmulatorContext.ReadMemory(nAddress, GetMemSize());
     if (nValue != m_pPointerData->RawPointerValue)
@@ -309,9 +314,14 @@ std::wstring CodeNoteModel::GetPrimaryNote() const
 {
     if (m_pPointerData != nullptr)
     {
-        const auto nIndex = m_sNote.find(L"\n+");
+        auto nIndex = m_sNote.find(L"\n+");
         if (nIndex != std::wstring::npos)
+        {
+            if (nIndex > 0 && m_sNote.at(nIndex - 1) == '\r')
+                --nIndex;
+
             return m_sNote.substr(0, nIndex);
+        }
     }
 
     return m_sNote;
@@ -329,15 +339,19 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
     do
     {
         const auto nNextIndex = sNote.find(L'\n', nIndex);
-        sLine = (nNextIndex == std::string::npos) ?
-            sNote.substr(nIndex) : sNote.substr(nIndex, nNextIndex - nIndex);
+        if (nNextIndex == std::string::npos)
+            sLine = sNote.substr(nIndex);
+        else if (nNextIndex > 0 && sNote.at(nNextIndex - 1) == '\r') // expect data to be normalized for Windows so it will load into the controls correctly
+            sLine = sNote.substr(nIndex, nNextIndex - nIndex - 1);
+        else
+            sLine = sNote.substr(nIndex, nNextIndex - nIndex);
 
         if (!sLine.empty())
         {
             if (sLine.at(0) == '+' && bImpliedPointer)
             {
-                m_nMemSize = MemSize::ThirtyTwoBit;
-                m_nBytes = 4;
+                m_nMemSize = GetImpliedPointerSize();
+                m_nBytes = ra::data::MemSizeBytes(m_nMemSize);
 
                 // found a line starting with a plus sign, bit no pointer annotation. bImpliedPointer
                 // must be true. assume the parent note is not described. pass -1 as the note size
@@ -351,15 +365,28 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
             }
 
             StringMakeLowercase(sLine);
-            ExtractSize(sLine);
 
-            if (sLine.find(L"pointer") != std::string::npos)
+            const auto nPointerIndex = sLine.find(L"pointer");
+            if (nPointerIndex == std::string::npos)
             {
+                // "pointer" not found
+                ExtractSize(sLine, false);
+            }
+            else if (sLine.length() > nPointerIndex + 8 && isalpha(sLine.at(nPointerIndex + 7)))
+            {
+                // extra trailing letters - assume "pointers"
+                ExtractSize(sLine, false);
+            }
+            else
+            {
+                // found "pointer"
+                ExtractSize(sLine, true);
+
                 if (m_nMemSize == MemSize::Unknown)
                 {
                     // pointer size not specified. assume 32-bit
-                    m_nMemSize = MemSize::ThirtyTwoBit;
-                    m_nBytes = 4;
+                    m_nMemSize = GetImpliedPointerSize();
+                    m_nBytes = ra::data::MemSizeBytes(m_nMemSize);
                 }
 
                 // if there are any lines starting with a plus sign, extract the indirect code notes
@@ -387,6 +414,19 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
 
         nIndex = nNextIndex + 1;
     } while (true);
+}
+
+MemSize CodeNoteModel::GetImpliedPointerSize()
+{
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+
+    MemSize nSize;
+    uint32_t nMask;
+    uint32_t nOffset;
+    if (pConsoleContext.GetRealAddressConversion(&nSize, &nMask, &nOffset))
+        return nSize;
+
+    return MemSize::ThirtyTwoBit;
 }
 
 CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& sWord) const
@@ -501,7 +541,7 @@ CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& 
     return TokenType::Other;
 }
 
-void CodeNoteModel::ExtractSize(const std::wstring& sNote)
+void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
 {
     // provide defaults in case no matches are found
     m_nBytes = 1;
@@ -611,7 +651,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote)
             }
             else if (nTokenType == Parser::TokenType::Bytes)
             {
-                if (!bFoundSize || bBytesFromBits)
+                if (!bFoundSize || (bBytesFromBits && !bIsPointer))
                 {
                     m_nBytes = _wtoi(sPreviousWord.c_str());
                     m_nMemSize = MemSize::Unknown;
@@ -722,8 +762,11 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
 {
     auto pointerData = std::make_unique<PointerData>();
     pointerData->HeaderLength = gsl::narrow_cast<unsigned int>(nIndex);
-    nIndex += 2;
 
+    if (nIndex > 0 && nIndex < sNote.length() && sNote.at(nIndex - 1) == '\r')
+        --pointerData->HeaderLength;
+
+    nIndex += 2; // "\n+"
     do
     {
         CodeNoteModel offsetNote;
@@ -838,6 +881,58 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
     }
 
     m_pPointerData = std::move(pointerData);
+}
+
+std::wstring CodeNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPointer)
+{
+    size_t nEndIndex = 0;
+    size_t nStartIndex = sNote.find('[');
+    if (nStartIndex != std::string::npos)
+    {
+        nEndIndex = sNote.find(']', nStartIndex + 1);
+        if (nEndIndex == std::string::npos)
+            return sNote;
+    }
+    else
+    {
+        nStartIndex = sNote.find('(');
+        if (nStartIndex == std::string::npos)
+            return sNote;
+
+        nEndIndex = sNote.find(')', nStartIndex + 1);
+        if (nEndIndex == std::string::npos)
+            return sNote;
+    }
+
+    bool bPointer = false;
+    std::wstring sWord;
+    ra::data::models::CodeNoteModel::Parser::TokenType nTokenType;
+    const ra::data::models::CodeNoteModel::Parser parser(sNote, nStartIndex + 1, nEndIndex);
+    do
+    {
+        nTokenType = parser.NextToken(sWord);
+        if (nTokenType == ra::data::models::CodeNoteModel::Parser::TokenType::Other)
+        {
+            if (sWord == L"pointer")
+                bPointer = true;
+            else
+                return sNote;
+        }
+    } while (nTokenType != ra::data::models::CodeNoteModel::Parser::TokenType::None);
+
+    while (nStartIndex > 0 && isspace(sNote.at(nStartIndex - 1)))
+        nStartIndex--;
+
+    while (nEndIndex < sNote.length() - 1 && isspace(sNote.at(nEndIndex + 1)))
+        nEndIndex++;
+
+    std::wstring sNoteCopy = sNote;
+    sNoteCopy.erase(nStartIndex, nEndIndex - nStartIndex + 1);
+
+    if (bPointer && bKeepPointer)
+        sNoteCopy.insert(0, L"[pointer] ");
+
+    return sNoteCopy;
 }
 
 void CodeNoteModel::EnumeratePointerNotes(

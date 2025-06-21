@@ -112,6 +112,21 @@ public:
     void CopyChecksumToClipboard() const;
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the problem header.
+    /// </summary>
+    static const StringModelProperty ProblemHeaderProperty;
+
+    /// <summary>
+    /// Gets the problem header.
+    /// </summary>
+    const std::wstring& GetProblemHeader() const { return GetValue(ProblemHeaderProperty); }
+
+    /// <summary>
+    /// Sets the problem header.
+    /// </summary>
+    void SetProblemHeader(const std::wstring& sValue) { SetValue(ProblemHeaderProperty, sValue); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the game name provided by the emulator.
     /// </summary>
     static const StringModelProperty EstimatedGameNameProperty;

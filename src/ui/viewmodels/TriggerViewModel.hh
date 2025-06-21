@@ -75,6 +75,7 @@ public:
     /// The <see cref="ModelProperty" /> for the number of visible conditions.
     /// </summary>
     static const IntModelProperty VisibleItemCountProperty;
+    int GetVisibleItemCount() const { return GetValue(VisibleItemCountProperty); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the number of changes that have been made to the trigger.
@@ -82,6 +83,7 @@ public:
     static const IntModelProperty VersionProperty;
 
     static const IntModelProperty ScrollOffsetProperty;
+    int GetScrollOffset() const { return GetValue(ScrollOffsetProperty); }
     static const IntModelProperty ScrollMaximumProperty;
 
     std::string Serialize() const;
@@ -159,6 +161,8 @@ public:
     void SetIsValue(bool bValue) noexcept { m_bIsValue = bValue; }
 
 protected:
+    void EnsureVisible(int nFirstIndex, int nCount);
+
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
 
@@ -175,7 +179,8 @@ private:
     void UpdateGroups(const rc_trigger_t& pTrigger);
     void UpdateConditions(const GroupViewModel* pGroup);
     void UpdateTotalHits(const GroupViewModel* pGroup);
-    void EnsureVisible(int nFirstIndex, int nCount);
+
+    int AppendMemRefChain(const std::string& sTrigger);
 
     void DeselectAllConditions();
     rc_trigger_t* ParseTrigger(const std::string& sTrigger);

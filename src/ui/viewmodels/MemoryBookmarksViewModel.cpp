@@ -5,6 +5,7 @@
 #include "RA_StringUtils.h"
 
 #include "data\Types.hh"
+#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\models\TriggerValidation.hh"
 
@@ -33,8 +34,9 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const StringModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::DescriptionProperty("MemoryBookmarkViewModel", "Description", L"");
+const StringModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::DescriptionProperty("MemoryBookmarkViewModel", "DescriptionHeader", L"");
 const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsCustomDescriptionProperty("MemoryBookmarkViewModel", "IsCustomDescription", false);
+const StringModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::RealNoteProperty("MemoryBookmarkViewModel", "Description", L"");
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty("MemoryBookmarkViewModel", "Address", 0);
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty("MemoryBookmarkViewModel", "Size", ra::etoi(MemSize::EightBit));
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty("MemoryBookmarkViewModel", "Format", ra::etoi(MemFormat::Hex));
@@ -119,24 +121,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Int
     else if (args.Property == MemoryBookmarkViewModel::SizeProperty)
     {
         m_nSize = ra::itoe<MemSize>(args.tNewValue);
-        switch (m_nSize)
-        {
-            case MemSize::BitCount:
-            case MemSize::Text:
-                SetReadOnly(true);
-                break;
-
-            default:
-                SetReadOnly(false);
-                break;
-        }
-
-        if (m_bInitialized)
-        {
-            m_bModified = true;
-            m_nValue = ReadValue();
-            SetValue(CurrentValueProperty, BuildCurrentValue());
-        }
+        OnSizeChanged();
     }
     else if (args.Property == MemoryBookmarkViewModel::AddressProperty)
     {
@@ -168,43 +153,105 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Int
 
 void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (args.Property == MemoryBookmarkViewModel::DescriptionProperty)
+    if (args.Property == MemoryBookmarkViewModel::RealNoteProperty)
     {
-        if (m_bInitialized)
+        const auto sNewHeader = ExtractDescriptionHeader(args.tNewValue);
+        if (sNewHeader == GetDescription())
         {
-            m_bModified = true;
-
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-            const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-            const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(m_nAddress) : nullptr;
-
-            bool bIsCustomDescription = false;
-            if (pNote)
-            {
-                if (*pNote != args.tNewValue)
-                    bIsCustomDescription = true;
-            }
-            else if (!args.tNewValue.empty())
-            {
-                bIsCustomDescription = true;
-            }
-            SetIsCustomDescription(bIsCustomDescription);
+            SetIsCustomDescription(false);
+        }
+        else if (!IsCustomDescription())
+        {
+            m_bSyncingDescriptionHeader = true;
+            SetDescription(sNewHeader);
+            m_bSyncingDescriptionHeader = false;
+        }
+    }
+    else if (args.Property == MemoryBookmarkViewModel::DescriptionProperty && !m_bSyncingDescriptionHeader)
+    {
+        const auto& sFullNote = GetRealNote();
+        const auto sHeader = ExtractDescriptionHeader(sFullNote);
+        if (args.tNewValue.empty() && !sHeader.empty())
+        {
+            // custom description was cleared out - reset to default
+            m_bSyncingDescriptionHeader = true;
+            SetDescription(sHeader);
+            m_bSyncingDescriptionHeader = false;
+            SetIsCustomDescription(false);
+        }
+        else
+        {
+            SetIsCustomDescription(sHeader != args.tNewValue);
         }
     }
 
     LookupItemViewModel::OnValueChanged(args);
 }
 
-static const rc_operand_t* FindMeasuredOperand(const rc_value_t* pValue) noexcept
+std::wstring MemoryBookmarksViewModel::MemoryBookmarkViewModel::ExtractDescriptionHeader(const std::wstring& sFullNote)
 {
-    const rc_condition_t* condition = pValue->conditions->conditions;
+    // extract the first line into DescriptionHeader
+    const auto nIndex = sFullNote.find('\n');
+    if (nIndex == std::string::npos)
+        return ra::data::models::CodeNoteModel::TrimSize(sFullNote, true);
+
+    std::wstring sNote = sFullNote;
+    sNote.resize(nIndex);
+
+    if (sNote.back() == '\r')
+        sNote.pop_back();
+
+    return ra::data::models::CodeNoteModel::TrimSize(sNote, true);
+}
+
+static rc_condition_t* FindMeasuredCondition(rc_value_t* pValue) noexcept
+{
+    rc_condition_t* condition = pValue->conditions->conditions;
     for (; condition; condition = condition->next)
     {
         if (condition->type == RC_CONDITION_MEASURED && rc_operand_is_memref(&condition->operand1))
-            return &condition->operand1;
+            return condition;
     }
 
     return nullptr;
+}
+
+void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnSizeChanged()
+{
+    switch (m_nSize)
+    {
+        case MemSize::BitCount:
+        case MemSize::Text:
+            SetReadOnly(true);
+            break;
+
+        default:
+            SetReadOnly(false);
+            break;
+    }
+
+    if (m_bInitialized)
+    {
+        m_bModified = true;
+
+        if (m_pValue)
+        {
+            auto* pCondition = FindMeasuredCondition(m_pValue);
+            if (pCondition)
+            {
+                std::string sSerialized;
+                ra::services::AchievementLogicSerializer::AppendOperand(
+                    sSerialized, ra::services::TriggerOperandType::Address, m_nSize, 0U);
+
+                const char* memaddr = sSerialized.c_str();
+                uint32_t unused;
+                rc_parse_memref(&memaddr, &pCondition->operand1.size, &unused);
+            }
+        }
+
+        m_nValue = ReadValue();
+        SetValue(CurrentValueProperty, BuildCurrentValue());
+    }
 }
 
 unsigned MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadValue() const
@@ -213,7 +260,13 @@ unsigned MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadValue() const
     {
         rc_typed_value_t value;
         rc_evaluate_value_typed(m_pValue, &value, rc_peek_callback, nullptr);
-        rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
+
+        // floats will be returned as their u32 equivalent and converted back to
+        // a float by BuildCurrentValue, but we need to reverse the byte order
+        // for big endian floats
+        if (value.type == RC_VALUE_TYPE_FLOAT && ra::data::IsBigEndian(m_nSize))
+            return ra::data::ReverseBytes(value.value.u32);
+
         return value.value.u32;
     }
 
@@ -240,8 +293,10 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::EndInitialization()
     m_nValue = 0;
     SetPreviousValue(BuildCurrentValue());
 
-    m_nValue = ReadValue();
-    SetValue(CurrentValueProperty, BuildCurrentValue());
+    ra::data::context::EmulatorContext::DispatchesReadMemory::DispatchMemoryRead([this]() {
+        m_nValue = ReadValue();
+        SetValue(CurrentValueProperty, BuildCurrentValue());
+    });
 
     SetChanges(0);
 
@@ -254,8 +309,21 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::MemoryChanged()
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nValue = ReadValue();
 
-    if (HasIndirectAddress()) // address must be updated after calling ReadValue as ReadValue updates local memrefs
-        UpdateCurrentAddress();
+    if (HasIndirectAddress())
+    {
+        // address must be updated after calling ReadValue as ReadValue updates local memrefs
+        const bool bAddressChainValid = UpdateCurrentAddress();
+
+        if (GetBehavior() == BookmarkBehavior::Frozen)
+        {
+            SetValue(RowColorProperty, bAddressChainValid ? 0xFFFFFFC0 : 0xFFFFF0C0);
+
+            // if there's a null in the indirect chain, don't write the frozen value back
+            // and don't update the current value or notify that it changed.
+            if (!bAddressChainValid)
+                return false;
+        }
+    }
 
     if (nValue == m_nValue)
         return false;
@@ -341,6 +409,11 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValue(const st
 void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentValue()
 {
     const auto nValue = ReadValue();
+    SetCurrentValueRaw(nValue);
+}
+
+void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValueRaw(unsigned nValue)
+{
     if (nValue != m_nValue)
     {
         m_nValue = nValue;
@@ -360,32 +433,62 @@ std::wstring MemoryBookmarksViewModel::MemoryBookmarkViewModel::BuildCurrentValu
     return ra::data::MemSizeFormat(m_nValue, m_nSize, GetFormat());
 }
 
-void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentAddress()
+bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentAddress()
 {
-    if (m_pValue)
-    {
-        const auto* pOperand = FindMeasuredOperand(m_pValue);
-        if (pOperand != nullptr && pOperand->value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
-        {
-            GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
-                reinterpret_cast<rc_modified_memref_t*>(pOperand->value.memref);
-            if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
-            {
-                rc_typed_value_t address, offset;
-                rc_evaluate_operand(&address, &pModifiedMemref->parent, nullptr);
-                rc_evaluate_operand(&offset, &pModifiedMemref->modifier, nullptr);
-                rc_typed_value_add(&address, &offset);
-                rc_typed_value_convert(&address, RC_VALUE_TYPE_UNSIGNED);
-                const auto nNewAddress = gsl::narrow_cast<ra::ByteAddress>(address.value.u32);
+    if (!m_pValue)
+        return true;
 
-                if (m_nAddress != nNewAddress)
-                {
-                    m_nAddress = nNewAddress;
-                    SetAddressWithoutUpdatingValue(nNewAddress);
-                }
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+
+    bool bIsValid = true;
+    for (const auto* pCondition = m_pValue->conditions->conditions; pCondition; pCondition = pCondition->next)
+    {
+        if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
+        {
+            if (bIsValid) // don't need to check validity if we've already found a problem
+            {
+                rc_typed_value_t address;
+                rc_evaluate_operand(&address, &pCondition->operand1, nullptr);
+                rc_typed_value_convert(&address, RC_VALUE_TYPE_UNSIGNED);
+
+                if (address.value.u32 == 0) // pointer is null
+                    bIsValid = false;
+
+                const auto nAdjustedAddress = pConsoleContext.ByteAddressFromRealAddress(address.value.u32);
+                if (nAdjustedAddress == 0xFFFFFFFF) // pointer is invalid
+                    bIsValid = false;
             }
         }
+        else if (pCondition->type == RC_CONDITION_MEASURED)
+        {
+            if (rc_operand_is_memref(&pCondition->operand1) &&
+                pCondition->operand1.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+            {
+                GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
+                    reinterpret_cast<rc_modified_memref_t*>(pCondition->operand1.value.memref);
+                if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
+                {
+                    // calculate the new address and update the local reference if it changed
+                    rc_typed_value_t address, offset;
+                    rc_evaluate_operand(&address, &pModifiedMemref->parent, nullptr);
+                    rc_evaluate_operand(&offset, &pModifiedMemref->modifier, nullptr);
+                    rc_typed_value_add(&address, &offset);
+                    rc_typed_value_convert(&address, RC_VALUE_TYPE_UNSIGNED);
+                    const auto nNewAddress = gsl::narrow_cast<ra::ByteAddress>(address.value.u32);
+
+                    if (m_nAddress != nNewAddress)
+                    {
+                        m_nAddress = nNewAddress;
+                        SetAddressWithoutUpdatingValue(nNewAddress);
+                    }
+                }
+            }
+
+            break;
+        }
     }
+
+    return bIsValid;
 }
 
 void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetIndirectAddress(const std::string& sSerialized)
@@ -425,9 +528,9 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetIndirectAddress(const
     m_pValue = &value->value;
     m_sIndirectAddress = sSerialized;
 
-    const rc_operand_t* pOperand = FindMeasuredOperand(m_pValue);
-    if (pOperand != nullptr)
-        SetSize(ra::data::models::TriggerValidation::MapRcheevosMemSize(pOperand->size));
+    const auto* pCondition = FindMeasuredCondition(m_pValue);
+    if (pCondition != nullptr)
+        SetSize(ra::data::models::TriggerValidation::MapRcheevosMemSize(rc_condition_get_real_operand1(pCondition)->size));
 
     UpdateCurrentValue(); // value must be updated first to populate memrefs
     UpdateCurrentAddress();
@@ -485,23 +588,14 @@ void MemoryBookmarksViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const
     {
         auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
         if (pBookmark && pBookmark->GetAddress() == nAddress)
-        {
-            if (!pBookmark->IsCustomDescription())
-            {
-                pBookmark->SetDescription(sNewNote);
-            }
-            else
-            {
-                if (pBookmark->GetDescription() == sNewNote)
-                    pBookmark->SetIsCustomDescription(false);
-            }
-        }
+            pBookmark->SetRealNote(sNewNote);
     }
 }
 
 void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmarksFile)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     gsl::index nIndex = 0;
 
     m_vBookmarks.BeginUpdate();
@@ -573,22 +667,16 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     vmBookmark->SetAddress(bookmark["Address"].GetUint());
                 }
 
-                const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-                const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(vmBookmark->GetAddress()) : nullptr;
 
                 std::wstring sDescription;
+                const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(vmBookmark->GetAddress()) : nullptr;
+                vmBookmark->SetRealNote(pNote ? *pNote : std::wstring(L""));
+
                 if (bookmark.HasMember("Description"))
                 {
                     sDescription = ra::Widen(bookmark["Description"].GetString());
-                    vmBookmark->SetIsCustomDescription(!pNote || sDescription != *pNote);
+                    vmBookmark->SetDescription(sDescription);
                 }
-                else
-                {
-                    vmBookmark->SetIsCustomDescription(false);
-                    if (pNote)
-                        sDescription = *pNote;
-                }
-                vmBookmark->SetDescription(sDescription);
 
                 if (bookmark.HasMember("Decimal") && bookmark["Decimal"].GetBool())
                     vmBookmark->SetFormat(ra::MemFormat::Dec);
@@ -687,15 +775,17 @@ void MemoryBookmarksViewModel::EndWritingMemory()
 {
     if (--m_nWritingMemoryCount == 0)
     {
-        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
-        {
-            auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
-            if (pBookmark.IsDirty())
+        ra::data::context::EmulatorContext::DispatchesReadMemory::DispatchMemoryRead([this]() {
+            for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
             {
-                pBookmark.SetDirty(false);
-                pBookmark.UpdateCurrentValue();
+                auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
+                if (pBookmark.IsDirty())
+                {
+                    pBookmark.SetDirty(false);
+                    pBookmark.UpdateCurrentValue();
+                }
             }
-        }
+        });
     }
 }
 
@@ -730,7 +820,7 @@ void MemoryBookmarksViewModel::UpdateBookmark(MemoryBookmarksViewModel::MemoryBo
             if (isspace(sMessage.at(0)))
                 sMessage.erase(0, 1);
 
-            const auto& pDescription = pBookmark.GetDescription();
+            const auto& pDescription = pBookmark.GetRealNote();
             if (!pDescription.empty())
             {
                 auto nDescriptionLength = pDescription.find(L'\n');
@@ -817,7 +907,7 @@ void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::Memo
     const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
     if (pNote)
     {
-        vmBookmark.SetDescription(*pNote);
+        vmBookmark.SetRealNote(*pNote);
 
         // if bookmarking an 8-byte double, automatically adjust the bookmark for the significant bytes
         if (vmBookmark.GetSize() == MemSize::Double32 && pCodeNotes->GetCodeNoteBytes(nAddress) == 8)
@@ -833,6 +923,9 @@ void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::Memo
         uint8_t size = 0;
         uint32_t address = 0;
         const char* memaddr = sSerialized.c_str();
+        if (ra::StringStartsWith(sSerialized, "M:"))
+            memaddr += 2;
+
         if (rc_parse_memref(&memaddr, &size, &address) == RC_OK)
         {
             vmBookmark.SetAddress(address);

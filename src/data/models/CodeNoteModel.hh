@@ -14,7 +14,7 @@ class CodeNoteModel
 {
 public:
 	CodeNoteModel() noexcept;
-	~CodeNoteModel();
+	virtual ~CodeNoteModel();
 	CodeNoteModel(const CodeNoteModel&) noexcept = delete;
     CodeNoteModel& operator=(const CodeNoteModel&) noexcept = delete;
     CodeNoteModel(CodeNoteModel&&) noexcept;
@@ -28,17 +28,19 @@ public:
 
     void SetAuthor(const std::string& sAuthor) { m_sAuthor = sAuthor; }
     void SetAddress(ra::ByteAddress nAddress) noexcept { m_nAddress = nAddress; }
+    void SetMemSize(MemSize nMemSize) noexcept { m_nMemSize = nMemSize; }
     void SetNote(const std::wstring& sNote, bool bImpliedPointer = false);
 
     bool IsPointer() const noexcept { return m_pPointerData != nullptr; }
     std::wstring GetPointerDescription() const;
     ra::ByteAddress GetPointerAddress() const noexcept;
+    bool HasRawPointerValue() const noexcept;
     uint32_t GetRawPointerValue() const noexcept;
     bool HasNestedPointers() const noexcept;
     const CodeNoteModel* GetPointerNoteAtOffset(int nOffset) const;
     std::pair<ra::ByteAddress, const CodeNoteModel*> GetPointerNoteAtAddress(ra::ByteAddress nAddress) const;
 
-    bool GetPointerChain(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pRootNote) const;
+    virtual bool GetPointerChain(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pRootNote) const;
 
     typedef std::function<void(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const CodeNoteModel&)> NoteMovedFunction;
     void UpdateRawPointerValue(ra::ByteAddress nAddress, const ra::data::context::EmulatorContext& pEmulatorContext, NoteMovedFunction fNoteMovedCallback);
@@ -82,6 +84,7 @@ public:
         size_t m_nEndIndex;
     };
 
+    static std::wstring TrimSize(const std::wstring& sNote, bool bKeepPointer);
 
 private:
     std::string m_sAuthor;
@@ -96,7 +99,8 @@ private:
     bool GetPointerChainRecursive(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pParentNote) const;
 
     void ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex);
-    void ExtractSize(const std::wstring& sNote);
+    void ExtractSize(const std::wstring& sNote, bool bIsPointer);
+    static MemSize GetImpliedPointerSize();
 };
 
 } // namespace models

@@ -103,6 +103,31 @@ constexpr bool MemSizeIsFloat(MemSize nSize)
     }
 }
 
+constexpr bool IsBigEndian(MemSize nSize)
+{
+    switch (nSize)
+    {
+        case MemSize::SixteenBitBigEndian:
+        case MemSize::TwentyFourBitBigEndian:
+        case MemSize::ThirtyTwoBitBigEndian:
+        case MemSize::FloatBigEndian:
+        case MemSize::Double32BigEndian:
+        case MemSize::MBF32:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+constexpr uint32_t ReverseBytes(uint32_t nValue) noexcept
+{
+    return ((nValue & 0xFF000000) >> 24) |
+           ((nValue & 0x00FF0000) >> 8) |
+           ((nValue & 0x0000FF00) << 8) |
+           ((nValue & 0x000000FF) << 24);
+}
+
 constexpr unsigned int MemSizeBits(MemSize nSize)
 {
     switch (nSize)

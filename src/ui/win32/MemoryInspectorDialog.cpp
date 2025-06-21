@@ -327,6 +327,11 @@ BOOL MemoryInspectorDialog::OnInitDialog()
     SetWindowFont(GetDlgItem(GetHWND(), IDC_RA_MEMBITS), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
     SetWindowFont(GetDlgItem(GetHWND(), IDC_RA_MEMBITS_TITLE), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
 
+    // NOTE: This is the number of Unicode characters allowed. The database stores data
+    //       in UTF-8, so this is the upper bound and less will actually be allowed if
+    //       non-ASCII characters are used.
+    SendMessage(GetDlgItem(GetHWND(), IDC_RA_NOTE_TEXT), EM_SETLIMITTEXT, 65530, 0);
+
     return DialogBase::OnInitDialog();
 }
 

@@ -7,6 +7,8 @@
 #include <string>
 #include <atomic>
 
+struct rc_api_fetch_game_sets_response_t;
+
 namespace ra { namespace services { class AchievementRuntimeExports; } }
 
 namespace ra {
@@ -51,6 +53,14 @@ public:
     unsigned int GameId() const noexcept { return m_nGameId; }
 
     /// <summary>
+    /// Gets the unique identifier of the currently loaded subset game.
+    /// </summary>
+    /// <remarks>
+    /// Will match <see cref="GameId"/> unless an exclusive or specialty subset is loaded.
+    /// </remarks>
+    unsigned int ActiveGameId() const noexcept { return m_nActiveGameId; }
+
+    /// <summary>
     /// Gets the title of the currently loaded game.
     /// </summary>
     const std::wstring& GameTitle() const noexcept { return m_sGameTitle; }
@@ -90,6 +100,36 @@ public:
     }
 
     /// <summary>
+    /// Determines if the provided game identifier is virtual
+    /// </summary>
+    /// <remarks>
+    /// IDs above 1 billion are incompatible. The 100 millions place indicates how.
+    /// Mask off the part above 100 million to get the actual game id.
+    /// </remarks>
+    static constexpr bool IsVirtualGameId(uint32_t nGameId) noexcept { return nGameId > 1000000000; }
+
+    /// <summary>
+    /// Gets the real game identifier from a virtual one
+    /// </summary>
+    static constexpr uint32_t GetRealGameId(uint32_t nGameId) noexcept { return nGameId % 100000000; }
+
+    enum HashCompatibility
+    {
+        Compatible = 0,
+        Incompatible = 10,
+        Untested = 11,
+        PatchRequired = 12,
+    };
+
+    /// <summary>
+    /// Extracts the hash compatibility information from a virtual game identifier
+    /// </summary>
+    static constexpr HashCompatibility GetHashCompatibility(uint32_t nGameId) noexcept
+    {
+        return ra::itoe<HashCompatibility>(nGameId / 100000000);
+    }
+
+    /// <summary>
     /// Gets the assets for the current game.
     /// </summary>
     GameAssets& Assets() noexcept { return m_vAssets; }
@@ -117,9 +157,44 @@ public:
 
     void DoFrame();
 
+    enum SubsetType
+    {
+        Core,
+        Bonus,
+        Specialty,
+        Exclusive,
+    };
+
+    class Subset
+    {
+    public:
+        Subset(uint32_t nAchievementSetId, uint32_t nGameId, const std::wstring& sTitle, SubsetType nType) :
+            m_sTitle(sTitle), m_nType(nType), m_nAchievementSetId(nAchievementSetId), m_nGameId(nGameId)
+        {
+        }
+
+        const std::wstring& Title() const noexcept { return m_sTitle; }
+        SubsetType Type() const noexcept { return m_nType; }
+        uint32_t AchievementSetID() const noexcept { return m_nAchievementSetId; }
+        uint32_t GameID() const noexcept { return m_nGameId; }
+
+        // Core assets have SubsetId of 0
+        uint32_t ID() const noexcept { return (m_nType == SubsetType::Core) ? 0 : m_nAchievementSetId; }
+
+    private:
+        std::wstring m_sTitle;
+        SubsetType m_nType;
+        uint32_t m_nAchievementSetId;
+        uint32_t m_nGameId;
+    };
+    const std::vector<Subset>& Subsets() const noexcept { return m_vSubsets; }
+    void InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response);
+    uint32_t GetGameId(uint32_t nSubsetId) const noexcept;
+
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
     void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused);
+    void MigrateSubsetUserFiles();
 
     friend class ra::services::AchievementRuntimeExports;
     bool BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaused);
@@ -133,9 +208,12 @@ protected:
     void EndLoad();
 
     unsigned int m_nGameId = 0;
+    unsigned int m_nActiveGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
     Mode m_nMode{};
+
+    std::vector<Subset> m_vSubsets;
 
 private:
     /// <summary>

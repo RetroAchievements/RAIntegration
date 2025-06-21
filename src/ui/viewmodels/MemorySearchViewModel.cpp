@@ -383,14 +383,6 @@ void MemorySearchViewModel::DoFrame()
 
     // EndUpdate has to be outside the lock as it may raise UI events
     m_vResults.EndUpdate();
-
-    // If another thread tried to update the results while we were updating the results,
-    // let that happen now
-    if (m_bUpdateResultsPending)
-    {
-        m_bUpdateResultsPending = false;
-        UpdateResults();
-    }
 }
 
 inline static constexpr auto ParseAddress(const wchar_t* ptr, ra::ByteAddress& address) noexcept
@@ -510,6 +502,11 @@ void MemorySearchViewModel::BeginNewSearch()
     if (m_bIsContinuousFiltering)
         ToggleContinuousFilter();
 
+    DispatchMemoryRead([this, nStart, nEnd]() { BeginNewSearch(nStart, nEnd); });
+}
+
+void MemorySearchViewModel::BeginNewSearch(ra::ByteAddress nStart, ra::ByteAddress nEnd)
+{
     std::unique_ptr<SearchResult> pResult;
     pResult.reset(new SearchResult());
     pResult->pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, GetSearchType());
@@ -561,6 +558,11 @@ void MemorySearchViewModel::ApplyFilter()
     if (m_vSearchResults.empty())
         return;
 
+    DispatchMemoryRead([this]() { DoApplyFilter(); });
+}
+
+void MemorySearchViewModel::DoApplyFilter()
+{
     const std::wstring sEmptyString;
     const auto* sValue = GetValue(CanEditFilterValueProperty) ? &GetFilterValue() : &sEmptyString;
 
@@ -624,7 +626,7 @@ void MemorySearchViewModel::ApplyFilter()
     SetValue(FilterSummaryProperty, pResult->sSummary);
 
     AddNewPage(std::move(pResult));
-    ChangePage(m_nSelectedSearchResult);
+    DispatchMemoryRead([this]() { ChangePage(m_nSelectedSearchResult); });
 }
 
 bool MemorySearchViewModel::ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult,
@@ -652,14 +654,16 @@ void MemorySearchViewModel::ToggleContinuousFilter()
     }
     else
     {
-        // apply the filter before disabling CanFilter or the filter value will be ignored
-        ApplyFilter();
+        DispatchMemoryRead([this]() {
+            // apply the filter before disabling CanFilter or the filter value will be ignored
+            ApplyFilter();
 
-        m_bIsContinuousFiltering = true;
-        m_tLastContinuousFilter = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+            m_bIsContinuousFiltering = true;
+            m_tLastContinuousFilter = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
 
-        SetValue(CanFilterProperty, false);
-        SetValue(ContinuousFilterLabelProperty, L"Stop Filtering");
+            SetValue(CanFilterProperty, false);
+            SetValue(ContinuousFilterLabelProperty, L"Stop Filtering");
+        });
     }
 }
 
@@ -723,6 +727,9 @@ void MemorySearchViewModel::ApplyContinuousFilter()
 
 void MemorySearchViewModel::ChangePage(size_t nNewPage)
 {
+    // NOTE: UpdateResults reads memory from the emulator. As such, this function should
+    //       only be called from the thread that calls DoFrame(). That can be managed
+    //       by using DispatchMemoryRead().
     {
         std::lock_guard lock(m_oMutex);
         m_nSelectedSearchResult = nNewPage;
@@ -734,11 +741,16 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(nMatches));
     SetValue(FilterSummaryProperty, pResult.sSummary);
 
+    // attempt to keep the current results in the results window
+    const auto nNewScrollOffset = (nMatches <= SEARCH_ROWS_DISPLAYED) ? 0
+        : std::min(CalculatePreserveResultsScrollOffset(pResult),
+                   gsl::narrow_cast<unsigned>(nMatches - SEARCH_ROWS_DISPLAYED));
+
     // prevent scrolling from triggering a call to UpdateResults - we'll do that in a few lines.
     m_bScrolling = true;
     // note: update maximum first - it can affect offset. then update offset to the value we want.
     SetValue(ScrollMaximumProperty, gsl::narrow_cast<int>(nMatches));
-    SetValue(ScrollOffsetProperty, 0);
+    SetValue(ScrollOffsetProperty, nNewScrollOffset);
     m_bScrolling = false;
 
     m_vSelectedAddresses.clear();
@@ -749,38 +761,76 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
     SetValue(CanGoToNextPageProperty, (nNewPage < m_vSearchResults.size() - 1));
 }
 
-void MemorySearchViewModel::UpdateResults()
+unsigned MemorySearchViewModel::CalculatePreserveResultsScrollOffset(const SearchResult& pResult) const
 {
-    if (m_vResults.IsUpdating())
+    const auto nScrollOffset = GetScrollOffset();
+    if (nScrollOffset == 0)
+        return 0;
+
+    // Results() is virtualizing. The first item in Results() is the item at the scroll offset
+    const auto* nItemAtScrollOffset = m_vResults.GetItemAt(0);
+    if (nItemAtScrollOffset == nullptr)
+        return 0;
+
+    const auto nAddressAtScrollOffset = nItemAtScrollOffset->nAddress;
+
+    ra::services::SearchResults::Result pSearchResult;
+    if (pResult.pResults.GetMatchingAddress(nScrollOffset, pSearchResult) &&
+        pSearchResult.nAddress == nAddressAtScrollOffset)
     {
-        // assume DoFrame is updating the results list from another thread and just
-        // queue the UpdateResults
-        m_bUpdateResultsPending = true;
-        return;
+        // item offset didn't change
+        return nScrollOffset;
     }
 
-    const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-    if (!pDesktop.IsOnUIThread())
-    {
-        m_bUpdateResultsPending = true;
-        pDesktop.InvokeOnUIThread([this]() {
-            if (m_bUpdateResultsPending)
-            {
-                m_bUpdateResultsPending = false;
-                UpdateResults();
-            }
-        });
+    // find new offset of item (or nearest item)
+    // assume a non-match means the item was filtered out and will be at an index
+    // lower than nScrollOffset
+    gsl::index nLow = 0;
+    gsl::index nHigh = nScrollOffset;
 
-        return;
+    // if the found item is lower than the search item, search forward instead of back
+    if (pSearchResult.nAddress < nAddressAtScrollOffset)
+    {
+        nLow = gsl::narrow_cast<gsl::index>(nScrollOffset + 1);
+        nHigh = gsl::narrow_cast<gsl::index>(pResult.pResults.MatchingAddressCount());
     }
 
-    // inlining this code was causing an analysis warning suggesting the lock was being released from
-    // the early returns above
-    DoUpdateResults();
+    do
+    {
+        const gsl::index nMid = (nLow + nHigh) / 2;
+        if (!pResult.pResults.GetMatchingAddress(nMid, pSearchResult))
+        {
+            // nMid outside results range, set new upper limit
+            nHigh = gsl::narrow_cast<gsl::index>(pResult.pResults.MatchingAddressCount());
+        }
+        else if (pSearchResult.nAddress == nAddressAtScrollOffset)
+        {
+            // found a match
+            return gsl::narrow_cast<unsigned int>(nMid);
+        }
+        else
+        {
+            // apply bsearch algorithm
+            if (pSearchResult.nAddress > nAddressAtScrollOffset)
+                nHigh = nMid;
+            else
+                nLow = nMid + 1;
+        }
+    } while (nLow < nHigh);
+
+    // no match found, return the closest item before the search item (if one exists)
+    if (nHigh < 1)
+        return 0;
+
+    return gsl::narrow_cast<unsigned int>(nHigh - 1);
 }
 
-void MemorySearchViewModel::DoUpdateResults()
+void MemorySearchViewModel::UpdateResults()
 {
+    // NOTE: UpdateResult reads memory from the emulator. As such, this function should
+    //       only be called from the thread that calls DoFrame(). That can be managed
+    //       by using DispatchMemoryRead().
+
     // intentionally release the lock before calling EndUpdate to ensure callbacks aren't within the lock scope
     {
         std::lock_guard lock(m_oMutex);
@@ -927,7 +977,7 @@ void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
         auto* pRow = m_vResults.GetItemAt(i);
         if (pRow != nullptr && pRow->nAddress == nAddress)
         {
-            UpdateResults();
+            DispatchMemoryRead([this]() { UpdateResults(); });
             break;
         }
     }
@@ -978,7 +1028,7 @@ void MemorySearchViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
     if (args.Property == ScrollOffsetProperty)
     {
         if (!m_bScrolling)
-            UpdateResults();
+            DispatchMemoryRead([this]() { UpdateResults(); });
     }
     else if (args.Property == ResultCountProperty)
     {
@@ -1028,7 +1078,7 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const
 void MemorySearchViewModel::NextPage()
 {
     if (m_nSelectedSearchResult < m_vSearchResults.size() - 1)
-        ChangePage(m_nSelectedSearchResult + 1);
+        DispatchMemoryRead([this]() { ChangePage(m_nSelectedSearchResult + 1); });
 }
 
 void MemorySearchViewModel::PreviousPage()
@@ -1039,7 +1089,7 @@ void MemorySearchViewModel::PreviousPage()
         if (m_bIsContinuousFiltering)
             ToggleContinuousFilter();
 
-        ChangePage(m_nSelectedSearchResult - 1);
+        DispatchMemoryRead([this]() { ChangePage(m_nSelectedSearchResult - 1); });
     }
 }
 
@@ -1145,13 +1195,15 @@ void MemorySearchViewModel::ExcludeSelected()
     SetValue(HasSelectionProperty, false);
 
     const size_t nMatchingAddressCount = pResult->pResults.MatchingAddressCount();
-    AddNewPage(std::move(pResult));
-    ChangePage(m_nSelectedSearchResult);
-
     if (nMatchingAddressCount < gsl::narrow_cast<size_t>(nScrollOffset) + SEARCH_ROWS_DISPLAYED)
         nScrollOffset = 0;
 
-    SetValue(ScrollOffsetProperty, nScrollOffset);
+    AddNewPage(std::move(pResult));
+    DispatchMemoryRead([this, nScrollOffset]() {
+        ChangePage(m_nSelectedSearchResult);
+
+        SetValue(ScrollOffsetProperty, nScrollOffset);
+    });
 }
 
 void MemorySearchViewModel::BookmarkSelected()
@@ -1388,7 +1440,7 @@ void MemorySearchViewModel::ImportResults()
                     m_vSearchResults.push_back(std::move(pResult2));
                 }
 
-                ChangePage(1);
+                DispatchMemoryRead([this]() { ChangePage(1); });
             }
         }
     }

@@ -432,6 +432,51 @@ void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_cl
     }
 }
 
+typedef struct QueueMemoryReadData
+{
+    std::function<void()> fCallback;
+} QueueMemoryReadData;
+
+static void DispatchMemoryRead(struct rc_client_scheduled_callback_data_t* callback_data,
+                               rc_client_t*, rc_clock_t)
+{
+    QueueMemoryReadData* data = static_cast<QueueMemoryReadData*>(callback_data->data);
+    data->fCallback();
+
+    delete data;
+    free(callback_data);
+}
+
+void AchievementRuntime::QueueMemoryRead(std::function<void()>&& fCallback) const
+{
+    if (GetClient()->state.allow_background_memory_reads)
+    {
+        fCallback();
+        return;
+    }
+
+    if (m_hDoFrameThread == 0 || IsOnDoFrameThread())
+    {
+        fCallback();
+        return;
+    }
+
+    QueueMemoryReadData* data = new QueueMemoryReadData();
+    Expects(data != nullptr);
+    data->fCallback = std::move(fCallback);
+
+    rc_client_scheduled_callback_data_t* scheduled_callback =
+        static_cast<rc_client_scheduled_callback_data_t*>(calloc(1, sizeof(rc_client_scheduled_callback_data_t)));
+    Expects(scheduled_callback != nullptr);
+    scheduled_callback->callback = DispatchMemoryRead;
+    scheduled_callback->data = data;
+
+    rc_client_schedule_callback(GetClient(), scheduled_callback);
+
+    // We have to assume the client will call rc_client_do_frame or rc_client_idle in a
+    // timely manner or the callback won't get called and the UI will appear unresponsive.
+}
+
 /* ---- ClientSynchronizer ----- */
 
 class AchievementRuntime::ClientSynchronizer
@@ -530,6 +575,7 @@ private:
                 const auto nAchievementId = vmAchievement->GetID();
                 if (vmAchievement->GetChanges() == ra::data::models::AssetChanges::None)
                 {
+                    // reset to server state
                     rc_client_subset_info_t* pPublishedSubset = m_pPublishedSubset;
                     for (; pPublishedSubset; pPublishedSubset = pPublishedSubset->next)
                     {
@@ -618,6 +664,7 @@ private:
                 const auto nLeaderboardId = vmLeaderboard->GetID();
                 if (vmLeaderboard->GetChanges() == ra::data::models::AssetChanges::None)
                 {
+                    // reset to server state
                     rc_client_subset_info_t* pPublishedSubset = m_pPublishedSubset;
                     for (; pPublishedSubset; pPublishedSubset = pPublishedSubset->next)
                     {
@@ -625,6 +672,30 @@ private:
                         if (pSrcLeaderboard != nullptr)
                         {
                             memcpy(pLeaderboard, pSrcLeaderboard, sizeof(*pLeaderboard));
+
+                            // if the leaderboard is running, we have to also copy the current value and tracker reference
+                            if (pSrcLeaderboard->lboard->state == RC_LBOARD_STATE_STARTED)
+                            {
+                                pPublishedSubset = m_pClient->game->subsets;
+                                for (; pPublishedSubset; pPublishedSubset = pPublishedSubset->next)
+                                {
+                                    pSrcLeaderboard = FindLeaderboard(pPublishedSubset, nLeaderboardId);
+                                    if (pSrcLeaderboard != nullptr)
+                                    {
+                                        if (pSrcLeaderboard->lboard == pLeaderboard->lboard)
+                                        {
+                                            pLeaderboard->tracker = pSrcLeaderboard->tracker;
+                                            pLeaderboard->value = pSrcLeaderboard->value;
+                                        }
+                                        else
+                                        {
+                                            rc_client_release_leaderboard_tracker(m_pClient->game, pSrcLeaderboard);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+
                             vmLeaderboard->ReplaceAttached(*pLeaderboard++);
                             break;
                         }
@@ -811,13 +882,6 @@ public:
         rc_mutex_unlock(&pClient->state.mutex);
     }
 
-    void GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const
-    {
-        const auto* pSubset = m_pPublishedSubset;
-        for (; pSubset; pSubset = pSubset->next)
-            vSubsets.emplace_back(pSubset->public_.id, ra::Widen(pSubset->public_.title));
-    }
-
     void AttachMemory(void* pMemory)
     {
         if (m_pSubsetWrapper)
@@ -864,12 +928,6 @@ void AchievementRuntime::SyncAssets()
     if (m_pClientSynchronizer == nullptr)
         m_pClientSynchronizer.reset(new ClientSynchronizer());
     m_pClientSynchronizer->SyncAssets(GetClient());
-}
-
-void AchievementRuntime::GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const
-{
-    if (m_pClientSynchronizer != nullptr)
-        m_pClientSynchronizer->GetSubsets(vSubsets);
 }
 
 void AchievementRuntime::AttachMemory(void* pMemory)
@@ -1164,58 +1222,54 @@ void AchievementRuntime::BeginLoadGame(const std::string& sHash, unsigned id, rc
     BeginLoadGame(sHash.c_str(), id, pCallbackWrapper);
 }
 
-static void ExtractPatchData(const rc_api_server_response_t* server_response, uint32_t nGameId)
+static void ProcessPatchData(const rc_api_server_response_t* server_response,
+                             const rc_api_fetch_game_sets_response_t* game_data_response)
 {
-    // extract the PatchData and store a copy in the cache for offline mode
-    rc_api_response_t api_response{};
-    GSL_SUPPRESS_ES47
-    rc_json_field_t fields[] = {RC_JSON_NEW_FIELD("Success"), RC_JSON_NEW_FIELD("Error"),
-                                RC_JSON_NEW_FIELD("PatchData")};
+    Expects(game_data_response != nullptr);
+    // determine the active game ID and any identify any provided subsets
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    pGameContext.InitializeSubsets(game_data_response);
 
-    if (rc_json_parse_server_response(&api_response, server_response, fields, sizeof(fields) / sizeof(fields[0])) ==
-            RC_OK &&
-        fields[2].value_start && fields[2].value_end)
+    // extract the old rich presence script from the last cached server response so we can tell if the
+    // local value has changed. store it as the local value, and we'll merge in the real local value later.
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pOldData = pLocalStorage.ReadText(StorageItemType::GameData, std::to_wstring(pGameContext.ActiveGameId()));
+    if (pOldData != nullptr)
     {
-        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-        auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
-        if (pData != nullptr)
+        rapidjson::Document pDocument;
+        if (LoadDocument(pDocument, *pOldData) && pDocument.HasMember("RichPresencePatch") &&
+            pDocument["RichPresencePatch"].IsString())
         {
-            std::string sPatchData;
-            sPatchData.append(fields[2].value_start, fields[2].value_end - fields[2].value_start);
-            pData->Write(sPatchData);
+            auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+            Expects(pRichPresence != nullptr);
+            pRichPresence->SetScript(pDocument["RichPresencePatch"].GetString());
+            pRichPresence->UpdateLocalCheckpoint();
         }
+    }
+
+    // cache the patchdata so it can be used in offline mode or by external tools
+    auto pData = pLocalStorage.WriteText(StorageItemType::GameData, std::to_wstring(pGameContext.ActiveGameId()));
+    if (pData != nullptr)
+    {
+        std::string sPatchData(server_response->body, server_response->body_length);
+        pData->Write(sPatchData);
     }
 }
 
 GSL_SUPPRESS_CON3
 void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
-                                                 struct rc_api_fetch_game_data_response_t* game_data_response,
+                                                 rc_api_fetch_game_sets_response_t* game_data_response,
                                                  rc_client_t*, void* pUserdata)
 {
     auto* wrapper = static_cast<LoadGameCallbackWrapper*>(pUserdata);
     Expects(wrapper != nullptr);
+    Expects(game_data_response != nullptr);
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 
     auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
     pRichPresence->SetScript(game_data_response->rich_presence_script);
     pRichPresence->CreateServerCheckpoint();
-
-    // extract the old rich presence script from the last cached server response so we can tell if the
-    // local value has changed. store it as the local value, and we'll merge in the real local value later.
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(game_data_response->id));
-    if (pData != nullptr)
-    {
-        rapidjson::Document pDocument;
-        if (LoadDocument(pDocument, *pData) &&
-            pDocument.HasMember("RichPresencePatch") &&
-            pDocument["RichPresencePatch"].IsString())
-        {
-            pRichPresence->SetScript(pDocument["RichPresencePatch"].GetString());
-        }
-    }
-
     pRichPresence->CreateLocalCheckpoint();
     pGameContext.Assets().Append(std::move(pRichPresence));
 
@@ -1225,17 +1279,23 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
     pImageRepository.FetchImage(ra::ui::ImageType::Icon, game_data_response->image_name, game_data_response->image_url);
 #endif
 
-    const rc_api_achievement_definition_t* pAchievement = game_data_response->achievements;
-    const rc_api_achievement_definition_t* pAchievementStop = pAchievement + game_data_response->num_achievements;
-    for (; pAchievement < pAchievementStop; ++pAchievement)
-        wrapper->m_mAchievementDefinitions[pAchievement->id] = pAchievement->definition;
+    for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
+    {
+        const auto* pSet = &game_data_response->sets[i];
 
-    const rc_api_leaderboard_definition_t* pLeaderboard = game_data_response->leaderboards;
-    const rc_api_leaderboard_definition_t* pLeaderboardStop = pLeaderboard + game_data_response->num_leaderboards;
-    for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
-        wrapper->m_mLeaderboardDefinitions[pLeaderboard->id] = pLeaderboard->definition;
+        const auto* pAchievement = pSet->achievements;
+        const auto* pAchievementStop = pAchievement + pSet->num_achievements;
+        for (; pAchievement < pAchievementStop; ++pAchievement)
+            wrapper->m_mAchievementDefinitions[pAchievement->id] = pAchievement->definition;
 
-    ExtractPatchData(server_response, game_data_response->id);
+        const auto* pLeaderboard = pSet->leaderboards;
+        const auto* pLeaderboardStop = pLeaderboard + pSet->num_leaderboards;
+        for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
+            wrapper->m_mLeaderboardDefinitions[pLeaderboard->id] = pLeaderboard->definition;
+    }
+
+    if (!ra::data::context::GameContext::IsVirtualGameId(game_data_response->id))
+        ProcessPatchData(server_response, game_data_response);
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, unsigned id,
@@ -1244,9 +1304,8 @@ rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, u
     auto* client = GetClient();
 
     // unload the game and free any additional memory we allocated for local changes
-    rc_client_unload_game(client);
-    m_pClientSynchronizer.reset();
-    s_mAchievementPopups.clear();
+    UnloadGame();
+
 
     // if an ID was provided, store the hash->id mapping
     if (id != 0)
@@ -1257,7 +1316,7 @@ rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, u
     }
 
     // start the load process
-    client->callbacks.post_process_game_data_response = PostProcessGameDataResponse;
+    client->callbacks.post_process_game_sets_response = PostProcessGameDataResponse;
 
     return rc_client_begin_load_game(client, sHash, AchievementRuntime::LoadGameCallback, pCallbackWrapper);
 }
@@ -1274,7 +1333,7 @@ rc_client_async_handle_t* AchievementRuntime::BeginIdentifyAndLoadGame(uint32_t 
     s_mAchievementPopups.clear();
 
     // start the load process
-    client->callbacks.post_process_game_data_response = PostProcessGameDataResponse;
+    client->callbacks.post_process_game_sets_response = PostProcessGameDataResponse;
 
     return rc_client_begin_identify_and_load_game(client, console_id, file_path, data, data_size,
                                                   AchievementRuntime::LoadGameCallback, pCallbackWrapper);
@@ -1288,6 +1347,48 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
 
     if (nResult == RC_OK || nResult == RC_NO_GAME_LOADED)
     {
+        if (pClient->game && ra::data::context::GameContext::IsVirtualGameId(pClient->game->public_.id))
+        {
+            ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
+
+            const auto nGameId = ra::data::context::GameContext::GetRealGameId(pClient->game->public_.id);
+            const auto nHashCompatibility = ra::data::context::GameContext::GetHashCompatibility(pClient->game->public_.id);
+            if (nHashCompatibility == ra::data::context::GameContext::HashCompatibility::Untested)
+                vmUnknownGame.SetProblemHeader(L"The compatibility of the provided game is unknown.");
+            else
+                vmUnknownGame.SetProblemHeader(L"The provided game has been marked as incompatible.");
+            RA_LOG_INFO("Hash %s identified as unsupported for game %u", pClient->game->public_.hash, nGameId);
+
+            // we don't have the actual game title, so we can't just call InitializeTestCompatibilityMode
+            vmUnknownGame.InitializeGameTitles(ra::itoe<ConsoleID>(pClient->game->public_.console_id));
+            vmUnknownGame.SetSystemName(ra::Widen(rc_console_name(pClient->game->public_.console_id)));
+            vmUnknownGame.SetChecksum(ra::Widen(pClient->game->public_.hash));
+            vmUnknownGame.SetSelectedGameId(nGameId);
+
+            const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+            auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+            vmUnknownGame.SetEstimatedGameName(sEstimatedGameTitle);
+
+            if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
+            {
+                if (vmUnknownGame.GetTestMode())
+                {
+                    ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().SetMode(
+                        ra::data::context::GameContext::Mode::CompatibilityTest);
+
+                    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+
+                    // create the virtual association so rc_client will fetch by game id instead of by hash
+                    auto* client_hash = rc_client_find_game_hash(pRuntime.GetClient(), pClient->game->public_.hash);
+                    client_hash->game_id = nGameId;
+                    client_hash->is_unknown = 1;
+
+                    pRuntime.BeginLoadGame(pClient->game->public_.hash, nGameId, wrapper);
+                    return;
+                }
+            }
+        }
+
         // this has to be done before calling InitializeFromAchievementRuntime so the address validation
         // doesn't flag every achievement as invalid.
         if (IsExternalRcheevosClient() && pClient->game)
@@ -1297,7 +1398,6 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
                 pClient->game->public_.console_id != 0)
             {
                 _RA_SetConsoleID(pClient->game->public_.console_id);
-                ResetEmulatorMemoryRegionsForRcheevosClient();
             }
         }
 
@@ -1315,17 +1415,17 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
     delete wrapper;
 }
 
-rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* file_path,
+rc_client_async_handle_t* AchievementRuntime::BeginIdentifyAndChangeMedia(const char* file_path,
     const uint8_t* data, size_t data_size, CallbackWrapper* pCallbackWrapper) noexcept
 {
     auto* client = GetClient();
-    return rc_client_begin_change_media(client, file_path, data, data_size, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
+    return rc_client_begin_identify_and_change_media(client, file_path, data, data_size, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
 }
 
-rc_client_async_handle_t* AchievementRuntime::BeginChangeMediaFromHash(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept
+rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept
 {
     auto* client = GetClient();
-    return rc_client_begin_change_media_from_hash(client, sHash, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
+    return rc_client_begin_change_media(client, sHash, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
 }
 
 GSL_SUPPRESS_CON3
@@ -1342,6 +1442,12 @@ void AchievementRuntime::ChangeMediaCallback(int nResult, const char* sErrorMess
     delete wrapper;
 }
 
+void AchievementRuntime::UnloadGame() noexcept
+{
+    rc_client_unload_game(GetClient());
+    m_pClientSynchronizer.reset();
+    s_mAchievementPopups.clear();
+}
 
 /* ---- DoFrame ----- */
 
@@ -1521,6 +1627,8 @@ static void RaisePauseOnChangeEvents(
 
 void AchievementRuntime::DoFrame()
 {
+    m_hDoFrameThread = GetCurrentThreadId();
+
     if (m_bPaused)
     {
         rc_client_idle(GetClient());
@@ -1541,9 +1649,35 @@ void AchievementRuntime::DoFrame()
         RaisePauseOnChangeEvents(mLeaderboardsWithHits, mActiveLeaderboards);
 }
 
-void AchievementRuntime::Idle() noexcept
+void AchievementRuntime::Idle() const noexcept
 {
-    rc_client_idle(GetClient());
+    auto* pClient = GetClient();
+    if (!pClient)
+        return;
+
+    const auto* pScheduledCallback = pClient->state.scheduled_callbacks;
+    if (!pScheduledCallback)
+        return;
+
+    const rc_clock_t now = pClient->callbacks.get_time_millisecs(pClient);
+    bool bShouldIdle = false;
+    {
+        rc_mutex_lock(&pClient->state.mutex);
+        pScheduledCallback = pClient->state.scheduled_callbacks;
+        while (pScheduledCallback && pScheduledCallback->when == 0)
+            pScheduledCallback = pScheduledCallback->next;
+
+        if (pScheduledCallback && pScheduledCallback->when < now - 5000)
+        {
+            // pending callback has been waiting for more than five
+            // seconds. force a call to rc_client_idle
+            bShouldIdle = true;
+        }
+        rc_mutex_unlock(&pClient->state.mutex);
+    }
+
+    if (bShouldIdle)
+        rc_client_idle(pClient);
 }
 
 void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress) noexcept

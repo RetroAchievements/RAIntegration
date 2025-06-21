@@ -128,6 +128,48 @@ protected:
     const BoolModelProperty& m_pIsHiddenProperty;
 };
 
+class SourceTypeColumnBinding : public ra::ui::win32::bindings::GridLookupColumnBinding
+{
+public:
+    SourceTypeColumnBinding(const IntModelProperty& pBoundProperty,
+                      const ra::ui::viewmodels::LookupItemViewModelCollection& vmItems) noexcept :
+        ra::ui::win32::bindings::GridLookupColumnBinding(pBoundProperty, vmItems)
+    {
+    }
+
+    std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto* vmConditions = dynamic_cast<const ViewModelCollection<TriggerConditionViewModel>*>(&vmItems);
+        Expects(vmConditions != nullptr);
+        const auto* vmCondition = vmConditions->GetItemAt(nIndex);
+        if (vmCondition != nullptr)
+            return vmCondition->GetTooltip(*m_pBoundProperty);
+
+        return L"";
+    }
+};
+
+class TargetTypeColumnBinding : public HideableGridLookupColumnBinding
+{
+public:
+    TargetTypeColumnBinding(const IntModelProperty& pBoundProperty, const BoolModelProperty& pIsHiddenProperty,
+                            const ra::ui::viewmodels::LookupItemViewModelCollection& vmItems) noexcept :
+        HideableGridLookupColumnBinding(pBoundProperty, pIsHiddenProperty, vmItems)
+    {
+    }
+
+    std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto* vmConditions = dynamic_cast<const ViewModelCollection<TriggerConditionViewModel>*>(&vmItems);
+        Expects(vmConditions != nullptr);
+        const auto* vmCondition = vmConditions->GetItemAt(nIndex);
+        if (vmCondition != nullptr)
+            return vmCondition->GetTooltip(*m_pBoundProperty);
+
+        return L"";
+    }
+};
+
 class ValueColumnBinding : public ra::ui::win32::bindings::GridTextColumnBinding
 {
 public:
@@ -491,9 +533,9 @@ void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstrin
                 ::EnableWindow(m_hWndSpinner, false);
 
                 ra::api::FetchBadgeIds::Request request;
-                request.CallAsync([this](const ra::api::FetchBadgeIds::Response& response) noexcept {
+                request.CallAsync([this](const ra::api::FetchBadgeIds::Response& response) {
                     SetRange(ra::to_signed(response.FirstID), ra::to_signed(response.NextID) - 1);
-                    ::EnableWindow(m_hWndSpinner, true);
+                    InvokeOnUIThread([hWnd = m_hWndSpinner]() noexcept { ::EnableWindow(hWnd, true); });
                 });
             }
             else
@@ -878,7 +920,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     pFlagColumn->SetReadOnly(false);
     m_bindConditions.BindColumn(1, std::move(pFlagColumn));
 
-    auto pSourceTypeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
+    auto pSourceTypeColumn = std::make_unique<SourceTypeColumnBinding>(
         TriggerConditionViewModel::SourceTypeProperty, vmAssetEditor.Trigger().OperandTypes());
     pSourceTypeColumn->SetHeader(L"Type");
     pSourceTypeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_TYPE);
@@ -907,7 +949,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     pOperatorColumn->SetReadOnly(false);
     m_bindConditions.BindColumn(5, std::move(pOperatorColumn));
 
-    auto pTargetTypeColumn = std::make_unique<HideableGridLookupColumnBinding>(TriggerConditionViewModel::TargetTypeProperty,
+    auto pTargetTypeColumn = std::make_unique<TargetTypeColumnBinding>(TriggerConditionViewModel::TargetTypeProperty,
         TriggerConditionViewModel::HasTargetProperty, vmAssetEditor.Trigger().OperandTypes());
     pTargetTypeColumn->SetHeader(L"Type");
     pTargetTypeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_TYPE);

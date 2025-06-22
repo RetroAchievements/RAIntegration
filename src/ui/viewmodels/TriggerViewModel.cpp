@@ -1625,13 +1625,8 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
         }
     }
 
-    for (; nConditionIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nConditionIndex)
+    for (; nConditionIndex < nFirstCondition + nVisibleConditions; ++nConditionIndex)
     {
-        if (nConditionIndex < nFirstCondition)
-            continue;
-        if (nConditionIndex - nFirstCondition >= nVisibleConditions)
-            break;
-
         auto* pCondition = m_vConditions.GetItemAt(nConditionIndex - nFirstCondition);
         if (pCondition != nullptr)
             pCondition->UpdateRowColor(nullptr);

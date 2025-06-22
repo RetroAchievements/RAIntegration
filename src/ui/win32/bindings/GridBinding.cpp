@@ -764,6 +764,17 @@ void GridBinding::SetHWND(DialogBase& pDialog, HWND hControl)
     if ((GetWindowStyle(m_hWnd) & LVS_OWNERDATA) != 0)
         ListView_SetUnicodeFormat(hControl, TRUE);
 #endif
+
+    if (m_pScrollMaximumProperty)
+    {
+        Expects((GetWindowStyle(m_hWnd) & LVS_OWNERDATA) != 0);
+
+        const auto nValue = GetValue(*m_pScrollMaximumProperty);
+        if (nValue < 1)
+            ListView_SetItemCountEx(m_hWnd, 0, 0);
+        else
+            ListView_SetItemCountEx(m_hWnd, gsl::narrow_cast<size_t>(nValue), 0);
+    }
 }
 
 INT_PTR CALLBACK GridBinding::WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam)

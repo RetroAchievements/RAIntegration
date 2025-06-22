@@ -1007,7 +1007,7 @@ void TriggerViewModel::UpdateCurrentGroup(bool bRememberHits)
         if (bRememberHits)
         {
             nIndex = 0;
-            for (pCondition = pCondSet->conditions; pCondition && nIndex < vCurrentHits.size(); pCondition = pCondition->next)
+            for (pCondition = pCondSet->conditions; pCondition && ra::to_unsigned(nIndex) < vCurrentHits.size(); pCondition = pCondition->next)
                 pCondition->current_hits = vCurrentHits.at(nIndex++);
         }
     }

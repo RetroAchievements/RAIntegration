@@ -199,13 +199,13 @@ void GridBinding::UpdateLayout()
         UpdateVisibleItemCount();
 }
 
-void GridBinding::BindVisibleItemCount(const IntModelProperty& pVisibleItemCountProperty) noexcept
+void GridBinding::BindVisibleItemCount(const IntModelProperty& pVisibleItemCountProperty)
 {
     m_pVisibleItemCountProperty = &pVisibleItemCountProperty;
     UpdateVisibleItemCount();
 }
 
-void GridBinding::UpdateVisibleItemCount() noexcept
+void GridBinding::UpdateVisibleItemCount()
 {
     const auto nPerPage = ListView_GetCountPerPage(m_hWnd);
     SetValue(*m_pVisibleItemCountProperty, nPerPage + 1);

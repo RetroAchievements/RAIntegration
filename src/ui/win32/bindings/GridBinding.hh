@@ -37,7 +37,7 @@ public:
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty);
     void BindEnsureVisible(const IntModelProperty& pEnsureVisibleProperty) noexcept;
     void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
-    void BindVisibleItemCount(const IntModelProperty& pVisibleItemCountProperty) noexcept;
+    void BindVisibleItemCount(const IntModelProperty& pVisibleItemCountProperty);
 
     void SetDoubleClickHandler(std::function<void(gsl::index)> pHandler);
     void SetCopyHandler(std::function<void()> pHandler);
@@ -86,7 +86,7 @@ protected:
     virtual void UpdateItems(gsl::index nColumn);
     virtual void UpdateCell(gsl::index nIndex, gsl::index nColumnIndex);
     void CheckForScrollBar();
-    void UpdateVisibleItemCount() noexcept;
+    void UpdateVisibleItemCount();
     int GetVisibleItemIndex(int iItem);
     gsl::index GetRealItemIndex(gsl::index iItem) const;
 

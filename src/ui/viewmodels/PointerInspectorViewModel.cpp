@@ -56,11 +56,11 @@ void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::Change
 {
     if (args.Property == CurrentFieldNoteProperty && !m_bSyncingNote)
     {
-        OnCurrentFieldNoteChanged(args.tNewValue);
+        UpdateSourceCodeNote();
     }
     else if (args.Property == CurrentAddressNoteProperty && !m_bSyncingNote)
     {
-        OnCurrentFieldNoteChanged(args.tNewValue);
+        UpdateSourceCodeNote();
     }
     else if (args.Property == CurrentAddressTextProperty && !m_bSyncingAddress)
     {
@@ -75,6 +75,15 @@ void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::Change
     }
 
     MemoryBookmarksViewModel::OnValueChanged(args);
+}
+
+void PointerInspectorViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
+{
+    if (args.Property == StructFieldViewModel::OffsetProperty)
+        OnOffsetChanged(nIndex, args.tNewValue);
+
+
+    MemoryBookmarksViewModel::OnViewModelStringValueChanged(nIndex, args);
 }
 
 void PointerInspectorViewModel::OnActiveGameChanged()
@@ -341,17 +350,14 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
         if (pNode->IsRootNode())
         {
             pItem->m_nOffset = nCurrentAddress;
+            pItem->m_nIndent = 0;
             pItem->SetOffset(L"");
         }
         else
         {
             pItem->m_nOffset = pNode->GetOffset();
-
-            std::wstring sLabel;
-            if (nInsertIndex > 1)
-                sLabel = std::wstring(nInsertIndex - 1, ' ');
-            sLabel += ra::StringPrintf(L"+%04x", pItem->m_nOffset);
-            pItem->SetOffset(sLabel);
+            pItem->m_nIndent = gsl::narrow_cast<int32_t>(nInsertIndex) - 1;
+            pItem->FormatOffset();
 
             pNote = pNote ? pNote->GetPointerNoteAtOffset(pItem->m_nOffset) : nullptr;
         }
@@ -391,6 +397,8 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
 
 void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote)
 {
+    pFieldViewModel.m_pNote = &pOffsetNote;
+
     const auto nSize = pOffsetNote.GetMemSize();
     pFieldViewModel.SetSize((nSize == MemSize::Unknown) ? MemSize::EightBit : nSize);
 
@@ -526,65 +534,105 @@ void PointerInspectorViewModel::LoadNodes(const ra::data::models::CodeNoteModel*
         SetSelectedNode(PointerNodeViewModel::RootNodeId);
 }
 
-
-void PointerInspectorViewModel::BuildNote(ra::StringBuilder& builder,
-                      std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain, gsl::index nDepth,
-                      const ra::data::models::CodeNoteModel& pNote)
+void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& builder,
+    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
+    gsl::index nDepth)
 {
-    const auto nBaseAddress = pNote.GetPointerAddress();
+    // if a single field is selected, push the current field value back into the field
+    const auto nSingleSelectionIndex = gsl::narrow_cast<gsl::index>(GetValue(SingleSelectionIndexProperty));
+    auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nSingleSelectionIndex);
+    if (pField)
+    {
+        // SyncField will cause pField to point at the local newNote, capture the current value so it can be restored
+        const ra::data::models::CodeNoteModel* pExistingNote = pField->m_pNote;
+        ra::data::models::CodeNoteModel newNote;
+        newNote.SetNote(GetCurrentFieldNote());
+        SyncField(*pField, newNote);
+        pField->m_pNote = pExistingNote;
+    }
 
-    pNote.EnumeratePointerNotes([this, &builder, &sChain, nDepth, nBaseAddress](
-                                    ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pOffsetNote) {
-        const auto nOffset = nAddress - nBaseAddress;
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Bookmarks().Count()); ++nIndex)
+    {
+        pField = Bookmarks().GetItemAt<StructFieldViewModel>(nIndex);
+        if (!pField)
+            continue;
 
         builder.Append(L"\r\n");
         builder.Append(std::wstring(nDepth, '+'));
-        builder.Append(ra::StringPrintf(L"0x%02X: ", nOffset));
+        builder.Append(ra::StringPrintf(L"0x%02X: ", pField->m_nOffset));
 
-        bool isCurrentField = false;
-        if (nDepth == gsl::narrow_cast<gsl::index>(sChain.size()))
-        {
-            // if a single field is selected, push the current field value back into the field
-            const auto nIndex = GetValue(SingleSelectionIndexProperty);
-            auto* pField = dynamic_cast<StructFieldViewModel*>(Bookmarks().GetItemAt(nIndex));
-            if (pField && pField->m_nOffset == ra::to_signed(nOffset))
-            {
-                ra::data::models::CodeNoteModel newNote;
-                newNote.SetNote(GetCurrentFieldNote());
-                SyncField(*pField, newNote);
-
-                isCurrentField = true;
-            }
-        }
-
-        if (pOffsetNote.GetMemSize() != MemSize::Unknown)
+        if (pField->GetSize() != MemSize::Unknown)
         {
             builder.Append('[');
-            builder.Append(ra::data::MemSizeString(pOffsetNote.GetMemSize()));
+            builder.Append(ra::data::MemSizeString(pField->GetSize()));
 
-            if (pOffsetNote.IsPointer())
+            if (pField->m_pNote->IsPointer())
                 builder.Append(L" pointer] ");
             else
                 builder.Append(L"] ");
         }
 
-        if (isCurrentField)
-            builder.Append(ra::data::models::CodeNoteModel::TrimSize(GetCurrentFieldNote(), false));
-        else if (!pOffsetNote.IsPointer())
-            builder.Append(ra::data::models::CodeNoteModel::TrimSize(pOffsetNote.GetNote(), false));
-        else if (&pOffsetNote == m_pCurrentNote)
-            builder.Append(ra::data::models::CodeNoteModel::TrimSize(GetCurrentAddressNote(), false));
-        else
-            builder.Append(ra::data::models::CodeNoteModel::TrimSize(pOffsetNote.GetPointerDescription(), false));
+        builder.Append(pField->GetDescription());
 
-        if (pOffsetNote.IsPointer())
-            BuildNote(builder, sChain, nDepth + 1, pOffsetNote);
+        const auto& sBody = pField->GetBody();
+        const auto nLineIndex = sBody.find('\n');
+        if (nLineIndex != std::string::npos)
+        {
+            builder.Append(L"\r\n");
+            builder.Append(sBody.substr(nLineIndex + 1));
+        }
 
-        return true;
-    });
+        if (pField->m_pNote->IsPointer())
+            BuildNote(builder, sChain, nDepth + 1, *pField->m_pNote);
+    }
 }
 
-void PointerInspectorViewModel::OnCurrentFieldNoteChanged(const std::wstring&)
+void PointerInspectorViewModel::BuildNote(ra::StringBuilder& builder,
+    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
+    gsl::index nDepth, const ra::data::models::CodeNoteModel& pNote)
+{
+    if (nDepth == gsl::narrow_cast<gsl::index>(sChain.size()))
+    {
+        BuildNoteForCurrentNode(builder, sChain, nDepth);
+        return;
+    }
+
+    const auto nBaseAddress = pNote.GetPointerAddress();
+
+    pNote.EnumeratePointerNotes([this, &builder, &sChain, nDepth, nBaseAddress]
+        (ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pOffsetNote) {
+            const auto nOffset = nAddress - nBaseAddress;
+
+            builder.Append(L"\r\n");
+            builder.Append(std::wstring(nDepth, '+'));
+            builder.Append(ra::StringPrintf(L"0x%02X: ", nOffset));
+
+            if (pOffsetNote.GetMemSize() != MemSize::Unknown)
+            {
+                builder.Append('[');
+                builder.Append(ra::data::MemSizeString(pOffsetNote.GetMemSize()));
+
+                if (pOffsetNote.IsPointer())
+                    builder.Append(L" pointer] ");
+                else
+                    builder.Append(L"] ");
+            }
+
+            if (!pOffsetNote.IsPointer())
+                builder.Append(ra::data::models::CodeNoteModel::TrimSize(pOffsetNote.GetNote(), false));
+            else if (&pOffsetNote == m_pCurrentNote)
+                builder.Append(ra::data::models::CodeNoteModel::TrimSize(GetCurrentAddressNote(), false));
+            else
+                builder.Append(ra::data::models::CodeNoteModel::TrimSize(pOffsetNote.GetPointerDescription(), false));
+
+            if (pOffsetNote.IsPointer())
+                BuildNote(builder, sChain, nDepth + 1, pOffsetNote);
+
+            return true;
+        });
+}
+
+void PointerInspectorViewModel::UpdateSourceCodeNote()
 {
     const auto nAddress = GetCurrentAddress();
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -618,7 +666,19 @@ void PointerInspectorViewModel::OnCurrentFieldNoteChanged(const std::wstring&)
             pCodeNotes->SetCodeNote(nAddress, builder.ToWString());
             m_bSyncingNote = false;
 
+            // update the current note pointer
             m_pCurrentNote = UpdatePointerChain(GetSelectedNode());
+
+            // update the field note pointers
+            gsl::index nNoteIndex = 0;
+            m_pCurrentNote->EnumeratePointerNotes([this, &nNoteIndex]
+                (ra::ByteAddress, const ra::data::models::CodeNoteModel& pOffsetNote)
+                {
+                    Bookmarks().GetItemAt<StructFieldViewModel>(nNoteIndex++)->m_pNote = &pOffsetNote;
+                    return true;
+                });
+            for (; nNoteIndex < gsl::narrow_cast<gsl::index>(Bookmarks().Count()); ++nNoteIndex)
+                Bookmarks().GetItemAt<StructFieldViewModel>(nNoteIndex)->m_pNote = nullptr;
         }
     }
 }
@@ -824,6 +884,75 @@ void PointerInspectorViewModel::BookmarkCurrentField() const
 
     if (!pWindowManager.MemoryBookmarks.IsVisible())
         pWindowManager.MemoryBookmarks.Show();
+}
+
+void PointerInspectorViewModel::OnOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset)
+{
+    auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nIndex);
+    if (!pField || pField->m_bFormattingOffset)
+        return;
+
+    const auto nOldOffset = pField->m_nOffset;
+    unsigned nOffset;
+    std::wstring sError;
+    if (ra::ParseHex(sNewOffset, 0xFFFFFFFF, nOffset, sError))
+        pField->m_nOffset = ra::to_signed(nOffset);
+
+    pField->FormatOffset();
+
+    // keep the fields sorted
+    if (pField->m_nOffset != nOldOffset)
+    {
+        auto nNewIndex = nIndex;
+        while (nNewIndex > 0)
+        {
+            auto* pPrevField = Bookmarks().GetItemAt<StructFieldViewModel>(nNewIndex - 1);
+            if (pPrevField->m_nOffset < pField->m_nOffset)
+                break;
+
+            nNewIndex--;
+        }
+        if (nNewIndex == nIndex)
+        {
+            while (nNewIndex < gsl::narrow_cast<gsl::index>(Bookmarks().Count()) - 1)
+            {
+                auto* pNextField = Bookmarks().GetItemAt<StructFieldViewModel>(nNewIndex + 1);
+                if (pNextField->m_nOffset > pField->m_nOffset)
+                    break;
+
+                nNewIndex++;
+            }
+        }
+
+        if (nNewIndex != nIndex)
+        {
+            Bookmarks().MoveItem(nIndex, nNewIndex);
+
+            const auto nSelectionIndex = GetValue(SingleSelectionIndexProperty);
+            if (nSelectionIndex == gsl::narrow_cast<int>(nIndex))
+                SetValue(SingleSelectionIndexProperty, gsl::narrow_cast<int>(nNewIndex));
+        }
+
+        // update the composite note
+        UpdateSourceCodeNote();
+
+        // lastly, update the current value (may trigger PauseOnChange)
+        const auto nBaseAddress = (m_pCurrentNote != nullptr) ? m_pCurrentNote->GetPointerAddress() : 0U;
+        pField->SetAddress(nBaseAddress + pField->m_nOffset);
+        UpdateBookmark(*pField);
+    }
+}
+
+void PointerInspectorViewModel::StructFieldViewModel::FormatOffset()
+{
+    std::wstring sLabel;
+    if (m_nIndent > 0)
+        sLabel = std::wstring(m_nIndent, ' ');
+    sLabel += ra::StringPrintf(L"+%04x", m_nOffset);
+
+    m_bFormattingOffset = true;
+    SetOffset(sLabel);
+    m_bFormattingOffset = false;
 }
 
 } // namespace viewmodels

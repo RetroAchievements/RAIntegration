@@ -95,6 +95,8 @@ public:
         /// </summary>
         void SetOffset(const std::wstring& sValue) { SetValue(OffsetProperty, sValue); }
 
+        void FormatOffset();
+
         /// <summary>
         /// The <see cref="ModelProperty" /> for the field note body.
         /// </summary>
@@ -113,6 +115,9 @@ public:
         using MemoryBookmarkViewModel::SetAddressWithoutUpdatingValue;
 
         int32_t m_nOffset = 0;
+        int32_t m_nIndent = 0;
+        const ra::data::models::CodeNoteModel* m_pNote = nullptr;
+        bool m_bFormattingOffset = false;
     };
 
     /// <summary>
@@ -204,15 +209,16 @@ public:
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
+    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
+    void OnOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset);
 
 private:
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
-    void OnCurrentFieldNoteChanged(const std::wstring& sValue);
     void OnSelectedNodeChanged(int nNode);
     void OnSelectedFieldChanged(int nNode);
     void LoadNote(const ra::data::models::CodeNoteModel* pNote);
@@ -227,9 +233,13 @@ private:
     void UpdateValues();
     std::string GetMemRefChain(bool bMeasured) const;
 
+    void UpdateSourceCodeNote();
     void BuildNote(ra::StringBuilder& builder,
-                   std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain, gsl::index nDepth,
-                   const ra::data::models::CodeNoteModel& pNote);
+                   std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
+                   gsl::index nDepth, const ra::data::models::CodeNoteModel& pNote);
+    void BuildNoteForCurrentNode(ra::StringBuilder& builder,
+                                 std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
+                                 gsl::index nDepth);
 
     LookupItemViewModelCollection m_vPointers;
     LookupItemViewModelCollection m_vNodes;

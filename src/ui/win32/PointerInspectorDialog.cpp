@@ -10,6 +10,7 @@
 #include "ui\win32\bindings\GridBookmarkFormatColumnBinding.hh"
 #include "ui\win32\bindings\GridBookmarkValueColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
+#include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
 using ra::ui::viewmodels::PointerInspectorViewModel;
@@ -48,6 +49,24 @@ void PointerInspectorDialog::Presenter::OnClosed() noexcept { m_pDialog.reset();
 
 // ------------------------------------
 
+class GridOffsetColumnBinding : public ra::ui::win32::bindings::GridTextColumnBinding
+{
+    bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
+    {
+        std::wstring sError;
+        unsigned int nValue = 0U;
+
+        if (!ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError))
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
+            return false;
+        }
+
+        vmItems.SetItemValue(nIndex, *m_pBoundProperty, sValue);
+        return true;
+    }
+};
+
 PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPointerFinder)
     : DialogBase(vmPointerFinder),
       m_bindAddress(vmPointerFinder),
@@ -77,6 +96,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
         PointerInspectorViewModel::StructFieldViewModel::OffsetProperty);
     pOffsetColumn->SetHeader(L"Offset");
     pOffsetColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
+    pOffsetColumn->SetReadOnly(false);
     m_bindFields.BindColumn(0, std::move(pOffsetColumn));
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(

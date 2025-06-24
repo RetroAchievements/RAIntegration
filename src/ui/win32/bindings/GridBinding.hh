@@ -32,11 +32,12 @@ public:
     ViewModelCollectionBase& GetItems() noexcept { return *m_vmItems; }
 
     void Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty,
-        std::function<void(gsl::index, gsl::index, bool)> pUpdateSelectedItems);
+        std::function<void(gsl::index, gsl::index, bool)> fUpdateSelectedItems);
 
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty);
     void BindEnsureVisible(const IntModelProperty& pEnsureVisibleProperty) noexcept;
     void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
+    void BindVisibleItemCount(const IntModelProperty& pVisibleItemCountProperty);
 
     void SetDoubleClickHandler(std::function<void(gsl::index)> pHandler);
     void SetCopyHandler(std::function<void()> pHandler);
@@ -85,6 +86,7 @@ protected:
     virtual void UpdateItems(gsl::index nColumn);
     virtual void UpdateCell(gsl::index nIndex, gsl::index nColumnIndex);
     void CheckForScrollBar();
+    void UpdateVisibleItemCount();
     int GetVisibleItemIndex(int iItem);
     gsl::index GetRealItemIndex(gsl::index iItem) const;
 
@@ -137,8 +139,9 @@ private:
 
     const IntModelProperty* m_pScrollOffsetProperty = nullptr;
     const IntModelProperty* m_pScrollMaximumProperty = nullptr;
+    const IntModelProperty* m_pVisibleItemCountProperty = nullptr;
     ra::tstring m_sDispInfo;
-    std::function<void(gsl::index, gsl::index, bool)> m_pUpdateSelectedItems = nullptr;
+    std::function<void(gsl::index, gsl::index, bool)> m_fUpdateSelectedItems = nullptr;
 
     HWND m_hInPlaceEditor = nullptr;
 

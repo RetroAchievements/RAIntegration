@@ -8,6 +8,7 @@
 
 #include "data\models\TriggerValidation.hh"
 
+#include "services\AchievementLogicSerializer.hh"
 #include "services\AchievementRuntime.hh"
 #include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
@@ -22,9 +23,11 @@ namespace viewmodels {
 
 const IntModelProperty TriggerViewModel::SelectedGroupIndexProperty("TriggerViewModel", "SelectedGroupIndex", -1);
 const IntModelProperty TriggerViewModel::VersionProperty("TriggerViewModel", "Version", 0);
-const IntModelProperty TriggerViewModel::EnsureVisibleConditionIndexProperty("TriggerViewModel", "EnsureVisibleConditionIndex", -1);
 const IntModelProperty TriggerViewModel::EnsureVisibleGroupIndexProperty("TriggerViewModel", "EnsureVisibleGroupIndex", -1);
 const BoolModelProperty TriggerViewModel::IsMeasuredTrackedAsPercentProperty("TriggerViewModel", "IsMeasuredTrackedAsPercent", false);
+const IntModelProperty TriggerViewModel::ScrollOffsetProperty("TriggerViewModel", "ScrollOffset", 0);
+const IntModelProperty TriggerViewModel::ScrollMaximumProperty("TriggerViewModel", "ScrollMaximum", 0);
+const IntModelProperty TriggerViewModel::VisibleItemCountProperty("TriggerViewModel", "VisibleItemCount", 8);
 const IntModelProperty TriggerViewModel::GroupViewModel::ColorProperty("GroupViewModel", "Color", 0);
 
 TriggerViewModel::TriggerViewModel() noexcept
@@ -103,14 +106,11 @@ std::string TriggerViewModel::Serialize() const
     return buffer;
 }
 
-bool TriggerViewModel::GroupViewModel::UpdateSerialized(const ViewModelCollection<TriggerConditionViewModel>& vConditions)
+bool TriggerViewModel::GroupViewModel::UpdateSerialized(const std::string& sSerialized)
 {
-    std::string sSerialized;
-    UpdateSerialized(sSerialized, vConditions);
-
     if (sSerialized != m_sSerialized)
     {
-        m_sSerialized.swap(sSerialized);
+        m_sSerialized = sSerialized;
         m_pConditionSet = nullptr;
         return true;
     }
@@ -118,23 +118,58 @@ bool TriggerViewModel::GroupViewModel::UpdateSerialized(const ViewModelCollectio
     return false;
 }
 
-void TriggerViewModel::GroupViewModel::UpdateSerialized(std::string& sSerialized, const ViewModelCollection<TriggerConditionViewModel>& vConditions)
+
+rc_condset_t* TriggerViewModel::GroupViewModel::GetConditionSet(bool bIsValue) const
 {
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vConditions.Count()); ++nIndex)
+    if (m_pConditionSet != nullptr)
+        return m_pConditionSet;
+
+    const auto sTrigger = GetSerialized();
+
+    rc_memrefs_t* pMemrefs = nullptr;
+    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
     {
-        const auto* vmCondition = vConditions.GetItemAt(nIndex);
-        if (vmCondition != nullptr)
-        {
-            vmCondition->SerializeAppend(sSerialized);
-            sSerialized.push_back('_');
-        }
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        auto* pGame = pRuntime.GetClient()->game;
+        if (pGame != nullptr)
+            pMemrefs = pGame->runtime.memrefs;
     }
 
-    if (!sSerialized.empty() && sSerialized.back() == '_')
-        sSerialized.pop_back();
+    rc_preparse_state_t preparse;
+    rc_init_preparse_state(&preparse);
+    preparse.parse.existing_memrefs = pMemrefs;
+    preparse.parse.is_value = bIsValue ? 1 : 0;
+    preparse.parse.ignore_non_parse_errors = 1;
+    rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+    const char* sMemaddr = sTrigger.c_str();
+    rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
+    rc_preparse_alloc_memrefs(nullptr, &preparse);
+
+    const auto nSize = preparse.parse.offset;
+    if (nSize > 0)
+    {
+        m_sBuffer.resize(nSize);
+
+        rc_reset_parse_state(&preparse.parse, m_sBuffer.data());
+        trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+        rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
+
+        preparse.parse.existing_memrefs = pMemrefs;
+        preparse.parse.memrefs = &trigger->memrefs;
+        preparse.parse.is_value = bIsValue ? 1 : 0;
+        preparse.parse.ignore_non_parse_errors = 1;
+
+        sMemaddr = sTrigger.c_str();
+        rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
+        trigger->trigger.has_memrefs = 1;
+
+        m_pConditionSet = trigger->trigger.requirement;
+    }
+
+    return m_pConditionSet;
 }
 
-const std::string& TriggerViewModel::GroupViewModel::GetSerialized(const TriggerViewModel& vmTrigger) const
+const std::string& TriggerViewModel::GroupViewModel::GetSerialized() const
 {
     if (m_sSerialized == TriggerViewModel::GroupViewModel::NOT_SERIALIZED)
     {
@@ -142,16 +177,18 @@ const std::string& TriggerViewModel::GroupViewModel::GetSerialized(const Trigger
 
         if (m_pConditionSet)
         {
-            ViewModelCollection<TriggerConditionViewModel> vConditions;
+            TriggerConditionViewModel vmCondition;
             rc_condition_t* pCondition = m_pConditionSet->conditions;
-            for (; pCondition != nullptr; pCondition = pCondition->next)
+            while (pCondition != nullptr)
             {
-                auto& vmCondition = vConditions.Add();
-                vmCondition.SetTriggerViewModel(&vmTrigger);
                 vmCondition.InitializeFrom(*pCondition);
-            }
+                vmCondition.SerializeAppend(m_sSerialized);
+                if (!pCondition->next)
+                    break;
 
-            UpdateSerialized(m_sSerialized, vConditions);
+                ra::services::AchievementLogicSerializer::AppendConditionSeparator(m_sSerialized);
+                pCondition = pCondition->next;
+            }
         }
     }
 
@@ -186,7 +223,7 @@ void TriggerViewModel::SerializeAppend(std::string& sBuffer) const
             if (nGroup != 0)
                 sBuffer.push_back(m_bIsValue ? '$' : 'S');
 
-            sBuffer.append(vmGroup->GetSerialized(*this));
+            sBuffer.append(vmGroup->GetSerialized());
         }
     }
 }
@@ -201,10 +238,10 @@ void TriggerViewModel::CopySelectedConditionsToClipboard()
 {
     std::string sSerialized;
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
+    for (const auto nIndex : m_vSelectedConditions)
     {
         const auto* vmCondition = m_vConditions.GetItemAt(nIndex);
-        if (vmCondition != nullptr && vmCondition->IsSelected())
+        if (vmCondition != nullptr)
         {
             vmCondition->SerializeAppend(sSerialized);
             sSerialized.push_back('_');
@@ -216,7 +253,7 @@ void TriggerViewModel::CopySelectedConditionsToClipboard()
         // no selection, get the whole group
         const auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
         if (pGroup != nullptr)
-            sSerialized = pGroup->GetSerialized(*this);
+            sSerialized = pGroup->GetSerialized();
     }
     else if (sSerialized.back() == '_')
     {
@@ -229,8 +266,13 @@ void TriggerViewModel::CopySelectedConditionsToClipboard()
 
 void TriggerViewModel::DeselectAllConditions()
 {
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vConditions.Count()); ++nIndex)
-        m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty, false);
+    if (!m_vSelectedConditions.empty())
+    {
+        for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vConditions.Count()); ++nIndex)
+            m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty, false);
+
+        m_vSelectedConditions.clear();
+    }
 }
 
 static constexpr int RC_MULTIPLE_GROUPS = -99;
@@ -287,57 +329,30 @@ int TriggerViewModel::AppendMemRefChain(const std::string& sTrigger)
         return RC_INVALID_STATE; // additional test that was not parsed
     }
 
-    std::string sTriggerBuffer;
-    sTriggerBuffer.resize(nSize);
-    rc_reset_parse_state(&preparse.parse, sTriggerBuffer.data());
-    preparse.parse.is_value = IsValue();
-    preparse.parse.ignore_non_parse_errors = 1;
-
-    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
-    {
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient()->game->runtime;
-        preparse.parse.memrefs = pRuntime.memrefs;
-    }
-    else
-    {
-        preparse.parse.memrefs = &preparse.memrefs;
-    }
-
-    memaddr = sTrigger.c_str();
-    const rc_condset_t* pCondSet = rc_parse_condset(&memaddr, &preparse.parse);
-    Expects(pCondSet != nullptr);
-
-    m_vConditions.BeginUpdate();
+    auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+    Expects(pGroup != nullptr);
+    std::string sSerialized = pGroup->GetSerialized();
+    if (!sSerialized.empty())
+        ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+    sSerialized.append(sTrigger);
+    pGroup->UpdateSerialized(sSerialized);
 
     DeselectAllConditions();
 
-    for (const rc_condition_t* pCondition = pCondSet->conditions;
-        pCondition != nullptr; pCondition = pCondition->next)
-    {
-        auto& vmCondition = m_vConditions.Add();
-        vmCondition.InitializeFrom(*pCondition);
-        vmCondition.SetTriggerViewModel(this);
-        vmCondition.SetSelected(true);
-        vmCondition.SetIndex(gsl::narrow_cast<int>(m_vConditions.Count()));
-    }
+    const auto nCountBefore = GetValue(ScrollMaximumProperty);
+    UpdateConditions(pGroup);
+    const auto nCountAfter = GetValue(ScrollMaximumProperty);
+    EnsureVisible(nCountBefore, nCountAfter - nCountBefore);
 
-    m_vConditions.EndUpdate();
+    SelectRange(nCountBefore, gsl::narrow_cast<gsl::index>(nCountAfter) - 1, true);
 
-    SetValue(EnsureVisibleConditionIndexProperty, gsl::narrow_cast<int>(m_vConditions.Count()) - 1);
+    UpdateVersion();
     return RC_OK;
 }
 
 void TriggerViewModel::RemoveSelectedConditions()
 {
-    int nSelected = 0;
-
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
-    {
-        const auto* vmCondition = m_vConditions.GetItemAt(nIndex);
-        if (vmCondition != nullptr && vmCondition->IsSelected())
-            ++nSelected;
-    }
-
+    const int nSelected = gsl::narrow_cast<int>(m_vSelectedConditions.size());
     if (nSelected == 0)
         return;
 
@@ -350,57 +365,202 @@ void TriggerViewModel::RemoveSelectedConditions()
     if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
         return;
 
-    m_vConditions.BeginUpdate();
+    const auto nFirstVisibleIndex = GetValue(ScrollOffsetProperty);
+    const auto nVisibleItemCount = gsl::narrow_cast<int>(m_vConditions.Count());
+    auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+    Expects(pGroup != nullptr);
+    const auto* pCondSet = pGroup->GetConditionSet(IsValue());
+    Expects(pCondSet != nullptr);
 
-    for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vConditions.Count()) - 1; nIndex >= 0; --nIndex)
+    std::string sSerialized;
+    TriggerConditionViewModel vmCondition;
+    int nIndex = 0;
+    for (const auto* pCondition = pCondSet->conditions; pCondition; pCondition = pCondition->next)
     {
-        const auto* vmCondition = m_vConditions.GetItemAt(nIndex);
-        if (vmCondition != nullptr && vmCondition->IsSelected())
-            m_vConditions.RemoveAt(nIndex);
+        if (m_vSelectedConditions.find(nIndex) == m_vSelectedConditions.end())
+        {
+            if (!sSerialized.empty())
+                ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+
+            if (nIndex < nFirstVisibleIndex || nIndex >= nFirstVisibleIndex + nVisibleItemCount)
+            {
+                vmCondition.InitializeFrom(*pCondition);
+                vmCondition.SerializeAppend(sSerialized);
+            }
+            else
+            {
+                m_vConditions.GetItemAt(gsl::narrow_cast<gsl::index>(nIndex) - nFirstVisibleIndex)->SerializeAppend(sSerialized);
+            }
+        }
+
+        ++nIndex;
     }
 
-    m_vConditions.EndUpdate();
+    pGroup->UpdateSerialized(sSerialized);
 
-    // update indices after EndUpdate to address a synchronization issue with the GridBinding
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
-    {
-        auto* vmCondition = m_vConditions.GetItemAt(nIndex);
-        if (vmCondition != nullptr)
-            vmCondition->SetIndex(gsl::narrow_cast<int>(nIndex) + 1);
-    }
+    m_vSelectedConditions.clear();
+
+    m_bInitializingConditions = true;
+
+    const auto nNewItemCount = GetValue(ScrollMaximumProperty) - gsl::narrow_cast<int>(m_vSelectedConditions.size());
+    SetValue(ScrollMaximumProperty, nNewItemCount);
+
+    const auto nNewScrollOffset = nNewItemCount - nVisibleItemCount;
+    if (nNewScrollOffset < nFirstVisibleIndex && nNewScrollOffset >= 0)
+        SetValue(ScrollOffsetProperty, nNewScrollOffset);
+
+    UpdateConditions(pGroup);
+
+    m_bInitializingConditions = false;
+
+    UpdateVersion();
 }
 
 void TriggerViewModel::MoveSelectedConditionsUp()
 {
-    m_vConditions.ShiftItemsUp(TriggerConditionViewModel::IsSelectedProperty);
+    const auto nSelectedCount = m_vSelectedConditions.size();
+    if (nSelectedCount == 0)
+        return;
 
-    UpdateIndicesAndEnsureSelectionVisible();
+    auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+    if (pGroup != nullptr)
+    {
+        std::vector<rc_condition_t*> vConditions;
+        {
+            rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+            for (; pCondition; pCondition = pCondition->next)
+                vConditions.push_back(pCondition);
+        }
+
+        const size_t nFirstIndex = gsl::narrow_cast<size_t>(*m_vSelectedConditions.begin());
+        size_t nInsertIndex = nFirstIndex - 1;
+        std::set<unsigned int> vNewSelectedConditions;
+        for (const auto nIndex : m_vSelectedConditions)
+        {
+            if (nIndex > 0)
+            {
+                auto* pMovedCondition = vConditions.at(nIndex);
+                for (size_t nMoveIndex = nIndex; nMoveIndex > nInsertIndex; --nMoveIndex)
+                    vConditions.at(nMoveIndex) = vConditions.at(nMoveIndex - 1);
+                vConditions.at(nInsertIndex) = pMovedCondition;
+            }
+
+            vNewSelectedConditions.insert(gsl::narrow_cast<unsigned int>(nInsertIndex));
+            ++nInsertIndex;
+        }
+
+        m_vSelectedConditions.swap(vNewSelectedConditions);
+
+        TriggerConditionViewModel vmCondition;
+        std::string sSerialized;
+        for (const auto* pCondition : vConditions)
+        {
+            Expects(pCondition != nullptr);
+            if (!sSerialized.empty())
+                ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+
+            vmCondition.InitializeFrom(*pCondition);
+            vmCondition.SerializeAppend(sSerialized);
+        }
+
+        pGroup->UpdateSerialized(sSerialized);
+
+        m_bInitializingConditions = true;
+        EnsureVisible(gsl::narrow_cast<int>(nFirstIndex) - 1, gsl::narrow_cast<int>(nInsertIndex - nFirstIndex));
+        UpdateConditions(pGroup);
+        m_bInitializingConditions = false;
+
+        UpdateVersion();
+    }
 }
 
 void TriggerViewModel::MoveSelectedConditionsDown()
 {
-    m_vConditions.ShiftItemsDown(TriggerConditionViewModel::IsSelectedProperty);
+    const auto nSelectedCount = m_vSelectedConditions.size();
+    if (nSelectedCount == 0)
+        return;
 
-    UpdateIndicesAndEnsureSelectionVisible();
+    auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+    if (pGroup != nullptr)
+    {
+        std::vector<rc_condition_t*> vConditions;
+        {
+            rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+            for (; pCondition; pCondition = pCondition->next)
+                vConditions.push_back(pCondition);
+        }
+
+        const size_t nLastIndex = gsl::narrow_cast<size_t>(*m_vSelectedConditions.rbegin());
+        size_t nInsertIndex = nLastIndex + 1;
+        std::set<unsigned int> vNewSelectedConditions;
+        for (auto iter = m_vSelectedConditions.rbegin(); iter != m_vSelectedConditions.rend(); ++iter)
+        {
+            const auto nIndex = *iter;
+            if (nIndex < vConditions.size() - 1)
+            {
+                auto* pMovedCondition = vConditions.at(nIndex);
+                for (size_t nMoveIndex = nIndex; nMoveIndex < nInsertIndex; ++nMoveIndex)
+                    vConditions.at(nMoveIndex) = vConditions.at(nMoveIndex + 1);
+                vConditions.at(nInsertIndex) = pMovedCondition;
+            }
+
+            vNewSelectedConditions.insert(gsl::narrow_cast<unsigned int>(nInsertIndex));
+            --nInsertIndex;
+        }
+
+        m_vSelectedConditions.swap(vNewSelectedConditions);
+
+        TriggerConditionViewModel vmCondition;
+        std::string sSerialized;
+        for (const auto* pCondition : vConditions)
+        {
+            Expects(pCondition != nullptr);
+            if (!sSerialized.empty())
+                ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+
+            vmCondition.InitializeFrom(*pCondition);
+            vmCondition.SerializeAppend(sSerialized);
+        }
+
+        pGroup->UpdateSerialized(sSerialized);
+
+        m_bInitializingConditions = true;
+        EnsureVisible(gsl::narrow_cast<int>(nInsertIndex) + 1, gsl::narrow_cast<int>(nLastIndex - nInsertIndex));
+        UpdateConditions(pGroup);
+        m_bInitializingConditions = false;
+
+        UpdateVersion();
+    }
 }
 
-void TriggerViewModel::UpdateIndicesAndEnsureSelectionVisible()
+void TriggerViewModel::EnsureVisible(int nFirstIndex, int nCount)
 {
-    bool bFoundFirst = false;
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
+    const auto nFirstVisibleIndex = GetValue(ScrollOffsetProperty);
+    if (nFirstIndex < nFirstVisibleIndex)
     {
-        m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IndexProperty, gsl::narrow_cast<int>(nIndex) + 1);
-
-        if (!bFoundFirst && m_vConditions.GetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty))
+        if (nFirstIndex < 0)
+            nFirstIndex = 0;
+        SetValue(ScrollOffsetProperty, nFirstIndex);
+    }
+    else
+    {
+        const auto nNumVisibleConditions = GetValue(VisibleItemCountProperty);
+        if (nFirstIndex + nCount > nFirstVisibleIndex + nNumVisibleConditions)
         {
-            SetValue(EnsureVisibleConditionIndexProperty, gsl::narrow_cast<int>(nIndex));
-            bFoundFirst = true;
+            int nNewOffset = nFirstIndex + nCount - nNumVisibleConditions;
+            if (nNewOffset < 0)
+                nNewOffset = 0;
+            SetValue(ScrollOffsetProperty, nNewOffset);
         }
     }
 }
 
 void TriggerViewModel::NewCondition()
 {
+    auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+    if (pGroup == nullptr)
+        return;
+
     // assume the user wants to create a condition for the currently watched memory address.
     const auto& pMemoryInspector = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryInspector;
     auto sMemRef = pMemoryInspector.GetCurrentAddressMemRefChain();
@@ -417,13 +577,29 @@ void TriggerViewModel::NewCondition()
     {
         MemSize nSize = MemSize::EightBit;
         const auto nIndex = sMemRef.find_last_of('_');
-        const auto nIndex2 = (nIndex == std::string::npos) ? 0 : nIndex + 1;
+        auto nIndex2 = (nIndex == std::string::npos) ? 0 : nIndex + 1;
         uint8_t nMemRefSize = RC_MEMSIZE_8_BITS;
         uint32_t nAddress = 0;
 
-        // last condition of memref chain should be Measured. remove the Measured
+        // last condition of memref chain should be Measured. if found, remove the Measured
         if (sMemRef.at(nIndex2) == 'M' && sMemRef.at(nIndex2 + 1) == ':')
-            sMemRef.erase(nIndex2, 2);
+        {
+            if (m_bIsValue)
+            {
+                // value deserializer doesn't like conditions with a type. change to AndNext
+                sMemRef.at(nIndex2) = 'N';
+                nIndex2 += 2;
+            }
+            else
+            {
+                sMemRef.erase(nIndex2, 2);
+            }
+        }
+        else if (m_bIsValue)
+        {
+            // value deserializer doesn't like conditions without a type. insert AndNext
+            sMemRef.insert(0, "N:");
+        }
 
         // extract the size
         const char* sMemRefPtr = &sMemRef.at(nIndex2);
@@ -438,14 +614,13 @@ void TriggerViewModel::NewCondition()
 
         if (ra::data::MemSizeIsFloat(nSize))
         {
-            ra::services::AchievementLogicSerializer::AppendOperand(sMemRef,
-                ra::services::TriggerOperandType::Float,
-                nSize, ra::data::U32ToFloat(nValue, nSize));
+            ra::services::AchievementLogicSerializer::AppendOperand(sMemRef, ra::services::TriggerOperandType::Float,
+                                                                    nSize, ra::data::U32ToFloat(nValue, nSize));
         }
         else
         {
-            ra::services::AchievementLogicSerializer::AppendOperand(sMemRef,
-                ra::services::TriggerOperandType::Value, nSize, nValue);
+            ra::services::AchievementLogicSerializer::AppendOperand(sMemRef, ra::services::TriggerOperandType::Value,
+                                                                    nSize, nValue);
         }
     }
 
@@ -489,7 +664,7 @@ void TriggerViewModel::InitializeGroups(const rc_trigger_t& pTrigger)
     m_vGroups.AddNotifyTarget(*this);
 
     // forcibly update the conditions from the group that was selected earlier
-    UpdateConditions(&vmCoreGroup);
+    InitializeConditions(&vmCoreGroup);
 }
 
 void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
@@ -656,6 +831,36 @@ void TriggerViewModel::UpdateFrom(const rc_value_t& pValue)
     UpdateGroups(*m_pTrigger);
 }
 
+void TriggerViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue)
+{
+    m_vConditions.RemoveNotifyTarget(*this);
+
+    if (bValue)
+    {
+        for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
+            m_vSelectedConditions.insert(gsl::narrow_cast<unsigned int>(nIndex));
+    }
+    else
+    {
+        for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
+            m_vSelectedConditions.erase(gsl::narrow_cast<unsigned int>(nIndex));
+    }
+
+    const auto nFirstVisibleIndex = gsl::narrow_cast<gsl::index>(GetValue(ScrollOffsetProperty));
+    nTo -= nFirstVisibleIndex;
+    if (nTo >= 0 && nTo < gsl::narrow_cast<gsl::index>(m_vConditions.Count()))
+    {
+        nFrom -= nFirstVisibleIndex;
+        if (nFrom < 0)
+            nFrom = 0;
+
+        for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
+            m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty, bValue);
+    }
+
+    m_vConditions.AddNotifyTarget(*this);
+}
+
 void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == GroupViewModel::IsSelectedProperty)
@@ -721,12 +926,7 @@ void TriggerViewModel::ConditionsMonitor::UpdateCurrentGroup()
         return;
     }
 
-    auto* pGroup = m_vmTrigger->m_vGroups.GetItemAt(m_vmTrigger->GetSelectedGroupIndex());
-    if (pGroup)
-    {
-        if (pGroup->UpdateSerialized(m_vmTrigger->m_vConditions))
-            m_vmTrigger->UpdateVersion();
-    }
+    m_vmTrigger->UpdateCurrentGroup(false);
 }
 
 void TriggerViewModel::ConditionsMonitor::EndUpdate()
@@ -752,6 +952,65 @@ void TriggerViewModel::SuspendConditionMonitor() const noexcept
 void TriggerViewModel::ResumeConditionMonitor() const
 {
     m_pConditionsMonitor.EndUpdate();
+}
+
+void TriggerViewModel::UpdateCurrentGroup(bool bRememberHits)
+{
+    auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+    if (!pGroup)
+        return;
+
+    auto* pCondSet = pGroup->GetConditionSet(IsValue());
+    if (!pCondSet)
+        return;
+
+    const auto nConditionCount = GetValue(ScrollMaximumProperty);
+    const auto nFirstVisibleIndex = GetValue(ScrollOffsetProperty);
+    const auto nVisibleItemCount = gsl::narrow_cast<int>(m_vConditions.Count());
+
+    std::vector<unsigned> vCurrentHits;
+
+    std::string sSerialized;
+    TriggerConditionViewModel vmCondition;
+    rc_condition_t* pCondition = pCondSet->conditions;
+    int nIndex = 0;
+    while (pCondition != nullptr)
+    {
+        if (bRememberHits)
+            vCurrentHits.push_back(pCondition->current_hits);
+
+        if (nIndex < nFirstVisibleIndex || nIndex >= nFirstVisibleIndex + nVisibleItemCount)
+        {
+            vmCondition.InitializeFrom(*pCondition);
+            vmCondition.SerializeAppend(sSerialized);
+        }
+        else
+        {
+            m_vConditions.GetItemAt(gsl::narrow_cast<gsl::index>(nIndex) - nFirstVisibleIndex)->SerializeAppend(sSerialized);
+        }
+
+        if (!pCondition->next)
+            break;
+
+        ++nIndex;
+        if (nIndex == nConditionCount)
+            break;
+
+        ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+        pCondition = pCondition->next;
+    }
+
+    if (pGroup->UpdateSerialized(sSerialized))
+    {
+        UpdateVersion();
+
+        if (bRememberHits)
+        {
+            nIndex = 0;
+            for (pCondition = pCondSet->conditions; pCondition && ra::to_unsigned(nIndex) < vCurrentHits.size(); pCondition = pCondition->next)
+                pCondition->current_hits = vCurrentHits.at(nIndex++);
+        }
+    }
 }
 
 void TriggerViewModel::UpdateVersion()
@@ -797,7 +1056,12 @@ void TriggerViewModel::UpdateVersionAndRestoreHits()
 
 void TriggerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == SelectedGroupIndexProperty)
+    if (args.Property == ScrollOffsetProperty)
+    {
+        if (!m_bInitializingConditions)
+            UpdateConditions();
+    }
+    else if (args.Property == SelectedGroupIndexProperty)
     {
         // ignore change caused in InitializeFrom
         if (!m_vGroups.IsUpdating())
@@ -818,8 +1082,12 @@ void TriggerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 
             m_vGroups.AddNotifyTarget(*this);
 
-            UpdateConditions(pGroup);
+            InitializeConditions(pGroup);
         }
+    }
+    else if (args.Property == VisibleItemCountProperty)
+    {
+        UpdateConditions();
     }
 
     ViewModelBase::OnValueChanged(args);
@@ -855,8 +1123,21 @@ void TriggerViewModel::UpdateConditions()
         UpdateConditions(pGroup);
 }
 
+void TriggerViewModel::InitializeConditions(const GroupViewModel* pGroup)
+{
+    m_bInitializingConditions = true;
+    SetValue(ScrollOffsetProperty, 0);
+
+    UpdateConditions(pGroup);
+    m_bInitializingConditions = false;
+}
+
 void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 {
+    std::lock_guard<std::mutex> lock(m_pMutex);
+
+    const auto nVisibleConditions = GetValue(VisibleItemCountProperty);
+
     m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
     m_vConditions.BeginUpdate();
 
@@ -865,50 +1146,51 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 
     if (pGroup != nullptr)
     {
-        std::string sBuffer;
-        rc_condset_t* pConditions = pGroup->m_pConditionSet;
-        if (pConditions == nullptr)
-        {
-            const auto sTrigger = pGroup->GetSerialized(*this);
-            const auto nSize = rc_trigger_size(sTrigger.c_str());
-            if (nSize >= 0)
-            {
-                sBuffer.resize(nSize);
-                const auto pTrigger = rc_parse_trigger(sBuffer.data(), sTrigger.c_str(), nullptr, 0);
-                pConditions = pTrigger->requirement;
-            }
-        }
-
+        rc_condset_t* pConditions = pGroup->GetConditionSet(IsValue());
         if (pConditions)
         {
+            const auto nFirstCondition = GetValue(ScrollOffsetProperty);
+            int nVisibleIndex = 0;
+
             bool bIsIndirect = false;
             rc_condition_t* pCondition = pConditions->conditions;
             for (; pCondition != nullptr; pCondition = pCondition->next)
             {
-                auto* vmCondition = m_vConditions.GetItemAt(gsl::narrow_cast<gsl::index>(nIndex));
-                if (vmCondition == nullptr)
+                if (nIndex++ >= nFirstCondition && nVisibleIndex < nVisibleConditions)
                 {
-                    vmCondition = &m_vConditions.Add();
-                    Ensures(vmCondition != nullptr);
-                    vmCondition->SetTriggerViewModel(this);
+                    auto* vmCondition = m_vConditions.GetItemAt(gsl::narrow_cast<gsl::index>(nVisibleIndex++));
+                    if (vmCondition == nullptr)
+                    {
+                        vmCondition = &m_vConditions.Add();
+                        Ensures(vmCondition != nullptr);
+                        vmCondition->SetTriggerViewModel(this);
+                    }
+
+                    vmCondition->SetIndex(nIndex);
+                    vmCondition->InitializeFrom(*pCondition);
+                    vmCondition->SetCurrentHits(pCondition->current_hits);
+                    vmCondition->SetTotalHits(0);
+
+                    vmCondition->SetIndirect(bIsIndirect);
+
+                    if (!m_vSelectedConditions.empty())
+                        vmCondition->SetSelected(m_vSelectedConditions.find(nIndex - 1) != m_vSelectedConditions.end());
                 }
 
-                vmCondition->SetIndex(++nIndex);
-                vmCondition->InitializeFrom(*pCondition);
-                vmCondition->SetCurrentHits(pCondition->current_hits);
-                vmCondition->SetTotalHits(0);
-
-                vmCondition->SetIndirect(bIsIndirect);
                 bIsIndirect = (pCondition->type == RC_CONDITION_ADD_ADDRESS);
 
                 m_bHasHitChain |= (pCondition->type == RC_CONDITION_ADD_HITS || pCondition->type == RC_CONDITION_SUB_HITS);
             }
+
+            SetValue(ScrollMaximumProperty, nIndex);
         }
 
         if (m_bHasHitChain)
-            UpdateTotalHits();
+            UpdateTotalHits(pGroup);
     }
 
+    if (nIndex > nVisibleConditions)
+        nIndex = nVisibleConditions;
     for (gsl::index nScan = m_vConditions.Count() - 1; nScan >= nIndex; --nScan)
         m_vConditions.RemoveAt(nScan);
 
@@ -947,46 +1229,48 @@ void TriggerViewModel::ToggleDecimal()
     m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
 }
 
-void TriggerViewModel::UpdateTotalHits()
+void TriggerViewModel::UpdateTotalHits(const GroupViewModel* pGroup)
 {
     int nHits = 0;
     bool bIsHitsChain = false;
 
-    for (size_t nIndex = 0; nIndex < m_vConditions.Count(); ++nIndex)
+    const gsl::index nFirstVisibleCondition = gsl::narrow_cast<gsl::index>(GetValue(ScrollOffsetProperty));
+    const gsl::index nNumVisibleConditions = gsl::narrow_cast<gsl::index>(GetValue(VisibleItemCountProperty));
+    gsl::index nConditionIndex = 0;
+    rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+    for (; pCondition != nullptr; pCondition = pCondition->next)
     {
-        auto* vmCondition = m_vConditions.GetItemAt(nIndex);
-        Expects(vmCondition != nullptr);
-        switch (vmCondition->GetType())
+        if (pCondition->type == RC_CONDITION_ADD_HITS)
         {
-            case ra::ui::viewmodels::TriggerConditionType::AddHits:
-                bIsHitsChain = true;
-                nHits += vmCondition->GetCurrentHits();
-                break;
-
-            case ra::ui::viewmodels::TriggerConditionType::SubHits:
-                bIsHitsChain = true;
-                nHits -= vmCondition->GetCurrentHits();
-                break;
-
-            case ra::ui::viewmodels::TriggerConditionType::AddAddress:
-            case ra::ui::viewmodels::TriggerConditionType::AddSource:
-            case ra::ui::viewmodels::TriggerConditionType::SubSource:
-            case ra::ui::viewmodels::TriggerConditionType::Remember:
-            case ra::ui::viewmodels::TriggerConditionType::AndNext:
-            case ra::ui::viewmodels::TriggerConditionType::OrNext:
-            case ra::ui::viewmodels::TriggerConditionType::ResetNextIf:
-                break;
-
-            default:
-                if (bIsHitsChain)
-                {
-                    nHits += vmCondition->GetCurrentHits();
-                    vmCondition->SetTotalHits(nHits);
-                    bIsHitsChain = false;
-                }
-                nHits = 0;
-                break;
+            bIsHitsChain = true;
+            nHits += pCondition->current_hits;
         }
+        else if (pCondition->type == RC_CONDITION_SUB_HITS)
+        {
+            bIsHitsChain = true;
+            nHits -= pCondition->current_hits;
+        }
+        else if (!rc_condition_is_combining(pCondition))
+        {
+            if (bIsHitsChain)
+            {
+                if (nConditionIndex >= nFirstVisibleCondition)
+                {
+                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex - nFirstVisibleCondition);
+                    if (vmCondition != nullptr)
+                    {
+                        nHits += pCondition->current_hits;
+                        vmCondition->SetTotalHits(nHits);
+                    }
+                }
+                bIsHitsChain = false;
+            }
+            nHits = 0;
+        }
+
+        ++nConditionIndex;
+        if (nConditionIndex == nFirstVisibleCondition + nNumVisibleConditions)
+            break;
     }
 }
 
@@ -1062,29 +1346,42 @@ void TriggerViewModel::RemoveGroup()
 
 void TriggerViewModel::DoFrame()
 {
+    std::lock_guard<std::mutex> lock(m_pMutex);
+
     auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
     if (pGroup != nullptr && pGroup->m_pConditionSet)
     {
         m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
         m_vConditions.BeginUpdate();
 
+        const gsl::index nFirstVisibleCondition = gsl::narrow_cast<gsl::index>(GetValue(ScrollOffsetProperty));
+        const gsl::index nNumVisibleConditions = gsl::narrow_cast<gsl::index>(GetValue(VisibleItemCountProperty));
         gsl::index nConditionIndex = 0;
         rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
         for (; pCondition != nullptr; pCondition = pCondition->next)
         {
-            auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex++);
-            if (vmCondition == nullptr)
+            if (nConditionIndex >= nFirstVisibleCondition)
             {
-                // assume the trigger is being updated on another thread and we'll
-                // resynchronize the hit counts on the next frame
-                break;
+                const auto nVisibleIndex = (nConditionIndex - nFirstVisibleCondition);
+                if (nVisibleIndex == nNumVisibleConditions)
+                    break;
+
+                auto* vmCondition = m_vConditions.GetItemAt(nVisibleIndex);
+                if (vmCondition == nullptr)
+                {
+                    // assume the trigger is being updated on another thread and we'll
+                    // resynchronize the hit counts on the next frame
+                    break;
+                }
+
+                vmCondition->SetCurrentHits(pCondition->current_hits);
             }
 
-            vmCondition->SetCurrentHits(pCondition->current_hits);
+            ++nConditionIndex;
         }
 
         if (m_bHasHitChain)
-            UpdateTotalHits();
+            UpdateTotalHits(pGroup);
 
         m_vConditions.EndUpdate();
         m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
@@ -1266,7 +1563,12 @@ void TriggerViewModel::UpdateGroupColors(const rc_trigger_t* pTrigger)
 
 void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
 {
+    std::lock_guard<std::mutex> lock(m_pMutex);
+
     // update the condition rows for the currently selected group
+    const auto nFirstCondition = GetValue(ScrollOffsetProperty);
+    const auto nVisibleConditions = GetValue(VisibleItemCountProperty);
+
     gsl::index nConditionIndex = 0;
     if (pTrigger)
     {
@@ -1283,7 +1585,12 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
                 rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
                 for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
                 {
-                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex);
+                    if (nConditionIndex < nFirstCondition)
+                        continue;
+                    if (nConditionIndex - nFirstCondition >= nVisibleConditions)
+                        break;
+
+                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex - nFirstCondition);
                     if (vmCondition != nullptr)
                     {
                         if (pCondition < pEndPauseConditions && pCondition >= pPauseConditions && bFirstPause)
@@ -1309,7 +1616,12 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
                 rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
                 for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
                 {
-                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex);
+                    if (nConditionIndex < nFirstCondition)
+                        continue;
+                    if (nConditionIndex - nFirstCondition >= nVisibleConditions)
+                        break;
+
+                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex - nFirstCondition);
                     if (vmCondition != nullptr)
                         vmCondition->UpdateRowColor(pCondition);
                 }
@@ -1317,9 +1629,9 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
         }
     }
 
-    for (; nConditionIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nConditionIndex)
+    for (; nConditionIndex < gsl::narrow_cast<gsl::index>(nFirstCondition) + nVisibleConditions; ++nConditionIndex)
     {
-        auto* pCondition = m_vConditions.GetItemAt(nConditionIndex);
+        auto* pCondition = m_vConditions.GetItemAt(nConditionIndex - nFirstCondition);
         if (pCondition != nullptr)
             pCondition->UpdateRowColor(nullptr);
     }

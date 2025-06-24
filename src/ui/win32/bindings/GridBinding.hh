@@ -32,7 +32,7 @@ public:
     ViewModelCollectionBase& GetItems() noexcept { return *m_vmItems; }
 
     void Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty,
-        std::function<void(gsl::index, gsl::index, bool)> pUpdateSelectedItems);
+        std::function<void(gsl::index, gsl::index, bool)> fUpdateSelectedItems);
 
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty);
     void BindEnsureVisible(const IntModelProperty& pEnsureVisibleProperty) noexcept;
@@ -141,7 +141,7 @@ private:
     const IntModelProperty* m_pScrollMaximumProperty = nullptr;
     const IntModelProperty* m_pVisibleItemCountProperty = nullptr;
     ra::tstring m_sDispInfo;
-    std::function<void(gsl::index, gsl::index, bool)> m_pUpdateSelectedItems = nullptr;
+    std::function<void(gsl::index, gsl::index, bool)> m_fUpdateSelectedItems = nullptr;
 
     HWND m_hInPlaceEditor = nullptr;
 

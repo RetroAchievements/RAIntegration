@@ -479,7 +479,7 @@ int GridBinding::UpdateSelected(const IntModelProperty& pProperty, int nNewValue
 void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
 {
     // virtualized listview does not support LVM_INSERTITEM or LVM_SETITEM
-    if (m_pUpdateSelectedItems)
+    if (m_fUpdateSelectedItems)
         return;
 
     if (!WindowBinding::IsOnUIThread())
@@ -555,7 +555,7 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
     // when an item is added, we can't assume the list is still sorted
     m_nSortIndex = -1;
 
-    if (m_pUpdateSelectedItems)
+    if (m_fUpdateSelectedItems)
     {
         // don't actually add/update items in virtual listview
         m_bForceRepaint = true;
@@ -574,7 +574,7 @@ void GridBinding::OnViewModelRemoved(gsl::index nIndex)
 {
     if (m_hWnd)
     {
-        if (m_pUpdateSelectedItems)
+        if (m_fUpdateSelectedItems)
         {
             // don't actually delete items from virtual listview
             m_bForceRepaint = true;
@@ -684,7 +684,7 @@ void GridBinding::SuspendRedraw()
 
 void GridBinding::UpdateSelectedItemStates()
 {
-    if (m_pIsSelectedProperty && !m_pUpdateSelectedItems)
+    if (m_pIsSelectedProperty && !m_fUpdateSelectedItems)
     {
         for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vmItems->Count()); ++nIndex)
         {
@@ -728,7 +728,7 @@ void GridBinding::SetPasteHandler(std::function<void()> pHandler)
 }
 
 void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty,
-    std::function<void(gsl::index, gsl::index, bool)> pUpdateSelectedItems)
+    std::function<void(gsl::index, gsl::index, bool)> fUpdateSelectedItems)
 {
     if (m_hWnd)
     {
@@ -737,7 +737,7 @@ void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, cons
 
     m_pScrollOffsetProperty = &pScrollOffsetProperty;
     m_pScrollMaximumProperty = &pScrollMaximumProperty;
-    m_pUpdateSelectedItems = pUpdateSelectedItems;
+    m_fUpdateSelectedItems = fUpdateSelectedItems;
 
     m_nScrollOffset = GetValue(pScrollOffsetProperty);
 }
@@ -913,9 +913,19 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
         if (!m_vmItems->IsUpdating())
         {
             if (pnmListView->uNewState & LVIS_SELECTED)
-                m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, true);
+            {
+                if (m_fUpdateSelectedItems)
+                    m_fUpdateSelectedItems(pnmListView->iItem, pnmListView->iItem, true);
+                else
+                    m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, true);
+            }
             else if (pnmListView->uOldState & LVIS_SELECTED)
-                m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, false);
+            {
+                if (m_fUpdateSelectedItems)
+                    m_fUpdateSelectedItems(pnmListView->iItem, pnmListView->iItem, false);
+                else
+                    m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, false);
+            }
         }
         else
         {
@@ -957,8 +967,8 @@ void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateC
         gsl::index nTo = pnmStateChanged->iTo;
 
         // notify the view model of all the changed items
-        if (m_pUpdateSelectedItems)
-            m_pUpdateSelectedItems(nFrom, nTo, bSelected);
+        if (m_fUpdateSelectedItems)
+            m_fUpdateSelectedItems(nFrom, nTo, bSelected);
 
         // explicitly update the items in the virtualization window
         if (m_pIsSelectedProperty)

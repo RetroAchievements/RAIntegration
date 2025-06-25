@@ -91,6 +91,8 @@ public:
         return (pMatchingAddresses[nIndex >> 3] & nBit);
     }
 
+    void ShareMemory(const std::vector<MemBlock>& vBlocks, uint32_t nHash) noexcept;
+
 private:
     uint8_t* AllocateMatchingAddresses() noexcept;
 

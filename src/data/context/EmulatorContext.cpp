@@ -1114,6 +1114,16 @@ void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBl
 
             ReadMemory(nAdjustedAddress, pBlock->GetBytes(), nBlockSize, pMemoryBlock);
 
+            if (nBlockSize > 8)
+            {
+                const auto* pScan = reinterpret_cast<uint32_t*>(pBlock->GetBytes());
+                const auto* pStop = reinterpret_cast<uint32_t*>(pBlock->GetBytes() + pBlock->GetBytesSize());
+                uint32_t nHash = 0;
+                while (pScan < pStop)
+                    nHash ^= *pScan++;
+                pBlock->ShareMemory(vBlocks, nHash);
+            }
+
             nAddress += nBlockSize;
             nAdjustedAddress += nBlockSize;
             nToRead -= nBlockSize;

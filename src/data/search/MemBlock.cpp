@@ -81,6 +81,33 @@ MemBlock::~MemBlock() noexcept
         delete[] m_pAddresses;
 }
 
+void MemBlock::ShareMemory(const std::vector<MemBlock>& vBlocks, uint32_t nHash) noexcept
+{
+    if (m_nBytesSize > sizeof(m_vBytes))
+    {
+        for (const auto& pBlock : vBlocks)
+        {
+            if (pBlock.m_nBytesSize == m_nBytesSize &&
+                &pBlock != this &&
+                pBlock.m_pAllocatedMemory->nHash == nHash)
+            {
+                if (memcmp(pBlock.m_pAllocatedMemory->pBytes, m_pAllocatedMemory->pBytes, m_nBytesSize) == 0)
+                {
+                    pBlock.m_pAllocatedMemory->nReferenceCount++;
+                    auto* pAllocatedMemory = m_pAllocatedMemory;
+                    m_pAllocatedMemory = pBlock.m_pAllocatedMemory;
+
+                    if (--pAllocatedMemory->nReferenceCount == 0)
+                        free(pAllocatedMemory);
+
+                    return;
+                }
+            }
+        }
+
+        m_pAllocatedMemory->nHash = nHash;
+    }
+}
 
 uint8_t* MemBlock::AllocateMatchingAddresses() noexcept
 {

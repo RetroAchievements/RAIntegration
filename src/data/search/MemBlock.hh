@@ -10,6 +10,14 @@ namespace search {
 
 class MemBlock
 {
+private:
+    struct AllocatedMemory
+    {
+        uint32_t nReferenceCount;
+        uint32_t nHash;
+        uint8_t pBytes[16];
+    };
+
 public:
     explicit MemBlock(_In_ uint32_t nAddress, _In_ uint32_t nSize, _In_ uint32_t nMaxAddresses) noexcept :
         m_nFirstAddress(nAddress),
@@ -18,79 +26,30 @@ public:
         m_nMaxAddresses(nMaxAddresses)
     {
         if (nSize > sizeof(m_vBytes))
-            m_pBytes = new (std::nothrow) uint8_t[(nSize + 3) & ~3];
-    }
-
-    MemBlock(const MemBlock& other) noexcept :
-        MemBlock(other.m_nFirstAddress, other.m_nBytesSize, other.m_nMaxAddresses)
-    {
-        if (m_nBytesSize > sizeof(m_vBytes))
-            std::memcpy(m_pBytes, other.m_pBytes, m_nBytesSize);
-        else
-            std::memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
-
-        m_nMatchingAddresses = other.m_nMatchingAddresses;
-        if (!AreAllAddressesMatching())
         {
-            if ((m_nMatchingAddresses + 7) / 8 > sizeof(m_vAddresses))
-            {
-                auto* pAddresses = AllocateMatchingAddresses();
-                if (pAddresses != nullptr)
-                    std::memcpy(pAddresses, other.m_pAddresses, (m_nMatchingAddresses + 7) / 8);
-            }
-            else
-            {
-                std::memcpy(m_vAddresses, other.m_vAddresses, sizeof(m_vAddresses));
-            }
+            m_pAllocatedMemory = (AllocatedMemory*)malloc(sizeof(AllocatedMemory) - sizeof(m_pAllocatedMemory->pBytes) +
+                                                          ((gsl::narrow_cast<size_t>(nSize) + 3) & ~3));
+            Expects(m_pAllocatedMemory != nullptr);
+            m_pAllocatedMemory->nReferenceCount = 1;
+            m_pAllocatedMemory->nHash = 0;
         }
     }
 
+    MemBlock(const MemBlock& other) noexcept;
     MemBlock& operator=(const MemBlock&) noexcept = delete;
-
-    MemBlock(MemBlock&& other) noexcept :
-        m_nFirstAddress(other.m_nFirstAddress),
-        m_nBytesSize(other.m_nBytesSize),
-        m_nMatchingAddresses(other.m_nMatchingAddresses),
-        m_nMaxAddresses(other.m_nMaxAddresses)
-    {
-        if (other.m_nBytesSize > sizeof(m_vBytes))
-        {
-            m_pBytes = other.m_pBytes;
-            other.m_pBytes = nullptr;
-            other.m_nBytesSize = 0;
-        }
-        else
-        {
-            std::memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
-        }
-
-        if (!AreAllAddressesMatching())
-        {
-            if ((m_nMatchingAddresses + 7) / 8 > sizeof(m_vAddresses))
-            {
-                m_pAddresses = other.m_pAddresses;
-                other.m_pAddresses = nullptr;
-                other.m_nMatchingAddresses = 0;
-            }
-            else
-            {
-                std::memcpy(m_vAddresses, other.m_vAddresses, sizeof(m_vAddresses));
-            }
-        }
-    }
-
+    MemBlock(MemBlock&& other) noexcept;
     MemBlock& operator=(MemBlock&&) noexcept = delete;
 
-    ~MemBlock() noexcept
-    {
-        if (m_nBytesSize > sizeof(m_vBytes))
-            delete[] m_pBytes;
-        if (!AreAllAddressesMatching() && (m_nMatchingAddresses + 7) / 8 > sizeof(m_vAddresses))
-            delete[] m_pAddresses;
-    }
+    ~MemBlock() noexcept;
 
-    uint8_t* GetBytes() noexcept { return (m_nBytesSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
-    const uint8_t* GetBytes() const noexcept { return (m_nBytesSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
+    uint8_t* GetBytes() noexcept
+    {
+        return (m_nBytesSize > sizeof(m_vBytes)) ? &m_pAllocatedMemory->pBytes[0] : &m_vBytes[0];
+    }
+    const uint8_t* GetBytes() const noexcept
+    {
+        return (m_nBytesSize > sizeof(m_vBytes)) ? &m_pAllocatedMemory->pBytes[0] : &m_vBytes[0];
+    }
 
     void SetFirstAddress(ra::ByteAddress nAddress) noexcept { m_nFirstAddress = nAddress; }
     ra::ByteAddress GetFirstAddress() const noexcept { return m_nFirstAddress; }
@@ -132,20 +91,16 @@ public:
         return (pMatchingAddresses[nIndex >> 3] & nBit);
     }
 
-    struct AllocatedMemory
-    {
-        uint32_t nReferenceCount;
-        uint32_t nHash;
-        uint8_t pBuffer[16];
-    };
-
 private:
     uint8_t* AllocateMatchingAddresses() noexcept;
 
-    union // 8 bytes
+    ra::ByteAddress m_nFirstAddress; // 4 bytes
+    uint32_t m_nBytesSize;           // 4 bytes
+
+    union                            // 8 bytes
     {
         uint8_t m_vBytes[8]{};
-        uint8_t* m_pBytes;
+        AllocatedMemory* m_pAllocatedMemory;
     };
 
     union // 8 bytes
@@ -154,8 +109,6 @@ private:
         uint8_t* m_pAddresses;
     };
 
-    uint32_t m_nBytesSize;           // 4 bytes
-    ra::ByteAddress m_nFirstAddress; // 4 bytes
     uint32_t m_nMatchingAddresses;   // 4 bytes
     uint32_t m_nMaxAddresses;        // 4 bytes
 };

@@ -4,6 +4,84 @@ namespace ra {
 namespace data {
 namespace search {
 
+MemBlock::MemBlock(const MemBlock& other) noexcept :
+    m_nFirstAddress(other.m_nFirstAddress),
+    m_nBytesSize(other.m_nBytesSize),
+    m_nMatchingAddresses(other.m_nMatchingAddresses),
+    m_nMaxAddresses(other.m_nMaxAddresses)
+{
+    if (m_nBytesSize > sizeof(m_vBytes))
+    {
+        other.m_pAllocatedMemory->nReferenceCount++;
+        m_pAllocatedMemory = other.m_pAllocatedMemory;
+    }
+    else
+    {
+        std::memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
+    }
+
+    m_nMatchingAddresses = other.m_nMatchingAddresses;
+    if (!AreAllAddressesMatching())
+    {
+        if ((m_nMatchingAddresses + 7) / 8 > sizeof(m_vAddresses))
+        {
+            auto* pAddresses = AllocateMatchingAddresses();
+            if (pAddresses != nullptr)
+                std::memcpy(pAddresses, other.m_pAddresses, (m_nMatchingAddresses + 7) / 8);
+        }
+        else
+        {
+            std::memcpy(m_vAddresses, other.m_vAddresses, sizeof(m_vAddresses));
+        }
+    }
+}
+
+MemBlock::MemBlock(MemBlock&& other) noexcept :
+    m_nFirstAddress(other.m_nFirstAddress),
+    m_nBytesSize(other.m_nBytesSize),
+    m_nMatchingAddresses(other.m_nMatchingAddresses),
+    m_nMaxAddresses(other.m_nMaxAddresses)
+{
+    if (other.m_nBytesSize > sizeof(m_vBytes))
+    {
+        other.m_nBytesSize = 0;
+        m_pAllocatedMemory = other.m_pAllocatedMemory;
+        other.m_pAllocatedMemory = nullptr;
+    }
+    else
+    {
+        std::memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
+    }
+
+    if (!AreAllAddressesMatching())
+    {
+        if ((m_nMatchingAddresses + 7) / 8 > sizeof(m_vAddresses))
+        {
+            m_pAddresses = other.m_pAddresses;
+            other.m_pAddresses = nullptr;
+            other.m_nMatchingAddresses = 0;
+        }
+        else
+        {
+            std::memcpy(m_vAddresses, other.m_vAddresses, sizeof(m_vAddresses));
+        }
+    }
+}
+
+MemBlock::~MemBlock() noexcept
+{
+    if (m_nBytesSize > sizeof(m_vBytes))
+    {
+        m_nBytesSize = 0;
+        if (--m_pAllocatedMemory->nReferenceCount == 0)
+            free(m_pAllocatedMemory);
+    }
+
+    if (!AreAllAddressesMatching() && (m_nMatchingAddresses + 7) / 8 > sizeof(m_vAddresses))
+        delete[] m_pAddresses;
+}
+
+
 uint8_t* MemBlock::AllocateMatchingAddresses() noexcept
 {
     const auto nAddressesSize = (m_nMaxAddresses + 7) / 8;

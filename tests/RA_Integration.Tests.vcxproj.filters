@@ -486,10 +486,10 @@
     <ClCompile Include="services\AchievementLogicSerializer_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\services\search\MemBlock.cpp">
+    <ClCompile Include="..\src\services\search\SearchImpl.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\services\search\SearchImpl.cpp">
+    <ClCompile Include="..\src\data\search\MemBlock.cpp">
       <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>

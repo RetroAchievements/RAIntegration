@@ -1,7 +1,7 @@
 #include "MemBlock.hh"
 
 namespace ra {
-namespace services {
+namespace data {
 namespace search {
 
 uint8_t* MemBlock::AllocateMatchingAddresses() noexcept

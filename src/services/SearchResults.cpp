@@ -100,6 +100,20 @@ static search::SearchImpl* GetSearchImpl(SearchType nType) noexcept
     }
 }
 
+static size_t CalcSize(const std::vector<data::search::MemBlock>& vBlocks)
+{
+    size_t nTotalSize = vBlocks.size() * sizeof(data::search::MemBlock);
+    for (const auto& pBlock : vBlocks)
+    {
+        if (pBlock.GetBytesSize() > 8)
+            nTotalSize += pBlock.GetBytesSize();
+        if (pBlock.GetMatchingAddressCount() > 8)
+            nTotalSize += pBlock.GetMatchingAddressCount();
+    }
+
+    return nTotalSize;
+}
+
 void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchType nType)
 {
     m_nType = nType;
@@ -129,6 +143,8 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
         nAddress += nBlockSize;
         nBytes -= nBlockSize;
     }
+
+    RA_LOG_INFO("Allocated %zu bytes for initial search", CalcSize(m_vBlocks));
 }
 
 _Use_decl_annotations_
@@ -209,6 +225,7 @@ void SearchResults::Initialize(const std::vector<SearchResult>& vResults, Search
     }
 
     m_pImpl->AddBlocks(*this, vAddresses, vMemory, nFirstAddress, m_pImpl->GetPadding());
+    RA_LOG_INFO("Allocated %zu bytes for initial search", CalcSize(m_vBlocks));
 }
 
 bool SearchResults::ContainsAddress(ra::ByteAddress nAddress) const
@@ -276,6 +293,9 @@ bool SearchResults::Initialize(const SearchResults& srFirst, std::function<void(
         return false;
 
     m_pImpl->ApplyFilter(*this, srFirst, pReadMemory);
+
+    RA_LOG_INFO("Allocated %zu bytes for filtered search", CalcSize(m_vBlocks));
+
     return true;
 }
 

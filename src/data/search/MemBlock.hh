@@ -5,7 +5,7 @@
 #include "data\Types.hh"
 
 namespace ra {
-namespace services {
+namespace data {
 namespace search {
 
 class MemBlock

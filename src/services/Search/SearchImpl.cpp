@@ -1,6 +1,5 @@
 #include "SearchImpl.hh"
 
-#include "MemBlock.hh"
 #include "ra_utility.h"
 
 #include <algorithm>

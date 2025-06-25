@@ -98,19 +98,31 @@ static search::SearchImpl* GetSearchImpl(SearchType nType) noexcept
     }
 }
 
+#ifndef RA_UTEST
 static size_t CalcSize(const std::vector<data::search::MemBlock>& vBlocks)
 {
+    std::set<const uint8_t*> vAllocatedMemoryBlocks;
+
     size_t nTotalSize = vBlocks.size() * sizeof(data::search::MemBlock);
     for (const auto& pBlock : vBlocks)
     {
-        if (pBlock.GetBytesSize() > 8)
-            nTotalSize += pBlock.GetBytesSize();
+        if (pBlock.IsBytesAllocated())
+        {
+            const auto* pBytes = pBlock.GetBytes();
+            if (vAllocatedMemoryBlocks.find(pBytes) == vAllocatedMemoryBlocks.end())
+            {
+                vAllocatedMemoryBlocks.insert(pBytes);
+                nTotalSize += gsl::narrow_cast<size_t>((pBlock.GetBytesSize() + 3) & ~3 + 8);
+            }
+        }
+
         if (pBlock.GetMatchingAddressCount() > 8)
             nTotalSize += pBlock.GetMatchingAddressCount();
     }
 
     return nTotalSize;
 }
+#endif
 
 void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchType nType)
 {
@@ -128,7 +140,7 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
     if (nPadding >= nBytes)
         nBytes = 0;
 
-    pEmulatorContext.CaptureMemory(m_vBlocks, nAddress, nBytes, nPadding);
+    pEmulatorContext.CaptureMemory(m_vBlocks, nAddress, gsl::narrow_cast<uint32_t>(nBytes), nPadding);
 
     for (auto& pBlock : m_vBlocks)
     {

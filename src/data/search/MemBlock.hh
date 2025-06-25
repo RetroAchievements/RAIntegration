@@ -19,16 +19,17 @@ private:
     };
 
 public:
-    explicit MemBlock(_In_ uint32_t nAddress, _In_ uint32_t nSize, _In_ uint32_t nMaxAddresses) noexcept :
+    explicit MemBlock(_In_ uint32_t nAddress, _In_ uint32_t nSize, _In_ uint32_t nMaxAddresses) :
         m_nFirstAddress(nAddress),
         m_nBytesSize(nSize),
         m_nMatchingAddresses(nMaxAddresses),
         m_nMaxAddresses(nMaxAddresses)
     {
-        if (nSize > sizeof(m_vBytes))
+        if (IsBytesAllocated())
         {
-            m_pAllocatedMemory = (AllocatedMemory*)malloc(sizeof(AllocatedMemory) - sizeof(m_pAllocatedMemory->pBytes) +
-                                                          ((gsl::narrow_cast<size_t>(nSize) + 3) & ~3));
+            const auto nAllocSize = sizeof(AllocatedMemory) - sizeof(m_pAllocatedMemory->pBytes) +
+                                    ((gsl::narrow_cast<size_t>(nSize) + 3) & ~3);
+            m_pAllocatedMemory = static_cast<AllocatedMemory*>(malloc(nAllocSize));
             Expects(m_pAllocatedMemory != nullptr);
             m_pAllocatedMemory->nReferenceCount = 1;
             m_pAllocatedMemory->nHash = 0;
@@ -44,16 +45,17 @@ public:
 
     uint8_t* GetBytes() noexcept
     {
-        return (m_nBytesSize > sizeof(m_vBytes)) ? &m_pAllocatedMemory->pBytes[0] : &m_vBytes[0];
+        return IsBytesAllocated() ? &m_pAllocatedMemory->pBytes[0] : &m_vBytes[0];
     }
     const uint8_t* GetBytes() const noexcept
     {
-        return (m_nBytesSize > sizeof(m_vBytes)) ? &m_pAllocatedMemory->pBytes[0] : &m_vBytes[0];
+        return IsBytesAllocated() ? &m_pAllocatedMemory->pBytes[0] : &m_vBytes[0];
     }
 
     void SetFirstAddress(ra::ByteAddress nAddress) noexcept { m_nFirstAddress = nAddress; }
     ra::ByteAddress GetFirstAddress() const noexcept { return m_nFirstAddress; }
-    uint32_t GetBytesSize() const noexcept { return m_nBytesSize; }
+    uint32_t GetBytesSize() const noexcept { return m_nBytesSize & 0x00FFFFFF; }
+    bool IsBytesAllocated() const noexcept { return GetBytesSize() > sizeof(m_vBytes); }
     void SetMaxAddresses(uint32_t nMaxAddresses) noexcept { m_nMaxAddresses = nMaxAddresses; }
     uint32_t GetMaxAddresses() const noexcept { return m_nMaxAddresses; }
 
@@ -92,9 +94,11 @@ public:
     }
 
     void ShareMemory(const std::vector<MemBlock>& vBlocks, uint32_t nHash) noexcept;
+    void OptimizeMemory(const std::vector<ra::data::search::MemBlock>& vBlocks) noexcept;
 
 private:
     uint8_t* AllocateMatchingAddresses() noexcept;
+    void SetRepeat(uint32_t nCount, uint32_t nValue) noexcept;
 
     ra::ByteAddress m_nFirstAddress; // 4 bytes
     uint32_t m_nBytesSize;           // 4 bytes

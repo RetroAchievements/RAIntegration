@@ -1,5 +1,7 @@
 #include "MemBlock.hh"
 
+#include "ra_fwd.h"
+
 namespace ra {
 namespace data {
 namespace search {
@@ -10,7 +12,7 @@ MemBlock::MemBlock(const MemBlock& other) noexcept :
     m_nMatchingAddresses(other.m_nMatchingAddresses),
     m_nMaxAddresses(other.m_nMaxAddresses)
 {
-    if (m_nBytesSize > sizeof(m_vBytes))
+    if (IsBytesAllocated())
     {
         other.m_pAllocatedMemory->nReferenceCount++;
         m_pAllocatedMemory = other.m_pAllocatedMemory;
@@ -42,7 +44,7 @@ MemBlock::MemBlock(MemBlock&& other) noexcept :
     m_nMatchingAddresses(other.m_nMatchingAddresses),
     m_nMaxAddresses(other.m_nMaxAddresses)
 {
-    if (other.m_nBytesSize > sizeof(m_vBytes))
+    if (other.IsBytesAllocated())
     {
         other.m_nBytesSize = 0;
         m_pAllocatedMemory = other.m_pAllocatedMemory;
@@ -70,7 +72,7 @@ MemBlock::MemBlock(MemBlock&& other) noexcept :
 
 MemBlock::~MemBlock() noexcept
 {
-    if (m_nBytesSize > sizeof(m_vBytes))
+    if (IsBytesAllocated())
     {
         m_nBytesSize = 0;
         if (--m_pAllocatedMemory->nReferenceCount == 0)
@@ -83,7 +85,7 @@ MemBlock::~MemBlock() noexcept
 
 void MemBlock::ShareMemory(const std::vector<MemBlock>& vBlocks, uint32_t nHash) noexcept
 {
-    if (m_nBytesSize > sizeof(m_vBytes))
+    if (IsBytesAllocated())
     {
         for (const auto& pBlock : vBlocks)
         {
@@ -107,6 +109,112 @@ void MemBlock::ShareMemory(const std::vector<MemBlock>& vBlocks, uint32_t nHash)
 
         m_pAllocatedMemory->nHash = nHash;
     }
+}
+
+void MemBlock::SetRepeat(uint32_t nCount, uint32_t nValue) noexcept
+{
+    m_nBytesSize = (nCount * sizeof(uint32_t)) | 0x01000000;
+    memcpy(m_vBytes, &nValue, 4);
+    memcpy(&m_vBytes[4], &nValue, 4);
+}
+
+void MemBlock::OptimizeMemory(const std::vector<ra::data::search::MemBlock>& vBlocks) noexcept
+{
+    if (!IsBytesAllocated())
+        return;
+
+    const auto* pBytes = GetBytes();
+    if (!pBytes)
+        return;
+
+    GSL_SUPPRESS_TYPE1
+    const auto* pStart = reinterpret_cast<const uint32_t*>(pBytes);
+    const auto* pScan = pStart;
+    if (!pScan)
+        return;
+
+    GSL_SUPPRESS_TYPE1
+    const auto* pStop = reinterpret_cast<const uint32_t*>(pBytes + GetBytesSize());
+    //const auto* pUniqueStart = pScan;
+    uint32_t nHash = *pScan++;
+    uint32_t nLast = nHash;
+    uint32_t nRepeat = 1;
+    //bool bWasSplit = false;
+    //uint32_t nAddress = GetFirstAddress();
+
+    while (pScan < pStop)
+    {
+        const uint32_t nScan = *pScan++;
+        if (nScan == nLast)
+        {
+            nRepeat++;
+        }
+        else
+        {
+            //if (nRepeat >= 64 / 4) // 64 bytes of repeated data
+            //{
+            //    const auto* pRepeatStart = pScan - nRepeat - 1;
+            //    const auto nUniqueSize = (pRepeatStart - pUniqueStart) * sizeof(uint32_t);
+            //    if (nUniqueSize)
+            //    {
+            //        auto& pUniqueBlock = vBlocks.emplace_back(nAddress, nUniqueSize, nUniqueSize);
+            //        memcpy(pUniqueBlock.GetBytes(), pUniqueStart, nUniqueSize);
+            //        pUniqueBlock.ShareMemory(vBlocks, nHash);
+            //        nAddress += nUniqueSize;
+            //    }
+
+            //    auto& pRepeatBlock = vBlocks.emplace_back(nAddress, 0, 0);
+            //    pRepeatBlock.SetRepeat(nRepeat, nLast);
+            //    nAddress += nRepeat * sizeof(uint32_t);
+
+            //    pUniqueStart = pScan - 1;
+            //    bWasSplit = true;
+            //    nHash = 0;
+            //}
+
+            // branchless version of "if (nRepeat & 1) nHash ^= nScan"
+            nHash ^= (nScan * (nRepeat & 1));
+
+            nLast = nScan;
+            nRepeat = 1;
+        }
+    }
+
+    //if (nRepeat >= 64 / 4) // 64 bytes of repeated data
+    //{
+    //    const auto* pRepeatStart = pScan - nRepeat - 1;
+    //    const auto nUniqueSize = (pRepeatStart - pUniqueStart) * sizeof(uint32_t);
+    //    if (nUniqueSize)
+    //    {
+    //        auto& pUniqueBlock = vBlocks.emplace_back(nAddress, nUniqueSize, nUniqueSize);
+    //        memcpy(pUniqueBlock.GetBytes(), pUniqueStart, nUniqueSize);
+    //        pUniqueBlock.ShareMemory(vBlocks, nHash);
+    //        nAddress += nUniqueSize;
+    //    }
+
+    //    auto& pRepeatBlock = vBlocks.emplace_back(nAddress, 0, 0);
+    //    pRepeatBlock.SetRepeat(nRepeat, nLast);
+    //    nAddress += nRepeat * sizeof(uint32_t);
+
+    //    pUniqueStart = pScan;
+    //}
+
+    //if (bWasSplit)
+    //{
+    //    // copy last block
+    //    const auto nUniqueSize = (pScan - pUniqueStart) * sizeof(uint32_t);
+    //    if (nUniqueSize)
+    //    {
+    //        auto& pUniqueBlock = vBlocks.emplace_back(nAddress, nUniqueSize, nUniqueSize);
+    //        memcpy(pUniqueBlock.GetBytes(), pUniqueStart, nUniqueSize);
+    //        pUniqueBlock.ShareMemory(vBlocks, nHash);
+    //    }
+
+    //    vBlocks.erase(this);
+    //    return;
+    //}
+
+    ShareMemory(vBlocks, nHash);
 }
 
 uint8_t* MemBlock::AllocateMatchingAddresses() noexcept

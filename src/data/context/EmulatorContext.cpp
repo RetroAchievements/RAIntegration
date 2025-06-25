@@ -738,9 +738,11 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
     return 0;
 }
 
-size_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount,
+uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount,
                                    const EmulatorContext::MemoryBlock& pBlock)
 {
+    Expects(pBuffer != nullptr);
+
     if (pBlock.readBlock)
     {
         const size_t nRead = pBlock.readBlock(nAddress, pBuffer, gsl::narrow_cast<uint32_t>(nCount));
@@ -797,7 +799,7 @@ size_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], 
             break;
     }
 
-    return nCount;
+    return gsl::narrow_cast<uint32_t>(nCount);
 }
 
 _Use_decl_annotations_
@@ -1080,10 +1082,8 @@ bool EmulatorContext::IsMemoryInsecure() const
 
 _CONSTANT_VAR MAX_BLOCK_SIZE = 256U * 1024; // 256K
 
-void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBlocks, ra::ByteAddress nAddress, size_t nCount, uint32_t nPadding) const
+void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBlocks, ra::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const
 {
-    ra::data::search::MemBlock* pBlock = nullptr;
-
     ra::ByteAddress nAdjustedAddress = nAddress;
     for (const auto& pMemoryBlock : m_vMemoryBlocks)
     {
@@ -1093,13 +1093,15 @@ void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBl
             continue;
         }
 
-        const size_t nBlockRemaining = pMemoryBlock.size - nAdjustedAddress;
-        size_t nToRead = std::min(nCount, nBlockRemaining);
+        const uint32_t nBlockRemaining = gsl::narrow_cast<uint32_t>(pMemoryBlock.size) - nAdjustedAddress;
+        uint32_t nToRead = std::min(nCount, nBlockRemaining);
         nCount -= nToRead;
 
         while (nToRead > 0)
         {
-            auto nBlockSize = nToRead;
+            ra::data::search::MemBlock* pBlock = nullptr;
+
+            uint32_t nBlockSize = nToRead;
             if (nBlockSize > MAX_BLOCK_SIZE)
             {
                 // if we're reading across a block boundary, capture nPadding overlapping
@@ -1112,17 +1114,9 @@ void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBl
                 pBlock = &vBlocks.emplace_back(nAddress, nBlockSize, nBlockSize);
             }
 
+            Expects(pBlock != nullptr);
             ReadMemory(nAdjustedAddress, pBlock->GetBytes(), nBlockSize, pMemoryBlock);
-
-            if (nBlockSize > 8)
-            {
-                const auto* pScan = reinterpret_cast<uint32_t*>(pBlock->GetBytes());
-                const auto* pStop = reinterpret_cast<uint32_t*>(pBlock->GetBytes() + pBlock->GetBytesSize());
-                uint32_t nHash = 0;
-                while (pScan < pStop)
-                    nHash ^= *pScan++;
-                pBlock->ShareMemory(vBlocks, nHash);
-            }
+            pBlock->OptimizeMemory(vBlocks);
 
             nAddress += nBlockSize;
             nAdjustedAddress += nBlockSize;
@@ -1145,7 +1139,7 @@ void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBl
             // ASSERT: pDstBlock->GetBytes() is a size that's a multiple of 4 even if
             //         pDstBlock->GetBytesSize() is not.
             auto* pDstBytes = pDstBlock.GetBytes() + (pDstBlock.GetBytesSize() & ~3);
-            auto* pSrcBytes = vBlocks.at(i).GetBytes();
+            const auto* pSrcBytes = vBlocks.at(i).GetBytes();
             memcpy(pDstBytes, pSrcBytes, 4);
         }
     }

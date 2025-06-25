@@ -246,7 +246,7 @@ public:
     /// <summary>
     /// Captures the current state of memory
     /// </summary>
-    void CaptureMemory(std::vector<ra::data::search::MemBlock>& vMemBlocks, ra::ByteAddress nAddress, size_t nCount, uint32_t nPadding) const;
+    void CaptureMemory(std::vector<ra::data::search::MemBlock>& vMemBlocks, ra::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const;
 
     /// <summary>
     /// Converts an address to a displayable string.
@@ -323,7 +323,7 @@ protected:
         MemoryWriteFunction* write;
         MemoryReadBlockFunction* readBlock;
     };
-    static size_t ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount, const MemoryBlock& pBlock);
+    static uint32_t ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount, const MemoryBlock& pBlock);
 
     std::vector<MemoryBlock> m_vMemoryBlocks;
     size_t m_nTotalMemorySize = 0U;

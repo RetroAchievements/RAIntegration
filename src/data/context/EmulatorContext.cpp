@@ -738,6 +738,68 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
     return 0;
 }
 
+size_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount,
+                                   const EmulatorContext::MemoryBlock& pBlock)
+{
+    if (pBlock.readBlock)
+    {
+        const size_t nRead = pBlock.readBlock(nAddress, pBuffer, gsl::narrow_cast<uint32_t>(nCount));
+        if (nRead < nCount)
+            memset(pBuffer + nRead, 0, nCount - nRead);
+
+        return gsl::narrow_cast<uint32_t>(nRead);
+    }
+
+    if (!pBlock.read)
+    {
+        memset(pBuffer, 0, nCount);
+        return 0;
+    }
+
+    auto nRemaining = nCount;
+    while (nRemaining >= 8) // unrolled loop to read 8-byte chunks
+    {
+        *pBuffer++ = pBlock.read(nAddress++);
+        *pBuffer++ = pBlock.read(nAddress++);
+        *pBuffer++ = pBlock.read(nAddress++);
+        *pBuffer++ = pBlock.read(nAddress++);
+        *pBuffer++ = pBlock.read(nAddress++);
+        *pBuffer++ = pBlock.read(nAddress++);
+        *pBuffer++ = pBlock.read(nAddress++);
+        *pBuffer++ = pBlock.read(nAddress++);
+        nRemaining -= 8;
+    }
+
+    switch (nRemaining) // partial Duff's device to read remaining bytes
+    {
+        case 7:
+            *pBuffer++ = pBlock.read(nAddress++);
+            _FALLTHROUGH;
+        case 6:
+            *pBuffer++ = pBlock.read(nAddress++);
+            _FALLTHROUGH;
+        case 5:
+            *pBuffer++ = pBlock.read(nAddress++);
+            _FALLTHROUGH;
+        case 4:
+            *pBuffer++ = pBlock.read(nAddress++);
+            _FALLTHROUGH;
+        case 3:
+            *pBuffer++ = pBlock.read(nAddress++);
+            _FALLTHROUGH;
+        case 2:
+            *pBuffer++ = pBlock.read(nAddress++);
+            _FALLTHROUGH;
+        case 1:
+            *pBuffer++ = pBlock.read(nAddress++);
+            _FALLTHROUGH;
+        default:
+            break;
+    }
+
+    return nCount;
+}
+
 _Use_decl_annotations_
 uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
 {
@@ -763,51 +825,11 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[]
 
         const size_t nBlockRemaining = pBlock.size - nAddress;
         size_t nToRead = std::min(nCount, nBlockRemaining);
+
+        nBytesRead += ReadMemory(nAddress, pBuffer, nToRead, pBlock);
+
+        pBuffer += nToRead;
         nCount -= nToRead;
-
-        if (pBlock.readBlock)
-        {
-            const size_t nRead = pBlock.readBlock(nAddress, pBuffer, gsl::narrow_cast<uint32_t>(nToRead));
-            if (nRead < nToRead)
-                memset(pBuffer + nRead, 0, nToRead - nRead);
-
-            pBuffer += nToRead;
-            nBytesRead += gsl::narrow_cast<uint32_t>(nRead);
-        }
-        else if (!pBlock.read)
-        {
-            memset(pBuffer, 0, nToRead);
-            pBuffer += nToRead;
-        }
-        else
-        {
-            while (nToRead >= 8) // unrolled loop to read 8-byte chunks
-            {
-                *pBuffer++ = pBlock.read(nAddress++);
-                *pBuffer++ = pBlock.read(nAddress++);
-                *pBuffer++ = pBlock.read(nAddress++);
-                *pBuffer++ = pBlock.read(nAddress++);
-                *pBuffer++ = pBlock.read(nAddress++);
-                *pBuffer++ = pBlock.read(nAddress++);
-                *pBuffer++ = pBlock.read(nAddress++);
-                *pBuffer++ = pBlock.read(nAddress++);
-                nToRead -= 8;
-            }
-
-            switch (nToRead) // partial Duff's device to read remaining bytes
-            {
-                case 7: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-                case 6: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-                case 5: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-                case 4: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-                case 3: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-                case 2: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-                case 1: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-                default: break;
-            }
-
-            nBytesRead += gsl::narrow_cast<uint32_t>(nToRead);
-        }
 
         if (nCount == 0)
             return nBytesRead;
@@ -1054,6 +1076,69 @@ bool EmulatorContext::IsMemoryInsecure() const
     }
 
     return m_bMemoryInsecure;
+}
+
+_CONSTANT_VAR MAX_BLOCK_SIZE = 256U * 1024; // 256K
+
+void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBlocks, ra::ByteAddress nAddress, size_t nCount, uint32_t nPadding) const
+{
+    ra::data::search::MemBlock* pBlock = nullptr;
+
+    ra::ByteAddress nAdjustedAddress = nAddress;
+    for (const auto& pMemoryBlock : m_vMemoryBlocks)
+    {
+        if (nAdjustedAddress > pMemoryBlock.size)
+        {
+            nAdjustedAddress -= gsl::narrow_cast<ra::ByteAddress>(pMemoryBlock.size);
+            continue;
+        }
+
+        const size_t nBlockRemaining = pMemoryBlock.size - nAdjustedAddress;
+        size_t nToRead = std::min(nCount, nBlockRemaining);
+        nCount -= nToRead;
+
+        while (nToRead > 0)
+        {
+            auto nBlockSize = nToRead;
+            if (nBlockSize > MAX_BLOCK_SIZE)
+            {
+                // if we're reading across a block boundary, capture nPadding overlapping
+                // bytes so we don't have to stitch them together later.
+                nBlockSize = MAX_BLOCK_SIZE;
+                pBlock = &vBlocks.emplace_back(nAddress, MAX_BLOCK_SIZE + nPadding, nBlockSize);
+            }
+            else
+            {
+                pBlock = &vBlocks.emplace_back(nAddress, nBlockSize, nBlockSize);
+            }
+
+            ReadMemory(nAdjustedAddress, pBlock->GetBytes(), nBlockSize, pMemoryBlock);
+
+            nAddress += nBlockSize;
+            nAdjustedAddress += nBlockSize;
+            nToRead -= nBlockSize;
+        }
+
+        if (nCount == 0)
+            break;
+
+        nAdjustedAddress = 0;
+    }
+
+    if (nPadding)
+    {
+        // copy the first four bytes of each block to the last four bytes of the previous
+        // block to cover the overlap
+        for (size_t i = 1; i < vBlocks.size(); ++i)
+        {
+            auto& pDstBlock = vBlocks.at(i - 1);
+            // ASSERT: pDstBlock->GetBytes() is a size that's a multiple of 4 even if
+            //         pDstBlock->GetBytesSize() is not.
+            auto* pDstBytes = pDstBlock.GetBytes() + (pDstBlock.GetBytesSize() & ~3);
+            auto* pSrcBytes = vBlocks.at(i).GetBytes();
+            memcpy(pDstBytes, pSrcBytes, 4);
+        }
+    }
 }
 
 void EmulatorContext::UpdateMenuState(int nMenuItemId) const

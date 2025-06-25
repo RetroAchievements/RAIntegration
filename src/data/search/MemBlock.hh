@@ -11,14 +11,14 @@ namespace search {
 class MemBlock
 {
 public:
-    explicit MemBlock(_In_ unsigned int nAddress, _In_ unsigned int nSize, _In_ unsigned int nMaxAddresses) noexcept :
+    explicit MemBlock(_In_ uint32_t nAddress, _In_ uint32_t nSize, _In_ uint32_t nMaxAddresses) noexcept :
         m_nFirstAddress(nAddress),
         m_nBytesSize(nSize),
         m_nMatchingAddresses(nMaxAddresses),
         m_nMaxAddresses(nMaxAddresses)
     {
         if (nSize > sizeof(m_vBytes))
-            m_pBytes = new (std::nothrow) uint8_t[nSize];
+            m_pBytes = new (std::nothrow) uint8_t[(nSize + 3) & ~3];
     }
 
     MemBlock(const MemBlock& other) noexcept :
@@ -92,9 +92,11 @@ public:
     uint8_t* GetBytes() noexcept { return (m_nBytesSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
     const uint8_t* GetBytes() const noexcept { return (m_nBytesSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
 
+    void SetFirstAddress(ra::ByteAddress nAddress) noexcept { m_nFirstAddress = nAddress; }
     ra::ByteAddress GetFirstAddress() const noexcept { return m_nFirstAddress; }
-    unsigned int GetBytesSize() const noexcept { return m_nBytesSize; }
-    unsigned int GetMaxAddresses() const noexcept { return m_nMaxAddresses; }
+    uint32_t GetBytesSize() const noexcept { return m_nBytesSize; }
+    void SetMaxAddresses(uint32_t nMaxAddresses) noexcept { m_nMaxAddresses = nMaxAddresses; }
+    uint32_t GetMaxAddresses() const noexcept { return m_nMaxAddresses; }
 
     bool ContainsAddress(ra::ByteAddress nAddress) const noexcept;
 
@@ -103,7 +105,8 @@ public:
     void ExcludeMatchingAddress(ra::ByteAddress nAddress);
     bool ContainsMatchingAddress(ra::ByteAddress nAddress) const;
 
-    unsigned int GetMatchingAddressCount() const noexcept { return m_nMatchingAddresses; }
+    void SetMatchingAddressCount(uint32_t nCount) noexcept { m_nMatchingAddresses = nCount; }
+    uint32_t GetMatchingAddressCount() const noexcept { return m_nMatchingAddresses; }
     ra::ByteAddress GetMatchingAddress(gsl::index nIndex) const noexcept;
     bool AreAllAddressesMatching() const noexcept { return m_nMatchingAddresses == m_nMaxAddresses; }
 
@@ -129,6 +132,13 @@ public:
         return (pMatchingAddresses[nIndex >> 3] & nBit);
     }
 
+    struct AllocatedMemory
+    {
+        uint32_t nReferenceCount;
+        uint32_t nHash;
+        uint8_t pBuffer[16];
+    };
+
 private:
     uint8_t* AllocateMatchingAddresses() noexcept;
 
@@ -144,10 +154,10 @@ private:
         uint8_t* m_pAddresses;
     };
 
-    unsigned int m_nBytesSize;         // 4 bytes
-    ra::ByteAddress m_nFirstAddress;   // 4 bytes
-    unsigned int m_nMatchingAddresses; // 4 bytes
-    unsigned int m_nMaxAddresses;      // 4 bytes
+    uint32_t m_nBytesSize;           // 4 bytes
+    ra::ByteAddress m_nFirstAddress; // 4 bytes
+    uint32_t m_nMatchingAddresses;   // 4 bytes
+    uint32_t m_nMaxAddresses;        // 4 bytes
 };
 static_assert(sizeof(MemBlock) <= 32, "sizeof(MemBlock) is incorrect");
 

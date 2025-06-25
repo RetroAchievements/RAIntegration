@@ -52,8 +52,6 @@ static search::MBF32SearchImpl s_pMBF32SearchImpl;
 static search::MBF32LESearchImpl s_pMBF32LESearchImpl;
 } // namespace search
 
-_CONSTANT_VAR MAX_BLOCK_SIZE = 256U * 1024; // 256K
-
 static search::SearchImpl* GetSearchImpl(SearchType nType) noexcept
 {
     switch (nType)
@@ -129,19 +127,16 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
     const unsigned int nPadding = m_pImpl->GetPadding();
     if (nPadding >= nBytes)
         nBytes = 0;
-    else if (nBytes > nPadding)
-        nBytes -= nPadding;
 
-    while (nBytes > 0)
+    pEmulatorContext.CaptureMemory(m_vBlocks, nAddress, nBytes, nPadding);
+
+    for (auto& pBlock : m_vBlocks)
     {
-        const auto nBlockSize = gsl::narrow_cast<unsigned int>((nBytes > MAX_BLOCK_SIZE) ? MAX_BLOCK_SIZE : nBytes);
-        const auto nMaxAddresses = m_pImpl->GetAddressCountForBytes(nBlockSize + nPadding);
-        const auto nBlockAddress = m_pImpl->ConvertFromRealAddress(nAddress);
-        auto& block = m_vBlocks.emplace_back(nBlockAddress, nBlockSize + nPadding, nMaxAddresses);
-        pEmulatorContext.ReadMemory(nAddress, block.GetBytes(), gsl::narrow_cast<size_t>(block.GetBytesSize()));
+        pBlock.SetFirstAddress(m_pImpl->ConvertFromRealAddress(pBlock.GetFirstAddress()));
 
-        nAddress += nBlockSize;
-        nBytes -= nBlockSize;
+        const auto nAdjustedAddressCount = m_pImpl->GetAddressCountForBytes(pBlock.GetBytesSize());
+        pBlock.SetMaxAddresses(nAdjustedAddressCount);
+        pBlock.SetMatchingAddressCount(nAdjustedAddressCount);
     }
 
     RA_LOG_INFO("Allocated %zu bytes for initial search", CalcSize(m_vBlocks));

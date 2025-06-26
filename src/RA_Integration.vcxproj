@@ -76,6 +76,7 @@
     <ClCompile Include="data\models\LocalBadgesModel.cpp" />
     <ClCompile Include="data\models\RichPresenceModel.cpp" />
     <ClCompile Include="data\models\TriggerValidation.cpp" />
+    <ClCompile Include="data\search\MemBlock.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -100,7 +101,6 @@
     <ClCompile Include="services\Initialization.cpp" />
     <ClCompile Include="services\PerformanceCounter.cpp" />
     <ClCompile Include="services\SearchResults.cpp" />
-    <ClCompile Include="services\Search\MemBlock.cpp" />
     <ClCompile Include="services\search\SearchImpl.cpp" />
     <ClCompile Include="ui\drawing\gdi\GDIBitmapSurface.cpp" />
     <ClCompile Include="ui\drawing\gdi\GDISurface.cpp" />
@@ -221,6 +221,7 @@
     <ClInclude Include="data\models\LocalBadgesModel.hh" />
     <ClInclude Include="data\models\RichPresenceModel.hh" />
     <ClInclude Include="data\models\TriggerValidation.hh" />
+    <ClInclude Include="data\search\MemBlock.hh" />
     <ClInclude Include="data\Types.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />
@@ -268,7 +269,6 @@
     <ClInclude Include="services\Initialization.hh" />
     <ClInclude Include="services\IThreadPool.hh" />
     <ClInclude Include="services\PerformanceCounter.hh" />
-    <ClInclude Include="services\Search\MemBlock.hh" />
     <ClInclude Include="services\search\SearchImpl.hh" />
     <ClInclude Include="services\search\SearchImpl_16bit.hh" />
     <ClInclude Include="services\search\SearchImpl_16bit_aligned.hh" />

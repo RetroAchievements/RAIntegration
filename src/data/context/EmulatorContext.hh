@@ -9,6 +9,8 @@
 
 #include <string>
 
+#include "data\search\MemBlock.hh"
+
 namespace ra {
 namespace data {
 namespace context {
@@ -242,6 +244,11 @@ public:
     };
 
     /// <summary>
+    /// Captures the current state of memory
+    /// </summary>
+    void CaptureMemory(std::vector<ra::data::search::MemBlock>& vMemBlocks, ra::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const;
+
+    /// <summary>
     /// Converts an address to a displayable string.
     /// </summary>
     std::string FormatAddress(ra::ByteAddress nAddress) const { return m_fFormatAddress(nAddress); }
@@ -316,6 +323,7 @@ protected:
         MemoryWriteFunction* write;
         MemoryReadBlockFunction* readBlock;
     };
+    static uint32_t ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount, const MemoryBlock& pBlock);
 
     std::vector<MemoryBlock> m_vMemoryBlocks;
     size_t m_nTotalMemorySize = 0U;

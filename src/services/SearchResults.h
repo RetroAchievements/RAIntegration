@@ -6,7 +6,7 @@
 
 #include "data\context\EmulatorContext.hh"
 
-#include "search\MemBlock.hh"
+#include "data\search\MemBlock.hh"
 
 namespace ra {
 namespace services {
@@ -206,7 +206,7 @@ public:
 private:
     void MergeSearchResults(const SearchResults& srMemory, const SearchResults& srAddresses);
 
-    std::vector<search::MemBlock> m_vBlocks;
+    std::vector<data::search::MemBlock> m_vBlocks;
     SearchType m_nType = SearchType::EightBit;
 
     friend class search::SearchImpl;

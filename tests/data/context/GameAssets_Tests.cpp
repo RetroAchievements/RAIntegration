@@ -143,7 +143,7 @@ public:
 
         void MockUserFileContents(const std::string& sContents)
         {
-            MockUserFile("0.0.0.0\nGameName\n" + sContents);
+            MockUserFile("0.0.0.0\nGame Title\n" + sContents);
         }
 
         const std::string& GetUserFile()
@@ -183,7 +183,7 @@ public:
         GameAssetsHarness gameAssets;
         gameAssets.SaveAllAssets();
 
-        Assert::AreEqual(std::string("0.0.0.0\nGameName\n"), gameAssets.GetUserFile());
+        Assert::AreEqual(std::string("0.0.0.0\nGame Title\n"), gameAssets.GetUserFile());
     }
 
     TEST_METHOD(TestSaveLocalOnlySavesLocal)
@@ -195,7 +195,7 @@ public:
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\n%u:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId + 1);
+        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGame Title\n%u:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId + 1);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -206,7 +206,7 @@ public:
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\n%u:\"2=2\":\"Ach:2\":\"Desc \\\"2\\\"\"::::Auth5:15:::::54321\n", GameAssets::FirstLocalId);
+        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGame Title\n%u:\"2=2\":\"Ach:2\":\"Desc \\\"2\\\"\"::::Auth5:15:::::54321\n", GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -218,7 +218,7 @@ public:
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\n%u|77:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId);
+        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGame Title\n%u|77:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -241,7 +241,7 @@ public:
 
         gameAssets.ReloadAsset(AssetType::Achievement, GameAssets::FirstLocalId);
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\n"
+        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGame Title\n"
             "%u:\"1=1\":Temp:Temp::::Authl:10:::::\"local\\\\22-ABCDE.png\"\n", GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
@@ -268,7 +268,7 @@ public:
 
         gameAssets.SaveAllAssets();
 
-        const std::string sExpected = "0.0.0.0\nGameName\n"
+        const std::string sExpected = "0.0.0.0\nGame Title\n"
             "111000002:\"0xH2345=0\":Test2:::::User:0:::::00000\n";
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
 
@@ -679,7 +679,7 @@ public:
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\nL%u:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2:0\n", GameAssets::FirstLocalId + 1);
+        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGame Title\nL%u:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2:0\n", GameAssets::FirstLocalId + 1);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -729,7 +729,7 @@ public:
         gameAssets.SaveAllAssets();
 
         const auto& sExpected = ra::StringPrintf(
-            "0.0.0.0\nGameName\n%u:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n",
+            "0.0.0.0\nGame Title\n%u:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n",
             GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }

@@ -317,6 +317,18 @@ public:
         Assert::AreEqual(std::string("http://host/game/1234"), menu.mockDesktop.LastOpenedUrl());
     }
 
+    TEST_METHOD(TestOpenGamePageExclusiveSubset)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.mockConfiguration.SetHostName("host");
+        menu.mockGameContext.SetGameId(1234);
+        menu.mockGameContext.SetActiveGameId(2345);
+
+        menu.ActivateMenuItem(IDM_RA_OPENGAMEPAGE);
+
+        Assert::AreEqual(std::string("http://host/game/2345"), menu.mockDesktop.LastOpenedUrl());
+    }
+
     TEST_METHOD(TestOpenGamePageNoGameLoaded)
     {
         IntegrationMenuViewModelHarness menu;

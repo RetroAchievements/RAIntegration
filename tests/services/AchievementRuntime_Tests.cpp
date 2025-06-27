@@ -502,6 +502,7 @@ public:
         vmAchievement->SetID(ra::data::context::GameAssets::FirstLocalId);
         vmAchievement->CreateLocalCheckpoint();
         vmAchievement->SetState(ra::data::models::AssetState::Active);
+        vmAchievement->SetSubsetID(1U);
         runtime.mockGameContext.Assets().Append(std::move(vmAchievement));
 
         // SyncAssets should generate an empty core subset and a local subset containing the achievement
@@ -553,6 +554,7 @@ public:
         vmAchievement2->SetID(ra::data::context::GameAssets::FirstLocalId);
         vmAchievement2->CreateLocalCheckpoint();
         vmAchievement2->SetState(ra::data::models::AssetState::Active);
+        vmAchievement2->SetSubsetID(1U);
         runtime.mockGameContext.Assets().Append(std::move(vmAchievement2));
 
         runtime.SyncAssets();
@@ -576,6 +578,7 @@ public:
         vmAchievement3->SetID(ra::data::context::GameAssets::FirstLocalId);
         vmAchievement3->CreateLocalCheckpoint();
         vmAchievement3->SetState(ra::data::models::AssetState::Active);
+        vmAchievement3->SetSubsetID(1U);
         runtime.mockGameContext.Assets().Append(std::move(vmAchievement3));
 
         runtime.SyncAssets();
@@ -604,6 +607,7 @@ public:
 
         auto vmNewAchievement = std::make_unique<ra::data::models::AchievementModel>();
         vmNewAchievement->Attach(*pAchievement, ra::data::models::AssetCategory::Core, "0xH0000=1");
+        vmNewAchievement->SetSubsetID(1U);
         auto& vmAchievement = reinterpret_cast<ra::data::models::AchievementModel&>(runtime.mockGameContext.Assets().Append(std::move(vmNewAchievement)));
 
         // SyncAssets should generate a new core subset with the merged achievement

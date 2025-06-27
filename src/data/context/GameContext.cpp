@@ -486,9 +486,9 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
     m_vSubsets.clear();
 
     // GameID dictates which game is loaded for purposes of local achievement storage and code notes
-    m_nGameId = game_data_response->id;
+    m_nGameId = GetRealGameId(game_data_response->id);
     // ActiveGameID dictates which game is running for purposes of rich presence and pings
-    m_nActiveGameId = game_data_response->session_game_id;
+    m_nActiveGameId = GetRealGameId(game_data_response->session_game_id);
 
     for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
     {
@@ -497,7 +497,8 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
         {
             // core subset should always be first
             m_vSubsets.insert(m_vSubsets.begin(),
-                              Subset(pSet->id, pSet->game_id, ra::Widen(pSet->title), SubsetType::Core));
+                              Subset(pSet->id, GetRealGameId(pSet->game_id),
+                                     ra::Widen(pSet->title), SubsetType::Core));
         }
         else
         {
@@ -514,7 +515,8 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
                     nType = SubsetType::Bonus;
                     break;
             }
-            m_vSubsets.emplace_back(pSet->id, pSet->game_id, ra::Widen(pSet->title), nType);
+            m_vSubsets.emplace_back(pSet->id, GetRealGameId(pSet->game_id),
+                                    ra::Widen(pSet->title), nType);
         }
     }
 

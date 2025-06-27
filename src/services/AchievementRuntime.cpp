@@ -1226,9 +1226,7 @@ static void ProcessPatchData(const rc_api_server_response_t* server_response,
                              const rc_api_fetch_game_sets_response_t* game_data_response)
 {
     Expects(game_data_response != nullptr);
-    // determine the active game ID and any identify any provided subsets
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    pGameContext.InitializeSubsets(game_data_response);
 
     // extract the old rich presence script from the last cached server response so we can tell if the
     // local value has changed. store it as the local value, and we'll merge in the real local value later.
@@ -1294,6 +1292,9 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
             wrapper->m_mLeaderboardDefinitions[pLeaderboard->id] = pLeaderboard->definition;
     }
 
+    pGameContext.InitializeSubsets(game_data_response);
+
+    // don't write virtual game data to disc
     if (!ra::data::context::GameContext::IsVirtualGameId(game_data_response->id))
         ProcessPatchData(server_response, game_data_response);
 }

@@ -58,7 +58,7 @@ void PointerFinderViewModel::StateViewModel::ToggleCapture()
 
 void PointerFinderViewModel::StateViewModel::Capture()
 {
-    if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0)
+    if (ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().TotalMemorySize() == 0)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"No game loaded.", L"Cannot capture memory without a loaded game.");
         return;

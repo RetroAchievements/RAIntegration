@@ -101,6 +101,8 @@ public:
     {
         PointerFinderViewModelHarness vmPointerFinder;
         vmPointerFinder.mockGameContext.SetGameId(1U);
+        std::array<unsigned char, 256> pMemory{};
+        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
         bool bDialogSeen = false;
         vmPointerFinder.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](MessageBoxViewModel& vmMessageBox) {
@@ -212,6 +214,8 @@ public:
     {
         PointerFinderViewModelHarness vmPointerFinder;
         vmPointerFinder.mockGameContext.SetGameId(1U);
+        std::array<unsigned char, 256> pMemory{};
+        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
         bool bDialogSeen = false;
         vmPointerFinder.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](MessageBoxViewModel& vmMessageBox) {
@@ -235,6 +239,8 @@ public:
     {
         PointerFinderViewModelHarness vmPointerFinder;
         vmPointerFinder.mockGameContext.SetGameId(1U);
+        std::array<unsigned char, 256> pMemory{};
+        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
         bool bDialogSeen = false;
         vmPointerFinder.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](MessageBoxViewModel& vmMessageBox) {

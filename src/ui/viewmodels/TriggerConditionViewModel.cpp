@@ -975,7 +975,10 @@ void TriggerConditionViewModel::UpdateRowColor(const rc_condition_t* pCondition)
         switch (pCondition->type)
         {
             case RC_CONDITION_RESET_IF:
-                SetRowColor(pTheme.ColorTriggerResetTrue());
+                if (pCondition->is_true & 0x02)
+                    SetRowColor(pTheme.ColorTriggerResetTrue());
+                else
+                    SetRowColor(pTheme.ColorTriggerIsTrue());
                 return;
 
             case RC_CONDITION_PAUSE_IF:

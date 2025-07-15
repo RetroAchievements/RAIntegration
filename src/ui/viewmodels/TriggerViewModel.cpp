@@ -1494,14 +1494,17 @@ void TriggerViewModel::UpdateGroupColors(const rc_trigger_t* pTrigger)
                 continue;
 
             bool bIsReset = false;
-            rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
-            for (; pCondition != nullptr; pCondition = pCondition->next)
+            if (pGroup->m_pConditionSet->num_reset_conditions > 0)
             {
-                // a reset condition cannot remain true with a target hitcount, so only check if it's currently true
-                if (pCondition->is_true && pCondition->type == RC_CONDITION_RESET_IF)
+                rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+                for (; pCondition != nullptr; pCondition = pCondition->next)
                 {
-                    bIsReset = true;
-                    break;
+                    // if the second is_true bit is non-zero, the condition was responsible for resetting the trigger.
+                    if (pCondition->type == RC_CONDITION_RESET_IF && (pCondition->is_true & 0x02))
+                    {
+                        bIsReset = true;
+                        break;
+                    }
                 }
             }
 

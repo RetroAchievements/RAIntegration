@@ -773,6 +773,8 @@ private:
                 pCodeNotes->DoFrame();
         }
 
+        using TriggerViewModel::EnsureVisible;
+
     private:
         std::array<unsigned char, 10> m_pMemory = { 0,1,2,3,4,5,6,7,8,9 };
     };
@@ -1475,7 +1477,10 @@ public:
         Assert::AreEqual(std::wstring(L""), pCondition6->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
         Assert::AreEqual(std::wstring(L"1"), pCondition6->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
 
-        const auto* pCondition7 = vmTrigger.Conditions().GetItemAt(6);
+        vmTrigger.EnsureVisible(6, 4); // scroll to end
+        const int nScrollOffset = vmTrigger.GetScrollOffset();
+
+        const auto* pCondition7 = vmTrigger.Conditions().GetItemAt(6 - nScrollOffset);
         Expects(pCondition7 != nullptr);
         Assert::IsFalse(pCondition7->IsIndirect());
         Assert::AreEqual(std::wstring(L"0x00392ec0 (recall)\r\n2: $0xb65ba9 -> 0x00392ec0"),
@@ -1484,7 +1489,7 @@ public:
         Assert::AreEqual(std::wstring(L""), pCondition7->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
         Assert::AreEqual(std::wstring(L"0x2222\r\n[No code note]"), pCondition7->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
 
-        const auto* pCondition8 = vmTrigger.Conditions().GetItemAt(7);
+        const auto* pCondition8 = vmTrigger.Conditions().GetItemAt(7 - nScrollOffset);
         Expects(pCondition8 != nullptr);
         Assert::IsTrue(pCondition8->IsIndirect());
         Assert::AreEqual(std::wstring(L""), pCondition8->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
@@ -1493,7 +1498,7 @@ public:
         Assert::AreEqual(std::wstring(L""), pCondition8->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
         Assert::AreEqual(std::wstring(L""), pCondition8->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
 
-        const auto* pCondition9 = vmTrigger.Conditions().GetItemAt(8);
+        const auto* pCondition9 = vmTrigger.Conditions().GetItemAt(8 - nScrollOffset);
         Expects(pCondition9 != nullptr);
         Assert::IsFalse(pCondition9->IsIndirect());
         Assert::AreEqual(std::wstring(L"0x00000000 (recall)\r\n8: $0xe60589 -> 0x00000000"),
@@ -1503,7 +1508,7 @@ public:
         Assert::AreEqual(std::wstring(L"0x2222\r\n[No code note]"),
                          pCondition9->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
 
-        const auto* pCondition10 = vmTrigger.Conditions().GetItemAt(9);
+        const auto* pCondition10 = vmTrigger.Conditions().GetItemAt(9 - nScrollOffset);
         Expects(pCondition8 != nullptr);
         Assert::IsTrue(pCondition10->IsIndirect());
         Assert::AreEqual(std::wstring(L""), pCondition10->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));

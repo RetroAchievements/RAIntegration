@@ -981,8 +981,12 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
 
     m_bindConditions.SetCopyHandler([&vmAssetEditor]() { vmAssetEditor.Trigger().CopySelectedConditionsToClipboard(); });
     m_bindConditions.SetPasteHandler([&vmAssetEditor]() { vmAssetEditor.Trigger().PasteFromClipboard(); });
-    m_bindConditions.BindEnsureVisible(TriggerViewModel::EnsureVisibleConditionIndexProperty);
     m_bindConditions.BindRowColor(TriggerConditionViewModel::RowColorProperty);
+    m_bindConditions.BindVisibleItemCount(TriggerViewModel::VisibleItemCountProperty);
+    m_bindConditions.Virtualize(TriggerViewModel::ScrollOffsetProperty, TriggerViewModel::ScrollMaximumProperty,
+        [&vmAssetEditor](gsl::index nFrom, gsl::index nTo, bool bIsSelected) {
+            vmAssetEditor.Trigger().SelectRange(nFrom, nTo, bIsSelected);
+        });
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_TITLE, Anchor::Top | Anchor::Left | Anchor::Right);

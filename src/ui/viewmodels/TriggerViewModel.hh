@@ -41,10 +41,11 @@ public:
         protected ViewModelCollectionBase::NotifyTarget
     {
     public:
-        rc_condset_t* m_pConditionSet = nullptr;
+        rc_condset_t* GetConditionSet(bool bIsValue) const;
+        mutable rc_condset_t* m_pConditionSet = nullptr;
 
-        bool UpdateSerialized(const ViewModelCollection<TriggerConditionViewModel>& vConditions);
-        const std::string& GetSerialized(const TriggerViewModel& vmTrigger) const;
+        bool UpdateSerialized(const std::string& sSerialized);
+        const std::string& GetSerialized() const;
         void ResetSerialized() { m_sSerialized = NOT_SERIALIZED; }
 
         bool UpdateMeasuredFlags();
@@ -54,7 +55,7 @@ public:
         void SetColor(Color value) { SetValue(ColorProperty, ra::to_signed(value.ARGB)); }
 
     private:
-        static void UpdateSerialized(std::string& sSerialized, const ViewModelCollection<TriggerConditionViewModel>& vConditions);
+        mutable std::string m_sBuffer;
         mutable std::string m_sSerialized = NOT_SERIALIZED;
         static constexpr const char* NOT_SERIALIZED = "?";
     };
@@ -71,14 +72,19 @@ public:
     const ViewModelCollection<TriggerConditionViewModel>& Conditions() const noexcept { return m_vConditions; }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the index of the condition that should be made visible.
+    /// The <see cref="ModelProperty" /> for the number of visible conditions.
     /// </summary>
-    static const IntModelProperty EnsureVisibleConditionIndexProperty;
+    static const IntModelProperty VisibleItemCountProperty;
+    int GetVisibleItemCount() const { return GetValue(VisibleItemCountProperty); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the number of changes that have been made to the trigger.
     /// </summary>
     static const IntModelProperty VersionProperty;
+
+    static const IntModelProperty ScrollOffsetProperty;
+    int GetScrollOffset() const { return GetValue(ScrollOffsetProperty); }
+    static const IntModelProperty ScrollMaximumProperty;
 
     std::string Serialize() const;
     void SerializeAppend(std::string& sBuffer) const;
@@ -91,6 +97,8 @@ public:
 
     void InitializeFrom(const rc_value_t& pValue);
     void UpdateFrom(const rc_value_t& pValue);
+    
+    void SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue);
 
     void SuspendConditionMonitor() const noexcept;
     void ResumeConditionMonitor() const;
@@ -143,6 +151,7 @@ public:
 
     void DoFrame();
     void UpdateColors(const rc_trigger_t* pTrigger);
+    void UpdateCurrentGroup(bool bRememberHits);
     void UpdateConditions();
     void ToggleDecimal();
 
@@ -152,24 +161,28 @@ public:
     void SetIsValue(bool bValue) noexcept { m_bIsValue = bValue; }
 
 protected:
+    void EnsureVisible(int nFirstIndex, int nCount);
+
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
 
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
+    std::set<unsigned int> m_vSelectedConditions;
+
 private:
     void UpdateVersion();
     void UpdateVersionAndRestoreHits();
     void InitializeGroups(const rc_trigger_t& pTrigger);
+    void InitializeConditions(const GroupViewModel* pGroup);
     void UpdateGroups(const rc_trigger_t& pTrigger);
     void UpdateConditions(const GroupViewModel* pGroup);
-    void UpdateTotalHits();
+    void UpdateTotalHits(const GroupViewModel* pGroup);
 
     int AppendMemRefChain(const std::string& sTrigger);
 
     void DeselectAllConditions();
-    void UpdateIndicesAndEnsureSelectionVisible();
     rc_trigger_t* ParseTrigger(const std::string& sTrigger);
 
     void UpdateGroupColors(const rc_trigger_t* pTrigger);
@@ -206,6 +219,8 @@ private:
     };
 
     mutable ConditionsMonitor m_pConditionsMonitor;
+    std::mutex m_pMutex;
+    bool m_bInitializingConditions = false;
 
     LookupItemViewModelCollection m_vConditionTypes;
     LookupItemViewModelCollection m_vOperandTypes;

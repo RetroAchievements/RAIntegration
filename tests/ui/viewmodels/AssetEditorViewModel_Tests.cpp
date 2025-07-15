@@ -16,10 +16,12 @@
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
+#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -763,7 +765,9 @@ public:
         Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
         Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
 
-        editor.Trigger().Conditions().Add();
+        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager; // to copy address from memory viewer
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext; // to get current value at address
+        editor.Trigger().NewCondition();
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsTrue(editor.HasAssetValidationWarning());
         Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
@@ -1661,7 +1665,7 @@ public:
         Expects(pTrigger != nullptr);
 
         Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
-        editor.Trigger().Conditions().GetItemAt(1)->SetSelected(true);
+        editor.Trigger().SelectRange(1, 1, true);        
         editor.Trigger().MoveSelectedConditionsUp();
 
         // make sure the trigger definition got updated

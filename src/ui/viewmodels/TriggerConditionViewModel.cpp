@@ -662,9 +662,20 @@ const rc_condition_t* TriggerConditionViewModel::GetCondition() const
     const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
     if (pTriggerViewModel != nullptr)
     {
+        auto nScrollOffset = pTriggerViewModel->GetScrollOffset();
+        while (nScrollOffset)
+        {
+            pCondition = pCondition->next;
+            if (!pCondition)
+                break;
+
+            --nScrollOffset;
+        }
+
         gsl::index nConditionIndex = 0;
         for (; pCondition != nullptr; pCondition = pCondition->next)
         {
+
             auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);
             if (!vmCondition)
                 break;
@@ -811,15 +822,17 @@ std::wstring TriggerConditionViewModel::GetRecallTooltip(bool bOperand2) const
     const rc_condition_t* pLastRememberCondition = nullptr;
     gsl::index nLastRememberIndex = -1;
 
+    const auto nFirstVisibleIndex = pTriggerViewModel->GetScrollOffset();
+    const auto nLastVisibleIndex = nFirstVisibleIndex + pTriggerViewModel->GetVisibleItemCount() - 1;
     gsl::index nConditionIndex = 0;
     for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
     {
-        auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex);
-        if (!vmCondition)
-            return L"";
-
-        if (vmCondition == this)
-            break;
+        if (nConditionIndex >= nFirstVisibleIndex && nConditionIndex <= nLastVisibleIndex)
+        {
+            auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex - nFirstVisibleIndex);
+            if (vmCondition == this)
+                break;
+        }
 
         const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
         if ((pOperand1 && pOperand1->type == RC_OPERAND_RECALL) || pCondition->operand2.type == RC_OPERAND_RECALL)

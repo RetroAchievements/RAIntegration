@@ -55,6 +55,9 @@
     <Filter Include="Services\Search">
       <UniqueIdentifier>{e978c08c-fedb-4ead-af63-0420b26291bb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Data\Search">
+      <UniqueIdentifier>{94064815-198f-4ee6-bdea-3a44f8b79d2d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_md5factory.cpp">
@@ -423,11 +426,11 @@
     <ClCompile Include="services\AchievementLogicSerializer.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="services\Search\MemBlock.cpp">
-      <Filter>Services\Search</Filter>
-    </ClCompile>
     <ClCompile Include="services\search\SearchImpl.cpp">
       <Filter>Services\Search</Filter>
+    </ClCompile>
+    <ClCompile Include="data\search\MemBlock.cpp">
+      <Filter>Data\Search</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1010,9 +1013,6 @@
     <ClInclude Include="services\AchievementLogicSerializer.hh">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="services\Search\MemBlock.hh">
-      <Filter>Services\Search</Filter>
-    </ClInclude>
     <ClInclude Include="services\search\SearchImpl.hh">
       <Filter>Services\Search</Filter>
     </ClInclude>
@@ -1072,6 +1072,9 @@
     </ClInclude>
     <ClInclude Include="services\search\SearchImpl_mbf32_le.hh">
       <Filter>Services\Search</Filter>
+    </ClInclude>
+    <ClInclude Include="data\search\MemBlock.hh">
+      <Filter>Data\Search</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -4,13 +4,13 @@
 
 #include "data\Types.hh"
 
-#include "MemBlock.hh"
-
 #include "services\SearchResults.h"
 
 // define this to use the generic filtering code for all search types
 // if defined, specialized templated code will be used for little endian searches
 #undef DISABLE_TEMPLATED_SEARCH
+
+using ra::data::search::MemBlock;
 
 namespace ra {
 namespace services {

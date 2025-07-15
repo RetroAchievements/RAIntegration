@@ -1,6 +1,5 @@
 #include "SearchImpl.hh"
 
-#include "MemBlock.hh"
 #include "ra_utility.h"
 
 #include <algorithm>
@@ -71,7 +70,7 @@ void SearchImpl::ApplyFilter(SearchResults& srNew, const SearchResults& srPrevio
             nLargestBlock = block.GetBytesSize();
     }
 
-    std::vector<unsigned char> vMemory(nLargestBlock);
+    std::vector<uint8_t> vMemory(nLargestBlock);
     std::vector<ra::ByteAddress> vMatches;
 
     uint32_t nAdjustment = 0;
@@ -114,9 +113,7 @@ void SearchImpl::ApplyFilter(SearchResults& srNew, const SearchResults& srPrevio
                             if (nAdjustment == 0)
                             {
                                 // entire block matches, copy the old block
-                                MemBlock& newBlock = AddBlock(srNew, block.GetFirstAddress(), block.GetBytesSize(), block.GetMaxAddresses());
-                                memcpy(newBlock.GetBytes(), block.GetBytes(), block.GetBytesSize());
-                                newBlock.CopyMatchingAddresses(block);
+                                srNew.m_vBlocks.emplace_back(block);
                                 continue;
                             }
                             else if (srNew.GetFilterComparison() == ComparisonType::Equals)

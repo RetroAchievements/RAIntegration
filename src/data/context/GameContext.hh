@@ -181,6 +181,8 @@ public:
         // Core assets have SubsetId of 0
         uint32_t ID() const noexcept { return (m_nType == SubsetType::Core) ? 0 : m_nAchievementSetId; }
 
+        void SetTitle(const std::wstring& sTitle) { m_sTitle = sTitle; }
+
     private:
         std::wstring m_sTitle;
         SubsetType m_nType;

@@ -211,7 +211,7 @@ void IntegrationMenuViewModel::OpenGamePage()
     if (pGameContext.GameId() != 0)
     {
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        const auto sUrl = ra::StringPrintf("%s/game/%u", pConfiguration.GetHostUrl(), pGameContext.GameId());
+        const auto sUrl = ra::StringPrintf("%s/game/%u", pConfiguration.GetHostUrl(), pGameContext.ActiveGameId());
 
         const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
         pDesktop.OpenUrl(sUrl);

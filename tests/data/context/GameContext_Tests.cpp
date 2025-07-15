@@ -1749,17 +1749,18 @@ public:
 
         subsets[0].id = 1111;
         subsets[0].game_id = 2222;
-        subsets[0].title = "Game Title";
+        subsets[0].title = "Subset Title";
         subsets[0].type = RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE;
 
-        sets.id = subsets[0].game_id;
+        sets.id = 3333;
+        sets.title = "Game Title";
         sets.session_game_id = 2222;
         sets.sets = subsets;
         sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
 
         game.InitializeSubsets(&sets);
 
-        Assert::AreEqual(2222U, game.GameId());
+        Assert::AreEqual(3333U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
 
         Assert::AreEqual({1}, game.Subsets().size());
@@ -1769,7 +1770,7 @@ public:
         Assert::AreEqual(1111U, pSubset.AchievementSetID());
         Assert::AreEqual(2222U, pSubset.GameID());
         Assert::AreEqual(GameContext::SubsetType::Exclusive, pSubset.Type());
-        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.Title());
+        Assert::AreEqual(std::wstring(L"Subset Title (Game Title)"), pSubset.Title());
     }
 
     TEST_METHOD(TestInitializeSubsetsSpecialtyWithBonus)
@@ -1828,6 +1829,39 @@ public:
         Assert::AreEqual(3333U, pSubset3.GameID());
         Assert::AreEqual(GameContext::SubsetType::Bonus, pSubset3.Type());
         Assert::AreEqual(std::wstring(L"Bonus"), pSubset3.Title());
+    }
+
+    TEST_METHOD(TestInitializeSubsetsVirtual)
+    {
+        GameContextHarness game;
+        rc_api_achievement_set_definition_t subsets[1];
+        rc_api_fetch_game_sets_response_t sets;
+
+        memset(&subsets, 0, sizeof(subsets));
+        memset(&sets, 0, sizeof(sets));
+
+        subsets[0].id = 11111;
+        subsets[0].game_id = 2222 + 100000000;
+        subsets[0].title = "Unsupported Game Version";
+        subsets[0].type = RC_ACHIEVEMENT_SET_TYPE_CORE;
+
+        sets.id = sets.session_game_id = subsets[0].game_id;
+        sets.sets = subsets;
+        sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
+
+        game.InitializeSubsets(&sets);
+
+        Assert::AreEqual(2222U, game.GameId());
+        Assert::AreEqual(2222U, game.ActiveGameId());
+
+        Assert::AreEqual({1}, game.Subsets().size());
+
+        const auto& pSubset = game.Subsets().front();
+        Assert::AreEqual(0U, pSubset.ID());
+        Assert::AreEqual(11111U, pSubset.AchievementSetID());
+        Assert::AreEqual(2222U, pSubset.GameID());
+        Assert::AreEqual(GameContext::SubsetType::Core, pSubset.Type());
+        Assert::AreEqual(std::wstring(L"Unsupported Game Version"), pSubset.Title());
     }
 };
 

@@ -843,8 +843,8 @@ public:
         {
             m_pClient = pClient;
             m_pPublishedSubset = pClient->game->subsets;
-            Expects(m_pPublishedSubset != nullptr);
         }
+        Expects(m_pPublishedSubset != nullptr);
 
         std::unique_ptr<SubsetWrapper> pSubsetWrapper;
         pSubsetWrapper.reset(new SubsetWrapper);
@@ -858,7 +858,7 @@ public:
         pSubsetWrapper->pLocalSubset.resize(nSubsets);
 
         BuildSubsetWrapper(*pSubsetWrapper, pSubsetWrapper->pCoreSubset.at(0), pSubsetWrapper->pLocalSubset.at(0),
-                           m_pPublishedSubset, 0, vAssets);
+                           m_pPublishedSubset, m_pPublishedSubset->public_.id, vAssets);
 
         nSubsets = 1;
         for (auto* pSubset = m_pPublishedSubset->next; pSubset; pSubset = pSubset->next, nSubsets++)
@@ -1226,9 +1226,7 @@ static void ProcessPatchData(const rc_api_server_response_t* server_response,
                              const rc_api_fetch_game_sets_response_t* game_data_response)
 {
     Expects(game_data_response != nullptr);
-    // determine the active game ID and any identify any provided subsets
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    pGameContext.InitializeSubsets(game_data_response);
 
     // extract the old rich presence script from the last cached server response so we can tell if the
     // local value has changed. store it as the local value, and we'll merge in the real local value later.
@@ -1299,6 +1297,9 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
             wrapper->m_mLeaderboardDefinitions[pLeaderboard->id] = pLeaderboard->definition;
     }
 
+    pGameContext.InitializeSubsets(game_data_response);
+
+    // don't write virtual game data to disc
     if (!ra::data::context::GameContext::IsVirtualGameId(game_data_response->id))
         ProcessPatchData(server_response, game_data_response);
 }

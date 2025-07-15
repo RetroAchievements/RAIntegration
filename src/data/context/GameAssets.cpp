@@ -144,13 +144,14 @@ void GameAssets::OnBeforeItemRemoved(ModelBase& pModel)
 void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase*>& vAssetsToReload)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto nPrimarySubsetId = pGameContext.Subsets().front().AchievementSetID();
 
     auto* pRichPresence = dynamic_cast<ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0));
     if (pRichPresence != nullptr)
         pRichPresence->ReloadRichPresenceScript();
 
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.GameId()));
+    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.ActiveGameId()));
     if (pData == nullptr)
     {
         // no local file found. reset non-local items to their server state
@@ -237,7 +238,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
         }
 
         nId = pTokenizer.ReadNumber();
-        nSubsetId = pTokenizer.Consume('|') ? pTokenizer.ReadNumber() : 0;
+        nSubsetId = pTokenizer.Consume('|') ? pTokenizer.ReadNumber() : nPrimarySubsetId;
 
         if (!pTokenizer.Consume(':'))
             continue;
@@ -358,7 +359,7 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.GameId()));
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.ActiveGameId()));
     if (pData == nullptr)
     {
         RA_LOG_ERR("Failed to create user assets file");
@@ -371,7 +372,16 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
     pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
 #endif
 
-    pData->WriteLine(pGameContext.GameTitle());
+    uint32_t nPrimarySubsetId = 0;
+    if (pGameContext.Subsets().empty())
+    {
+        pData->WriteLine(pGameContext.GameTitle());
+    }
+    else
+    {
+        nPrimarySubsetId = pGameContext.Subsets().front().AchievementSetID();
+        pData->WriteLine(pGameContext.Subsets().front().Title());
+    }
 
     bool bHasDeleted = false;
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
@@ -457,7 +467,7 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
         pData->Write(std::to_string(pItem->GetID()));
 
         const auto nSubsetId = pItem->GetSubsetID();
-        if (nSubsetId > 0)
+        if (nSubsetId > 0 && nSubsetId != nPrimarySubsetId)
         {
             pData->Write("|");
             pData->Write(std::to_string(nSubsetId));

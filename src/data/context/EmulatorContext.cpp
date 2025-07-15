@@ -26,6 +26,8 @@
 #include "RAInterface\RA_Consoles.h"
 #include "RAInterface\RA_Emulators.h"
 
+#include <rcheevos/src/rc_client_internal.h>
+
 namespace ra {
 namespace data {
 namespace context {
@@ -715,7 +717,7 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
 {
 #if !defined(_NDEBUG) && !defined(RA_UTEST)
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    if (!pRuntime.IsOnDoFrameThread())
+    if (!pRuntime.GetClient()->state.allow_background_memory_reads && !pRuntime.IsOnDoFrameThread())
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         Expects(pGameContext.GameId() == 0 || pGameContext.IsGameLoading());
@@ -743,7 +745,7 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[]
 {
 #if !defined(_NDEBUG) && !defined(RA_UTEST)
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    if (!pRuntime.IsOnDoFrameThread())
+    if (!pRuntime.GetClient()->state.allow_background_memory_reads && !pRuntime.IsOnDoFrameThread())
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         Expects(pGameContext.GameId() == 0 || pGameContext.IsGameLoading());

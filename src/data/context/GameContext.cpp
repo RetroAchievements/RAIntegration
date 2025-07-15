@@ -277,6 +277,8 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
         // activate rich presence (or remove if not defined)
         if (pRichPresence && nResult == RC_OK)
         {
+            pRichPresence->SetSubsetID(m_vSubsets.front().AchievementSetID());
+
             // if the server value differs from the local value, the model will appear as Unpublished
             if (pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
             {
@@ -438,8 +440,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 else
                     vmAchievement->Attach(*pAchievementData, nCategory, "");
 
-                if (pSubset != pClient->game->subsets)
-                    vmAchievement->SetSubsetID(pSubset->public_.id);
+                vmAchievement->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmAchievement));
 
@@ -475,6 +476,8 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 else
                     vmLeaderboard->Attach(*pLeaderboardData, nCategory, "");
 
+                vmLeaderboard->SetSubsetID(pSubset->public_.id);
+
                 m_vAssets.Append(std::move(vmLeaderboard));
             }
         }
@@ -487,9 +490,9 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
     m_vSubsets.clear();
 
     // GameID dictates which game is loaded for purposes of local achievement storage and code notes
-    m_nGameId = game_data_response->id;
+    m_nGameId = GetRealGameId(game_data_response->id);
     // ActiveGameID dictates which game is running for purposes of rich presence and pings
-    m_nActiveGameId = game_data_response->session_game_id;
+    m_nActiveGameId = GetRealGameId(game_data_response->session_game_id);
 
     for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
     {
@@ -498,7 +501,8 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
         {
             // core subset should always be first
             m_vSubsets.insert(m_vSubsets.begin(),
-                              Subset(pSet->id, pSet->game_id, ra::Widen(pSet->title), SubsetType::Core));
+                              Subset(pSet->id, GetRealGameId(pSet->game_id),
+                                     ra::Widen(pSet->title), SubsetType::Core));
         }
         else
         {
@@ -515,13 +519,21 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
                     nType = SubsetType::Bonus;
                     break;
             }
-            m_vSubsets.emplace_back(pSet->id, pSet->game_id, ra::Widen(pSet->title), nType);
+            m_vSubsets.emplace_back(pSet->id, GetRealGameId(pSet->game_id),
+                                    ra::Widen(pSet->title), nType);
         }
     }
 
     // if subsets were found, migrate any SUBSET-User.txt files into the the GAME-User.txt file
     if (m_vSubsets.size() > 1)
+    {
         MigrateSubsetUserFiles();
+    }
+    else if (m_nActiveGameId != m_nGameId)
+    {
+        m_vSubsets.front().SetTitle(ra::StringPrintf(L"%s (%s)",
+            m_vSubsets.front().Title(), game_data_response->title));
+    }
 }
 
 void GameContext::MigrateSubsetUserFiles()

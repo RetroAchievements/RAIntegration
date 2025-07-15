@@ -397,7 +397,7 @@ private:
                 auto* pSubset =
                     (rc_client_subset_info_t*)rc_buffer_alloc(&pGame->buffer, sizeof(rc_client_subset_info_t));
                 memset(pSubset, 0, sizeof(*pSubset));
-                pSubset->public_.id = pGame->public_.id;
+                pSubset->public_.id = mockGameContext.ActiveGameId();
                 pSubset->public_.title = pGame->public_.title;
                 pSubset->active = true;
 
@@ -413,6 +413,7 @@ private:
             vmAchievement->SetCategory(nCategory);
             vmAchievement->SetPoints(nPoints);
             vmAchievement->SetName(sTitle);
+            vmAchievement->SetSubsetID(mockGameContext.ActiveGameId());
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
@@ -432,6 +433,7 @@ private:
             vmAchievement->SetDescription(sDescription);
             vmAchievement->SetBadge(sBadge);
             vmAchievement->SetTrigger(sTrigger);
+            vmAchievement->SetSubsetID(mockGameContext.ActiveGameId());
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
@@ -452,6 +454,7 @@ private:
             vmAchievement->SetDescription(sDescription);
             vmAchievement->SetBadge(sBadge);
             vmAchievement->SetTrigger(sTrigger);
+            vmAchievement->SetSubsetID(mockGameContext.ActiveGameId());
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->SetNew();
             vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
@@ -475,6 +478,7 @@ private:
             vmLeaderboard->SetName(sTitle);
             vmLeaderboard->CreateServerCheckpoint();
             vmLeaderboard->CreateLocalCheckpoint();
+            vmLeaderboard->SetSubsetID(mockGameContext.ActiveGameId());
             mockGameContext.Assets().Append(std::move(vmLeaderboard));
 
             EnsureCoreSubset();
@@ -491,6 +495,7 @@ private:
             vmRichPresence->SetScript(sScript);
             vmRichPresence->CreateServerCheckpoint();
             vmRichPresence->CreateLocalCheckpoint();
+            vmRichPresence->SetSubsetID(mockGameContext.ActiveGameId());
             mockGameContext.Assets().Append(std::move(vmRichPresence));
 
             EnsureCoreSubset();
@@ -501,10 +506,15 @@ private:
             mockThreadPool.AdvanceTime(std::chrono::milliseconds(500));
         }
 
-        void MockGameId(unsigned int nGameId)
+        void MockGameId(unsigned int nGameId, bool notify=true)
         {
+            mockRuntime.GetClient()->game->public_.id = nGameId;
+
             mockGameContext.SetGameId(nGameId);
-            mockGameContext.NotifyActiveGameChanged();
+            if (notify)
+                mockGameContext.NotifyActiveGameChanged();
+
+            SetSubsetFilter(mockGameContext.ActiveGameId());
         }
 
         const std::string& GetUserFile(const std::wstring& sGameId)
@@ -706,8 +716,9 @@ public:
     TEST_METHOD(TestLoadGameCoreAchievements)
     {
         AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(1U, false);
         vmAssetList.AddAchievement(AssetCategory::Core, 10, L"Ach1");
-        vmAssetList.MockGameId(1U);
+        vmAssetList.mockGameContext.NotifyActiveGameChanged();
 
         Assert::AreEqual(1U, vmAssetList.GetGameId());
         Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
@@ -717,8 +728,9 @@ public:
     TEST_METHOD(TestLoadGameUnofficialAchievements)
     {
         AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(1U, false);
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 10, L"Ach1");
-        vmAssetList.MockGameId(1U);
+        vmAssetList.mockGameContext.NotifyActiveGameChanged();
 
         Assert::AreEqual(1U, vmAssetList.GetGameId());
         Assert::AreEqual(AssetListViewModel::CategoryFilter::Unofficial, vmAssetList.GetCategoryFilter());
@@ -728,8 +740,9 @@ public:
     TEST_METHOD(TestLoadGameLocalAchievements)
     {
         AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(1U, false);
         vmAssetList.AddAchievement(AssetCategory::Local, 10, L"Ach1");
-        vmAssetList.MockGameId(1U);
+        vmAssetList.mockGameContext.NotifyActiveGameChanged();
 
         Assert::AreEqual(1U, vmAssetList.GetGameId());
         Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
@@ -1213,7 +1226,8 @@ public:
     TEST_METHOD(TestSubsetFilter)
     {
         AssetListViewModelHarness vmAssetList;
-        vmAssetList.SetSubsetFilter(0);
+        vmAssetList.MockGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         // create core achievements first so core subset gets created
@@ -1231,7 +1245,7 @@ public:
         vmAssetList.mockGameContext.NotifyActiveGameChanged();
 
         Assert::AreEqual({2U}, vmAssetList.Subsets().Count());
-        Assert::AreEqual({0U}, vmAssetList.Subsets().GetItemAt(0)->GetId());
+        Assert::AreEqual({22U}, vmAssetList.Subsets().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Game Title"), vmAssetList.Subsets().GetItemAt(0)->GetLabel());
         Assert::AreEqual({555U}, vmAssetList.Subsets().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Bonus"), vmAssetList.Subsets().GetItemAt(1)->GetLabel());
@@ -1262,7 +1276,8 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockUserContext.Initialize("User1", "FOO");
-        vmAssetList.SetSubsetFilter(0);
+        vmAssetList.MockGameId(22U);
+        vmAssetList.SetSubsetFilter(vmAssetList.mockGameContext.GameId());
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
 
         vmAssetList.mockRuntime.MockAchievement(1, "Ach1")->public_.points = 5;
@@ -1291,7 +1306,7 @@ public:
         Assert::AreEqual({3U}, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
         Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
-        Assert::AreEqual(0U, vmAssetList.GetSubsetFilter());
+        Assert::AreEqual(22U, vmAssetList.GetSubsetFilter());
 
         const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -1312,7 +1327,7 @@ public:
         // achievement should be associated to core subset
         const auto* pAch = vmAssetList.mockGameContext.Assets().FindAchievement({111000001U});
         Expects(pAch != nullptr);
-        Assert::AreEqual(0U, pAch->GetSubsetID());
+        Assert::AreEqual(22U, pAch->GetSubsetID());
 
         // reset the filter for the subset
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
@@ -3235,7 +3250,7 @@ public:
 
         // local file should be updated without the local achievement
         const auto& sText = vmAssetList.GetUserFile(L"22");
-        Assert::AreEqual(std::string("0.0.0.0\nGameName\n"), sText);
+        Assert::AreEqual(std::string("0.0.0.0\nGame Title\n"), sText);
     }
 
     TEST_METHOD(TestDoFrameUpdatesAssets)
@@ -3264,6 +3279,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockUserContext.Initialize("User1", "FOO");
+        vmAssetList.mockGameContext.SetGameId(22U);
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
@@ -5509,7 +5525,7 @@ public:
 
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
-        vmAssetList.SetGameId(22U);
+        vmAssetList.MockGameId(22U);
         vmAssetList.AddRichPresence("Display\nTest\n");
         vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
 
@@ -5525,7 +5541,38 @@ public:
         vmAssetList.OpenEditor(pItem);
         Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
 
-        Assert::AreEqual(std::string("file://localhost/./RACache/Data/0-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
+        Assert::AreEqual(std::string("file://localhost/./RACache/Data/22-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
+    }
+
+    TEST_METHOD(TestOpenEditorRichPresenceExclusiveSubset)
+    {
+        AssetListViewModelHarness vmAssetList;
+        ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::services::impl::FileLocalStorage storage(mockFileSystem);
+        ra::services::ServiceLocator::ServiceOverride<ra::services::ILocalStorage> storageOverride(&storage);
+
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
+        vmAssetList.MockGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(33U);
+        vmAssetList.AddRichPresence("Display\nTest\n");
+        vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
+        vmAssetList.SetSubsetFilter(33U);
+
+        Assert::AreEqual({1U}, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+
+        auto* pItem = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pItem != nullptr);
+        pItem->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        vmAssetList.OpenEditor(pItem);
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+
+        Assert::AreEqual(std::string("file://localhost/./RACache/Data/33-Rich.txt"),
+                         vmAssetList.mockDesktop.LastOpenedUrl());
     }
 
     TEST_METHOD(TestUpdateButtonsRichPresenceSelection)

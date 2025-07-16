@@ -274,8 +274,15 @@ void GridBinding::UpdateItems(gsl::index nColumn)
 
         for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
         {
-            sText = pColumn.GetText(*m_vmItems, i);
-            item.pszText = sText.data();
+            if (m_pScrollOffsetProperty)
+            {
+                item.pszText = LPSTR_TEXTCALLBACK;
+            }
+            else
+            {
+                sText = pColumn.GetText(*m_vmItems, i);
+                item.pszText = sText.data();
+            }
             item.iItem = gsl::narrow_cast<int>(i);
 
             GSL_SUPPRESS_TYPE1
@@ -368,12 +375,14 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
 void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
 {
     // when virtualizing, only the visible items have view models. adjust the index accordingly.
-    nIndex = GetRealItemIndex(nIndex);
+    const auto nRealIndex = GetRealItemIndex(nIndex);
+    if (nRealIndex == -1)
+        return;
 
     if (m_pIsSelectedProperty && *m_pIsSelectedProperty == args.Property)
     {
-        InvokeOnUIThread([this, nIndex, nValue = args.tNewValue ? LVIS_SELECTED : 0]() noexcept {
-            ListView_SetItemState(m_hWnd, nIndex, nValue, LVIS_SELECTED);
+        InvokeOnUIThread([this, nRealIndex, nValue = args.tNewValue ? LVIS_SELECTED : 0]() noexcept {
+            ListView_SetItemState(m_hWnd, nRealIndex, nValue, LVIS_SELECTED);
         });
     }
 
@@ -385,8 +394,8 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
             const auto* pCheckBoxColumn = dynamic_cast<const GridCheckBoxColumnBinding*>(&pColumn);
             if (pCheckBoxColumn != nullptr)
             {
-                InvokeOnUIThread([this, nIndex, nValue = args.tNewValue]() noexcept {
-                    ListView_SetCheckState(m_hWnd, nIndex, nValue);
+                InvokeOnUIThread([this, nRealIndex, nValue = args.tNewValue]() noexcept {
+                    ListView_SetCheckState(m_hWnd, nRealIndex, nValue);
                 });
             }
             else
@@ -399,9 +408,6 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
 
 void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
-    // when virtualizing, only the visible items have view models. adjust the index accordingly.
-    nIndex = GetRealItemIndex(nIndex);
-
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
@@ -418,25 +424,29 @@ void GridBinding::UpdateCell(gsl::index nIndex, gsl::index nColumnIndex)
     if (m_nSortIndex == nColumnIndex)
         m_nSortIndex = -1;
 
-    const auto& pColumn = *m_vColumns.at(nColumnIndex);
-    std::wstring sText = pColumn.GetText(*m_vmItems, nIndex);
+    const auto nRealIndex = GetRealItemIndex(nIndex);
+    InvokeOnUIThread([this, nIndex, nRealIndex, nColumnIndex]() {
+        std::wstring sText;
 
-    nIndex = GetRealItemIndex(nIndex);
-    InvokeOnUIThread([this, sText, nIndex, nColumnIndex]() noexcept {
         LV_ITEMW item{};
         item.mask = LVIF_TEXT;
-        item.iItem = gsl::narrow_cast<int>(nIndex);
+        item.iItem = gsl::narrow_cast<int>(nRealIndex);
         item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
-        GSL_SUPPRESS_TYPE3
-        item.pszText = const_cast<wchar_t*>(sText.data());
+
+        if (m_pScrollOffsetProperty)
+        {
+            item.pszText = LPSTR_TEXTCALLBACK;
+        }
+        else
+        {
+            const auto& pColumn = *m_vColumns.at(nColumnIndex);
+            sText = pColumn.GetText(*m_vmItems, nIndex);
+            item.pszText = sText.data();
+        }
 
         GSL_SUPPRESS_TYPE1
         SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
-
-        ListView_RedrawItems(m_hWnd, nIndex, nIndex);
     });
-
-    m_bForceRepaintItems = true;
 }
 
 void GridBinding::EnsureVisible(gsl::index nIndex)
@@ -515,8 +525,15 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     const auto& pColumn = *m_vColumns.at(0);
     nIndex -= m_nScrollOffset;
 
-    sText = pColumn.GetText(*m_vmItems, nIndex);
-    item.pszText = sText.data();
+    if (m_pScrollOffsetProperty)
+    {
+        item.pszText = LPSTR_TEXTCALLBACK;
+    }
+    else
+    {
+        sText = pColumn.GetText(*m_vmItems, nIndex);
+        item.pszText = sText.data();
+    }
 
     GSL_SUPPRESS_TYPE1
     SNDMSG(m_hWnd, bExisting ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
@@ -530,10 +547,17 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
 
     for (gsl::index i = 1; ra::to_unsigned(i) < m_vColumns.size(); ++i)
     {
-        sText = m_vColumns.at(i)->GetText(*m_vmItems, nIndex);
-
-        item.pszText = sText.data();
         item.iSubItem = gsl::narrow_cast<int>(i);
+
+        if (m_pScrollOffsetProperty)
+        {
+            item.pszText = LPSTR_TEXTCALLBACK;
+        }
+        else
+        {
+            sText = m_vColumns.at(i)->GetText(*m_vmItems, nIndex);
+            item.pszText = sText.data();
+        }
 
         GSL_SUPPRESS_TYPE1
         SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
@@ -1102,38 +1126,9 @@ int GridBinding::GetVisibleItemIndex(int iItem)
     if (nItems == 0)
         return -1;
 
-    // adjust for scroll offset
-    const auto iAdjustedItem = iItem - m_nScrollOffset;
-    if (iAdjustedItem >= 0 && iAdjustedItem < nItems)
-        return iAdjustedItem;
-
-    // quick check to make sure the item is valid
-    const auto nScrollMax = GetValue(*m_pScrollMaximumProperty);
-    if (iItem >= nScrollMax)
-        return -1;
-
-    // calculate what the scroll offset should be
-    int nOffset = 0;
-    if (iAdjustedItem < 0)
-    {
-        nOffset = m_nScrollOffset + iAdjustedItem;
-        if (nOffset < 0)
-            nOffset = 0;
-    }
-    else
-    {
-        const auto nPerPage = ListView_GetCountPerPage(m_hWnd);
-        const auto nMaxOffset = nScrollMax - nPerPage;
-        nOffset = m_nScrollOffset + iAdjustedItem - nPerPage;
-        if (nOffset > nMaxOffset)
-            nOffset = nMaxOffset;
-    }
-
-    // if it's correct, the requested item is not available
-    if (m_nScrollOffset == nOffset)
-        return -1;
-
-    // update the scroll offset
+    // update the scroll offset (scroll wheel event needs to push offset back to view model)
+    const auto nOffset = ListView_GetTopIndex(m_hWnd);
+    if (nOffset != m_nScrollOffset)
     {
         // changing the scroll offset can cause the list to repaint, which may try to
         // adjust the scroll offset again. make sure it doesn't.
@@ -1156,10 +1151,6 @@ int GridBinding::GetVisibleItemIndex(int iItem)
                 ControlBinding::ForceRepaint(m_hWnd);
             }
         });
-
-        // attempt to scroll failed
-        if (m_nScrollOffset != nOffset)
-            return -1;
     }
 
     // readjust with new scroll offset
@@ -1170,28 +1161,25 @@ int GridBinding::GetVisibleItemIndex(int iItem)
     return -1;
 }
 
-static void CacheText(ra::tstring& sCacheString, const std::wstring& sText)
-{
-    // weird bug - assigning the NativeStr to the cache string seems to do some weird stuff with the
-    // backing pointer, sometimes causing invalid memory to be displayed in the control. This forces
-    // the string into the same buffer, instead of doing a swap() or whatever is happening.
-#ifdef NEVER
-    sCacheString = NativeStr(sText);
-#else
-    ra::tstring sNativeText = NativeStr(sText);
-    sCacheString.resize(sNativeText.length());
-    memcpy(sCacheString.data(), sNativeText.data(), (sNativeText.length() + 1) * 2);
-#endif
-}
-
 void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 {
+    if ((pnmDispInfo.item.mask & LVIF_TEXT) == 0)
+        return;
+
     // when virtualizing, only the visible items have view models. adjust the index accordingly.
     const auto nIndex = GetVisibleItemIndex(pnmDispInfo.item.iItem);
 
     // get the requested data
-    CacheText(m_sDispInfo, m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
-    GSL_SUPPRESS_TYPE3 pnmDispInfo.item.pszText = const_cast<LPTSTR>(m_sDispInfo.c_str());
+    auto sText = m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex);
+    if (sText.length() + 1 < pnmDispInfo.item.cchTextMax)
+    {
+        memcpy(pnmDispInfo.item.pszText, sText.data(), (sText.length() + 1) * 2);
+    }
+    else
+    {
+        m_sDispInfo.swap(sText);
+        GSL_SUPPRESS_TYPE3 pnmDispInfo.item.pszText = const_cast<LPTSTR>(m_sDispInfo.c_str());
+    }
 }
 
 void GridBinding::OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo)
@@ -1207,7 +1195,7 @@ void GridBinding::OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo)
     if (iSubItem < 0 || iSubItem >= gsl::narrow_cast<int>(m_vColumns.size()))
         return;
 
-    CacheText(m_sTooltip, m_vColumns.at(iSubItem)->GetTooltip(*m_vmItems, nIndex));
+    m_sTooltip = m_vColumns.at(iSubItem)->GetTooltip(*m_vmItems, nIndex);
     GSL_SUPPRESS_TYPE3 pnmTtDispInfo.lpszText = const_cast<LPTSTR>(m_sTooltip.c_str());
 }
 

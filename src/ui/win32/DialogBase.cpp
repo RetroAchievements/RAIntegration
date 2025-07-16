@@ -372,6 +372,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                         GSL_SUPPRESS_TYPE1{ plvdi = reinterpret_cast<NMLVDISPINFO*>(lParam); }
                         Expects(plvdi != nullptr);
                         pGridBinding->OnLvnGetDispInfo(*plvdi);
+                        return 1;
                     }
 
                     return 0;

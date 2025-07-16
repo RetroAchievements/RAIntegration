@@ -43,7 +43,8 @@ public:
         PauseOnChange,
     };
 
-    class MemoryBookmarkViewModel : public LookupItemViewModel
+    class MemoryBookmarkViewModel : public LookupItemViewModel,
+        protected ra::data::context::EmulatorContext::DispatchesReadMemory
     {
     public:
         /// <summary>
@@ -90,6 +91,11 @@ public:
         /// Sets the note supporting the bookmark.
         /// </summary>
         void SetRealNote(const std::wstring& sValue) { SetValue(RealNoteProperty, sValue); }
+
+        /// <summary>
+        /// Sets the <see cref="RealNoteProperty" /> based on the <see cref="CurrentAddressProperty" />.
+        /// </summary>
+        void UpdateRealNote();
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the bookmark address.

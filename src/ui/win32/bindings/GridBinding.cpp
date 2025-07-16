@@ -335,15 +335,14 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
 
 void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
 {
-    // when virtualizing, only the visible items have view models. adjust the index accordingly.
-    nIndex = GetRealItemIndex(nIndex);
-
     if (m_pRowColorProperty && *m_pRowColorProperty == args.Property)
     {
         if (m_nAdjustingScrollOffset == 0)
         {
-            InvokeOnUIThread([this, nIndex]() noexcept {
-                ListView_RedrawItems(m_hWnd, nIndex, nIndex);
+            const auto nRealIndex = GetRealItemIndex(nIndex);
+
+            InvokeOnUIThread([this, nRealIndex]() noexcept {
+                ListView_RedrawItems(m_hWnd, nRealIndex, nRealIndex);
             });
 
             m_bForceRepaintItems = true;
@@ -422,6 +421,7 @@ void GridBinding::UpdateCell(gsl::index nIndex, gsl::index nColumnIndex)
     const auto& pColumn = *m_vColumns.at(nColumnIndex);
     std::wstring sText = pColumn.GetText(*m_vmItems, nIndex);
 
+    nIndex = GetRealItemIndex(nIndex);
     InvokeOnUIThread([this, sText, nIndex, nColumnIndex]() noexcept {
         LV_ITEMW item{};
         item.mask = LVIF_TEXT;
@@ -1196,6 +1196,9 @@ void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 
 void GridBinding::OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo)
 {
+    if (m_nTooltipLocation == -1)
+        return;
+
     const auto nIndex = GetVisibleItemIndex(m_nTooltipLocation / 256);
     if (nIndex < 0 || nIndex >= gsl::narrow_cast<int>(m_vmItems->Count()))
         return;

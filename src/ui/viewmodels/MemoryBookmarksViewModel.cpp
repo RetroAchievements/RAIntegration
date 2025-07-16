@@ -249,8 +249,10 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnSizeChanged()
             }
         }
 
-        m_nValue = ReadValue();
-        SetValue(CurrentValueProperty, BuildCurrentValue());
+        ra::data::context::EmulatorContext::DispatchesReadMemory::DispatchMemoryRead([this]() {
+            m_nValue = ReadValue();
+            SetValue(CurrentValueProperty, BuildCurrentValue());
+        });
     }
 }
 
@@ -532,8 +534,30 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetIndirectAddress(const
     if (pCondition != nullptr)
         SetSize(ra::data::models::TriggerValidation::MapRcheevosMemSize(rc_condition_get_real_operand1(pCondition)->size));
 
-    UpdateCurrentValue(); // value must be updated first to populate memrefs
-    UpdateCurrentAddress();
+    DispatchMemoryRead([this]() {
+        UpdateCurrentValue(); // value must be updated first to populate memrefs
+        UpdateCurrentAddress();
+        UpdateRealNote();
+    });
+}
+
+void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateRealNote()
+{
+    const auto nAddress = GetAddress();
+    if (nAddress == 0 && HasIndirectAddress()) // ignore null pointer
+        return;
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
+    if (pNote)
+    {
+        SetRealNote(*pNote);
+
+        // if bookmarking an 8-byte double, automatically adjust the bookmark for the significant bytes
+        if (GetSize() == MemSize::Double32 && pCodeNotes->GetCodeNoteBytes(nAddress) == 8)
+            SetAddress(nAddress + 4);
+    }
 }
 
 bool MemoryBookmarksViewModel::IsModified() const
@@ -890,6 +914,13 @@ void MemoryBookmarksViewModel::AddBookmark(const std::string& sSerialized)
     InitializeBookmark(*vmBookmark, sSerialized);
     InitializeBookmark(*vmBookmark);
 
+    if (vmBookmark->HasIndirectAddress())
+    {
+        DispatchMemoryRead([this, pBookmark = vmBookmark.get()]() {
+            InitializeBookmark(*pBookmark);
+        });
+    }
+
     vmBookmark->EndInitialization();
 
     m_vBookmarks.Append(std::move(vmBookmark));
@@ -901,18 +932,7 @@ void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::Memo
     const auto bPreferDecimal = pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal);
     vmBookmark.SetFormat(bPreferDecimal ? MemFormat::Dec : MemFormat::Hex);
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    const auto nAddress = vmBookmark.GetAddress();
-    const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
-    if (pNote)
-    {
-        vmBookmark.SetRealNote(*pNote);
-
-        // if bookmarking an 8-byte double, automatically adjust the bookmark for the significant bytes
-        if (vmBookmark.GetSize() == MemSize::Double32 && pCodeNotes->GetCodeNoteBytes(nAddress) == 8)
-            vmBookmark.SetAddress(nAddress + 4);
-    }
+    vmBookmark.UpdateRealNote();
 }
 
 void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::MemoryBookmarkViewModel& vmBookmark, const std::string& sSerialized)

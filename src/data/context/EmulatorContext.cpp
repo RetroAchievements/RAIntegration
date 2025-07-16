@@ -472,8 +472,10 @@ void EmulatorContext::DisableHardcoreMode()
         UpdateMenuState(IDM_RA_HARDCORE_MODE);
 
         // GameContext::DoFrame synchronizes the models to the runtime
-        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-        pGameContext.DoFrame();
+        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().QueueMemoryRead([]() {
+            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+            pGameContext.DoFrame();
+        });
     }
 }
 
@@ -713,16 +715,29 @@ bool EmulatorContext::IsValidAddress(ra::ByteAddress nAddress) const noexcept
     return false;
 }
 
-uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
+void EmulatorContext::AssertIsOnDoFrameThread() const
 {
-#if !defined(_NDEBUG) && !defined(RA_UTEST)
+#if !defined(RA_UTEST)
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    if (!pRuntime.GetClient()->state.allow_background_memory_reads && !pRuntime.IsOnDoFrameThread())
+    if (!pRuntime.GetClient()->state.allow_background_memory_reads &&
+        !pRuntime.IsOnDoFrameThread())
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        Expects(pGameContext.GameId() == 0 || pGameContext.IsGameLoading());
+        if (pGameContext.GameId() != 0 && !pGameContext.IsGameLoading())
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                L"Memory Read on Background Thread",
+                L"Memory is being read on a thread other than the thread that last called rc_client_do_frame and the "
+                L"client has specified that should not be allowed. Please notify a RetroAchievements engineer what you "
+                L"were doing when this occurred.");
+        }
     }
 #endif
+}
+
+uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
+{
+    AssertIsOnDoFrameThread();
 
     for (const auto& pBlock : m_vMemoryBlocks)
     {
@@ -807,14 +822,7 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[]
 _Use_decl_annotations_
 uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
 {
-#if !defined(_NDEBUG) && !defined(RA_UTEST)
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    if (!pRuntime.GetClient()->state.allow_background_memory_reads && !pRuntime.IsOnDoFrameThread())
-    {
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        Expects(pGameContext.GameId() == 0 || pGameContext.IsGameLoading());
-    }
-#endif
+    AssertIsOnDoFrameThread();
 
     uint32_t nBytesRead = 0;
     Expects(pBuffer != nullptr);

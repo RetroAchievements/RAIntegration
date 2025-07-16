@@ -914,13 +914,6 @@ void MemoryBookmarksViewModel::AddBookmark(const std::string& sSerialized)
     InitializeBookmark(*vmBookmark, sSerialized);
     InitializeBookmark(*vmBookmark);
 
-    if (vmBookmark->HasIndirectAddress())
-    {
-        DispatchMemoryRead([this, pBookmark = vmBookmark.get()]() {
-            InitializeBookmark(*pBookmark);
-        });
-    }
-
     vmBookmark->EndInitialization();
 
     m_vBookmarks.Append(std::move(vmBookmark));

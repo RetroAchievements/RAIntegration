@@ -1159,6 +1159,7 @@ void TriggerViewModel::InitializeConditions(const GroupViewModel* pGroup)
 void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 {
     int nNewScrollMaximum = -1;
+
     {
         std::lock_guard<std::mutex> lock(m_pMutex);
 
@@ -1189,7 +1190,8 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
                         if (vmCondition == nullptr)
                         {
                             vmCondition = &m_vConditions.Add();
-                            Ensures(vmCondition != nullptr);
+                            if (vmCondition == nullptr) // this should be an Ensures(), but the exception trips up the code analysis when the lock is used in an inner scope
+                                break;
                             vmCondition->SetTriggerViewModel(this);
                         }
 

@@ -1171,7 +1171,7 @@ void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 
     // get the requested data
     auto sText = m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex);
-    if (sText.length() + 1 < pnmDispInfo.item.cchTextMax)
+    if (gsl::narrow_cast<int>(sText.length()) + 1 < pnmDispInfo.item.cchTextMax)
     {
         memcpy(pnmDispInfo.item.pszText, sText.data(), (sText.length() + 1) * 2);
     }

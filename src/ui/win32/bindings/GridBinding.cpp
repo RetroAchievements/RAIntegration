@@ -1171,6 +1171,8 @@ void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 
     // when virtualizing, only the visible items have view models. adjust the index accordingly.
     const auto nIndex = GetVisibleItemIndex(pnmDispInfo.item.iItem);
+    if (nIndex < 0)
+        return;
 
     // get the requested data
     auto sText = m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex);

@@ -834,6 +834,7 @@ public:
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
         Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
@@ -856,6 +857,7 @@ public:
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::SixteenBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
         Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
@@ -881,6 +883,7 @@ public:
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
         Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
@@ -905,6 +908,7 @@ public:
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(4);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
         Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
@@ -930,6 +934,7 @@ public:
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
         Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
@@ -959,6 +964,7 @@ public:
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
 
         vmTrigger.NewCondition();
         Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
@@ -992,6 +998,7 @@ public:
 
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         Assert::AreEqual(
             std::wstring(L"[Indirect from 0x0004]\r\n[16-bit] note"),
             vmTrigger.mockWindowManager.MemoryInspector.GetCurrentAddressNote());
@@ -1012,6 +1019,7 @@ public:
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
         // first condition added to a value should be Measured without an operator

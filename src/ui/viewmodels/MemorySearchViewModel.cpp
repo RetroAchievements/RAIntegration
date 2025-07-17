@@ -89,6 +89,33 @@ void MemorySearchViewModel::SearchResultViewModel::UpdateRowColor()
     }
 }
 
+void MemorySearchViewModel::SearchResultViewModel::UpdateCodeNote(const std::wstring& sNote)
+{
+    if (!sNote.empty())
+    {
+        bHasCodeNote = true;
+        SetDescription(sNote);
+        SetDescriptionColor(ra::ui::Color(ra::to_unsigned(DescriptionColorProperty.GetDefaultValue())));
+    }
+    else
+    {
+        bHasCodeNote = false;
+
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto* pRegion = pConsoleContext.GetMemoryRegion(nAddress);
+        if (pRegion)
+        {
+            SetDescription(ra::Widen(pRegion->Description));
+            SetDescriptionColor(ra::ui::Color(0xFFA0A0A0));
+        }
+        else
+        {
+            SetDescription(L"");
+            SetDescriptionColor(ra::ui::Color(ra::to_unsigned(DescriptionColorProperty.GetDefaultValue())));
+        }
+    }
+}
+
 
 MemorySearchViewModel::MemorySearchViewModel()
 {
@@ -844,7 +871,6 @@ void MemorySearchViewModel::UpdateResults()
 
         const auto& vmBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
 
@@ -886,28 +912,7 @@ void MemorySearchViewModel::UpdateResults()
 
             const auto pCodeNote = (pCodeNotes != nullptr) ?
                 pCodeNotes->FindCodeNote(pResult.nAddress, pResult.nSize) : std::wstring(L"");
-            if (!pCodeNote.empty())
-            {
-                pRow->bHasCodeNote = true;
-                pRow->SetDescription(pCodeNote);
-                pRow->SetDescriptionColor(ra::ui::Color(ra::to_unsigned(SearchResultViewModel::DescriptionColorProperty.GetDefaultValue())));
-            }
-            else
-            {
-                pRow->bHasCodeNote = false;
-
-                const auto* pRegion = pConsoleContext.GetMemoryRegion(pResult.nAddress);
-                if (pRegion)
-                {
-                    pRow->SetDescription(ra::Widen(pRegion->Description));
-                    pRow->SetDescriptionColor(ra::ui::Color(0xFFA0A0A0));
-                }
-                else
-                {
-                    pRow->SetDescription(L"");
-                    pRow->SetDescriptionColor(ra::ui::Color(ra::to_unsigned(SearchResultViewModel::DescriptionColorProperty.GetDefaultValue())));
-                }
-            }
+            pRow->UpdateCodeNote(pCodeNote);
 
             pRow->SetSelected(m_vSelectedAddresses.find(pRow->nAddress) != m_vSelectedAddresses.end());
 
@@ -970,14 +975,14 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
     return sTooltip;
 }
 
-void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring&)
+void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote)
 {
     for (gsl::index i = 0; i < ra::to_signed(m_vResults.Count()); ++i)
     {
         auto* pRow = m_vResults.GetItemAt(i);
         if (pRow != nullptr && pRow->nAddress == nAddress)
         {
-            DispatchMemoryRead([this]() { UpdateResults(); });
+            pRow->UpdateCodeNote(sNote);
             break;
         }
     }

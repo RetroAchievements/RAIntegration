@@ -320,6 +320,7 @@ public:
         bool bHasBeenModified = false;
 
         void UpdateRowColor();
+        void UpdateCodeNote(const std::wstring& sNote);
     };
 
     /// <summary>

@@ -446,6 +446,9 @@ void GridBinding::UpdateCell(gsl::index nIndex, gsl::index nColumnIndex)
 
         GSL_SUPPRESS_TYPE1
         SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
+
+        ListView_RedrawItems(m_hWnd, nRealIndex, nRealIndex);
+        m_bForceRepaintItems = true;
     });
 }
 

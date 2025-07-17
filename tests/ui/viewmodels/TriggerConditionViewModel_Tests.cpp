@@ -1873,13 +1873,17 @@ public:
         condition.UpdateRowColor(pCondition);
         Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
 
-        pCondition->is_true = 1;
+        pCondition->is_true = 3;
         condition.UpdateRowColor(pCondition);
         Assert::AreEqual(pTheme.ColorTriggerResetTrue().ARGB, condition.GetRowColor().ARGB);
 
         pCondition->is_true = 0;
         condition.UpdateRowColor(pCondition);
         Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 1; // condition itself is true, but reset did not occur - assume false exists in AndNext chain
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(pTheme.ColorTriggerIsTrue().ARGB, condition.GetRowColor().ARGB);
 
         // PauseIf
         pCondition = pCondition->next;

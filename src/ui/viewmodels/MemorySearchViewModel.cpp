@@ -949,6 +949,20 @@ void MemorySearchViewModel::UpdateResult(SearchResultViewModel& vmResult,
     }
 }
 
+bool MemorySearchViewModel::GetResult(gsl::index nIndex, ra::services::SearchResult& pResult) const
+{
+    memset(&pResult, 0, sizeof(pResult));
+
+    std::lock_guard lock(m_oMutex);
+
+    if (m_vSearchResults.size() < 2)
+        return false;
+
+    const auto& pCurrentResults = *m_vSearchResults.at(m_nSelectedSearchResult).get();
+    return pCurrentResults.pResults.GetMatchingAddress(nIndex, pResult);
+}
+
+
 std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmResult) const
 {
     std::wstring sTooltip = ra::StringPrintf(L"%s\n%s | Current\n",

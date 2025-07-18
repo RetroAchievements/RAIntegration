@@ -367,6 +367,11 @@ public:
     const std::wstring& GetResultCountText() const { return GetValue(ResultCountTextProperty); }
 
     /// <summary>
+    /// Gets the unprocessed result at the specified index.
+    /// </summary>
+    bool GetResult(gsl::index nIndex, ra::services::SearchResult& pResult) const;
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the scroll offset.
     /// </summary>
     static const IntModelProperty ScrollOffsetProperty;
@@ -497,7 +502,7 @@ private:
     bool m_bScrolling = false;
     bool m_bSelectingFilter = false;
 
-    std::mutex m_oMutex;
+    mutable std::mutex m_oMutex;
 
     struct SearchResult
     {

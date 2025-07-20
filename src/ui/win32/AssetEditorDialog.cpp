@@ -986,6 +986,9 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindConditions.Virtualize(TriggerViewModel::ScrollOffsetProperty, TriggerViewModel::ScrollMaximumProperty,
         [&vmAssetEditor](gsl::index nFrom, gsl::index nTo, bool bIsSelected) {
             vmAssetEditor.Trigger().SelectRange(nFrom, nTo, bIsSelected);
+        },
+        [&vmAssetEditor](const ra::data::IntModelProperty& pProperty, int nNewValue) {
+            return vmAssetEditor.Trigger().SetSelectedItemValues(pProperty, nNewValue);
         });
 
     using namespace ra::bitwise_ops;

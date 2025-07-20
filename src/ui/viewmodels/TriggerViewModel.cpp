@@ -881,6 +881,18 @@ void TriggerViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue
     m_vConditions.AddNotifyTarget(*this);
 }
 
+int TriggerViewModel::SetSelectedItemValues(const IntModelProperty& pProperty, int nNewValue)
+{
+    if (m_vSelectedConditions.empty())
+        return 0;
+
+    m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
+    UpdateCurrentGroup(false, &pProperty, nNewValue);
+    m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
+
+    return gsl::narrow_cast<int>(m_vSelectedConditions.size());
+}
+
 void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == GroupViewModel::IsSelectedProperty)
@@ -946,7 +958,7 @@ void TriggerViewModel::ConditionsMonitor::UpdateCurrentGroup()
         return;
     }
 
-    m_vmTrigger->UpdateCurrentGroup(false);
+    m_vmTrigger->UpdateCurrentGroup(false, nullptr, 0);
 }
 
 void TriggerViewModel::ConditionsMonitor::EndUpdate()
@@ -974,7 +986,7 @@ void TriggerViewModel::ResumeConditionMonitor() const
     m_pConditionsMonitor.EndUpdate();
 }
 
-void TriggerViewModel::UpdateCurrentGroup(bool bRememberHits)
+void TriggerViewModel::UpdateCurrentGroup(bool bRememberHits, const IntModelProperty* pProperty, int nNewValue)
 {
     auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
     if (!pGroup)
@@ -992,6 +1004,7 @@ void TriggerViewModel::UpdateCurrentGroup(bool bRememberHits)
 
     std::string sSerialized;
     TriggerConditionViewModel vmCondition;
+    TriggerConditionViewModel* pvmCondition;
     rc_condition_t* pCondition = pCondSet->conditions;
     int nIndex = 0;
     while (pCondition != nullptr)
@@ -1002,12 +1015,18 @@ void TriggerViewModel::UpdateCurrentGroup(bool bRememberHits)
         if (nIndex < nFirstVisibleIndex || nIndex >= nFirstVisibleIndex + nVisibleItemCount)
         {
             vmCondition.InitializeFrom(*pCondition);
-            vmCondition.SerializeAppend(sSerialized);
+            pvmCondition = &vmCondition;
         }
         else
         {
-            m_vConditions.GetItemAt(gsl::narrow_cast<gsl::index>(nIndex) - nFirstVisibleIndex)->SerializeAppend(sSerialized);
+            pvmCondition = m_vConditions.GetItemAt(gsl::narrow_cast<gsl::index>(nIndex) - nFirstVisibleIndex);
+            Expects(pvmCondition != nullptr);
         }
+
+        if (pProperty && m_vSelectedConditions.find(gsl::narrow_cast<unsigned int>(nIndex)) != m_vSelectedConditions.end())
+            pvmCondition->PushValue(*pProperty, nNewValue);
+
+        pvmCondition->SerializeAppend(sSerialized);
 
         if (!pCondition->next)
             break;

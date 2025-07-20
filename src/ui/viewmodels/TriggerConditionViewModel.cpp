@@ -992,6 +992,11 @@ void TriggerConditionViewModel::UpdateRowColor(const rc_condition_t* pCondition)
     }
 }
 
+void TriggerConditionViewModel::PushValue(const ra::data::IntModelProperty& pProperty, int nNewValue)
+{
+    SetValue(pProperty, nNewValue);
+}
+
 } // namespace viewmodels
 } // namespace ui
 } // namespace ra

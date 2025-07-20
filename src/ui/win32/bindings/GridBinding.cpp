@@ -471,18 +471,22 @@ void GridBinding::DeselectAll() noexcept
 
 int GridBinding::UpdateSelected(const IntModelProperty& pProperty, int nNewValue)
 {
-    if (m_pIsSelectedProperty == nullptr)
-        return 0;
-
     int nUpdated = 0;
 
-    const auto nCount = ra::to_signed(m_vmItems->Count());
-    for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
+    if (m_fSetSelectedItemValues != nullptr)
     {
-        if (m_vmItems->GetItemValue(nIndex, *m_pIsSelectedProperty))
+        return m_fSetSelectedItemValues(pProperty, nNewValue);
+    }
+    else if (m_pIsSelectedProperty != nullptr)
+    {
+        const auto nCount = ra::to_signed(m_vmItems->Count());
+        for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
         {
-            m_vmItems->SetItemValue(nIndex, pProperty, nNewValue);
-            ++nUpdated;
+            if (m_vmItems->GetItemValue(nIndex, *m_pIsSelectedProperty))
+            {
+                m_vmItems->SetItemValue(nIndex, pProperty, nNewValue);
+                ++nUpdated;
+            }
         }
     }
 
@@ -755,7 +759,8 @@ void GridBinding::SetPasteHandler(std::function<void()> pHandler)
 }
 
 void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty,
-    std::function<void(gsl::index, gsl::index, bool)> fUpdateSelectedItems)
+    std::function<void(gsl::index, gsl::index, bool)> fUpdateSelectedItems,
+    std::function<int(const IntModelProperty& pProperty, int nNewValue)> fSetSelectedItemValues)
 {
     if (m_hWnd)
     {
@@ -765,6 +770,7 @@ void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, cons
     m_pScrollOffsetProperty = &pScrollOffsetProperty;
     m_pScrollMaximumProperty = &pScrollMaximumProperty;
     m_fUpdateSelectedItems = fUpdateSelectedItems;
+    m_fSetSelectedItemValues = fSetSelectedItemValues;
 
     m_nScrollOffset = GetValue(pScrollOffsetProperty);
 }

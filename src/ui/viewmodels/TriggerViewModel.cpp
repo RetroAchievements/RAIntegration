@@ -1177,7 +1177,7 @@ void TriggerViewModel::InitializeConditions(const GroupViewModel* pGroup)
 
 void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 {
-    int nNewScrollMaximum = -1;
+    int nNewScrollMaximum = 0;
 
     {
         std::lock_guard<std::mutex> lock(m_pMutex);
@@ -1245,8 +1245,7 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
             m_vConditions.RemoveAt(nScan);
     }
 
-    if (nNewScrollMaximum > 0)
-        SetValue(ScrollMaximumProperty, nNewScrollMaximum);
+    SetValue(ScrollMaximumProperty, nNewScrollMaximum);
 
     m_vConditions.EndUpdate();
     if (!m_vConditions.IsUpdating())

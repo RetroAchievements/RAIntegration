@@ -1004,7 +1004,7 @@ void TriggerViewModel::UpdateCurrentGroup(bool bRememberHits, const IntModelProp
 
     std::string sSerialized;
     TriggerConditionViewModel vmCondition;
-    TriggerConditionViewModel* pvmCondition;
+    TriggerConditionViewModel* pvmCondition = nullptr;
     rc_condition_t* pCondition = pCondSet->conditions;
     int nIndex = 0;
     while (pCondition != nullptr)

@@ -236,7 +236,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnSizeChanged()
 
         if (m_pValue)
         {
-            auto* pCondition = FindMeasuredCondition(m_pValue);
+            const auto* pCondition = FindMeasuredCondition(m_pValue);
             if (pCondition)
             {
                 std::string sSerialized;
@@ -245,7 +245,13 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnSizeChanged()
 
                 const char* memaddr = sSerialized.c_str();
                 uint32_t unused;
-                rc_parse_memref(&memaddr, &pCondition->operand1.size, &unused);
+                uint8_t nNewSize;
+                rc_parse_memref(&memaddr, &nNewSize, &unused);
+
+                GSL_SUPPRESS_TYPE3
+                auto* pOperand = const_cast<rc_operand_t*>(rc_condition_get_real_operand1(pCondition));
+                pOperand->value.memref->value.size = nNewSize;
+                pOperand->size = nNewSize;
             }
         }
 

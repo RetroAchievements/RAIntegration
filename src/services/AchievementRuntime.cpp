@@ -16,6 +16,7 @@
 #include "data\context\UserContext.hh"
 
 #include "services\FrameEventQueue.hh"
+#include "services\GameIdentifier.hh"
 #include "services\Http.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
@@ -291,10 +292,38 @@ static std::string GetParam(const ra::services::Http::Request& httpRequest, cons
     return std::string(httpRequest.GetPostData(), nIndex, nIndex2 - nIndex);
 }
 
+static ra::services::Http::Response AchievementDataNotFound(const std::string& sGameId)
+{
+    return ra::services::Http::Response(ra::services::Http::StatusCode::NotFound,
+        ra::StringPrintf("{\"Success\":false,\"Error\":\"Achievement data for game %s not found in cache\"}", sGameId));
+}
+
 static ra::services::Http::Response HandleOfflineRequest(const ra::services::Http::Request& httpRequest, const std::string sApi)
 {
     if (sApi == "ping")
         return ra::services::Http::Response(ra::services::Http::StatusCode::OK, "{\"Success\":true}");
+
+    if (sApi == "achievementsets")
+    {
+        const auto sGameHash = GetParam(httpRequest, "m");
+        const auto nGameId = ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().IdentifyHash(sGameHash);
+
+        // see if the data is available in the cache
+        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
+        if (pData == nullptr)
+            return AchievementDataNotFound(std::to_string(nGameId));
+
+        const auto nSize = pData->GetSize();
+        std::string sContents;
+        sContents.resize(nSize + 1);
+        GSL_SUPPRESS_TYPE1 pData->GetBytes(reinterpret_cast<uint8_t*>(sContents.data()), nSize);
+
+        if (sContents.find(",\"Sets\":[") == std::string::npos) // ignore patch response - only return achievementsets response
+            return AchievementDataNotFound(std::to_string(nGameId));
+
+        return ra::services::Http::Response(ra::services::Http::StatusCode::OK, sContents);
+    }
 
     if (sApi == "patch")
     {
@@ -304,10 +333,7 @@ static ra::services::Http::Response HandleOfflineRequest(const ra::services::Htt
         auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
         auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, ra::Widen(sGameId));
         if (pData == nullptr)
-        {
-            return ra::services::Http::Response(ra::services::Http::StatusCode::NotFound,
-                ra::StringPrintf("{\"Success\":false,\"Error\":\"Achievement data for game %s not found in cache\"}", sGameId));
-        }
+            return AchievementDataNotFound(sGameId);
 
         std::string sContents = "{\"Success\":true,\"PatchData\":";
         std::string sLine;

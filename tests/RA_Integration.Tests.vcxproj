@@ -450,6 +450,7 @@
     <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="mocks\MockFrameEventQueue.hh" />
     <ClInclude Include="mocks\MockGameContext.hh" />
+    <ClInclude Include="mocks\MockGameIdentifier.hh" />
     <ClInclude Include="mocks\MockHttpRequester.hh" />
     <ClInclude Include="mocks\MockImageRepository.hh" />
     <ClInclude Include="mocks\MockLocalStorage.hh" />

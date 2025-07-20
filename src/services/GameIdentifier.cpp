@@ -258,6 +258,11 @@ void GameIdentifier::LoadKnownHashes(std::map<std::string, unsigned>& mHashes)
     }
 }
 
+void GameIdentifier::AddHash(const std::string& sHash, unsigned nGameId)
+{
+    m_mKnownHashes.insert_or_assign(sHash, nGameId);
+}
+
 void GameIdentifier::SaveKnownHashes(std::map<std::string, unsigned>& mHashes)
 {
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();

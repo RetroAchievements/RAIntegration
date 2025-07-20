@@ -11,6 +11,7 @@
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockGameIdentifier.hh"
 #include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockLocalStorage.hh"
@@ -3612,6 +3613,107 @@ public:
         memset(&pRequest, 0, sizeof(pRequest));
         pRequest.url = "https://retroachievements.org/dorequest.php";
         pRequest.post_data = "g=1234&r=patch&u=User&t=APITOKEN";
+        pRequest.content_type = "application/x-www-form-urlencoded";
+
+        bool bCallbackCalled = false;
+        auto fCallback = [](const rc_api_server_response_t* server_response, void* callback_data) {
+            Assert::AreEqual("{\"Success\":false,\"Error\":\"Achievement data for game 1234 not found in cache\"}", server_response->body);
+            Assert::AreEqual({77}, server_response->body_length);
+            Assert::AreEqual(404, server_response->http_status_code);
+
+            *((bool*)callback_data) = true;
+        };
+
+        runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
+
+        Assert::IsFalse(bCallbackCalled);
+
+        runtime.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(bCallbackCalled);
+    }
+
+    TEST_METHOD(TestServerCallOfflineAchievementSetsExists)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockUserContext.Logout();
+        ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockGameIdentifier mockGameIdentifier;
+        mockLocalStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1234", "{\"Title\":\"GameName\",\"Sets\":[{\"a\":1}]}");
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+        mockGameIdentifier.AddHash("ABCDEF0123456789", 1234);
+
+        rc_api_request_t pRequest;
+        memset(&pRequest, 0, sizeof(pRequest));
+        pRequest.url = "https://retroachievements.org/dorequest.php";
+        pRequest.post_data = "r=achievementsets&u=User&t=APITOKEN&m=ABCDEF0123456789";
+        pRequest.content_type = "application/x-www-form-urlencoded";
+
+        bool bCallbackCalled = false;
+        auto fCallback = [](const rc_api_server_response_t* server_response, void* callback_data) {
+            Assert::AreEqual("{\"Title\":\"GameName\",\"Sets\":[{\"a\":1}]}", server_response->body);
+            Assert::AreEqual({38}, server_response->body_length);
+            Assert::AreEqual(200, server_response->http_status_code);
+
+            *((bool*)callback_data) = true;
+        };
+
+        runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
+
+        Assert::IsFalse(bCallbackCalled);
+
+        runtime.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(bCallbackCalled);
+    }
+
+    TEST_METHOD(TestServerCallOfflineAchievementSetsPatchExists)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockUserContext.Logout();
+        ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockGameIdentifier mockGameIdentifier;
+        // cached file exists, but is old format and should be ignored
+        mockLocalStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1234", "{\"a\":1}");
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+        mockGameIdentifier.AddHash("ABCDEF0123456789", 1234);
+
+        rc_api_request_t pRequest;
+        memset(&pRequest, 0, sizeof(pRequest));
+        pRequest.url = "https://retroachievements.org/dorequest.php";
+        pRequest.post_data = "r=achievementsets&u=User&t=APITOKEN&m=ABCDEF0123456789";
+        pRequest.content_type = "application/x-www-form-urlencoded";
+
+        bool bCallbackCalled = false;
+        auto fCallback = [](const rc_api_server_response_t* server_response, void* callback_data) {
+            Assert::AreEqual("{\"Success\":false,\"Error\":\"Achievement data for game 1234 not found in cache\"}", server_response->body);
+            Assert::AreEqual({77}, server_response->body_length);
+            Assert::AreEqual(404, server_response->http_status_code);
+
+            *((bool*)callback_data) = true;
+        };
+
+        runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
+
+        Assert::IsFalse(bCallbackCalled);
+
+        runtime.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(bCallbackCalled);
+    }
+
+    TEST_METHOD(TestServerCallOfflineAchievementSetsDoesntExist)
+    {
+        AchievementRuntimeHarness runtime;
+        ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockGameIdentifier mockGameIdentifier;
+        mockGameIdentifier.AddHash("ABCDEF0123456789", 1234);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        rc_api_request_t pRequest;
+        memset(&pRequest, 0, sizeof(pRequest));
+        pRequest.url = "https://retroachievements.org/dorequest.php";
+        pRequest.post_data = "r=achievementsets&u=User&t=APITOKEN&m=ABCDEF0123456789";
         pRequest.content_type = "application/x-www-form-urlencoded";
 
         bool bCallbackCalled = false;

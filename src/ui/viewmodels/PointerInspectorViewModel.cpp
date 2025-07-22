@@ -399,6 +399,8 @@ void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructField
 {
     pFieldViewModel.m_pNote = &pOffsetNote;
 
+    pFieldViewModel.SetFormat(pOffsetNote.GetDefaultMemFormat());
+
     const auto nSize = pOffsetNote.GetMemSize();
     pFieldViewModel.SetSize((nSize == MemSize::Unknown) ? MemSize::EightBit : nSize);
 
@@ -451,7 +453,6 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
                 pItem = Bookmarks().GetItemAt<StructFieldViewModel>(nInsertIndex);
                 Expects(pItem != nullptr);
                 pItem->SetSelected(false);
-                pItem->SetFormat(MemFormat::Hex);
             }
             else
             {

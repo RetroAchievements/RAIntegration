@@ -375,6 +375,8 @@ static bool IsValue(const std::wstring& sNote, size_t nIndex, size_t nStopIndex,
                 return false;
         }
     }
+
+    return true;
 }
 
 static bool IsBitX(const std::wstring& sNote, size_t nIndex, size_t nStopIndex)

@@ -40,6 +40,14 @@ private:
         Assert::AreEqual(nExpectedSize, note.GetMemSize(), sNote.c_str());
     }
 
+    void TestCodeNoteFormat(const std::wstring& sNote, MemFormat nExpectedFormat)
+    {
+        CodeNoteModel note;
+        note.SetNote(sNote);
+
+        Assert::AreEqual(nExpectedFormat, note.GetDefaultMemFormat(), sNote.c_str());
+    }
+
     const CodeNoteModel* AssertIndirectNote(const CodeNoteModel& note, unsigned int nOffset,
         const std::wstring& sExpectedNote, MemSize nExpectedSize, unsigned int nExpectedBytes)
     {
@@ -66,6 +74,7 @@ public:
         TestCodeNoteSize(L"[16-bit] Test", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"[16 bit] Test", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"[16 Bit] Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[16-bit BCD] Test", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"[24-bit] Test", 3U, MemSize::TwentyFourBit);
         TestCodeNoteSize(L"[32-bit] Test", 4U, MemSize::ThirtyTwoBit);
         TestCodeNoteSize(L"[32 bit] Test", 4U, MemSize::ThirtyTwoBit);
@@ -158,6 +167,155 @@ public:
         TestCodeNoteSize(L"[24-bit]\r\nIt's really 32-bit, but the top byte will never be non-zero\r\n", 3U, MemSize::TwentyFourBit);
     }
 
+    TEST_METHOD(TestExtractFormat)
+    {
+        TestCodeNoteFormat(L"", MemFormat::Dec);
+        TestCodeNoteFormat(L"Test", MemFormat::Dec);
+        TestCodeNoteFormat(L"16-bit Test", MemFormat::Dec);
+        TestCodeNoteFormat(L"Test 16-bit", MemFormat::Dec);
+        TestCodeNoteFormat(L"[16-bit] Test", MemFormat::Dec);
+
+        TestCodeNoteFormat(L"[16-bit BCD] Test", MemFormat::Hex);
+    }
+
+    TEST_METHOD(TestExtractFormatIndirect)
+    {
+        CodeNoteModel note;
+        const std::wstring sNote =
+            L"Bomb Timer Pointer (24-bit)\r\n"
+            L"+03 - Bombs Defused\r\n"
+            L"+04 - Bomb Timer (BCD)\r\n"
+            L"+08 - [24-bit pointer] Bomb Info\r\n"
+            L"++00 - [8-bit] Type\r\n"
+            L"++04 - [8-bit] Color (hex)\r\n"
+            L"+10 - Bombs Remaining\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat()); // pointer
+        Assert::AreEqual(MemFormat::Dec, note.GetPointerNoteAtOffset(3)->GetDefaultMemFormat()); // bombs defused
+        Assert::AreEqual(MemFormat::Hex, note.GetPointerNoteAtOffset(4)->GetDefaultMemFormat()); // bomb timer
+        Assert::AreEqual(MemFormat::Dec, note.GetPointerNoteAtOffset(10)->GetDefaultMemFormat()); // bombs remaining
+
+        const auto* nestedNote = note.GetPointerNoteAtOffset(8);
+        Expects(nestedNote != nullptr);
+        Assert::AreEqual(MemFormat::Hex, nestedNote->GetDefaultMemFormat()); // bomb info pointer
+        Assert::AreEqual(MemFormat::Dec, nestedNote->GetPointerNoteAtOffset(0)->GetDefaultMemFormat()); // type
+        Assert::AreEqual(MemFormat::Hex, nestedNote->GetPointerNoteAtOffset(4)->GetDefaultMemFormat());  // color
+    }
+
+    TEST_METHOD(TestExtractFormatImplied)
+    {
+        CodeNoteModel note;
+
+        // generic decimal values; assume decimal
+        const std::wstring sNote =
+            L"[16-bit] location\r\n"
+            L"0=Unknown\r\n"
+            L"10=Level 1\r\n"
+            L"68=Credits\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(MemFormat::Dec, note.GetDefaultMemFormat());
+
+        // could be decimal values, but padded to size. assume hex
+        const std::wstring sNote2 =
+            L"[16-bit] location\r\n"
+            L"0000=Unknown\r\n"
+            L"0010=Level 1\r\n"
+            L"0068=Credits\r\n";
+        note.SetNote(sNote2);
+
+        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+
+        // definitely hex
+        const std::wstring sNote3 =
+            L"[16-bit] location\r\n"
+            L"0000=Unknown\r\n"
+            L"0010=Level 1\r\n"
+            L"001A=Level 1-a\r\n"
+            L"0068=Credits\r\n";
+        note.SetNote(sNote3);
+
+        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+
+        // alternate separator
+        const std::wstring sNote4 =
+            L"[16-bit] location\r\n"
+            L"0000: Unknown\r\n"
+            L"0010: Level 1\r\n"
+            L"001A: Level 1-a\r\n"
+            L"0068: Credits\r\n";
+        note.SetNote(sNote4);
+
+        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+
+        // alternate separator
+        const std::wstring sNote5 =
+            L"[16-bit] location\r\n"
+            L"0000 -> Unknown\r\n"
+            L"0010 -> Level 1\r\n"
+            L"001A -> Level 1-a\r\n"
+            L"0068 -> Credits\r\n";
+        note.SetNote(sNote5);
+
+        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+
+        // 0x prefix
+        const std::wstring sNote6 =
+            L"[16-bit] location\r\n"
+            L"0x00=Unknown\r\n"
+            L"0x10=Level 1\r\n"
+            L"0x68=Credits\r\n";
+        note.SetNote(sNote6);
+
+        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+
+        // h prefix
+        const std::wstring sNote7 =
+            L"[16-bit] location\r\n"
+            L"00h=Unknown\r\n"
+            L"10h=Level 1\r\n"
+            L"68h=Credits\r\n";
+        note.SetNote(sNote7);
+
+        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+    }
+
+    TEST_METHOD(TestExtractFormatBits)
+    {
+        CodeNoteModel note;
+
+        // b0 looks like value hex for an 8-bit value
+        const std::wstring sNote =
+            L"[8-bit] chests in cave\r\n"
+            L"b0=first\r\n"
+            L"b1=second\r\n"
+            L"b2=third\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+
+        // bit0 explicitly handled for 8-bit size
+        const std::wstring sNote2 =
+            L"[8-bit] chests in cave\r\n"
+            L"bit0 = first\r\n"
+            L"bit1 = second\r\n"
+            L"bit2 = third\r\n";
+        note.SetNote(sNote2);
+
+        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+
+        // bit0 allowed for larger sizes
+        const std::wstring sNote3 =
+            L"[16-bit] chests in cave\r\n"
+            L"bit0 = first\r\n"
+            L"bit1 = second\r\n"
+            L"bit2 = third\r\n";
+        note.SetNote(sNote3);
+
+        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+    }
+
     TEST_METHOD(TestGetPointerNoteAtOffset)
     {
         CodeNoteModelHarness note;
@@ -218,7 +376,7 @@ public:
                            MemSize::Array, 24);
     }
 
-    TEST_METHOD(TestCodeNoteHeadered)
+    TEST_METHOD(TestHeaderedPointer)
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
@@ -241,7 +399,7 @@ public:
         AssertIndirectNote(note, 0x1B5CEU, L"Lap", MemSize::Unknown, 1);
     }
 
-    TEST_METHOD(TestCodeNotePointerOverlap)
+    TEST_METHOD(TestPointerOverlap)
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
@@ -261,7 +419,7 @@ public:
         AssertIndirectNote(note, 6, L"Job Level (8-bit)", MemSize::EightBit, 1);
     }
 
-    TEST_METHOD(TestCodeNoteNested)
+    TEST_METHOD(TestNestedPointer)
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
@@ -284,7 +442,7 @@ public:
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
     }
 
-    TEST_METHOD(TestCodeNoteUnannotatedPointerChain)
+    TEST_METHOD(TestUnannotatedPointerChain)
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
@@ -309,7 +467,7 @@ public:
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
     }
 
-    TEST_METHOD(TestCodeNoteNestedAlternateFormat)
+    TEST_METHOD(TestNestedPointerAlternateFormat)
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
@@ -332,7 +490,7 @@ public:
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
     }
 
-    TEST_METHOD(TestCodeNoteNestedMultiLine)
+    TEST_METHOD(TestNestedPointerMultiLine)
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
@@ -361,7 +519,7 @@ public:
         AssertIndirectNote(note, 0x448, L"[32-bit BE] Not-nested number", MemSize::ThirtyTwoBitBigEndian, 4);
     }
 
-    TEST_METHOD(TestCodeNoteImpliedPointerChain)
+    TEST_METHOD(TestImpliedPointerChain)
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =
@@ -386,7 +544,7 @@ public:
         AssertIndirectNote(*nestedNote2, 0x8008, L"Second [32-bits]", MemSize::ThirtyTwoBit, 4);
     }
 
-    TEST_METHOD(TestCodeNoteNestedArray)
+    TEST_METHOD(TestArrayPointer)
     {
         CodeNoteModelHarness note;
         const std::wstring sNote =

@@ -25,6 +25,7 @@ public:
     const ra::ByteAddress GetAddress() const noexcept { return m_nAddress; }
     const unsigned int GetBytes() const noexcept { return m_nBytes; }
     const MemSize GetMemSize() const noexcept { return m_nMemSize; }
+    const MemFormat GetDefaultMemFormat() const noexcept { return m_nMemFormat; }
 
     void SetAuthor(const std::string& sAuthor) { m_sAuthor = sAuthor; }
     void SetAddress(ra::ByteAddress nAddress) noexcept { m_nAddress = nAddress; }
@@ -72,6 +73,8 @@ public:
             MBF,
             BigEndian,
             LittleEndian,
+            BCD,
+            Hex,
             Other,
         };
 
@@ -92,6 +95,7 @@ private:
     ra::ByteAddress m_nAddress = 0; // address of root nodes, offset to indirect nodes
     unsigned int m_nBytes = 1;
     MemSize m_nMemSize = MemSize::Unknown;
+    MemFormat m_nMemFormat = MemFormat::Dec;
 
     struct PointerData;
     std::unique_ptr<PointerData> m_pPointerData;
@@ -101,6 +105,7 @@ private:
     void ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex);
     void ExtractSize(const std::wstring& sNote, bool bIsPointer);
     static MemSize GetImpliedPointerSize();
+    void CheckForHexEnum(size_t nStartIndex);
 };
 
 } // namespace models

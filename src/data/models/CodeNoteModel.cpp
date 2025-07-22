@@ -41,6 +41,7 @@ CodeNoteModel::CodeNoteModel(CodeNoteModel&& pOther) noexcept
       m_nBytes(pOther.m_nBytes),
       m_nAddress(pOther.m_nAddress),
       m_nMemSize(pOther.m_nMemSize),
+      m_nMemFormat(pOther.m_nMemFormat),
       m_pPointerData(std::move(pOther.m_pPointerData))
 {
 }
@@ -51,6 +52,7 @@ CodeNoteModel& CodeNoteModel::operator=(CodeNoteModel&& pOther) noexcept
     m_nBytes = pOther.m_nBytes;
     m_nAddress = pOther.m_nAddress;
     m_nMemSize = pOther.m_nMemSize;
+    m_nMemFormat = pOther.m_nMemFormat;
     m_pPointerData = std::move(pOther.m_pPointerData);
     return *this;
 }
@@ -327,18 +329,158 @@ std::wstring CodeNoteModel::GetPrimaryNote() const
     return m_sNote;
 }
 
+static bool IsValue(const std::wstring& sNote, size_t nIndex, size_t nStopIndex, unsigned& nLength, bool& bHex)
+{
+    if (nStopIndex == std::string::npos)
+        nStopIndex = sNote.length();
+
+    while (nIndex < nStopIndex && isspace(sNote.at(nIndex)))
+        ++nIndex;
+    while (nStopIndex > nIndex && isspace(sNote.at(nStopIndex - 1)))
+        --nStopIndex;
+
+    bHex = false;
+
+    if (nStopIndex - nIndex > 2 && sNote.at(nIndex) == '0' && sNote.at(nIndex + 1) == 'x')
+    {
+        // explicit hex prefix
+        nIndex += 2;
+        bHex = true;
+    }
+    else if (nStopIndex - nIndex > 1 && sNote.at(nStopIndex - 1) == 'h')
+    {
+        // explicit hex suffix
+        nStopIndex--;
+        bHex = true;
+    }
+
+    nLength = 0;
+    while (nIndex < nStopIndex)
+    {
+        const auto c = sNote.at(nIndex++);
+        switch (c)
+        {
+            case '0': case '1': case '2': case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+                nLength++;
+                break;
+
+            case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+            case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+                nLength++;
+                bHex = true;
+                break;
+
+            default:
+                return false;
+        }
+    }
+}
+
+static bool IsBitX(const std::wstring& sNote, size_t nIndex, size_t nStopIndex)
+{
+    if (nStopIndex == std::string::npos)
+        nStopIndex = sNote.length();
+
+    if (nStopIndex - nIndex < 4)
+        return false;
+
+    auto c = sNote.at(nIndex);
+    if (c != 'b' && c != 'B')
+        return false;
+
+    c = sNote.at(nIndex + 1);
+    if (c != 'i' && c != 'I')
+        return false;
+
+    c = sNote.at(nIndex + 2);
+    if (c != 't' && c != 'T')
+        return false;
+
+    if (!isdigit(sNote.at(nIndex + 3)))
+        return false;
+
+    nIndex += 4;
+    while (nIndex < nStopIndex)
+    {
+        if (!isspace(sNote.at(nIndex++)))
+            return false;
+    }
+
+    return true;
+}
+
+void CodeNoteModel::CheckForHexEnum(size_t nNextIndex)
+{
+    bool bAllValuesPotentialHex = true;
+    bool bFoundPotentialHexValueWithLeadingZero = false;
+    while (nNextIndex != std::string::npos)
+    {
+        auto nIndex = nNextIndex + 1;
+
+        // 12=Happy
+        // 12-Happy
+        // 12|Happy
+        // 12: Happy
+        const auto nSplitIndex = m_sNote.find_first_of(L"=-|:", nIndex);
+        if (nSplitIndex == std::string::npos)
+            break;
+
+        do
+        {
+            nNextIndex = m_sNote.find(L'\n', nIndex);
+            if (nNextIndex == std::string::npos || nNextIndex > nSplitIndex)
+                break;
+
+            nIndex = nNextIndex + 1;
+        } while (true);
+
+        if (m_sNote.at(nIndex) == '*') // bulleted list
+            ++nIndex;
+
+        unsigned nLength;
+        bool bHex;
+        if (IsValue(m_sNote, nIndex, nSplitIndex, nLength, bHex) ||       // 12=Happy
+            IsValue(m_sNote, nSplitIndex + 1, nNextIndex, nLength, bHex)) // Happy=12
+        {
+            if (bHex)
+            {
+                m_nMemFormat = MemFormat::Hex;
+                break;
+            }
+            else if (bAllValuesPotentialHex)
+            {
+                if (nLength != m_nBytes * 2)
+                    bAllValuesPotentialHex = false;
+                else if (m_sNote.at(nIndex) == '0')
+                    bFoundPotentialHexValueWithLeadingZero = true;
+            }
+        }
+        else if (IsBitX(m_sNote, nIndex, nSplitIndex)) // bit1=Happy
+        {
+            m_nMemFormat = MemFormat::Hex;
+            break;
+        }
+    }
+
+    if (bAllValuesPotentialHex && bFoundPotentialHexValueWithLeadingZero)
+        m_nMemFormat = MemFormat::Hex;
+}
+
 void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
 {
     if (m_sNote == sNote)
         return;
 
     m_sNote = sNote;
+    m_nMemFormat = MemFormat::Dec;
 
     std::wstring sLine;
     size_t nIndex = 0;
+    size_t nNextIndex;
     do
     {
-        const auto nNextIndex = sNote.find(L'\n', nIndex);
+        nNextIndex = sNote.find(L'\n', nIndex);
         if (nNextIndex == std::string::npos)
             sLine = sNote.substr(nIndex);
         else if (nNextIndex > 0 && sNote.at(nNextIndex - 1) == '\r') // expect data to be normalized for Windows so it will load into the controls correctly
@@ -382,6 +524,8 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
                 // found "pointer"
                 ExtractSize(sLine, true);
 
+                m_nMemFormat = MemFormat::Hex;
+
                 if (m_nMemSize == MemSize::Unknown)
                 {
                     // pointer size not specified. assume 32-bit
@@ -414,6 +558,9 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
 
         nIndex = nNextIndex + 1;
     } while (true);
+
+    if (m_nMemFormat == MemFormat::Dec) // implicitly ignored nested notes as pointers will be flagged as hex
+        CheckForHexEnum(nNextIndex);
 }
 
 MemSize CodeNoteModel::GetImpliedPointerSize()
@@ -512,6 +659,8 @@ CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& 
                 return TokenType::Bytes;
             if (sWord == L"be" || sWord == L"bigendian")
                 return TokenType::BigEndian;
+            if (sWord == L"bcd")
+                return TokenType::BCD;
             break;
 
         case 'd':
@@ -522,6 +671,11 @@ CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& 
         case 'f':
             if (sWord == L"float")
                 return TokenType::Float;
+            break;
+
+        case 'h':
+            if (sWord == L"hex")
+                return TokenType::Hex;
             break;
 
         case 'l':
@@ -593,6 +747,10 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
                 bWordIsSize = true;
                 bFoundSize = true;
             }
+        }
+        else if (nTokenType == Parser::TokenType::BCD || nTokenType == Parser::TokenType::Hex)
+        {
+            m_nMemFormat = MemFormat::Hex;
         }
         else if (bLastWordIsSize)
         {

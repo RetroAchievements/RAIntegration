@@ -1840,6 +1840,7 @@ void AssetListViewModel::CloneSelected()
     FilteredAssets().BeginUpdate();
 
     // add the cloned items
+    pGameContext.Assets().BeginUpdate();
     std::vector<int> vNewIDs;
     for (const auto* pAsset : vSelectedAssets)
     {
@@ -1847,6 +1848,7 @@ void AssetListViewModel::CloneSelected()
         if (pSourceAchievement != nullptr)
         {
             auto& vmAchievement = pGameContext.Assets().NewAchievement();
+            vmAchievement.SetSubsetID(pSourceAchievement->GetSubsetID());
             vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
             vmAchievement.UpdateServerCheckpoint();
 
@@ -1866,6 +1868,7 @@ void AssetListViewModel::CloneSelected()
         if (pSourceLeaderboard != nullptr)
         {
             auto& vmLeaderboard = pGameContext.Assets().NewLeaderboard();
+            vmLeaderboard.SetSubsetID(pSourceLeaderboard->GetSubsetID());
             vmLeaderboard.SetCategory(ra::data::models::AssetCategory::Local);
             vmLeaderboard.UpdateServerCheckpoint();
 
@@ -1884,6 +1887,7 @@ void AssetListViewModel::CloneSelected()
             vNewIDs.push_back(vmLeaderboard.GetID());
         }
     }
+    pGameContext.Assets().EndUpdate();
 
     // select the new items and deselect everything else
     gsl::index nIndex = -1;

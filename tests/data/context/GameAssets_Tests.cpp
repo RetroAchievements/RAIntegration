@@ -156,12 +156,12 @@ public:
             auto pLocalBadges = std::make_unique<ra::data::models::LocalBadgesModel>();
             pLocalBadges->CreateServerCheckpoint();
             pLocalBadges->CreateLocalCheckpoint();
-            Append(std::move(pLocalBadges));
+            mockGameContext.Assets().Append(std::move(pLocalBadges));
         }
 
         ra::data::models::LocalBadgesModel& GetLocalBadgesModel()
         {
-            return *(dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0)));
+            return *(dynamic_cast<ra::data::models::LocalBadgesModel*>(mockGameContext.Assets().FindAsset(ra::data::models::AssetType::LocalBadges, 0)));
         }
 
         void AddRichPresenceModel()

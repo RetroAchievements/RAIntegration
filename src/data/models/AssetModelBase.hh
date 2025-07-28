@@ -276,6 +276,8 @@ public:
     virtual void Serialize(ra::services::TextWriter& pWriter) const = 0;
     virtual bool Deserialize(ra::Tokenizer& pTokenizer) = 0;
 
+    void DeserializeLocalCheckpoint(ra::Tokenizer& pTokenizer);
+
     /// <summary>
     /// Captures the current state of the asset as a reflection of the state on the server.
     /// </summary>

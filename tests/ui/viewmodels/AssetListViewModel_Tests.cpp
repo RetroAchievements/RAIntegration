@@ -409,6 +409,7 @@ private:
         void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle)
         {
             auto vmAchievement = std::make_unique<MockAchievementModel>();
+            vmAchievement->BeginUpdate();
             vmAchievement->SetID(gsl::narrow_cast<unsigned int>(mockGameContext.Assets().Count() + 1));
             vmAchievement->SetCategory(nCategory);
             vmAchievement->SetPoints(nPoints);
@@ -417,6 +418,7 @@ private:
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
+            vmAchievement->EndUpdate();
             mockGameContext.Assets().Append(std::move(vmAchievement));
 
             EnsureCoreSubset();
@@ -426,6 +428,7 @@ private:
             const std::wstring& sDescription, const std::wstring& sBadge, const std::string& sTrigger)
         {
             auto vmAchievement = std::make_unique<MockAchievementModel>();
+            vmAchievement->BeginUpdate();
             vmAchievement->SetID(gsl::narrow_cast<unsigned int>(mockGameContext.Assets().Count() + 1));
             vmAchievement->SetCategory(nCategory);
             vmAchievement->SetPoints(nPoints);
@@ -437,6 +440,7 @@ private:
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
+            vmAchievement->EndUpdate();
             mockGameContext.Assets().Append(std::move(vmAchievement));
 
             EnsureCoreSubset();
@@ -446,6 +450,7 @@ private:
             const std::wstring& sDescription, const std::wstring& sBadge, const std::string& sTrigger)
         {
             auto vmAchievement = std::make_unique<MockAchievementModel>();
+            vmAchievement->BeginUpdate();
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->SetID(gsl::narrow_cast<unsigned int>(mockGameContext.Assets().Count() + 1));
             vmAchievement->SetCategory(AssetCategory::Local);
@@ -458,6 +463,7 @@ private:
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->SetNew();
             vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
+            vmAchievement->EndUpdate();
             mockGameContext.Assets().Append(std::move(vmAchievement));
 
             EnsureCoreSubset();
@@ -615,6 +621,9 @@ private:
             }
 
             std::unique_ptr<rc_client_achievement_info_t> m_pInfo;
+
+            using ra::data::models::AchievementModel::BeginUpdate;
+            using ra::data::models::AchievementModel::EndUpdate;
         };
 
         std::map<ra::AchievementID, std::wstring> m_mValidationErrors;
@@ -3790,6 +3799,8 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
 
@@ -3826,6 +3837,7 @@ public:
 
         const auto* pAchievement = vmAssetList.mockGameContext.Assets().FindAchievement(pAsset->GetId());
         Expects(pAchievement != nullptr);
+        Assert::AreEqual(22U, pAchievement->GetSubsetID());
         Assert::AreEqual(std::wstring(L"Desc2"), pAchievement->GetDescription());
         Assert::AreEqual(std::wstring(L"11111"), pAchievement->GetBadge());
         Assert::AreEqual(std::string("0xH1111=1"), pAchievement->GetTrigger());
@@ -3856,6 +3868,8 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
 
@@ -3926,11 +3940,14 @@ public:
         const std::wstring sLocalBadgeName = L"local\\1234.png";
 
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         auto* pSourceAchievement = vmAssetList.mockGameContext.Assets().FindAchievement(2);
         Expects(pSourceAchievement != nullptr);
         pSourceAchievement->SetBadge(sLocalBadgeName);
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sLocalBadgeName, false));
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
@@ -3981,6 +3998,8 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::All);
@@ -4016,6 +4035,8 @@ public:
         AssetListViewModelHarness vmAssetList;
 
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         auto* pSourceAchievement = vmAssetList.mockGameContext.Assets().FindAchievement(1);
@@ -4056,6 +4077,8 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 9, L"Test3", L"Desc3", L"12321", "0xH5342=1");
@@ -4120,6 +4143,8 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
 
@@ -4152,6 +4177,8 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
 
@@ -4209,6 +4236,8 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
         Expects(pLocalBadges != nullptr);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
@@ -4300,6 +4329,8 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
         Expects(pLocalBadges != nullptr);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
@@ -4404,6 +4435,8 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
+        vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.SetSubsetFilter(22U);
         vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::Leaderboard);
         vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
         auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));

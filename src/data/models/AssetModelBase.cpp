@@ -267,6 +267,17 @@ void AssetModelBase::ResetLocalCheckpoint(ra::Tokenizer& pTokenizer)
     EndUpdate();             // re-enable notifications
 }
 
+void AssetModelBase::DeserializeLocalCheckpoint(ra::Tokenizer& pTokenizer)
+{
+    Expects(m_pTransaction != nullptr);
+    Expects(m_pTransaction->m_pNext == nullptr);
+
+    BeginUpdate();           // disable notifications while rebuilding
+    Deserialize(pTokenizer); // load unpublished changes
+    CreateLocalCheckpoint(); // start transaction for in-memory changes
+    EndUpdate();             // re-enable notifications
+}
+
 void AssetModelBase::SetNew()
 {
     SetValue(ChangesProperty, ra::etoi(AssetChanges::New));

@@ -670,7 +670,28 @@ public:
         Assert::AreEqual(std::wstring(L"NOTE"), bookmark.GetRealNote());
         Assert::AreEqual(2345U, bookmark.GetAddress());
         Assert::AreEqual(MemSize::SixteenBit, bookmark.GetSize());
-        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+        Assert::AreEqual(MemFormat::Dec, bookmark.GetFormat());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
+        Assert::AreEqual(std::wstring(L"0"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark.GetPreviousValue());
+        Assert::AreEqual(0U, bookmark.GetChanges());
+
+        Assert::IsTrue(bookmarks.IsModified());
+    }
+
+    TEST_METHOD(TestAddBookmarkForNoteHex)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.mockGameContext.SetCodeNote(2345U, L"NOTE (BCD)");
+
+        bookmarks.AddBookmark(2345U, MemSize::SixteenBit);
+
+        Assert::AreEqual({1U}, bookmarks.Bookmarks().Count());
+        const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"NOTE (BCD)"), bookmark.GetRealNote());
+        Assert::AreEqual(2345U, bookmark.GetAddress());
+        Assert::AreEqual(MemSize::SixteenBit, bookmark.GetSize());
+        Assert::AreEqual(MemFormat::Hex, bookmark.GetFormat());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
         Assert::AreEqual(std::wstring(L"0000"), bookmark.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0000"), bookmark.GetPreviousValue());
@@ -690,7 +711,7 @@ public:
         Assert::AreEqual(std::wstring(L""), bookmark.GetRealNote());
         Assert::AreEqual(5678U, bookmark.GetAddress());
         Assert::AreEqual(MemSize::ThirtyTwoBit, bookmark.GetSize());
-        Assert::AreEqual((int)MemFormat::Dec, (int)bookmark.GetFormat());
+        Assert::AreEqual(MemFormat::Dec, bookmark.GetFormat());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
         Assert::AreEqual(std::wstring(L"0"), bookmark.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0"), bookmark.GetPreviousValue());
@@ -1415,7 +1436,7 @@ public:
         Assert::AreEqual(std::wstring(L""), bookmark.GetRealNote());
         Assert::AreEqual(4U, bookmark.GetAddress());
         Assert::AreEqual(MemSize::Double32, bookmark.GetSize());
-        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+        Assert::AreEqual(MemFormat::Hex, bookmark.GetFormat()); // default to user preference
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
         Assert::AreEqual(std::wstring(L"0.0"), bookmark.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0.0"), bookmark.GetPreviousValue());
@@ -1436,7 +1457,7 @@ public:
         Assert::AreEqual(std::wstring(L"[double] Note description"), bookmark2.GetRealNote());
         Assert::AreEqual(12U, bookmark2.GetAddress()); // adjusted to significant bytes
         Assert::AreEqual(MemSize::Double32, bookmark2.GetSize());
-        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark2.GetFormat());
+        Assert::AreEqual(MemFormat::Dec, bookmark2.GetFormat()); // implied from note
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark2.GetBehavior());
         Assert::AreEqual(std::wstring(L"0.0"), bookmark2.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0.0"), bookmark2.GetPreviousValue());
@@ -1455,7 +1476,7 @@ public:
         Assert::AreEqual(std::wstring(L""), bookmark3.GetRealNote());
         Assert::AreEqual(12U, bookmark3.GetAddress()); // adjusted to significant bytes
         Assert::AreEqual(MemSize::Double32, bookmark3.GetSize());
-        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark3.GetFormat());
+        Assert::AreEqual(MemFormat::Hex, bookmark3.GetFormat()); // default to preference
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark3.GetBehavior());
         Assert::AreEqual(std::wstring(L"-2.0"), bookmark3.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0.0"), bookmark3.GetPreviousValue());
@@ -1636,8 +1657,8 @@ public:
         Assert::AreEqual(std::wstring(L"data here"), bookmark.GetRealNote());
         Assert::AreEqual(0x28U, bookmark.GetAddress()); // $0020=0x20, 0x20+8 = 0x28
         Assert::AreEqual(MemSize::TwentyFourBit, bookmark.GetSize());
-        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
-        Assert::AreEqual(std::wstring(L"2a0028"), bookmark.GetCurrentValue());
+        Assert::AreEqual(MemFormat::Dec, bookmark.GetFormat());
+        Assert::AreEqual(std::wstring(L"2752552"), bookmark.GetCurrentValue()); // 0x2a0028 = 2752552
         Assert::IsTrue(bookmark.HasIndirectAddress());
         Assert::AreEqual(std::string("I:0x 0020_M:0xW0008"), bookmark.GetIndirectAddress());
 
@@ -1647,7 +1668,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"data here"), bookmark.GetRealNote());
         Assert::AreEqual(0x18U, bookmark.GetAddress()); // $0020=0x10, 0x10+8 = 0x18
-        Assert::AreEqual(std::wstring(L"1a00ab"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"1704107"), bookmark.GetCurrentValue()); // 0x1a00ab = 1704107
     }
 
     TEST_METHOD(TestLoadBookmarkFileIndirect)

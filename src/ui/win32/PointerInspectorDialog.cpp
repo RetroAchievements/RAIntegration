@@ -128,13 +128,6 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     pValueColumn->SetReadOnly(false);
     m_bindFields.BindColumn(4, std::move(pValueColumn));
 
-    auto pBehaviorColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::BehaviorProperty, vmPointerFinder.Behaviors());
-    pBehaviorColumn->SetHeader(L"Behavior");
-    pBehaviorColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
-    pBehaviorColumn->SetReadOnly(false);
-    m_bindFields.BindColumn(5, std::move(pBehaviorColumn));
-
     m_bindFields.BindItems(vmPointerFinder.Bookmarks());
     m_bindFields.BindIsSelected(PointerInspectorViewModel::StructFieldViewModel::IsSelectedProperty);
     m_bindFields.BindRowColor(PointerInspectorViewModel::StructFieldViewModel::RowColorProperty);
@@ -180,8 +173,6 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     SetAnchor(IDC_RA_NOTE_TEXT, Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_COPY_ALL, Anchor::Left | Anchor::Bottom);
-    SetAnchor(IDC_RA_PAUSE, Anchor::Right | Anchor::Bottom);
-    SetAnchor(IDC_RA_FREEZE, Anchor::Right | Anchor::Bottom);
 
     SetMinimumSize(480, 258);
 }
@@ -214,22 +205,6 @@ BOOL PointerInspectorDialog::OnCommand(WORD nCommand)
             const auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
             if (vmPointerInspector)
                 vmPointerInspector->CopyDefinition();
-
-            return TRUE;
-        }
-
-        case IDC_RA_PAUSE: {
-            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
-            if (vmPointerInspector)
-                vmPointerInspector->TogglePauseSelected();
-
-            return TRUE;
-        }
-
-        case IDC_RA_FREEZE: {
-            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
-            if (vmPointerInspector)
-                vmPointerInspector->ToggleFreezeSelected();
 
             return TRUE;
         }

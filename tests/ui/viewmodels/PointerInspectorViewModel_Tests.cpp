@@ -227,8 +227,8 @@ public:
 
         Assert::AreEqual({ 2U }, inspector.Bookmarks().Count());
 
-        inspector.AssertField(0, 4, 16U, L"+0004", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
-        inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
+        inspector.AssertField(0, 4, 16U, L"+0004", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
+        inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
     }
 
     TEST_METHOD(TestSetCurrentAddressWithMultiLinePointerNote)
@@ -257,9 +257,9 @@ public:
 
         Assert::AreEqual({ 2U }, inspector.Bookmarks().Count());
 
-        inspector.AssertField(0, 4, 16U, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
+        inspector.AssertField(0, 4, 16U, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
         inspector.AssertFieldBody(0, L"[32-bit] Class\r\n1=Wizard\r\n2=Fighter");
-        inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
+        inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
         inspector.AssertFieldBody(1, L"[32-bit] Max HP");
     }
 
@@ -397,7 +397,7 @@ public:
         inspector.AssertField(0, 0, 0x0CU, L"+0000", L"[pointer] Row 1", MemSize::EightBit, MemFormat::Hex, L"14");
         inspector.AssertField(1, 8, 0x14U, L"+0008", L"[pointer] Row 2", MemSize::EightBit, MemFormat::Hex, L"1c");
         inspector.AssertField(2, 16, 0x1CU, L"+0010", L"[pointer] Row 3", MemSize::EightBit, MemFormat::Hex, L"24");
-        inspector.AssertField(3, 24, 0x24U, L"+0018", L"Generic data", MemSize::EightBit, MemFormat::Hex, L"2c");
+        inspector.AssertField(3, 24, 0x24U, L"+0018", L"Generic data", MemSize::EightBit, MemFormat::Dec, L"44");
 
         Assert::AreEqual({1U}, inspector.PointerChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"[8-bit pointer] Player data", L"0c");
@@ -415,9 +415,9 @@ public:
         Assert::AreEqual(0x00000000, inspector.GetSelectedNode());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Row 1"), inspector.GetCurrentAddressNote());
         Assert::AreEqual({3U}, inspector.Bookmarks().Count());
-        inspector.AssertField(0, 0, 0x14U, L"+0000", L"Column 1a", MemSize::EightBit, MemFormat::Hex, L"1c");
+        inspector.AssertField(0, 0, 0x14U, L"+0000", L"Column 1a", MemSize::EightBit, MemFormat::Dec, L"28");
         inspector.AssertField(1, 4, 0x18U, L"+0004", L"[pointer] Column 1b", MemSize::EightBit, MemFormat::Hex, L"20");
-        inspector.AssertField(2, 8, 0x1CU, L"+0008", L"Column 1c", MemSize::EightBit, MemFormat::Hex, L"24");
+        inspector.AssertField(2, 8, 0x1CU, L"+0008", L"Column 1c", MemSize::EightBit, MemFormat::Dec, L"36");
 
         Assert::AreEqual({2U}, inspector.PointerChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"[8-bit pointer] Player data", L"0c");
@@ -509,14 +509,14 @@ public:
             L"+8: [32-bit] Max HP");
 
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
-        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
 
         inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
         Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
 
         inspector.SetCurrentFieldNote(L"[32-bit] Current HP");
         Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), inspector.GetCurrentFieldNote());
-        inspector.AssertField(0, 8, 20, L"+0008", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
+        inspector.AssertField(0, 8, 20, L"+0008", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
 
         inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\r\n+0x08: [32-bit] Current HP"));
     }
@@ -542,14 +542,14 @@ public:
             L"+8: [32-bit] Max HP");
 
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
-        inspector.AssertField(0, 4, 16, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
+        inspector.AssertField(0, 4, 16, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
 
         inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
         Assert::AreEqual(std::wstring(L"[32-bit] Class\r\n1=Wizard\r\n2=Fighter"), inspector.GetCurrentFieldNote());
 
         inspector.SetCurrentFieldNote(L"[32-bit] Class\r\n1=Mage\r\n2=Fighter");
         Assert::AreEqual(std::wstring(L"[32-bit] Class\r\n1=Mage\r\n2=Fighter"), inspector.GetCurrentFieldNote());
-        inspector.AssertField(0, 4, 16, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
+        inspector.AssertField(0, 4, 16, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
 
         inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\r\n+0x04: [32-bit] Class\r\n1=Mage\r\n2=Fighter\r\n+0x08: [32-bit] Max HP"));
     }
@@ -576,14 +576,14 @@ public:
         inspector.SetSelectedNode(0x0000000C);
 
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
-        inspector.AssertField(0, 8, 32, L"+0008", L"First item", MemSize::SixteenBit, MemFormat::Hex, L"0020");
+        inspector.AssertField(0, 8, 32, L"+0008", L"First item", MemSize::SixteenBit, MemFormat::Dec, L"32");
 
         inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
         Assert::AreEqual(std::wstring(L"[16-bit] First item"), inspector.GetCurrentFieldNote());
 
         inspector.SetCurrentFieldNote(L"[16-bit] 1st item");
         Assert::AreEqual(std::wstring(L"[16-bit] 1st item"), inspector.GetCurrentFieldNote());
-        inspector.AssertField(0, 8, 32, L"+0008", L"1st item", MemSize::SixteenBit, MemFormat::Hex, L"0020");
+        inspector.AssertField(0, 8, 32, L"+0008", L"1st item", MemSize::SixteenBit, MemFormat::Dec, L"32");
 
         inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\r\n+0x08: [32-bit] Max HP\r\n+0x0C: [32-bit pointer] Inventory\r\n"
                                                 L"++0x08: [16-bit] 1st item\r\n++0x0A: [16-bit] Second item"));
@@ -607,14 +607,14 @@ public:
             L"+8: [32-bit] Max HP");
 
         Assert::AreEqual({4U}, inspector.GetCurrentAddress());
-        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
 
         auto* pField = inspector.Bookmarks().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
         Expects(pField != nullptr);
         pField->SetOffset(L"+000c");
 
         Assert::AreEqual(std::wstring(L"+000c"), pField->GetOffset());
-        inspector.AssertField(0, 12, 24, L"+000c", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000018");
+        inspector.AssertField(0, 12, 24, L"+000c", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"24");
 
         inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\r\n+0x0C: [32-bit] Max HP"));
     }
@@ -641,7 +641,7 @@ public:
         inspector.SetSelectedNode(0x0000000C);
 
         Assert::AreEqual({4U}, inspector.GetCurrentAddress());
-        inspector.AssertField(0, 8, 32, L"+0008", L"First item", MemSize::SixteenBit, MemFormat::Hex, L"0020");
+        inspector.AssertField(0, 8, 32, L"+0008", L"First item", MemSize::SixteenBit, MemFormat::Dec, L"32");
 
         // position does not change
         auto* pField = inspector.Bookmarks().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
@@ -651,7 +651,7 @@ public:
         Assert::AreEqual(0, inspector.GetSingleSelectionIndex());
 
         Assert::AreEqual(std::wstring(L"+0004"), pField->GetOffset());
-        inspector.AssertField(0, 4, 28, L"+0004", L"First item", MemSize::SixteenBit, MemFormat::Hex, L"001c");
+        inspector.AssertField(0, 4, 28, L"+0004", L"First item", MemSize::SixteenBit, MemFormat::Dec, L"28");
 
         inspector.AssertNote(
             {4U}, std::wstring(
@@ -665,7 +665,7 @@ public:
         Assert::AreEqual(1, inspector.GetSingleSelectionIndex());
 
         Assert::AreEqual(std::wstring(L"+0010"), pField->GetOffset());
-        inspector.AssertField(1, 16, 40, L"+0010", L"First item", MemSize::SixteenBit, MemFormat::Hex, L"0028");
+        inspector.AssertField(1, 16, 40, L"+0010", L"First item", MemSize::SixteenBit, MemFormat::Dec, L"40");
 
         inspector.AssertNote(
             {4U}, std::wstring(
@@ -713,7 +713,7 @@ public:
         inspector.SetSelectedNode(0x01000004);
         Assert::AreEqual(0x01000004, inspector.GetSelectedNode());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Column 1b"), inspector.GetCurrentAddressNote());
-        inspector.AssertField(0, 0, 0x20U, L"+0000", L"Column 1a", MemSize::EightBit, MemFormat::Hex, L"28");
+        inspector.AssertField(0, 0, 0x20U, L"+0000", L"Column 1a", MemSize::EightBit, MemFormat::Dec, L"40");
         inspector.CopyDefinition();
         Assert::AreEqual(std::wstring(), inspector.mockClipboard.GetText());
 
@@ -745,8 +745,8 @@ public:
         Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.GetCurrentAddressNote());
 
         Assert::AreEqual({2U}, inspector.Bookmarks().Count());
-        inspector.AssertField(0, 4, 16U, L"+0004", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000010");
-        inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
+        inspector.AssertField(0, 4, 16U, L"+0004", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
+        inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
 
         Assert::AreEqual({1U}, inspector.PointerChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"[32-bit pointer] Player data", L"0000000c");
@@ -755,8 +755,8 @@ public:
         memory.at(17) = 1;
         memory.at(20) = 99;
         inspector.DoFrame();
-        inspector.AssertField(0, 4, 16U, L"+0004", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000110");
-        inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000063");
+        inspector.AssertField(0, 4, 16U, L"+0004", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"272");
+        inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"99");
 
         Assert::AreEqual({1U}, inspector.PointerChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"[32-bit pointer] Player data", L"0000000c");
@@ -764,8 +764,8 @@ public:
         // pointer changes
         memory.at(4) = 13;
         inspector.DoFrame();
-        inspector.AssertField(0, 4, 17U, L"+0004", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"63000001");
-        inspector.AssertField(1, 8, 21U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"18000000");
+        inspector.AssertField(0, 4, 17U, L"+0004", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"1660944385");
+        inspector.AssertField(1, 8, 21U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"402653184");
 
         Assert::AreEqual({1U}, inspector.PointerChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"[32-bit pointer] Player data", L"0000000d");
@@ -811,10 +811,10 @@ public:
 
         // all pointers are good
         Assert::AreEqual({2U}, inspector.Bookmarks().Count());
-        inspector.AssertField(0, 0, 0x20U, L"+0000", L"Current HP", // 20+00=20 (56)
-            MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000056");
-        inspector.AssertField(1, 8, 0x28U, L"+0008", L"Max HP",     // 20+08=28 (64)
-            MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000064");
+        inspector.AssertField(0, 0, 0x20U, L"+0000", L"Current HP", // 20+00=20 (0x56 => 86)
+            MemSize::ThirtyTwoBit, MemFormat::Dec, L"86");
+        inspector.AssertField(1, 8, 0x28U, L"+0008", L"Max HP",     // 20+08=28 (0x64 => 100)
+            MemSize::ThirtyTwoBit, MemFormat::Dec, L"100");
 
         Assert::AreEqual({3U}, inspector.PointerChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"[32-bit pointer] Player data", L"0000000c");     //    04    (0C)
@@ -835,9 +835,9 @@ public:
         inspector.AssertPointerChainAddressNull(1);
         inspector.AssertPointerChainAddressValid(2);
         inspector.AssertField(0, 0, 0x08U, L"+0000", L"Current HP", // 08+00=08 (08)
-                              MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000008");
+                              MemSize::ThirtyTwoBit, MemFormat::Dec, L"8");
         inspector.AssertField(1, 8, 0x10U, L"+0008", L"Max HP",     // 08+08=10 (00)
-                              MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000000");
+                              MemSize::ThirtyTwoBit, MemFormat::Dec, L"0");
         
         // third level is out of range
         memory.at(0x0004) = 0x20;
@@ -850,9 +850,9 @@ public:
         inspector.AssertPointerChainAddressInvalid(1);
         inspector.AssertPointerChainAddressNull(2);
         inspector.AssertField(0, 0, 0x00U, L"+0000", L"Current HP", // 00+00=00 (00)
-                              MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000000");
+                              MemSize::ThirtyTwoBit, MemFormat::Dec, L"0");
         inspector.AssertField(1, 8, 0x08U, L"+0008", L"Max HP",     // 00+08=08 (08)
-                              MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000008");
+                              MemSize::ThirtyTwoBit, MemFormat::Dec, L"8");
     }
 };
 

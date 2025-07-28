@@ -555,13 +555,14 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateRealNote()
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
+    const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNoteModel(nAddress) : nullptr;
     if (pNote)
     {
-        SetRealNote(*pNote);
+        SetRealNote(pNote->GetNote());
+        SetFormat(pNote->GetDefaultMemFormat());
 
         // if bookmarking an 8-byte double, automatically adjust the bookmark for the significant bytes
-        if (GetSize() == MemSize::Double32 && pCodeNotes->GetCodeNoteBytes(nAddress) == 8)
+        if (GetSize() == MemSize::Double32 && pNote->GetBytes() == 8)
             SetAddress(nAddress + 4);
     }
 }

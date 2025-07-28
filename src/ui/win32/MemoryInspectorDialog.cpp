@@ -210,10 +210,13 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     m_bindSearchResults.BindRowColor(MemorySearchViewModel::SearchResultViewModel::RowColorProperty);
     m_bindSearchResults.BindIsSelected(MemorySearchViewModel::SearchResultViewModel::IsSelectedProperty);
     m_bindSearchResults.Virtualize(MemorySearchViewModel::ScrollOffsetProperty,
-        MemorySearchViewModel::ScrollMaximumProperty, [&vmMemoryInspector](gsl::index nFrom, gsl::index nTo, bool bIsSelected)
-    {
-        vmMemoryInspector.Search().SelectRange(nFrom, nTo, bIsSelected);
-    });
+        MemorySearchViewModel::ScrollMaximumProperty,
+        [&vmMemoryInspector](gsl::index nFrom, gsl::index nTo, bool bIsSelected)
+        {
+            vmMemoryInspector.Search().SelectRange(nFrom, nTo, bIsSelected);
+        },
+        nullptr // Search results are readonly, no need to multi-set values
+    );
 
     // Code Notes
     m_bindAddress.BindText(MemoryInspectorViewModel::CurrentAddressTextProperty, ra::ui::win32::bindings::TextBoxBinding::UpdateMode::KeyPress);

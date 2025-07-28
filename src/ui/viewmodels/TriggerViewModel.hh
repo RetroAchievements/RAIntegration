@@ -99,6 +99,7 @@ public:
     void UpdateFrom(const rc_value_t& pValue);
     
     void SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue);
+    int SetSelectedItemValues(const IntModelProperty& pProperty, int nNewValue);
 
     void SuspendConditionMonitor() const noexcept;
     void ResumeConditionMonitor() const;
@@ -151,7 +152,7 @@ public:
 
     void DoFrame();
     void UpdateColors(const rc_trigger_t* pTrigger);
-    void UpdateCurrentGroup(bool bRememberHits);
+    void UpdateCurrentGroup(bool bRememberHits, const IntModelProperty* pProperty, int nNewValue);
     void UpdateConditions();
     void ToggleDecimal();
 

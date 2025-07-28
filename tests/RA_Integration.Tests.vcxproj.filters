@@ -590,5 +590,8 @@
     <ClInclude Include="..\src\data\models\CodeNoteModel.hh">
       <Filter>Code</Filter>
     </ClInclude>
+    <ClInclude Include="mocks\MockGameIdentifier.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

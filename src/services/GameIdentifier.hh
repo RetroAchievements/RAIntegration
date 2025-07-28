@@ -41,6 +41,9 @@ public:
     /// </summary>
     void SaveKnownHashes() const;
 
+protected:
+    void AddHash(const std::string& sHash, unsigned nGameId);
+
 private:
     static void LoadKnownHashes(std::map<std::string, unsigned>& mHashes);
     static void SaveKnownHashes(std::map<std::string, unsigned>& mHashes);

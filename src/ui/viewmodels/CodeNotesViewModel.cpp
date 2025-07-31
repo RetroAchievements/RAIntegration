@@ -297,7 +297,7 @@ void CodeNotesViewModel::BookmarkSelected() const
     if (!vmBookmarks.IsVisible())
         vmBookmarks.Show();
 
-    vmBookmarks.Bookmarks().BeginUpdate();
+    vmBookmarks.Bookmarks().Items().BeginUpdate();
 
     int nCount = 0;
     for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vNotes.Count()); ++nIndex)
@@ -327,7 +327,7 @@ void CodeNotesViewModel::BookmarkSelected() const
         }
     }
 
-    vmBookmarks.Bookmarks().EndUpdate();
+    vmBookmarks.Bookmarks().Items().EndUpdate();
 
     if (nCount == 100)
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Can only create 100 new bookmarks at a time.");

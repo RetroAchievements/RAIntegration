@@ -3,9 +3,11 @@
 #pragma once
 
 #include "data\Types.hh"
+#include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
-#include "ui\viewmodels\MemoryBookmarksViewModel.hh"
+#include "ui\WindowViewModelBase.hh"
+#include "ui\viewmodels\MemoryWatchListViewModel.hh"
 
 namespace ra {
 namespace data {
@@ -21,7 +23,11 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class PointerInspectorViewModel : public MemoryBookmarksViewModel
+class PointerInspectorViewModel : public WindowViewModelBase,
+    protected ra::data::context::GameContext::NotifyTarget,
+    protected ra::data::context::EmulatorContext::DispatchesReadMemory,
+    protected ra::ui::ViewModelBase::NotifyTarget,
+    protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 PointerInspectorViewModel();
@@ -31,6 +37,8 @@ public:
     PointerInspectorViewModel& operator=(const PointerInspectorViewModel&) noexcept = delete;
     PointerInspectorViewModel(PointerInspectorViewModel&&) noexcept = delete;
     PointerInspectorViewModel& operator=(PointerInspectorViewModel&&) noexcept = delete;
+
+    void InitializeNotifyTargets();
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the current address.
@@ -77,7 +85,7 @@ public:
     /// </summary>
     void SetCurrentAddressNote(const std::wstring& sValue) { SetValue(CurrentAddressNoteProperty, sValue); }
 
-    class StructFieldViewModel : public MemoryBookmarkViewModel
+    class StructFieldViewModel : public MemoryWatchViewModel
     {
     public:
         /// <summary>
@@ -112,7 +120,7 @@ public:
         /// </summary>
         void SetBody(const std::wstring& sValue) { SetValue(BodyProperty, sValue); }
 
-        using MemoryBookmarkViewModel::SetAddressWithoutUpdatingValue;
+        using MemoryWatchViewModel::SetAddressWithoutUpdatingValue;
 
         int32_t m_nOffset = 0;
         int32_t m_nIndent = 0;
@@ -201,7 +209,17 @@ public:
     /// </summary>
     const ViewModelCollection<StructFieldViewModel>& PointerChain() const noexcept { return m_vPointerChain; }
 
-    void DoFrame() override;
+    /// <summary>
+    /// Gets the list of fields.
+    /// </summary>
+    MemoryWatchListViewModel& Fields() noexcept { return m_vmFields; }
+
+    /// <summary>
+    /// Gets the list of fields.
+    /// </summary>
+    const MemoryWatchListViewModel& Fields() const noexcept { return m_vmFields; }
+
+    void DoFrame();
 
     void CopyDefinition() const;
     void BookmarkCurrentField() const;
@@ -209,6 +227,8 @@ public:
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
+
+    // ra::ui::ViewModelCollectionBase::NotifyTarget
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget
@@ -216,6 +236,9 @@ protected:
     void OnEndGameLoad() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
     void OnOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset);
+
+    // ViewModelBase::NotifyTarget
+    virtual void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args);
 
 private:
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
@@ -244,6 +267,7 @@ private:
     LookupItemViewModelCollection m_vPointers;
     LookupItemViewModelCollection m_vNodes;
     ViewModelCollection<StructFieldViewModel> m_vPointerChain;
+    MemoryWatchListViewModel m_vmFields;
     bool m_bSyncingAddress = false;
     bool m_bSyncingNote = false;
 

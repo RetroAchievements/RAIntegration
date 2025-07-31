@@ -435,6 +435,9 @@
     <ClCompile Include="ui\viewmodels\MemoryWatchViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryWatchListViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -1080,6 +1083,9 @@
       <Filter>Data\Search</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\MemoryWatchViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\MemoryWatchListViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>

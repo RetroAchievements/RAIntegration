@@ -1235,7 +1235,7 @@ void MemorySearchViewModel::BookmarkSelected()
     if (!vmBookmarks.IsVisible())
         vmBookmarks.Show();
 
-    vmBookmarks.Bookmarks().BeginUpdate();
+    vmBookmarks.Bookmarks().Items().BeginUpdate();
 
     int nCount = 0;
     for (const auto nAddress : m_vSelectedAddresses)
@@ -1257,7 +1257,7 @@ void MemorySearchViewModel::BookmarkSelected()
             break;
     }
 
-    vmBookmarks.Bookmarks().EndUpdate();
+    vmBookmarks.Bookmarks().Items().EndUpdate();
 
     if (nCount == 100)
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Can only create 100 new bookmarks at a time.");

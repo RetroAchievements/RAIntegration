@@ -461,7 +461,7 @@ public:
         vmPointerFinder.mockDesktop.ResetExpectedWindows();
 
         const auto& pBookmarks = vmPointerFinder.mockWindowManager.MemoryBookmarks.Bookmarks();
-        Assert::AreEqual({ 0U }, pBookmarks.Count());
+        Assert::AreEqual({ 0U }, pBookmarks.Items().Count());
 
         // initialize results
         std::array<unsigned char, 256> pMemory{};
@@ -489,13 +489,13 @@ public:
 
         // no selection
         vmPointerFinder.BookmarkSelected();
-        Assert::AreEqual({ 0U }, pBookmarks.Count());
+        Assert::AreEqual({ 0U }, pBookmarks.Items().Count());
 
         // selection
         vmPointerFinder.PotentialPointers().GetItemAt(1)->SetSelected(true);
         vmPointerFinder.BookmarkSelected();
-        Assert::AreEqual({ 1U }, pBookmarks.Count());
-        Assert::AreEqual({ 0x0070U }, pBookmarks.GetItemAt(0)->GetAddress());
+        Assert::AreEqual({ 1U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 0x0070U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
     }
 
     TEST_METHOD(TestExportResults)

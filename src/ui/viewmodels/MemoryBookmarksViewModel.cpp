@@ -26,10 +26,6 @@ namespace ui {
 namespace viewmodels {
 
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::BehaviorProperty("MemoryBookmarkViewModel", "Behavior", ra::etoi(BookmarkBehavior::None));
-const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsDirtyProperty("MemoryBookmarkViewModel", "IsDirty", false);
-const BoolModelProperty MemoryBookmarksViewModel::HasSelectionProperty("MemoryBookmarkViewModel", "HasSelection", false);
-const BoolModelProperty MemoryBookmarksViewModel::HasSingleSelectionProperty("MemoryBookmarkViewModel", "HasSingleSelection", false);
-const IntModelProperty MemoryBookmarksViewModel::SingleSelectionIndexProperty("MemoryBookmarkViewModel", "SingleSelectionIndex", -1);
 const StringModelProperty MemoryBookmarksViewModel::FreezeButtonTextProperty("MemoryBookmarksViewModel", "FreezeButtonText", L"Freeze");
 const StringModelProperty MemoryBookmarksViewModel::PauseButtonTextProperty("MemoryBookmarksViewModel", "PauseButtonText", L"Pause");
 
@@ -37,32 +33,11 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
 {
     SetWindowTitle(L"Memory Bookmarks");
 
-    m_vSizes.Add(ra::etoi(MemSize::EightBit), L" 8-bit"); // leading space for sort order
-    m_vSizes.Add(ra::etoi(MemSize::SixteenBit), ra::data::MemSizeString(MemSize::SixteenBit));
-    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBit), ra::data::MemSizeString(MemSize::TwentyFourBit));
-    m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), ra::data::MemSizeString(MemSize::ThirtyTwoBit));
-    m_vSizes.Add(ra::etoi(MemSize::SixteenBitBigEndian), ra::data::MemSizeString(MemSize::SixteenBitBigEndian));
-    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBitBigEndian), ra::data::MemSizeString(MemSize::TwentyFourBitBigEndian));
-    m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBitBigEndian), ra::data::MemSizeString(MemSize::ThirtyTwoBitBigEndian));
-    m_vSizes.Add(ra::etoi(MemSize::BitCount), ra::data::MemSizeString(MemSize::BitCount));
-    m_vSizes.Add(ra::etoi(MemSize::Nibble_Lower), ra::data::MemSizeString(MemSize::Nibble_Lower));
-    m_vSizes.Add(ra::etoi(MemSize::Nibble_Upper), ra::data::MemSizeString(MemSize::Nibble_Upper));
-    m_vSizes.Add(ra::etoi(MemSize::Float), ra::data::MemSizeString(MemSize::Float));
-    m_vSizes.Add(ra::etoi(MemSize::FloatBigEndian), ra::data::MemSizeString(MemSize::FloatBigEndian));
-    m_vSizes.Add(ra::etoi(MemSize::Double32), ra::data::MemSizeString(MemSize::Double32));
-    m_vSizes.Add(ra::etoi(MemSize::Double32BigEndian), ra::data::MemSizeString(MemSize::Double32BigEndian));
-    m_vSizes.Add(ra::etoi(MemSize::MBF32), ra::data::MemSizeString(MemSize::MBF32));
-    m_vSizes.Add(ra::etoi(MemSize::MBF32LE), ra::data::MemSizeString(MemSize::MBF32LE));
-    m_vSizes.Add(ra::etoi(MemSize::Text), ra::data::MemSizeString(MemSize::Text));
-
-    m_vFormats.Add(ra::etoi(MemFormat::Hex), L"Hex");
-    m_vFormats.Add(ra::etoi(MemFormat::Dec), L"Dec");
-
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::None), L"");
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::Frozen), L"Frozen");
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::PauseOnChange), L"Pause");
 
-    m_vBookmarks.AddNotifyTarget(*this);
+    m_vmMemoryWatchList.Items().AddNotifyTarget(*this);
 }
 
 void MemoryBookmarksViewModel::InitializeNotifyTargets()
@@ -70,8 +45,7 @@ void MemoryBookmarksViewModel::InitializeNotifyTargets()
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);
 
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.AddNotifyTarget(*this);
+    m_vmMemoryWatchList.InitializeNotifyTargets();
 }
 
 GSL_SUPPRESS_F6
@@ -94,22 +68,34 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Int
     MemoryWatchViewModel::OnValueChanged(args);
 }
 
-void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentValue()
-{
-    const auto nValue = ReadValue();
-    SetCurrentValueRaw(nValue);
-}
-
 bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangeValue(uint32_t nNewValue)
 {
-    if (GetBehavior() == BookmarkBehavior::Frozen)
+    const auto nBehavior = GetBehavior();
+
+    if (nNewValue == GetCurrentValueRaw())
+    {
+        // if the value didn't change, remove any highlighting from previous pause events
+        if (nBehavior == BookmarkBehavior::PauseOnChange)
+            SetRowColor(ra::ui::Color(ra::to_unsigned(RowColorProperty.GetDefaultValue())));
+
+        return false;
+    }
+
+    // value changed. if it's frozen, write the frozen value back into memory
+    if (nBehavior == BookmarkBehavior::Frozen)
     {
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         pEmulatorContext.WriteMemory(GetAddress(), GetSize(), GetCurrentValueRaw());
         return false;
     }
 
-    return MemoryWatchViewModel::ChangeValue(nNewValue);
+    if (!MemoryWatchViewModel::ChangeValue(nNewValue))
+        return false;
+
+    if (nBehavior == BookmarkBehavior::PauseOnChange)
+        HandlePauseOnChange();
+
+    return true;
 }
 
 bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::IgnoreValueChange(uint32_t nNewValue)
@@ -121,14 +107,46 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::IgnoreValueChange(uint32
     return MemoryWatchViewModel::IgnoreValueChange(nNewValue);
 }
 
+void MemoryBookmarksViewModel::MemoryBookmarkViewModel::HandlePauseOnChange()
+{
+    SetRowColor(ra::ui::Color(0xFFFFC0C0));
+
+    auto sMessage =
+        ra::StringPrintf(L"%s %s", ra::data::MemSizeString(GetSize()), ra::ByteAddressToString(GetAddress()));
+
+    const auto& pDescription = GetRealNote();
+    if (!pDescription.empty())
+    {
+        auto nDescriptionLength = pDescription.find(L'\n');
+        if (nDescriptionLength == std::string::npos)
+        {
+            if (pDescription.length() < 40)
+            {
+                nDescriptionLength = pDescription.length();
+            }
+            else
+            {
+                nDescriptionLength = pDescription.find_last_of(L' ', 40);
+                if (nDescriptionLength == std::string::npos)
+                    nDescriptionLength = 40;
+            }
+        }
+        sMessage.append(L": ");
+        sMessage.append(pDescription, 0, nDescriptionLength);
+    }
+
+    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+    pFrameEventQueue.QueuePauseOnChange(sMessage);
+}
+
 bool MemoryBookmarksViewModel::IsModified() const
 {
-    if (m_vBookmarks.Count() != m_nUnmodifiedBookmarkCount)
+    if (m_vmMemoryWatchList.Items().Count() != m_nUnmodifiedBookmarkCount)
         return true;
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vBookmarks.Count()); ++nIndex)
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vmMemoryWatchList.Items().Count()); ++nIndex)
     {
-        const auto& vmBookmark = *m_vBookmarks.GetItemAt(nIndex);
+        const auto& vmBookmark = *m_vmMemoryWatchList.Items().GetItemAt(nIndex);
         if (vmBookmark.IsModified())
             return true;
     }
@@ -159,21 +177,11 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
         }
         else
         {
-            m_vBookmarks.Clear();
+            m_vmMemoryWatchList.Items().Clear();
             m_nUnmodifiedBookmarkCount = 0;
         }
 
         m_nLoadedGameId = pGameContext.GameId();
-    }
-}
-
-void MemoryBookmarksViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
-{
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
-    {
-        auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
-        if (pBookmark && pBookmark->GetAddress() == nAddress)
-            pBookmark->SetRealNote(sNewNote);
     }
 }
 
@@ -183,7 +191,7 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     gsl::index nIndex = 0;
 
-    m_vBookmarks.BeginUpdate();
+    m_vmMemoryWatchList.Items().BeginUpdate();
 
     rapidjson::Document document;
     if (LoadDocument(document, sBookmarksFile))
@@ -193,10 +201,10 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
             const auto& bookmarks = document["Bookmarks"];
             for (const auto& bookmark : bookmarks.GetArray())
             {
-                auto* vmBookmark = m_vBookmarks.GetItemAt(nIndex);
+                auto* vmBookmark = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
                 if (vmBookmark == nullptr)
                 {
-                    vmBookmark = &m_vBookmarks.Add();
+                    vmBookmark = &m_vmMemoryWatchList.Items().Add<MemoryBookmarkViewModel>();
                     Ensures(vmBookmark != nullptr);
                 }
                 ++nIndex;
@@ -275,12 +283,12 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
         }
     }
 
-    while (m_vBookmarks.Count() > ra::to_unsigned(nIndex))
-        m_vBookmarks.RemoveAt(m_vBookmarks.Count() - 1);
+    while (m_vmMemoryWatchList.Items().Count() > ra::to_unsigned(nIndex))
+        m_vmMemoryWatchList.Items().RemoveAt(m_vmMemoryWatchList.Items().Count() - 1);
 
-    m_vBookmarks.EndUpdate();
+    m_vmMemoryWatchList.Items().EndUpdate();
 
-    m_nUnmodifiedBookmarkCount = m_vBookmarks.Count();
+    m_nUnmodifiedBookmarkCount = m_vmMemoryWatchList.Items().Count();
 }
 
 void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmarksFile)
@@ -292,9 +300,9 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
     document.SetObject();
 
     rapidjson::Value bookmarks(rapidjson::kArrayType);
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vmMemoryWatchList.Items().Count(); ++nIndex)
     {
-        auto& vmBookmark = *m_vBookmarks.GetItemAt(nIndex);
+        auto& vmBookmark = *m_vmMemoryWatchList.Items().GetItemAt(nIndex);
 
         rapidjson::Value item(rapidjson::kObjectType);
 
@@ -335,117 +343,28 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
     SaveDocument(document, sBookmarksFile);
 }
 
-void MemoryBookmarksViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t)
-{
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
-    {
-        auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
-        const auto nBookmarkAddress = pBookmark.GetAddress();
-        if (nAddress < nBookmarkAddress)
-            continue;
-
-        const auto nSize = pBookmark.GetSize();
-        const auto nBytes = (nSize == MemSize::Text) ? MemoryWatchViewModel::MaxTextBookmarkLength : ra::data::MemSizeBytes(nSize);
-        if (nAddress >= nBookmarkAddress + nBytes)
-            continue;
-
-        if (m_nWritingMemoryCount)
-            pBookmark.SetDirty(true);
-        else
-            pBookmark.UpdateCurrentValue();
-    }
-}
-
-void MemoryBookmarksViewModel::EndWritingMemory()
-{
-    if (--m_nWritingMemoryCount == 0)
-    {
-        ra::data::context::EmulatorContext::DispatchesReadMemory::DispatchMemoryRead([this]() {
-            for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
-            {
-                auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
-                if (pBookmark.IsDirty())
-                {
-                    pBookmark.SetDirty(false);
-                    pBookmark.UpdateCurrentValue();
-                }
-            }
-        });
-    }
-}
-
 void MemoryBookmarksViewModel::DoFrame()
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.RemoveNotifyTarget(*this);
-
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
-    {
-        auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
-        UpdateBookmark(pBookmark);
-    }
-
-    pEmulatorContext.AddNotifyTarget(*this);
-}
-
-void MemoryBookmarksViewModel::UpdateBookmark(MemoryBookmarksViewModel::MemoryBookmarkViewModel& pBookmark)
-{
-    if (pBookmark.MemoryChanged())
-    {
-        if (pBookmark.GetBehavior() == BookmarkBehavior::PauseOnChange)
-        {
-            pBookmark.SetRowColor(ra::ui::Color(0xFFFFC0C0));
-
-            const auto nSizeIndex = m_vSizes.FindItemIndex(LookupItemViewModel::IdProperty, ra::etoi(pBookmark.GetSize()));
-            Expects(nSizeIndex >= 0);
-
-            auto sMessage = ra::StringPrintf(L"%s %s", m_vSizes.GetItemAt(nSizeIndex)->GetLabel(), ra::ByteAddressToString(pBookmark.GetAddress()));
-
-            // remove leading space of " 8-bit"
-            if (isspace(sMessage.at(0)))
-                sMessage.erase(0, 1);
-
-            const auto& pDescription = pBookmark.GetRealNote();
-            if (!pDescription.empty())
-            {
-                auto nDescriptionLength = pDescription.find(L'\n');
-                if (nDescriptionLength == std::string::npos)
-                {
-                    if (pDescription.length() < 40)
-                    {
-                        nDescriptionLength = pDescription.length();
-                    }
-                    else
-                    {
-                        nDescriptionLength = pDescription.find_last_of(L' ', 40);
-                        if (nDescriptionLength == std::string::npos)
-                            nDescriptionLength = 40;
-                    }
-                }
-                sMessage.append(L": ");
-                sMessage.append(pDescription, 0, nDescriptionLength);
-            }
-
-            auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-            pFrameEventQueue.QueuePauseOnChange(sMessage);
-        }
-    }
-    else if (pBookmark.GetBehavior() == BookmarkBehavior::PauseOnChange)
-    {
-        pBookmark.SetRowColor(ra::ui::Color(ra::to_unsigned(MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue())));
-    }
+    m_vmMemoryWatchList.DoFrame();
 }
 
 bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const
 {
-    return (m_vBookmarks.FindItemIndex(MemoryBookmarkViewModel::AddressProperty, nAddress) >= 0);
+    for (size_t nIndex = 0; nIndex < m_vmMemoryWatchList.Items().Count(); ++nIndex)
+    {
+        const auto* pBookmark = m_vmMemoryWatchList.Items().GetItemAt(nIndex);
+        if (pBookmark != nullptr && pBookmark->GetAddress() == nAddress)
+            return true;
+    }
+
+    return false;
 }
 
 bool MemoryBookmarksViewModel::HasFrozenBookmark(ra::ByteAddress nAddress) const
 {
-    for (size_t nIndex = 0; nIndex < m_vBookmarks.Count(); ++nIndex)
+    for (size_t nIndex = 0; nIndex < m_vmMemoryWatchList.Items().Count(); ++nIndex)
     {
-        const auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
+        const auto* pBookmark = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
         if (pBookmark != nullptr && pBookmark->GetBehavior() == BookmarkBehavior::Frozen && pBookmark->GetAddress() == nAddress)
             return true;
     }
@@ -464,7 +383,7 @@ void MemoryBookmarksViewModel::AddBookmark(ra::ByteAddress nAddress, MemSize nSi
 
     vmBookmark->EndInitialization();
 
-    m_vBookmarks.Append(std::move(vmBookmark));
+    m_vmMemoryWatchList.Items().Append(std::move(vmBookmark));
 }
 
 void MemoryBookmarksViewModel::AddBookmark(const std::string& sSerialized)
@@ -477,10 +396,10 @@ void MemoryBookmarksViewModel::AddBookmark(const std::string& sSerialized)
 
     vmBookmark->EndInitialization();
 
-    m_vBookmarks.Append(std::move(vmBookmark));
+    m_vmMemoryWatchList.Items().Append(std::move(vmBookmark));
 }
 
-void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::MemoryBookmarkViewModel& vmBookmark)
+void MemoryBookmarksViewModel::InitializeBookmark(MemoryWatchViewModel& vmBookmark)
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     const auto bPreferDecimal = pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal);
@@ -489,7 +408,7 @@ void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::Memo
     vmBookmark.UpdateRealNote();
 }
 
-void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::MemoryBookmarkViewModel& vmBookmark, const std::string& sSerialized)
+void MemoryBookmarksViewModel::InitializeBookmark(MemoryWatchViewModel& vmBookmark, const std::string& sSerialized)
 {
     // if there's no condition separator, it's a simple memref
     if (sSerialized.find('_') == std::string::npos)
@@ -515,19 +434,19 @@ void MemoryBookmarksViewModel::InitializeBookmark(MemoryBookmarksViewModel::Memo
 
 int MemoryBookmarksViewModel::RemoveSelectedBookmarks()
 {
-    m_vBookmarks.BeginUpdate();
+    m_vmMemoryWatchList.Items().BeginUpdate();
 
     int nRemoved = 0;
-    for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+    for (gsl::index nIndex = m_vmMemoryWatchList.Items().Count() - 1; nIndex >= 0; --nIndex)
     {
-        if (m_vBookmarks.GetItemAt(nIndex)->IsSelected())
+        if (m_vmMemoryWatchList.Items().GetItemAt(nIndex)->IsSelected())
         {
-            m_vBookmarks.RemoveAt(nIndex);
+            m_vmMemoryWatchList.Items().RemoveAt(nIndex);
             ++nRemoved;
         }
     }
 
-    m_vBookmarks.EndUpdate();
+    m_vmMemoryWatchList.Items().EndUpdate();
 
     return nRemoved;
 }
@@ -536,9 +455,8 @@ void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(gsl::index, const Boo
 {
     if (args.Property == LookupItemViewModel::IsSelectedProperty)
     {
-        if (!m_vBookmarks.IsUpdating())
+        if (!m_vmMemoryWatchList.Items().IsUpdating())
         {
-            UpdateHasSelection();
             UpdateFreezeButtonText();
             UpdatePauseButtonText();
         }
@@ -549,7 +467,7 @@ void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index, const IntM
 {
     if (args.Property == MemoryBookmarkViewModel::BehaviorProperty)
     {
-        if (!m_vBookmarks.IsUpdating())
+        if (!m_vmMemoryWatchList.Items().IsUpdating())
         {
             UpdateFreezeButtonText();
             UpdatePauseButtonText();
@@ -559,50 +477,15 @@ void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index, const IntM
 
 void MemoryBookmarksViewModel::OnEndViewModelCollectionUpdate()
 {
-    UpdateHasSelection();
     UpdateFreezeButtonText();
     UpdatePauseButtonText();
 }
 
-void MemoryBookmarksViewModel::UpdateHasSelection()
-{
-    gsl::index nSelectedItemIndex = -1;
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
-    {
-        const auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
-        if (pBookmark.IsSelected())
-        {
-            if (nSelectedItemIndex != -1)
-            {
-                SetValue(HasSelectionProperty, true);
-                SetValue(HasSingleSelectionProperty, false);
-                SetValue(SingleSelectionIndexProperty, -1);
-                return;
-            }
-
-            nSelectedItemIndex = nIndex;
-        }
-    }
-
-    if (nSelectedItemIndex == -1)
-    {
-        SetValue(HasSelectionProperty, false);
-        SetValue(HasSingleSelectionProperty, false);
-        SetValue(SingleSelectionIndexProperty, -1);
-    }
-    else
-    {
-        SetValue(HasSelectionProperty, true);
-        SetValue(HasSingleSelectionProperty, true);
-        SetValue(SingleSelectionIndexProperty, gsl::narrow_cast<int>(nSelectedItemIndex));
-    }
-}
-
 bool MemoryBookmarksViewModel::ShouldFreeze() const
 {
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vmMemoryWatchList.Items().Count(); ++nIndex)
     {
-        const auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
+        const auto& pBookmark = *m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
         if (pBookmark.IsSelected() && pBookmark.GetBehavior() != BookmarkBehavior::Frozen)
             return true;
     }
@@ -612,7 +495,7 @@ bool MemoryBookmarksViewModel::ShouldFreeze() const
 
 void MemoryBookmarksViewModel::UpdateFreezeButtonText()
 {
-    if (!HasSelection() || ShouldFreeze())
+    if (!m_vmMemoryWatchList.HasSelection() || ShouldFreeze())
         SetValue(FreezeButtonTextProperty, FreezeButtonTextProperty.GetDefaultValue());
     else
         SetValue(FreezeButtonTextProperty, L"Unfreeze");
@@ -620,35 +503,35 @@ void MemoryBookmarksViewModel::UpdateFreezeButtonText()
 
 void MemoryBookmarksViewModel::ToggleFreezeSelected()
 {
-    m_vBookmarks.BeginUpdate();
+    m_vmMemoryWatchList.Items().BeginUpdate();
 
     if (ShouldFreeze())
     {
-        for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+        for (gsl::index nIndex = m_vmMemoryWatchList.Items().Count() - 1; nIndex >= 0; --nIndex)
         {
-            auto* pItem = m_vBookmarks.GetItemAt(nIndex);
+            auto* pItem = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
             if (pItem && pItem->IsSelected())
                 pItem->SetBehavior(BookmarkBehavior::Frozen);
         }
     }
     else
     {
-        for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+        for (gsl::index nIndex = m_vmMemoryWatchList.Items().Count() - 1; nIndex >= 0; --nIndex)
         {
-            auto* pItem = m_vBookmarks.GetItemAt(nIndex);
+            auto* pItem = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
             if (pItem && pItem->IsSelected() && pItem->GetBehavior() == BookmarkBehavior::Frozen)
                 pItem->SetBehavior(BookmarkBehavior::None);
         }
     }
 
-    m_vBookmarks.EndUpdate();
+    m_vmMemoryWatchList.Items().EndUpdate();
 }
 
 bool MemoryBookmarksViewModel::ShouldPause() const
 {
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vmMemoryWatchList.Items().Count(); ++nIndex)
     {
-        const auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
+        const auto& pBookmark = *m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
         if (pBookmark.IsSelected() && pBookmark.GetBehavior() != BookmarkBehavior::PauseOnChange)
             return true;
     }
@@ -658,7 +541,7 @@ bool MemoryBookmarksViewModel::ShouldPause() const
 
 void MemoryBookmarksViewModel::UpdatePauseButtonText()
 {
-    if (!HasSelection() || ShouldPause())
+    if (!m_vmMemoryWatchList.HasSelection() || ShouldPause())
         SetValue(PauseButtonTextProperty, PauseButtonTextProperty.GetDefaultValue());
     else
         SetValue(PauseButtonTextProperty, L"Stop Pausing");
@@ -666,44 +549,48 @@ void MemoryBookmarksViewModel::UpdatePauseButtonText()
 
 void MemoryBookmarksViewModel::TogglePauseSelected()
 {
-    m_vBookmarks.BeginUpdate();
+    m_vmMemoryWatchList.Items().BeginUpdate();
 
     if (ShouldPause())
     {
-        for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+        for (gsl::index nIndex = m_vmMemoryWatchList.Items().Count() - 1; nIndex >= 0; --nIndex)
         {
-            auto* pItem = m_vBookmarks.GetItemAt(nIndex);
+            auto* pItem = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
             if (pItem && pItem->IsSelected())
                 pItem->SetBehavior(BookmarkBehavior::PauseOnChange);
         }
     }
     else
     {
-        for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+        for (gsl::index nIndex = m_vmMemoryWatchList.Items().Count() - 1; nIndex >= 0; --nIndex)
         {
-            auto* pItem = m_vBookmarks.GetItemAt(nIndex);
+            auto* pItem = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
             if (pItem && pItem->IsSelected() && pItem->GetBehavior() == BookmarkBehavior::PauseOnChange)
                 pItem->SetBehavior(BookmarkBehavior::None);
         }
     }
 
-    m_vBookmarks.EndUpdate();
+    m_vmMemoryWatchList.Items().EndUpdate();
 }
 
 void MemoryBookmarksViewModel::MoveSelectedBookmarksUp()
 {
-    m_vBookmarks.ShiftItemsUp(MemoryBookmarkViewModel::IsSelectedProperty);
+    m_vmMemoryWatchList.Items().ShiftItemsUp(MemoryBookmarkViewModel::IsSelectedProperty);
 }
 
 void MemoryBookmarksViewModel::MoveSelectedBookmarksDown()
 {
-    m_vBookmarks.ShiftItemsDown(MemoryBookmarkViewModel::IsSelectedProperty);
+    m_vmMemoryWatchList.Items().ShiftItemsDown(MemoryBookmarkViewModel::IsSelectedProperty);
 }
 
-void MemoryBookmarksViewModel::ClearAllChanges()
+void MemoryBookmarksViewModel::ClearBehaviors()
 {
-    for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
-        m_vBookmarks.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty, 0);
+    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vmMemoryWatchList.Items().Count()); ++nIndex)
+    {
+        auto* pBookmark = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
+        if (pBookmark)
+            pBookmark->SetBehavior(BookmarkBehavior::None);
+    }
 }
 
 void MemoryBookmarksViewModel::LoadBookmarkFile()

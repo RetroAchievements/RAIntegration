@@ -10,7 +10,7 @@
 #include "services\TextWriter.hh"
 
 #include "ui\WindowViewModelBase.hh"
-#include "ui\viewmodels\MemoryWatchViewModel.hh"
+#include "ui\viewmodels\MemoryWatchListViewModel.hh"
 
 namespace ra {
 namespace ui {
@@ -18,7 +18,6 @@ namespace viewmodels {
 
 class MemoryBookmarksViewModel : public WindowViewModelBase,
     protected ra::data::context::GameContext::NotifyTarget,
-    protected ra::data::context::EmulatorContext::NotifyTarget,
     protected ra::data::context::EmulatorContext::DispatchesReadMemory,
     protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
@@ -33,7 +32,7 @@ public:
     
     void InitializeNotifyTargets();
 
-    virtual void DoFrame();
+    void DoFrame();
 
     enum class BookmarkBehavior
     {
@@ -60,54 +59,30 @@ public:
         /// </summary>
         void SetBehavior(BookmarkBehavior value) { SetValue(BehaviorProperty, ra::etoi(value)); }
 
-        /// <summary>
-        /// Reads the watched memory and updates the <see cref="CurrentValueProperty" />.
-        /// </summary>
-        /// <remarks>
-        /// Should only be called in response to the watched memory being changed by the user.
-        /// Bypasses behavioral triggers.
-        /// </remarks>
-        void UpdateCurrentValue();
-
-        // ==== used to communicate user-driven change to watched memory through bookmark view model
-        // ==== TODO: add an m_bUpdatingCurrentValue flag and have UpdateCurrentValue abort if that's set
-        /// <summary>
-        /// The <see cref="ModelProperty" /> for whether or not the <see cref="CurrentValueProperty"/> is dirty.
-        /// </summary>
-        static const BoolModelProperty IsDirtyProperty;
-
-        /// <summary>
-        /// Gets whether or not the <see cref="CurrentValueProperty"/> is dirty.
-        /// </summary>
-        bool IsDirty() const { return GetValue(IsDirtyProperty); }
-
-        /// <summary>
-        /// Sets whether or not the <see cref="CurrentValueProperty"/> is dirty.
-        /// </summary>
-        void SetDirty(bool bValue) { SetValue(IsDirtyProperty, bValue); }
-        // ===== END TODO
-
     protected:
         void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
         bool IgnoreValueChange(uint32_t nNewValue) override;
         bool ChangeValue(uint32_t nNewValue) override;
+
+    private:
+        void HandlePauseOnChange();
     };
 
     /// <summary>
     /// Gets the list of bookmarks.
     /// </summary>
-    ViewModelCollection<MemoryBookmarkViewModel>& Bookmarks() noexcept
+    MemoryWatchListViewModel& Bookmarks() noexcept
     {
-        return m_vBookmarks;
+        return m_vmMemoryWatchList;
     }
 
     /// <summary>
     /// Gets the list of bookmarks.
     /// </summary>
-    const ViewModelCollection<MemoryBookmarkViewModel>& Bookmarks() const noexcept
+    const MemoryWatchListViewModel& Bookmarks() const noexcept
     {
-        return m_vBookmarks;
+        return m_vmMemoryWatchList;
     }
 
     /// <summary>
@@ -119,22 +94,6 @@ public:
     /// Determines if a bookmark that is frozen exists for the specified address.
     /// </summary>
     bool HasFrozenBookmark(ra::ByteAddress nAddress) const;
-
-    /// <summary>
-    /// Gets the list of selectable sizes for each bookmark.
-    /// </summary>
-    const LookupItemViewModelCollection& Sizes() const noexcept
-    {
-        return m_vSizes;
-    }
-
-    /// <summary>
-    /// Gets the list of selectable formats for each bookmark.
-    /// </summary>
-    const LookupItemViewModelCollection& Formats() const noexcept
-    {
-        return m_vFormats;
-    }
 
     /// <summary>
     /// Gets the list of selectable behaviors for each bookmark.
@@ -159,12 +118,6 @@ public:
     /// </summary>
     /// <returns>Number of bookmarks that were removed</returns>
     int RemoveSelectedBookmarks();
-
-    static const BoolModelProperty HasSelectionProperty;
-    const bool HasSelection() const { return GetValue(HasSelectionProperty); }
-
-    static const BoolModelProperty HasSingleSelectionProperty;
-    static const IntModelProperty SingleSelectionIndexProperty;
 
     static const StringModelProperty FreezeButtonTextProperty;
     const std::wstring& GetFreezeButtonText() const { return GetValue(FreezeButtonTextProperty); }
@@ -193,11 +146,6 @@ public:
     void MoveSelectedBookmarksDown();
 
     /// <summary>
-    /// Resets the Changes counter on all bookmarks.
-    /// </summary>
-    void ClearAllChanges();
-
-    /// <summary>
     /// Prompts the user to select a bookmarks file to load.
     /// </summary>
     void LoadBookmarkFile();
@@ -207,8 +155,7 @@ public:
     /// </summary>
     void SaveBookmarkFile();
 
-    void BeginWritingMemory() noexcept { m_nWritingMemoryCount++; }
-    void EndWritingMemory();
+    void ClearBehaviors();
 
 protected:
     void LoadBookmarks(ra::services::TextReader& sBookmarksFile);
@@ -216,17 +163,11 @@ protected:
 
     // ra::data::context::GameContext::NotifyTarget
     void OnActiveGameChanged() override;
-    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
-
-    // ra::data::context::EmulatorContext::NotifyTarget
-    void OnByteWritten(ra::ByteAddress, uint8_t) override;
 
     // ra::ui::ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnEndViewModelCollectionUpdate() override;
-
-    void UpdateBookmark(MemoryBookmarkViewModel& pBookmark);
 
     bool IsModified() const;
     size_t m_nUnmodifiedBookmarkCount = 0;
@@ -238,18 +179,13 @@ private:
     bool ShouldPause() const;
     void UpdatePauseButtonText();
 
-    static void InitializeBookmark(MemoryBookmarkViewModel& vmBookmark, const std::string& sSerialized);
-    static void InitializeBookmark(MemoryBookmarkViewModel& vmBookmark);
+    static void InitializeBookmark(MemoryWatchViewModel& vmBookmark, const std::string& sSerialized);
+    static void InitializeBookmark(MemoryWatchViewModel& vmBookmark);
 
-    void UpdateHasSelection();
-
-    ViewModelCollection<MemoryBookmarkViewModel> m_vBookmarks;
-    LookupItemViewModelCollection m_vSizes;
-    LookupItemViewModelCollection m_vFormats;
+    MemoryWatchListViewModel m_vmMemoryWatchList;
     LookupItemViewModelCollection m_vBehaviors;
 
     unsigned int m_nLoadedGameId = 0;
-    int m_nWritingMemoryCount = 0;
 };
 
 } // namespace viewmodels

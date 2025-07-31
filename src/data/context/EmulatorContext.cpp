@@ -566,12 +566,7 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
 
     // unfreeze bookmarks so the user doesn't get hit with a modified memory error
     auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(vmBookmarks.Bookmarks().Count()); ++nIndex)
-    {
-        auto* pBookmark = vmBookmarks.Bookmarks().GetItemAt(nIndex);
-        if (pBookmark)
-            pBookmark->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::None);
-    }
+    vmBookmarks.ClearBehaviors();
 
     return true;
 }
@@ -933,127 +928,161 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
     }
 }
 
-void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const
+void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, const uint8_t* pBytes, size_t nBytes) const
 {
+    size_t nBytesWritten = 0;
     auto nBlockAddress = nAddress;
+
     for (const auto& pBlock : m_vMemoryBlocks)
     {
         if (nBlockAddress < pBlock.size)
         {
             if (!pBlock.write)
-                return;
+                break;
 
-            pBlock.write(nBlockAddress, nValue);
             m_bMemoryModified = true;
 
-            // create a copy of the list of pointers in case it's modified by one of the callbacks
-            NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-            for (NotifyTarget* target : vNotifyTargets)
+            if (nBytes == 1)
             {
-                Expects(target != nullptr);
-                target->OnByteWritten(nAddress, nValue);
+                pBlock.write(nBlockAddress, pBytes[0]);
+                nBytesWritten = 1;
+                break;
             }
+            else
+            {
+                do
+                {
+                    pBlock.write(nBlockAddress++, pBytes[nBytesWritten++]);
+                } while (nBytesWritten < nBytes && nBlockAddress < pBlock.size);
 
-            return;
+                if (nBytesWritten == nBytes)
+                    break;
+            }
         }
 
         nBlockAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
     }
+
+    if (nBytesWritten > 0)
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+
+            for (unsigned nIndex = 0; nIndex < nBytesWritten; ++nIndex)
+                target->OnByteWritten(nAddress + nIndex, pBytes[nIndex]);
+        }
+    }
+}
+
+void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const
+{
+    WriteMemory(nAddress, &nValue, 1);
 }
 
 void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const
 {
+    union
+    {
+        uint32_t u32;
+        uint8_t u8[4];
+    } u;
+    u.u32 = nValue;
+
     switch (nSize)
     {
         case MemSize::EightBit:
-            WriteMemoryByte(nAddress, nValue & 0xFF);
-            return;
+            WriteMemory(nAddress, u.u8, 1);
+            break;
+
         case MemSize::SixteenBit:
-            WriteMemoryByte(nAddress, nValue & 0xFF);
-            nValue >>= 8;
-            WriteMemoryByte(++nAddress, nValue & 0xFF);
-            return;
+            WriteMemory(nAddress, u.u8, 2);
+            break;
+
         case MemSize::TwentyFourBit:
-            WriteMemoryByte(nAddress, nValue & 0xFF);
-            nValue >>= 8;
-            WriteMemoryByte(++nAddress, nValue & 0xFF);
-            nValue >>= 8;
-            WriteMemoryByte(++nAddress, nValue & 0xFF);
-            return;
+            WriteMemory(nAddress, u.u8, 3);
+            break;
+
         case MemSize::ThirtyTwoBit:
-        case MemSize::Float:          // assumes the value has already been encoded into a 32-bit value
-        case MemSize::FloatBigEndian: // assumes the value has already been encoded into a 32-bit value
-        case MemSize::Double32:       // assumes the value has already been encoded into a 32-bit value
-        case MemSize::Double32BigEndian: // assumes the value has already been encoded into a 32-bit value
-        case MemSize::MBF32:          // assumes the value has already been encoded into a 32-bit value
-        case MemSize::MBF32LE: // assumes the value has already been encoded into a 32-bit value
-            WriteMemoryByte(nAddress, nValue & 0xFF);
-            nValue >>= 8;
-            WriteMemoryByte(++nAddress, nValue & 0xFF);
-            nValue >>= 8;
-            WriteMemoryByte(++nAddress, nValue & 0xFF);
-            nValue >>= 8;
-            WriteMemoryByte(++nAddress, nValue & 0xFF);
-            return;
+            // already little endian
+            WriteMemory(nAddress, u.u8, 4);
+            break;
+
+        case MemSize::Float:
+        case MemSize::FloatBigEndian:
+        case MemSize::Double32:
+        case MemSize::Double32BigEndian:
+        case MemSize::MBF32:
+        case MemSize::MBF32LE:
+            // assume the value has already been encoded into a 32-bit little endian value
+            WriteMemory(nAddress, u.u8, 4);
+            break;
+
         case MemSize::SixteenBitBigEndian:
-            WriteMemoryByte(nAddress, (nValue >> 8) & 0xFF);
-            WriteMemoryByte(++nAddress, nValue & 0xFF);
-            return;
+            u.u8[3] = u.u8[0];
+            u.u8[2] = u.u8[1];
+            WriteMemory(nAddress, &u.u8[2], 2);
+            break;
+
         case MemSize::TwentyFourBitBigEndian:
-            WriteMemoryByte(nAddress, (nValue >> 16) & 0xFF);
-            WriteMemoryByte(++nAddress, (nValue >> 8) & 0xFF);
-            WriteMemoryByte(++nAddress, nValue & 0xFF);
-            return;
+            u.u8[3] = u.u8[0];
+            u.u8[0] = u.u8[2];
+            u.u8[2] = u.u8[3];
+            WriteMemory(nAddress, u.u8, 3);
+            break;
+
         case MemSize::ThirtyTwoBitBigEndian:
-            WriteMemoryByte(nAddress, (nValue >> 24) & 0xFF);
-            WriteMemoryByte(++nAddress, (nValue >> 16) & 0xFF);
-            WriteMemoryByte(++nAddress, (nValue >> 8) & 0xFF);
-            WriteMemoryByte(++nAddress, nValue & 0xFF);
-            return;
-        case MemSize::BitCount:
-            return;
-    }
+            u.u32 = ReverseBytes(nValue);
+            WriteMemory(nAddress, u.u8, 4);
+            break;
 
-    const auto nCurrentValue = ReadMemoryByte(nAddress);
-    uint8_t nNewValue = gsl::narrow_cast<uint8_t>(nValue);
-
-    switch (nSize)
-    {
         case MemSize::Bit_0:
-            nNewValue = (nCurrentValue & ~0x01) | (nNewValue & 1);
+            u.u32 = (ReadMemoryByte(nAddress) & ~0x01) | (nValue & 1);
+            WriteMemory(nAddress, u.u8, 1);
             break;
         case MemSize::Bit_1:
-            nNewValue = (nCurrentValue & ~0x02) | ((nNewValue & 1) << 1);
+            u.u32 = (ReadMemoryByte(nAddress) & ~0x02) | ((nValue & 1) << 1);
+            WriteMemory(nAddress, u.u8, 1);
             break;
         case MemSize::Bit_2:
-            nNewValue = (nCurrentValue & ~0x04) | ((nNewValue & 1) << 2);
+            u.u32 = (ReadMemoryByte(nAddress) & ~0x04) | ((nValue & 1) << 2);
+            WriteMemory(nAddress, u.u8, 1);
             break;
         case MemSize::Bit_3:
-            nNewValue = (nCurrentValue & ~0x08) | ((nNewValue & 1) << 3);
+            u.u32 = (ReadMemoryByte(nAddress) & ~0x08) | ((nValue & 1) << 3);
+            WriteMemory(nAddress, u.u8, 1);
             break;
         case MemSize::Bit_4:
-            nNewValue = (nCurrentValue & ~0x10) | ((nNewValue & 1) << 4);
+            u.u32 = (ReadMemoryByte(nAddress) & ~0x10) | ((nValue & 1) << 4);
+            WriteMemory(nAddress, u.u8, 1);
             break;
         case MemSize::Bit_5:
-            nNewValue = (nCurrentValue & ~0x20) | ((nNewValue & 1) << 5);
+            u.u32 = (ReadMemoryByte(nAddress) & ~0x20) | ((nValue & 1) << 5);
+            WriteMemory(nAddress, u.u8, 1);
             break;
         case MemSize::Bit_6:
-            nNewValue = (nCurrentValue & ~0x40) | ((nNewValue & 1) << 6);
+            u.u32 = (ReadMemoryByte(nAddress) & ~0x40) | ((nValue & 1) << 6);
+            WriteMemory(nAddress, u.u8, 1);
             break;
         case MemSize::Bit_7:
-            nNewValue = (nCurrentValue & ~0x80) | ((nNewValue & 1) << 7);
+            u.u32 = (ReadMemoryByte(nAddress) & ~0x80) | ((nValue & 1) << 7);
+            WriteMemory(nAddress, u.u8, 1);
             break;
+
         case MemSize::Nibble_Lower:
-            nNewValue = (nCurrentValue & ~0x0F) | (nNewValue & 0x0F);
+            u.u32 = (ReadMemoryByte(nAddress) & ~0x0F) | (nValue & 0x0F);
+            WriteMemory(nAddress, u.u8, 1);
             break;
         case MemSize::Nibble_Upper:
-            nNewValue = (nCurrentValue & ~0xF0) | ((nNewValue & 0x0F) << 4);
+            u.u32 = (ReadMemoryByte(nAddress) & ~0xF0) | ((nValue & 0x0F) << 4);
+            WriteMemory(nAddress, u.u8, 1);
             break;
+
         default:
             break;
     }
-
-    WriteMemoryByte(nAddress, nNewValue);
 }
 
 void EmulatorContext::ResetMemoryModified()

@@ -38,6 +38,7 @@ const StringModelProperty MemoryWatchViewModel::PreviousValueProperty("MemoryWat
 const IntModelProperty MemoryWatchViewModel::ChangesProperty("MemoryWatchViewModel", "Changes", 0);
 const IntModelProperty MemoryWatchViewModel::RowColorProperty("MemoryWatchViewModel", "RowColor", 0);
 const BoolModelProperty MemoryWatchViewModel::ReadOnlyProperty("MemoryWatchViewModel", "IsReadOnly", false);
+const BoolModelProperty MemoryWatchViewModel::IsWritingMemoryProperty("MemoryWatchViewModel", "IsWritingMemory", false);
 
 void MemoryWatchViewModel::SetAddressWithoutUpdatingValue(ra::ByteAddress nNewAddress)
 {
@@ -279,16 +280,17 @@ bool MemoryWatchViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std
             break;
     }
 
-    // do not set m_nValue here, it will get set by UpdateCurrentValue which will be called by the
-    // OnByteWritten notification handler when WriteMemory modifies the EmulatorContext.
-#ifndef RA_UTEST
-    auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-#else
-    auto& vmBookmarks = *g_pMemoryBookmarksViewModel;
-#endif
-    vmBookmarks.BeginWritingMemory();
+    // set m_nValue directly to avoid bookmark behaviors from firing
+    m_nValue = nValue;
+
+    // use the IsWritingMemoryProperty to disable the event handler in the list
+    // while we write the memory so it doesn't try to sync the value back here
+    SetValue(IsWritingMemoryProperty, true);
     pEmulatorContext.WriteMemory(nAddress, m_nSize, nValue);
-    vmBookmarks.EndWritingMemory();
+    SetValue(IsWritingMemoryProperty, false);
+
+    // update the fields dependent on m_nValue
+    OnValueChanged();
 
 #ifndef RA_UTEST
     // memory inspector does not automatically redraw if the emulator is paused. force it to redraw.
@@ -300,7 +302,7 @@ bool MemoryWatchViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std
     return true;
 }
 
-bool MemoryWatchViewModel::MemoryChanged()
+bool MemoryWatchViewModel::DoFrame()
 {
     const auto nValue = ReadValue();
 
@@ -313,18 +315,33 @@ bool MemoryWatchViewModel::MemoryChanged()
             return false;
     }
 
-    if (nValue == m_nValue)
-        return false;
-
     return ChangeValue(nValue);
 }
 
 bool MemoryWatchViewModel::ChangeValue(uint32_t nNewValue)
 {
+    if (m_nValue == nNewValue)
+        return false;
+
     m_nValue = nNewValue;
     OnValueChanged();
 
     return true;
+}
+
+void MemoryWatchViewModel::UpdateCurrentValue()
+{
+    const auto nValue = ReadValue();
+    SetCurrentValueRaw(nValue);
+}
+
+void MemoryWatchViewModel::SetCurrentValueRaw(uint32_t nValue)
+{
+    if (m_nValue != nValue)
+    {
+        m_nValue = nValue;
+        OnValueChanged();
+    }
 }
 
 void MemoryWatchViewModel::OnValueChanged()
@@ -335,14 +352,6 @@ void MemoryWatchViewModel::OnValueChanged()
     SetChanges(GetChanges() + 1);
 }
 
-void MemoryWatchViewModel::SetCurrentValueRaw(uint32_t nValue)
-{
-    if (nValue != m_nValue)
-    {
-        m_nValue = nValue;
-        OnValueChanged();
-    }
-}
 
 std::wstring MemoryWatchViewModel::BuildCurrentValue() const
 {

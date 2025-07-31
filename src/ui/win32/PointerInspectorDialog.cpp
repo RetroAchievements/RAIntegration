@@ -77,13 +77,11 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
       m_bindFieldNote(vmPointerFinder)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Pointer Inspector");
-    m_bindWindow.BindLabel(IDC_RA_PAUSE, PointerInspectorViewModel::PauseButtonTextProperty);
-    m_bindWindow.BindLabel(IDC_RA_FREEZE, PointerInspectorViewModel::FreezeButtonTextProperty);
-    m_bindWindow.BindEnabled(IDC_RA_ADDBOOKMARK, PointerInspectorViewModel::HasSelectionProperty);
-    m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, PointerInspectorViewModel::HasSingleSelectionProperty);
-    m_bindWindow.BindEnabled(IDC_RA_PAUSE, PointerInspectorViewModel::HasSelectionProperty);
-    m_bindWindow.BindEnabled(IDC_RA_FREEZE, PointerInspectorViewModel::HasSelectionProperty);
-    m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, PointerInspectorViewModel::HasSingleSelectionProperty);
+
+    m_bindWindow.AddChildViewModel(vmPointerFinder.Fields());
+    m_bindWindow.BindEnabled(IDC_RA_ADDBOOKMARK, ra::ui::viewmodels::MemoryWatchListViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
 
     m_bindAddress.BindItems(vmPointerFinder.KnownPointers());
     m_bindAddress.BindSelectedItem(PointerInspectorViewModel::CurrentAddressProperty);
@@ -106,7 +104,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindFields.BindColumn(1, std::move(pDescriptionColumn));
 
     auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::SizeProperty, vmPointerFinder.Sizes());
+        PointerInspectorViewModel::StructFieldViewModel::SizeProperty, vmPointerFinder.Fields().Sizes());
     pSizeColumn->SetHeader(L"Size");
     pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 76);
     pSizeColumn->SetAlignment(ra::ui::RelativePosition::Far);
@@ -114,7 +112,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindFields.BindColumn(2, std::move(pSizeColumn));
 
     auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkFormatColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::FormatProperty, vmPointerFinder.Formats());
+        PointerInspectorViewModel::StructFieldViewModel::FormatProperty, vmPointerFinder.Fields().Formats());
     pFormatColumn->SetHeader(L"Format");
     pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 32);
     pFormatColumn->SetReadOnly(false);
@@ -128,7 +126,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     pValueColumn->SetReadOnly(false);
     m_bindFields.BindColumn(4, std::move(pValueColumn));
 
-    m_bindFields.BindItems(vmPointerFinder.Bookmarks());
+    m_bindFields.BindItems(vmPointerFinder.Fields().Items());
     m_bindFields.BindIsSelected(PointerInspectorViewModel::StructFieldViewModel::IsSelectedProperty);
     m_bindFields.BindRowColor(PointerInspectorViewModel::StructFieldViewModel::RowColorProperty);
     m_bindFields.SetShowGridLines(true);

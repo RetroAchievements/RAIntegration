@@ -23,9 +23,22 @@ const IntModelProperty PointerInspectorViewModel::SelectedNodeProperty("PointerI
 const StringModelProperty PointerInspectorViewModel::CurrentFieldNoteProperty("PointerInspectorViewModel", "CurrentFieldNote", L"");
 
 PointerInspectorViewModel::PointerInspectorViewModel()
-    : MemoryBookmarksViewModel()
 {
     SetWindowTitle(L"Pointer Inspector");
+
+    m_vmFields.AddNotifyTarget(*this); // for properties on the field list
+    m_vmFields.Items().AddNotifyTarget(*this); // for properties on individual fields
+}
+
+void PointerInspectorViewModel::InitializeNotifyTargets()
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    pGameContext.AddNotifyTarget(*this);
+
+    // don't let the MemoryWatchListViewModel sync notes. if the watched pointer changes, it
+    // will cause all the fields to blank out before they get resynced to the new addresses.
+    // instead, we'll update all the fields if we detect the parent node changing.
+    m_vmFields.InitializeNotifyTargets(false);
 }
 
 void PointerInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
@@ -44,12 +57,8 @@ void PointerInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     {
         OnSelectedNodeChanged(args.tNewValue);
     }
-    else if (args.Property == SingleSelectionIndexProperty)
-    {
-        OnSelectedFieldChanged(args.tNewValue);
-    }
 
-    MemoryBookmarksViewModel::OnValueChanged(args);
+    WindowViewModelBase::OnValueChanged(args);
 }
 
 void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
@@ -74,16 +83,19 @@ void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::Change
         OnCurrentAddressChanged(nAddress);
     }
 
-    MemoryBookmarksViewModel::OnValueChanged(args);
+    WindowViewModelBase::OnValueChanged(args);
+}
+
+void PointerInspectorViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == MemoryWatchListViewModel::SingleSelectionIndexProperty)
+        OnSelectedFieldChanged(args.tNewValue);
 }
 
 void PointerInspectorViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
     if (args.Property == StructFieldViewModel::OffsetProperty)
         OnOffsetChanged(nIndex, args.tNewValue);
-
-
-    MemoryBookmarksViewModel::OnViewModelStringValueChanged(nIndex, args);
 }
 
 void PointerInspectorViewModel::OnActiveGameChanged()
@@ -102,7 +114,7 @@ void PointerInspectorViewModel::OnActiveGameChanged()
         m_vPointers.Clear();
         m_vNodes.Clear();
         m_vPointerChain.Clear();
-        Bookmarks().Clear();
+        m_vmFields.Items().Clear();
 
         m_bSyncingAddress = true;
         SetCurrentAddress(0);
@@ -292,7 +304,7 @@ void PointerInspectorViewModel::OnSelectedFieldChanged(int nNewFieldIndex)
     m_bSyncingNote = true;
     if (nNewFieldIndex != -1)
     {
-        const auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nNewFieldIndex);
+        const auto* pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNewFieldIndex);
         Expects(pField != nullptr);
         SetCurrentFieldNote(pField->GetBody());
     }
@@ -427,7 +439,7 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
     {
         SetCurrentAddressNote(L"");
         m_pCurrentNote = nullptr;
-        Bookmarks().Clear();
+        m_vmFields.Items().Clear();
         return;
     }
 
@@ -437,10 +449,10 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
 
     m_pCurrentNote = pNote;
     const auto nBaseAddress = m_pCurrentNote->GetPointerAddress();
-    gsl::index nCount = gsl::narrow_cast<gsl::index>(Bookmarks().Count());
+    gsl::index nCount = gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count());
 
     gsl::index nInsertIndex = 0;
-    Bookmarks().BeginUpdate();
+    m_vmFields.Items().BeginUpdate();
     pNote->EnumeratePointerNotes([this, &nCount, &nInsertIndex, nBaseAddress]
         (ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pOffsetNote)
         {
@@ -450,14 +462,14 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
             StructFieldViewModel* pItem = nullptr;
             if (nInsertIndex < nCount)
             {
-                pItem = Bookmarks().GetItemAt<StructFieldViewModel>(nInsertIndex);
+                pItem = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nInsertIndex);
                 Expects(pItem != nullptr);
                 pItem->SetSelected(false);
             }
             else
             {
                 ++nCount;
-                pItem = &Bookmarks().Add<StructFieldViewModel>();
+                pItem = &m_vmFields.Items().Add<StructFieldViewModel>();
             }
 
             pItem->BeginInitialization();
@@ -473,18 +485,18 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
         });
 
     while (nCount > nInsertIndex)
-        Bookmarks().RemoveAt(--nCount);
+        m_vmFields.Items().RemoveAt(--nCount);
 
     DispatchMemoryRead([this]() {
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(Bookmarks().Count()); i++)
-            Bookmarks().GetItemAt(i)->EndInitialization();
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count()); i++)
+            m_vmFields.Items().GetItemAt(i)->EndInitialization();
 
         UpdateValues();
     });
 
-    Bookmarks().EndUpdate();
+    m_vmFields.Items().EndUpdate();
 
-    OnSelectedFieldChanged(GetValue(SingleSelectionIndexProperty));
+    OnSelectedFieldChanged(m_vmFields.GetSingleSelectionIndex());
 }
 
 static void LoadSubNotes(LookupItemViewModelCollection& vNodes,
@@ -540,8 +552,8 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
     gsl::index nDepth)
 {
     // if a single field is selected, push the current field value back into the field
-    const auto nSingleSelectionIndex = gsl::narrow_cast<gsl::index>(GetValue(SingleSelectionIndexProperty));
-    auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nSingleSelectionIndex);
+    const auto nSingleSelectionIndex = gsl::narrow_cast<gsl::index>(m_vmFields.GetSingleSelectionIndex());
+    auto* pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nSingleSelectionIndex);
     if (pField)
     {
         // SyncField will cause pField to point at the local newNote, capture the current value so it can be restored
@@ -552,9 +564,9 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
         pField->m_pNote = pExistingNote;
     }
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Bookmarks().Count()); ++nIndex)
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count()); ++nIndex)
     {
-        pField = Bookmarks().GetItemAt<StructFieldViewModel>(nIndex);
+        pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nIndex);
         if (!pField)
             continue;
 
@@ -675,11 +687,11 @@ void PointerInspectorViewModel::UpdateSourceCodeNote()
             m_pCurrentNote->EnumeratePointerNotes([this, &nNoteIndex]
                 (ra::ByteAddress, const ra::data::models::CodeNoteModel& pOffsetNote)
                 {
-                    Bookmarks().GetItemAt<StructFieldViewModel>(nNoteIndex++)->m_pNote = &pOffsetNote;
+                    m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNoteIndex++)->m_pNote = &pOffsetNote;
                     return true;
                 });
-            for (; nNoteIndex < gsl::narrow_cast<gsl::index>(Bookmarks().Count()); ++nNoteIndex)
-                Bookmarks().GetItemAt<StructFieldViewModel>(nNoteIndex)->m_pNote = nullptr;
+            for (; nNoteIndex < gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count()); ++nNoteIndex)
+                m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNoteIndex)->m_pNote = nullptr;
         }
     }
 }
@@ -701,7 +713,7 @@ void PointerInspectorViewModel::UpdatePointerChainValues()
             nAddress += pPointer->m_nOffset;
             pPointer->SetAddressWithoutUpdatingValue(nAddress);
 
-            if (pPointer->MemoryChanged())
+            if (pPointer->DoFrame())
                 UpdatePointerChainRowColor(*pPointer);
 
             nAddress = pPointer->GetCurrentValueRaw();
@@ -756,7 +768,7 @@ void PointerInspectorViewModel::UpdatePointerChainRowColor(PointerInspectorViewM
     {
         // pointer is valid
         pPointer.SetRowColor(
-            ra::ui::Color(ra::to_unsigned(MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue())));
+            ra::ui::Color(ra::to_unsigned(MemoryWatchViewModel::RowColorProperty.GetDefaultValue())));
     }
 }
 
@@ -764,46 +776,20 @@ void PointerInspectorViewModel::UpdateValues()
 {
     const auto nBaseAddress = (m_pCurrentNote != nullptr) ? m_pCurrentNote->GetPointerAddress() : 0U;
 
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.RemoveNotifyTarget(*this);
+    m_vmFields.Items().BeginUpdate();
 
-    Bookmarks().BeginUpdate();
-
-    const auto nCount = gsl::narrow_cast<gsl::index>(Bookmarks().Count());
+    const auto nCount = gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count());
     for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
     {
-        auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nIndex);
+        auto* pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nIndex);
         if (pField != nullptr)
         {
-            if (pField->GetBehavior() == BookmarkBehavior::Frozen)
-            {
-                pField->SetAddressWithoutUpdatingValue(nBaseAddress + pField->m_nOffset);
-
-                bool bIsPointerChainValid = true;
-                for (gsl::index nChainIndex = 0; nChainIndex < gsl::narrow_cast<gsl::index>(PointerChain().Count()); ++nChainIndex)
-                {
-                    if (PointerChain().GetItemValue(nChainIndex, MemoryBookmarkViewModel::RowColorProperty) != MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue())
-                    {
-                        bIsPointerChainValid = false;
-                        break;
-                    }
-                }
-
-                pField->SetRowColor(ra::ui::Color(bIsPointerChainValid ? 0xFFFFFFC0 : 0xFFFFF0C0));
-                if (!bIsPointerChainValid)
-                    continue;
-            }
-            else
-            {
-                pField->SetAddress(nBaseAddress + pField->m_nOffset);
-            }
-
-            UpdateBookmark(*pField);
+            pField->SetAddress(nBaseAddress + pField->m_nOffset);
+            pField->DoFrame();
         }
     }
-    Bookmarks().EndUpdate();
 
-    pEmulatorContext.AddNotifyTarget(*this);
+    m_vmFields.Items().EndUpdate();
 }
 
 void PointerInspectorViewModel::DoFrame()
@@ -834,7 +820,7 @@ std::string PointerInspectorViewModel::GetMemRefChain(bool bMeasured) const
 {
     std::string sBuffer;
 
-    const auto nSelectedFieldIndex = Bookmarks().FindItemIndex(LookupItemViewModel::IsSelectedProperty, true);
+    const auto nSelectedFieldIndex = m_vmFields.Items().FindItemIndex(LookupItemViewModel::IsSelectedProperty, true);
     if (nSelectedFieldIndex == -1)
         return sBuffer;
 
@@ -843,7 +829,7 @@ std::string PointerInspectorViewModel::GetMemRefChain(bool bMeasured) const
     if (pCodeNotes == nullptr)
         return sBuffer;
 
-    const auto* vmField = Bookmarks().GetItemAt<StructFieldViewModel>(nSelectedFieldIndex);
+    const auto* vmField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nSelectedFieldIndex);
     Expects(vmField != nullptr);
 
     auto* pRootNote = pCodeNotes->FindCodeNoteModel(GetCurrentAddress());
@@ -889,7 +875,7 @@ void PointerInspectorViewModel::BookmarkCurrentField() const
 
 void PointerInspectorViewModel::OnOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset)
 {
-    auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nIndex);
+    auto* pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nIndex);
     if (!pField || pField->m_bFormattingOffset)
         return;
 
@@ -907,7 +893,7 @@ void PointerInspectorViewModel::OnOffsetChanged(gsl::index nIndex, const std::ws
         auto nNewIndex = nIndex;
         while (nNewIndex > 0)
         {
-            auto* pPrevField = Bookmarks().GetItemAt<StructFieldViewModel>(nNewIndex - 1);
+            auto* pPrevField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNewIndex - 1);
             if (pPrevField->m_nOffset < pField->m_nOffset)
                 break;
 
@@ -915,9 +901,9 @@ void PointerInspectorViewModel::OnOffsetChanged(gsl::index nIndex, const std::ws
         }
         if (nNewIndex == nIndex)
         {
-            while (nNewIndex < gsl::narrow_cast<gsl::index>(Bookmarks().Count()) - 1)
+            while (nNewIndex < gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count()) - 1)
             {
-                auto* pNextField = Bookmarks().GetItemAt<StructFieldViewModel>(nNewIndex + 1);
+                auto* pNextField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNewIndex + 1);
                 if (pNextField->m_nOffset > pField->m_nOffset)
                     break;
 
@@ -927,11 +913,11 @@ void PointerInspectorViewModel::OnOffsetChanged(gsl::index nIndex, const std::ws
 
         if (nNewIndex != nIndex)
         {
-            Bookmarks().MoveItem(nIndex, nNewIndex);
+            m_vmFields.Items().MoveItem(nIndex, nNewIndex);
 
-            const auto nSelectionIndex = GetValue(SingleSelectionIndexProperty);
+            const auto nSelectionIndex = m_vmFields.GetSingleSelectionIndex();
             if (nSelectionIndex == gsl::narrow_cast<int>(nIndex))
-                SetValue(SingleSelectionIndexProperty, gsl::narrow_cast<int>(nNewIndex));
+                m_vmFields.SetSingleSelectionIndex(gsl::narrow_cast<int>(nNewIndex));
         }
 
         // update the composite note
@@ -940,7 +926,7 @@ void PointerInspectorViewModel::OnOffsetChanged(gsl::index nIndex, const std::ws
         // lastly, update the current value (may trigger PauseOnChange)
         const auto nBaseAddress = (m_pCurrentNote != nullptr) ? m_pCurrentNote->GetPointerAddress() : 0U;
         pField->SetAddress(nBaseAddress + pField->m_nOffset);
-        UpdateBookmark(*pField);
+        pField->DoFrame();
     }
 }
 

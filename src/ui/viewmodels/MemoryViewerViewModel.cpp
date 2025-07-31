@@ -38,7 +38,7 @@ class MemoryViewerViewModel::MemoryBookmarkMonitor : protected ViewModelCollecti
 public:
     MemoryBookmarkMonitor(MemoryViewerViewModel& pOwner)
         : m_pOwner(pOwner),
-          m_vBookmarks(ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Bookmarks())
+          m_vBookmarks(ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Bookmarks().Items())
     {
         m_vBookmarks.AddNotifyTarget(*this);
     }
@@ -84,7 +84,7 @@ protected:
             if (pBookmark != nullptr)
                 m_pOwner.UpdateColor(pBookmark->GetAddress());
         }
-        else if (args.Property == ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty)
+        else if (args.Property == ra::ui::viewmodels::MemoryWatchViewModel::AddressProperty)
         {
             m_pOwner.UpdateColor(static_cast<ra::ByteAddress>(args.tOldValue));
             m_pOwner.UpdateColor(static_cast<ra::ByteAddress>(args.tNewValue));
@@ -92,7 +92,7 @@ protected:
     }
 
 private:
-    ViewModelCollection<ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel>& m_vBookmarks;
+    ViewModelCollection<ra::ui::viewmodels::MemoryWatchViewModel>& m_vBookmarks;
     MemoryViewerViewModel& m_pOwner;
 };
 

@@ -125,6 +125,14 @@ public:
     void SetSize(MemSize value) { SetValue(SizeProperty, ra::etoi(value)); }
 
     /// <summary>
+    /// Gets the number of bytes being watched.
+    /// </summary>
+    uint32_t GetSizeBytes() const noexcept
+    {
+        return (m_nSize == MemSize::Text) ? MaxTextBookmarkLength : ra::data::MemSizeBytes(m_nSize);
+    }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the watched memory format.
     /// </summary>
     static const IntModelProperty FormatProperty;
@@ -162,7 +170,17 @@ public:
     /// <summary>
     /// Sets the unformatted current value of the watched memory.
     /// </summary>
+    /// <remarks>Bypasses behavioral triggers.</remarks>
     void SetCurrentValueRaw(uint32_t nValue);
+
+    /// <summary>
+    /// Reads the watched memory and updates the <see cref="CurrentValueProperty" />.
+    /// </summary>
+    /// <remarks>
+    /// Should only be called in response to the watched memory being changed by the user.
+    /// Bypasses behavioral triggers.
+    /// </remarks>
+    void UpdateCurrentValue();
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the previous value of the watched memory.
@@ -240,7 +258,7 @@ public:
     /// Reads the watched memory and returns whether or not it has changed since the last time it was read.
     /// </summary>
     /// <returns><c>true</c> if the memory has changed, <c>false</c> if not.</returns>
-    bool MemoryChanged();
+    bool DoFrame();
 
     /// <summary>
     /// Starts initialization of the view model.
@@ -254,6 +272,8 @@ public:
     void EndInitialization();
 
     static constexpr int MaxTextBookmarkLength = 8;
+
+    static const BoolModelProperty IsWritingMemoryProperty;
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;

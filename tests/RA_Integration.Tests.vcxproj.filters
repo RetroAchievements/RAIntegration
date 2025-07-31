@@ -495,6 +495,12 @@
     <ClCompile Include="..\src\ui\viewmodels\MemoryWatchViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\MemoryWatchListViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryWatchListViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />
@@ -597,6 +603,9 @@
       <Filter>Mocks</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ui\viewmodels\MemoryWatchViewModel.hh">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ui\viewmodels\MemoryWatchListViewModel.hh">
       <Filter>Code</Filter>
     </ClInclude>
   </ItemGroup>

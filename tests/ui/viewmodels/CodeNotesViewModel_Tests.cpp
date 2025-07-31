@@ -616,15 +616,15 @@ public:
         notes.BookmarkSelected();
 
         const auto& pBookmarks = notes.mockWindowManager.MemoryBookmarks.Bookmarks();
-        Assert::AreEqual({ 4U }, pBookmarks.Count());
-        Assert::AreEqual({ 0x0010U }, pBookmarks.GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pBookmarks.GetItemAt(0)->GetSize());
-        Assert::AreEqual({ 0x0016U }, pBookmarks.GetItemAt(1)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(1)->GetSize());
-        Assert::AreEqual({ 0x0022U }, pBookmarks.GetItemAt(2)->GetAddress());
-        Assert::AreEqual(MemSize::SixteenBit, pBookmarks.GetItemAt(2)->GetSize());
-        Assert::AreEqual({ 0x0040U }, pBookmarks.GetItemAt(3)->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pBookmarks.GetItemAt(3)->GetSize());
+        Assert::AreEqual({ 4U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 0x0010U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual({ 0x0016U }, pBookmarks.Items().GetItemAt(1)->GetAddress());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.Items().GetItemAt(1)->GetSize());
+        Assert::AreEqual({ 0x0022U }, pBookmarks.Items().GetItemAt(2)->GetAddress());
+        Assert::AreEqual(MemSize::SixteenBit, pBookmarks.Items().GetItemAt(2)->GetSize());
+        Assert::AreEqual({ 0x0040U }, pBookmarks.Items().GetItemAt(3)->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(3)->GetSize());
     }
 
     TEST_METHOD(TestModifiedIndicator)

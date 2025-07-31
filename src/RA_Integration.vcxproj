@@ -125,6 +125,7 @@
     <ClCompile Include="ui\viewmodels\MemoryInspectorViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemorySearchViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemoryViewerViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\MemoryWatchViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\NewAssetViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
@@ -323,6 +324,7 @@
     <ClInclude Include="ui\viewmodels\MemoryInspectorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemorySearchViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemoryViewerViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\MemoryWatchViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\viewmodels\NewAssetViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh" />

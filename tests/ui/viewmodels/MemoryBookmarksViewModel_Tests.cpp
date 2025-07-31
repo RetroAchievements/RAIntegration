@@ -1659,7 +1659,7 @@ public:
         Assert::AreEqual(MemSize::TwentyFourBit, bookmark.GetSize());
         Assert::AreEqual(MemFormat::Dec, bookmark.GetFormat());
         Assert::AreEqual(std::wstring(L"2752552"), bookmark.GetCurrentValue()); // 0x2a0028 = 2752552
-        Assert::IsTrue(bookmark.HasIndirectAddress());
+        Assert::IsTrue(bookmark.IsIndirectAddress());
         Assert::AreEqual(std::string("I:0x 0020_M:0xW0008"), bookmark.GetIndirectAddress());
 
         memory.at(0x20) = 0x10;
@@ -1705,7 +1705,7 @@ public:
         Assert::AreEqual(8U, bookmark.GetAddress());
         Assert::AreEqual(MemSize::TwentyFourBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
-        Assert::IsTrue(bookmark.HasIndirectAddress());
+        Assert::IsTrue(bookmark.IsIndirectAddress());
         Assert::AreEqual(std::string("I:0x 0020_M:0xW0008"), bookmark.GetIndirectAddress());
     }
 
@@ -1898,11 +1898,11 @@ public:
         bookmarks.DoFrame();
 
         Assert::AreEqual(0U, pBookmark1->GetAddress());
-        Assert::IsFalse(pBookmark1->HasIndirectAddress());
+        Assert::IsFalse(pBookmark1->IsIndirectAddress());
         Assert::AreEqual(std::wstring(L"00000106"), pBookmark1->GetCurrentValue());
 
         Assert::AreEqual(12U, pBookmark2->GetAddress());
-        Assert::IsTrue(pBookmark2->HasIndirectAddress());
+        Assert::IsTrue(pBookmark2->IsIndirectAddress());
         Assert::AreEqual(std::wstring(L"07"), pBookmark2->GetCurrentValue());
 
         pBookmark1->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);

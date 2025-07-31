@@ -341,6 +341,7 @@
     <ClCompile Include="..\src\ui\viewmodels\MemoryInspectorViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemorySearchViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryViewerViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\MemoryWatchViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\NewAssetViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayFriendsPageViewModel.cpp" />
@@ -436,6 +437,7 @@
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
     <ClInclude Include="..\src\pch.h" />
+    <ClInclude Include="..\src\ui\viewmodels\MemoryWatchViewModel.hh" />
     <ClInclude Include="..\src\ui\viewmodels\PointerFinderViewModel.hh" />
     <ClInclude Include="api\ApiAsserts.hh" />
     <ClInclude Include="data\DataAsserts.hh" />

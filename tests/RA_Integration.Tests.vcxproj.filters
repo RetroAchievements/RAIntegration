@@ -492,6 +492,9 @@
     <ClCompile Include="..\src\data\search\MemBlock.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\MemoryWatchViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />
@@ -592,6 +595,9 @@
     </ClInclude>
     <ClInclude Include="mocks\MockGameIdentifier.hh">
       <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ui\viewmodels\MemoryWatchViewModel.hh">
+      <Filter>Code</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

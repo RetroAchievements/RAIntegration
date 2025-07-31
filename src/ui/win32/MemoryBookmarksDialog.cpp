@@ -99,7 +99,7 @@ public:
             return ra::ui::win32::bindings::GridAddressColumnBinding::GetText(vmItems, nIndex);
 
         const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
-        if (pItem->HasIndirectAddress())
+        if (pItem->IsIndirectAddress())
             return ra::StringPrintf(L"(%s)", ra::ByteAddressToString(nValue).substr(2));
 
         return ra::Widen(ra::ByteAddressToString(nValue));

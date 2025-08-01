@@ -930,6 +930,7 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
 
 void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, const uint8_t* pBytes, size_t nBytes) const
 {
+    Expects(pBytes != nullptr);
     size_t nBytesWritten = 0;
     auto nBlockAddress = nAddress;
 

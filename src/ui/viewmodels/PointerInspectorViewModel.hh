@@ -238,7 +238,7 @@ protected:
     void OnOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset);
 
     // ViewModelBase::NotifyTarget
-    virtual void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args);
+    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
 private:
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);

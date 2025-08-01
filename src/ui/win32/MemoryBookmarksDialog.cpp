@@ -8,8 +8,8 @@
 #include "ui\viewmodels\PointerInspectorViewModel.hh"
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
-#include "ui\win32\bindings\GridBookmarkFormatColumnBinding.hh"
-#include "ui\win32\bindings\GridBookmarkValueColumnBinding.hh"
+#include "ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh"
+#include "ui\win32\bindings\GridMemoryWatchValueColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
@@ -149,14 +149,14 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pSizeColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(2, std::move(pSizeColumn));
 
-    auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkFormatColumnBinding>(
+    auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchFormatColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty, vmMemoryBookmarks.Bookmarks().Formats());
     pFormatColumn->SetHeader(L"Format");
     pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 32);
     pFormatColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(3, std::move(pFormatColumn));
 
-    auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkValueColumnBinding>(
+    auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchValueColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::CurrentValueProperty);
     pValueColumn->SetHeader(L"Value");
     pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
@@ -164,7 +164,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pValueColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(4, std::move(pValueColumn));
 
-    auto pPriorColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkValueColumnBinding>(
+    auto pPriorColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchValueColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::PreviousValueProperty);
     pPriorColumn->SetHeader(L"Prior");
     pPriorColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);

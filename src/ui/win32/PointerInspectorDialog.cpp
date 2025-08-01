@@ -7,8 +7,8 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
-#include "ui\win32\bindings\GridBookmarkFormatColumnBinding.hh"
-#include "ui\win32\bindings\GridBookmarkValueColumnBinding.hh"
+#include "ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh"
+#include "ui\win32\bindings\GridMemoryWatchValueColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
@@ -111,14 +111,14 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     pSizeColumn->SetReadOnly(false);
     m_bindFields.BindColumn(2, std::move(pSizeColumn));
 
-    auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkFormatColumnBinding>(
+    auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchFormatColumnBinding>(
         PointerInspectorViewModel::StructFieldViewModel::FormatProperty, vmPointerFinder.Fields().Formats());
     pFormatColumn->SetHeader(L"Format");
     pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 32);
     pFormatColumn->SetReadOnly(false);
     m_bindFields.BindColumn(3, std::move(pFormatColumn));
 
-    auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkValueColumnBinding>(
+    auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchValueColumnBinding>(
         PointerInspectorViewModel::StructFieldViewModel::CurrentValueProperty);
     pValueColumn->SetHeader(L"Value");
     pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
@@ -143,7 +143,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
     m_bindPointerChain.BindColumn(1, std::move(pAddressColumn));
 
-    pValueColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkValueColumnBinding>(
+    pValueColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchValueColumnBinding>(
         PointerInspectorViewModel::StructFieldViewModel::CurrentValueProperty);
     pValueColumn->SetHeader(L"Value");
     pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);

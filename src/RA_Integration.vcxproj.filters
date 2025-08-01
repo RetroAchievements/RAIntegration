@@ -1010,10 +1010,10 @@
     <ClInclude Include="ui\win32\PointerInspectorDialog.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
-    <ClInclude Include="ui\win32\bindings\GridBookmarkFormatColumnBinding.hh">
+    <ClInclude Include="ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
-    <ClInclude Include="ui\win32\bindings\GridBookmarkValueColumnBinding.hh">
+    <ClInclude Include="ui\win32\bindings\GridMemoryWatchValueColumnBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
     <ClInclude Include="services\AchievementLogicSerializer.hh">

@@ -432,6 +432,12 @@
     <ClCompile Include="data\search\MemBlock.cpp">
       <Filter>Data\Search</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryWatchViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryWatchListViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -1004,10 +1010,10 @@
     <ClInclude Include="ui\win32\PointerInspectorDialog.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
-    <ClInclude Include="ui\win32\bindings\GridBookmarkFormatColumnBinding.hh">
+    <ClInclude Include="ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
-    <ClInclude Include="ui\win32\bindings\GridBookmarkValueColumnBinding.hh">
+    <ClInclude Include="ui\win32\bindings\GridMemoryWatchValueColumnBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
     <ClInclude Include="services\AchievementLogicSerializer.hh">
@@ -1075,6 +1081,12 @@
     </ClInclude>
     <ClInclude Include="data\search\MemBlock.hh">
       <Filter>Data\Search</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\MemoryWatchViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\MemoryWatchListViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

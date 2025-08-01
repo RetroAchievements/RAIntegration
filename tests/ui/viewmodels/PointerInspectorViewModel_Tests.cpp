@@ -62,7 +62,7 @@ private:
         PointerInspectorViewModelHarness(PointerInspectorViewModelHarness&&) noexcept = delete;
         PointerInspectorViewModelHarness& operator=(PointerInspectorViewModelHarness&&) noexcept = delete;
 
-        void DoFrame() override
+        void DoFrame()
         {
             mockGameContext.DoFrame(); // ensure note pointers get updated
             PointerInspectorViewModel::DoFrame();
@@ -78,7 +78,7 @@ private:
             const std::wstring& sOffset, const std::wstring& sDescription,
             MemSize nSize, MemFormat nFormat, const std::wstring& sCurrentValue)
         {
-            const auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nIndex);
+            const auto* pField = Fields().Items().GetItemAt<StructFieldViewModel>(nIndex);
             Assert::IsNotNull(pField);
             Ensures(pField != nullptr);
             Assert::AreEqual(nOffset, pField->m_nOffset);
@@ -92,7 +92,7 @@ private:
 
         void AssertFieldBody(gsl::index nIndex, const std::wstring& sBody)
         {
-            const auto* pField = Bookmarks().GetItemAt<StructFieldViewModel>(nIndex);
+            const auto* pField = Fields().Items().GetItemAt<StructFieldViewModel>(nIndex);
             Assert::IsNotNull(pField);
             Ensures(pField != nullptr);
             Assert::AreEqual(sBody, pField->GetBody());
@@ -143,8 +143,9 @@ private:
             Assert::AreEqual(sExpectedNote, pNote->GetNote());
         }
 
-        bool HasSingleSelection() const { return GetValue(HasSingleSelectionProperty); }
-        int GetSingleSelectionIndex() const { return GetValue(SingleSelectionIndexProperty); }
+        bool HasSelection() const { return Fields().HasSelection(); }
+        bool HasSingleSelection() const { return Fields().HasSingleSelection(); }
+        int GetSingleSelectionIndex() const { return Fields().GetSingleSelectionIndex(); }
     };
 
 
@@ -196,7 +197,7 @@ public:
         Assert::AreEqual({ 3U }, inspector.GetCurrentAddress());
         Assert::AreEqual(std::wstring(L"0x0003"), inspector.GetCurrentAddressText());
         Assert::AreEqual(std::wstring(L"Note on 3"), inspector.GetCurrentAddressNote());
-        Assert::AreEqual({ 0U }, inspector.Bookmarks().Count());
+        Assert::AreEqual({ 0U }, inspector.Fields().Items().Count());
 
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({3U}, L"Modified Note on 3");
 
@@ -225,7 +226,7 @@ public:
         Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
         Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.GetCurrentAddressNote());
 
-        Assert::AreEqual({ 2U }, inspector.Bookmarks().Count());
+        Assert::AreEqual({ 2U }, inspector.Fields().Items().Count());
 
         inspector.AssertField(0, 4, 16U, L"+0004", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
         inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
@@ -255,7 +256,7 @@ public:
         Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
         Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.GetCurrentAddressNote());
 
-        Assert::AreEqual({ 2U }, inspector.Bookmarks().Count());
+        Assert::AreEqual({ 2U }, inspector.Fields().Items().Count());
 
         inspector.AssertField(0, 4, 16U, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
         inspector.AssertFieldBody(0, L"[32-bit] Class\r\n1=Wizard\r\n2=Fighter");
@@ -393,7 +394,7 @@ public:
 
         Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.GetSelectedNode());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Player data"), inspector.GetCurrentAddressNote());
-        Assert::AreEqual({4U}, inspector.Bookmarks().Count());
+        Assert::AreEqual({4U}, inspector.Fields().Items().Count());
         inspector.AssertField(0, 0, 0x0CU, L"+0000", L"[pointer] Row 1", MemSize::EightBit, MemFormat::Hex, L"14");
         inspector.AssertField(1, 8, 0x14U, L"+0008", L"[pointer] Row 2", MemSize::EightBit, MemFormat::Hex, L"1c");
         inspector.AssertField(2, 16, 0x1CU, L"+0010", L"[pointer] Row 3", MemSize::EightBit, MemFormat::Hex, L"24");
@@ -405,7 +406,7 @@ public:
         inspector.SetSelectedNode(0x00000008);
         Assert::AreEqual(0x00000008, inspector.GetSelectedNode());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Row 2"), inspector.GetCurrentAddressNote());
-        Assert::AreEqual({0U}, inspector.Bookmarks().Count());
+        Assert::AreEqual({0U}, inspector.Fields().Items().Count());
 
         Assert::AreEqual({2U}, inspector.PointerChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"[8-bit pointer] Player data", L"0c");
@@ -414,7 +415,7 @@ public:
         inspector.SetSelectedNode(0x00000000);
         Assert::AreEqual(0x00000000, inspector.GetSelectedNode());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Row 1"), inspector.GetCurrentAddressNote());
-        Assert::AreEqual({3U}, inspector.Bookmarks().Count());
+        Assert::AreEqual({3U}, inspector.Fields().Items().Count());
         inspector.AssertField(0, 0, 0x14U, L"+0000", L"Column 1a", MemSize::EightBit, MemFormat::Dec, L"28");
         inspector.AssertField(1, 4, 0x18U, L"+0004", L"[pointer] Column 1b", MemSize::EightBit, MemFormat::Hex, L"20");
         inspector.AssertField(2, 8, 0x1CU, L"+0008", L"Column 1c", MemSize::EightBit, MemFormat::Dec, L"36");
@@ -449,43 +450,43 @@ public:
 
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
 
-        Assert::AreEqual({ 3U }, inspector.Bookmarks().Count());
+        Assert::AreEqual({ 3U }, inspector.Fields().Items().Count());
         Assert::IsFalse(inspector.HasSelection());
         Assert::IsFalse(inspector.HasSingleSelection());
         Assert::AreEqual(std::wstring(), inspector.GetCurrentFieldNote());
 
-        inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
+        inspector.Fields().Items().GetItemAt(0)->SetSelected(true);
         Assert::IsTrue(inspector.HasSelection());
         Assert::IsTrue(inspector.HasSingleSelection());
         Assert::AreEqual(std::wstring(L"[32-bit] Class\r\n1=Wizard\r\n2=Fighter"), inspector.GetCurrentFieldNote());
 
-        inspector.Bookmarks().GetItemAt(1)->SetSelected(true);
+        inspector.Fields().Items().GetItemAt(1)->SetSelected(true);
         Assert::IsTrue(inspector.HasSelection());
         Assert::IsFalse(inspector.HasSingleSelection());
         Assert::AreEqual(std::wstring(), inspector.GetCurrentFieldNote());
 
-        inspector.Bookmarks().GetItemAt(0)->SetSelected(false);
+        inspector.Fields().Items().GetItemAt(0)->SetSelected(false);
         Assert::IsTrue(inspector.HasSelection());
         Assert::IsTrue(inspector.HasSingleSelection());
         Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
 
-        inspector.Bookmarks().GetItemAt(1)->SetSelected(false);
+        inspector.Fields().Items().GetItemAt(1)->SetSelected(false);
         Assert::IsFalse(inspector.HasSelection());
         Assert::IsFalse(inspector.HasSingleSelection());
         Assert::AreEqual(std::wstring(), inspector.GetCurrentFieldNote());
 
-        inspector.Bookmarks().GetItemAt(1)->SetSelected(true);
+        inspector.Fields().Items().GetItemAt(1)->SetSelected(true);
         Assert::IsTrue(inspector.HasSelection());
         Assert::IsTrue(inspector.HasSingleSelection());
         Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
 
         inspector.SetSelectedNode(0x0000000C);
-        Assert::AreEqual({2U}, inspector.Bookmarks().Count());
+        Assert::AreEqual({2U}, inspector.Fields().Items().Count());
         Assert::IsFalse(inspector.HasSelection());
         Assert::IsFalse(inspector.HasSingleSelection());
         Assert::AreEqual(std::wstring(), inspector.GetCurrentFieldNote());
 
-        inspector.Bookmarks().GetItemAt(1)->SetSelected(true);
+        inspector.Fields().Items().GetItemAt(1)->SetSelected(true);
         Assert::IsTrue(inspector.HasSelection());
         Assert::IsTrue(inspector.HasSingleSelection());
         Assert::AreEqual(std::wstring(L"[16-bit] Second item"), inspector.GetCurrentFieldNote());
@@ -511,7 +512,7 @@ public:
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
         inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
 
-        inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
+        inspector.Fields().Items().GetItemAt(0)->SetSelected(true);
         Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
 
         inspector.SetCurrentFieldNote(L"[32-bit] Current HP");
@@ -544,7 +545,7 @@ public:
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
         inspector.AssertField(0, 4, 16, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
 
-        inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
+        inspector.Fields().Items().GetItemAt(0)->SetSelected(true);
         Assert::AreEqual(std::wstring(L"[32-bit] Class\r\n1=Wizard\r\n2=Fighter"), inspector.GetCurrentFieldNote());
 
         inspector.SetCurrentFieldNote(L"[32-bit] Class\r\n1=Mage\r\n2=Fighter");
@@ -578,7 +579,7 @@ public:
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
         inspector.AssertField(0, 8, 32, L"+0008", L"First item", MemSize::SixteenBit, MemFormat::Dec, L"32");
 
-        inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
+        inspector.Fields().Items().GetItemAt(0)->SetSelected(true);
         Assert::AreEqual(std::wstring(L"[16-bit] First item"), inspector.GetCurrentFieldNote());
 
         inspector.SetCurrentFieldNote(L"[16-bit] 1st item");
@@ -609,7 +610,7 @@ public:
         Assert::AreEqual({4U}, inspector.GetCurrentAddress());
         inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
 
-        auto* pField = inspector.Bookmarks().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
+        auto* pField = inspector.Fields().Items().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
         Expects(pField != nullptr);
         pField->SetOffset(L"+000c");
 
@@ -644,9 +645,10 @@ public:
         inspector.AssertField(0, 8, 32, L"+0008", L"First item", MemSize::SixteenBit, MemFormat::Dec, L"32");
 
         // position does not change
-        auto* pField = inspector.Bookmarks().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
+        auto* pField = inspector.Fields().Items().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
         Expects(pField != nullptr);
         pField->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[16-bit] First item"), inspector.GetCurrentFieldNote());
         pField->SetOffset(L"4");
         Assert::AreEqual(0, inspector.GetSingleSelectionIndex());
 
@@ -659,7 +661,7 @@ public:
                       L"++0x04: [16-bit] First item\r\n++0x0A: [16-bit] Second item"));
 
         // position does change
-        pField = inspector.Bookmarks().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
+        pField = inspector.Fields().Items().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
         Expects(pField != nullptr);
         pField->SetOffset(L"10");
         Assert::AreEqual(1, inspector.GetSingleSelectionIndex());
@@ -706,7 +708,7 @@ public:
         inspector.CopyDefinition();
         Assert::AreEqual(std::wstring(), inspector.mockClipboard.GetText());
 
-        inspector.Bookmarks().GetItemAt(1)->SetSelected(true);
+        inspector.Fields().Items().GetItemAt(1)->SetSelected(true);
         inspector.CopyDefinition();
         Assert::AreEqual(std::wstring(L"I:0xH0004_0xH0008=28"), inspector.mockClipboard.GetText());
 
@@ -717,7 +719,7 @@ public:
         inspector.CopyDefinition();
         Assert::AreEqual(std::wstring(), inspector.mockClipboard.GetText());
 
-        inspector.Bookmarks().GetItemAt(0)->SetSelected(true);
+        inspector.Fields().Items().GetItemAt(0)->SetSelected(true);
         inspector.CopyDefinition();
         Assert::AreEqual(std::wstring(L"I:0xH0004_I:0xH0000_I:0xH0004_0xH0000=40"), inspector.mockClipboard.GetText());
     }
@@ -744,7 +746,7 @@ public:
         Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
         Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.GetCurrentAddressNote());
 
-        Assert::AreEqual({2U}, inspector.Bookmarks().Count());
+        Assert::AreEqual({2U}, inspector.Fields().Items().Count());
         inspector.AssertField(0, 4, 16U, L"+0004", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
         inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
 
@@ -810,7 +812,7 @@ public:
         Assert::AreEqual(std::wstring(L"[32-bit pointer] Health"), inspector.GetCurrentAddressNote());
 
         // all pointers are good
-        Assert::AreEqual({2U}, inspector.Bookmarks().Count());
+        Assert::AreEqual({2U}, inspector.Fields().Items().Count());
         inspector.AssertField(0, 0, 0x20U, L"+0000", L"Current HP", // 20+00=20 (0x56 => 86)
             MemSize::ThirtyTwoBit, MemFormat::Dec, L"86");
         inspector.AssertField(1, 8, 0x28U, L"+0008", L"Max HP",     // 20+08=28 (0x64 => 100)

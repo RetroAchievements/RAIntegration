@@ -1677,16 +1677,26 @@ public:
         constexpr int nBookmarks = 10;
         auto& pBookmarks = emulator.mockWindowManager.MemoryBookmarks;
         for (int i = 0; i < nBookmarks; ++i)
-            pBookmarks.Bookmarks().Add();
+            pBookmarks.AddBookmark(i, MemSize::EightBit);
 
-        pBookmarks.Bookmarks().GetItemAt(3)->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
-        pBookmarks.Bookmarks().GetItemAt(5)->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
-        pBookmarks.Bookmarks().GetItemAt(8)->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+        pBookmarks.Bookmarks().Items()
+            .GetItemAt<ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel>(3)
+                ->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+        pBookmarks.Bookmarks().Items()
+            .GetItemAt<ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel>(5)
+                ->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
+        pBookmarks.Bookmarks().Items()
+            .GetItemAt<ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel>(8)
+                ->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
 
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
         for (int i = 0; i < nBookmarks; ++i)
-            Assert::IsTrue(pBookmarks.Bookmarks().GetItemAt(i)->GetBehavior() == ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::None);
+        {
+            const auto* pBookmark = pBookmarks.Bookmarks().Items().GetItemAt<ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel>(i);
+            Expects(pBookmark != nullptr);
+            Assert::IsTrue(pBookmark->GetBehavior() == ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::None);
+        }
     }
 
     TEST_METHOD(TestEnableHardcoreModeDisablesModifiedAssets)

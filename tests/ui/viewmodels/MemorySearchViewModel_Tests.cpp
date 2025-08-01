@@ -1282,9 +1282,9 @@ public:
         Assert::IsTrue(search.HasSelection());
 
         const auto& pBookmarks = search.mockWindowManager.MemoryBookmarks.Bookmarks();
-        Assert::AreEqual({ 2U }, pBookmarks.Count());
-        Assert::AreEqual({ 2U }, pBookmarks.GetItemAt(0)->GetAddress());
-        Assert::AreEqual({ 3U }, pBookmarks.GetItemAt(1)->GetAddress());
+        Assert::AreEqual({ 2U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 2U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual({ 3U }, pBookmarks.Items().GetItemAt(1)->GetAddress());
 
         Assert::IsTrue(search.Results().GetItemAt(2)->IsSelected());
         Assert::IsTrue(search.Results().GetItemAt(3)->IsSelected());
@@ -1316,11 +1316,11 @@ public:
         Assert::AreEqual({ 5U }, search.Results().Count());
 
         const auto& pBookmarks = search.mockWindowManager.MemoryBookmarks.Bookmarks();
-        Assert::AreEqual({ 2U }, pBookmarks.Count());
-        Assert::AreEqual({ 30U }, pBookmarks.GetItemAt(0)->GetAddress());
-        Assert::AreEqual({ 30U }, pBookmarks.GetItemAt(1)->GetAddress());
-        Assert::AreEqual(MemSize::Nibble_Lower, pBookmarks.GetItemAt(0)->GetSize());
-        Assert::AreEqual(MemSize::Nibble_Upper, pBookmarks.GetItemAt(1)->GetSize());
+        Assert::AreEqual({ 2U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 30U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual({ 30U }, pBookmarks.Items().GetItemAt(1)->GetAddress());
+        Assert::AreEqual(MemSize::Nibble_Lower, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(MemSize::Nibble_Upper, pBookmarks.Items().GetItemAt(1)->GetSize());
 
         Assert::IsTrue(search.Results().GetItemAt(2)->IsSelected());
         Assert::IsTrue(search.Results().GetItemAt(3)->IsSelected());
@@ -1354,9 +1354,9 @@ public:
         Assert::AreEqual({ 1U }, search.Results().Count());
 
         const auto& pBookmarks = search.mockWindowManager.MemoryBookmarks.Bookmarks();
-        Assert::AreEqual({ 1U }, pBookmarks.Count());
-        Assert::AreEqual({ 8U }, pBookmarks.GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::Text, pBookmarks.GetItemAt(0)->GetSize());
+        Assert::AreEqual({ 1U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 8U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::Text, pBookmarks.Items().GetItemAt(0)->GetSize());
         Assert::IsTrue(search.Results().GetItemAt(0)->IsSelected());
     }
 

@@ -322,7 +322,7 @@ public:
 
         inspector.mockWindowManager.MemoryBookmarks.InitializeNotifyTargets();
         inspector.mockWindowManager.MemoryBookmarks.AddBookmark(3, MemSize::EightBit);
-        auto* pNote = inspector.mockWindowManager.MemoryBookmarks.Bookmarks().GetItemAt(0);
+        auto* pNote = inspector.mockWindowManager.MemoryBookmarks.Bookmarks().Items().GetItemAt<MemoryBookmarksViewModel::MemoryBookmarkViewModel>(0);
         Expects(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"03"), pNote->GetCurrentValue());
         Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)pNote->GetBehavior());
@@ -699,31 +699,31 @@ public:
         inspector.BookmarkCurrentAddress();
 
         const auto& pBookmarks = inspector.mockWindowManager.MemoryBookmarks.Bookmarks();
-        Assert::AreEqual({ 1U }, pBookmarks.Count());
-        Assert::AreEqual({ 2U }, pBookmarks.GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pBookmarks.GetItemAt(0)->GetSize());
+        Assert::AreEqual({ 1U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 2U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
 
         inspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
         inspector.SetCurrentAddress(5U);
         inspector.BookmarkCurrentAddress();
 
-        Assert::AreEqual({ 2U }, pBookmarks.Count());
-        Assert::AreEqual({ 2U }, pBookmarks.GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pBookmarks.GetItemAt(0)->GetSize());
-        Assert::AreEqual({ 5U }, pBookmarks.GetItemAt(1)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(1)->GetSize());
+        Assert::AreEqual({ 2U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 2U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual({ 5U }, pBookmarks.Items().GetItemAt(1)->GetAddress());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.Items().GetItemAt(1)->GetSize());
 
         inspector.Viewer().SetSize(MemSize::ThirtyTwoBitBigEndian);
         inspector.SetCurrentAddress(12U);
         inspector.BookmarkCurrentAddress();
 
-        Assert::AreEqual({3U}, pBookmarks.Count());
-        Assert::AreEqual({2U}, pBookmarks.GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pBookmarks.GetItemAt(0)->GetSize());
-        Assert::AreEqual({5U}, pBookmarks.GetItemAt(1)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(1)->GetSize());
-        Assert::AreEqual({12U}, pBookmarks.GetItemAt(2)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, pBookmarks.GetItemAt(2)->GetSize());
+        Assert::AreEqual({ 3U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 2U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual({ 5U }, pBookmarks.Items().GetItemAt(1)->GetAddress());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.Items().GetItemAt(1)->GetSize());
+        Assert::AreEqual({ 12U }, pBookmarks.Items().GetItemAt(2)->GetAddress());
+        Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, pBookmarks.Items().GetItemAt(2)->GetSize());
     }
 
     TEST_METHOD(TestBookmarkCurrentAddressIndirect)
@@ -747,11 +747,11 @@ public:
         inspector.BookmarkCurrentAddress();
 
         const auto& pBookmarks = inspector.mockWindowManager.MemoryBookmarks.Bookmarks();
-        Assert::AreEqual({1U}, pBookmarks.Count());
-        Assert::AreEqual({16U}, pBookmarks.GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(0)->GetSize());
-        Assert::AreEqual(std::string("I:0xX0004_M:0xX0004"), pBookmarks.GetItemAt(0)->GetIndirectAddress());
-        Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), pBookmarks.GetItemAt(0)->GetRealNote());
+        Assert::AreEqual({1U}, pBookmarks.Items().Count());
+        Assert::AreEqual({16U}, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(std::string("I:0xX0004_M:0xX0004"), pBookmarks.Items().GetItemAt(0)->GetIndirectAddress());
+        Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), pBookmarks.Items().GetItemAt(0)->GetRealNote());
     }
 };
 

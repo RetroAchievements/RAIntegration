@@ -8,8 +8,8 @@
 #include "ui\viewmodels\PointerInspectorViewModel.hh"
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
-#include "ui\win32\bindings\GridBookmarkFormatColumnBinding.hh"
-#include "ui\win32\bindings\GridBookmarkValueColumnBinding.hh"
+#include "ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh"
+#include "ui\win32\bindings\GridMemoryWatchValueColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
@@ -99,7 +99,7 @@ public:
             return ra::ui::win32::bindings::GridAddressColumnBinding::GetText(vmItems, nIndex);
 
         const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
-        if (pItem->HasIndirectAddress())
+        if (pItem->IsIndirectAddress())
             return ra::StringPrintf(L"(%s)", ra::ByteAddressToString(nValue).substr(2));
 
         return ra::Widen(ra::ByteAddressToString(nValue));
@@ -113,11 +113,13 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Memory Bookmarks");
     m_bindWindow.BindLabel(IDC_RA_PAUSE, MemoryBookmarksViewModel::PauseButtonTextProperty);
     m_bindWindow.BindLabel(IDC_RA_FREEZE, MemoryBookmarksViewModel::FreezeButtonTextProperty);
-    m_bindWindow.BindEnabled(IDC_RA_DEL_BOOKMARK, MemoryBookmarksViewModel::HasSelectionProperty);
-    m_bindWindow.BindEnabled(IDC_RA_PAUSE, MemoryBookmarksViewModel::HasSelectionProperty);
-    m_bindWindow.BindEnabled(IDC_RA_FREEZE, MemoryBookmarksViewModel::HasSelectionProperty);
-    m_bindWindow.BindEnabled(IDC_RA_MOVE_BOOKMARK_UP, MemoryBookmarksViewModel::HasSelectionProperty);
-    m_bindWindow.BindEnabled(IDC_RA_MOVE_BOOKMARK_DOWN, MemoryBookmarksViewModel::HasSelectionProperty);
+
+    m_bindWindow.AddChildViewModel(vmMemoryBookmarks.Bookmarks());
+    m_bindWindow.BindEnabled(IDC_RA_DEL_BOOKMARK, ra::ui::viewmodels::MemoryWatchListViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_PAUSE, ra::ui::viewmodels::MemoryWatchListViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_FREEZE, ra::ui::viewmodels::MemoryWatchListViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_MOVE_BOOKMARK_UP, ra::ui::viewmodels::MemoryWatchListViewModel::HasSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_MOVE_BOOKMARK_DOWN, ra::ui::viewmodels::MemoryWatchListViewModel::HasSelectionProperty);
 
     m_bindBookmarks.SetShowGridLines(true);
     m_bindBookmarks.BindIsSelected(MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsSelectedProperty);
@@ -140,21 +142,21 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     m_bindBookmarks.BindColumn(1, std::move(pAddressColumn));
 
     auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty, vmMemoryBookmarks.Sizes());
+        MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty, vmMemoryBookmarks.Bookmarks().Sizes());
     pSizeColumn->SetHeader(L"Size");
     pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 76);
     pSizeColumn->SetAlignment(ra::ui::RelativePosition::Far);
     pSizeColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(2, std::move(pSizeColumn));
 
-    auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkFormatColumnBinding>(
-        MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty, vmMemoryBookmarks.Formats());
+    auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchFormatColumnBinding>(
+        MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty, vmMemoryBookmarks.Bookmarks().Formats());
     pFormatColumn->SetHeader(L"Format");
     pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 32);
     pFormatColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(3, std::move(pFormatColumn));
 
-    auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkValueColumnBinding>(
+    auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchValueColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::CurrentValueProperty);
     pValueColumn->SetHeader(L"Value");
     pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
@@ -162,7 +164,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pValueColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(4, std::move(pValueColumn));
 
-    auto pPriorColumn = std::make_unique<ra::ui::win32::bindings::GridBookmarkValueColumnBinding>(
+    auto pPriorColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchValueColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::PreviousValueProperty);
     pPriorColumn->SetHeader(L"Prior");
     pPriorColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
@@ -183,7 +185,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pBehaviorColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(7, std::move(pBehaviorColumn));
 
-    m_bindBookmarks.BindItems(vmMemoryBookmarks.Bookmarks());
+    m_bindBookmarks.BindItems(vmMemoryBookmarks.Bookmarks().Items());
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_SAVEBOOKMARK, Anchor::Top | Anchor::Left);
@@ -224,7 +226,7 @@ BOOL MemoryBookmarksDialog::OnCommand(WORD nCommand)
         {
             auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
             if (vmMemoryBookmarks)
-                vmMemoryBookmarks->ClearAllChanges();
+                vmMemoryBookmarks->Bookmarks().ClearAllChanges();
 
             return TRUE;
         }

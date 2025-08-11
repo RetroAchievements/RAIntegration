@@ -149,6 +149,7 @@
 #define IDC_RA_TYPE                     1244
 #define IDC_RA_RESULTS_IMPORT           1245
 #define IDC_RA_PAUSE                    1246
+#define IDC_RA_CHK_ALIGNED              1247
 
 
 #define IDD_RA_MEMORY                   1501
@@ -219,7 +220,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1247
+#define _APS_NEXT_CONTROL_VALUE         1248
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

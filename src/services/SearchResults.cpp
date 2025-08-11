@@ -433,5 +433,18 @@ MemSize SearchResults::GetSize() const noexcept
     return m_pImpl ? m_pImpl->GetMemSize() : MemSize::EightBit;
 }
 
+SearchType GetAlignedSearchType(SearchType searchType)
+{
+    switch (searchType)
+    {
+        case SearchType::SixteenBit: return SearchType::SixteenBitAligned;
+        case SearchType::SixteenBitBigEndian: return SearchType::SixteenBitBigEndianAligned;
+        case SearchType::ThirtyTwoBit: return SearchType::ThirtyTwoBitAligned;
+        case SearchType::ThirtyTwoBitBigEndian: return SearchType::ThirtyTwoBitBigEndianAligned;
+        default: return SearchType::None;
+    }
+}
+
+
 } // namespace services
 } // namespace ra

@@ -7,6 +7,7 @@
 #include "ui/win32/DialogBase.hh"
 #include "ui/win32/IDialogPresenter.hh"
 
+#include "ui/win32/bindings/CheckBoxBinding.hh"
 #include "ui/win32/bindings/ComboBoxBinding.hh"
 #include "ui/win32/bindings/GridBinding.hh"
 #include "ui/win32/bindings/MemoryViewerControlBinding.hh"
@@ -50,6 +51,7 @@ private:
     bindings::TextBoxBinding m_bindSearchRange;
 
     bindings::ComboBoxBinding m_bindSearchType;
+    bindings::CheckBoxBinding m_bindSearchAligned;
 
     bindings::ComboBoxBinding m_bindComparison;
     bindings::ComboBoxBinding m_bindValueType;

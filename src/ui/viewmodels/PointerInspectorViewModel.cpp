@@ -315,7 +315,7 @@ void PointerInspectorViewModel::OnSelectedFieldChanged(int nNewFieldIndex)
     {
         const auto* pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNewFieldIndex);
         Expects(pField != nullptr);
-        SetCurrentFieldNote(pField->GetBody());
+        SetCurrentFieldNote(pField->GetRealNote());
     }
     else
     {
@@ -426,19 +426,23 @@ void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructField
     pFieldViewModel.SetSize((nSize == MemSize::Unknown) ? MemSize::EightBit : nSize);
 
     const auto& sNote = pOffsetNote.IsPointer() ? pOffsetNote.GetPointerDescription() : pOffsetNote.GetPrimaryNote();
-    pFieldViewModel.SetBody(sNote);
+    pFieldViewModel.SetRealNote(sNote);
 
     auto nIndex = sNote.find('\n');
     if (nIndex == std::string::npos)
     {
-        pFieldViewModel.SetRealNote(ra::data::models::CodeNoteModel::TrimSize(sNote, true));
+        pFieldViewModel.SetDescription(ra::data::models::CodeNoteModel::TrimSize(sNote, true));
+        pFieldViewModel.SetBody(L"");
     }
     else
     {
+        std::wstring sTrimmed = sNote.substr(nIndex + 1);
+        pFieldViewModel.SetBody(ra::Trim(sTrimmed));
+
         if (nIndex > 0 && sNote.at(nIndex - 1) == '\r')
             --nIndex;
 
-        pFieldViewModel.SetRealNote(ra::data::models::CodeNoteModel::TrimSize(sNote.substr(0, nIndex), true));
+        pFieldViewModel.SetDescription(ra::data::models::CodeNoteModel::TrimSize(sNote.substr(0, nIndex), true));
     }
 }
 
@@ -597,11 +601,10 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
         builder.Append(pField->GetDescription());
 
         const auto& sBody = pField->GetBody();
-        const auto nLineIndex = sBody.find('\n');
-        if (nLineIndex != std::string::npos)
+        if (!sBody.empty())
         {
             builder.Append(L"\r\n");
-            builder.Append(sBody.substr(nLineIndex + 1));
+            builder.Append(sBody);
         }
 
         if (pField->m_pNote && pField->m_pNote->IsPointer())
@@ -640,13 +643,14 @@ void PointerInspectorViewModel::BuildNote(ra::StringBuilder& builder,
                     builder.Append(L"] ");
             }
 
+
             if (!pOffsetNote.IsPointer())
                 builder.Append(ra::data::models::CodeNoteModel::TrimSize(pOffsetNote.GetNote(), false));
             else if (&pOffsetNote == m_pCurrentNote)
                 builder.Append(ra::data::models::CodeNoteModel::TrimSize(GetCurrentAddressNote(), false));
             else
                 builder.Append(ra::data::models::CodeNoteModel::TrimSize(pOffsetNote.GetPointerDescription(), false));
-
+            
             if (pOffsetNote.IsPointer())
                 BuildNote(builder, sChain, nDepth + 1, pOffsetNote);
 
@@ -701,6 +705,11 @@ void PointerInspectorViewModel::UpdateSourceCodeNote()
                 });
             for (; nNoteIndex < gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count()); ++nNoteIndex)
                 m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNoteIndex)->m_pNote = nullptr;
+
+            // also write the changes to disk
+            std::vector<ra::data::models::AssetModelBase*> vAssets;
+            vAssets.push_back(pCodeNotes);
+            pGameContext.Assets().SaveAssets(vAssets);
         }
     }
 }
@@ -965,13 +974,26 @@ void PointerInspectorViewModel::NewField()
     }
     else
     {
+        // TODO: ConsoleContext should return an architecture size
         MemSize nReadSize;
         uint32_t nMask, nOffset;
         auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
         pConsoleContext.GetRealAddressConversion(&nReadSize, &nMask, &nOffset);
 
-        pField->SetSize(ra::data::IsBigEndian(nReadSize) ? MemSize::ThirtyTwoBitBigEndian : MemSize::ThirtyTwoBit);
+        switch (nReadSize)
+        {
+            case MemSize::TwentyFourBit:
+                nReadSize = MemSize::ThirtyTwoBit;
+                break;
+            case MemSize::TwentyFourBitBigEndian:
+                nReadSize = MemSize::ThirtyTwoBitBigEndian;
+                break;
+        }
+
+        pField->SetSize(nReadSize);
     }
+
+    pField->SetRealNote(ra::StringPrintf(L"[%s]", ra::data::MemSizeString(pField->GetSize())));
 
     const auto nBaseAddress = (m_pCurrentNote != nullptr) ? m_pCurrentNote->GetPointerAddress() : 0U;
     pField->SetAddress(nBaseAddress + pField->m_nOffset);
@@ -980,6 +1002,16 @@ void PointerInspectorViewModel::NewField()
     pField->EndInitialization();
 
     m_vmFields.Items().Append(std::move(pField));
+}
+
+void PointerInspectorViewModel::RemoveSelectedField()
+{
+    const auto nIndex = m_vmFields.GetSingleSelectionIndex();
+    if (nIndex == -1)
+        return;
+
+    m_vmFields.Items().RemoveAt(nIndex);
+    UpdateSourceCodeNote();
 }
 
 } // namespace viewmodels

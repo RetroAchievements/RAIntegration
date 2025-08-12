@@ -82,6 +82,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindWindow.BindEnabled(IDC_RA_ADDBOOKMARK, ra::ui::viewmodels::MemoryWatchListViewModel::HasSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DELETE_COND, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADD_COND, PointerInspectorViewModel::HasSelectedNodeProperty);
 
     m_bindAddress.BindItems(vmPointerFinder.KnownPointers());
@@ -213,6 +214,14 @@ BOOL PointerInspectorDialog::OnCommand(WORD nCommand)
             auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
             if (vmPointerInspector)
                 vmPointerInspector->NewField();
+
+            return TRUE;
+        }
+
+        case IDC_RA_DELETE_COND: {
+            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
+            if (vmPointerInspector)
+                vmPointerInspector->RemoveSelectedField();
 
             return TRUE;
         }

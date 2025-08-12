@@ -230,6 +230,7 @@ public:
     const MemoryWatchListViewModel& Fields() const noexcept { return m_vmFields; }
 
     void NewField();
+    void RemoveSelectedField();
 
     void DoFrame();
 

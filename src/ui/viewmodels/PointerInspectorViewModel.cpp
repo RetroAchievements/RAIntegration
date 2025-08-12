@@ -98,7 +98,13 @@ void PointerInspectorViewModel::OnViewModelIntValueChanged(const IntModelPropert
 void PointerInspectorViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
     if (args.Property == StructFieldViewModel::OffsetProperty)
-        OnOffsetChanged(nIndex, args.tNewValue);
+        OnFieldOffsetChanged(nIndex, args.tNewValue);
+}
+
+void PointerInspectorViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == StructFieldViewModel::SizeProperty && !m_bSyncingNote)
+        OnFieldSizeChanged(nIndex);
 }
 
 void PointerInspectorViewModel::OnActiveGameChanged()
@@ -385,6 +391,7 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
 
         if (pNote)
         {
+            // SetRealNote will keep a "[pointer]" tag on the description, so strip it now.
             pItem->SetRealNote(ra::data::models::CodeNoteModel::TrimSize(pNote->GetPointerDescription(), false));
             pItem->SetSize(pNote->GetMemSize());
         }
@@ -489,7 +496,9 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
 
             pItem->m_nOffset = nOffset;
             pItem->SetOffset(sOffset);
+            m_bSyncingNote = true;
             SyncField(*pItem, pOffsetNote);
+            m_bSyncingNote = false;
 
             // EndInitialization does memory reads, so it must be dispatched. we'll do it in a bit
 
@@ -572,8 +581,10 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
         // SyncField will cause pField to point at the local newNote, capture the current value so it can be restored
         const ra::data::models::CodeNoteModel* pExistingNote = pField->m_pNote;
         ra::data::models::CodeNoteModel newNote;
+        m_bSyncingNote = true;
         newNote.SetNote(GetCurrentFieldNote());
         SyncField(*pField, newNote);
+        m_bSyncingNote = false;
         pField->m_pNote = pExistingNote;
     }
 
@@ -891,7 +902,7 @@ void PointerInspectorViewModel::BookmarkCurrentField() const
         pWindowManager.MemoryBookmarks.Show();
 }
 
-void PointerInspectorViewModel::OnOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset)
+void PointerInspectorViewModel::OnFieldOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset)
 {
     auto* pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nIndex);
     if (!pField || pField->m_bFormattingOffset)
@@ -958,6 +969,30 @@ void PointerInspectorViewModel::StructFieldViewModel::FormatOffset()
     m_bFormattingOffset = true;
     SetOffset(sLabel);
     m_bFormattingOffset = false;
+}
+
+void PointerInspectorViewModel::OnFieldSizeChanged(gsl::index nIndex)
+{
+    // if it's the selected note, we have to update the CurrentFieldNote
+    // before calling UpdatingSourceCodeNote().
+    if (nIndex == Fields().GetSingleSelectionIndex())
+    {
+        const auto* pNote = Fields().Items().GetItemAt<StructFieldViewModel>(nIndex);
+        if (pNote != nullptr)
+        {
+            const auto sUnsizedFieldNote = ra::data::models::CodeNoteModel::TrimSize(GetCurrentFieldNote(), false);
+            const auto sNewFieldNote = ra::StringPrintf(L"[%s%s] %s",
+                ra::data::MemSizeString(pNote->GetSize()),
+                pNote->m_pNote->IsPointer() ? L" pointer" : L"",
+                sUnsizedFieldNote);
+
+            m_bSyncingNote = true;
+            SetCurrentFieldNote(sNewFieldNote);
+            m_bSyncingNote = false;
+        }
+    }
+
+    UpdateSourceCodeNote();
 }
 
 void PointerInspectorViewModel::NewField()

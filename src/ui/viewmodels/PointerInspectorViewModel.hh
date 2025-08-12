@@ -241,14 +241,14 @@ protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
 
-    // ra::ui::ViewModelCollectionBase::NotifyTarget
+    // ViewModelCollectionBase::NotifyTarget
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
-    void OnOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset);
 
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
@@ -257,6 +257,8 @@ private:
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
     void OnSelectedNodeChanged(int nNode);
     void OnSelectedFieldChanged(int nNode);
+    void OnFieldSizeChanged(gsl::index nIndex);
+    void OnFieldOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset);
     void LoadNote(const ra::data::models::CodeNoteModel* pNote);
     void LoadNodes(const ra::data::models::CodeNoteModel* pNote);
     const ra::data::models::CodeNoteModel* FindNestedCodeNoteModel(const ra::data::models::CodeNoteModel& pRootNote, int nNewNode);

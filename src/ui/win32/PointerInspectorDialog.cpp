@@ -100,7 +100,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindFields.BindColumn(0, std::move(pOffsetColumn));
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::RealNoteProperty);
+        PointerInspectorViewModel::StructFieldViewModel::DescriptionProperty);
     pDescriptionColumn->SetHeader(L"Description");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 80);
     m_bindFields.BindColumn(1, std::move(pDescriptionColumn));
@@ -153,7 +153,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindPointerChain.BindColumn(2, std::move(pValueColumn));
 
     pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::RealNoteProperty);
+        PointerInspectorViewModel::StructFieldViewModel::DescriptionProperty);
     pDescriptionColumn->SetHeader(L"Description");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 80);
     m_bindPointerChain.BindColumn(3, std::move(pDescriptionColumn));

@@ -14,12 +14,15 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
+constexpr int SelectedNodeNone = -2;
+
 const IntModelProperty PointerInspectorViewModel::CurrentAddressProperty("PointerInspectorViewModel", "CurrentAddress", 0);
 const StringModelProperty PointerInspectorViewModel::CurrentAddressTextProperty("PointerInspectorViewModel", "CurrentAddressText", L"0x0000");
 const StringModelProperty PointerInspectorViewModel::CurrentAddressNoteProperty("PointerInspectorViewModel", "CurrentAddressNote", L"");
 const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::OffsetProperty("StructFieldViewModel", "Offset", L"+0000");
 const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::BodyProperty("StructFieldViewModel", "Body", L"");
-const IntModelProperty PointerInspectorViewModel::SelectedNodeProperty("PointerInspectorViewModel", "SelectedNode", -2);
+const IntModelProperty PointerInspectorViewModel::SelectedNodeProperty("PointerInspectorViewModel", "SelectedNode", SelectedNodeNone);
+const BoolModelProperty PointerInspectorViewModel::HasSelectedNodeProperty("PointerInspectorViewModel", "HasSelectedNode", false);
 const StringModelProperty PointerInspectorViewModel::CurrentFieldNoteProperty("PointerInspectorViewModel", "CurrentFieldNote", L"");
 
 PointerInspectorViewModel::PointerInspectorViewModel()
@@ -130,7 +133,11 @@ void PointerInspectorViewModel::OnActiveGameChanged()
     }
     else
     {
-        OnCurrentAddressChanged(nAddress);
+        m_bSyncingAddress = true;
+        SetCurrentAddress(0xFFFFFFFF);
+        m_bSyncingAddress = false;
+
+        SetCurrentAddress(nAddress);
     }
 }
 
@@ -230,7 +237,7 @@ void PointerInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddr
     if (pCodeNotes != nullptr)
     {
         // select an invalid node to force LoadNodes to select the new root node after it's been updated
-        SetSelectedNode(-2);
+        SetSelectedNode(SelectedNodeNone);
 
         const auto* pNote = pCodeNotes->FindCodeNoteModel(nNewAddress);
         if (pNote)
@@ -293,6 +300,8 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::FindNestedCode
 
 void PointerInspectorViewModel::OnSelectedNodeChanged(int nNewNode)
 {
+    SetValue(HasSelectedNodeProperty, nNewNode >= PointerNodeViewModel::RootNodeId);
+
     DispatchMemoryRead([this, nNewNode]() {
         const auto* pNote = UpdatePointerChain(nNewNode);
         LoadNote(pNote);
@@ -376,7 +385,7 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
 
         if (pNote)
         {
-            pItem->SetRealNote(pNote->GetPointerDescription());
+            pItem->SetRealNote(ra::data::models::CodeNoteModel::TrimSize(pNote->GetPointerDescription(), false));
             pItem->SetSize(pNote->GetMemSize());
         }
         else
@@ -531,11 +540,11 @@ void PointerInspectorViewModel::LoadNodes(const ra::data::models::CodeNoteModel*
 
     if (pNote == nullptr)
     {
-        m_vNodes.Add<PointerNodeViewModel>(-1, ra::to_signed(GetCurrentAddress()), L"Root");
+        m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetCurrentAddress()), L"Root");
     }
     else
     {
-        m_vNodes.Add<PointerNodeViewModel>(-1, ra::to_signed(GetCurrentAddress()), pNote->GetPrimaryNote());
+        m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetCurrentAddress()), pNote->GetPrimaryNote());
         if (pNote->HasNestedPointers())
             LoadSubNotes(m_vNodes, *pNote, pNote->GetPointerAddress(), 1, 0);
     }
@@ -579,7 +588,7 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
             builder.Append('[');
             builder.Append(ra::data::MemSizeString(pField->GetSize()));
 
-            if (pField->m_pNote->IsPointer())
+            if (pField->m_pNote && pField->m_pNote->IsPointer())
                 builder.Append(L" pointer] ");
             else
                 builder.Append(L"] ");
@@ -595,7 +604,7 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
             builder.Append(sBody.substr(nLineIndex + 1));
         }
 
-        if (pField->m_pNote->IsPointer())
+        if (pField->m_pNote && pField->m_pNote->IsPointer())
             BuildNote(builder, sChain, nDepth + 1, *pField->m_pNote);
     }
 }
@@ -940,6 +949,37 @@ void PointerInspectorViewModel::StructFieldViewModel::FormatOffset()
     m_bFormattingOffset = true;
     SetOffset(sLabel);
     m_bFormattingOffset = false;
+}
+
+void PointerInspectorViewModel::NewField()
+{
+    auto pField = std::make_unique<StructFieldViewModel>();
+    pField->BeginInitialization();
+    pField->SetFormat(ra::MemFormat::Dec);
+
+    if (m_vmFields.Items().Count() > 0)
+    {
+        auto pLastField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(m_vmFields.Items().Count() - 1);
+        pField->m_nOffset = pLastField->m_nOffset + pLastField->GetSizeBytes();
+        pField->SetSize(pLastField->GetSize());
+    }
+    else
+    {
+        MemSize nReadSize;
+        uint32_t nMask, nOffset;
+        auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        pConsoleContext.GetRealAddressConversion(&nReadSize, &nMask, &nOffset);
+
+        pField->SetSize(ra::data::IsBigEndian(nReadSize) ? MemSize::ThirtyTwoBitBigEndian : MemSize::ThirtyTwoBit);
+    }
+
+    const auto nBaseAddress = (m_pCurrentNote != nullptr) ? m_pCurrentNote->GetPointerAddress() : 0U;
+    pField->SetAddress(nBaseAddress + pField->m_nOffset);
+
+    pField->FormatOffset();
+    pField->EndInitialization();
+
+    m_vmFields.Items().Append(std::move(pField));
 }
 
 } // namespace viewmodels

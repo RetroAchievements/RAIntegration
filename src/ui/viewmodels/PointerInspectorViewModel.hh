@@ -200,6 +200,16 @@ public:
     void SetSelectedNode(int nValue) { SetValue(SelectedNodeProperty, nValue); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not a node is selected.
+    /// </summary>
+    static const BoolModelProperty HasSelectedNodeProperty;
+
+    /// <summary>
+    /// Gets whether or not a node is selected.
+    /// </summary>
+    bool HasSelectedNode() const { return GetValue(HasSelectedNodeProperty); }
+
+    /// <summary>
     /// Gets the pointer chain list.
     /// </summary>
     ViewModelCollection<StructFieldViewModel>& PointerChain() noexcept { return m_vPointerChain; }
@@ -218,6 +228,8 @@ public:
     /// Gets the list of fields.
     /// </summary>
     const MemoryWatchListViewModel& Fields() const noexcept { return m_vmFields; }
+
+    void NewField();
 
     void DoFrame();
 

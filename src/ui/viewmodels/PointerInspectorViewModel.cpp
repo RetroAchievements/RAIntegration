@@ -1033,14 +1033,15 @@ void PointerInspectorViewModel::NewField()
     if (m_vmFields.Items().Count() > 0)
     {
         auto pLastField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(m_vmFields.Items().Count() - 1);
+        Expects(pLastField != nullptr);
         pField->m_nOffset = pLastField->m_nOffset + pLastField->GetSizeBytes();
         pField->SetSize(pLastField->GetSize());
     }
     else
     {
         // TODO: ConsoleContext should return an architecture size
-        MemSize nReadSize;
-        uint32_t nMask, nOffset;
+        MemSize nReadSize = MemSize::ThirtyTwoBit;
+        uint32_t nMask = 0, nOffset = 0;
         auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
         pConsoleContext.GetRealAddressConversion(&nReadSize, &nMask, &nOffset);
 

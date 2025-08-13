@@ -285,6 +285,7 @@ private:
     MemoryWatchListViewModel m_vmFields;
     bool m_bSyncingAddress = false;
     bool m_bSyncingNote = false;
+    bool m_bRebuildNodes = false;
 
     const ra::data::models::CodeNoteModel* m_pCurrentNote = nullptr;
 };

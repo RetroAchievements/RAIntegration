@@ -337,6 +337,14 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
     const auto nCurrentAddress = GetCurrentAddress();
     const auto* pNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nCurrentAddress) : nullptr;
 
+    if (m_bRebuildNodes)
+    {
+        m_bRebuildNodes = false;
+
+        if (pNote)
+            LoadNodes(pNote);
+    }
+
     auto nNewNodeIndex = Nodes().FindItemIndex(PointerNodeViewModel::IdProperty, nNewNode);
     if (nNewNodeIndex == -1)
     {
@@ -573,19 +581,25 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
     std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
     gsl::index nDepth)
 {
+    ra::data::models::CodeNoteModel newNote;
+
     // if a single field is selected, push the current field value back into the field
     const auto nSingleSelectionIndex = gsl::narrow_cast<gsl::index>(m_vmFields.GetSingleSelectionIndex());
     auto* pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nSingleSelectionIndex);
+
+    // SyncField will cause pField to point at the local newNote, capture the current value so it can be restored
+    const ra::data::models::CodeNoteModel* pExistingNote = pField ? pField->m_pNote : nullptr;
+
     if (pField)
     {
-        // SyncField will cause pField to point at the local newNote, capture the current value so it can be restored
-        const ra::data::models::CodeNoteModel* pExistingNote = pField->m_pNote;
-        ra::data::models::CodeNoteModel newNote;
         m_bSyncingNote = true;
         newNote.SetNote(GetCurrentFieldNote());
         SyncField(*pField, newNote);
         m_bSyncingNote = false;
-        pField->m_pNote = pExistingNote;
+
+        const bool bExistingPointer = pExistingNote && pExistingNote->IsPointer();
+        if (bExistingPointer != newNote.IsPointer())
+            m_bRebuildNodes = true;
     }
 
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count()); ++nIndex)
@@ -593,6 +607,8 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
         pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nIndex);
         if (!pField)
             continue;
+
+        const bool bIsPointer = pField->m_pNote && pField->m_pNote->IsPointer();
 
         builder.Append(L"\r\n");
         builder.Append(std::wstring(nDepth, '+'));
@@ -603,13 +619,17 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
             builder.Append('[');
             builder.Append(ra::data::MemSizeString(pField->GetSize()));
 
-            if (pField->m_pNote && pField->m_pNote->IsPointer())
+            if (bIsPointer)
                 builder.Append(L" pointer] ");
             else
                 builder.Append(L"] ");
         }
 
-        builder.Append(pField->GetDescription());
+        const auto& sDescription = pField->GetDescription();
+        if (bIsPointer && ra::StringStartsWith(sDescription, L"[pointer] "))
+            builder.Append(pField->GetDescription().substr(10));
+        else
+            builder.Append(pField->GetDescription());
 
         const auto& sBody = pField->GetBody();
         if (!sBody.empty())
@@ -618,8 +638,16 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
             builder.Append(sBody);
         }
 
-        if (pField->m_pNote && pField->m_pNote->IsPointer())
+        if (bIsPointer)
             BuildNote(builder, sChain, nDepth + 1, *pField->m_pNote);
+    }
+
+    // restore the captured note (temporary note is about to go out of scope)
+    if (pExistingNote)
+    {
+        pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nSingleSelectionIndex);
+        if (pField)
+            pField->m_pNote = pExistingNote;
     }
 }
 
@@ -691,6 +719,7 @@ void PointerInspectorViewModel::UpdateSourceCodeNote()
             else
                 builder.Append(pNote->GetPointerDescription());
 
+            m_bRebuildNodes = false;
             BuildNote(builder, sChain, 1, *pNote);
 
             // nested note reference is invalidated in SetCodeNote. temporarily release

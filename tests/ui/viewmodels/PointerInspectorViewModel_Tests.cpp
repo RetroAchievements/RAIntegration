@@ -649,6 +649,63 @@ public:
             L"+0x0C: [24-bit] Current HP"));
     }
 
+
+    TEST_METHOD(TestUpdateFieldConvertToPointer)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.SetCurrentAddress({ 4U });
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+            L"[32-bit pointer] Player data\r\n"
+            L"+8: [32-bit] Max HP");
+
+        Assert::AreEqual({ 1U }, inspector.Nodes().Count());
+        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
+
+        inspector.Fields().Items().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
+
+        // convert to pointer by updating current note
+        inspector.SetCurrentFieldNote(L"[32-bit pointer] Max HP");
+        Assert::AreEqual(std::wstring(L"[32-bit pointer] Max HP"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 8, 20, L"+0008", L"[pointer] Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
+
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32-bit pointer] Player data\r\n"
+            L"+0x08: [32-bit pointer] Max HP"));
+
+        Assert::AreEqual({ 2U }, inspector.Nodes().Count());
+        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(0x00000008, inspector.Nodes().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"+0008 | [32-bit pointer] Max HP"), inspector.Nodes().GetItemAt(1)->GetLabel());
+
+        // convert back to non-pointer by updating current note
+        inspector.SetCurrentFieldNote(L"[32-bit] Max HP");
+        Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
+
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32-bit pointer] Player data\r\n"
+            L"+0x08: [32-bit] Max HP"));
+
+        Assert::AreEqual({ 1U }, inspector.Nodes().Count());
+        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
+    }
+
     TEST_METHOD(TestUpdateCurrentFieldOffsetSimple)
     {
         PointerInspectorViewModelHarness inspector;

@@ -168,6 +168,7 @@ bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMas
     {
         case ConsoleID::Dreamcast:
         case ConsoleID::DSi:
+        case ConsoleID::N64:
         case ConsoleID::PlayStation:
             *nReadSize = MemSize::TwentyFourBit;
             *nMask = 0xFFFFFFFF;

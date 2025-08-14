@@ -294,6 +294,8 @@ private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
     NotifyTargetSet m_vNotifyTargets;
 
+    void WriteMemory(ra::ByteAddress nAddress, const uint8_t* pBytes, size_t nByteCount) const;
+
 protected:
     void UpdateUserAgent();
     void OnTotalMemorySizeChanged();

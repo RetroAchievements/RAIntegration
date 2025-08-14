@@ -1,22 +1,22 @@
-#ifndef RA_UI_WIN32_GRIDBOOKMARKFORMATCOLUMNBINDING_H
-#define RA_UI_WIN32_GRIDBOOKMARKFORMATCOLUMNBINDING_H
+#ifndef RA_UI_WIN32_GRIDMEMORYWATCHFORMATCOLUMNBINDING_H
+#define RA_UI_WIN32_GRIDMEMORYWATCHFORMATCOLUMNBINDING_H
 #pragma once
 
 #include "GridBinding.hh"
 #include "GridLookupColumnBinding.hh"
 
-#include "ui\viewmodels\MemoryBookmarksViewModel.hh"
+#include "ui\viewmodels\MemoryWatchViewModel.hh"
 
 namespace ra {
 namespace ui {
 namespace win32 {
 namespace bindings {
 
-class GridBookmarkFormatColumnBinding : public ra::ui::win32::bindings::GridLookupColumnBinding
+class GridMemoryWatchFormatColumnBinding : public ra::ui::win32::bindings::GridLookupColumnBinding
 {
 public:
-    GridBookmarkFormatColumnBinding(const IntModelProperty& pBoundProperty,
-                                    const ra::ui::viewmodels::LookupItemViewModelCollection& vmItems) noexcept :
+    GridMemoryWatchFormatColumnBinding(const IntModelProperty& pBoundProperty,
+                                       const ra::ui::viewmodels::LookupItemViewModelCollection& vmItems) noexcept :
         ra::ui::win32::bindings::GridLookupColumnBinding(pBoundProperty, vmItems)
     {}
 
@@ -30,7 +30,7 @@ public:
 
     bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
     {
-        if (pProperty == ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty)
+        if (pProperty == ra::ui::viewmodels::MemoryWatchViewModel::SizeProperty)
             return true;
 
         return ra::ui::win32::bindings::GridLookupColumnBinding::DependsOn(pProperty);
@@ -50,8 +50,7 @@ public:
 private:
     static bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex)
     {
-        const auto nSize = ra::itoe<MemSize>(
-            vmItems.GetItemValue(nIndex, ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty));
+        const auto nSize = ra::itoe<MemSize>(vmItems.GetItemValue(nIndex, ra::ui::viewmodels::MemoryWatchViewModel::SizeProperty));
         switch (nSize)
         {
             case MemSize::Float:
@@ -74,4 +73,4 @@ private:
 } // namespace ui
 } // namespace ra
 
-#endif // !RA_UI_WIN32_GRIDBOOKMARKFORMATCOLUMNBINDING_H
+#endif // !RA_UI_WIN32_GRIDMEMORYWATCHFORMATCOLUMNBINDING_H

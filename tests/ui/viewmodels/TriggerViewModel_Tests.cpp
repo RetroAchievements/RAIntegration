@@ -776,6 +776,42 @@ public:
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
         Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
+
+        // items 0 and 2 are selected, they should get moved into slots 0 and 1
+        vmTrigger.SelectRange(1, 1, false);
+        vmTrigger.SelectRange(2, 2, true);
+        vmTrigger.MoveSelectedConditionsUp();
+
+        Assert::AreEqual(std::string("R:0xT3333=1_0xH1234=16_0xW5555=16_0xL65ff=11.1."), vmTrigger.Serialize());
+
+        // selection should be maintained
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
+
+        // indices should be updated
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(0)->GetIndex(), 1);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
+
+        // items 0 and 1 are selected and cannot be moved up any further
+        vmTrigger.MoveSelectedConditionsUp();
+
+        Assert::AreEqual(std::string("R:0xT3333=1_0xH1234=16_0xW5555=16_0xL65ff=11.1."), vmTrigger.Serialize());
+
+        // selection should be maintained
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
+
+        // indices should be updated
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(0)->GetIndex(), 1);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
     }
 
     TEST_METHOD(TestMoveSelectedConditionsDown)
@@ -809,6 +845,42 @@ public:
         vmTrigger.MoveSelectedConditionsDown();
 
         Assert::AreEqual(std::string("R:0xT3333=1_0xW5555=16_0xH1234=16_0xL65ff=11.1."), vmTrigger.Serialize());
+
+        // selection should be maintained
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
+
+        // indices should be updated
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(0)->GetIndex(), 1);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
+
+        // items 1 and 3 are selected, they should get moved into slots 2 and 3
+        vmTrigger.SelectRange(2, 2, false);
+        vmTrigger.SelectRange(1, 1, true);
+        vmTrigger.MoveSelectedConditionsDown();
+
+        Assert::AreEqual(std::string("R:0xT3333=1_0xH1234=16_0xW5555=16_0xL65ff=11.1."), vmTrigger.Serialize());
+
+        // selection should be maintained
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
+
+        // indices should be updated
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(0)->GetIndex(), 1);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
+
+        // items 2 and 3 are selected and cannot be moved
+        vmTrigger.MoveSelectedConditionsDown();
+
+        Assert::AreEqual(std::string("R:0xT3333=1_0xH1234=16_0xW5555=16_0xL65ff=11.1."), vmTrigger.Serialize());
 
         // selection should be maintained
         Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());

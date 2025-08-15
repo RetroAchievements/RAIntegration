@@ -429,6 +429,8 @@ void TriggerViewModel::MoveSelectedConditionsUp()
     auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
     if (pGroup != nullptr)
     {
+        bool bChanged = false;
+
         std::vector<rc_condition_t*> vConditions;
         {
             rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
@@ -437,44 +439,48 @@ void TriggerViewModel::MoveSelectedConditionsUp()
         }
 
         const size_t nFirstIndex = gsl::narrow_cast<size_t>(*m_vSelectedConditions.begin());
-        size_t nInsertIndex = nFirstIndex - 1;
+        size_t nInsertIndex = (nFirstIndex > 1) ? nFirstIndex - 1 : 0;
         std::set<unsigned int> vNewSelectedConditions;
         for (const auto nIndex : m_vSelectedConditions)
         {
-            if (nIndex > 0)
+            if (nIndex > nInsertIndex)
             {
                 auto* pMovedCondition = vConditions.at(nIndex);
                 for (size_t nMoveIndex = nIndex; nMoveIndex > nInsertIndex; --nMoveIndex)
                     vConditions.at(nMoveIndex) = vConditions.at(nMoveIndex - 1);
                 vConditions.at(nInsertIndex) = pMovedCondition;
+                bChanged = true;
             }
 
             vNewSelectedConditions.insert(gsl::narrow_cast<unsigned int>(nInsertIndex));
             ++nInsertIndex;
         }
 
-        m_vSelectedConditions.swap(vNewSelectedConditions);
-
-        TriggerConditionViewModel vmCondition;
-        std::string sSerialized;
-        for (const auto* pCondition : vConditions)
+        if (bChanged)
         {
-            Expects(pCondition != nullptr);
-            if (!sSerialized.empty())
-                ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+            m_vSelectedConditions.swap(vNewSelectedConditions);
 
-            vmCondition.InitializeFrom(*pCondition);
-            vmCondition.SerializeAppend(sSerialized);
+            TriggerConditionViewModel vmCondition;
+            std::string sSerialized;
+            for (const auto* pCondition : vConditions)
+            {
+                Expects(pCondition != nullptr);
+                if (!sSerialized.empty())
+                    ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+
+                vmCondition.InitializeFrom(*pCondition);
+                vmCondition.SerializeAppend(sSerialized);
+            }
+
+            pGroup->UpdateSerialized(sSerialized);
+
+            m_bInitializingConditions = true;
+            EnsureVisible(gsl::narrow_cast<int>(*m_vSelectedConditions.begin()), gsl::narrow_cast<int>(m_vSelectedConditions.size()));
+            UpdateConditions(pGroup);
+            m_bInitializingConditions = false;
+
+            UpdateVersion();
         }
-
-        pGroup->UpdateSerialized(sSerialized);
-
-        m_bInitializingConditions = true;
-        EnsureVisible(gsl::narrow_cast<int>(nFirstIndex) - 1, gsl::narrow_cast<int>(nInsertIndex - nFirstIndex));
-        UpdateConditions(pGroup);
-        m_bInitializingConditions = false;
-
-        UpdateVersion();
     }
 }
 
@@ -487,6 +493,8 @@ void TriggerViewModel::MoveSelectedConditionsDown()
     auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
     if (pGroup != nullptr)
     {
+        bool bChanged = false;
+
         std::vector<rc_condition_t*> vConditions;
         {
             rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
@@ -495,45 +503,49 @@ void TriggerViewModel::MoveSelectedConditionsDown()
         }
 
         const size_t nLastIndex = gsl::narrow_cast<size_t>(*m_vSelectedConditions.rbegin());
-        size_t nInsertIndex = nLastIndex + 1;
+        size_t nInsertIndex = std::min(nLastIndex + 1, vConditions.size() - 1);
         std::set<unsigned int> vNewSelectedConditions;
         for (auto iter = m_vSelectedConditions.rbegin(); iter != m_vSelectedConditions.rend(); ++iter)
         {
             const auto nIndex = *iter;
-            if (nIndex < vConditions.size() - 1)
+            if (nIndex < nInsertIndex)
             {
                 auto* pMovedCondition = vConditions.at(nIndex);
                 for (size_t nMoveIndex = nIndex; nMoveIndex < nInsertIndex; ++nMoveIndex)
                     vConditions.at(nMoveIndex) = vConditions.at(nMoveIndex + 1);
                 vConditions.at(nInsertIndex) = pMovedCondition;
+                bChanged = true;
             }
 
             vNewSelectedConditions.insert(gsl::narrow_cast<unsigned int>(nInsertIndex));
             --nInsertIndex;
         }
 
-        m_vSelectedConditions.swap(vNewSelectedConditions);
-
-        TriggerConditionViewModel vmCondition;
-        std::string sSerialized;
-        for (const auto* pCondition : vConditions)
+        if (bChanged)
         {
-            Expects(pCondition != nullptr);
-            if (!sSerialized.empty())
-                ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+            m_vSelectedConditions.swap(vNewSelectedConditions);
 
-            vmCondition.InitializeFrom(*pCondition);
-            vmCondition.SerializeAppend(sSerialized);
+            TriggerConditionViewModel vmCondition;
+            std::string sSerialized;
+            for (const auto* pCondition : vConditions)
+            {
+                Expects(pCondition != nullptr);
+                if (!sSerialized.empty())
+                    ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+
+                vmCondition.InitializeFrom(*pCondition);
+                vmCondition.SerializeAppend(sSerialized);
+            }
+
+            pGroup->UpdateSerialized(sSerialized);
+
+            m_bInitializingConditions = true;
+            EnsureVisible(gsl::narrow_cast<int>(nInsertIndex) + 1, gsl::narrow_cast<int>(nLastIndex - nInsertIndex));
+            UpdateConditions(pGroup);
+            m_bInitializingConditions = false;
+
+            UpdateVersion();
         }
-
-        pGroup->UpdateSerialized(sSerialized);
-
-        m_bInitializingConditions = true;
-        EnsureVisible(gsl::narrow_cast<int>(nInsertIndex) + 1, gsl::narrow_cast<int>(nLastIndex - nInsertIndex));
-        UpdateConditions(pGroup);
-        m_bInitializingConditions = false;
-
-        UpdateVersion();
     }
 }
 

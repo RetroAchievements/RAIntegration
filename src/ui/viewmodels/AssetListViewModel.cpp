@@ -899,16 +899,26 @@ void AssetListViewModel::DoUpdateButtons()
 
     if (bGameLoaded)
     {
+        bool bCanRevert = true;
         if (bHasCoreSelection || bHasUnofficialSelection)
+        {
             SetValue(RevertButtonTextProperty, L"Re&vert");
+        }
         else if (bHasLocalSelection)
+        {
             SetValue(RevertButtonTextProperty, L"&Delete");
+        }
         else if (bHasLocal && !bHasCore && !bHasUnofficial)
-            SetValue(RevertButtonTextProperty, L"&Delete All");
+        {
+            SetValue(RevertButtonTextProperty, L"&Delete");
+            bCanRevert = false;
+        }
         else
+        {
             SetValue(RevertButtonTextProperty, RevertButtonTextProperty.GetDefaultValue());
+        }
 
-        SetValue(CanRevertProperty, true);
+        SetValue(CanRevertProperty, bCanRevert);
     }
     else
     {

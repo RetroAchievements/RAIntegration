@@ -66,14 +66,15 @@ protected:
         }
     }
 
-    void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
+    GSL_SUPPRESS_TYPE1
+        void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
         std::vector<ra::ByteAddress>& vMatches) const override
     {
         // cannot use base implementation because we need to offset pBytes and pBlockBytes
         const auto* pBlockBytes = pPreviousBlock.GetBytes() + 4;
         const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
-        const auto nStride = 8;
+        constexpr auto nStride = 8;
         const auto* pMatchingAddresses = pPreviousBlock.GetMatchingAddressPointer();
 
         const auto* pAdjustment = reinterpret_cast<const uint8_t*>(&nAdjustment);

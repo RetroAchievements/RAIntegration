@@ -39,7 +39,7 @@ enum class SearchType
     BitCount,
 };
 
-SearchType GetAlignedSearchType(SearchType searchType);
+SearchType GetAlignedSearchType(SearchType searchType) noexcept;
 
 enum class SearchFilterType
 {

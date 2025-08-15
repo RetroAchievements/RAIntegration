@@ -449,7 +449,7 @@ MemSize SearchResults::GetSize() const noexcept
     return m_pImpl ? m_pImpl->GetMemSize() : MemSize::EightBit;
 }
 
-SearchType GetAlignedSearchType(SearchType searchType)
+SearchType GetAlignedSearchType(SearchType searchType) noexcept
 {
     switch (searchType)
     {

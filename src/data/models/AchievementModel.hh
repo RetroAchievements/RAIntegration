@@ -162,7 +162,7 @@ public:
     void Attach(struct rc_client_achievement_info_t& pAchievement,
         AssetCategory nCategory, const std::string& sTrigger);
     // Replaces the attached rc_client_achievement_info_t. Does not update model or source.
-    void ReplaceAttached(struct rc_client_achievement_info_t& pAchievement) noexcept;
+    void ReplaceAttached(struct rc_client_achievement_info_t& pAchievement);
     // Attaches an rc_client_achievement_info_t and populates it from the model.
     void AttachAndInitialize(struct rc_client_achievement_info_t& pAchievement);
     // Gets the attached rc_client_achievement_info_t.

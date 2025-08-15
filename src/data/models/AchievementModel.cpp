@@ -523,7 +523,7 @@ void AchievementModel::Attach(struct rc_client_achievement_info_t& pAchievement,
     m_bCaptureTrigger = true;
 }
 
-void AchievementModel::ReplaceAttached(struct rc_client_achievement_info_t& pAchievement) noexcept
+void AchievementModel::ReplaceAttached(struct rc_client_achievement_info_t& pAchievement)
 {
     m_pAchievement = &pAchievement;
 

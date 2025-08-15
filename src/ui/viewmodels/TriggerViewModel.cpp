@@ -211,6 +211,28 @@ bool TriggerViewModel::GroupViewModel::UpdateMeasuredFlags()
             }
         }
     }
+    else if (m_pTriggerViewModel && !m_sSerialized.empty())
+    {
+        char cOldPrefix = 'G';
+        char cNewPrefix = 'M';
+        if (m_pTriggerViewModel->IsMeasuredTrackedAsPercent())
+        {
+            cOldPrefix = 'M';
+            cNewPrefix = 'G';
+        }
+
+        bool bUpdated = false;
+        for (auto nIndex = m_sSerialized.find(cOldPrefix); nIndex != std::string::npos; nIndex = m_sSerialized.find(cOldPrefix, nIndex + 2))
+        {
+            if (nIndex + 1 < m_sSerialized.length() && m_sSerialized.at(nIndex + 1) == ':')
+            {
+                m_sSerialized.at(nIndex) = cNewPrefix;
+                bUpdated = true;
+            }
+        }
+
+        return bUpdated;
+    }
 
     return false;
 }
@@ -1067,7 +1089,7 @@ void TriggerViewModel::UpdateVersionAndRestoreHits()
     for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
     {
         auto* pGroup = m_vGroups.GetItemAt(i);
-        if (pGroup != nullptr)
+        if (pGroup != nullptr && pGroup->m_pConditionSet)
         {
             const auto* pCondition = pGroup->m_pConditionSet->conditions;
             while (pCondition != nullptr)
@@ -1084,7 +1106,7 @@ void TriggerViewModel::UpdateVersionAndRestoreHits()
     for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
     {
         auto* pGroup = m_vGroups.GetItemAt(i);
-        if (pGroup != nullptr)
+        if (pGroup != nullptr && pGroup->m_pConditionSet)
         {
             auto* pCondition = pGroup->m_pConditionSet->conditions;
             while (pCondition != nullptr)

@@ -1525,6 +1525,26 @@ public:
         Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
         Assert::AreEqual(2, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits());
     }
+
+    TEST_METHOD(TestToggleMeasuredAsPercent)
+    {
+        std::array<uint8_t, 10> pMemory = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "M:0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+        vmTrigger.SelectRange(0, 0, true);
+
+        vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
+
+        vmTrigger.SetMeasuredTrackedAsPercent(true);
+        Assert::AreEqual(std::string("G:0xH1234=16"), vmTrigger.Serialize());
+
+        vmTrigger.SetMeasuredTrackedAsPercent(false);
+        Assert::AreEqual(std::string("M:0xH1234=16"), vmTrigger.Serialize());
+    }
 };
 
 } // namespace tests

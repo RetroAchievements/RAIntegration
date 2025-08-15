@@ -48,6 +48,7 @@ public:
         const std::string& GetSerialized() const;
         void ResetSerialized() { m_sSerialized = NOT_SERIALIZED; }
 
+        void SetTriggerViewModel(const TriggerViewModel* pTriggerViewModel) noexcept { m_pTriggerViewModel = pTriggerViewModel; }
         bool UpdateMeasuredFlags();
 
         static const IntModelProperty ColorProperty;
@@ -58,6 +59,8 @@ public:
         mutable std::string m_sBuffer;
         mutable std::string m_sSerialized = NOT_SERIALIZED;
         static constexpr const char* NOT_SERIALIZED = "?";
+
+        const TriggerViewModel* m_pTriggerViewModel = nullptr;
     };
 
     ViewModelCollection<GroupViewModel>& Groups() noexcept { return m_vGroups; }
@@ -188,6 +191,8 @@ private:
 
     void UpdateGroupColors(const rc_trigger_t* pTrigger);
     void UpdateConditionColors(const rc_trigger_t* pTrigger);
+
+    void AddAltGroup(int nId, rc_condset_t* pConditionSet);
 
     ViewModelCollection<GroupViewModel> m_vGroups;
     ViewModelCollection<TriggerConditionViewModel> m_vConditions;

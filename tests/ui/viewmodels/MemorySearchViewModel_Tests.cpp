@@ -188,7 +188,7 @@ public:
         Assert::AreEqual((int)ra::services::SearchType::AsciiText, search.SearchTypes().GetItemAt(13)->GetId());
         Assert::AreEqual(std::wstring(L"ASCII Text"), search.SearchTypes().GetItemAt(13)->GetLabel());
         Assert::AreEqual(ra::services::SearchType::EightBit, search.GetSearchType());
-        Assert::AreEqual(false, search.IsAligned());
+        Assert::AreEqual(true, search.IsAligned());
         Assert::AreEqual(false, search.CanAlign());
 
         Assert::AreEqual({ 6U }, search.ComparisonTypes().Count());
@@ -256,6 +256,7 @@ public:
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
         search.SetSearchType(ra::services::SearchType::SixteenBit);
+        search.SetAligned(false);
         Assert::IsFalse(search.CanFilter());
 
         search.BeginNewSearch();
@@ -804,6 +805,7 @@ public:
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
         search.SetSearchType(ra::services::SearchType::SixteenBit);
+        search.SetAligned(false);
         search.BeginNewSearch();
         search.SetComparisonType(ComparisonType::Equals);
         search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
@@ -1806,6 +1808,7 @@ public:
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
         search.SetSearchType(ra::services::SearchType::SixteenBit);
+        search.SetAligned(false);
         search.BeginNewSearch();
         search.SetComparisonType(ComparisonType::Equals);
         search.SetValueType(ra::services::SearchFilterType::LastKnownValue);

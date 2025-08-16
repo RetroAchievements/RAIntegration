@@ -30,7 +30,7 @@ constexpr int MEMORY_RANGE_CUSTOM = 3;
 const IntModelProperty MemorySearchViewModel::PredefinedFilterRangeProperty("MemorySearchViewModel", "PredefinedFilterRange", MEMORY_RANGE_ALL);
 const StringModelProperty MemorySearchViewModel::FilterRangeProperty("MemorySearchViewModel", "FilterRange", L"");
 const IntModelProperty MemorySearchViewModel::SearchTypeProperty("MemorySearchViewModel", "SearchType", ra::etoi(ra::services::SearchType::EightBit));
-const BoolModelProperty MemorySearchViewModel::IsAlignedProperty("MemorySearchViewModel", "IsAligned", false);
+const BoolModelProperty MemorySearchViewModel::IsAlignedProperty("MemorySearchViewModel", "IsAligned", true);
 const BoolModelProperty MemorySearchViewModel::CanAlignProperty("MemorySearchViewModel", "CanAlign", false);
 const IntModelProperty MemorySearchViewModel::ComparisonTypeProperty("MemorySearchViewModel", "ComparisonType", ra::etoi(ComparisonType::Equals));
 const IntModelProperty MemorySearchViewModel::ValueTypeProperty("MemorySearchViewModel", "ValueType", ra::etoi(ra::services::SearchFilterType::LastKnownValue));

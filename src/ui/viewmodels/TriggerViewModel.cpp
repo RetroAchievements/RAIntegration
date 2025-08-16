@@ -1105,6 +1105,8 @@ void TriggerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
         // ignore change caused in InitializeFrom
         if (!m_vGroups.IsUpdating())
         {
+            m_vSelectedConditions.clear();
+
             // disable notifications while updating the selected group to prevent re-entrancy
             m_vGroups.RemoveNotifyTarget(*this);
 

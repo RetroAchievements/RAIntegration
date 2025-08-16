@@ -5149,7 +5149,7 @@ public:
         // we don't want an easy way to accidentally delete all local assets.
         // delete should be disabled if nothing is selected.
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
             bDialogShown = true;
             return DialogResult::Yes;

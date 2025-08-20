@@ -95,12 +95,31 @@ private:
         void AssertIndirectNote(ra::ByteAddress nAddress, unsigned nOffset, const std::wstring& sExpected)
         {
             const auto* pNote = FindCodeNoteModel(nAddress);
-            Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X", nAddress, nOffset).c_str());
+            Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X", nAddress).c_str());
             Ensures(pNote != nullptr);
             pNote = pNote->GetPointerNoteAtOffset(nOffset);
             Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X + %u", nAddress, nOffset).c_str());
             Ensures(pNote != nullptr);
             Assert::AreEqual(sExpected, pNote->GetNote());
+        }
+
+        void AssertNoteDescription(ra::ByteAddress nAddress, const wchar_t* sExpected)
+        {
+            const auto* pNote = FindCodeNoteModel(nAddress);
+            if (!sExpected)
+            {
+                if (pNote != nullptr)
+                    Assert::IsNull(pNote, ra::StringPrintf(L"Note found for address %04X: %s", nAddress, pNote->GetNote()).c_str());
+
+                return;
+            }
+
+            Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X", nAddress).c_str());
+            Ensures(pNote != nullptr);
+            if (pNote->IsPointer())
+                Assert::AreEqual(std::wstring(sExpected), pNote->GetPointerDescription());
+            else
+                Assert::AreEqual(std::wstring(sExpected), pNote->GetNote());
         }
 
         void AssertSerialize(const std::string& sExpected)
@@ -624,6 +643,93 @@ public:
         Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(32, MemSize::SixteenBit));
         Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(35, MemSize::SixteenBit));
         Assert::AreEqual(std::wstring(), notes.FindCodeNote(36, MemSize::SixteenBit));
+    }
+
+    TEST_METHOD(TestFindCodeNoteBrokenPointerChain)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"Pointer [32bit]\r\n"
+            L"+0 | Obj1 pointer\r\n"
+            L"++0 | [16-bit] State\r\n"
+            L"++2 | [16-bit] Visible\r\n"
+            L"+4 | Obj2 pointer\r\n"
+            L"++0 | [32-bit] ID\r\n"
+            L"+8 | Count";
+        notes.AddCodeNote(4U, "Author", sNote);
+
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        std::array<unsigned char, 32> memory{};
+        memory.at(4) = 8; // pointer = 8
+        memory.at(8) = 20; // obj1 pointer = 20
+        memory.at(12) = 28; // obj2 pointer = 28
+        notes.mockEmulatorContext.MockMemory(memory);
+
+        notes.DoFrame();
+
+        // expected locations
+        notes.AssertNoteDescription(4U, L"Pointer [32bit]");
+        notes.AssertNoteDescription(8U, L"Obj1 pointer");
+        notes.AssertNoteDescription(12U, L"Obj2 pointer");
+        notes.AssertNoteDescription(16U, L"Count");
+        notes.AssertNoteDescription(20U, L"[16-bit] State");
+        notes.AssertNoteDescription(22U, L"[16-bit] Visible");
+        notes.AssertNoteDescription(28U, L"[32-bit] ID");
+
+        // unexpected locations
+        notes.AssertNoteDescription(0U, nullptr);
+        notes.AssertNoteDescription(2U, nullptr);
+
+        // make pointer2 null
+        memory.at(12) = 0;
+        notes.DoFrame();
+        notes.AssertNoteDescription(4U, L"Pointer [32bit]");
+        notes.AssertNoteDescription(8U, L"Obj1 pointer");
+        notes.AssertNoteDescription(12U, L"Obj2 pointer");
+        notes.AssertNoteDescription(16U, L"Count");
+        notes.AssertNoteDescription(20U, L"[16-bit] State");
+        notes.AssertNoteDescription(22U, L"[16-bit] Visible");
+        notes.AssertNoteDescription(28U, nullptr);
+        notes.AssertNoteDescription(0U, nullptr);
+        notes.AssertNoteDescription(2U, nullptr);
+
+        // make root pointer null
+        memory.at(4) = 0;
+        notes.DoFrame();
+        notes.AssertNoteDescription(4U, L"Pointer [32bit]");
+        notes.AssertNoteDescription(8U, nullptr);
+        notes.AssertNoteDescription(12U, nullptr);
+        notes.AssertNoteDescription(16U, nullptr);
+        notes.AssertNoteDescription(20U, nullptr);
+        notes.AssertNoteDescription(22U, nullptr);
+        notes.AssertNoteDescription(28U, nullptr);
+        notes.AssertNoteDescription(0U, nullptr);
+        notes.AssertNoteDescription(2U, nullptr);
+
+        // set root pointer
+        memory.at(4) = 12;
+        notes.DoFrame();
+        notes.AssertNoteDescription(4U, L"Pointer [32bit]");
+        notes.AssertNoteDescription(8U, nullptr);
+        notes.AssertNoteDescription(12U, L"Obj1 pointer");
+        notes.AssertNoteDescription(16U, L"Obj2 pointer");
+        notes.AssertNoteDescription(20U, L"Count");
+        notes.AssertNoteDescription(28U, nullptr);
+        notes.AssertNoteDescription(0U, nullptr);
+        notes.AssertNoteDescription(2U, nullptr);
+
+        // make pointer1 not null
+        memory.at(12) = 28;
+        notes.DoFrame();
+        notes.AssertNoteDescription(4U, L"Pointer [32bit]");
+        notes.AssertNoteDescription(8U, nullptr);
+        notes.AssertNoteDescription(12U, L"Obj1 pointer");
+        notes.AssertNoteDescription(16U, L"Obj2 pointer");
+        notes.AssertNoteDescription(20U, L"Count");
+        notes.AssertNoteDescription(28U, L"[16-bit] State");
+        notes.AssertNoteDescription(30U, L"[16-bit] Visible");
+        notes.AssertNoteDescription(0U, nullptr);
+        notes.AssertNoteDescription(2U, nullptr);
     }
 
     TEST_METHOD(TestEnumerateCodeNotes)

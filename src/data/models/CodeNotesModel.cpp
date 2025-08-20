@@ -377,7 +377,7 @@ std::pair<ra::ByteAddress, const CodeNoteModel*>
 {
     for (const auto& pCodeNote : m_vCodeNotes)
     {
-        auto pair= pCodeNote->GetPointerNoteAtAddress(nAddress);
+        auto pair = pCodeNote->GetPointerNoteAtAddress(nAddress);
         if (pair.second != nullptr && pair.first == nAddress) // only match start of note
             return {pCodeNote->GetAddress(), pair.second};
     }

@@ -557,6 +557,8 @@ static void BuildOperatorTooltip(std::wstring& sTooltip, uint8_t nOperatorType)
 static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperand, std::wstring& sPointerChain,
     const ra::data::models::CodeNoteModel** pParentNote)
 {
+    Expects(pParentNote != nullptr);
+
     rc_typed_value_t pValue;
     rc_evaluate_operand(&pValue, pOperand, nullptr);
     rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
@@ -626,7 +628,7 @@ static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperan
             // find the code note associated to the start of the array
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
             const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-            *pParentNote = (*pParentNote) ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
+            *pParentNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
 
             // return the address offset into the array
             return pValue.value.u32;
@@ -768,6 +770,8 @@ const rc_condition_t* TriggerConditionViewModel::GetCondition() const
 ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress, std::wstring& sPointerChain,
     const ra::data::models::CodeNoteModel** pLeafNote) const
 {
+    Expects(pLeafNote != nullptr);
+
     const auto* pCondition = GetCondition();
     if (pCondition)
     {

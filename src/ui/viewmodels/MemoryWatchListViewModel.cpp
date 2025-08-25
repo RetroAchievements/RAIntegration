@@ -151,6 +151,11 @@ void MemoryWatchListViewModel::OnEndViewModelCollectionUpdate()
     UpdateHasSelection();
 }
 
+void MemoryWatchListViewModel::OnViewModelRemoved(gsl::index)
+{
+    UpdateHasSelection();
+}
+
 void MemoryWatchListViewModel::UpdateHasSelection()
 {
     gsl::index nSelectedItemIndex = -1;

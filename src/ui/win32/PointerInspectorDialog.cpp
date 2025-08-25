@@ -82,6 +82,8 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindWindow.BindEnabled(IDC_RA_ADDBOOKMARK, ra::ui::viewmodels::MemoryWatchListViewModel::HasSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DELETE_COND, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ADD_COND, PointerInspectorViewModel::HasSelectedNodeProperty);
 
     m_bindAddress.BindItems(vmPointerFinder.KnownPointers());
     m_bindAddress.BindSelectedItem(PointerInspectorViewModel::CurrentAddressProperty);
@@ -98,7 +100,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindFields.BindColumn(0, std::move(pOffsetColumn));
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::RealNoteProperty);
+        PointerInspectorViewModel::StructFieldViewModel::DescriptionProperty);
     pDescriptionColumn->SetHeader(L"Description");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 80);
     m_bindFields.BindColumn(1, std::move(pDescriptionColumn));
@@ -151,7 +153,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindPointerChain.BindColumn(2, std::move(pValueColumn));
 
     pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::RealNoteProperty);
+        PointerInspectorViewModel::StructFieldViewModel::DescriptionProperty);
     pDescriptionColumn->SetHeader(L"Description");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 80);
     m_bindPointerChain.BindColumn(3, std::move(pDescriptionColumn));
@@ -171,6 +173,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     SetAnchor(IDC_RA_NOTE_TEXT, Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_COPY_ALL, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_ADD_COND, Anchor::Right | Anchor::Bottom);
 
     SetMinimumSize(480, 258);
 }
@@ -203,6 +206,22 @@ BOOL PointerInspectorDialog::OnCommand(WORD nCommand)
             const auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
             if (vmPointerInspector)
                 vmPointerInspector->CopyDefinition();
+
+            return TRUE;
+        }
+
+        case IDC_RA_ADD_COND: {
+            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
+            if (vmPointerInspector)
+                vmPointerInspector->NewField();
+
+            return TRUE;
+        }
+
+        case IDC_RA_DELETE_COND: {
+            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
+            if (vmPointerInspector)
+                vmPointerInspector->RemoveSelectedField();
 
             return TRUE;
         }

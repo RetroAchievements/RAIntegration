@@ -92,6 +92,7 @@ protected:
     // ra::ui::ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnEndViewModelCollectionUpdate() override;
+    void OnViewModelRemoved(gsl::index nIndex) override;
 
 private:
     void UpdateHasSelection();

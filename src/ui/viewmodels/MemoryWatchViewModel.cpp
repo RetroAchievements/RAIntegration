@@ -27,7 +27,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const StringModelProperty MemoryWatchViewModel::DescriptionProperty("MemoryWatchViewModel", "DescriptionHeader", L"");
+const StringModelProperty MemoryWatchViewModel::DescriptionProperty("MemoryWatchViewModel", "Description", L"");
 const BoolModelProperty MemoryWatchViewModel::IsCustomDescriptionProperty("MemoryWatchViewModel", "IsCustomDescription", false);
 const StringModelProperty MemoryWatchViewModel::RealNoteProperty("MemoryWatchViewModel", "Description", L"");
 const IntModelProperty MemoryWatchViewModel::AddressProperty("MemoryWatchViewModel", "Address", 0);

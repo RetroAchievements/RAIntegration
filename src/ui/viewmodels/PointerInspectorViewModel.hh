@@ -200,6 +200,16 @@ public:
     void SetSelectedNode(int nValue) { SetValue(SelectedNodeProperty, nValue); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not a node is selected.
+    /// </summary>
+    static const BoolModelProperty HasSelectedNodeProperty;
+
+    /// <summary>
+    /// Gets whether or not a node is selected.
+    /// </summary>
+    bool HasSelectedNode() const { return GetValue(HasSelectedNodeProperty); }
+
+    /// <summary>
     /// Gets the pointer chain list.
     /// </summary>
     ViewModelCollection<StructFieldViewModel>& PointerChain() noexcept { return m_vPointerChain; }
@@ -219,6 +229,9 @@ public:
     /// </summary>
     const MemoryWatchListViewModel& Fields() const noexcept { return m_vmFields; }
 
+    void NewField();
+    void RemoveSelectedField();
+
     void DoFrame();
 
     void CopyDefinition() const;
@@ -228,14 +241,14 @@ protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
 
-    // ra::ui::ViewModelCollectionBase::NotifyTarget
+    // ViewModelCollectionBase::NotifyTarget
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
-    void OnOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset);
 
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
@@ -244,6 +257,8 @@ private:
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
     void OnSelectedNodeChanged(int nNode);
     void OnSelectedFieldChanged(int nNode);
+    void OnFieldSizeChanged(gsl::index nIndex);
+    void OnFieldOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset);
     void LoadNote(const ra::data::models::CodeNoteModel* pNote);
     void LoadNodes(const ra::data::models::CodeNoteModel* pNote);
     const ra::data::models::CodeNoteModel* FindNestedCodeNoteModel(const ra::data::models::CodeNoteModel& pRootNote, int nNewNode);
@@ -270,6 +285,7 @@ private:
     MemoryWatchListViewModel m_vmFields;
     bool m_bSyncingAddress = false;
     bool m_bSyncingNote = false;
+    bool m_bRebuildNodes = false;
 
     const ra::data::models::CodeNoteModel* m_pCurrentNote = nullptr;
 };

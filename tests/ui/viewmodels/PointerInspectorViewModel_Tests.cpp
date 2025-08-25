@@ -38,6 +38,7 @@ private:
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::services::mocks::MockClipboard mockClipboard;
+        ra::services::mocks::MockLocalStorage mockLocalStorage;
 
         std::array<unsigned char, 32> memory{};
 
@@ -84,18 +85,18 @@ private:
             Assert::AreEqual(nOffset, pField->m_nOffset);
             Assert::AreEqual(nAddress, pField->GetAddress());
             Assert::AreEqual(sOffset, pField->GetOffset());
-            Assert::AreEqual(sDescription, pField->GetRealNote());
+            Assert::AreEqual(sDescription, pField->GetDescription());
             Assert::AreEqual(nSize, pField->GetSize());
             Assert::AreEqual(nFormat, pField->GetFormat());
             Assert::AreEqual(sCurrentValue, pField->GetCurrentValue());
         }
 
-        void AssertFieldBody(gsl::index nIndex, const std::wstring& sBody)
+        void AssertFieldFullNote(gsl::index nIndex, const std::wstring& sBody)
         {
             const auto* pField = Fields().Items().GetItemAt<StructFieldViewModel>(nIndex);
             Assert::IsNotNull(pField);
             Ensures(pField != nullptr);
-            Assert::AreEqual(sBody, pField->GetBody());
+            Assert::AreEqual(sBody, pField->GetRealNote());
         }
 
         void AssertPointerChain(gsl::index nIndex, const std::wstring& sOffset,
@@ -107,7 +108,7 @@ private:
             Ensures(pPointer != nullptr);
             Assert::AreEqual(sOffset, pPointer->GetOffset());
             Assert::AreEqual(nAddress, pPointer->GetAddress());
-            Assert::AreEqual(sDescription, pPointer->GetRealNote());
+            Assert::AreEqual(sDescription, pPointer->GetDescription());
             Assert::AreEqual(sValue, pPointer->GetCurrentValue());
         }
 
@@ -259,9 +260,9 @@ public:
         Assert::AreEqual({ 2U }, inspector.Fields().Items().Count());
 
         inspector.AssertField(0, 4, 16U, L"+0004", L"Class", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
-        inspector.AssertFieldBody(0, L"[32-bit] Class\r\n1=Wizard\r\n2=Fighter");
+        inspector.AssertFieldFullNote(0, L"[32-bit] Class\r\n1=Wizard\r\n2=Fighter");
         inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
-        inspector.AssertFieldBody(1, L"[32-bit] Max HP");
+        inspector.AssertFieldFullNote(1, L"[32-bit] Max HP");
     }
 
     TEST_METHOD(TestKnownPointers)
@@ -401,7 +402,7 @@ public:
         inspector.AssertField(3, 24, 0x24U, L"+0018", L"Generic data", MemSize::EightBit, MemFormat::Dec, L"44");
 
         Assert::AreEqual({1U}, inspector.PointerChain().Count());
-        inspector.AssertPointerChain(0, L"", 0x04, L"[8-bit pointer] Player data", L"0c");
+        inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
 
         inspector.SetSelectedNode(0x00000008);
         Assert::AreEqual(0x00000008, inspector.GetSelectedNode());
@@ -409,8 +410,8 @@ public:
         Assert::AreEqual({0U}, inspector.Fields().Items().Count());
 
         Assert::AreEqual({2U}, inspector.PointerChain().Count());
-        inspector.AssertPointerChain(0, L"", 0x04, L"[8-bit pointer] Player data", L"0c");
-        inspector.AssertPointerChain(1, L"+0008", 0x14, L"[8-bit pointer] Row 2", L"1c");
+        inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
+        inspector.AssertPointerChain(1, L"+0008", 0x14, L"Row 2", L"1c");
 
         inspector.SetSelectedNode(0x00000000);
         Assert::AreEqual(0x00000000, inspector.GetSelectedNode());
@@ -421,8 +422,8 @@ public:
         inspector.AssertField(2, 8, 0x1CU, L"+0008", L"Column 1c", MemSize::EightBit, MemFormat::Dec, L"36");
 
         Assert::AreEqual({2U}, inspector.PointerChain().Count());
-        inspector.AssertPointerChain(0, L"", 0x04, L"[8-bit pointer] Player data", L"0c");
-        inspector.AssertPointerChain(1, L"+0000", 0x0C, L"[8-bit pointer] Row 1", L"14");
+        inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
+        inspector.AssertPointerChain(1, L"+0000", 0x0C, L"Row 1", L"14");
     }
 
     TEST_METHOD(TestSelectedField)
@@ -521,7 +522,7 @@ public:
 
         inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\r\n+0x08: [32-bit] Current HP"));
     }
-    
+
     TEST_METHOD(TestUpdateCurrentFieldNoteMultiline)
     {
         PointerInspectorViewModelHarness inspector;
@@ -588,6 +589,121 @@ public:
 
         inspector.AssertNote({4U}, std::wstring(L"[32-bit pointer] Player data\r\n+0x08: [32-bit] Max HP\r\n+0x0C: [32-bit pointer] Inventory\r\n"
                                                 L"++0x08: [16-bit] 1st item\r\n++0x0A: [16-bit] Second item"));
+    }
+
+    TEST_METHOD(TestUpdateFieldNoteSize)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.SetCurrentAddress({ 4U });
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+            L"[32-bit pointer] Player data\r\n"
+            L"+8: [32-bit] Max HP\r\n"
+            L"+12: [32-bit] Current HP");
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
+
+        inspector.Fields().Items().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
+
+        // update size via current note
+        inspector.SetCurrentFieldNote(L"[16-bit] Max HP");
+        Assert::AreEqual(std::wstring(L"[16-bit] Max HP"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::SixteenBit, MemFormat::Dec, L"20");
+        inspector.AssertField(1, 12, 24, L"+000c", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"24");
+
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32-bit pointer] Player data\r\n"
+            L"+0x08: [16-bit] Max HP\r\n"
+            L"+0x0C: [32-bit] Current HP"));
+
+        // update size via field row (selected row)
+        inspector.Fields().Items().GetItemAt(0)->SetSize(MemSize::TwentyFourBit);
+        Assert::AreEqual(std::wstring(L"[24-bit] Max HP"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::TwentyFourBit, MemFormat::Dec, L"20");
+        inspector.AssertField(1, 12, 24, L"+000c", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"24");
+
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32-bit pointer] Player data\r\n"
+            L"+0x08: [24-bit] Max HP\r\n"
+            L"+0x0C: [32-bit] Current HP"));
+
+        // update size via field row (unselected row)
+        inspector.Fields().Items().GetItemAt(1)->SetSize(MemSize::TwentyFourBit);
+        Assert::AreEqual(std::wstring(L"[24-bit] Max HP"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::TwentyFourBit, MemFormat::Dec, L"20");
+        inspector.AssertField(1, 12, 24, L"+000c", L"Current HP", MemSize::TwentyFourBit, MemFormat::Dec, L"24");
+
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32-bit pointer] Player data\r\n"
+            L"+0x08: [24-bit] Max HP\r\n"
+            L"+0x0C: [24-bit] Current HP"));
+    }
+
+
+    TEST_METHOD(TestUpdateFieldConvertToPointer)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.SetCurrentAddress({ 4U });
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+            L"[32-bit pointer] Player data\r\n"
+            L"+8: [32-bit] Max HP");
+
+        Assert::AreEqual({ 1U }, inspector.Nodes().Count());
+        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
+
+        inspector.Fields().Items().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
+
+        // convert to pointer by updating current note
+        inspector.SetCurrentFieldNote(L"[32-bit pointer] Max HP");
+        Assert::AreEqual(std::wstring(L"[32-bit pointer] Max HP"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 8, 20, L"+0008", L"[pointer] Max HP", MemSize::ThirtyTwoBit, MemFormat::Hex, L"00000014");
+
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32-bit pointer] Player data\r\n"
+            L"+0x08: [32-bit pointer] Max HP"));
+
+        Assert::AreEqual({ 2U }, inspector.Nodes().Count());
+        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(0x00000008, inspector.Nodes().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"+0008 | [32-bit pointer] Max HP"), inspector.Nodes().GetItemAt(1)->GetLabel());
+
+        // convert back to non-pointer by updating current note
+        inspector.SetCurrentFieldNote(L"[32-bit] Max HP");
+        Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
+
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32-bit pointer] Player data\r\n"
+            L"+0x08: [32-bit] Max HP"));
+
+        Assert::AreEqual({ 1U }, inspector.Nodes().Count());
+        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
     }
 
     TEST_METHOD(TestUpdateCurrentFieldOffsetSimple)
@@ -751,7 +867,7 @@ public:
         inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"20");
 
         Assert::AreEqual({1U}, inspector.PointerChain().Count());
-        inspector.AssertPointerChain(0, L"", 0x04, L"[32-bit pointer] Player data", L"0000000c");
+        inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0000000c");
 
         // data changes
         memory.at(17) = 1;
@@ -761,7 +877,7 @@ public:
         inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"99");
 
         Assert::AreEqual({1U}, inspector.PointerChain().Count());
-        inspector.AssertPointerChain(0, L"", 0x04, L"[32-bit pointer] Player data", L"0000000c");
+        inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0000000c");
 
         // pointer changes
         memory.at(4) = 13;
@@ -770,7 +886,7 @@ public:
         inspector.AssertField(1, 8, 21U, L"+0008", L"Max HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"402653184");
 
         Assert::AreEqual({1U}, inspector.PointerChain().Count());
-        inspector.AssertPointerChain(0, L"", 0x04, L"[32-bit pointer] Player data", L"0000000d");
+        inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0000000d");
     }
 
     TEST_METHOD(TestDoFrameNested)
@@ -819,9 +935,9 @@ public:
             MemSize::ThirtyTwoBit, MemFormat::Dec, L"100");
 
         Assert::AreEqual({3U}, inspector.PointerChain().Count());
-        inspector.AssertPointerChain(0, L"", 0x04, L"[32-bit pointer] Player data", L"0000000c");     //    04    (0C)
-        inspector.AssertPointerChain(1, L"+0004", 0x10, L"[32-bit pointer] 1st player", L"00000034"); // 0C+04=10 (34)
-        inspector.AssertPointerChain(2, L" +0008", 0x3C, L"[32-bit pointer] Health", L"00000020");    // 34+08=3C (20)
+        inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0000000c");     //    04    (0C)
+        inspector.AssertPointerChain(1, L"+0004", 0x10, L"1st player", L"00000034"); // 0C+04=10 (34)
+        inspector.AssertPointerChain(2, L" +0008", 0x3C, L"Health", L"00000020");    // 34+08=3C (20)
         inspector.AssertPointerChainAddressValid(0);
         inspector.AssertPointerChainAddressValid(1);
         inspector.AssertPointerChainAddressValid(2);
@@ -830,9 +946,9 @@ public:
         memory.at(0x0010) = 0x00;
         inspector.DoFrame();
 
-        inspector.AssertPointerChain(0, L"", 0x04, L"[32-bit pointer] Player data", L"0000000c");     //    04    (0C)
-        inspector.AssertPointerChain(1, L"+0004", 0x10, L"[32-bit pointer] 1st player", L"00000000"); // 0C+04=10 (00)
-        inspector.AssertPointerChain(2, L" +0008", 0x08, L"[32-bit pointer] Health", L"00000008");    // 00+08=08 (08)
+        inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0000000c");     //    04    (0C)
+        inspector.AssertPointerChain(1, L"+0004", 0x10, L"1st player", L"00000000"); // 0C+04=10 (00)
+        inspector.AssertPointerChain(2, L" +0008", 0x08, L"Health", L"00000008");    // 00+08=08 (08)
         inspector.AssertPointerChainAddressValid(0);
         inspector.AssertPointerChainAddressNull(1);
         inspector.AssertPointerChainAddressValid(2);
@@ -845,9 +961,9 @@ public:
         memory.at(0x0004) = 0x20;
         inspector.DoFrame();
 
-        inspector.AssertPointerChain(0, L"", 0x04, L"[32-bit pointer] Player data", L"00000020");     //    04    (20)
-        inspector.AssertPointerChain(1, L"+0004", 0x24, L"[32-bit pointer] 1st player", L"00000060"); // 20+04=24 (60)
-        inspector.AssertPointerChain(2, L" +0008", 0x68, L"[32-bit pointer] Health", L"00000000");    // 60+08=68 (00)
+        inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"00000020");     //    04    (20)
+        inspector.AssertPointerChain(1, L"+0004", 0x24, L"1st player", L"00000060"); // 20+04=24 (60)
+        inspector.AssertPointerChain(2, L" +0008", 0x68, L"Health", L"00000000");    // 60+08=68 (00)
         inspector.AssertPointerChainAddressValid(0);
         inspector.AssertPointerChainAddressInvalid(1);
         inspector.AssertPointerChainAddressNull(2);
@@ -856,6 +972,169 @@ public:
         inspector.AssertField(1, 8, 0x08U, L"+0008", L"Max HP",     // 00+08=08 (08)
                               MemSize::ThirtyTwoBit, MemFormat::Dec, L"8");
     }
+
+    TEST_METHOD(TestNewFieldEmpty)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockConsoleContext.SetId(ConsoleID::PlayStation);
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockEmulatorContext.MockMemory(memory);
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+            L"[32-bit pointer] Player data\r\n");
+
+        memory.at(0x0004) = 0x0C;
+        memory.at(0x000C) = 0x10;
+        memory.at(0x0011) = 0x01;
+        inspector.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+
+        inspector.SetCurrentAddress({ 4U });
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
+        Assert::AreEqual({ 0U }, inspector.Fields().Items().Count());
+
+        inspector.NewField();
+        Assert::AreEqual({ 1U }, inspector.Fields().Items().Count());
+        inspector.AssertField(0, 0, 12, L"+0000", L"", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
+
+        inspector.NewField();
+        Assert::AreEqual({ 2U }, inspector.Fields().Items().Count());
+        inspector.AssertField(0, 0, 12, L"+0000", L"", MemSize::ThirtyTwoBit, MemFormat::Dec, L"16");
+        inspector.AssertField(1, 4, 16, L"+0004", L"", MemSize::ThirtyTwoBit, MemFormat::Dec, L"256");
+
+        // note should not be updated until description or offset changed
+        inspector.AssertNote({ 4U }, std::wstring(L"[32-bit pointer] Player data\r\n"));
+    }
+
+    TEST_METHOD(TestNewFieldEmptyBigEndian)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockConsoleContext.SetId(ConsoleID::GameCube);
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockEmulatorContext.MockMemory(memory);
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+            L"[32-bit BE pointer] Player data\r\n");
+
+        memory.at(0x0007) = 0x0C;
+        memory.at(0x000F) = 0x10;
+        memory.at(0x0012) = 0x01;
+        inspector.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+
+        inspector.SetCurrentAddress({ 4U });
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
+        Assert::AreEqual({ 0U }, inspector.Fields().Items().Count());
+
+        inspector.NewField();
+        Assert::AreEqual({ 1U }, inspector.Fields().Items().Count());
+        inspector.AssertField(0, 0, 12, L"+0000", L"", MemSize::ThirtyTwoBitBigEndian, MemFormat::Dec, L"16");
+
+        inspector.NewField();
+        Assert::AreEqual({ 2U }, inspector.Fields().Items().Count());
+        inspector.AssertField(0, 0, 12, L"+0000", L"", MemSize::ThirtyTwoBitBigEndian, MemFormat::Dec, L"16");
+        inspector.AssertField(1, 4, 16, L"+0004", L"", MemSize::ThirtyTwoBitBigEndian, MemFormat::Dec, L"256");
+    }
+
+    TEST_METHOD(TestNewFieldSized)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockConsoleContext.SetId(ConsoleID::PlayStation2);
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockEmulatorContext.MockMemory(memory);
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+            L"[32-bit pointer] Player data\r\n"
+            L"+8: [16-bit] Current HP\r\n");
+
+        memory.at(0x0004) = 0x0C;
+        memory.at(0x0014) = 0x10;
+        memory.at(0x0016) = 0x16;
+        inspector.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+
+        inspector.SetCurrentAddress({ 4U });
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
+        Assert::AreEqual({ 1U }, inspector.Fields().Items().Count());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Current HP", MemSize::SixteenBit, MemFormat::Dec, L"16");
+
+        inspector.NewField();
+        Assert::AreEqual({ 2U }, inspector.Fields().Items().Count());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Current HP", MemSize::SixteenBit, MemFormat::Dec, L"16");
+        inspector.AssertField(1, 10, 22, L"+000a", L"", MemSize::SixteenBit, MemFormat::Dec, L"22");
+
+        // note should not be updated until description or offset changed
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32-bit pointer] Player data\r\n"
+            L"+8: [16-bit] Current HP\r\n"));
+
+        inspector.Fields().Items().GetItemAt(1)->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[16-bit]"), inspector.GetCurrentFieldNote());
+        inspector.SetCurrentFieldNote(L"[16-bit] Max HP");
+        Assert::AreEqual({ 2U }, inspector.Fields().Items().Count());
+        inspector.AssertField(0, 8, 20, L"+0008", L"Current HP", MemSize::SixteenBit, MemFormat::Dec, L"16");
+        inspector.AssertField(1, 10, 22, L"+000a", L"Max HP", MemSize::SixteenBit, MemFormat::Dec, L"22");
+
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32-bit pointer] Player data\r\n"
+            L"+0x08: [16-bit] Current HP\r\n"
+            L"+0x0A: [16-bit] Max HP"));
+    }
+
+    TEST_METHOD(TestRemoveSelectedField)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+            L"[32-bit pointer] Player data\r\n"
+            L"+8: [32-bit] Max HP\r\n" //\r\n"
+            L"+12: [32-bit pointer] Inventory\r\n"
+            L"++8: [16-bit] First item\r\n"
+            L"++10: [16-bit] Second item");
+        inspector.SetCurrentAddress({ 4U });
+        inspector.SetSelectedNode(0x0000000C);
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        inspector.AssertField(0, 8, 32, L"+0008", L"First item", MemSize::SixteenBit, MemFormat::Dec, L"32");
+
+        // position does not change
+        auto* pField = inspector.Fields().Items().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
+        Expects(pField != nullptr);
+        pField->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[16-bit] First item"), inspector.GetCurrentFieldNote());
+        inspector.RemoveSelectedField();
+
+        Assert::AreEqual({ 1U }, inspector.Fields().Items().Count());
+        Assert::IsFalse(inspector.Fields().HasSelection());
+
+        inspector.AssertNote(
+            { 4U }, std::wstring(
+                L"[32-bit pointer] Player data\r\n"
+                L"+0x08: [32-bit] Max HP\r\n"
+                L"+0x0C: [32-bit pointer] Inventory\r\n"
+                L"++0x0A: [16-bit] Second item"));
+    }
+
 };
 
 } // namespace tests

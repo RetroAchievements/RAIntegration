@@ -170,6 +170,8 @@ std::pair<ra::ByteAddress, const CodeNoteModel*> CodeNoteModel::GetPointerNoteAt
         return {0, nullptr};
 
     const auto nPointerAddress = m_pPointerData->PointerAddress;
+    if (nPointerAddress == 0) // assume null is not a valid pointer address
+        return { 0, nullptr };
 
     bool bAddressValid = true;
     if (m_pPointerData->OffsetType == PointerData::OffsetType::Converted)

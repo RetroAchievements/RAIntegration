@@ -1588,6 +1588,11 @@ public:
         bookmarks.mockFileSystem.MockFile(L"E:\\Data\\3-Bookmarks.json",
                                           "{\"Bookmarks\":[{\"MemAddr\":\"I:0x 0020_M:0xW0008\"}]}");
 
+        std::array<unsigned char, 64> memory{};
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+        memory.at(0x20) = 0x10;
+        bookmarks.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+
         bool bDialogSeen = false;
         bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
             [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
@@ -1610,7 +1615,7 @@ public:
         const auto& bookmark = *bookmarks.GetBookmark(0);
         Assert::AreEqual(std::wstring(L"data here"), bookmark.GetRealNote());
         Assert::AreEqual(std::wstring(L"data here"), bookmark.GetDescription());
-        Assert::AreEqual(8U, bookmark.GetAddress());
+        Assert::AreEqual(0x10+8U, bookmark.GetAddress());
         Assert::AreEqual(MemSize::TwentyFourBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
         Assert::IsTrue(bookmark.IsIndirectAddress());

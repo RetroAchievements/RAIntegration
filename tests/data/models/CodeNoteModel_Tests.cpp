@@ -567,6 +567,41 @@ public:
                                         MemSize::ThirtyTwoBit, 4);
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
     }
+
+    TEST_METHOD(TestUpdateRawPointerValue)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"Pointer [32bit]\r\n"
+            L"+0 | Obj1 pointer\r\n"
+            L"++0 | [16-bit] State\r\n"
+            L"++2 | [16-bit] Visible\r\n"
+            L"+4 | Obj2 pointer\r\n"
+            L"++0 | [32-bit] ID\r\n"
+            L"+8 | Count";
+        note.SetAddress(4U);
+        note.SetNote(sNote);
+
+        std::array<unsigned char, 32> memory{};
+        note.mockEmulatorContext.MockMemory(memory);
+
+        memory.at(4) = 8; // pointer = 8
+        memory.at(8) = 20; // obj1 pointer = 20
+        memory.at(12) = 28; // obj2 pointer = 28
+
+        note.UpdateRawPointerValue(4U, note.mockEmulatorContext, nullptr);
+        Assert::AreEqual(8U, note.GetPointerAddress());
+
+        const auto* pObj1Note = note.GetPointerNoteAtOffset(0);
+        Expects(pObj1Note != nullptr);
+        Assert::IsNotNull(pObj1Note);
+        Assert::AreEqual(20U, pObj1Note->GetPointerAddress());
+
+        const auto* pObj2Note = note.GetPointerNoteAtOffset(4);
+        Expects(pObj2Note != nullptr);
+        Assert::IsNotNull(pObj2Note);
+        Assert::AreEqual(28U, pObj2Note->GetPointerAddress());
+    }
 };
 
 } // namespace tests

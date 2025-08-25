@@ -330,8 +330,8 @@ private:
                     break;
 
                 case RevertButtonState::DeleteAll:
-                    Assert::AreEqual(std::wstring(L"&Delete All"), GetValue(RevertButtonTextProperty));
-                    Assert::IsTrue(CanRevert());
+                    Assert::AreEqual(std::wstring(L"&Delete"), GetValue(RevertButtonTextProperty));
+                    Assert::IsFalse(CanRevert());
                     break;
 
                 case RevertButtonState::RevertDisabled:
@@ -5146,12 +5146,11 @@ public:
 
         vmAssetList.AssertButtonState(RevertButtonState::DeleteAll);
 
+        // we don't want an easy way to accidentally delete all local assets.
+        // delete should be disabled if nothing is selected.
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
-            Assert::AreEqual(std::wstring(L"Permanently delete?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Assets not available on the server will be permanently deleted."), vmMessageBox.GetMessage());
-
             bDialogShown = true;
             return DialogResult::Yes;
         });
@@ -5165,10 +5164,10 @@ public:
 
         vmAssetList.RevertSelected();
 
-        Assert::IsTrue(bDialogShown);
+        Assert::IsFalse(bDialogShown);
 
         pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
-        Assert::IsNull(pAsset);
+        Assert::IsNotNull(pAsset);
     }
 
     TEST_METHOD(TestRevertSelectedLocalUnpublished)
@@ -5425,31 +5424,6 @@ public:
 
         Assert::AreEqual(std::string("revert core assets"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
         Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
-    }
-
-    TEST_METHOD(TestRevertSelectedLocalHardcore)
-    {
-        AssetListViewModelHarness vmAssetList;
-        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        vmAssetList.MockGameId(22U);
-        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
-        vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(RevertButtonState::DeleteAll);
-
-        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
-        Assert::IsNotNull(pAsset);
-        Ensures(pAsset != nullptr);
-        pAsset->SetName(L"Apple");
-        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
-
-        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel&) { return DialogResult::Yes; });
-        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
-        vmAssetList.RevertSelected();
-
-        Assert::AreEqual(std::string(), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
-        pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
-        Assert::IsNull(pAsset);
     }
 
     TEST_METHOD(TestIsProcessingActive)

@@ -178,6 +178,8 @@ const std::string& TriggerViewModel::GroupViewModel::GetSerialized() const
         if (m_pConditionSet)
         {
             TriggerConditionViewModel vmCondition;
+            vmCondition.SetTriggerViewModel(m_pTriggerViewModel);
+
             rc_condition_t* pCondition = m_pConditionSet->conditions;
             while (pCondition != nullptr)
             {
@@ -208,6 +210,28 @@ bool TriggerViewModel::GroupViewModel::UpdateMeasuredFlags()
                 return true;
             }
         }
+    }
+    else if (m_pTriggerViewModel && !m_sSerialized.empty())
+    {
+        char cOldPrefix = 'G';
+        char cNewPrefix = 'M';
+        if (m_pTriggerViewModel->IsMeasuredTrackedAsPercent())
+        {
+            cOldPrefix = 'M';
+            cNewPrefix = 'G';
+        }
+
+        bool bUpdated = false;
+        for (auto nIndex = m_sSerialized.find(cOldPrefix); nIndex != std::string::npos; nIndex = m_sSerialized.find(cOldPrefix, nIndex + 2))
+        {
+            if (nIndex + 1 < m_sSerialized.length() && m_sSerialized.at(nIndex + 1) == ':')
+            {
+                m_sSerialized.at(nIndex) = cNewPrefix;
+                bUpdated = true;
+            }
+        }
+
+        return bUpdated;
     }
 
     return false;
@@ -657,10 +681,10 @@ void TriggerViewModel::NewCondition()
     AppendMemRefChain(sMemRef);
 }
 
-static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& vGroups,
-    int nId, rc_condset_t* pConditionSet)
+void TriggerViewModel::AddAltGroup(int nId, rc_condset_t* pConditionSet)
 {
-    auto& vmAltGroup = vGroups.Add();
+    auto& vmAltGroup = m_vGroups.Add();
+    vmAltGroup.SetTriggerViewModel(this);
     vmAltGroup.SetId(nId);
     vmAltGroup.SetLabel(ra::StringPrintf(L"%s%d", (nId < 1000) ? "Alt " : "A", nId));
     vmAltGroup.m_pConditionSet = pConditionSet;
@@ -679,6 +703,7 @@ void TriggerViewModel::InitializeGroups(const rc_trigger_t& pTrigger)
     m_vGroups.Clear();
 
     auto& vmCoreGroup = m_vGroups.Add();
+    vmCoreGroup.SetTriggerViewModel(this);
     vmCoreGroup.SetId(0);
     vmCoreGroup.SetLabel(m_bIsValue ? L"Value" : L"Core");
     vmCoreGroup.SetSelected(true);
@@ -688,7 +713,7 @@ void TriggerViewModel::InitializeGroups(const rc_trigger_t& pTrigger)
     int nId = 0;
     rc_condset_t* pConditionSet = pTrigger.alternative;
     for (; pConditionSet != nullptr; pConditionSet = pConditionSet->next)
-        AddAltGroup(m_vGroups, ++nId, pConditionSet);
+        AddAltGroup(++nId, pConditionSet);
 
     m_vGroups.EndUpdate();
     m_vGroups.AddNotifyTarget(*this);
@@ -804,7 +829,7 @@ void TriggerViewModel::UpdateGroups(const rc_trigger_t& pTrigger)
         }
         else
         {
-            AddAltGroup(m_vGroups, gsl::narrow_cast<int>(nIndex), pConditionSet);
+            AddAltGroup(gsl::narrow_cast<int>(nIndex), pConditionSet);
         }
     }
 
@@ -1076,7 +1101,7 @@ void TriggerViewModel::UpdateVersionAndRestoreHits()
     for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
     {
         auto* pGroup = m_vGroups.GetItemAt(i);
-        if (pGroup != nullptr)
+        if (pGroup != nullptr && pGroup->m_pConditionSet)
         {
             const auto* pCondition = pGroup->m_pConditionSet->conditions;
             while (pCondition != nullptr)
@@ -1093,7 +1118,7 @@ void TriggerViewModel::UpdateVersionAndRestoreHits()
     for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
     {
         auto* pGroup = m_vGroups.GetItemAt(i);
-        if (pGroup != nullptr)
+        if (pGroup != nullptr && pGroup->m_pConditionSet)
         {
             auto* pCondition = pGroup->m_pConditionSet->conditions;
             while (pCondition != nullptr)
@@ -1347,13 +1372,13 @@ void TriggerViewModel::AddGroup()
     if (nGroups == 1 && !m_bIsValue)
     {
         // only a core group, add two alt groups
-        AddAltGroup(m_vGroups, nGroups, nullptr);
-        AddAltGroup(m_vGroups, nGroups + 1, nullptr);
+        AddAltGroup(nGroups, nullptr);
+        AddAltGroup(nGroups + 1, nullptr);
     }
     else
     {
         // already at least one alt group, only add one more
-        AddAltGroup(m_vGroups, nGroups, nullptr);
+        AddAltGroup(nGroups, nullptr);
     }
 
     SetSelectedGroupIndex(nGroups);

@@ -1597,6 +1597,48 @@ public:
         Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
         Assert::AreEqual(2, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits());
     }
+
+    TEST_METHOD(TestToggleMeasuredAsPercent)
+    {
+        std::array<uint8_t, 10> pMemory = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "M:0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+
+        vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
+
+        vmTrigger.SetMeasuredTrackedAsPercent(true);
+        Assert::AreEqual(std::string("G:0xH1234=16"), vmTrigger.Serialize());
+
+        vmTrigger.SetMeasuredTrackedAsPercent(false);
+        Assert::AreEqual(std::string("M:0xH1234=16"), vmTrigger.Serialize());
+    }
+
+    TEST_METHOD(TestToggleMeasuredAsPercentInNewAlt)
+    {
+        ra::data::models::AchievementModel pAchievement;
+        TriggerViewModelHarness vmTrigger;
+        vmTrigger.InitializeFrom(pAchievement.GetTrigger(), pAchievement.GetCapturedHits());
+        vmTrigger.AddGroup();
+        vmTrigger.SetSelectedGroupIndex(1);
+        vmTrigger.NewCondition();
+        auto* vmCondition = vmTrigger.Conditions().GetItemAt(0);
+        Expects(vmCondition != nullptr);
+        vmCondition->SetType(ra::services::TriggerConditionType::Measured);
+        vmCondition->SetSourceType(ra::services::TriggerOperandType::Value);
+        vmCondition->SetSourceValue(0);
+        vmCondition->SetTargetType(ra::services::TriggerOperandType::Value);
+        vmCondition->SetTargetValue(1U);
+
+        vmTrigger.SetMeasuredTrackedAsPercent(true);
+        Assert::AreEqual(std::string("SG:0=1S"), vmTrigger.Serialize());
+
+        vmTrigger.SetMeasuredTrackedAsPercent(false);
+        Assert::AreEqual(std::string("SM:0=1S"), vmTrigger.Serialize());
+    }
 };
 
 } // namespace tests

@@ -733,6 +733,42 @@ public:
         Assert::AreEqual(1, vmTrigger.GetVersion());
     }
 
+    TEST_METHOD(TestResetSelectionWhenChangingGroups)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1S0xW5555=16S0=1");
+
+        Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+
+        vmTrigger.SetSelectedGroupIndex(1);
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+
+        vmTrigger.SelectRange(0, 0, true);
+        Assert::AreEqual({ 1U }, vmTrigger.GetSelectedItems().size());
+
+        vmTrigger.SetSelectedGroupIndex(0);
+        Assert::AreEqual({ 0U }, vmTrigger.GetSelectedItems().size());
+
+        vmTrigger.SelectRange(1, 1, true);
+        Assert::AreEqual({ 1U }, vmTrigger.GetSelectedItems().size());
+
+        vmTrigger.SetSelectedGroupIndex(1);
+        Assert::AreEqual({ 0U }, vmTrigger.GetSelectedItems().size());
+
+        vmTrigger.SelectRange(0, 0, true);
+        Assert::AreEqual({ 1U }, vmTrigger.GetSelectedItems().size());
+
+        vmTrigger.SetSelectedGroupIndex(0);
+        Assert::AreEqual({ 0U }, vmTrigger.GetSelectedItems().size());
+
+        vmTrigger.SelectRange(0, 0, true);
+        Assert::AreEqual({ 1U }, vmTrigger.GetSelectedItems().size());
+
+        vmTrigger.SetSelectedGroupIndex(1);
+        Assert::AreEqual({ 0U }, vmTrigger.GetSelectedItems().size());
+    }
+
     TEST_METHOD(TestMoveSelectedConditionsUp)
     {
         TriggerViewModelHarness vmTrigger;

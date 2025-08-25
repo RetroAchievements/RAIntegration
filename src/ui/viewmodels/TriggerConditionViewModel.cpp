@@ -441,13 +441,14 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
 
         if (IsIndirect())
         {
+            const ra::data::models::CodeNoteModel* pNote = nullptr;
             std::wstring sPointerChain;
             const auto nOffset = GetSourceAddress();
-            const auto nIndirectAddress = GetIndirectAddress(nOffset, sPointerChain);
-            return GetAddressTooltip(nIndirectAddress, sPointerChain);
+            const auto nIndirectAddress = GetIndirectAddress(nOffset, sPointerChain, &pNote);
+            return GetAddressTooltip(nIndirectAddress, sPointerChain, pNote);
         }
 
-        return GetAddressTooltip(GetSourceAddress(), L"");
+        return GetAddressTooltip(GetSourceAddress(), L"", nullptr);
     }
 
     if (nProperty == TargetValueProperty && GetValue(HasTargetValueProperty))
@@ -464,13 +465,14 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
 
         if (IsIndirect())
         {
+            const ra::data::models::CodeNoteModel* pNote = nullptr;
             std::wstring sPointerChain;
             const auto nOffset = GetTargetAddress();
-            const auto nIndirectAddress = GetIndirectAddress(nOffset, sPointerChain);
-            return GetAddressTooltip(nIndirectAddress, sPointerChain);
+            const auto nIndirectAddress = GetIndirectAddress(nOffset, sPointerChain, &pNote);
+            return GetAddressTooltip(nIndirectAddress, sPointerChain, pNote);
         }
 
-        return GetAddressTooltip(GetTargetAddress(), L"");
+        return GetAddressTooltip(GetTargetAddress(), L"", nullptr);
     }
 
     return L"";
@@ -552,57 +554,134 @@ static void BuildOperatorTooltip(std::wstring& sTooltip, uint8_t nOperatorType)
     }
 }
 
-static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperand, std::wstring& sPointerChain)
+static ra::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperand, std::wstring& sPointerChain,
+    const ra::data::models::CodeNoteModel** pParentNote)
 {
+    Expects(pParentNote != nullptr);
+
     rc_typed_value_t pValue;
     rc_evaluate_operand(&pValue, pOperand, nullptr);
     rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
 
+    // check for {recall}
     if (pOperand->type == RC_OPERAND_RECALL)
     {
+        *pParentNote = nullptr;
+
         sPointerChain += ra::StringPrintf(L"{recall:0x%02x}", pValue.value.u32);
         return pValue.value.u32;
     }
 
+    // check for constant offset
     if (!rc_operand_is_memref(pOperand))
     {
+        if (*pParentNote)
+            *pParentNote = (*pParentNote)->GetPointerNoteAtOffset(pValue.value.u32);
+
         sPointerChain += ra::StringPrintf(L"0x%02x", pValue.value.u32);
         return pValue.value.u32;
     }
 
+    // check for root pointer
     if (pOperand->value.memref->value.memref_type != RC_MEMREF_TYPE_MODIFIED_MEMREF)
     {
-        sPointerChain += '$';
-        sPointerChain += ra::Widen(ra::ByteAddressToString(pOperand->value.memref->address));
+        const auto nAddress = pOperand->value.memref->address;
+
+        // find the code note associated to the parent
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+        *pParentNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
+
+        sPointerChain.push_back('$');
+        sPointerChain += ra::Widen(ra::ByteAddressToString(nAddress));
         return pValue.value.u32;
     }
 
+    // process offset
     GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
         reinterpret_cast<const rc_modified_memref_t*>(pOperand->value.memref);
-    GetIndirectAddressFromOperand(&pModifiedMemref->parent, sPointerChain);
 
+    GetIndirectAddressFromOperand(&pModifiedMemref->parent, sPointerChain, pParentNote);
+
+    // calculate current values of both operands
+    rc_evaluate_operand(&pValue, &pModifiedMemref->parent, nullptr);
+    rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
+
+    rc_typed_value_t pModifier{};
+    rc_evaluate_operand(&pModifier, &pModifiedMemref->modifier, nullptr);
+    rc_typed_value_convert(&pModifier, RC_VALUE_TYPE_UNSIGNED);
+
+    // if it's an indirect read, determine if it's a pointer or index offset
     if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
     {
-        sPointerChain.push_back('+');
-        GetIndirectAddressFromOperand(&pModifiedMemref->modifier, sPointerChain);
-
-        rc_evaluate_operand(&pValue, &pModifiedMemref->parent, nullptr);
-        rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
-
-        rc_typed_value_t pModifier{};
-        rc_evaluate_operand(&pModifier, &pModifiedMemref->modifier, nullptr);
-        rc_typed_value_convert(&pModifier, RC_VALUE_TYPE_UNSIGNED);
-
         rc_typed_value_combine(&pValue, &pModifier, RC_OPERATOR_ADD);
+
+        if (*pParentNote && !(*pParentNote)->IsPointer())
+        {
+            // if the parent note is not a pointer, assume it's an index
+            Expects(pModifiedMemref->modifier.type == RC_OPERAND_CONST);
+            const auto nAddress = pModifier.value.u32;
+            std::wstring sPrefix = ra::StringPrintf(L"%s[", ra::ByteAddressToString(nAddress));
+            sPointerChain.insert(0, sPrefix);
+            sPointerChain.push_back(']');
+
+            // find the code note associated to the start of the array
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+            const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+            *pParentNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
+
+            // return the address offset into the array
+            return pValue.value.u32;
+        }
+
+        // process the pointer
+        sPointerChain.push_back('+');
+        GetIndirectAddressFromOperand(&pModifiedMemref->modifier, sPointerChain, pParentNote);
+
+        // value is the parent pointer, modifier is the offset. combine them to get the new address
+        return pValue.value.u32;
     }
-    else if (pModifiedMemref->modifier_type != RC_OPERATOR_AND)
+
+    // not an indirect read. must be a scalar.
+    if (pModifiedMemref->modifier_type != RC_OPERATOR_AND)
     {
+        // don't report mask on every pointer evaluation
         std::wstring sTemp;
         BuildOperatorTooltip(sTemp, pModifiedMemref->modifier_type);
         sPointerChain.push_back(sTemp.empty() ? '?' : sTemp.at(1));
-        GetIndirectAddressFromOperand(&pModifiedMemref->modifier, sPointerChain);
+
+        if (pModifiedMemref->modifier.type == RC_OPERAND_RECALL)
+        {
+            sPointerChain += ra::StringPrintf(L"{recall:0x%02x}", pModifier.value.u32);
+        }
+        else if (rc_operand_is_memref(&pModifiedMemref->modifier))
+        {
+            sPointerChain.push_back('$');
+            sPointerChain += ra::Widen(ra::ByteAddressToString(pModifiedMemref->modifier.value.memref->address));
+        }
+        else
+        {
+            const auto nModifier = pModifiedMemref->modifier.value.num;
+
+            switch (pModifiedMemref->modifier_type)
+            {
+                case RC_OPERATOR_AND:
+                case RC_OPERATOR_XOR: // use hex for bitwise combines
+                    sPointerChain += ra::StringPrintf(L"0x%02x", nModifier);
+                    break;
+
+                default:
+                    if (nModifier >= 0x1000 && (nModifier & 0xFF) == 0) // large multiple of 256, use hex
+                        sPointerChain += ra::StringPrintf(L"0x%04x", nModifier);
+                    else // otherwise use decimal
+                        sPointerChain += std::to_wstring(nModifier);
+                    break;
+            }
+        }
     }
 
+    // return the result of combining the value and the modifier
+    rc_typed_value_combine(&pValue, &pModifier, pModifiedMemref->modifier_type);
     return pValue.value.u32;
 }
 
@@ -688,23 +767,29 @@ const rc_condition_t* TriggerConditionViewModel::GetCondition() const
     return nullptr;
 }
 
-ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress, std::wstring& sPointerChain) const
+ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress, std::wstring& sPointerChain,
+    const ra::data::models::CodeNoteModel** pLeafNote) const
 {
+    Expects(pLeafNote != nullptr);
+
     const auto* pCondition = GetCondition();
     if (pCondition)
     {
+        *pLeafNote = nullptr;
+
         const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
         if (rc_operand_is_memref(pOperand1) && nAddress == pOperand1->value.memref->address)
-            return GetIndirectAddressFromOperand(pOperand1, sPointerChain);
+            return GetIndirectAddressFromOperand(pOperand1, sPointerChain, pLeafNote);
 
         if (rc_operand_is_memref(&pCondition->operand2) && nAddress == pCondition->operand2.value.memref->address)
-            return GetIndirectAddressFromOperand(&pCondition->operand2, sPointerChain);
+            return GetIndirectAddressFromOperand(&pCondition->operand2, sPointerChain, pLeafNote);
     }
 
     return nAddress;
 }
 
-std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::ByteAddress nAddress, const std::wstring& sPointerChain) const
+std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::ByteAddress nAddress,
+    const std::wstring& sPointerChain, const ra::data::models::CodeNoteModel* pNote) const
 {
     std::wstring sAddress;
     if (sPointerChain.empty())
@@ -712,26 +797,28 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::ByteAddress nAddre
     else
         sAddress = ra::StringPrintf(L"%s (indirect %s)", ra::ByteAddressToString(nAddress), sPointerChain);
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    const ra::data::models::CodeNoteModel* pNote = nullptr;
-    if (pCodeNotes)
+    if (!pNote)
     {
-        pNote = pCodeNotes->FindCodeNoteModel(nAddress);
-        if (pNote == nullptr)
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+        if (pCodeNotes)
         {
-            const auto nNoteStart = pCodeNotes->FindCodeNoteStart(nAddress);
-            if (nNoteStart != 0xFFFFFFFF)
+            pNote = pCodeNotes->FindCodeNoteModel(nAddress);
+            if (pNote == nullptr)
             {
-                pNote = pCodeNotes->FindCodeNoteModel(nNoteStart);
+                const auto nNoteStart = pCodeNotes->FindCodeNoteStart(nAddress);
+                if (nNoteStart != 0xFFFFFFFF)
+                {
+                    pNote = pCodeNotes->FindCodeNoteModel(nNoteStart);
 
-                if (sPointerChain.empty())
-                    sAddress = ra::StringPrintf(L"%s (%s+%u)", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nNoteStart), nAddress - nNoteStart);
+                    if (sPointerChain.empty())
+                        sAddress = ra::StringPrintf(L"%s (%s+%u)", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nNoteStart), nAddress - nNoteStart);
+                }
             }
         }
+        if (!pNote)
+            return ra::StringPrintf(L"%s\r\n[No code note]", sAddress);
     }
-    if (!pNote)
-        return ra::StringPrintf(L"%s\r\n[No code note]", sAddress);
 
     if (pNote->IsPointer() && GetType() == TriggerConditionType::AddAddress)
         return ra::StringPrintf(L"%s\r\n%s", sAddress, pNote->GetPointerDescription());

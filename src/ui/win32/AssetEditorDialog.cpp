@@ -295,7 +295,8 @@ public:
                 const auto* pConditionViewModel = dynamic_cast<const TriggerConditionViewModel*>(vmItems.GetViewModelAt(nIndex));
                 Expects(pConditionViewModel != nullptr);
                 std::wstring sPointerChain;
-                nAddress = pConditionViewModel->GetIndirectAddress(nAddress, sPointerChain);
+                const ra::data::models::CodeNoteModel* pNote = nullptr;
+                nAddress = pConditionViewModel->GetIndirectAddress(nAddress, sPointerChain, &pNote);
             }
 
             auto& pMemoryInspector = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector;

@@ -286,9 +286,13 @@
     <ClInclude Include="services\search\SearchImpl_asciitext.hh" />
     <ClInclude Include="services\search\SearchImpl_bitcount.hh" />
     <ClInclude Include="services\search\SearchImpl_double32.hh" />
+    <ClInclude Include="services\Search\SearchImpl_double32_aligned.hh" />
     <ClInclude Include="services\search\SearchImpl_double32_be.hh" />
+    <ClInclude Include="services\Search\SearchImpl_double32_be_aligned.hh" />
     <ClInclude Include="services\search\SearchImpl_float.hh" />
+    <ClInclude Include="services\Search\SearchImpl_float_aligned.hh" />
     <ClInclude Include="services\search\SearchImpl_float_be.hh" />
+    <ClInclude Include="services\Search\SearchImpl_float_be_aligned.hh" />
     <ClInclude Include="services\search\SearchImpl_mbf32.hh" />
     <ClInclude Include="services\search\SearchImpl_mbf32_le.hh" />
     <ClInclude Include="services\ServiceLocator.hh" />

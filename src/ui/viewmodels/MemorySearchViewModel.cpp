@@ -30,6 +30,8 @@ constexpr int MEMORY_RANGE_CUSTOM = 3;
 const IntModelProperty MemorySearchViewModel::PredefinedFilterRangeProperty("MemorySearchViewModel", "PredefinedFilterRange", MEMORY_RANGE_ALL);
 const StringModelProperty MemorySearchViewModel::FilterRangeProperty("MemorySearchViewModel", "FilterRange", L"");
 const IntModelProperty MemorySearchViewModel::SearchTypeProperty("MemorySearchViewModel", "SearchType", ra::etoi(ra::services::SearchType::EightBit));
+const BoolModelProperty MemorySearchViewModel::IsAlignedProperty("MemorySearchViewModel", "IsAligned", true);
+const BoolModelProperty MemorySearchViewModel::CanAlignProperty("MemorySearchViewModel", "CanAlign", false);
 const IntModelProperty MemorySearchViewModel::ComparisonTypeProperty("MemorySearchViewModel", "ComparisonType", ra::etoi(ComparisonType::Equals));
 const IntModelProperty MemorySearchViewModel::ValueTypeProperty("MemorySearchViewModel", "ValueType", ra::etoi(ra::services::SearchFilterType::LastKnownValue));
 const StringModelProperty MemorySearchViewModel::FilterValueProperty("MemorySearchViewModel", "FilterValue", L"");
@@ -126,12 +128,8 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::EightBit), L"8-bit");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBit), L"16-bit");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBit), L"32-bit");
-    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBitAligned), L"16-bit (aligned)");
-    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBitAligned), L"32-bit (aligned)");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBitBigEndian), L"16-bit BE");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBitBigEndian), L"32-bit BE");
-    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBitBigEndianAligned), L"16-bit BE (aligned)");
-    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBitBigEndianAligned), L"32-bit BE (aligned)");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::BitCount), L"BitCount");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::Float), L"Float");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::FloatBigEndian), L"Float BE");
@@ -534,10 +532,24 @@ void MemorySearchViewModel::BeginNewSearch()
 
 void MemorySearchViewModel::BeginNewSearch(ra::ByteAddress nStart, ra::ByteAddress nEnd)
 {
+    auto nSearchType = GetSearchType();
+    bool bIsAligned = false;
+    if (IsAligned())
+    {
+        const auto nAlignedSearchType = ra::services::GetAlignedSearchType(nSearchType);
+        if (nAlignedSearchType != ra::services::SearchType::None)
+        {
+            nSearchType = nAlignedSearchType;
+            bIsAligned = true;
+        }
+    }
+
     std::unique_ptr<SearchResult> pResult;
     pResult.reset(new SearchResult());
-    pResult->pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, GetSearchType());
-    pResult->sSummary = ra::StringPrintf(L"New %s Search", SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
+    pResult->pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, nSearchType);
+    pResult->sSummary = ra::StringPrintf(L"New %s%s Search",
+        SearchTypes().GetLabelForId(ra::etoi(GetSearchType())),
+        bIsAligned ? L" (aligned)" : L"");
 
     SetValue(FilterSummaryProperty, pResult->sSummary);
     SetValue(SelectedPageProperty, L"1/1");
@@ -1065,8 +1077,11 @@ void MemorySearchViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
     }
     else if (args.Property == SearchTypeProperty)
     {
-        if (args.tNewValue == ra::etoi(ra::services::SearchType::AsciiText))
+        const auto nNewValue = ra::itoe<ra::services::SearchType>(args.tNewValue);
+        if (nNewValue == ra::services::SearchType::AsciiText)
             SetValueType(ra::services::SearchFilterType::Constant);
+
+        SetValue(CanAlignProperty, ra::services::GetAlignedSearchType(nNewValue) != ra::services::SearchType::None);
     }
 
     ViewModelBase::OnValueChanged(args);

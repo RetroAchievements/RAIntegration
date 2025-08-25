@@ -1079,6 +1079,18 @@
     <ClInclude Include="services\search\SearchImpl_mbf32_le.hh">
       <Filter>Services\Search</Filter>
     </ClInclude>
+    <ClInclude Include="services\Search\SearchImpl_float_aligned.hh">
+      <Filter>Services\Search</Filter>
+    </ClInclude>
+    <ClInclude Include="services\Search\SearchImpl_float_be_aligned.hh">
+      <Filter>Services\Search</Filter>
+    </ClInclude>
+    <ClInclude Include="services\Search\SearchImpl_double32_aligned.hh">
+      <Filter>Services\Search</Filter>
+    </ClInclude>
+    <ClInclude Include="services\Search\SearchImpl_double32_be_aligned.hh">
+      <Filter>Services\Search</Filter>
+    </ClInclude>
     <ClInclude Include="data\search\MemBlock.hh">
       <Filter>Data\Search</Filter>
     </ClInclude>

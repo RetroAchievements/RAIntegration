@@ -13,6 +13,7 @@ namespace services {
 
 enum class SearchType
 {
+    None,
     FourBit,
     EightBit,
     SixteenBit,
@@ -25,14 +26,20 @@ enum class SearchType
     SixteenBitBigEndianAligned,
     ThirtyTwoBitBigEndianAligned,
     Float,
+    FloatAligned,
     FloatBigEndian,
+    FloatBigEndianAligned,
     MBF32,
     MBF32LE,
     Double32,
+    Double32Aligned,
     Double32BigEndian,
+    Double32BigEndianAligned,
     AsciiText,
     BitCount,
 };
+
+SearchType GetAlignedSearchType(SearchType searchType) noexcept;
 
 enum class SearchFilterType
 {

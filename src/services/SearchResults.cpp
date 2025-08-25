@@ -21,9 +21,13 @@
 #include "search\SearchImpl_asciitext.hh"
 #include "search\SearchImpl_bitcount.hh"
 #include "search\SearchImpl_double32.hh"
+#include "search\SearchImpl_double32_aligned.hh"
 #include "search\SearchImpl_double32_be.hh"
+#include "search\SearchImpl_double32_be_aligned.hh"
 #include "search\SearchImpl_float.hh"
+#include "search\SearchImpl_float_aligned.hh"
 #include "search\SearchImpl_float_be.hh"
+#include "search\SearchImpl_float_be_aligned.hh"
 #include "search\SearchImpl_mbf32.hh"
 #include "search\SearchImpl_mbf32_le.hh"
 
@@ -45,9 +49,13 @@ static search::ThirtyTwoBitBigEndianAlignedSearchImpl s_pThirtyTwoBitBigEndianAl
 static search::BitCountSearchImpl s_pBitCountSearchImpl;
 static search::AsciiTextSearchImpl s_pAsciiTextSearchImpl;
 static search::FloatSearchImpl s_pFloatSearchImpl;
+static search::FloatAlignedSearchImpl s_pFloatAlignedSearchImpl;
 static search::FloatBESearchImpl s_pFloatBESearchImpl;
+static search::FloatBEAlignedSearchImpl s_pFloatBEAlignedSearchImpl;
 static search::Double32SearchImpl s_pDouble32SearchImpl;
+static search::Double32AlignedSearchImpl s_pDouble32AlignedSearchImpl;
 static search::Double32BESearchImpl s_pDouble32BESearchImpl;
+static search::Double32BEAlignedSearchImpl s_pDouble32BEAlignedSearchImpl;
 static search::MBF32SearchImpl s_pMBF32SearchImpl;
 static search::MBF32LESearchImpl s_pMBF32LESearchImpl;
 } // namespace search
@@ -85,12 +93,20 @@ static search::SearchImpl* GetSearchImpl(SearchType nType) noexcept
             return &ra::services::search::s_pAsciiTextSearchImpl;
         case SearchType::Float:
             return &ra::services::search::s_pFloatSearchImpl;
+        case SearchType::FloatAligned:
+            return &ra::services::search::s_pFloatAlignedSearchImpl;
         case SearchType::FloatBigEndian:
             return &ra::services::search::s_pFloatBESearchImpl;
+        case SearchType::FloatBigEndianAligned:
+            return &ra::services::search::s_pFloatBEAlignedSearchImpl;
         case SearchType::Double32:
             return &ra::services::search::s_pDouble32SearchImpl;
+        case SearchType::Double32Aligned:
+            return &ra::services::search::s_pDouble32AlignedSearchImpl;
         case SearchType::Double32BigEndian:
             return &ra::services::search::s_pDouble32BESearchImpl;
+        case SearchType::Double32BigEndianAligned:
+            return &ra::services::search::s_pDouble32BEAlignedSearchImpl;
         case SearchType::MBF32:
             return &ra::services::search::s_pMBF32SearchImpl;
         case SearchType::MBF32LE:
@@ -432,6 +448,23 @@ MemSize SearchResults::GetSize() const noexcept
 {
     return m_pImpl ? m_pImpl->GetMemSize() : MemSize::EightBit;
 }
+
+SearchType GetAlignedSearchType(SearchType searchType) noexcept
+{
+    switch (searchType)
+    {
+        case SearchType::SixteenBit: return SearchType::SixteenBitAligned;
+        case SearchType::SixteenBitBigEndian: return SearchType::SixteenBitBigEndianAligned;
+        case SearchType::ThirtyTwoBit: return SearchType::ThirtyTwoBitAligned;
+        case SearchType::ThirtyTwoBitBigEndian: return SearchType::ThirtyTwoBitBigEndianAligned;
+        case SearchType::Float: return SearchType::FloatAligned;
+        case SearchType::FloatBigEndian: return SearchType::FloatBigEndianAligned;
+        case SearchType::Double32: return SearchType::Double32Aligned;
+        case SearchType::Double32BigEndian: return SearchType::Double32BigEndianAligned;
+        default: return SearchType::None;
+    }
+}
+
 
 } // namespace services
 } // namespace ra

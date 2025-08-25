@@ -131,6 +131,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
       m_bindSearchRanges(vmMemoryInspector.Search()),
       m_bindSearchRange(vmMemoryInspector.Search()),
       m_bindSearchType(vmMemoryInspector.Search()),
+      m_bindSearchAligned(vmMemoryInspector.Search()),
       m_bindComparison(vmMemoryInspector.Search()),
       m_bindValueType(vmMemoryInspector.Search()),
       m_bindFilterValue(vmMemoryInspector.Search()),
@@ -157,6 +158,8 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     // New Search
     m_bindSearchType.BindItems(vmMemoryInspector.Search().SearchTypes());
     m_bindSearchType.BindSelectedItem(MemorySearchViewModel::SearchTypeProperty);
+    m_bindSearchAligned.BindCheck(MemorySearchViewModel::IsAlignedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_ALIGNED, MemorySearchViewModel::CanAlignProperty);
 
     // Filter
     m_bindComparison.BindItems(vmMemoryInspector.Search().ComparisonTypes());
@@ -253,6 +256,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     SetAnchor(IDC_RA_SEARCHRANGES, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_SEARCHRANGE, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_SEARCHTYPE, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_CHK_ALIGNED, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_RESET_FILTER, Anchor::Top | Anchor::Left);
 
     SetAnchor(IDC_RA_GBX_FILTER, Anchor::Top | Anchor::Left | Anchor::Right);
@@ -302,6 +306,7 @@ BOOL MemoryInspectorDialog::OnInitDialog()
 
     // New Search
     m_bindSearchType.SetControl(*this, IDC_RA_SEARCHTYPE);
+    m_bindSearchAligned.SetControl(*this, IDC_RA_CHK_ALIGNED);
 
     // Filter
     m_bindComparison.SetControl(*this, IDC_RA_COMPARISON);

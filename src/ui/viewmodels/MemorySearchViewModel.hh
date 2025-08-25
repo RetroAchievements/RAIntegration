@@ -144,6 +144,31 @@ public:
     void SetSearchType(ra::services::SearchType value) { SetValue(SearchTypeProperty, ra::etoi(value)); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether the search should be performed on aligned addresses..
+    /// </summary>
+    static const BoolModelProperty IsAlignedProperty;
+
+    /// <summary>
+    /// Gets whether the search should be performed on aligned addresses.
+    /// </summary>
+    bool IsAligned() const { return GetValue(IsAlignedProperty); }
+
+    /// <summary>
+    /// Sets whether the search should be performed on aligned addresses.
+    /// </summary>
+    void SetAligned(bool value) { SetValue(IsAlignedProperty, value); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether the selected <see cref="GetSearchType" /> can be aligned.
+    /// </summary>
+    static const BoolModelProperty CanAlignProperty;
+
+    /// <summary>
+    /// Gets whether the selected <see cref="GetSearchType" /> can be aligned.
+    /// </summary>
+    bool CanAlign() const { return GetValue(CanAlignProperty); }
+
+    /// <summary>
     /// Gets the list of selectable comparison types.
     /// </summary>
     const LookupItemViewModelCollection& ComparisonTypes() const noexcept

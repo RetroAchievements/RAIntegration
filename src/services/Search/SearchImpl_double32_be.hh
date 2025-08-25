@@ -13,6 +13,11 @@ class Double32BESearchImpl : public FloatSearchImpl
 public:
     MemSize GetMemSize() const noexcept override { return MemSize::Double32BigEndian; }
 
+    // technically, doubles are 8-bytes long, so padding should be 7, but
+    // unaligned searches only look at 4-bytes at a time, so the 3 returned
+    // by the base class is correct
+    //unsigned int GetPadding() const noexcept override { return 7U; }
+
 protected:
     float BuildFloatValue(const unsigned char* ptr) const noexcept override
     {

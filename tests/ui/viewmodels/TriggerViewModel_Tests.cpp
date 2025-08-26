@@ -50,6 +50,11 @@ private:
             return GetValue(ScrollOffsetProperty);
         }
 
+        void SetScrollOffset(int nOffset)
+        {
+            SetValue(ScrollOffsetProperty, nOffset);
+        }
+
         int GetEnsureVisibleGroupIndex() const
         {
             return GetValue(EnsureVisibleGroupIndexProperty);
@@ -448,6 +453,28 @@ public:
         vmTrigger.SelectRange(2, 2, false);
         vmTrigger.CopySelectedConditionsToClipboard();
         Assert::AreEqual(std::wstring(L"0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.mockClipboard.GetText());
+    }
+
+    TEST_METHOD(TestCopySelectedConditionsToClipboardScrollOffset)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0=0_1=1_2=2_3=3_4=4_5=5_6=6_7=7_8=8_9=9_10=10_11=11_12=12_13=13_14=14_15=15_16=16_17=17_18=18_19=19");
+
+        vmTrigger.SelectRange(1, 1, true);
+        vmTrigger.SetScrollOffset(5);
+        vmTrigger.SelectRange(8, 10, true);
+
+        vmTrigger.CopySelectedConditionsToClipboard();
+        Assert::AreEqual(std::wstring(L"1=1_8=8_9=9_10=10"), vmTrigger.mockClipboard.GetText());
+
+        vmTrigger.SelectRange(8, 8, false);
+        vmTrigger.CopySelectedConditionsToClipboard();
+        Assert::AreEqual(std::wstring(L"1=1_9=9_10=10"), vmTrigger.mockClipboard.GetText());
+
+        vmTrigger.SelectRange(0, 19, false);
+        vmTrigger.SelectRange(12, 12, true);
+        vmTrigger.CopySelectedConditionsToClipboard();
+        Assert::AreEqual(std::wstring(L"12=12"), vmTrigger.mockClipboard.GetText());
     }
 
     TEST_METHOD(TestPasteFromClipboardEmpty)

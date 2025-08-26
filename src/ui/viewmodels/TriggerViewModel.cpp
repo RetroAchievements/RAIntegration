@@ -293,9 +293,7 @@ void TriggerViewModel::CopySelectedConditionsToClipboard()
     if (sSerialized.empty())
     {
         // no selection, get the whole group
-        const auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
-        if (pGroup != nullptr)
-            sSerialized = pGroup->GetSerialized();
+        sSerialized = pGroup->GetSerialized();
     }
     else if (sSerialized.back() == '_')
     {
@@ -915,7 +913,7 @@ void TriggerViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue
         for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
             m_vSelectedConditions.insert(gsl::narrow_cast<unsigned int>(nIndex));
     }
-    else if (nFrom == 0 && nTo == GetValue(ScrollMaximumProperty) - 1)
+    else if (nFrom == 0 && nTo == gsl::narrow_cast<gsl::index>(GetValue(ScrollMaximumProperty)) - 1)
     {
         m_vSelectedConditions.clear();
     }
@@ -929,8 +927,8 @@ void TriggerViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue
     nTo -= nFirstVisibleIndex;
     if (nTo >= 0)
     {
-        if (nTo >= m_vConditions.Count())
-            nTo = m_vConditions.Count() - 1;
+        if (nTo >= gsl::narrow_cast<gsl::index>(m_vConditions.Count()))
+            nTo = gsl::narrow_cast<gsl::index>(m_vConditions.Count()) - 1;
 
         nFrom -= nFirstVisibleIndex;
         if (nFrom < 0)

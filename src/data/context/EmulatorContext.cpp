@@ -1141,17 +1141,17 @@ void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBl
         {
             ra::data::search::MemBlock* pBlock = nullptr;
 
-            uint32_t nBlockSize = nToRead;
-            if (nBlockSize > MAX_BLOCK_SIZE)
+            const uint32_t nBlockSize = std::min(nToRead, MAX_BLOCK_SIZE);
+            const bool bIsLastBlock = (nCount == 0 && nBlockSize == nToRead);
+            if (!bIsLastBlock)
             {
-                // if we're reading across a block boundary, capture nPadding overlapping
-                // bytes so we don't have to stitch them together later.
-                nBlockSize = MAX_BLOCK_SIZE;
-                pBlock = &vBlocks.emplace_back(nAddress, MAX_BLOCK_SIZE + nPadding, nBlockSize);
+                // capture nPadding overlapping bytes so we don't have to stitch multiple
+                // blocks together if a read occurs at the block boundary
+                pBlock = &vBlocks.emplace_back(nAddress, nBlockSize + nPadding, nBlockSize);
             }
             else
             {
-                pBlock = &vBlocks.emplace_back(nAddress, nBlockSize + nPadding, nBlockSize);
+                pBlock = &vBlocks.emplace_back(nAddress, nBlockSize, nBlockSize);
             }
 
             Expects(pBlock != nullptr);

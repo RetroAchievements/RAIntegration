@@ -154,7 +154,7 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
     if (nBytes + nAddress > nTotalMemorySize)
         nBytes = nTotalMemorySize - nAddress;
 
-    const unsigned int nPadding = m_pImpl->GetPadding();
+    const auto nPadding = m_pImpl->GetPadding();
     if (nPadding >= nBytes)
         nBytes = 0;
 

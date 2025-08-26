@@ -128,7 +128,9 @@ static size_t CalcSize(const std::vector<data::search::MemBlock>& vBlocks)
             if (vAllocatedMemoryBlocks.find(pBytes) == vAllocatedMemoryBlocks.end())
             {
                 vAllocatedMemoryBlocks.insert(pBytes);
-                nTotalSize += gsl::narrow_cast<size_t>((pBlock.GetBytesSize() + 3) & ~3 + 8);
+
+                // 8 = sizeof(MemBlock::AllocatedMemory) - sizeof(MemBlock::AllocatedMemory::pBytes)
+                nTotalSize += gsl::narrow_cast<size_t>(((pBlock.GetBytesSize() + 3) & ~3) + 8);
             }
         }
 

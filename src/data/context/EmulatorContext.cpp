@@ -1151,7 +1151,7 @@ void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBl
             }
             else
             {
-                pBlock = &vBlocks.emplace_back(nAddress, nBlockSize, nBlockSize);
+                pBlock = &vBlocks.emplace_back(nAddress, nBlockSize + nPadding, nBlockSize);
             }
 
             Expects(pBlock != nullptr);

@@ -67,12 +67,28 @@ void MemoryWatchListViewModel::InitializeNotifyTargets(bool syncNotes)
     pEmulatorContext.AddNotifyTarget(*this);
 }
 
+void MemoryWatchListViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
+{
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vItems.Count(); ++nIndex)
+    {
+        auto* pItem = m_vItems.GetItemAt(nIndex);
+        if (pItem && !pItem->IsIndirectAddress()) // ignore move events for indirect notes
+        {
+            const auto nCurrentAddress = pItem->GetAddress();
+            if (nCurrentAddress == nNewAddress)
+                pItem->SetRealNote(sNote);
+            else if (nCurrentAddress == nOldAddress)
+                pItem->SetRealNote(L"");
+        }
+    }
+}
+
 void MemoryWatchListViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vItems.Count(); ++nIndex)
     {
         auto* pItem = m_vItems.GetItemAt(nIndex);
-        if (pItem && pItem->GetAddress() == nAddress)
+        if (pItem && !pItem->IsIndirectAddress() && pItem->GetAddress() == nAddress)
             pItem->SetRealNote(sNewNote);
     }
 }

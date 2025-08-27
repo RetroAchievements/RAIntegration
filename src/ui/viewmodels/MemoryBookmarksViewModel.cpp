@@ -168,27 +168,23 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
                 SaveBookmarks(*pWriter);
         }
 
-        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-
-        auto pReader = pLocalStorage.ReadText(ra::services::StorageItemType::Bookmarks, std::to_wstring(pGameContext.GameId()));
-        if (pReader != nullptr)
-        {
-            LoadBookmarks(*pReader);
-        }
-        else
-        {
-            m_vmMemoryWatchList.Items().Clear();
-            m_nUnmodifiedBookmarkCount = 0;
-        }
+        m_vmMemoryWatchList.Items().Clear();
+        m_nUnmodifiedBookmarkCount = 0;
 
         m_nLoadedGameId = pGameContext.GameId();
     }
 }
 
+void MemoryBookmarksViewModel::OnEndGameLoad()
+{
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pReader = pLocalStorage.ReadText(ra::services::StorageItemType::Bookmarks, std::to_wstring(m_nLoadedGameId));
+    if (pReader != nullptr)
+        LoadBookmarks(*pReader);
+}
+
 void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmarksFile)
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     gsl::index nIndex = 0;
 
     m_vmMemoryWatchList.Items().BeginUpdate();
@@ -260,21 +256,19 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     vmBookmark->SetAddress(bookmark["Address"].GetUint());
                 }
 
-
-                std::wstring sDescription;
-                const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(vmBookmark->GetAddress()) : nullptr;
-                vmBookmark->SetRealNote(pNote ? *pNote : std::wstring(L""));
-
-                if (bookmark.HasMember("Description"))
-                {
-                    sDescription = ra::Widen(bookmark["Description"].GetString());
-                    vmBookmark->SetDescription(sDescription);
-                }
-
                 if (bookmark.HasMember("Decimal") && bookmark["Decimal"].GetBool())
                     vmBookmark->SetFormat(ra::MemFormat::Dec);
                 else
                     vmBookmark->SetFormat(ra::MemFormat::Hex);
+
+                if (!vmBookmark->IsIndirectAddress()) // Indirect note already called UpdateRealNote
+                    vmBookmark->UpdateRealNote();
+
+                if (bookmark.HasMember("Description"))
+                {
+                    const auto sDescription = ra::Widen(bookmark["Description"].GetString());
+                    vmBookmark->SetDescription(sDescription);
+                }
 
                 vmBookmark->SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::None);
 
@@ -401,9 +395,7 @@ void MemoryBookmarksViewModel::AddBookmark(const std::string& sSerialized)
 
 void MemoryBookmarksViewModel::InitializeBookmark(MemoryWatchViewModel& vmBookmark)
 {
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    const auto bPreferDecimal = pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal);
-    vmBookmark.SetFormat(bPreferDecimal ? MemFormat::Dec : MemFormat::Hex);
+    vmBookmark.SetFormat(MemFormat::Unknown);
 
     vmBookmark.UpdateRealNote();
 }

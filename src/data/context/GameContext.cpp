@@ -250,6 +250,9 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
                 [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
                     OnCodeNoteChanged(nAddress, sNewNote);
                 },
+                [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring sNote) {
+                    OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
+                },
                 [this]() { EndLoad(); });
 
             m_vAssets.Append(std::move(pCodeNotes));
@@ -691,6 +694,20 @@ void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring
         {
             Expects(target != nullptr);
             target->OnCodeNoteChanged(nAddress, sNewNote);
+        }
+    }
+}
+
+void GameContext::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
+{
+    if (!m_vNotifyTargets.empty())
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
         }
     }
 }

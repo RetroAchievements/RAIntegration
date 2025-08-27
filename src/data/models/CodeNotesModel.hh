@@ -25,14 +25,16 @@ public:
     bool IsShownInList() const noexcept override { return false; }
 
     typedef std::function<void(ra::ByteAddress nAddress, const std::wstring& sNewNote)> CodeNoteChangedFunction;
+    typedef std::function<void(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNewNote)> CodeNoteMovedFunction;
 
     /// <summary>
     /// Repopulates with code notes from the server.
     /// </summary>
     /// <param name="nGameId">Unique identifier of the game to load code notes for.</param>
     /// <param name="fCodeNoteChanged">Callback to call when a code note is changed.</param>
+    /// <param name="fCodeMovedChanged">Callback to call when a code note is moved.</param>
     /// <param name="callback">Callback to call when the loading completes.</param>
-    void Refresh(unsigned int nGameId, CodeNoteChangedFunction fCodeNoteChanged, std::function<void()> callback);
+    void Refresh(unsigned int nGameId, CodeNoteChangedFunction fCodeNoteChanged, CodeNoteMovedFunction fCodeNoteMoved, std::function<void()> callback);
 
     /// <summary>
     /// Returns the note associated with the specified address.
@@ -215,6 +217,7 @@ protected:
     bool m_bRefreshing = false;
 
     CodeNoteChangedFunction m_fCodeNoteChanged;
+    CodeNoteMovedFunction m_fCodeNoteMoved;
 
 private:
     static std::wstring BuildCodeNoteSized(ra::ByteAddress nAddress, unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNoteModel& pNote);

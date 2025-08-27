@@ -107,6 +107,9 @@ public:
                 }
 
                 OnCodeNoteChanged(nAddress, sNote);
+            },
+            [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) {
+                OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
             });
         Assets().Append(std::move(pCodeNotes));
     }
@@ -155,10 +158,11 @@ private:
     class MockCodeNotesModel : public ra::data::models::CodeNotesModel
     {
     public:
-        void Initialize(unsigned nGameId, CodeNoteChangedFunction fCodeNoteChanged)
+        void Initialize(unsigned nGameId, CodeNoteChangedFunction fCodeNoteChanged, CodeNoteMovedFunction fCodeNoteMoved)
         {
             m_nGameId = nGameId;
             m_fCodeNoteChanged = fCodeNoteChanged;
+            m_fCodeNoteMoved = fCodeNoteMoved;
         }
     };
 

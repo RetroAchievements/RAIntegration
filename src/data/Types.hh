@@ -51,6 +51,7 @@ enum class MemFormat : uint8_t
 {
     Hex,
     Dec,
+    Unknown,
 };
 
 using ByteAddress = uint32_t;

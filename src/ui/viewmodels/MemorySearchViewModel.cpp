@@ -1014,6 +1014,27 @@ void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
     }
 }
 
+void MemorySearchViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
+{
+    for (gsl::index i = 0; i < ra::to_signed(m_vResults.Count()); ++i)
+    {
+        auto* pRow = m_vResults.GetItemAt(i);
+        if (pRow != nullptr)
+        {
+            if (pRow->nAddress == nOldAddress)
+            {
+                pRow->UpdateCodeNote(L"");
+                break;
+            }
+            else if (pRow->nAddress == nNewAddress)
+            {
+                pRow->UpdateCodeNote(sNote);
+                break;
+            }
+        }
+    }
+}
+
 static constexpr bool CanEditFilterValue(ra::services::SearchFilterType nFilterType)
 {
     switch (nFilterType)

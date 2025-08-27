@@ -733,6 +733,25 @@ void MemoryViewerViewModel::OnActiveGameChanged()
     UpdateColors();
 }
 
+void MemoryViewerViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
+{
+    const auto nFirstAddress = GetFirstAddress();
+    const auto nVisibleLines = GetNumVisibleLines();
+    const auto nFirstNonVisibleAddress = nFirstAddress + nVisibleLines * 16;
+
+    if (nOldAddress >= nFirstAddress && nOldAddress < nFirstNonVisibleAddress)
+    {
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+        Expects(pCodeNotes != nullptr);
+        const auto pNote = pCodeNotes->FindCodeNoteModel(nOldAddress);
+        OnCodeNoteChanged(nOldAddress, pNote ? pNote->GetNote() : std::wstring());
+    }
+
+    if (nNewAddress >= nFirstAddress && nNewAddress < nFirstNonVisibleAddress)
+        OnCodeNoteChanged(nNewAddress, sNote);
+}
+
 void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote)
 {
     const auto nFirstAddress = GetFirstAddress();
@@ -777,7 +796,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
         ++nOffset;
     }
 
-    // if the note size shrunk, clear out he surrogate indicators
+    // if the note size shrunk, clear out the surrogate indicators
     const auto nNextAddress = pCodeNotes->GetNextNoteAddress(nAddress);
     const auto nMaxOffset = ra::to_unsigned(nVisibleLines) * 16;
     while (nAddress < nNextAddress && nOffset < nMaxOffset)

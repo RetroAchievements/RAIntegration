@@ -22,7 +22,9 @@ CodeNotesModel::CodeNotesModel() noexcept
     GSL_SUPPRESS_F6 SetName(L"Code Notes");
 }
 
-void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCodeNoteChanged, std::function<void()> callback)
+void CodeNotesModel::Refresh(unsigned int nGameId,
+    CodeNoteChangedFunction fCodeNoteChanged, CodeNoteMovedFunction fCodeNoteMoved,
+    std::function<void()> callback)
 {
     m_nGameId = nGameId;
     m_vCodeNotes.clear();
@@ -31,11 +33,13 @@ void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCode
     if (nGameId == 0)
     {
         m_fCodeNoteChanged = nullptr;
+        m_fCodeNoteMoved = nullptr;
         callback();
         return;
     }
 
     m_fCodeNoteChanged = fCodeNoteChanged;
+    m_fCodeNoteMoved = fCodeNoteMoved;
 
     if (callback == nullptr) // unit test workaround to avoid server call
         return;
@@ -504,7 +508,7 @@ void CodeNotesModel::DoFrame()
     {
         if (pCodeNote->IsPointer())
         {
-            if (!m_fCodeNoteChanged)
+            if (!m_fCodeNoteMoved)
             {
                 pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext, nullptr);
             }
@@ -512,17 +516,15 @@ void CodeNotesModel::DoFrame()
             {
                 pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext,
                     [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
-                        const auto* pNote = FindCodeNoteModel(nOldAddress, false);
-                        m_fCodeNoteChanged(nOldAddress, pNote ? pNote->GetNote() : L"");
-                        m_fCodeNoteChanged(nNewAddress, pOffsetNote.GetNote());
+                        m_fCodeNoteMoved(nOldAddress, nNewAddress, pOffsetNote.GetNote());
                     });
             }
             else
             {
-                // pointer hasn't been read before, only raise event for new address
+                // pointer hasn't been read before, provide dummy previous address
                 pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext,
                     [this](ra::ByteAddress, ra::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
-                        m_fCodeNoteChanged(nNewAddress, pOffsetNote.GetNote());
+                        m_fCodeNoteMoved(0xFFFFFFFF, nNewAddress, pOffsetNote.GetNote());
                     });
             }
         }

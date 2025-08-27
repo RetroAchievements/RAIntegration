@@ -190,6 +190,15 @@ void MemoryInspectorViewModel::UpdateNoteButtons()
     }
 }
 
+void MemoryInspectorViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
+{
+    const auto nCurrentAddress = GetCurrentAddress();
+    if (nNewAddress == nCurrentAddress)
+        OnCodeNoteChanged(nCurrentAddress, sNote);
+    else if (nOldAddress == nCurrentAddress)
+        OnCodeNoteChanged(nCurrentAddress, L"");
+}
+
 void MemoryInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     if (nAddress == GetCurrentAddress())

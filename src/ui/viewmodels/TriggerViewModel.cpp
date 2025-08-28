@@ -262,22 +262,38 @@ void TriggerViewModel::CopySelectedConditionsToClipboard()
 {
     std::string sSerialized;
 
+    auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+    if (!pGroup)
+        return;
+
+    auto* pCondSet = pGroup->GetConditionSet(IsValue());
+    if (!pCondSet)
+        return;
+
+    TriggerConditionViewModel vmCondition;
+    rc_condition_t* pCondition = pCondSet->conditions;
+    unsigned nScan = 0;
+
     for (const auto nIndex : m_vSelectedConditions)
     {
-        const auto* vmCondition = m_vConditions.GetItemAt(nIndex);
-        if (vmCondition != nullptr)
+        while (nScan < nIndex && pCondition)
         {
-            vmCondition->SerializeAppend(sSerialized);
-            sSerialized.push_back('_');
+            pCondition = pCondition->next;
+            ++nScan;
         }
+
+        if (!pCondition)
+            break;
+
+        vmCondition.InitializeFrom(*pCondition);
+        vmCondition.SerializeAppend(sSerialized);
+        sSerialized.push_back('_');
     }
 
     if (sSerialized.empty())
     {
         // no selection, get the whole group
-        const auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
-        if (pGroup != nullptr)
-            sSerialized = pGroup->GetSerialized();
+        sSerialized = pGroup->GetSerialized();
     }
     else if (sSerialized.back() == '_')
     {
@@ -897,6 +913,10 @@ void TriggerViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue
         for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
             m_vSelectedConditions.insert(gsl::narrow_cast<unsigned int>(nIndex));
     }
+    else if (nFrom == 0 && nTo == gsl::narrow_cast<gsl::index>(GetValue(ScrollMaximumProperty)) - 1)
+    {
+        m_vSelectedConditions.clear();
+    }
     else
     {
         for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
@@ -905,8 +925,11 @@ void TriggerViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue
 
     const auto nFirstVisibleIndex = gsl::narrow_cast<gsl::index>(GetValue(ScrollOffsetProperty));
     nTo -= nFirstVisibleIndex;
-    if (nTo >= 0 && nTo < gsl::narrow_cast<gsl::index>(m_vConditions.Count()))
+    if (nTo >= 0)
     {
+        if (nTo >= gsl::narrow_cast<gsl::index>(m_vConditions.Count()))
+            nTo = gsl::narrow_cast<gsl::index>(m_vConditions.Count()) - 1;
+
         nFrom -= nFirstVisibleIndex;
         if (nFrom < 0)
             nFrom = 0;
@@ -1260,9 +1283,10 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 
                         vmCondition->SetIndirect(bIsIndirect);
 
-                        if (!m_vSelectedConditions.empty())
-                            vmCondition->SetSelected(m_vSelectedConditions.find(nIndex - 1) !=
-                                                     m_vSelectedConditions.end());
+                        if (m_vSelectedConditions.empty())
+                            vmCondition->SetSelected(false);
+                        else
+                            vmCondition->SetSelected(m_vSelectedConditions.find(nIndex - 1) != m_vSelectedConditions.end());
                     }
 
                     bIsIndirect = (pCondition->type == RC_CONDITION_ADD_ADDRESS);

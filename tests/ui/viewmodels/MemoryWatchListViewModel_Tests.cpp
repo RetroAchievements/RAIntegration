@@ -35,6 +35,7 @@ private:
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
+        ra::services::mocks::MockConfiguration mockConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
 
@@ -129,7 +130,7 @@ public:
         Assert::AreEqual(std::wstring(L"Note description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
         Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Dec, pItem->GetFormat());
+        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
         Assert::IsFalse(pItem->IsCustomDescription());
 
         watchList.mockGameContext.SetCodeNote(1234U, L"New description");
@@ -141,7 +142,7 @@ public:
         Assert::AreEqual(std::wstring(L"New description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
         Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Dec, pItem->GetFormat());
+        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
         Assert::IsFalse(pItem->IsCustomDescription());
     }
 
@@ -160,7 +161,7 @@ public:
         Assert::AreEqual(std::wstring(L"My Description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
         Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Dec, pItem->GetFormat());
+        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
         Assert::IsTrue(pItem->IsCustomDescription());
 
         watchList.mockGameContext.SetCodeNote(1234U, L"New description");
@@ -172,7 +173,7 @@ public:
         Assert::AreEqual(std::wstring(L"My Description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
         Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Dec, pItem->GetFormat());
+        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
         Assert::IsTrue(pItem->IsCustomDescription());
 
         watchList.mockGameContext.SetCodeNote(1234U, L"My Description");
@@ -184,7 +185,7 @@ public:
         Assert::AreEqual(std::wstring(L"My Description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
         Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Dec, pItem->GetFormat());
+        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
         Assert::IsFalse(pItem->IsCustomDescription());
 
         watchList.mockGameContext.SetCodeNote(1234U, L"New description");
@@ -196,7 +197,7 @@ public:
         Assert::AreEqual(std::wstring(L"New description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
         Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Dec, pItem->GetFormat());
+        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
         Assert::IsFalse(pItem->IsCustomDescription());
     }
 
@@ -453,7 +454,7 @@ public:
         Assert::AreEqual(std::wstring(L"[double] Note description"), pItem2.GetRealNote());
         Assert::AreEqual(12U, pItem2.GetAddress()); // adjusted to significant bytes
         Assert::AreEqual(MemSize::Double32, pItem2.GetSize());
-        Assert::AreEqual(MemFormat::Dec, pItem2.GetFormat()); // implied from note
+        Assert::AreEqual(MemFormat::Hex, pItem2.GetFormat());
         Assert::AreEqual(std::wstring(L"0.0"), pItem2.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0.0"), pItem2.GetPreviousValue());
         Assert::AreEqual(0U, pItem2.GetChanges());

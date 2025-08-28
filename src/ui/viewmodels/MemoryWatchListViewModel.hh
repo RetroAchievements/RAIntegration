@@ -85,6 +85,7 @@ public:
 protected:
     // ra::data::context::GameContext::NotifyTarget
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
+    void OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
     // ra::data::context::EmulatorContext::NotifyTarget
     void OnByteWritten(ra::ByteAddress, uint8_t) override;

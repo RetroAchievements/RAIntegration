@@ -10,6 +10,7 @@
 #include "data\models\TriggerValidation.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\IConfiguration.hh"
 #include "services\SearchResults.h"
 #include "services\ServiceLocator.hh"
 
@@ -464,6 +465,8 @@ void MemoryWatchViewModel::SetIndirectAddress(const std::string& sSerialized)
     if (pCondition != nullptr)
         SetSize(ra::data::models::TriggerValidation::MapRcheevosMemSize(rc_condition_get_real_operand1(pCondition)->size));
 
+    SetFormat(ra::MemFormat::Unknown);
+
     DispatchMemoryRead([this]() {
         // value must be updated first to populate memrefs
         const auto nValue = ReadValue();
@@ -476,21 +479,67 @@ void MemoryWatchViewModel::SetIndirectAddress(const std::string& sSerialized)
 
 void MemoryWatchViewModel::UpdateRealNote()
 {
-    const auto nAddress = GetAddress();
-    if (nAddress == 0 && IsIndirectAddress()) // ignore null pointer
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    if (pGameContext.IsGameLoading()) // no notes available
         return;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNoteModel(nAddress) : nullptr;
+    const ra::data::models::CodeNoteModel* pNote = nullptr;
+
+    if (pCodeNotes)
+    {
+        if (!IsIndirectAddress())
+        {
+            pNote = pCodeNotes->FindCodeNoteModel(GetAddress());
+        }
+        else
+        {
+            // manually traverse the offset chain to find the leaf note to avoid
+            // any null pointers in the chain or conflicting addresses
+            for (const auto* pCondition = m_pValue->conditions->conditions; pCondition; pCondition = pCondition->next)
+            {
+                const auto* pOperand = rc_condition_get_real_operand1(pCondition);
+                if (rc_operand_is_memref(pOperand) && pOperand->value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+                {
+                    GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
+                        reinterpret_cast<rc_modified_memref_t*>(pCondition->operand1.value.memref);
+                    if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
+                        pOperand = &pModifiedMemref->modifier;
+                }
+
+                const auto nAddress = rc_operand_is_memref(pOperand) ? pOperand->value.memref->address : pOperand->value.num;
+                if (pNote)
+                    pNote = pNote->GetPointerNoteAtOffset(nAddress);
+                else
+                    pNote = pCodeNotes->FindCodeNoteModel(nAddress);
+
+                if (!pNote)
+                    break;
+            }
+        }
+    }
+
     if (pNote)
     {
         SetRealNote(pNote->GetNote());
-        SetFormat(pNote->GetDefaultMemFormat());
 
         // if bookmarking an 8-byte double, automatically adjust the bookmark for the significant bytes
         if (GetSize() == MemSize::Double32 && pNote->GetBytes() == 8)
-            SetAddress(nAddress + 4);
+            SetAddress(pNote->GetAddress() + 4);
+    }
+
+    if (GetFormat() == MemFormat::Unknown)
+    {
+        if (pNote)
+        {
+            SetFormat(pNote->GetDefaultMemFormat());
+        }
+        else
+        {
+            const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            const auto bPreferDecimal = pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal);
+            SetFormat(bPreferDecimal ? MemFormat::Dec : MemFormat::Hex);
+        }
     }
 }
 

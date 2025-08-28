@@ -44,6 +44,11 @@ private:
                 [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
                     mNewNotes[nAddress] = sNewNote;
                 },
+                [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) {
+                    if (nOldAddress != 0xFFFFFFFF)
+                        mNewNotes[nOldAddress] = L"";
+                    mNewNotes[nNewAddress] = sNote;
+                },
                 []() {});
 
             mockThreadPool.ExecuteNextTask(); // FetchCodeNotes is async
@@ -53,6 +58,11 @@ private:
         {
             m_fCodeNoteChanged = [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
                 mNewNotes[nAddress] = sNewNote;
+            };
+            m_fCodeNoteMoved = [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) {
+                if (nOldAddress != 0xFFFFFFFF)
+                    mNewNotes[nOldAddress] = L"";
+                mNewNotes[nNewAddress] = sNote;
             };
         }
 

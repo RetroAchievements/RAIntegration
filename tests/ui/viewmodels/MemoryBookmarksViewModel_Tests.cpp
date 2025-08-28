@@ -108,6 +108,7 @@ public:
 
         Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Items().Count());
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         const auto& bookmark = *bookmarks.GetBookmark(0);
@@ -133,6 +134,7 @@ public:
 
         Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Items().Count());
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         const auto& bookmark = *bookmarks.GetBookmark(0);
@@ -158,6 +160,7 @@ public:
 
         Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Items().Count());
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         const auto& bookmark = *bookmarks.GetBookmark(0);
@@ -183,6 +186,7 @@ public:
                             "{\"Description\":\"desc2\",\"Address\":1235,\"Type\":3,\"Decimal\":false}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
         Assert::AreEqual({ 2U }, bookmarks.Bookmarks().Items().Count());
 
         Assert::IsTrue(bookmarks.HasBookmark(1234U));
@@ -193,6 +197,7 @@ public:
             "{\"Bookmarks\":[{\"Description\":\"desc3\",\"Address\":5555,\"Type\":2,\"Decimal\":false}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         const auto& bookmark = *bookmarks.GetBookmark(0);
         Assert::AreEqual(std::wstring(L""), bookmark.GetRealNote());
@@ -219,10 +224,12 @@ public:
             "{\"Bookmarks\":[{\"Description\":\"desc\",\"Address\":1234,\"Type\":2,\"Decimal\":false}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
 
         bookmarks.mockGameContext.SetGameId(4U);
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
         Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Items().Count());
     }
 
@@ -236,6 +243,7 @@ public:
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         const auto& bookmark = *bookmarks.GetBookmark(0);
@@ -257,6 +265,7 @@ public:
                                                   "{\"Bookmarks\":[{\"MemAddr\":\"0xH4D2\"}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({1U}, bookmarks.Bookmarks().Items().Count());
         auto& bookmark = *bookmarks.GetBookmark(0);
@@ -295,6 +304,7 @@ public:
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"desc\"}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         const auto& bookmark = *bookmarks.GetBookmark(0);
@@ -316,6 +326,7 @@ public:
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"desc\"}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         const auto& bookmark = *bookmarks.GetBookmark(0);
@@ -337,6 +348,7 @@ public:
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"Note description\"}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         const auto& bookmark = *bookmarks.GetBookmark(0);
@@ -395,12 +407,14 @@ public:
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         bookmarks.AddBookmark(2345U, MemSize::SixteenBit);
         Assert::IsTrue(bookmarks.IsModified());
 
         bookmarks.mockGameContext.SetGameId(0U);
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::IsFalse(bookmarks.IsModified());
         const std::string& sContents = bookmarks.mockLocalStorage.GetStoredData(ra::services::StorageItemType::Bookmarks, L"3");
@@ -417,6 +431,7 @@ public:
             "{\"Bookmarks\":[{\"Address\":1234,\"Description\":\"Old\",\"Size\":10}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         bookmarks.AddBookmark(2345U, MemSize::SixteenBit);
         bookmarks.GetBookmark(0)->SetDescription(L"");        // explicit blank resets to default note
@@ -425,6 +440,7 @@ public:
 
         bookmarks.mockGameContext.SetGameId(0U);
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::IsFalse(bookmarks.IsModified());
         const std::string& sContents = bookmarks.mockLocalStorage.GetStoredData(ra::services::StorageItemType::Bookmarks, L"3");
@@ -442,12 +458,14 @@ public:
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         bookmarks.GetBookmark(0)->SetFormat(MemFormat::Dec);
         Assert::IsTrue(bookmarks.IsModified());
 
         bookmarks.mockGameContext.SetGameId(0U);
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::IsFalse(bookmarks.IsModified());
         const std::string& sContents = bookmarks.mockLocalStorage.GetStoredData(ra::services::StorageItemType::Bookmarks, L"3");
@@ -464,6 +482,7 @@ public:
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         const auto* bookmark = bookmarks.GetBookmark(0);
@@ -498,6 +517,7 @@ public:
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"My Description\"}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         const auto* bookmark = bookmarks.GetBookmark(0);
@@ -560,6 +580,7 @@ public:
         bookmarks.mockEmulatorContext.MockMemory(memory);
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
 
         auto& bookmark = *bookmarks.GetBookmark(0);
@@ -924,6 +945,7 @@ public:
             "{\"Bookmarks\":[{\"MemAddr\":\"0xH04d2\"}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         bookmarks.AddBookmark(2345U, MemSize::SixteenBit);
         Assert::IsTrue(bookmarks.IsModified());
@@ -962,6 +984,7 @@ public:
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         bookmarks.AddBookmark(2345U, MemSize::SixteenBit);
         Assert::IsTrue(bookmarks.IsModified());
@@ -1187,6 +1210,7 @@ public:
         bookmarks.mockEmulatorContext.MockMemory(memory);
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
         bookmarks.AddBookmark(1, MemSize::ThirtyTwoBit);
         bookmarks.AddBookmark(2, MemSize::TwentyFourBit);
         bookmarks.AddBookmark(3, MemSize::SixteenBit);
@@ -1632,6 +1656,7 @@ public:
                                                   "{\"Bookmarks\":[{\"MemAddr\":\"0xH04d2\"}]}");
 
         bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
 
         bookmarks.AddBookmark("I:0x 0020_M:0xW0008");
         Assert::IsTrue(bookmarks.IsModified());

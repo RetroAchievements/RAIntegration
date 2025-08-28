@@ -499,6 +499,7 @@ protected:
 
     // GameContext::NotifyTarget
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote) override;
+    void OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
     void SaveResults(ra::services::TextWriter& sFile, std::function<bool(int)> pProgressCallback) const;
 

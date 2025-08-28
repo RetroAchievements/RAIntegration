@@ -150,6 +150,7 @@ public:
         virtual void OnBeginGameLoad() noexcept(false) {}
         virtual void OnEndGameLoad() noexcept(false) {}
         virtual void OnCodeNoteChanged(ra::ByteAddress, const std::wstring&) noexcept(false) {}
+        virtual void OnCodeNoteMoved(ra::ByteAddress, ra::ByteAddress, const std::wstring&) noexcept(false) {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
@@ -206,6 +207,7 @@ protected:
     void OnBeforeActiveGameChanged();
     void OnActiveGameChanged();
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
+    void OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote);
     void BeginLoad();
     void EndLoad();
 

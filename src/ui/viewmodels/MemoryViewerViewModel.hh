@@ -187,6 +187,7 @@ protected:
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnCodeNoteChanged(ra::ByteAddress, const std::wstring&) override;
+    void OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
     // EmulatorContext::NotifyTarget
     void OnTotalMemorySizeChanged() override;

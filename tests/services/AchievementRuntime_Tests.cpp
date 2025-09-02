@@ -155,23 +155,28 @@ public:
         ResetEvents();
     }
 
+    rc_client_subset_info_t* MockSubset(uint32_t nId, const std::string& sName)
+    {
+        mockGameContext.MockSubset(nId, sName);
+
+        auto* game = GetClient()->game;
+        return GetSubset(game, nId, rc_buffer_strcpy(&game->buffer, sName.c_str()));
+    }
+
     rc_client_achievement_info_t* MockAchievement(uint32_t nId, const std::string& sTrigger)
     {
-        auto* game = GetClient()->game;
-        auto* ach = AddAchievement(game, GetCoreSubset(game), nId, ra::StringPrintf("Ach%u", nId).c_str());
-
-        auto nSize = rc_trigger_size(sTrigger.c_str());
-        void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
-        ach->trigger = rc_parse_trigger(trigger_buffer, sTrigger.c_str(), nullptr, 0);
-        ActivateAchievement(ach);
-
-        return ach;
+        return MockSubsetAchievement(nId, sTrigger, GetCoreSubset(GetClient()->game));
     }
 
     rc_client_achievement_info_t* MockLocalAchievement(uint32_t nId, const std::string& sTrigger)
     {
+        return MockSubsetAchievement(nId, sTrigger, GetLocalSubset(GetClient()->game));
+    }
+
+    rc_client_achievement_info_t* MockSubsetAchievement(uint32_t nId, const std::string& sTrigger, rc_client_subset_info_t* pSubset)
+    {
         auto* game = GetClient()->game;
-        auto* ach = AddAchievement(game, GetLocalSubset(game), nId, ra::StringPrintf("Ach%u", nId).c_str());
+        auto* ach = AddAchievement(game, pSubset, nId, ra::StringPrintf("Ach%u", nId).c_str());
 
         auto nSize = rc_trigger_size(sTrigger.c_str());
         void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
@@ -195,6 +200,8 @@ public:
 
     ra::data::models::AchievementModel* WrapAchievement(rc_client_achievement_info_t* pAchievement)
     {
+        auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
+
         auto nCategory = ra::data::models::AssetCategory::Core;
         if (pAchievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL)
         {
@@ -211,13 +218,14 @@ public:
                     {
                         if (pSubset->public_.id == ra::data::context::GameAssets::LocalSubsetId)
                             nCategory = ra::data::models::AssetCategory::Local;
+
+                        vmAchievement->SetSubsetID(pSubset->public_.id);
                         break;
                     }
                 }
             }
         }
 
-        auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
         vmAchievement->Attach(*pAchievement, nCategory, "");
 
         mockGameContext.Assets().Append(std::move(vmAchievement));
@@ -2410,6 +2418,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockGameContext.SetActiveGameId(1U);
         runtime.MockAchievement(6U, "0xH0000=1")->public_.points = 5;
         runtime.MockAchievement(7U, "0xH0000=1")->public_.points = 1;
         runtime.MockAchievement(8U, "0xH0000=1")->public_.points = 1;
@@ -2432,7 +2441,7 @@ public:
         Assert::AreEqual(ra::ui::viewmodels::Popup::Mastery, pPopup->GetPopupType());
         Assert::AreEqual(std::wstring(L"Mastered Game Title"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"8 achievements, 40 points"), pPopup->GetDescription());
-        Assert::AreEqual(std::wstring(L"UserDisplay | Play time: 5h33m"), pPopup->GetDetail());
+        Assert::AreEqual(std::wstring(L"User_ | Play time: 5h33m"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::Icon, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
         Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
@@ -2442,6 +2451,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        runtime.mockGameContext.SetActiveGameId(1U);
         runtime.MockAchievement(6U, "0xH0000=1")->public_.points = 5;
         runtime.MockAchievement(7U, "0xH0000=1")->public_.points = 1;
         runtime.MockAchievement(8U, "0xH0000=1")->public_.points = 1;
@@ -2464,7 +2474,79 @@ public:
         Assert::AreEqual(ra::ui::viewmodels::Popup::Mastery, pPopup->GetPopupType());
         Assert::AreEqual(std::wstring(L"Completed Game Title"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"8 achievements, 40 points"), pPopup->GetDescription());
-        Assert::AreEqual(std::wstring(L"UserDisplay | Play time: 5h33m"), pPopup->GetDetail());
+        Assert::AreEqual(std::wstring(L"User_ | Play time: 5h33m"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Icon, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleSubsetCompletedEventHardcore)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockGameContext.SetGameTitle(L"Game Name");
+        runtime.mockGameContext.SetActiveGameId(1U);
+        auto* pSubset = runtime.MockSubset(2U, "Game Subset");
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(6U, "0xH0000=1", pSubset))->SetPoints(5);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(7U, "0xH0000=1", pSubset))->SetPoints(1);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(8U, "0xH0000=1", pSubset))->SetPoints(1);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(9U, "0xH0000=1", pSubset))->SetPoints(3);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(10U, "0xH0000=1", pSubset))->SetPoints(10);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(11U, "0xH0000=1", pSubset))->SetPoints(5);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(12U, "0xH0000=1", pSubset))->SetPoints(10);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(13U, "0xH0000=1", pSubset))->SetPoints(5);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
+            ra::ui::viewmodels::PopupLocation::TopMiddle);
+        runtime.mockSessionTracker.MockSession(1U, time(NULL), std::chrono::seconds(20000));
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_SUBSET_COMPLETED;
+        event.subset = &pSubset->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Mastery, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Mastered Game Subset (Game Name)"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"8 achievements, 40 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"User_ | Play time: 5h33m"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Icon, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleSubsetCompletedEventSoftcore)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        runtime.mockGameContext.SetGameTitle(L"Game Name");
+        runtime.mockGameContext.SetActiveGameId(1U);
+        auto* pSubset = runtime.MockSubset(2U, "Game Subset");
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(6U, "0xH0000=1", pSubset))->SetPoints(5);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(7U, "0xH0000=1", pSubset))->SetPoints(1);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(8U, "0xH0000=1", pSubset))->SetPoints(1);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(9U, "0xH0000=1", pSubset))->SetPoints(3);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(10U, "0xH0000=1", pSubset))->SetPoints(10);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(11U, "0xH0000=1", pSubset))->SetPoints(5);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(12U, "0xH0000=1", pSubset))->SetPoints(10);
+        runtime.WrapAchievement(runtime.MockSubsetAchievement(13U, "0xH0000=1", pSubset))->SetPoints(5);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
+            ra::ui::viewmodels::PopupLocation::TopMiddle);
+        runtime.mockSessionTracker.MockSession(1U, time(NULL), std::chrono::seconds(20000));
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_SUBSET_COMPLETED;
+        event.subset = &pSubset->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Mastery, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Completed Game Subset (Game Name)"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"8 achievements, 40 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"User_ | Play time: 5h33m"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::Icon, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
         Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));

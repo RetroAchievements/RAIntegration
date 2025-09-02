@@ -814,11 +814,15 @@ public:
     TEST_METHOD(TestEnumerateCodeNotesWithIndirect)
     {
         CodeNotesModelHarness notes;
+        std::array<unsigned char, 128> memory{};
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(120) = 0x02; // start with initial value for pointer
+
         const std::wstring sPointerNote =
             L"Pointer\n"
             L"+8 = Unknown\n"
             L"+16 = Small (16-bit)";
-        notes.AddCodeNote(1234, "Author", sPointerNote);
+        notes.AddCodeNote(120, "Author", sPointerNote);
         notes.AddCodeNote(20, "Author", L"After [32-bit]");
         notes.AddCodeNote(4, "Author", L"Before");
         notes.AddCodeNote(12, "Author", L"In the middle");
@@ -834,7 +838,7 @@ public:
                     Assert::AreEqual(std::wstring(L"Before"), sNote);
                     break;
                 case 1:
-                    Assert::AreEqual({8U}, nAddress);
+                    Assert::AreEqual({10U}, nAddress);
                     Assert::AreEqual(1U, nBytes);
                     Assert::AreEqual(std::wstring(L"Unknown"), sNote);
                     break;
@@ -844,7 +848,7 @@ public:
                     Assert::AreEqual(std::wstring(L"In the middle"), sNote);
                     break;
                 case 3:
-                    Assert::AreEqual({16U}, nAddress);
+                    Assert::AreEqual({18U}, nAddress);
                     Assert::AreEqual(2U, nBytes);
                     Assert::AreEqual(std::wstring(L"Small (16-bit)"), sNote);
                     break;
@@ -854,7 +858,7 @@ public:
                     Assert::AreEqual(std::wstring(L"After [32-bit]"), sNote);
                     break;
                 case 5:
-                    Assert::AreEqual({1234U}, nAddress);
+                    Assert::AreEqual({120U}, nAddress);
                     Assert::AreEqual(4U, nBytes); // unspecified size on pointer assumed to be 32-bit
                     Assert::AreEqual(sPointerNote, sNote);
                     break;

@@ -1039,7 +1039,7 @@ void AchievementRuntime::RaiseClientEvent(rc_client_achievement_info_t& pAchieve
     }
 }
 
-void AchievementRuntime::UpdateActiveAchievements() noexcept
+void AchievementRuntime::UpdateActiveAchievements()
 {
     auto* client = GetClient();
     if (client->game)
@@ -2002,13 +2002,13 @@ static void ShowCompletionPopup(uint32_t nGameId, const std::wstring& sTitle, ui
     }
 }
 
-static void HandleSubsetCompletedEvent(const rc_client_t& pClient, const rc_client_subset_t& pSubset)
+static void HandleSubsetCompletedEvent(const rc_client_subset_t& pSubset)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     for (const auto& pGameSubset : pGameContext.Subsets()) {
         if (pGameSubset.AchievementSetID() == pSubset.id) {
             uint32_t nPoints = 0;
-            for (gsl::index nIndex = 0; nIndex < pGameContext.Assets().Count(); ++nIndex) {
+            for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex) {
                 const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pGameContext.Assets().GetItemAt(nIndex));
                 if (pAchievement && pAchievement->GetSubsetID() == pSubset.id && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
                     nPoints += pAchievement->GetPoints();
@@ -2426,7 +2426,7 @@ void AchievementRuntime::EventHandler(const rc_client_event_t* pEvent, rc_client
             break;
 
         case RC_CLIENT_EVENT_SUBSET_COMPLETED:
-            HandleSubsetCompletedEvent(*pClient, *pEvent->subset);
+            HandleSubsetCompletedEvent(*pEvent->subset);
             break;
 
         case RC_CLIENT_EVENT_RESET:

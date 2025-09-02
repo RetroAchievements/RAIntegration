@@ -337,6 +337,7 @@ private:
     static void SyncAsset(AssetSummaryViewModel& vmSummary, const ra::data::models::AssetModelBase& pAsset);
     gsl::index GetFilteredAssetIndex(const ra::data::models::AssetModelBase& pAsset) const;
     void ApplyFilter();
+    bool m_bInitializingFilter = false;
 
     ViewModelCollection<AssetSummaryViewModel> m_vFilteredAssets;
 

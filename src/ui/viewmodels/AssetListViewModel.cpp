@@ -106,6 +106,8 @@ void AssetListViewModel::OnActiveGameChanged()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     SetGameId(pGameContext.ActiveGameId());
 
+    m_bInitializingFilter = true;
+
     switch (pGameContext.Assets().MostPublishedAssetCategory())
     {
         case ra::data::models::AssetCategory::Core:
@@ -133,6 +135,8 @@ void AssetListViewModel::OnActiveGameChanged()
         SetSubsetFilter(0);
     else
         SetSubsetFilter(pGameContext.Subsets().front().AchievementSetID());
+
+    m_bInitializingFilter = false;
 
     ApplyFilter();
 }
@@ -386,6 +390,9 @@ void AssetListViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& arg
 
 void AssetListViewModel::ApplyFilter()
 {
+    if (m_bInitializingFilter)
+        return;
+
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     m_vFilteredAssets.BeginUpdate();
 

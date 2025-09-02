@@ -475,7 +475,7 @@ void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddr
     std::map<ra::ByteAddress, const CodeNoteModel*> mNotes;
     for (const auto& pCodeNote : m_vCodeNotes)
     {
-        if (!pCodeNote->IsPointer())
+        if (!pCodeNote->IsPointer() || pCodeNote->GetRawPointerValue() == 0)
             continue;
 
         pCodeNote->EnumeratePointerNotes(

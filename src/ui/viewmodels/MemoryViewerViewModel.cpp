@@ -194,6 +194,9 @@ static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
             const auto nNoteStart = pCodeNotes->FindCodeNoteStart(nAddress);
             if (nNoteStart != 0xFFFFFFFF)
             {
+                if (nNoteStart == 0 && pCodeNotes->FindCodeNoteModel(nAddress, false) == nullptr)
+                    return MemoryViewerViewModel::TextColor::Default;
+
                 if (nNoteStart != nAddress)
                     return MemoryViewerViewModel::TextColor::HasSurrogateNote;
 
@@ -224,12 +227,13 @@ void MemoryViewerViewModel::UpdateColors()
     if (pCodeNotes != nullptr)
     {
         const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
-        pCodeNotes->EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
+        pCodeNotes->EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pNote) {
+            auto nBytes = pNote.GetBytes();
             if (nAddress + nBytes <= nFirstAddress) // not to viewing window yet
                 return true;
             if (nAddress >= nStopAddress) // past viewing window
                 return false;
-            if (sNote.empty()) // ignore deleted notes
+            if (pNote.GetNote().empty()) // ignore deleted notes
                 return true;
 
             uint8_t* pOffset = m_pColor;

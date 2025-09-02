@@ -163,7 +163,6 @@ protected:
 
     // ra::data::context::GameContext::NotifyTarget
     void OnActiveGameChanged() override;
-    void OnEndGameLoad() override;
 
     // ra::ui::ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;

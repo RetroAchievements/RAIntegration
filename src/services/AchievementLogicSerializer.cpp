@@ -178,6 +178,12 @@ void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOper
             sBuffer.push_back('L');
             break;
 
+        case MemSize::Array:
+        case MemSize::Text:
+            /* not a real size, use 32-bit BE as best approximation */
+            sBuffer.push_back('G');
+            break;
+
         default:
             assert(!"Unknown memory size");
             break;

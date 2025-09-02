@@ -194,20 +194,29 @@ void MemoryWatchViewModel::OnSizeChanged()
     }
 }
 
-uint32_t MemoryWatchViewModel::ReadValue() const
+uint32_t MemoryWatchViewModel::ReadValue()
 {
     if (m_pValue)
     {
         rc_typed_value_t value;
         rc_evaluate_value_typed(m_pValue, &value, rc_peek_callback, nullptr);
 
-        // floats will be returned as their u32 equivalent and converted back to
-        // a float by BuildCurrentValue, but we need to reverse the byte order
-        // for big endian floats
-        if (value.type == RC_VALUE_TYPE_FLOAT && ra::data::IsBigEndian(m_nSize))
-            return ra::data::ReverseBytes(value.value.u32);
+        if (IsIndirectAddress())
+            UpdateCurrentAddressFromIndirectAddress();
 
-        return value.value.u32;
+        if (m_nSize != MemSize::Text)
+        {
+            // floats will be returned as their u32 equivalent and converted back to
+            // a float by BuildCurrentValue, but we need to reverse the byte order
+            // for big endian floats
+            if (value.type == RC_VALUE_TYPE_FLOAT && ra::data::IsBigEndian(m_nSize))
+                return ra::data::ReverseBytes(value.value.u32);
+
+            return value.value.u32;
+        }
+
+        // MemSize::Text requires special processing. now that m_nAddress has been
+        // updated, proceeed to logic below to do the special processing.
     }
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
@@ -307,14 +316,8 @@ bool MemoryWatchViewModel::DoFrame()
 {
     const auto nValue = ReadValue();
 
-    if (IsIndirectAddress())
-    {
-        // address must be updated after calling ReadValue as ReadValue updates local memrefs
-        UpdateCurrentAddressFromIndirectAddress();
-
-        if (IgnoreValueChange(nValue))
-            return false;
-    }
+    if (IsIndirectAddress() && IgnoreValueChange(nValue))
+        return false;
 
     return ChangeValue(nValue);
 }
@@ -472,7 +475,6 @@ void MemoryWatchViewModel::SetIndirectAddress(const std::string& sSerialized)
         const auto nValue = ReadValue();
         SetCurrentValueRaw(nValue);
 
-        UpdateCurrentAddressFromIndirectAddress();
         UpdateRealNote();
     });
 }

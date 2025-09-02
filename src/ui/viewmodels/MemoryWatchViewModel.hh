@@ -282,7 +282,7 @@ protected:
     void OnValueChanged();
     void OnSizeChanged();
 
-    uint32_t ReadValue() const;
+    uint32_t ReadValue();
 
     void SetAddressWithoutUpdatingValue(ra::ByteAddress nNewAddress);
 

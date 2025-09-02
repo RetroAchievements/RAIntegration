@@ -75,6 +75,7 @@ public:
             LittleEndian,
             BCD,
             Hex,
+            ASCII,
             Other,
         };
 

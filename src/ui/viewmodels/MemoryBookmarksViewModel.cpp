@@ -182,6 +182,15 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
     }
 }
 
+void MemoryBookmarksViewModel::OnEndGameLoad()
+{
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vmMemoryWatchList.Items().Count(); ++nIndex)
+    {
+        auto& vmBookmark = *m_vmMemoryWatchList.Items().GetItemAt(nIndex);
+        vmBookmark.UpdateRealNote();
+    }
+}
+
 void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmarksFile)
 {
     gsl::index nIndex = 0;

@@ -1856,6 +1856,7 @@ public:
 
         Assert::AreEqual({1U}, bookmarks.Bookmarks().Items().Count());
         auto& bookmark = *bookmarks.GetBookmark(0);
+        Assert::AreEqual(MemSize::ThirtyTwoBit, bookmark.GetSize());
 
         bookmark.UpdateCurrentValue();
         Assert::AreEqual(std::wstring(L"42883efa"), bookmark.GetCurrentValue());
@@ -1880,6 +1881,37 @@ public:
 
         bookmark.SetSize(MemSize::TwentyFourBit);
         Assert::AreEqual(std::wstring(L"883efa"), bookmark.GetCurrentValue());
+    }
+
+    TEST_METHOD(TestUpdateCurrentValueIndirectBigEndian)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        std::array<uint8_t, 64> memory = {};
+        memory.at(4) = 8;
+        // 0x42883EFA => 68.123
+        memory.at(0x10) = 0x42;
+        memory.at(0x11) = 0x88;
+        memory.at(0x12) = 0x3E;
+        memory.at(0x13) = 0xFA;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+
+        bookmarks.AddBookmark("I:0xX0004_M:0xG0008"); // 4=8 $(8+8)= $16
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
+        auto& bookmark = *bookmarks.GetBookmark(0);
+        Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, bookmark.GetSize());
+
+        bookmark.UpdateCurrentValue();
+        Assert::AreEqual(std::wstring(L"42883efa"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::FloatBigEndian);
+        Assert::AreEqual(std::wstring(L"68.123001"), bookmark.GetCurrentValue());
+
+        bookmark.SetSize(MemSize::ThirtyTwoBit);
+        Assert::AreEqual(std::wstring(L"fa3e8842"), bookmark.GetCurrentValue());
     }
 
     TEST_METHOD(TestDoFrameFrozenBookmarks)

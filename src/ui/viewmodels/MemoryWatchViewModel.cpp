@@ -206,11 +206,8 @@ uint32_t MemoryWatchViewModel::ReadValue()
 
         if (m_nSize != MemSize::Text)
         {
-            // floats will be returned as their u32 equivalent and converted back to
-            // a float by BuildCurrentValue, but we need to reverse the byte order
-            // for big endian floats
-            if (value.type == RC_VALUE_TYPE_FLOAT && ra::data::IsBigEndian(m_nSize))
-                return ra::data::ReverseBytes(value.value.u32);
+            if (ra::data::MemSizeIsFloat(m_nSize))
+                rc_typed_value_convert(&value, RC_VALUE_TYPE_FLOAT);
 
             return value.value.u32;
         }
@@ -259,35 +256,28 @@ bool MemoryWatchViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std
     const auto nAddress = m_nAddress;
     unsigned nValue = 0;
 
-    switch (m_nSize)
+    if (ra::data::MemSizeIsFloat(m_nSize))
     {
-        case MemSize::Float:
-        case MemSize::FloatBigEndian:
-        case MemSize::Double32:
-        case MemSize::Double32BigEndian:
-        case MemSize::MBF32:
-        case MemSize::MBF32LE:
-            float fValue;
-            if (!ra::ParseFloat(sValue, fValue, sError))
+        float fValue;
+        if (!ra::ParseFloat(sValue, fValue, sError))
+            return false;
+
+        nValue = ra::data::FloatToU32(fValue, m_nSize);
+    }
+    else
+    {
+        const auto nMaximumValue = ra::data::MemSizeMax(m_nSize);
+
+        if (GetFormat() == MemFormat::Dec)
+        {
+            if (!ra::ParseUnsignedInt(sValue, nMaximumValue, nValue, sError))
                 return false;
-
-            nValue = ra::data::FloatToU32(fValue, m_nSize);
-            break;
-
-        default:
-            const auto nMaximumValue = ra::data::MemSizeMax(m_nSize);
-
-            if (GetFormat() == MemFormat::Dec)
-            {
-                if (!ra::ParseUnsignedInt(sValue, nMaximumValue, nValue, sError))
-                    return false;
-            }
-            else
-            {
-                if (!ra::ParseHex(sValue, nMaximumValue, nValue, sError))
-                    return false;
-            }
-            break;
+        }
+        else
+        {
+            if (!ra::ParseHex(sValue, nMaximumValue, nValue, sError))
+                return false;
+        }
     }
 
     // set m_nValue directly to avoid bookmark behaviors from firing
@@ -356,7 +346,6 @@ void MemoryWatchViewModel::OnValueChanged()
     SetChanges(GetChanges() + 1);
 }
 
-
 std::wstring MemoryWatchViewModel::BuildCurrentValue() const
 {
     if (m_nSize == MemSize::Text)
@@ -364,6 +353,12 @@ std::wstring MemoryWatchViewModel::BuildCurrentValue() const
         ra::services::SearchResults pResults;
         pResults.Initialize(m_nAddress, MaxTextBookmarkLength, ra::services::SearchType::AsciiText);
         return pResults.GetFormattedValue(m_nAddress, MemSize::Text);
+    }
+
+    if (m_pValue && ra::data::MemSizeIsFloat(m_nSize)) {
+        // m_nValue will have already been converted to a little-endian float
+        // by rc_evaluate_value_typed in ReadValue.
+        return ra::data::MemSizeFormat(m_nValue, MemSize::Float, GetFormat());
     }
 
     return ra::data::MemSizeFormat(m_nValue, m_nSize, GetFormat());

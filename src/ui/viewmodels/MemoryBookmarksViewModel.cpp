@@ -159,10 +159,10 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (m_nLoadedGameId != pGameContext.GameId())
     {
+        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+
         if (m_nLoadedGameId != 0 && IsModified())
         {
-            auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-
             auto pWriter = pLocalStorage.WriteText(ra::services::StorageItemType::Bookmarks, std::to_wstring(m_nLoadedGameId));
             if (pWriter != nullptr)
                 SaveBookmarks(*pWriter);
@@ -172,15 +172,23 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
         m_nUnmodifiedBookmarkCount = 0;
 
         m_nLoadedGameId = pGameContext.GameId();
+
+        if (m_nLoadedGameId != 0)
+        {
+            auto pReader = pLocalStorage.ReadText(ra::services::StorageItemType::Bookmarks, std::to_wstring(m_nLoadedGameId));
+            if (pReader != nullptr)
+                LoadBookmarks(*pReader);
+        }
     }
 }
 
 void MemoryBookmarksViewModel::OnEndGameLoad()
 {
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pReader = pLocalStorage.ReadText(ra::services::StorageItemType::Bookmarks, std::to_wstring(m_nLoadedGameId));
-    if (pReader != nullptr)
-        LoadBookmarks(*pReader);
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vmMemoryWatchList.Items().Count(); ++nIndex)
+    {
+        auto& vmBookmark = *m_vmMemoryWatchList.Items().GetItemAt(nIndex);
+        vmBookmark.UpdateRealNote();
+    }
 }
 
 void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmarksFile)
@@ -212,6 +220,14 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     // third bookmark format uses the memref serializer
                     const char* memaddr = bookmark["MemAddr"].GetString();
                     InitializeBookmark(*vmBookmark, memaddr);
+
+                    if (bookmark.HasMember("Size"))
+                    {
+                        switch (bookmark["Size"].GetInt())
+                        {
+                            case 15: vmBookmark->SetSize(MemSize::Text); break;
+                        }
+                    }
                 }
                 else
                 {
@@ -305,7 +321,10 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
         {
             case MemSize::Text:
                 item.AddMember("Size", 15, allocator);
-                item.AddMember("Address", vmBookmark.GetAddress(), allocator);
+                if (vmBookmark.IsIndirectAddress())
+                    item.AddMember("MemAddr", vmBookmark.GetIndirectAddress(), allocator);
+                else
+                    item.AddMember("Address", vmBookmark.GetAddress(), allocator);
                 break;
 
             default:

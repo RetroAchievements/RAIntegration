@@ -124,6 +124,7 @@ void PointerInspectorViewModel::OnActiveGameChanged()
         m_vNodes.Clear();
         m_vPointerChain.Clear();
         m_vmFields.Items().Clear();
+        m_pCurrentNote = nullptr;
 
         m_bSyncingAddress = true;
         SetCurrentAddress(0);
@@ -437,11 +438,25 @@ void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructField
 
     pFieldViewModel.SetFormat(pOffsetNote.GetDefaultMemFormat());
 
-    const auto nSize = pOffsetNote.GetMemSize();
-    pFieldViewModel.SetSize((nSize == MemSize::Unknown) ? MemSize::EightBit : nSize);
-
     const auto& sNote = pOffsetNote.IsPointer() ? pOffsetNote.GetPointerDescription() : pOffsetNote.GetPrimaryNote();
     pFieldViewModel.SetRealNote(sNote);
+
+    auto nSize = pOffsetNote.GetMemSize();
+    switch (nSize)
+    {
+        case MemSize::Unknown:
+            nSize = MemSize::EightBit;
+            break;
+
+        case MemSize::Array:
+            nSize = MemSize::ThirtyTwoBitBigEndian;
+            pFieldViewModel.SetFormat(ra::MemFormat::Hex);
+            break;
+
+        default:
+            break;
+    }
+    pFieldViewModel.SetSize(nSize);
 
     auto nIndex = sNote.find('\n');
     if (nIndex == std::string::npos)
@@ -617,12 +632,20 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
         if (pField->GetSize() != MemSize::Unknown)
         {
             builder.Append('[');
-            builder.Append(ra::data::MemSizeString(pField->GetSize()));
-
-            if (bIsPointer)
-                builder.Append(L" pointer] ");
+            if (pField->GetSize() == MemSize::Text)
+            {
+                builder.Append(newNote.GetBytes());
+                builder.Append(L"-byte ASCII] ");
+            }
             else
-                builder.Append(L"] ");
+            {
+                builder.Append(ra::data::MemSizeString(pField->GetSize()));
+
+                if (bIsPointer)
+                    builder.Append(L" pointer] ");
+                else
+                    builder.Append(L"] ");
+            }
         }
 
         const auto& sDescription = pField->GetDescription();
@@ -674,12 +697,20 @@ void PointerInspectorViewModel::BuildNote(ra::StringBuilder& builder,
             if (pOffsetNote.GetMemSize() != MemSize::Unknown)
             {
                 builder.Append('[');
-                builder.Append(ra::data::MemSizeString(pOffsetNote.GetMemSize()));
-
-                if (pOffsetNote.IsPointer())
-                    builder.Append(L" pointer] ");
+                if (pOffsetNote.GetMemSize() == MemSize::Text)
+                {
+                    builder.Append(pOffsetNote.GetBytes());
+                    builder.Append(L"-byte ASCII] ");
+                }
                 else
-                    builder.Append(L"] ");
+                {
+                    builder.Append(ra::data::MemSizeString(pOffsetNote.GetMemSize()));
+
+                    if (pOffsetNote.IsPointer())
+                        builder.Append(L" pointer] ");
+                    else
+                        builder.Append(L"] ");
+                }
             }
 
 
@@ -926,6 +957,21 @@ void PointerInspectorViewModel::BookmarkCurrentField() const
 
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.MemoryBookmarks.AddBookmark(sDefinition);
+
+    auto* pBookmark = pWindowManager.MemoryBookmarks.Bookmarks().Items().GetItemAt(pWindowManager.MemoryBookmarks.Bookmarks().Items().Count() - 1);
+    if (pBookmark != nullptr)
+    {
+        const auto nSelectedFieldIndex = m_vmFields.Items().FindItemIndex(LookupItemViewModel::IsSelectedProperty, true);
+        if (nSelectedFieldIndex != -1)
+        {
+            const auto* vmField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nSelectedFieldIndex);
+            if (vmField != nullptr)
+            {
+                pBookmark->SetSize(vmField->GetSize());
+                pBookmark->SetFormat(vmField->GetFormat());
+            }
+        }
+    }
 
     if (!pWindowManager.MemoryBookmarks.IsVisible())
         pWindowManager.MemoryBookmarks.Show();

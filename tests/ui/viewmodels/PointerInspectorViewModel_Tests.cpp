@@ -649,6 +649,47 @@ public:
             L"+0x0C: [24-bit] Current HP"));
     }
 
+    TEST_METHOD(TestUpdateFieldNoteTextSize)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+        memory.at(12) = 'N';
+        memory.at(13) = 'a';
+        memory.at(14) = 'm';
+        memory.at(15) = 'e';
+        memory.at(16) = '2';
+        memory.at(17) = 0;
+
+        inspector.SetCurrentAddress({ 4U });
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+            L"[32-bit pointer] Player data\r\n"
+            L"+0: [8-byte ASCII] Name\r\n"
+            L"+12: [32-bit] Current HP");
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        inspector.AssertField(0, 0, 12, L"+0000", L"Name", MemSize::Text, MemFormat::Dec, L"Name2");
+
+        inspector.Fields().Items().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[8-byte ASCII] Name"), inspector.GetCurrentFieldNote());
+
+        // update size via current note
+        inspector.SetCurrentFieldNote(L"[10-byte ASCII] Name");
+        Assert::AreEqual(std::wstring(L"[10-byte ASCII] Name"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(0, 0, 12, L"+0000", L"Name", MemSize::Text, MemFormat::Dec, L"Name2");
+        inspector.AssertField(1, 12, 24, L"+000c", L"Current HP", MemSize::ThirtyTwoBit, MemFormat::Dec, L"24");
+
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32-bit pointer] Player data\r\n"
+            L"+0x00: [10-byte ASCII] Name\r\n"
+            L"+0x0C: [32-bit] Current HP"));
+    }
 
     TEST_METHOD(TestUpdateFieldConvertToPointer)
     {

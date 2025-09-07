@@ -165,6 +165,8 @@ public:
 
         TestCodeNoteSize(L"[NTSCU]\r\n[16-bit] Test\r\n", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"[24-bit]\r\nIt's really 32-bit, but the top byte will never be non-zero\r\n", 3U, MemSize::TwentyFourBit);
+
+        TestCodeNoteSize(L"[13-bytes ASCII] Character Name", 13U, MemSize::Text);
     }
 
     TEST_METHOD(TestExtractFormat)

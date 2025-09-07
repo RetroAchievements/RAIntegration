@@ -656,6 +656,11 @@ CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& 
 
     switch (cFirstLetter)
     {
+        case 'a':
+            if (sWord == L"ascii")
+                return TokenType::ASCII;
+            break;
+
         case 'b':
             if (sWord == L"bit" || sWord == L"bits")
                 return TokenType::Bits;
@@ -711,6 +716,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
 
     bool bBytesFromBits = false;
     bool bFoundSize = false;
+    bool bFoundASCII = false;
     bool bLastWordIsSize = false;
     Parser::TokenType nLastTokenType = Parser::TokenType::None;
 
@@ -755,6 +761,10 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
         else if (nTokenType == Parser::TokenType::BCD || nTokenType == Parser::TokenType::Hex)
         {
             m_nMemFormat = MemFormat::Hex;
+        }
+        else if (nTokenType == Parser::TokenType::ASCII)
+        {
+            bFoundASCII = true;
         }
         else if (bLastWordIsSize)
         {
@@ -883,6 +893,9 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
             nLastTokenType = Parser::TokenType::None;
         }
     } while (true);
+
+    if (m_nMemSize == MemSize::Array && bFoundASCII)
+        m_nMemSize = MemSize::Text;
 }
 
 static void RemoveIndentPrefix(std::wstring& sNote)

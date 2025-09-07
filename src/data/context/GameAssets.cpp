@@ -127,6 +127,9 @@ void GameAssets::OnBeforeItemRemoved(ModelBase& pModel)
 void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase*>& vAssetsToReload)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    if (pGameContext.Subsets().empty()) // server assets haven't been loaded yet
+        return;
+
     const auto nPrimarySubsetId = pGameContext.Subsets().front().AchievementSetID();
 
     auto* pRichPresence = dynamic_cast<ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0));

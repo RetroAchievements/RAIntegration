@@ -205,17 +205,15 @@ void MemoryInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const
     {
         // call the override that asks for an author to see if there's a non-indirect note at
         // the address. if so, use it.
-        std::string sAuthor;
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        Expects(pCodeNotes != nullptr);
-        const auto* pDirectNote = pCodeNotes->FindCodeNote(nAddress, sAuthor);
+        const auto* pDirectNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
         if (pDirectNote)
         {
             // non indirect note found. normally, this will match sNewNote, but sometimes sNewNote
-            // will be for an indirect note sharing the addres, so always use the direct note
+            // will be for an indirect note sharing the address, so always use the direct note
             m_bNoteIsIndirect = false;
-            SetCurrentAddressNote(*pDirectNote);
+            SetCurrentAddressNote(pDirectNote->GetNote());
         }
         else
         {
@@ -223,7 +221,7 @@ void MemoryInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const
             if (sNewNote.length() == 0)
             {
                 // empty note notification is probably a deleted note, but check to be sure
-                const auto* pIndirectNote = pCodeNotes->FindCodeNote(nAddress);
+                const auto* pIndirectNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, true) : nullptr;
                 m_bNoteIsIndirect = (pIndirectNote != nullptr);
             }
             else

@@ -237,8 +237,12 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
     {
         ra::data::models::RichPresenceModel* pRichPresence = nullptr;
         std::string sOldRichPresence;
+        const auto nGameId = m_nGameId;
 
         std::lock_guard<std::mutex> lock(m_mLoadMutex);
+
+        if (m_nGameId != nGameId)
+            return;
 
         if (nResult == RC_OK && m_nGameId > 0)
         {
@@ -253,7 +257,9 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
                 [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring sNote) {
                     OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
                 },
-                [this]() { EndLoad(); });
+                [this]() {
+                    EndLoad();
+                });
 
             m_vAssets.Append(std::move(pCodeNotes));
 
@@ -490,6 +496,8 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
 void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response)
 {
     Expects(game_data_response != nullptr);
+
+    std::lock_guard<std::mutex> lock(m_mLoadMutex);
     m_vSubsets.clear();
 
     // GameID dictates which game is loaded for purposes of local achievement storage and code notes
@@ -686,7 +694,7 @@ void GameContext::DoFrame()
 
 void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
 {
-    if (!m_vNotifyTargets.empty())
+    if (!m_vNotifyTargets.empty() && !IsGameLoading())
     {
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
@@ -700,7 +708,7 @@ void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring
 
 void GameContext::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
 {
-    if (!m_vNotifyTargets.empty())
+    if (!m_vNotifyTargets.empty() && !IsGameLoading())
     {
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);

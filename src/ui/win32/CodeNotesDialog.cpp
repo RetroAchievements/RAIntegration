@@ -136,8 +136,11 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
         const auto* pItem = vmCodeNotes->Notes().GetItemAt(nIndex);
         if (pItem)
         {
-            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-            pWindowManager.MemoryInspector.SetCurrentAddress(pItem->nAddress);
+            auto& pMemoryInspector = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector;
+            pMemoryInspector.SetCurrentAddress(pItem->nAddress);
+
+            if (!pMemoryInspector.IsVisible())
+                pMemoryInspector.Show();
         }
     });
 

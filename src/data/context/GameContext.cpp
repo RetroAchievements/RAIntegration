@@ -503,7 +503,12 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
     // GameID dictates which game is loaded for purposes of local achievement storage and code notes
     m_nGameId = GetRealGameId(game_data_response->id);
     // ActiveGameID dictates which game is running for purposes of rich presence and pings
-    m_nActiveGameId = GetRealGameId(game_data_response->session_game_id);
+    const auto nActiveGameId = GetRealGameId(game_data_response->session_game_id);
+    if (m_nActiveGameId != nActiveGameId)
+    {
+        m_nActiveGameId = nActiveGameId;
+        ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().BeginSession(nActiveGameId);
+    }
 
     for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
     {

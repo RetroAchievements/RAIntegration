@@ -1039,14 +1039,37 @@ void AchievementRuntime::RaiseClientEvent(rc_client_achievement_info_t& pAchieve
     }
 }
 
-void AchievementRuntime::UpdateActiveAchievements() noexcept
+void AchievementRuntime::UpdateActiveAchievements()
 {
     auto* client = GetClient();
     if (client->game)
     {
         rc_mutex_lock(&client->state.mutex);
         if (client->game && (client->game->pending_events & RC_CLIENT_GAME_PENDING_EVENT_UPDATE_ACTIVE_ACHIEVEMENTS) == 0)
+        {
             rc_client_update_active_achievements(client->game);
+
+#ifndef RA_UTEST
+            // locked badges are only retrieved at startup if the user hasn't earned the achievement
+            // when manually activating an achievement, make sure the locked badge is available.
+            auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+            const auto* pSubset = client->game->subsets;
+            for (; pSubset; pSubset = pSubset->next) {
+                const auto* pAchievement = pSubset->achievements;
+                const auto* pAchievementStop = pAchievement + pSubset->public_.num_achievements;
+                for (; pAchievement < pAchievementStop; ++pAchievement)
+                {
+                    if (pAchievement->public_.state != RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED &&
+                        pAchievement->public_.badge_name[0] != 'L') // ignore local images
+                    {
+                        pImageRepository.FetchImage(ra::ui::ImageType::Badge,
+                            std::string(pAchievement->public_.badge_name) + "_lock",
+                            pAchievement->public_.badge_locked_url ? pAchievement->public_.badge_locked_url : "");
+                    }
+                }
+            }
+#endif
+        }
         rc_mutex_unlock(&client->state.mutex);
     }
 }
@@ -1945,29 +1968,27 @@ static void HandleProgressIndicatorHideEvent()
     pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::None, "", L"");
 }
 
-static void HandleGameCompletedEvent(const rc_client_t& pClient)
+static void ShowCompletionPopup(uint32_t nGameId, const std::wstring& sTitle, uint32_t nAchievements, uint32_t nPoints, const std::string& sBadgeName)
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Mastery) == ra::ui::viewmodels::PopupLocation::None)
         return;
 
     const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-    const auto* pGame = rc_client_get_game_info(&pClient);
-    Expects(pGame != nullptr);
 
-    rc_client_user_game_summary_t summary;
-    rc_client_get_user_game_summary(&pClient, &summary);
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
 
     const auto nPlayTimeSeconds =
-        ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(pGame->id);
+        ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(pGameContext.ActiveGameId());
     const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
 
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmMessage->SetTitle(ra::StringPrintf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", pGame->title));
-    vmMessage->SetDescription(ra::StringPrintf(L"%u achievements, %u points", summary.num_core_achievements, summary.points_core));
-    vmMessage->SetDetail(ra::StringPrintf(L"%s | Play time: %dh%02dm", rc_client_get_user_info(&pClient)->display_name,
-                                            nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
-    vmMessage->SetImage(ra::ui::ImageType::Icon, pGame->badge_name);
+    vmMessage->SetTitle(ra::StringPrintf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", sTitle));
+    vmMessage->SetDescription(ra::StringPrintf(L"%u achievements, %u points", nAchievements, nPoints));
+    vmMessage->SetDetail(ra::StringPrintf(L"%s | Play time: %dh%02dm", pUserContext.GetDisplayName(),
+        nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
+    vmMessage->SetImage(ra::ui::ImageType::Icon, sBadgeName);
     vmMessage->SetPopupType(ra::ui::viewmodels::Popup::Mastery);
 
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
@@ -1976,9 +1997,39 @@ static void HandleGameCompletedEvent(const rc_client_t& pClient)
 
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot))
     {
-        std::wstring sPath = ra::StringPrintf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), pGame->id);
+        std::wstring sPath = ra::StringPrintf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), nGameId);
         pOverlayManager.CaptureScreenshot(nPopupId, sPath);
     }
+}
+
+static void HandleSubsetCompletedEvent(const rc_client_subset_t& pSubset)
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    for (const auto& pGameSubset : pGameContext.Subsets()) {
+        if (pGameSubset.AchievementSetID() == pSubset.id) {
+            uint32_t nPoints = 0;
+            for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex) {
+                const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pGameContext.Assets().GetItemAt(nIndex));
+                if (pAchievement && pAchievement->GetSubsetID() == pSubset.id && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
+                    nPoints += pAchievement->GetPoints();
+            }
+
+            const auto sTitle = ra::StringPrintf(L"%s (%s)", pGameSubset.Title(), pGameContext.GameTitle());
+            ShowCompletionPopup(pGameSubset.GameID(), sTitle, pSubset.num_achievements, nPoints, pSubset.badge_name);
+            break;
+        }
+    }
+}
+
+static void HandleGameCompletedEvent(const rc_client_t& pClient)
+{
+    const auto* pGame = rc_client_get_game_info(&pClient);
+    Expects(pGame != nullptr);
+
+    rc_client_user_game_summary_t summary;
+    rc_client_get_user_game_summary(&pClient, &summary);
+
+    ShowCompletionPopup(pGame->id, ra::Widen(pGame->title), summary.num_core_achievements, summary.points_core, pGame->badge_name);
 }
 
 static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeaderboard)
@@ -2372,6 +2423,10 @@ void AchievementRuntime::EventHandler(const rc_client_event_t* pEvent, rc_client
 
         case RC_CLIENT_EVENT_GAME_COMPLETED:
             HandleGameCompletedEvent(*pClient);
+            break;
+
+        case RC_CLIENT_EVENT_SUBSET_COMPLETED:
+            HandleSubsetCompletedEvent(*pEvent->subset);
             break;
 
         case RC_CLIENT_EVENT_RESET:

@@ -63,7 +63,7 @@ protected:
         }
     }
 
-    void OnViewModelAdded(gsl::index nIndex) override
+    void OnViewModelAdded(gsl::index) override
     {
         UpdateColors();
     }

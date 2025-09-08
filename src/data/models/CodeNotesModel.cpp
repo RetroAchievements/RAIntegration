@@ -478,11 +478,20 @@ void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddr
         if (!pCodeNote->IsPointer() || pCodeNote->GetRawPointerValue() == 0)
             continue;
 
-        pCodeNote->EnumeratePointerNotes(
-            [&mNotes](ra::ByteAddress nAddress, const CodeNoteModel& pNote) {
-                mNotes[nAddress] = &pNote;
-                return true;
-            });
+        std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback =
+            [&mNotes, &fCallback](ra::ByteAddress nAddress, const CodeNoteModel& pNote)
+        {
+            mNotes[nAddress] = &pNote;
+
+            // if the note is a valid (non-null) pointer, recurse into it too
+            if (pNote.IsPointer() && pNote.HasRawPointerValue() && pNote.GetRawPointerValue() != 0)
+                pNote.EnumeratePointerNotes(fCallback);
+
+            return true;
+        };
+
+        pCodeNote->EnumeratePointerNotes(fCallback);
+
     }
 
     // merge in the non-pointer notes

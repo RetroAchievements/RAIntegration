@@ -367,7 +367,10 @@ bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const
     {
         const auto* pBookmark = m_vmMemoryWatchList.Items().GetItemAt(nIndex);
         if (pBookmark != nullptr && pBookmark->GetAddress() == nAddress)
-            return true;
+        {
+            if (!pBookmark->IsIndirectAddress() || pBookmark->IsIndirectAddressChainValid())
+                return true;
+        }
     }
 
     return false;

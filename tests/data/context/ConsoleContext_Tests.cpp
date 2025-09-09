@@ -177,10 +177,10 @@ public:
     {
         ConsoleContext context(ConsoleID::WII);
 
-        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0x80001234U));
-        Assert::AreEqual({ 0x00001234 }, context.ByteAddressFromRealAddress(0xC0001234U));
-        Assert::AreEqual({ 0x01801234 }, context.ByteAddressFromRealAddress(0x90001234U));
-        Assert::AreEqual({ 0x01801234 }, context.ByteAddressFromRealAddress(0xD0001234U));
+        Assert::AreEqual({ 0x80001234 }, context.ByteAddressFromRealAddress(0x80001234U));
+        Assert::AreEqual({ 0x80001234 }, context.ByteAddressFromRealAddress(0xC0001234U));
+        Assert::AreEqual({ 0x90001234 }, context.ByteAddressFromRealAddress(0x90001234U));
+        Assert::AreEqual({ 0x90001234 }, context.ByteAddressFromRealAddress(0xD0001234U));
         Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0xA0001234U));
         Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0xB0001234U));
         Assert::AreEqual({ 0xFFFFFFFF }, context.ByteAddressFromRealAddress(0x00001234U));

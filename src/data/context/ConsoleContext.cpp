@@ -89,7 +89,12 @@ ra::ByteAddress ConsoleContext::ByteAddressFromRealAddress(ra::ByteAddress nReal
         {
             const auto nRegionSize = pRegion.EndAddress - pRegion.StartAddress;
             if (nRealAddress < pRegion.RealAddress + nRegionSize)
+            {
+                if (pRegion.Type == ConsoleContext::AddressType::Unused)
+                    break;
+
                 return (nRealAddress - pRegion.RealAddress) + pRegion.StartAddress;
+            }
         }
     }
 
@@ -178,7 +183,7 @@ bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMas
         case ConsoleID::GameCube:
         case ConsoleID::WII:
             *nReadSize = MemSize::ThirtyTwoBitBigEndian;
-            *nMask = 0x01FFFFFF;
+            *nMask = 0x3FFFFFFF;
             *nOffset = 0;
             return true;
 

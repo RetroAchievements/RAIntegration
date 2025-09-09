@@ -1133,6 +1133,14 @@ void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBl
             continue;
         }
 
+        if (!pMemoryBlock.read && !pMemoryBlock.readBlock)
+        {
+            nCount -= gsl::narrow_cast<uint32_t>(pMemoryBlock.size);
+            nAddress += gsl::narrow_cast<ra::ByteAddress>(pMemoryBlock.size);
+            nAdjustedAddress = 0;
+            continue;
+        }
+
         const uint32_t nBlockRemaining = gsl::narrow_cast<uint32_t>(pMemoryBlock.size) - nAdjustedAddress;
         uint32_t nToRead = std::min(nCount, nBlockRemaining);
         nCount -= nToRead;

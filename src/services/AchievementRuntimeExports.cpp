@@ -69,17 +69,43 @@ public:
     static void ResetMemory()
     {
         const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-        const auto nNumBytes = pConsoleContext.MaxAddress() + 1;
 
         auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
         pEmulatorContext.ClearMemoryBlocks();
 
-        if (nNumBytes > 1)
+        gsl::index nIndex = 0;
+        uint32_t nBytes = 0;
+        for (const auto& pRegion : pConsoleContext.MemoryRegions())
         {
-            pEmulatorContext.AddMemoryBlock(0, nNumBytes,
-                                            AchievementRuntimeExports::ReadMemoryByte,
-                                            AchievementRuntimeExports::WriteMemoryByte);
-            pEmulatorContext.AddMemoryBlockReader(0, AchievementRuntimeExports::ReadMemoryBlock);
+            const auto nSize = pRegion.EndAddress - pRegion.StartAddress + 1;
+
+            if (pRegion.Type == ra::data::context::ConsoleContext::AddressType::Unused)
+            {
+                if (nBytes > 0)
+                {
+                    pEmulatorContext.AddMemoryBlock(nIndex, nBytes,
+                        AchievementRuntimeExports::ReadMemoryByte,
+                        AchievementRuntimeExports::WriteMemoryByte);
+                    pEmulatorContext.AddMemoryBlockReader(nIndex, AchievementRuntimeExports::ReadMemoryBlock);
+
+                    nBytes = 0;
+                    ++nIndex;
+                }
+
+                pEmulatorContext.AddMemoryBlock(nIndex++, nSize, nullptr, nullptr);
+            }
+            else
+            {
+                nBytes += nSize;
+            }
+        }
+
+        if (nBytes > 0)
+        {
+            pEmulatorContext.AddMemoryBlock(nIndex, nBytes,
+                AchievementRuntimeExports::ReadMemoryByte,
+                AchievementRuntimeExports::WriteMemoryByte);
+            pEmulatorContext.AddMemoryBlockReader(nIndex, AchievementRuntimeExports::ReadMemoryBlock);
         }
     }
 

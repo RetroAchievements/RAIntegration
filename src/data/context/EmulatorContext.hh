@@ -185,12 +185,12 @@ public:
     /// <summary>
     /// Specifies functions to read and write memory in the emulator.
     /// </summary>
-    void AddMemoryBlock(gsl::index nIndex, size_t nBytes, MemoryReadFunction* pReader, MemoryWriteFunction* pWriter);
+    void AddMemoryBlock(gsl::index nIndex, size_t nBytes, MemoryReadFunction pReader, MemoryWriteFunction pWriter);
 
     /// <summary>
     /// Specifies functions to read chunks of memory in the emulator.
     /// </summary>
-    void AddMemoryBlockReader(gsl::index nIndex, MemoryReadBlockFunction* pReader);
+    void AddMemoryBlockReader(gsl::index nIndex, MemoryReadBlockFunction pReader);
 
     /// <summary>
     /// Clears all registered memory blocks so they can be rebuilt.

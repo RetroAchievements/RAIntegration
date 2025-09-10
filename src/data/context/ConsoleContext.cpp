@@ -181,9 +181,14 @@ bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMas
             return true;
 
         case ConsoleID::GameCube:
+            *nReadSize = MemSize::ThirtyTwoBitBigEndian;
+            *nMask = 0x01FFFFFF;
+            *nOffset = 0;
+            return true;
+
         case ConsoleID::WII:
             *nReadSize = MemSize::ThirtyTwoBitBigEndian;
-            *nMask = 0x3FFFFFFF;
+            *nMask = 0xBFFFFFFF;
             *nOffset = 0;
             return true;
 

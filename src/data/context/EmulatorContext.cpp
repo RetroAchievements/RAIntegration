@@ -637,7 +637,7 @@ void EmulatorContext::ClearMemoryBlocks()
 }
 
 void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
-    EmulatorContext::MemoryReadFunction* pReader, EmulatorContext::MemoryWriteFunction* pWriter)
+    EmulatorContext::MemoryReadFunction pReader, EmulatorContext::MemoryWriteFunction pWriter)
 {
     while (m_vMemoryBlocks.size() <= ra::to_unsigned(nIndex))
         m_vMemoryBlocks.emplace_back();
@@ -657,7 +657,7 @@ void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
 }
 
 void EmulatorContext::AddMemoryBlockReader(gsl::index nIndex,
-    EmulatorContext::MemoryReadBlockFunction* pReader)
+    EmulatorContext::MemoryReadBlockFunction pReader)
 {
     if (nIndex < gsl::narrow_cast<gsl::index>(m_vMemoryBlocks.size()))
         m_vMemoryBlocks.at(nIndex).readBlock = pReader;

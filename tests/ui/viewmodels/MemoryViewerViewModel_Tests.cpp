@@ -5,6 +5,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
@@ -31,6 +32,7 @@ private:
     class MemoryViewerViewModelHarness : public MemoryViewerViewModel
     {
     public:
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
@@ -1717,6 +1719,23 @@ public:
         viewer.mockEmulatorContext.ClearMemoryBlocks();
         Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
         Assert::AreEqual({ 0U }, viewer.GetAddress());
+    }
+
+    TEST_METHOD(TestTotalMemorySizeChangedUnusedBlock)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetFirstAddress(0);
+        viewer.SetAddress(0);
+
+        viewer.mockConsoleContext.ResetMemoryRegions();
+        viewer.mockConsoleContext.AddMemoryRegion(0, 0x3F, ra::data::context::ConsoleContext::AddressType::Unused, "Unused");
+        viewer.mockConsoleContext.AddMemoryRegion(0x40, 0xFF, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System");
+
+        // initial address should skip over the unused region
+        viewer.mockEmulatorContext.MockTotalMemorySizeChanged(256);
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 64U }, viewer.GetAddress());
     }
 
     TEST_METHOD(TestOnClickEightBit)

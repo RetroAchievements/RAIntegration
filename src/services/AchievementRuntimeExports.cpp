@@ -75,7 +75,7 @@ private:
         ra::data::context::EmulatorContext::MemoryReadBlockFunction* fReadBlock;
     } MemoryBlockWrapper;
 
-    static MemoryBlockWrapper s_memoryBlockWrappers[];
+    static std::array<AchievementRuntimeExports::MemoryBlockWrapper, 16> s_memoryBlockWrappers;
 
 public:
     static void ResetMemory()
@@ -96,20 +96,20 @@ public:
                 if (nBytes > 0)
                 {
                     pEmulatorContext.AddMemoryBlock(nIndex, nBytes,
-                        s_memoryBlockWrappers[nIndex].fReadByte,
-                        s_memoryBlockWrappers[nIndex].fWriteByte);
+                        s_memoryBlockWrappers.at(nIndex).fReadByte,
+                        s_memoryBlockWrappers.at(nIndex).fWriteByte);
                     pEmulatorContext.AddMemoryBlockReader(nIndex,
-                        s_memoryBlockWrappers[nIndex].fReadBlock);
+                        s_memoryBlockWrappers.at(nIndex).fReadBlock);
 
                     nBytes = 0;
                     ++nIndex;
-                    s_memoryBlockWrappers[nIndex].nOffset = pRegion.StartAddress;
+                    s_memoryBlockWrappers.at(nIndex).nOffset = pRegion.StartAddress;
                 }
 
                 pEmulatorContext.AddMemoryBlock(nIndex++, nSize, nullptr, nullptr);
 
-                Expects(nIndex < 16);
-                s_memoryBlockWrappers[nIndex].nOffset = pRegion.EndAddress + 1;
+                Expects(gsl::narrow_cast<size_t>(nIndex) < s_memoryBlockWrappers.size());
+                s_memoryBlockWrappers.at(nIndex).nOffset = pRegion.EndAddress + 1;
             }
             else
             {
@@ -120,10 +120,10 @@ public:
         if (nBytes > 0)
         {
             pEmulatorContext.AddMemoryBlock(nIndex, nBytes,
-                s_memoryBlockWrappers[nIndex].fReadByte,
-                s_memoryBlockWrappers[nIndex].fWriteByte);
+                s_memoryBlockWrappers.at(nIndex).fReadByte,
+                s_memoryBlockWrappers.at(nIndex).fWriteByte);
             pEmulatorContext.AddMemoryBlockReader(nIndex,
-                s_memoryBlockWrappers[nIndex].fReadBlock);
+                s_memoryBlockWrappers.at(nIndex).fReadBlock);
         }
     }
 
@@ -892,53 +892,53 @@ private:
         return 0;
     }
 
-    static uint8_t ReadMemoryByte1(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[1].nOffset); }
-    static uint8_t ReadMemoryByte2(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[2].nOffset); }
-    static uint8_t ReadMemoryByte3(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[3].nOffset); }
-    static uint8_t ReadMemoryByte4(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[4].nOffset); }
-    static uint8_t ReadMemoryByte5(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[5].nOffset); }
-    static uint8_t ReadMemoryByte6(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[6].nOffset); }
-    static uint8_t ReadMemoryByte7(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[7].nOffset); }
-    static uint8_t ReadMemoryByte8(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[8].nOffset); }
-    static uint8_t ReadMemoryByte9(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[9].nOffset); }
-    static uint8_t ReadMemoryByte10(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[10].nOffset); }
-    static uint8_t ReadMemoryByte11(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[11].nOffset); }
-    static uint8_t ReadMemoryByte12(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[12].nOffset); }
-    static uint8_t ReadMemoryByte13(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[13].nOffset); }
-    static uint8_t ReadMemoryByte14(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[14].nOffset); }
-    static uint8_t ReadMemoryByte15(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers[15].nOffset); }
+    static uint8_t ReadMemoryByte1(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(1).nOffset); }
+    static uint8_t ReadMemoryByte2(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(2).nOffset); }
+    static uint8_t ReadMemoryByte3(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(3).nOffset); }
+    static uint8_t ReadMemoryByte4(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(4).nOffset); }
+    static uint8_t ReadMemoryByte5(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(5).nOffset); }
+    static uint8_t ReadMemoryByte6(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(6).nOffset); }
+    static uint8_t ReadMemoryByte7(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(7).nOffset); }
+    static uint8_t ReadMemoryByte8(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(8).nOffset); }
+    static uint8_t ReadMemoryByte9(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(9).nOffset); }
+    static uint8_t ReadMemoryByte10(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(10).nOffset); }
+    static uint8_t ReadMemoryByte11(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(11).nOffset); }
+    static uint8_t ReadMemoryByte12(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(12).nOffset); }
+    static uint8_t ReadMemoryByte13(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(13).nOffset); }
+    static uint8_t ReadMemoryByte14(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(14).nOffset); }
+    static uint8_t ReadMemoryByte15(uint32_t address) noexcept { return ReadMemoryByte(address + s_memoryBlockWrappers.at(15).nOffset); }
 
-    static void WriteMemoryByte1(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[1].nOffset, value); }
-    static void WriteMemoryByte2(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[2].nOffset, value); }
-    static void WriteMemoryByte3(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[3].nOffset, value); }
-    static void WriteMemoryByte4(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[4].nOffset, value); }
-    static void WriteMemoryByte5(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[5].nOffset, value); }
-    static void WriteMemoryByte6(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[6].nOffset, value); }
-    static void WriteMemoryByte7(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[7].nOffset, value); }
-    static void WriteMemoryByte8(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[8].nOffset, value); }
-    static void WriteMemoryByte9(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[9].nOffset, value); }
-    static void WriteMemoryByte10(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[10].nOffset, value); }
-    static void WriteMemoryByte11(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[11].nOffset, value); }
-    static void WriteMemoryByte12(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[12].nOffset, value); }
-    static void WriteMemoryByte13(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[13].nOffset, value); }
-    static void WriteMemoryByte14(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[14].nOffset, value); }
-    static void WriteMemoryByte15(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers[15].nOffset, value); }
+    static void WriteMemoryByte1(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(1).nOffset, value); }
+    static void WriteMemoryByte2(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(2).nOffset, value); }
+    static void WriteMemoryByte3(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(3).nOffset, value); }
+    static void WriteMemoryByte4(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(4).nOffset, value); }
+    static void WriteMemoryByte5(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(5).nOffset, value); }
+    static void WriteMemoryByte6(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(6).nOffset, value); }
+    static void WriteMemoryByte7(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(7).nOffset, value); }
+    static void WriteMemoryByte8(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(8).nOffset, value); }
+    static void WriteMemoryByte9(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(9).nOffset, value); }
+    static void WriteMemoryByte10(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(10).nOffset, value); }
+    static void WriteMemoryByte11(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(11).nOffset, value); }
+    static void WriteMemoryByte12(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(12).nOffset, value); }
+    static void WriteMemoryByte13(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(13).nOffset, value); }
+    static void WriteMemoryByte14(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(14).nOffset, value); }
+    static void WriteMemoryByte15(uint32_t address, uint8_t value) noexcept { return WriteMemoryByte(address + s_memoryBlockWrappers.at(15).nOffset, value); }
 
-    static uint32_t ReadMemoryBlock1(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[1].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock2(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[2].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock3(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[3].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock4(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[4].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock5(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[5].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock6(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[6].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock7(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[7].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock8(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[8].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock9(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[9].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock10(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[10].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock11(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[11].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock12(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[12].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock13(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[13].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock14(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[14].nOffset, buffer, num_bytes); }
-    static uint32_t ReadMemoryBlock15(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers[15].nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock1(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(1).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock2(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(2).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock3(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(3).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock4(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(4).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock5(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(5).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock6(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(6).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock7(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(7).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock8(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(8).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock9(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(9).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock10(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(10).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock11(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(11).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock12(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(12).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock13(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(13).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock14(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(14).nOffset, buffer, num_bytes); }
+    static uint32_t ReadMemoryBlock15(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false) { return ReadMemoryBlock(address + s_memoryBlockWrappers.at(15).nOffset, buffer, num_bytes); }
 
     static void RaisePauseEvent()
     {
@@ -1008,24 +1008,24 @@ bool AchievementRuntimeExports::s_bUpdatingHardcore = false;
 rc_client_raintegration_menu_t* AchievementRuntimeExports::s_pIntegrationMenu = nullptr;
 rc_buffer_t AchievementRuntimeExports::s_pIntegrationMenuBuffer{};
 
-AchievementRuntimeExports::MemoryBlockWrapper AchievementRuntimeExports::s_memoryBlockWrappers[] =
+std::array<AchievementRuntimeExports::MemoryBlockWrapper, 16> AchievementRuntimeExports::s_memoryBlockWrappers
 {
-    {0, AchievementRuntimeExports::ReadMemoryByte, AchievementRuntimeExports::WriteMemoryByte, AchievementRuntimeExports::ReadMemoryBlock },
-    {0, AchievementRuntimeExports::ReadMemoryByte1, AchievementRuntimeExports::WriteMemoryByte1, AchievementRuntimeExports::ReadMemoryBlock1 },
-    {0, AchievementRuntimeExports::ReadMemoryByte2, AchievementRuntimeExports::WriteMemoryByte2, AchievementRuntimeExports::ReadMemoryBlock2 },
-    {0, AchievementRuntimeExports::ReadMemoryByte3, AchievementRuntimeExports::WriteMemoryByte3, AchievementRuntimeExports::ReadMemoryBlock3 },
-    {0, AchievementRuntimeExports::ReadMemoryByte4, AchievementRuntimeExports::WriteMemoryByte4, AchievementRuntimeExports::ReadMemoryBlock4 },
-    {0, AchievementRuntimeExports::ReadMemoryByte5, AchievementRuntimeExports::WriteMemoryByte5, AchievementRuntimeExports::ReadMemoryBlock5 },
-    {0, AchievementRuntimeExports::ReadMemoryByte6, AchievementRuntimeExports::WriteMemoryByte6, AchievementRuntimeExports::ReadMemoryBlock6 },
-    {0, AchievementRuntimeExports::ReadMemoryByte7, AchievementRuntimeExports::WriteMemoryByte7, AchievementRuntimeExports::ReadMemoryBlock7 },
-    {0, AchievementRuntimeExports::ReadMemoryByte8, AchievementRuntimeExports::WriteMemoryByte8, AchievementRuntimeExports::ReadMemoryBlock8 },
-    {0, AchievementRuntimeExports::ReadMemoryByte9, AchievementRuntimeExports::WriteMemoryByte9, AchievementRuntimeExports::ReadMemoryBlock9 },
-    {0, AchievementRuntimeExports::ReadMemoryByte10, AchievementRuntimeExports::WriteMemoryByte10, AchievementRuntimeExports::ReadMemoryBlock10 },
-    {0, AchievementRuntimeExports::ReadMemoryByte11, AchievementRuntimeExports::WriteMemoryByte11, AchievementRuntimeExports::ReadMemoryBlock11 },
-    {0, AchievementRuntimeExports::ReadMemoryByte12, AchievementRuntimeExports::WriteMemoryByte12, AchievementRuntimeExports::ReadMemoryBlock12 },
-    {0, AchievementRuntimeExports::ReadMemoryByte13, AchievementRuntimeExports::WriteMemoryByte13, AchievementRuntimeExports::ReadMemoryBlock13 },
-    {0, AchievementRuntimeExports::ReadMemoryByte14, AchievementRuntimeExports::WriteMemoryByte14, AchievementRuntimeExports::ReadMemoryBlock14 },
-    {0, AchievementRuntimeExports::ReadMemoryByte15, AchievementRuntimeExports::WriteMemoryByte15, AchievementRuntimeExports::ReadMemoryBlock15 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte, AchievementRuntimeExports::WriteMemoryByte, AchievementRuntimeExports::ReadMemoryBlock },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte1, AchievementRuntimeExports::WriteMemoryByte1, AchievementRuntimeExports::ReadMemoryBlock1 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte2, AchievementRuntimeExports::WriteMemoryByte2, AchievementRuntimeExports::ReadMemoryBlock2 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte3, AchievementRuntimeExports::WriteMemoryByte3, AchievementRuntimeExports::ReadMemoryBlock3 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte4, AchievementRuntimeExports::WriteMemoryByte4, AchievementRuntimeExports::ReadMemoryBlock4 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte5, AchievementRuntimeExports::WriteMemoryByte5, AchievementRuntimeExports::ReadMemoryBlock5 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte6, AchievementRuntimeExports::WriteMemoryByte6, AchievementRuntimeExports::ReadMemoryBlock6 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte7, AchievementRuntimeExports::WriteMemoryByte7, AchievementRuntimeExports::ReadMemoryBlock7 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte8, AchievementRuntimeExports::WriteMemoryByte8, AchievementRuntimeExports::ReadMemoryBlock8 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte9, AchievementRuntimeExports::WriteMemoryByte9, AchievementRuntimeExports::ReadMemoryBlock9 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte10, AchievementRuntimeExports::WriteMemoryByte10, AchievementRuntimeExports::ReadMemoryBlock10 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte11, AchievementRuntimeExports::WriteMemoryByte11, AchievementRuntimeExports::ReadMemoryBlock11 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte12, AchievementRuntimeExports::WriteMemoryByte12, AchievementRuntimeExports::ReadMemoryBlock12 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte13, AchievementRuntimeExports::WriteMemoryByte13, AchievementRuntimeExports::ReadMemoryBlock13 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte14, AchievementRuntimeExports::WriteMemoryByte14, AchievementRuntimeExports::ReadMemoryBlock14 },
+    AchievementRuntimeExports::MemoryBlockWrapper{0, AchievementRuntimeExports::ReadMemoryByte15, AchievementRuntimeExports::WriteMemoryByte15, AchievementRuntimeExports::ReadMemoryBlock15 },
 };
 
 } // namespace services

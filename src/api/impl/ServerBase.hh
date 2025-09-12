@@ -5,7 +5,6 @@
 #include "api/IServer.hh"
 
 #include "RA_StringUtils.h"
-#include "RA_StringUtils.h"
 
 #include <string>
 
@@ -63,6 +62,11 @@ public:
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request&) override
     {
         return UnsupportedApi<FetchLeaderboardInfo::Response>(FetchLeaderboardInfo::Name());
+    }
+
+    UpdateRichPresence::Response UpdateRichPresence(const UpdateRichPresence::Request&) override
+    {
+        return UnsupportedApi<UpdateRichPresence::Response>(UpdateRichPresence::Name());
     }
 
     // === other functions ===

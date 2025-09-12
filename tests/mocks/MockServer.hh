@@ -105,6 +105,11 @@ public:
         return HandleRequest<ra::api::FetchLeaderboardInfo>(request);
     }
 
+    UpdateRichPresence::Response UpdateRichPresence(const UpdateRichPresence::Request& request) override
+    {
+        return HandleRequest<ra::api::UpdateRichPresence>(request);
+    }
+
     // === other functions ===
 
     LatestClient::Response LatestClient(const LatestClient::Request& request) override

@@ -4,6 +4,7 @@
 #include "api\UpdateAchievement.hh"
 #include "api\UpdateCodeNote.hh"
 #include "api\UpdateLeaderboard.hh"
+#include "api\UpdateRichPresence.hh"
 #include "api\UploadBadge.hh"
 
 #include "data\context\GameContext.hh"
@@ -36,6 +37,10 @@ void AssetUploadViewModel::QueueAsset(ra::data::models::AssetModelBase& pAsset)
 
         case ra::data::models::AssetType::Leaderboard:
             QueueLeaderboard(*(dynamic_cast<ra::data::models::LeaderboardModel*>(&pAsset)));
+            break;
+
+        case ra::data::models::AssetType::RichPresence:
+            QueueRichPresence(*(dynamic_cast<ra::data::models::RichPresenceModel*>(&pAsset)));
             break;
 
         case ra::data::models::AssetType::CodeNotes:
@@ -90,6 +95,17 @@ void AssetUploadViewModel::QueueLeaderboard(ra::data::models::LeaderboardModel& 
     QueueTask([this, pLeaderboard = &pLeaderboard]()
     {
         UploadLeaderboard(*pLeaderboard);
+    });
+}
+
+void AssetUploadViewModel::QueueRichPresence(ra::data::models::RichPresenceModel& pRichPresence)
+{
+    auto& pItem = m_vUploadQueue.emplace_back();
+    pItem.pAsset = &pRichPresence;
+
+    QueueTask([this, pRichPresence = &pRichPresence]()
+    {
+        UploadRichPresence(*pRichPresence);
     });
 }
 
@@ -277,7 +293,7 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
 
     const auto& response = request.Call();
 
-    // update the achievement
+    // update the achievement model
     if (response.Succeeded())
     {
         if (pAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
@@ -341,7 +357,7 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
 
     const auto& response = request.Call();
 
-    // update the achievement
+    // update the leaderboard model
     if (response.Succeeded())
     {
         if (pLeaderboard.GetCategory() == ra::data::models::AssetCategory::Local)
@@ -385,6 +401,47 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
                     pScan.sErrorMessage = "At least one value condition is required";
             }
 
+            pScan.nState = response.Succeeded() ? UploadState::Success : UploadState::Failed;
+            break;
+        }
+    }
+}
+
+void AssetUploadViewModel::UploadRichPresence(ra::data::models::RichPresenceModel& pRichPresence)
+{
+    std::string sErrorMessage;
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+
+    ra::api::UpdateRichPresence::Request request;
+    request.GameId = pGameContext.ActiveGameId();
+    request.Script = pRichPresence.GetScript();
+
+    const auto& response = request.Call();
+
+    // update the rich presence model
+    if (response.Succeeded())
+    {
+        if (pRichPresence.GetCategory() == ra::data::models::AssetCategory::Local)
+            pRichPresence.SetCategory(ra::data::models::AssetCategory::Core);
+
+        pRichPresence.UpdateLocalCheckpoint();
+        pRichPresence.UpdateServerCheckpoint();
+    }
+    else if (response.Result == ra::api::ApiResult::Incomplete)
+    {
+        Rest();
+        UploadRichPresence(pRichPresence);
+        return;
+    }
+
+    // update the queue
+    std::lock_guard<std::mutex> pLock(m_pMutex);
+    for (auto& pScan : m_vUploadQueue)
+    {
+        if (pScan.pAsset == &pRichPresence)
+        {
+            pScan.sErrorMessage = sErrorMessage;
             pScan.nState = response.Succeeded() ? UploadState::Success : UploadState::Failed;
             break;
         }

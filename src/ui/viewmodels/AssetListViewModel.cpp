@@ -643,17 +643,9 @@ void AssetListViewModel::FilteredListMonitor::OnEndViewModelCollectionUpdate()
     }
 }
 
-static bool constexpr CanPublish(ra::data::models::AssetType nAssetType) noexcept
+static bool constexpr CanPublish(ra::data::models::AssetType) noexcept
 {
-    switch (nAssetType)
-    {
-        case ra::data::models::AssetType::RichPresence:
-            // there's currently no API to publish rich presence changes
-            return false;
-
-        default:
-            return true;
-    }
+    return true;
 }
 
 void AssetListViewModel::UpdateButtons()
@@ -686,7 +678,7 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasUnofficial = false;
     bool bHasCore = false;
     bool bHasLocal = false;
-    gsl::index nRichPresenceSelectionIndex = -1;
+    bool bHasRichPresenceSelection = false;
     bool bHasNonRichPresenceSelection = false;
 
     const bool bOffline = ra::services::ServiceLocator::Get<ra::services::IConfiguration>().
@@ -702,7 +694,6 @@ void AssetListViewModel::DoUpdateButtons()
     else
     {
         SetValue(CanCreateProperty, true);
-        SetValue(CanActivateProperty, m_vFilteredAssets.Count() > 0);
 
         for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
         {
@@ -770,7 +761,7 @@ void AssetListViewModel::DoUpdateButtons()
                     switch (pItem->GetType())
                     {
                         case ra::data::models::AssetType::RichPresence:
-                            nRichPresenceSelectionIndex = i;
+                            bHasRichPresenceSelection = true;
                             break;
                         default:
                             bHasNonRichPresenceSelection = true;
@@ -798,47 +789,28 @@ void AssetListViewModel::DoUpdateButtons()
         }
     }
 
-    if (nRichPresenceSelectionIndex != -1)
-    {
-        SetValue(CanCreateProperty, true);
-        SetValue(CanCloneProperty, false);
-
-        SetValue(ActivateButtonTextProperty, L"&Activate");
-        SetValue(CanActivateProperty, false);
-
-        SetValue(SaveButtonTextProperty, L"&Save");
-        SetValue(CanSaveProperty, false);
-
-        SetValue(ResetButtonTextProperty, L"&Reset");
-        SetValue(CanResetProperty, false);
-
-        SetValue(RevertButtonTextProperty, L"Re&vert");
-
-        std::vector<AssetSummaryViewModel> vSelectedAssets;
-        SetValue(CanRevertProperty,
-                 (!bHasNonRichPresenceSelection &&
-                  m_vFilteredAssets.GetItemAt(nRichPresenceSelectionIndex)->GetCategory() == ra::data::models::AssetCategory::Core));
-
-        return;
-    }
-
+    // Activate/Deactivate
     if (bHasInactiveSelection)
     {
         SetValue(ActivateButtonTextProperty, L"&Activate");
-        SetValue(CanCloneProperty, true);
+        SetValue(CanActivateProperty, true);
+        SetValue(CanCloneProperty, !bHasRichPresenceSelection);
     }
     else if (bHasActiveSelection)
     {
         SetValue(ActivateButtonTextProperty, L"De&activate");
-        SetValue(CanCloneProperty, true);
+        SetValue(CanActivateProperty, !bHasRichPresenceSelection);
+        SetValue(CanCloneProperty, !bHasRichPresenceSelection);
     }
     else
     {
         Expects(!bHasSelection); // a selected item should be tallied as either active or inactive
         SetValue(ActivateButtonTextProperty, ActivateButtonTextProperty.GetDefaultValue());
+        SetValue(CanActivateProperty, m_vFilteredAssets.Count() > 0);
         SetValue(CanCloneProperty, false);
     }
 
+    // Save/Publish/Promote/Demote
     if (bHasModifiedSelection)
     {
         SetValue(SaveButtonTextProperty, L"&Save");
@@ -857,7 +829,7 @@ void AssetListViewModel::DoUpdateButtons()
     else if (bHasCoreSelection)
     {
         SetValue(SaveButtonTextProperty, L"De&mote");
-        SetValue(CanSaveProperty, !bOffline);
+        SetValue(CanSaveProperty, !bOffline && bHasNonRichPresenceSelection);
     }
     else if (bHasSelection)
     {
@@ -885,12 +857,13 @@ void AssetListViewModel::DoUpdateButtons()
         SetValue(CanSaveProperty, false);
     }
 
+    // Reset
     if (bGameLoaded)
     {
         if (bHasSelection)
         {
             SetValue(ResetButtonTextProperty, L"&Reset");
-            SetValue(CanResetProperty, bHasNonNewSelection);
+            SetValue(CanResetProperty, bHasNonNewSelection && !bHasRichPresenceSelection);
         }
         else
         {
@@ -904,6 +877,7 @@ void AssetListViewModel::DoUpdateButtons()
         SetValue(CanResetProperty, false);
     }
 
+    // Revert/Delete
     if (bGameLoaded)
     {
         bool bCanRevert = true;
@@ -914,6 +888,7 @@ void AssetListViewModel::DoUpdateButtons()
         else if (bHasLocalSelection)
         {
             SetValue(RevertButtonTextProperty, L"&Delete");
+            bCanRevert = !bHasRichPresenceSelection;
         }
         else if (bHasLocal && !bHasCore && !bHasUnofficial)
         {
@@ -1209,10 +1184,17 @@ void AssetListViewModel::SaveSelected()
 
         for (const auto* pAsset : vSelectedAssets)
         {
-            if (pAsset != nullptr && pAsset->GetType() == ra::data::models::AssetType::Leaderboard)
+            if (pAsset != nullptr)
             {
-                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Leaderboards cannot be demoted.");
-                return;
+                switch (pAsset->GetType())
+                {
+                    case ra::data::models::AssetType::Leaderboard:
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Leaderboards cannot be demoted.");
+                        return;
+                    case ra::data::models::AssetType::RichPresence:
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Rich Presence cannot be demoted.");
+                        return;
+                }
             }
         }
 

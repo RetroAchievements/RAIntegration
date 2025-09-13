@@ -24,6 +24,7 @@ public:
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) override;
     UpdateLeaderboard::Response UpdateLeaderboard(const UpdateLeaderboard::Request& request) override;
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) override;
+    UpdateRichPresence::Response UpdateRichPresence(const UpdateRichPresence::Request& request) override;
     LatestClient::Response LatestClient(const LatestClient::Request& request) override;
     FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) override;
     SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) override;

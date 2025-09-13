@@ -7,6 +7,7 @@
 #include "data\models\AchievementModel.hh"
 #include "data\models\CodeNotesModel.hh"
 #include "data\models\LeaderboardModel.hh"
+#include "data\models\RichPresenceModel.hh"
 
 namespace ra {
 namespace ui {
@@ -20,6 +21,7 @@ public:
     void QueueAsset(ra::data::models::AssetModelBase& pAsset);
     void QueueAchievement(ra::data::models::AchievementModel& pAchievement);
     void QueueLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard);
+    void QueueRichPresence(ra::data::models::RichPresenceModel& pRichPresence);
     void QueueCodeNotes(ra::data::models::CodeNotesModel& pLeaderboard);
     void QueueCodeNote(ra::data::models::CodeNotesModel& pCodeNotes, ra::ByteAddress nAddress);
 
@@ -58,6 +60,7 @@ private:
     void UploadBadge(const std::wstring& sBadge);
     void UploadAchievement(ra::data::models::AchievementModel& pAchievement);
     void UploadLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard);
+    void UploadRichPresence(ra::data::models::RichPresenceModel& pRichPresence);
     void UploadCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::ByteAddress nAddress);
 
     std::vector<UploadItem> m_vUploadQueue;

@@ -904,6 +904,49 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
     return response;
 }
 
+UpdateRichPresence::Response ConnectedServer::UpdateRichPresence(const UpdateRichPresence::Request& request)
+{
+    UpdateRichPresence::Response response;
+
+    rc_api_update_rich_presence_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+
+    api_params.game_id = request.GameId;
+    api_params.script = request.Script.c_str();
+
+    rc_api_request_t api_request;
+    const int result = rc_api_init_update_rich_presence_request(&api_request, &api_params);
+    if (result == RC_OK)
+    {
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, UpdateRichPresence::Name(), httpResponse, response))
+        {
+            rc_api_update_rich_presence_response_t api_response;
+            rc_api_server_response_t server_response;
+            HttpResponseToServerResponse(httpResponse, &server_response);
+
+            const auto nResult = rc_api_process_update_rich_presence_server_response(&api_response, &server_response);
+
+            if (ValidateResponse(nResult, api_response.response, UpdateRichPresence::Name(), httpResponse.StatusCode(), response))
+                response.Result = ApiResult::Success;
+
+            rc_api_destroy_update_rich_presence_response(&api_response);
+        }
+    }
+    else
+    {
+        response.Result = ApiResult::Failed;
+        response.ErrorMessage = rc_error_str(result);
+    }
+
+    rc_api_destroy_request(&api_request);
+    return response;
+}
+
 LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request& request)
 {
     LatestClient::Response response;

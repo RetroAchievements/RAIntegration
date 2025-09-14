@@ -102,6 +102,7 @@ private:
         Deactivate,
         ActivateAll,
         ActivateDisabled,
+        DeactivateDisabled,
         ActivateAllDisabled
     };
 
@@ -138,7 +139,8 @@ private:
         Delete,
         DeleteAll,
         RevertDisabled,
-        RevertAllDisabled
+        RevertAllDisabled,
+        DeleteDisabled
     };
 
     enum class CreateButtonState
@@ -183,27 +185,32 @@ private:
             {
                 case ActivateButtonState::Activate:
                     Assert::AreEqual(std::wstring(L"&Activate"), GetValue(ActivateButtonTextProperty));
-                    Assert::IsTrue(CanActivate());
+                    Assert::IsTrue(CanActivate(), L"Activate button should not be disabled");
                     break;
 
                 case ActivateButtonState::Deactivate:
                     Assert::AreEqual(std::wstring(L"De&activate"), GetValue(ActivateButtonTextProperty));
-                    Assert::IsTrue(CanActivate());
+                    Assert::IsTrue(CanActivate(), L"Deactivate button should not be disabled");
+                    break;
+
+                case ActivateButtonState::DeactivateDisabled:
+                    Assert::AreEqual(std::wstring(L"De&activate"), GetValue(ActivateButtonTextProperty));
+                    Assert::IsFalse(CanActivate(), L"Deactivate button should be disabled");
                     break;
 
                 case ActivateButtonState::ActivateAll:
                     Assert::AreEqual(std::wstring(L"&Activate All"), GetValue(ActivateButtonTextProperty));
-                    Assert::IsTrue(CanActivate());
+                    Assert::IsTrue(CanActivate(), L"Activate All button should not be disabled");
                     break;
 
                 case ActivateButtonState::ActivateAllDisabled:
                     Assert::AreEqual(std::wstring(L"&Activate All"), GetValue(ActivateButtonTextProperty));
-                    Assert::IsFalse(CanActivate());
+                    Assert::IsFalse(CanActivate(), L"Activate All button should be disabled");
                     break;
 
                 case ActivateButtonState::ActivateDisabled:
                     Assert::AreEqual(std::wstring(L"&Activate"), GetValue(ActivateButtonTextProperty));
-                    Assert::IsFalse(CanActivate());
+                    Assert::IsFalse(CanActivate(), L"Activate button should be disabled");
                     break;
             }
         }
@@ -214,72 +221,72 @@ private:
             {
                 case SaveButtonState::Save:
                     Assert::AreEqual(std::wstring(L"&Save"), GetValue(SaveButtonTextProperty));
-                    Assert::IsTrue(CanSave());
+                    Assert::IsTrue(CanSave(), L"Save button should not be disabled");
                     break;
 
                 case SaveButtonState::Publish:
                     Assert::AreEqual(std::wstring(L"Publi&sh"), GetValue(SaveButtonTextProperty));
-                    Assert::IsTrue(CanSave());
+                    Assert::IsTrue(CanSave(), L"Publish button should not be disabled");
                     break;
 
                 case SaveButtonState::Promote:
                     Assert::AreEqual(std::wstring(L"Pro&mote"), GetValue(SaveButtonTextProperty));
-                    Assert::IsTrue(CanSave());
+                    Assert::IsTrue(CanSave(), L"Promote button should not be disabled");
                     break;
 
                 case SaveButtonState::Demote:
                     Assert::AreEqual(std::wstring(L"De&mote"), GetValue(SaveButtonTextProperty));
-                    Assert::IsTrue(CanSave());
+                    Assert::IsTrue(CanSave(), L"Demote button should not be disabled");
                     break;
 
                 case SaveButtonState::SaveDisabled:
                     Assert::AreEqual(std::wstring(L"&Save"), GetValue(SaveButtonTextProperty));
-                    Assert::IsFalse(CanSave());
+                    Assert::IsFalse(CanSave(), L"Save button should be disabled");
                     break;
 
                 case SaveButtonState::PublishDisabled:
                     Assert::AreEqual(std::wstring(L"Publi&sh"), GetValue(SaveButtonTextProperty));
-                    Assert::IsFalse(CanSave());
+                    Assert::IsFalse(CanSave(), L"Publish button should be disabled");
                     break;
 
                 case SaveButtonState::PromoteDisabled:
                     Assert::AreEqual(std::wstring(L"Pro&mote"), GetValue(SaveButtonTextProperty));
-                    Assert::IsFalse(CanSave());
+                    Assert::IsFalse(CanSave(), L"Promote button should be disabled");
                     break;
 
                 case SaveButtonState::DemoteDisabled:
                     Assert::AreEqual(std::wstring(L"De&mote"), GetValue(SaveButtonTextProperty));
-                    Assert::IsFalse(CanSave());
+                    Assert::IsFalse(CanSave(), L"Demote button should be disabled");
                     break;
 
                 case SaveButtonState::SaveAll:
                     Assert::AreEqual(std::wstring(L"&Save All"), GetValue(SaveButtonTextProperty));
-                    Assert::IsTrue(CanSave());
+                    Assert::IsTrue(CanSave(), L"Save All button should not be disabled");
                     break;
 
                 case SaveButtonState::PublishAll:
                     Assert::AreEqual(std::wstring(L"Publi&sh All"), GetValue(SaveButtonTextProperty));
-                    Assert::IsTrue(CanSave());
+                    Assert::IsTrue(CanSave(), L"Publish All button should not be disabled");
                     break;
 
                 case SaveButtonState::PromoteAll:
                     Assert::AreEqual(std::wstring(L"Pro&mote All"), GetValue(SaveButtonTextProperty));
-                    Assert::IsTrue(CanSave());
+                    Assert::IsTrue(CanSave(), L"Promote All button should not be disabled");
                     break;
 
                 case SaveButtonState::SaveAllDisabled:
                     Assert::AreEqual(std::wstring(L"&Save All"), GetValue(SaveButtonTextProperty));
-                    Assert::IsFalse(CanSave());
+                    Assert::IsFalse(CanSave(), L"Save All button should be disabled");
                     break;
 
                 case SaveButtonState::PublishAllDisabled:
                     Assert::AreEqual(std::wstring(L"Publi&sh All"), GetValue(SaveButtonTextProperty));
-                    Assert::IsFalse(CanSave());
+                    Assert::IsFalse(CanSave(), L"Publish All button should be disabled");
                     break;
 
                 case SaveButtonState::PromoteAllDisabled:
                     Assert::AreEqual(std::wstring(L"Pro&mote All"), GetValue(SaveButtonTextProperty));
-                    Assert::IsFalse(CanSave());
+                    Assert::IsFalse(CanSave(), L"Promote All button should be disabled");
                     break;
             }
         }
@@ -290,22 +297,22 @@ private:
             {
                 case ResetButtonState::Reset:
                     Assert::AreEqual(std::wstring(L"&Reset"), GetValue(ResetButtonTextProperty));
-                    Assert::IsTrue(CanReset());
+                    Assert::IsTrue(CanReset(), L"Reset button should not be disabled");
                     break;
 
                 case ResetButtonState::ResetDisabled:
                     Assert::AreEqual(std::wstring(L"&Reset"), GetValue(ResetButtonTextProperty));
-                    Assert::IsFalse(CanReset());
+                    Assert::IsFalse(CanReset(), L"Reset button should be disabled");
                     break;
 
                 case ResetButtonState::ResetAll:
                     Assert::AreEqual(std::wstring(L"&Reset All"), GetValue(ResetButtonTextProperty));
-                    Assert::IsTrue(CanReset());
+                    Assert::IsTrue(CanReset(), L"Reset All button should not be disabled");
                     break;
 
                 case ResetButtonState::ResetAllDisabled:
                     Assert::AreEqual(std::wstring(L"&Reset All"), GetValue(ResetButtonTextProperty));
-                    Assert::IsFalse(CanReset());
+                    Assert::IsFalse(CanReset(), L"Reset All button should be disabled");
                     break;
             }
         }
@@ -316,32 +323,37 @@ private:
             {
                 case RevertButtonState::Revert:
                     Assert::AreEqual(std::wstring(L"Re&vert"), GetValue(RevertButtonTextProperty));
-                    Assert::IsTrue(CanRevert());
+                    Assert::IsTrue(CanRevert(), L"Revert button should not be disabled");
                     break;
 
                 case RevertButtonState::RevertAll:
                     Assert::AreEqual(std::wstring(L"Re&vert All"), GetValue(RevertButtonTextProperty));
-                    Assert::IsTrue(CanRevert());
+                    Assert::IsTrue(CanRevert(), L"Revert All button should not be disabled");
                     break;
 
                 case RevertButtonState::Delete:
                     Assert::AreEqual(std::wstring(L"&Delete"), GetValue(RevertButtonTextProperty));
-                    Assert::IsTrue(CanRevert());
+                    Assert::IsTrue(CanRevert(), L"Delete button should not be disabled");
                     break;
 
                 case RevertButtonState::DeleteAll:
                     Assert::AreEqual(std::wstring(L"&Delete"), GetValue(RevertButtonTextProperty));
-                    Assert::IsFalse(CanRevert());
+                    Assert::IsFalse(CanRevert(), L"Delete button should be disabled");
                     break;
 
                 case RevertButtonState::RevertDisabled:
                     Assert::AreEqual(std::wstring(L"Re&vert"), GetValue(RevertButtonTextProperty));
-                    Assert::IsFalse(CanRevert());
+                    Assert::IsFalse(CanRevert(), L"Revert button should be disabled");
                     break;
 
                 case RevertButtonState::RevertAllDisabled:
                     Assert::AreEqual(std::wstring(L"Re&vert All"), GetValue(RevertButtonTextProperty));
-                    Assert::IsFalse(CanRevert());
+                    Assert::IsFalse(CanRevert(), L"Revert All button should be disabled");
+                    break;
+
+                case RevertButtonState::DeleteDisabled:
+                    Assert::AreEqual(std::wstring(L"&Delete"), GetValue(RevertButtonTextProperty));
+                    Assert::IsFalse(CanRevert(), L"Delete button should be disabled");
                     break;
             }
         }
@@ -351,11 +363,11 @@ private:
             switch (nCreateButtonState)
             {
                 case CreateButtonState::Enabled:
-                    Assert::IsTrue(CanCreate());
+                    Assert::IsTrue(CanCreate(), L"Create button should not be disabled");
                     break;
 
                 case CreateButtonState::Disabled:
-                    Assert::IsFalse(CanCreate());
+                    Assert::IsFalse(CanCreate(), L"Create button should be disabled");
                     break;
             }
         }
@@ -365,11 +377,11 @@ private:
             switch (nCloneButtonState)
             {
                 case CloneButtonState::Enabled:
-                    Assert::IsTrue(CanClone());
+                    Assert::IsTrue(CanClone(), L"Clone button should not be disabled");
                     break;
 
                 case CloneButtonState::Disabled:
-                    Assert::IsFalse(CanClone());
+                    Assert::IsFalse(CanClone(), L"Clone button should be disabled");
                     break;
             }
         }
@@ -5595,7 +5607,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::ActivateDisabled, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::DemoteDisabled,
             ResetButtonState::ResetDisabled, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
@@ -5616,8 +5628,8 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::ActivateDisabled, SaveButtonState::SaveDisabled,
-            ResetButtonState::ResetDisabled, RevertButtonState::RevertDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
+            ResetButtonState::ResetDisabled, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -5630,14 +5642,15 @@ public:
         vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
         vmAssetList.AddRichPresence("Display:\nTest\n");
         vmAssetList.mockGameContext.Assets().FindRichPresence()->SetCategory(AssetCategory::Local);
+        vmAssetList.mockGameContext.Assets().FindRichPresence()->UpdateLocalCheckpoint();
 
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::ActivateDisabled, SaveButtonState::SaveDisabled,
-            ResetButtonState::ResetDisabled, RevertButtonState::RevertDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Publish,
+            ResetButtonState::ResetDisabled, RevertButtonState::DeleteDisabled,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -5658,14 +5671,14 @@ public:
         Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
         vmAssetList.ForceUpdateButtons();
 
-        vmAssetList.AssertButtonState(ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
+        vmAssetList.AssertButtonState(ActivateButtonState::ActivateAll, SaveButtonState::PublishAll,
                                       ResetButtonState::ResetAll, RevertButtonState::RevertAll,
                                       CreateButtonState::Enabled, CloneButtonState::Disabled);
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
 
-        vmAssetList.AssertButtonState(ActivateButtonState::ActivateDisabled, SaveButtonState::SaveDisabled,
+        vmAssetList.AssertButtonState(ActivateButtonState::Activate, SaveButtonState::Publish,
                                       ResetButtonState::ResetDisabled, RevertButtonState::Revert,
                                       CreateButtonState::Enabled, CloneButtonState::Disabled);
     }

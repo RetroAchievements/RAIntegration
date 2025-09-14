@@ -59,23 +59,21 @@ public:
 protected:
     void OnEndViewModelCollectionUpdate() override
     {
-        m_pOwner.UpdateColors();
+        if (m_bUpdateColors)
+        {
+            m_bUpdateColors = false;
+            m_pOwner.UpdateColors();
+        }
     }
 
-    void OnViewModelAdded(gsl::index nIndex) override
+    void OnViewModelAdded(gsl::index) override
     {
-        if (!m_vBookmarks.IsUpdating())
-        {
-            const auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
-            if (pBookmark != nullptr)
-                m_pOwner.UpdateColor(pBookmark->GetAddress());
-        }
+        UpdateColors();
     }
 
     void OnViewModelRemoved(gsl::index) override
     {
-        if (!m_vBookmarks.IsUpdating())
-            m_pOwner.UpdateColors();
+        UpdateColors();
     }
 
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override
@@ -89,14 +87,22 @@ protected:
         }
         else if (args.Property == ra::ui::viewmodels::MemoryWatchViewModel::AddressProperty)
         {
-            m_pOwner.UpdateColor(static_cast<ra::ByteAddress>(args.tOldValue));
-            m_pOwner.UpdateColor(static_cast<ra::ByteAddress>(args.tNewValue));
+            UpdateColors();
         }
     }
 
 private:
+    void UpdateColors()
+    {
+        if (!m_vBookmarks.IsUpdating())
+            m_pOwner.UpdateColors();
+        else
+            m_bUpdateColors = true;
+    }
+
     ViewModelCollection<ra::ui::viewmodels::MemoryWatchViewModel>& m_vBookmarks;
     MemoryViewerViewModel& m_pOwner;
+    bool m_bUpdateColors = false;
 };
 
 MemoryViewerViewModel::MemoryViewerViewModel()
@@ -774,7 +780,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
     const auto nSelectedAddress = GetAddress();
 
     const auto nMax = nFirstAddress + nVisibleLines * 16 - nAddress;
-    const auto nSize = std::min(pCodeNotes->GetCodeNoteBytes(nAddress), nMax);
+    const auto nSize = std::min(std::max(pCodeNotes->GetCodeNoteBytes(nAddress), 1U), nMax);
     for (unsigned i = 0; i < nSize; ++i)
     {
         auto nNewColor = (nAddress == nSelectedAddress) ?

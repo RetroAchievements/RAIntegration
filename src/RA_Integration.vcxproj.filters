@@ -1100,6 +1100,9 @@
     <ClInclude Include="ui\viewmodels\MemoryWatchListViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
+    <ClInclude Include="api\UpdateRichPresence.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

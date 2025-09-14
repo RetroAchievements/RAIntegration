@@ -9,9 +9,11 @@
 
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
+#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -145,6 +147,22 @@ private:
             vmLeaderboard->CreateLocalCheckpoint();
 
             return dynamic_cast<LeaderboardModel&>(m_pAssets.Append(std::move(vmLeaderboard)));
+        }
+
+        ra::data::models::RichPresenceModel& RichPresence()
+        {
+            auto* pRichPresence = m_pAssets.FindRichPresence();
+            if (pRichPresence == nullptr)
+            {
+                auto pNewRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
+                pNewRichPresence->SetScript("Display:\nTest\n");
+                pNewRichPresence->CreateServerCheckpoint();
+                pNewRichPresence->CreateLocalCheckpoint();
+                m_pAssets.Append(std::move(pNewRichPresence));
+                pRichPresence = m_pAssets.FindRichPresence();
+            }
+
+            return *pRichPresence;
         }
 
         ra::data::models::CodeNotesModel& CodeNotes()
@@ -1132,6 +1150,40 @@ public:
         Assert::AreEqual(AssetCategory::Core, pLeaderboard.GetCategory());
         Assert::AreEqual(7716U, pLeaderboard.GetID());
         Assert::AreEqual(AssetChanges::None, pLeaderboard.GetChanges());
+
+        vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestRichPresence)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        ra::services::mocks::MockAchievementRuntime mockRuntime;
+        ra::services::mocks::MockLocalStorage mockStorage;
+        mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, std::to_wstring(vmUpload.GameId), "Display:\nThis is a test.");
+
+        auto& pRichPresence = vmUpload.RichPresence();
+        pRichPresence.ReloadRichPresenceScript();
+        Assert::AreEqual(AssetChanges::Unpublished, pRichPresence.GetChanges());
+
+        vmUpload.QueueAsset(pRichPresence);
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateRichPresence>(
+            [&bApiCalled](const ra::api::UpdateRichPresence::Request& pRequest, ra::api::UpdateRichPresence::Response& pResponse)
+            {
+                bApiCalled = true;
+                Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+                Assert::AreEqual(std::string("Display:\nThis is a test.\n"), pRequest.Script);
+
+                pResponse.Result = ra::api::ApiResult::Success;
+                return true;
+            });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+        Assert::AreEqual(AssetChanges::None, pRichPresence.GetChanges());
 
         vmUpload.AssertSuccess(1);
     }

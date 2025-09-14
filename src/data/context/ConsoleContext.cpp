@@ -188,7 +188,7 @@ bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMas
 
         case ConsoleID::WII:
             *nReadSize = MemSize::ThirtyTwoBitBigEndian;
-            *nMask = 0xBFFFFFFF;
+            *nMask = 0x1FFFFFFF;
             *nOffset = 0;
             return true;
 

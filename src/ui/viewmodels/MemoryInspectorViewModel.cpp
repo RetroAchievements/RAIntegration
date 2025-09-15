@@ -289,10 +289,11 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddre
 
     UpdateNoteButtons();
 
+    // update viewer first so memory will be ready for GetValueAtAddress call
+    m_pViewer.SetAddress(nNewAddress);
+
     const auto nValue = Viewer().GetValueAtAddress(nNewAddress);
     SetValue(CurrentAddressValueProperty, nValue);
-
-    m_pViewer.SetAddress(nNewAddress);
 }
 
 std::string MemoryInspectorViewModel::GetCurrentAddressMemRefChain() const

@@ -637,7 +637,7 @@ void EmulatorContext::ClearMemoryBlocks()
 }
 
 void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
-    EmulatorContext::MemoryReadFunction* pReader, EmulatorContext::MemoryWriteFunction* pWriter)
+    EmulatorContext::MemoryReadFunction pReader, EmulatorContext::MemoryWriteFunction pWriter)
 {
     while (m_vMemoryBlocks.size() <= ra::to_unsigned(nIndex))
         m_vMemoryBlocks.emplace_back();
@@ -657,7 +657,7 @@ void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
 }
 
 void EmulatorContext::AddMemoryBlockReader(gsl::index nIndex,
-    EmulatorContext::MemoryReadBlockFunction* pReader)
+    EmulatorContext::MemoryReadBlockFunction pReader)
 {
     if (nIndex < gsl::narrow_cast<gsl::index>(m_vMemoryBlocks.size()))
         m_vMemoryBlocks.at(nIndex).readBlock = pReader;
@@ -1130,6 +1130,14 @@ void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBl
         if (nAdjustedAddress > pMemoryBlock.size)
         {
             nAdjustedAddress -= gsl::narrow_cast<ra::ByteAddress>(pMemoryBlock.size);
+            continue;
+        }
+
+        if (!pMemoryBlock.read && !pMemoryBlock.readBlock)
+        {
+            nCount -= gsl::narrow_cast<uint32_t>(pMemoryBlock.size);
+            nAddress += gsl::narrow_cast<ra::ByteAddress>(pMemoryBlock.size);
+            nAdjustedAddress = 0;
             continue;
         }
 

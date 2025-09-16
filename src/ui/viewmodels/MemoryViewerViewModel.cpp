@@ -2,6 +2,7 @@
 
 #include "RA_Defs.h"
 
+#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
@@ -23,6 +24,8 @@ constexpr uint8_t HIGHLIGHTED_COLOR = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra
 constexpr int ADDRESS_COLUMN_WIDTH = 10;
 constexpr int BASE_MEMORY_VIEWER_WIDTH_IN_CHARACTERS =
     (ADDRESS_COLUMN_WIDTH + 16 * 3 - 1); // address column + 16 bytes "XX " - last space
+
+constexpr uint32_t UNSIGNED_NEGATIVE_THRESHOLD = 0xFF000000;
 
 std::unique_ptr<ra::ui::drawing::ISurface> MemoryViewerViewModel::s_pFontSurface;
 std::unique_ptr<ra::ui::drawing::ISurface> MemoryViewerViewModel::s_pFontASCIISurface;
@@ -367,15 +370,12 @@ void MemoryViewerViewModel::SetAddress(ra::ByteAddress nValue)
     if (m_bAddressFixed)
         return;
 
-    int nSignedValue = ra::to_signed(nValue);
     if (m_nTotalMemorySize > 0)
     {
-        if (nSignedValue < 0)
-            nSignedValue = 0;
-        else if (nSignedValue >= gsl::narrow_cast<int>(m_nTotalMemorySize))
-            nSignedValue = gsl::narrow_cast<int>(m_nTotalMemorySize) - 1;
+        if (nValue >= m_nTotalMemorySize)
+            nValue = (nValue >= UNSIGNED_NEGATIVE_THRESHOLD) ? 0 : gsl::narrow_cast<ra::ByteAddress>(m_nTotalMemorySize) - 1;
 
-        SetValue(AddressProperty, nSignedValue);
+        SetValue(AddressProperty, gsl::narrow_cast<int>(nValue));
     }
     else
     {
@@ -383,27 +383,26 @@ void MemoryViewerViewModel::SetAddress(ra::ByteAddress nValue)
     }
 }
 
-void MemoryViewerViewModel::SetFirstAddress(ra::ByteAddress value)
+void MemoryViewerViewModel::SetFirstAddress(ra::ByteAddress nValue)
 {
-    int nSignedValue = ra::to_signed(value);
-    if (nSignedValue < 0)
+    if (nValue >= UNSIGNED_NEGATIVE_THRESHOLD)
     {
-        nSignedValue = 0;
+        nValue = 0;
     }
     else
     {
         const auto nVisibleLines = GetNumVisibleLines();
-        const auto nMaxFirstAddress = ra::to_signed((m_nTotalMemorySize + 15) & ~0x0F) - (nVisibleLines * 16);
+        const auto nMaxFirstAddress = ((m_nTotalMemorySize + 15) & ~0x0F) - (nVisibleLines * 16);
 
-        if (nMaxFirstAddress < 0)
-            nSignedValue = 0;
-        else if (nSignedValue > nMaxFirstAddress)
-            nSignedValue = nMaxFirstAddress;
+        if (nMaxFirstAddress >= UNSIGNED_NEGATIVE_THRESHOLD)
+            nValue = 0;
+        else if (nValue > nMaxFirstAddress)
+            nValue = nMaxFirstAddress;
         else
-            nSignedValue &= ~0x0F;
+            nValue &= ~0x0F;
     }
 
-    SetValue(FirstAddressProperty, nSignedValue);
+    SetValue(FirstAddressProperty, gsl::narrow_cast<int>(nValue));
 }
 
 void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
@@ -849,8 +848,27 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
         }
 
         // make sure the current memory address is valid
-        if (GetAddress() >= m_nTotalMemorySize)
+        const auto nAddress = GetAddress();
+        if (nAddress >= m_nTotalMemorySize)
+        {
             SetValue(AddressProperty, gsl::narrow_cast<int>(m_nTotalMemorySize - 1));
+        }
+        else
+        {
+            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+            const auto* pCurrentRegion = pConsoleContext.GetMemoryRegion(nAddress);
+            if (!pCurrentRegion || pCurrentRegion->Type == ra::data::context::ConsoleContext::AddressType::Unused)
+            {
+                for (const auto& pRegion : pConsoleContext.MemoryRegions())
+                {
+                    if (pRegion.Type != ra::data::context::ConsoleContext::AddressType::Unused)
+                    {
+                        SetValue(AddressProperty, gsl::narrow_cast<int>(pRegion.StartAddress));
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     const auto nVisibleLines = GetNumVisibleLines();

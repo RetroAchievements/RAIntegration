@@ -590,9 +590,11 @@ private:
         {
             pSubset->achievements = static_cast<rc_client_achievement_info_t*>(
                 rc_buffer_alloc(&pSubsetWrapper->pBuffer, vAchievements.size() * sizeof(*pSubset->achievements)));
+            Expects(pSubset->achievements != nullptr);
             memset(pSubset->achievements, 0, vAchievements.size() * sizeof(*pSubset->achievements));
 
             rc_client_achievement_info_t* pAchievement = pSubset->achievements;
+            Expects(pAchievement != nullptr);
             rc_client_achievement_info_t* pSrcAchievement = nullptr;
             for (auto* vmAchievement : vAchievements)
             {
@@ -667,7 +669,20 @@ private:
                         }
 
                         // no rc_client_achievement_t found for this achievement, populate from the model
-                        vmAchievement->AttachAndInitialize(*pAchievement++);
+                        vmAchievement->AttachAndInitialize(*pAchievement);
+
+                        // have to generate local urls for local images
+                        if (pAchievement->public_.badge_name[0] == 'L')
+                        {
+                            const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
+                            auto sUrl = ra::StringPrintf("file://%s",
+                                pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement->GetBadge())));
+                            std::replace(sUrl.begin(), sUrl.end(), '\\', '/');
+                            pAchievement->public_.badge_url = pAchievement->public_.badge_locked_url =
+                                rc_buffer_strncpy( & pSubsetWrapper->pBuffer, sUrl.c_str(), sUrl.length());
+                        }
+
+                        ++pAchievement;
                     }
                 }
             }

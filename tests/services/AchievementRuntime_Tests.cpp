@@ -509,6 +509,7 @@ public:
         vmAchievement->SetPoints(25);
         vmAchievement->SetTrigger("0xH0000=1");
         vmAchievement->SetID(ra::data::context::GameAssets::FirstLocalId);
+        vmAchievement->SetBadge(L"local\\ABCDEF0123456789.png");
         vmAchievement->CreateLocalCheckpoint();
         vmAchievement->SetState(ra::data::models::AssetState::Active);
         vmAchievement->SetSubsetID(1U);
@@ -539,6 +540,9 @@ public:
         Assert::AreEqual("Do something cool", pAchievement->public_.description);
         Assert::AreEqual(25U, pAchievement->public_.points);
         Assert::AreEqual(ra::data::context::GameAssets::FirstLocalId, pAchievement->public_.id);
+        Assert::AreEqual("L69db9c", pAchievement->public_.badge_name); // FirstLocalId as hex
+        Assert::AreEqual("file://RACache/Badges/local/ABCDEF0123456789.png", pAchievement->public_.badge_url);
+        Assert::AreEqual("file://RACache/Badges/local/ABCDEF0123456789.png", pAchievement->public_.badge_locked_url);
         Assert::IsNotNull(pAchievement->trigger);
         const auto* pOldTrigger = pAchievement->trigger;
 

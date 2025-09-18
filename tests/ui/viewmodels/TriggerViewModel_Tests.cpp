@@ -9,6 +9,7 @@
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
@@ -25,12 +26,14 @@ private:
     class TriggerViewModelHarness : public TriggerViewModel
     {
     public:
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockClipboard mockClipboard;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
+        ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
         void InitializeMemory(uint8_t* pMemory, size_t nMemorySize)
@@ -1121,7 +1124,6 @@ public:
     TEST_METHOD(TestNewConditionFromIndirectNote)
     {
         std::array<uint8_t, 10> pMemory = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=16");
         Assert::AreEqual({1U}, vmTrigger.Conditions().Count());

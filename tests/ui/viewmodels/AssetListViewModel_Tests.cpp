@@ -21,6 +21,7 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
@@ -167,6 +168,7 @@ private:
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::ui::mocks::MockDesktop mockDesktop;
+        ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::mocks::MockOverlayTheme mockTheme;
         ra::ui::drawing::mocks::MockSurfaceFactory mockSurfaceFactory;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -3762,7 +3764,7 @@ public:
 
         // and loaded externally
         Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
-        Assert::AreEqual(std::string("file://localhost/./RACache/Data/22-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
+        Assert::AreEqual(std::string("file://./RACache/Data/22-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
     }
 
     TEST_METHOD(TestCreateNewRichPresenceFilterTypeRichPresenceExisting)
@@ -3804,7 +3806,7 @@ public:
 
         // and loaded externally
         Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
-        Assert::AreEqual(std::string("file://localhost/./RACache/Data/22-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
+        Assert::AreEqual(std::string("file://./RACache/Data/22-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
     }
 
     TEST_METHOD(TestCloneSingle)
@@ -5560,7 +5562,7 @@ public:
         vmAssetList.OpenEditor(pItem);
         Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
 
-        Assert::AreEqual(std::string("file://localhost/./RACache/Data/22-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
+        Assert::AreEqual(std::string("file://./RACache/Data/22-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
     }
 
     TEST_METHOD(TestOpenEditorRichPresenceExclusiveSubset)
@@ -5590,7 +5592,7 @@ public:
         vmAssetList.OpenEditor(pItem);
         Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
 
-        Assert::AreEqual(std::string("file://localhost/./RACache/Data/33-Rich.txt"),
+        Assert::AreEqual(std::string("file://./RACache/Data/33-Rich.txt"),
                          vmAssetList.mockDesktop.LastOpenedUrl());
     }
 

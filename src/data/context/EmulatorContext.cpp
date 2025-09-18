@@ -1127,7 +1127,7 @@ void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBl
     ra::ByteAddress nAdjustedAddress = nAddress;
     for (const auto& pMemoryBlock : m_vMemoryBlocks)
     {
-        if (nAdjustedAddress > pMemoryBlock.size)
+        if (nAdjustedAddress >= pMemoryBlock.size)
         {
             nAdjustedAddress -= gsl::narrow_cast<ra::ByteAddress>(pMemoryBlock.size);
             continue;

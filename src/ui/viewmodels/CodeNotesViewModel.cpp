@@ -218,13 +218,13 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::
             {
                 pNote->SetModified(bNoteModified);
 
-                const auto nBytes = pCodeNotes->GetCodeNoteBytes(nAddress);
+                pNote->nBytes = pCodeNotes->GetCodeNoteBytes(nAddress);
                 std::wstring sAddress;
-                if (nBytes <= 4)
+                if (pNote->nBytes <= 4)
                     sAddress = ra::Widen(ra::ByteAddressToString(nAddress));
                 else
                     sAddress = ra::StringPrintf(L"%s\n- %s",
-                        ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nAddress + nBytes - 1));
+                        ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nAddress + pNote->nBytes - 1));
 
                 pNote->SetLabel(sAddress);
             }
@@ -299,6 +299,9 @@ void CodeNotesViewModel::BookmarkSelected() const
 
     vmBookmarks.Bookmarks().Items().BeginUpdate();
 
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+
     int nCount = 0;
     for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vNotes.Count()); ++nIndex)
     {
@@ -306,21 +309,39 @@ void CodeNotesViewModel::BookmarkSelected() const
         Ensures(pNote != nullptr);
         if (pNote->IsSelected())
         {
-            switch (pNote->nBytes)
+            MemSize nSize = MemSize::Unknown;
+
+            const auto* pCodeNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(pNote->nAddress, false) : nullptr;
+            if (pCodeNote != nullptr)
             {
-                default:
-                case 1:
-                    vmBookmarks.AddBookmark(pNote->nAddress, MemSize::EightBit);
-                    break;
-
-                case 2:
-                    vmBookmarks.AddBookmark(pNote->nAddress, MemSize::SixteenBit);
-                    break;
-
-                case 4:
-                    vmBookmarks.AddBookmark(pNote->nAddress, MemSize::ThirtyTwoBit);
-                    break;
+                nSize = pCodeNote->GetMemSize();
+                if (vmBookmarks.Bookmarks().Sizes().FindItemIndex(LookupItemViewModel::IdProperty, ra::etoi(nSize)) == -1)
+                {
+                    // size not supported by viewer
+                    nSize = MemSize::Unknown;
+                }
             }
+
+            if (nSize == MemSize::Unknown)
+            {
+                switch (pNote->nBytes)
+                {
+                    default:
+                    case 1:
+                        nSize = MemSize::EightBit;
+                        break;
+
+                    case 2:
+                        nSize = MemSize::SixteenBit;
+                        break;
+
+                    case 4:
+                        nSize = MemSize::ThirtyTwoBit;
+                        break;
+                }
+            }
+
+            vmBookmarks.AddBookmark(pNote->nAddress, nSize);
 
             if (++nCount == 100)
                 break;

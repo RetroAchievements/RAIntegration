@@ -625,6 +625,16 @@ public:
         Assert::AreEqual(MemSize::SixteenBit, pBookmarks.Items().GetItemAt(2)->GetSize());
         Assert::AreEqual({ 0x0040U }, pBookmarks.Items().GetItemAt(3)->GetAddress());
         Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(3)->GetSize());
+
+        notes.mockGameContext.SetCodeNote(0x0016, L"[32-bit BE] Score");
+        notes.Notes().GetItemAt(0)->SetSelected(false);
+        notes.Notes().GetItemAt(7)->SetSelected(false);
+        notes.Notes().GetItemAt(13)->SetSelected(false);
+
+        notes.BookmarkSelected();
+        Assert::AreEqual({ 5U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 0x0016U }, pBookmarks.Items().GetItemAt(4)->GetAddress());
+        Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, pBookmarks.Items().GetItemAt(4)->GetSize());
     }
 
     TEST_METHOD(TestModifiedIndicator)

@@ -590,7 +590,7 @@ void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
         const auto& pLocalStorage = dynamic_cast<const ra::services::impl::FileLocalStorage&>(ra::services::ServiceLocator::Get<ra::services::ILocalStorage>());
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         const auto sFilePath = pLocalStorage.GetPath(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.ActiveGameId()));
-        auto sUrl = ra::StringPrintf("file://localhost/%s", sFilePath);
+        auto sUrl = ra::StringPrintf("file://%s", sFilePath);
         std::replace(sUrl.begin(), sUrl.end(), '\\', '/');
         ra::services::ServiceLocator::Get<ra::ui::IDesktop>().OpenUrl(sUrl);
         return;

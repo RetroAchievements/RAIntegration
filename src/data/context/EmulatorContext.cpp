@@ -268,7 +268,6 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         return true;
 
     // fetch the latest version
-    unsigned long long nMinimumVersion = 0;
     if (m_sLatestVersion.empty())
     {
         ra::api::LatestClient::Request request;
@@ -292,8 +291,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         else
         {
             m_sLatestVersion = response.LatestVersion;
-            sMinimumVersion = response.MinimumVersion;
-            nMinimumVersion = ParseVersion(response.MinimumVersion.c_str());
+            m_sMinimumVersion = response.MinimumVersion;
 
 #ifndef RA_UTEST
             const unsigned long long nServerVersion = ParseVersion(m_sLatestVersion.c_str());
@@ -366,6 +364,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
     if (sNewVersion.find('.') == std::string::npos)
         sNewVersion.append(".0");
 
+    const unsigned long long nMinimumVersion = ParseVersion(m_sMinimumVersion.c_str());
     bool bUpdate = false;
     bool bResult = true;
 

@@ -304,6 +304,7 @@ protected:
 
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;
     std::string m_sVersion;
+    std::string m_sMinimumVersion;
     std::string m_sLatestVersion;
     std::string m_sLatestVersionError;
     std::string m_sClientName;

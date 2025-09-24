@@ -1835,6 +1835,8 @@ void AssetListViewModel::CloneSelected()
     }
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto pAuthor = ra::Widen(pUserContext.GetDisplayName());
 
     FilteredAssets().BeginUpdate();
 
@@ -1849,6 +1851,7 @@ void AssetListViewModel::CloneSelected()
             auto& vmAchievement = pGameContext.Assets().NewAchievement();
             vmAchievement.SetSubsetID(pSourceAchievement->GetSubsetID());
             vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
+            vmAchievement.SetAuthor(pAuthor);
             vmAchievement.UpdateServerCheckpoint();
 
             vmAchievement.SetName(pSourceAchievement->GetName() + L" (copy)");
@@ -1869,6 +1872,7 @@ void AssetListViewModel::CloneSelected()
             auto& vmLeaderboard = pGameContext.Assets().NewLeaderboard();
             vmLeaderboard.SetSubsetID(pSourceLeaderboard->GetSubsetID());
             vmLeaderboard.SetCategory(ra::data::models::AssetCategory::Local);
+            vmLeaderboard.SetAuthor(pAuthor);
             vmLeaderboard.UpdateServerCheckpoint();
 
             vmLeaderboard.SetName(pSourceLeaderboard->GetName() + L" (copy)");

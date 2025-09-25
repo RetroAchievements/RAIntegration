@@ -141,6 +141,30 @@ public:
         std::string sSerialized = AchievementLogicSerializer::BuildMemRefChain(note, *note3);
         Assert::AreEqual(std::string("I:0xG1234_I:0xG80000428_M:0xI8000024c"), sSerialized);
     }
+
+    TEST_METHOD(TestBuildMemRefChainGBA)
+    {
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockConsoleContext.SetId(ConsoleID::GBA); // 24-bit read with explicit offset in note
+
+        ra::data::models::CodeNoteModel note;
+        const std::wstring sNote =
+            L"Pointer [24bit]\n"
+            L"+0x8428 | Obj1 pointer\n"
+            L"++0x824C | [16-bit] State";
+        note.SetNote(sNote);
+        note.SetAddress(0x1234);
+        note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
+
+        const auto* note2 = note.GetPointerNoteAtOffset(0x8428);
+        Assert::IsNotNull(note2);
+        const auto* note3 = note2->GetPointerNoteAtOffset(0x824C);
+        Assert::IsNotNull(note3);
+
+        std::string sSerialized = AchievementLogicSerializer::BuildMemRefChain(note, *note3);
+        Assert::AreEqual(std::string("I:0xW1234_I:0xW8428_M:0x 824c"), sSerialized);
+    }
 };
 
 } // namespace tests

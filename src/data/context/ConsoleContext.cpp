@@ -199,23 +199,45 @@ bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMas
             *nOffset = 0;
             return true;
 
+        case ConsoleID::GBA:
+            // This is technically wrong as there's two distinct maps required.
+            //  $03000000 -> $00000000 (via just doing a 24-bit read)
+            //  $02000000 -> $00008000 (via an offset)
+            // However, most developers who have implemented sets just do a 24-bit
+            // read _and_ use a +0x8000 offset when necessary. As these offsets are
+            // encoded in the code notes, we shouldn't provide an explicit offset here.
+            *nReadSize = MemSize::TwentyFourBit;
+            *nMask = 0x00FFFFFF;
+            *nOffset = 0;
+            return true;
+
         default:
             for (const auto& pRegion : m_vRegions)
             {
                 if (pRegion.Type == AddressType::SystemRAM)
                 {
-                    *nOffset = (pRegion.RealAddress - pRegion.StartAddress);
-                    *nMask = 0xFFFFFFFF;
-
                     if (m_nMaxAddress > 0x00FFFFFF)
+                    {
                         *nReadSize = MemSize::ThirtyTwoBit;
+                        *nMask = 0xFFFFFFFF;
+                    }
                     else if (m_nMaxAddress > 0x0000FFFF)
+                    {
                         *nReadSize = MemSize::TwentyFourBit;
+                        *nMask = 0x00FFFFFF;
+                    }
                     else if (m_nMaxAddress > 0x000000FF)
+                    {
                         *nReadSize = MemSize::SixteenBit;
+                        *nMask = 0x0000FFFF;
+                    }
                     else
+                    {
                         *nReadSize = MemSize::EightBit;
+                        *nMask = 0x000000FF;
+                    }
 
+                    *nOffset = (pRegion.RealAddress - pRegion.StartAddress) & *nMask;
                     return true;
                 }
             }

@@ -3812,11 +3812,13 @@ public:
     TEST_METHOD(TestCloneSingle)
     {
         AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockUserContext.Initialize("Username", "DisplayName", "ApiToken");
         vmAssetList.SetGameId(22U);
         vmAssetList.mockGameContext.SetActiveGameId(22U);
         vmAssetList.SetSubsetFilter(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+        vmAssetList.mockGameContext.Assets().FindAchievement(2)->SetAuthor(L"OriginalAuthor");
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -3855,6 +3857,7 @@ public:
         Assert::AreEqual(std::wstring(L"Desc2"), pAchievement->GetDescription());
         Assert::AreEqual(std::wstring(L"11111"), pAchievement->GetBadge());
         Assert::AreEqual(std::string("0xH1111=1"), pAchievement->GetTrigger());
+        Assert::AreEqual(std::wstring(L"DisplayName"), pAchievement->GetAuthor());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
         Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
@@ -4448,6 +4451,7 @@ public:
     TEST_METHOD(TestCloneLeaderboard)
     {
         AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockUserContext.Initialize("Username", "DisplayName", "ApiToken");
         vmAssetList.SetGameId(22U);
         vmAssetList.mockGameContext.SetActiveGameId(22U);
         vmAssetList.SetSubsetFilter(22U);
@@ -4463,6 +4467,7 @@ public:
         vmLeaderboard->SetValueDefinition("0xH5555*2");
         vmLeaderboard->SetValueFormat(ra::data::ValueFormat::Score);
         vmLeaderboard->SetLowerIsBetter(true);
+        vmLeaderboard->SetAuthor(L"OriginalAuthor");
 
         Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
@@ -4503,6 +4508,7 @@ public:
         Assert::AreEqual(std::string("0xH5555*2"), pLeaderboard->GetValueDefinition());
         Assert::AreEqual(ra::data::ValueFormat::Score, pLeaderboard->GetValueFormat());
         Assert::IsTrue(pLeaderboard->IsLowerBetter());
+        Assert::AreEqual(std::wstring(L"DisplayName"), pLeaderboard->GetAuthor());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
         Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());

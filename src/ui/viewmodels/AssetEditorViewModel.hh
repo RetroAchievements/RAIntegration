@@ -17,7 +17,8 @@ namespace viewmodels {
 class AssetEditorViewModel : public WindowViewModelBase, 
     protected ViewModelBase::NotifyTarget,
     protected ViewModelCollectionBase::NotifyTarget,
-    protected ra::data::DataModelBase::NotifyTarget
+    protected ra::data::DataModelBase::NotifyTarget,
+    protected ra::data::context::EmulatorContext::DispatchesReadMemory
 {
 public:
     GSL_SUPPRESS_F6 AssetEditorViewModel() noexcept;

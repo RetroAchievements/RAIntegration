@@ -701,11 +701,6 @@ const rc_condition_t* TriggerConditionViewModel::GetFirstCondition() const
     auto* pTrigger = pTriggerViewModel->GetTriggerFromString();
     if (pTrigger != nullptr)
     {
-        // if the trigger is managed by the viewmodel (not the runtime) then we need to update the memrefs
-        auto* memrefs = rc_trigger_get_memrefs(pTrigger);
-        if (memrefs)
-            rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
-
         // find the condset associated to the selected group
         if (nIndex == 0)
         {

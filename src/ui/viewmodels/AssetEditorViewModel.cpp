@@ -522,7 +522,7 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
             SetDecimalPreferred(pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
 
             if (m_pAsset)
-                m_vmTrigger.DoFrame();
+                DispatchMemoryRead([this] { m_vmTrigger.DoFrame(); });
         }
     }
 

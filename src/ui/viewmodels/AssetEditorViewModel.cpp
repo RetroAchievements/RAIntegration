@@ -872,11 +872,16 @@ void AssetEditorViewModel::UpdateTriggerBinding()
 
 void AssetEditorViewModel::DoFrame()
 {
-    if (m_pAsset == nullptr || !m_pAsset->IsActive())
+    if (m_pAsset == nullptr)
         return;
 
     if (IsVisible())
-        UpdateAssetFrameValues();
+    {
+        if (m_pAsset->IsActive())
+            UpdateAssetFrameValues();
+        else
+            m_vmTrigger.UpdateMemrefs();
+    }
 }
 
 void AssetEditorViewModel::UpdateAssetFrameValues()

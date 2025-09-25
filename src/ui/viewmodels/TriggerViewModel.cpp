@@ -1493,16 +1493,11 @@ void TriggerViewModel::RemoveGroup()
 
 void TriggerViewModel::DoFrame()
 {
+    // if the trigger is managed by the viewmodel (not the runtime) then we need to update the memrefs
+    UpdateMemrefs();
+
     {
         std::lock_guard<std::mutex> lock(m_pMutex);
-
-        if (m_pTrigger != nullptr)
-        {
-            // if the trigger is managed by the viewmodel (not the runtime) then we need to update the memrefs
-            auto* memrefs = rc_trigger_get_memrefs(m_pTrigger);
-            if (memrefs)
-                rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
-        }
 
         auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
         if (pGroup == nullptr || !pGroup->m_pConditionSet)
@@ -1547,6 +1542,18 @@ void TriggerViewModel::DoFrame()
 
     if (!m_vConditions.IsUpdating())
         m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
+}
+
+void TriggerViewModel::UpdateMemrefs()
+{
+    if (m_pTrigger)
+    {
+        std::lock_guard<std::mutex> lock(m_pMutex);
+
+        auto* memrefs = rc_trigger_get_memrefs(m_pTrigger);
+        if (memrefs)
+            rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
+    }
 }
 
 bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,

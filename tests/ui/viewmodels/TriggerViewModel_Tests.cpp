@@ -1116,6 +1116,7 @@ public:
         Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
         Assert::AreEqual(std::string("0xH1234=16_I:0xH0002_0xH0005=6"), vmTrigger.Serialize());
         vmTrigger.UpdateFrom("0xH1234=16_I:0xH0002_0xH0005=6"); // force refresh to rebuild indirect chain
+        vmTrigger.DoFrame();
 
         Assert::AreEqual(std::wstring(L"0x0007 (indirect $0x0002+0x05)\r\n[No code note]"),
             vmTrigger.Conditions().GetItemAt(2)->GetTooltip(TriggerConditionViewModel::SourceValueProperty));

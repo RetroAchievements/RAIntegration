@@ -5690,6 +5690,48 @@ public:
                                       ResetButtonState::ResetDisabled, RevertButtonState::Revert,
                                       CreateButtonState::Enabled, CloneButtonState::Disabled);
     }
+
+    TEST_METHOD(TestKeepActive)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Core);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.SetKeepActive(true);
+
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        auto* pAchievement1 = vmAssetList.mockGameContext.Assets().FindAchievement(1);
+        Expects(pAchievement1 != nullptr);
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(0)->GetState());
+        pAchievement1->SetState(ra::data::models::AssetState::Active);
+
+        Assert::AreEqual(AssetState::Active, vmAssetList.FilteredAssets().GetItemAt(0)->GetState());
+        pAchievement1->SetState(ra::data::models::AssetState::Triggered);
+
+        Assert::AreEqual(AssetState::Waiting, vmAssetList.FilteredAssets().GetItemAt(0)->GetState());
+        Assert::AreEqual(AssetState::Waiting, pAchievement1->GetState());
+    }
+
+    TEST_METHOD(TestKeepActiveNonVisible)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Unofficial);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.SetKeepActive(true);
+
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        auto* pAchievement1 = vmAssetList.mockGameContext.Assets().FindAchievement(1);
+        Expects(pAchievement1 != nullptr);
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(0)->GetState());
+        pAchievement1->SetState(ra::data::models::AssetState::Active);
+
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(0)->GetState()); // not achievement 1 - shouldn't change
+        pAchievement1->SetState(ra::data::models::AssetState::Triggered);
+
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(0)->GetState());
+        Assert::AreEqual(AssetState::Waiting, pAchievement1->GetState()); // should still get set to waiting even if not visible
+    }
 };
 
 } // namespace tests

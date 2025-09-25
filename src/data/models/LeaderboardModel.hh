@@ -225,7 +225,7 @@ private:
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
     void SyncTitle();
     void SyncDescription();
-    void SyncState(AssetState nNewState) noexcept;
+    void SyncState(AssetState nNewState);
     void SyncValueFormat();
     void SyncTracker();
     void SyncDefinition();

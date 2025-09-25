@@ -223,7 +223,7 @@ void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
     SyncState(nNewState);
 }
 
-void LeaderboardModel::SyncState(AssetState nNewState) noexcept
+void LeaderboardModel::SyncState(AssetState nNewState)
 {
     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
     auto* pClient = pRuntime.GetClient();

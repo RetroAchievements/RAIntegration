@@ -268,7 +268,6 @@ void AchievementModel::SyncState()
                 const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
                 m_tUnlock = pClock.Now();
 
-                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
                 if (pRuntime.HasRichPresence())
                     SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
             }

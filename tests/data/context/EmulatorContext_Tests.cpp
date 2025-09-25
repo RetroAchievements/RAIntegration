@@ -1963,6 +1963,25 @@ public:
         for (size_t i = 0; i < 10; i++)
             Assert::AreEqual(memory.at(i + 20), pBytes[i]);
     }
+
+    TEST_METHOD(TestCaptureMemoryGapBoundary)
+    {
+        EmulatorContextHarness emulator;
+
+        InitializeMemory();
+        emulator.AddMemoryBlock(0, 10, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, nullptr, nullptr);
+        emulator.AddMemoryBlock(2, 10, &ReadMemory2, &WriteMemory2);
+
+        std::vector<ra::data::search::MemBlock> vBlocks;
+        emulator.CaptureMemory(vBlocks, 20, 10, 0);
+        Assert::AreEqual({ 1 }, vBlocks.size());
+
+        Assert::AreEqual(10U, vBlocks.at(0).GetBytesSize());
+        const auto* pBytes = vBlocks.at(0).GetBytes();
+        for (size_t i = 0; i < 10; i++)
+            Assert::AreEqual(memory.at(i + 20), pBytes[i]);
+    }
 };
 
 std::array<uint8_t, 64> EmulatorContext_Tests::memory;

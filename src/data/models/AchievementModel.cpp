@@ -251,6 +251,11 @@ void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
 
 void AchievementModel::SyncState()
 {
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    auto* pClient = pRuntime.GetClient();
+
+    rc_mutex_lock(&pClient->state.mutex);
+
     switch (GetState())
     {
         case ra::data::models::AssetState::Triggered: {
@@ -305,6 +310,8 @@ void AchievementModel::SyncState()
             m_pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
             break;
     }
+
+    rc_mutex_unlock(&pClient->state.mutex);
 }
 
 void AchievementModel::SyncID()
@@ -424,8 +431,11 @@ void AchievementModel::SyncTrigger()
             return;
         }
 
-        auto* pGame = pRuntime.GetClient()->game;
+        auto* pClient = pRuntime.GetClient();
+        auto* pGame = pClient->game;
         Expects(pGame != nullptr);
+
+        rc_mutex_lock(&pClient->state.mutex);
 
         rc_preparse_state_t preparse;
         rc_init_preparse_state(&preparse);
@@ -473,6 +483,8 @@ void AchievementModel::SyncTrigger()
                 }
             }
         }
+
+        rc_mutex_unlock(&pClient->state.mutex);
 
         rc_destroy_preparse_state(&preparse);
     }

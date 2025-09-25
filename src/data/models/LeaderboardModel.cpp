@@ -225,6 +225,11 @@ void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
 
 void LeaderboardModel::SyncState(AssetState nNewState) noexcept
 {
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    auto* pClient = pRuntime.GetClient();
+
+    rc_mutex_lock(&pClient->state.mutex);
+
     switch (nNewState)
     {
         case ra::data::models::AssetState::Disabled:
@@ -257,6 +262,8 @@ void LeaderboardModel::SyncState(AssetState nNewState) noexcept
                 m_pLeaderboard->lboard->state = RC_LBOARD_STATE_ACTIVE;
             break;
     }
+
+    rc_mutex_unlock(&pClient->state.mutex);
 }
 
 void LeaderboardModel::SyncTitle()
@@ -335,8 +342,11 @@ void LeaderboardModel::SyncDefinition()
             return;
         }
 
-        auto* pGame = pRuntime.GetClient()->game;
+        auto* pClient = pRuntime.GetClient();
+        auto* pGame = pClient->game;
         Expects(pGame != nullptr);
+
+        rc_mutex_lock(&pClient->state.mutex);
 
         rc_preparse_state_t preparse;
         rc_init_preparse_state(&preparse);
@@ -393,6 +403,8 @@ void LeaderboardModel::SyncDefinition()
             // parse error - discard old tracker
             pRuntime.ReleaseLeaderboardTracker(m_pLeaderboard->public_.id);
         }
+
+        rc_mutex_unlock(&pClient->state.mutex);
 
         rc_destroy_preparse_state(&preparse);
     }

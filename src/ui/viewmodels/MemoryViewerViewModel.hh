@@ -238,6 +238,7 @@ private:
     void DetermineIfASCIIShouldBeVisible();
 
     std::unique_ptr<uint8_t[]> m_pBuffer;
+    ra::ByteAddress m_nQueuedReadAddress = 0xFFFFFFFF;
 
     std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
     static std::unique_ptr<ra::ui::drawing::ISurface> s_pFontSurface;

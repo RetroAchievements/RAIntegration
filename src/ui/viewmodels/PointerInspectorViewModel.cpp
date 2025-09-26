@@ -171,6 +171,9 @@ void PointerInspectorViewModel::OnEndGameLoad()
 
                 return true;
             });
+
+        if (m_vPointers.Count() == 0)
+            m_vPointers.Add(0, L"No pointer notes found");
     }
 
     m_vPointers.EndUpdate();

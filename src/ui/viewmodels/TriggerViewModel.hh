@@ -18,7 +18,8 @@ namespace ui {
 namespace viewmodels {
 
 class TriggerViewModel : public ViewModelBase, 
-    protected ViewModelCollectionBase::NotifyTarget
+    protected ViewModelCollectionBase::NotifyTarget,
+    protected ra::data::context::EmulatorContext::DispatchesReadMemory
 {
 public:
     GSL_SUPPRESS_F6 TriggerViewModel() noexcept;
@@ -157,6 +158,7 @@ public:
     void UpdateColors(const rc_trigger_t* pTrigger);
     void UpdateCurrentGroup(bool bRememberHits, const IntModelProperty* pProperty, int nNewValue);
     void UpdateConditions();
+    void UpdateMemrefs();
     void ToggleDecimal();
 
     static bool BuildHitChainTooltip(std::wstring& sTooltip, const ViewModelCollection<TriggerConditionViewModel>& vmConditions, gsl::index nIndex);

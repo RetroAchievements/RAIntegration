@@ -460,12 +460,20 @@ void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
 
 void MemoryViewerViewModel::ReadMemory(ra::ByteAddress nFirstAddress, int nNumVisibleLines)
 {
+    m_nQueuedReadAddress = nFirstAddress;
     DispatchMemoryRead([this, nFirstAddress, nNumVisibleLines]() {
+        if (nFirstAddress != m_nQueuedReadAddress) {
+            // another read has been queued. disregard this one.
+            return;
+        }
+
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(nNumVisibleLines) * 16);
 
         UpdateInvalidRegions();
         UpdateColors();
+
+        Redraw();
     });
 }
 

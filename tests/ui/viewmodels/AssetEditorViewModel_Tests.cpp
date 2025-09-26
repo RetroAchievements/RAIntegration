@@ -67,6 +67,7 @@ private:
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::mocks::MockImageRepository mockImageRepository;
@@ -766,7 +767,6 @@ public:
         Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
 
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager; // to copy address from memory viewer
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext; // to get current value at address
         editor.Trigger().NewCondition();
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsTrue(editor.HasAssetValidationWarning());

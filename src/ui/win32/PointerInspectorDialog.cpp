@@ -173,6 +173,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     SetAnchor(IDC_RA_NOTE_TEXT, Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_COPY_ALL, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_DELETE_COND, Anchor::Right | Anchor::Bottom);
     SetAnchor(IDC_RA_ADD_COND, Anchor::Right | Anchor::Bottom);
 
     SetMinimumSize(480, 258);

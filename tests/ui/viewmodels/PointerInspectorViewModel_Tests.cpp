@@ -265,6 +265,21 @@ public:
         inspector.AssertFieldFullNote(1, L"[32-bit] Max HP");
     }
 
+    TEST_METHOD(TestNoKnownPointers)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        inspector.mockGameContext.NotifyGameLoad();
+
+        Assert::AreEqual({ 0U }, inspector.GetCurrentAddress());
+
+        Assert::AreEqual({ 1U }, inspector.KnownPointers().Count());
+        Assert::AreEqual(0, inspector.KnownPointers().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"No pointer notes found"), inspector.KnownPointers().GetItemAt(0)->GetLabel());
+    }
+
     TEST_METHOD(TestKnownPointers)
     {
         PointerInspectorViewModelHarness inspector;
@@ -294,7 +309,7 @@ public:
         Assert::AreEqual(std::wstring(L"0x0010 | Level data"), inspector.KnownPointers().GetItemAt(1)->GetLabel());
     }
 
-        TEST_METHOD(TestKnownPointersUpdateOnCodeNoteChange)
+    TEST_METHOD(TestKnownPointersUpdateOnCodeNoteChange)
     {
         PointerInspectorViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);

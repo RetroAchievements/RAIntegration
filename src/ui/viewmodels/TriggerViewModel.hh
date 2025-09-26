@@ -18,7 +18,8 @@ namespace ui {
 namespace viewmodels {
 
 class TriggerViewModel : public ViewModelBase, 
-    protected ViewModelCollectionBase::NotifyTarget
+    protected ViewModelCollectionBase::NotifyTarget,
+    protected ra::data::context::EmulatorContext::DispatchesReadMemory
 {
 public:
     GSL_SUPPRESS_F6 TriggerViewModel() noexcept;

@@ -909,6 +909,8 @@ void TriggerViewModel::UpdateFrom(const std::string& sTrigger)
     if (m_pTrigger)
     {
         UpdateGroups(*m_pTrigger);
+
+        DispatchMemoryRead([this] { UpdateMemrefs(); });
     }
     else
     {

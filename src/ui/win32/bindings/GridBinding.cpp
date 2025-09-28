@@ -1236,7 +1236,16 @@ void GridBinding::OnSizeChanged(const ra::ui::Size&)
 
 LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
 {
+    const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec) - m_nScrollOffset;
     LRESULT nResult = CDRF_DODEFAULT;
+
+    if (nIndex == 0 && pCustomDraw->nmcd.dwDrawStage == CDDS_PREPAINT)
+    {
+        // if painting the first item in the grid, force the header to repaint.
+        // this solves an issue where the header doesn't repaint when the entire
+        // dialog is invalidated.
+        ::InvalidateRect(ListView_GetHeader(m_hWnd), nullptr, FALSE);
+    }
 
     if (m_pRowColorProperty)
     {
@@ -1250,7 +1259,6 @@ LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
             {
                 if (ListView_GetItemState(m_hWnd, pCustomDraw->nmcd.dwItemSpec, LVIS_SELECTED) == 0)
                 {
-                    const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec) - m_nScrollOffset;
                     const Color pColor(ra::to_unsigned(m_vmItems->GetItemValue(nIndex, *m_pRowColorProperty)));
                     if (pColor.Channel.A != 0)
                         pCustomDraw->clrTextBk = RGB(pColor.Channel.R, pColor.Channel.G, pColor.Channel.B);
@@ -1278,7 +1286,6 @@ LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
                     const auto& pColumn = *m_vColumns.at(pCustomDraw->iSubItem);
                     if (pColumn.GetTextColorProperty() != nullptr)
                     {
-                        const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec) - m_nScrollOffset;
                         const Color pColor(ra::to_unsigned(m_vmItems->GetItemValue(nIndex, *pColumn.GetTextColorProperty())));
                         if (pColor.Channel.A != 0)
                             pCustomDraw->clrText = RGB(pColor.Channel.R, pColor.Channel.G, pColor.Channel.B);

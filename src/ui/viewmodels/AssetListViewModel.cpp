@@ -1533,6 +1533,8 @@ void AssetListViewModel::ResetSelected()
     const auto* pEditorAsset = pWindowManager.AssetEditor.GetAsset();
     if (pEditorAsset != nullptr && !pGameContext.Assets().FindAsset(pEditorAsset->GetType(), pEditorAsset->GetID()))
         pWindowManager.AssetEditor.LoadAsset(nullptr);
+    else
+        pWindowManager.AssetEditor.UpdateTriggerBinding();
 
     pGameContext.Assets().EndUpdate();
 

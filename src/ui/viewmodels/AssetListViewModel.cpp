@@ -185,9 +185,6 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
     }
     else if (args.Property == ra::data::models::AssetModelBase::StateProperty)
     {
-        if (GetSpecialFilter() != SpecialFilter::All)
-            AddOrRemoveFilteredItem(nIndex);
-
         // when an active achievement is deactivated, the challenge indicator needs
         // to be hidden as no event will be raised. similarly, the leaderboard tracker
         // needs to be hidden when a leaderboard is deactivated.
@@ -214,6 +211,24 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
                 }
             }
         }
+
+        // if an achievement triggers and KeepActive is enabled, set it back to waiting
+        const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
+        if (nNewState == ra::data::models::AssetState::Triggered && KeepActive())
+        {
+            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+            auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+            Expects(pAsset != nullptr);
+            switch (pAsset->GetType())
+            {
+                case ra::data::models::AssetType::Achievement:
+                    pAsset->SetState(ra::data::models::AssetState::Waiting);
+                    return; // stop processing the change to Triggered. we will get recalled with change to Waiting
+            }
+        }
+
+        if (GetSpecialFilter() != SpecialFilter::All)
+            AddOrRemoveFilteredItem(nIndex);
     }
 
     // these properties potentially affect visibility

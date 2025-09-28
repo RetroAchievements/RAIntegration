@@ -1772,11 +1772,6 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
     // this captures the unlock time and rich presence state, even if KeepActive it selected.
     vmAchievement->SetState(ra::data::models::AssetState::Triggered);
 
-    // if KeepActive is selected, set the achievement back to Waiting
-    const auto& pAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
-    if (pAssetList.KeepActive())
-        vmAchievement->SetState(ra::data::models::AssetState::Waiting);
-
     if (vmAchievement->IsPauseOnTrigger())
     {
         auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();

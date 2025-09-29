@@ -86,8 +86,8 @@ public:
         AssertValidation("0xH1234<255", L"");
         AssertValidation("0xH1234<=255", L"Condition 1: Comparison is always true");
 
-        AssertValidation("R:0xH1234<255", L"");
-        AssertValidation("R:0xH1234<=255", L"Condition 1: Comparison is always true");
+        AssertValidation("R:0xH1234<255_0xH2345=1.1.", L"");
+        AssertValidation("R:0xH1234<=255_0xH2345=1.1.", L"Condition 1: Comparison is always true");
 
         AssertValidation("0xH1234=256", L"Condition 1: Comparison is never true");
         AssertValidation("0xH1234!=256", L"Condition 1: Comparison is always true");
@@ -177,9 +177,10 @@ public:
     {
         AssertLeaderboardValidation("0xH1234<99_0x2345<50", L"");
         AssertLeaderboardValidation("P:0xH1234<99_0x2345<50", L"");
-        AssertLeaderboardValidation("R:0xH1234<99_0x2345<50", L"");
+        AssertLeaderboardValidation("R:0xH1234<99_0x2345<50", L"Condition 1: No captured hits to reset");
         AssertLeaderboardValidation("M:0xH1234<99_0x2345<50", L"Measured has no effect in leaderboard triggers");
-        AssertLeaderboardValidation("Q:0xH1234<99_0x2345<50", L"MeasuredIf has no effect in leaderboard triggers");
+        AssertLeaderboardValidation("Q:0xH1234<99_0x2345<50", L"Condition 1: MeasuredIf without Measured");
+        AssertLeaderboardValidation("Q:0xH1234<99_0x2345<50_M:0x1235=30", L"MeasuredIf has no effect in leaderboard triggers");
         AssertLeaderboardValidation("T:0xH1234<99_0x2345<50", L"Trigger has no effect in leaderboard triggers");
         AssertLeaderboardValidation("A:0xH1234<99_0x2345<50", L"");
         AssertLeaderboardValidation("B:0xH1234<99_0x2345<50", L"");

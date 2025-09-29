@@ -17,7 +17,8 @@ namespace viewmodels {
 class AssetEditorViewModel : public WindowViewModelBase, 
     protected ViewModelBase::NotifyTarget,
     protected ViewModelCollectionBase::NotifyTarget,
-    protected ra::data::DataModelBase::NotifyTarget
+    protected ra::data::DataModelBase::NotifyTarget,
+    protected ra::data::context::EmulatorContext::DispatchesReadMemory
 {
 public:
     GSL_SUPPRESS_F6 AssetEditorViewModel() noexcept;
@@ -445,6 +446,8 @@ public:
     TriggerViewModel& Trigger() noexcept { return m_vmTrigger; }
     const TriggerViewModel& Trigger() const noexcept { return m_vmTrigger; }
 
+    void UpdateTriggerBinding();
+
 protected:
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
@@ -461,7 +464,6 @@ protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
-    void UpdateTriggerBinding();
     void OnTriggerChanged(bool bIsLoading);
 
     void UpdateAssetFrameValues();

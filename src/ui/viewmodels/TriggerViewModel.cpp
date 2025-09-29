@@ -740,8 +740,13 @@ void TriggerViewModel::InitializeGroups(const rc_trigger_t& pTrigger)
 
 void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
 {
-    m_bIsValue = false;
-    m_pTrigger = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(m_pMutex);
+
+        m_bIsValue = false;
+        m_pTrigger = nullptr;
+    }
+
     InitializeGroups(pTrigger);
 }
 
@@ -788,7 +793,12 @@ rc_trigger_t* TriggerViewModel::ParseTrigger(const std::string& sTrigger)
 
 void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::data::models::CapturedTriggerHits& pCapturedHits)
 {
-    m_pTrigger = ParseTrigger(sTrigger);
+    {
+        std::lock_guard<std::mutex> lock(m_pMutex);
+
+        m_pTrigger = ParseTrigger(sTrigger);
+    }
+
     if (m_pTrigger)
     {
         pCapturedHits.Restore(m_pTrigger, sTrigger);
@@ -810,12 +820,17 @@ void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::dat
 
 void TriggerViewModel::InitializeFrom(const rc_value_t& pValue)
 {
-    m_bIsValue = true;
-    m_sTriggerBuffer.resize(sizeof(rc_trigger_t));
-    GSL_SUPPRESS_TYPE1 m_pTrigger = reinterpret_cast<rc_trigger_t*>(m_sTriggerBuffer.data());
-    memset(m_pTrigger, 0, sizeof(rc_trigger_t));
-    m_pTrigger->requirement = pValue.conditions;
-    m_pTrigger->alternative = (pValue.conditions) ? pValue.conditions->next : nullptr;
+    {
+        std::lock_guard<std::mutex> lock(m_pMutex);
+
+        m_bIsValue = true;
+        m_sTriggerBuffer.resize(sizeof(rc_trigger_t));
+        GSL_SUPPRESS_TYPE1 m_pTrigger = reinterpret_cast<rc_trigger_t*>(m_sTriggerBuffer.data());
+        memset(m_pTrigger, 0, sizeof(rc_trigger_t));
+        m_pTrigger->requirement = pValue.conditions;
+        m_pTrigger->alternative = (pValue.conditions) ? pValue.conditions->next : nullptr;
+    }
+
     InitializeGroups(*m_pTrigger);
 }
 
@@ -873,17 +888,29 @@ void TriggerViewModel::UpdateGroups(const rc_trigger_t& pTrigger)
 
 void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
 {
-    m_pTrigger = nullptr;
-    m_sTriggerBuffer.clear();
+    {
+        std::lock_guard<std::mutex> lock(m_pMutex);
+
+        m_pTrigger = nullptr;
+        m_sTriggerBuffer.clear();
+    }
+
     UpdateGroups(pTrigger);
 }
 
 void TriggerViewModel::UpdateFrom(const std::string& sTrigger)
 {
-    m_pTrigger = ParseTrigger(sTrigger);
+    {
+        std::lock_guard<std::mutex> lock(m_pMutex);
+
+        m_pTrigger = ParseTrigger(sTrigger);
+    }
+
     if (m_pTrigger)
     {
         UpdateGroups(*m_pTrigger);
+
+        DispatchMemoryRead([this] { UpdateMemrefs(); });
     }
     else
     {
@@ -895,12 +922,17 @@ void TriggerViewModel::UpdateFrom(const std::string& sTrigger)
 
 void TriggerViewModel::UpdateFrom(const rc_value_t& pValue)
 {
-    m_pTrigger = nullptr;
-    m_sTriggerBuffer.resize(sizeof(rc_trigger_t));
-    GSL_SUPPRESS_TYPE1 m_pTrigger = reinterpret_cast<rc_trigger_t*>(m_sTriggerBuffer.data());
-    memset(m_pTrigger, 0, sizeof(rc_trigger_t));
-    m_pTrigger->requirement = pValue.conditions;
-    m_pTrigger->alternative = pValue.conditions->next;
+    {
+        std::lock_guard<std::mutex> lock(m_pMutex);
+
+        m_pTrigger = nullptr;
+        m_sTriggerBuffer.resize(sizeof(rc_trigger_t));
+        GSL_SUPPRESS_TYPE1 m_pTrigger = reinterpret_cast<rc_trigger_t*>(m_sTriggerBuffer.data());
+        memset(m_pTrigger, 0, sizeof(rc_trigger_t));
+        m_pTrigger->requirement = pValue.conditions;
+        m_pTrigger->alternative = pValue.conditions->next;
+    }
+
     UpdateGroups(*m_pTrigger);
 }
 
@@ -1463,6 +1495,9 @@ void TriggerViewModel::RemoveGroup()
 
 void TriggerViewModel::DoFrame()
 {
+    // if the trigger is managed by the viewmodel (not the runtime) then we need to update the memrefs
+    UpdateMemrefs();
+
     {
         std::lock_guard<std::mutex> lock(m_pMutex);
 
@@ -1509,6 +1544,18 @@ void TriggerViewModel::DoFrame()
 
     if (!m_vConditions.IsUpdating())
         m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
+}
+
+void TriggerViewModel::UpdateMemrefs()
+{
+    if (m_pTrigger)
+    {
+        std::lock_guard<std::mutex> lock(m_pMutex);
+
+        auto* memrefs = rc_trigger_get_memrefs(m_pTrigger);
+        if (memrefs)
+            rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
+    }
 }
 
 bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,

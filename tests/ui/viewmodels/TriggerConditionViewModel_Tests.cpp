@@ -759,6 +759,8 @@ private:
 
             ra::data::models::CapturedTriggerHits pCapturedHits;
             InitializeFrom(sInput, pCapturedHits);
+
+            DoFrame();
         }
 
         void SetMemory(size_t nAddress, unsigned char nValue)
@@ -771,6 +773,8 @@ private:
             auto* pCodeNotes = mockGameContext.Assets().FindCodeNotes();
             if (pCodeNotes != nullptr)
                 pCodeNotes->DoFrame();
+
+            DoFrame();
         }
 
         using TriggerViewModel::EnsureVisible;
@@ -795,6 +799,7 @@ public:
 
         // $0001 = 3, 3+2 = $0005
         vmTrigger.SetMemory({ 1 }, 3);
+        vmTrigger.DoFrame();
         Assert::AreEqual(std::wstring(L"0x0005 (indirect $0x0001+0x02)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 

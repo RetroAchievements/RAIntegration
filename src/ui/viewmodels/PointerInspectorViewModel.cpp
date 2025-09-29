@@ -171,6 +171,9 @@ void PointerInspectorViewModel::OnEndGameLoad()
 
                 return true;
             });
+
+        if (m_vPointers.Count() == 0)
+            m_vPointers.Add(0, L"No pointer notes found");
     }
 
     m_vPointers.EndUpdate();
@@ -1030,7 +1033,7 @@ void PointerInspectorViewModel::OnFieldOffsetChanged(gsl::index nIndex, const st
         // lastly, update the current value (may trigger PauseOnChange)
         const auto nBaseAddress = (m_pCurrentNote != nullptr) ? m_pCurrentNote->GetPointerAddress() : 0U;
         pField->SetAddress(nBaseAddress + pField->m_nOffset);
-        pField->DoFrame();
+        DispatchMemoryRead([pField]() { pField->DoFrame(); });
     }
 }
 

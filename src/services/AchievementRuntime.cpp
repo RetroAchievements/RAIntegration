@@ -648,7 +648,7 @@ private:
                             pSubsetWrapper->vAllocatedMemory.push_back(pSrcAchievement->trigger);
 
                         memcpy(pAchievement, pSrcAchievement, sizeof(*pAchievement));
-                        vmAchievement->ReplaceAttached(*pAchievement++);
+                        vmAchievement->ReplaceAttached(*pAchievement);
                     }
                     else
                     {
@@ -670,20 +670,20 @@ private:
 
                         // no rc_client_achievement_t found for this achievement, populate from the model
                         vmAchievement->AttachAndInitialize(*pAchievement);
-
-                        // have to generate local urls for local images
-                        if (pAchievement->public_.badge_name[0] == 'L')
-                        {
-                            const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
-                            auto sUrl = ra::StringPrintf("file://%s",
-                                pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement->GetBadge())));
-                            std::replace(sUrl.begin(), sUrl.end(), '\\', '/');
-                            pAchievement->public_.badge_url = pAchievement->public_.badge_locked_url =
-                                rc_buffer_strncpy( & pSubsetWrapper->pBuffer, sUrl.c_str(), sUrl.length());
-                        }
-
-                        ++pAchievement;
                     }
+
+                    // have to generate local urls for local images
+                    if (pAchievement->public_.badge_name[0] == 'L')
+                    {
+                        const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
+                        auto sUrl = ra::StringPrintf("file://%s",
+                            pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement->GetBadge())));
+                        std::replace(sUrl.begin(), sUrl.end(), '\\', '/');
+                        pAchievement->public_.badge_url = pAchievement->public_.badge_locked_url =
+                            rc_buffer_strncpy(&pSubsetWrapper->pBuffer, sUrl.c_str(), sUrl.length());
+                    }
+
+                    ++pAchievement;
                 }
             }
 

@@ -112,11 +112,16 @@ public:
         TestCodeNoteSize(L"[4 Byte] Test", 4U, MemSize::ThirtyTwoBit);
         TestCodeNoteSize(L"[4 Byte - Float] Test", 4U, MemSize::Float);
         TestCodeNoteSize(L"[8 Byte] Test", 8U, MemSize::Array);
-        TestCodeNoteSize(L"[100 Bytes] Test", 100U, MemSize::Array);
+        TestCodeNoteSize(L"[0x80 Bytes] Test", 128U, MemSize::Array);
+        TestCodeNoteSize(L"[0xa8 bytes] Test", 168U, MemSize::Array);
+        TestCodeNoteSize(L"Test [0xE Bytes]", 14U, MemSize::Array);
+        TestCodeNoteSize(L"Test [0xET Bytes]", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"Test [0xE.3 Bytes]", 3U, MemSize::TwentyFourBit);
         TestCodeNoteSize(L"[2 byte] Test", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"[2-byte] Test", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"Test (6 bytes)", 6U, MemSize::Array);
         TestCodeNoteSize(L"[2byte] Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[100 Bytes] Test", 100U, MemSize::Array);
 
         TestCodeNoteSize(L"[float] Test", 4U, MemSize::Float);
         TestCodeNoteSize(L"[float32] Test", 4U, MemSize::Float);
@@ -568,6 +573,66 @@ public:
         offsetNote = AssertIndirectNote(note, 0x438, L"Pointer - Award - Pretty Woman (32bit)\r\n+0x24C | Flag",
                                         MemSize::ThirtyTwoBit, 4);
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+    }
+
+    TEST_METHOD(TestPointerOverflow)
+    {
+        CodeNoteModelHarness note;
+        note.mockConsoleContext.AddMemoryRegion(0, 0x7F, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80000000);
+        std::array<unsigned char, 256> memory{};
+        memory[0x04] = 0x10; // pointer@0x04 = 0x80000010
+        memory[0x07] = 0x80;
+        memory[0x14] = 0x20; // pointer@0x14 = 0x80000020
+        memory[0x17] = 0x80;
+        note.mockEmulatorContext.MockMemory(memory);
+        const std::wstring sNote =
+            L"[32-bit pointer] root\r\n"
+            L"+0x80000004 = [32-bit pointer] nested\r\n"
+            L"++0x80000006 = data (8-bit)";
+        note.SetAddress(0x04);
+        note.SetNote(sNote);
+        note.UpdateRawPointerValue(0x04, note.mockEmulatorContext, nullptr);
+
+        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+
+        note.EnumeratePointerNotes([](ra::ByteAddress nAddress, const CodeNoteModel& nOffsetNote)
+            {
+                Assert::AreEqual(0x14U, nAddress);
+                Assert::AreEqual(0x80000004U, nOffsetNote.GetAddress());
+                Assert::AreEqual(std::wstring(L"[32-bit pointer] nested"), nOffsetNote.GetPointerDescription());
+
+                return true;
+            });
+    }
+
+    TEST_METHOD(TestPointerNegative)
+    {
+        CodeNoteModelHarness note;
+        note.mockConsoleContext.AddMemoryRegion(0, 0x7F, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80000000);
+        std::array<unsigned char, 256> memory{};
+        memory[0x04] = 0x10; // pointer@0x04 = 0x80000010
+        memory[0x07] = 0x80;
+        memory[0x08] = 0x20; // pointer@0x08 = 0x80000020
+        memory[0x0B] = 0x80;
+        note.mockEmulatorContext.MockMemory(memory);
+        const std::wstring sNote =
+            L"[32-bit pointer] root\r\n"
+            L"+0xFFFFFFF8 = [32-bit pointer] nested\r\n"
+            L"++0x80000006 = data (8-bit)";
+        note.SetAddress(0x04);
+        note.SetNote(sNote);
+        note.UpdateRawPointerValue(0x04, note.mockEmulatorContext, nullptr);
+
+        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+
+        note.EnumeratePointerNotes([](ra::ByteAddress nAddress, const CodeNoteModel& nOffsetNote)
+            {
+                Assert::AreEqual(0x08U, nAddress);
+                Assert::AreEqual(0xFFFFFFF8U, nOffsetNote.GetAddress());
+                Assert::AreEqual(std::wstring(L"[32-bit pointer] nested"), nOffsetNote.GetPointerDescription());
+
+                return true;
+            });
     }
 
     TEST_METHOD(TestUpdateRawPointerValue)

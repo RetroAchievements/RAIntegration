@@ -76,6 +76,7 @@ public:
             BCD,
             Hex,
             ASCII,
+            HexNumber,
             Other,
         };
 

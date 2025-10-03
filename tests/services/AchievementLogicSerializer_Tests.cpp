@@ -165,6 +165,30 @@ public:
         std::string sSerialized = AchievementLogicSerializer::BuildMemRefChain(note, *note3);
         Assert::AreEqual(std::string("I:0xW1234_I:0xW8428_M:0x 824c"), sSerialized);
     }
+
+    TEST_METHOD(TestBuildMemRefChainNegativeOffset)
+    {
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockConsoleContext.SetId(ConsoleID::GameCube); // 29-bit BE read
+
+        ra::data::models::CodeNoteModel note;
+        const std::wstring sNote =
+            L"Pointer [24bit]\n"
+            L"+0xFFFFFFF8 | Obj1 pointer\n"
+            L"++0x824C | [16-bit] State";
+        note.SetNote(sNote);
+        note.SetAddress(0x1234);
+        note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
+
+        const auto* note2 = note.GetPointerNoteAtOffset(0xFFFFFFF8);
+        Assert::IsNotNull(note2);
+        const auto* note3 = note2->GetPointerNoteAtOffset(0x824C);
+        Assert::IsNotNull(note3);
+
+        std::string sSerialized = AchievementLogicSerializer::BuildMemRefChain(note, *note3);
+        Assert::AreEqual(std::string("I:0xG1234&33554431_I:0xGfffffff8&33554431_M:0x 824c"), sSerialized);
+    }
 };
 
 } // namespace tests

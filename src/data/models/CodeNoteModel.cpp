@@ -1040,6 +1040,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
     {
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         const auto nMaxAddress = pEmulatorContext.TotalMemorySize();
+        const auto nUnderflowMinAddress = 0xFFFFFFFF - nMaxAddress + 1;
 
         pointerData->OffsetType = PointerData::OffsetType::Converted;
 
@@ -1047,7 +1048,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
         // overflow math instead of masking, and don't attempt to translate the addresses.
         for (const auto& pNote : pointerData->OffsetNotes)
         {
-            if (pNote.GetAddress() >= nMaxAddress)
+            if (pNote.GetAddress() >= nMaxAddress && pNote.GetAddress() <= nUnderflowMinAddress)
             {
                 pointerData->OffsetType = PointerData::OffsetType::Overflow;
                 break;

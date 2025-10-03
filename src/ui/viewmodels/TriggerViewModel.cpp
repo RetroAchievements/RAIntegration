@@ -1734,6 +1734,57 @@ void TriggerViewModel::UpdateGroupColors(const rc_trigger_t* pTrigger)
     }
 }
 
+static bool CausedReset(const rc_condset_t* pCondSet) noexcept
+{
+    if (pCondSet->num_reset_conditions == 0)
+        return false;
+
+    GSL_SUPPRESS_TYPE3
+    const rc_condition_t* pPauseConditions = rc_condset_get_conditions(const_cast<rc_condset_t*>(pCondSet));
+    const rc_condition_t* pResetCondition = pPauseConditions + pCondSet->num_pause_conditions;
+    const rc_condition_t* pStop = pResetCondition + pCondSet->num_reset_conditions;
+    for (; pResetCondition < pStop; ++pResetCondition)
+    {
+        if (pResetCondition->type == RC_CONDITION_RESET_IF && (pResetCondition->is_true & 2) != 0)
+            return true;
+    }
+
+    return false;
+}
+
+static bool WasTriggerReset(const rc_trigger_t* pTrigger) noexcept
+{
+    if (pTrigger->has_hits)
+        return false;
+
+    if (pTrigger->requirement && CausedReset(pTrigger->requirement))
+        return true;
+
+    for (const auto* pAlt = pTrigger->alternative; pAlt; pAlt = pAlt->next)
+    {
+        if (CausedReset(pAlt))
+            return true;
+    }
+
+    return false;
+}
+
+static void UpdateTruthiness(rc_condset_t* pCondSet) noexcept
+{
+    rc_eval_state_t eval_state;
+    memset(&eval_state, 0, sizeof(eval_state));
+    eval_state.and_next = 1; /* this is important, we don't care about any of the other initial state */
+
+    rc_condition_t* pPauseConditions = rc_condset_get_conditions(pCondSet);
+    rc_condition_t* pResetConditions = pPauseConditions + pCondSet->num_pause_conditions;
+    rc_condition_t* pOtherConditions = pResetConditions + pCondSet->num_reset_conditions;
+    const uint32_t nNumConditions = pCondSet->num_hittarget_conditions +
+        pCondSet->num_measured_conditions + pCondSet->num_other_conditions;
+
+    rc_test_condset_internal(pOtherConditions, nNumConditions, &eval_state, 0);
+    rc_reset_condset(pCondSet);
+}
+
 void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
 {
     std::lock_guard<std::mutex> lock(m_pMutex);
@@ -1786,6 +1837,11 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
             }
             else
             {
+                // if a ResetIf is true, some of the conditions may not have been evaluated
+                // this frame. force evaluation and explicitly reset again.
+                if (WasTriggerReset(pTrigger))
+                    UpdateTruthiness(pSelectedGroup->m_pConditionSet);
+
                 rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
                 for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
                 {

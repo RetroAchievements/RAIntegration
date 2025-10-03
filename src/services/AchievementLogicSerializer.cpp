@@ -328,7 +328,7 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
         nAddress = pNote->GetAddress();
         if (nBitmaskOffset != std::string::npos)
         {
-            if (nAddress > nMask)
+            if (nAddress > nMask && nAddress < (0xFFFFFFFF - nMask))
             {
                 sBuffer.erase(nBitmaskOffset, sBuffer.length() - nBitmaskOffset);
                 AppendConditionSeparator(sBuffer);

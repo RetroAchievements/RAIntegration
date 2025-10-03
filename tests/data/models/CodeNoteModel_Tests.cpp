@@ -112,11 +112,16 @@ public:
         TestCodeNoteSize(L"[4 Byte] Test", 4U, MemSize::ThirtyTwoBit);
         TestCodeNoteSize(L"[4 Byte - Float] Test", 4U, MemSize::Float);
         TestCodeNoteSize(L"[8 Byte] Test", 8U, MemSize::Array);
-        TestCodeNoteSize(L"[100 Bytes] Test", 100U, MemSize::Array);
+        TestCodeNoteSize(L"[0x80 Bytes] Test", 128U, MemSize::Array);
+        TestCodeNoteSize(L"[0xa8 bytes] Test", 168U, MemSize::Array);
+        TestCodeNoteSize(L"Test [0xE Bytes]", 14U, MemSize::Array);
+        TestCodeNoteSize(L"Test [0xET Bytes]", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"Test [0xE.3 Bytes]", 3U, MemSize::TwentyFourBit);
         TestCodeNoteSize(L"[2 byte] Test", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"[2-byte] Test", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"Test (6 bytes)", 6U, MemSize::Array);
         TestCodeNoteSize(L"[2byte] Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[100 Bytes] Test", 100U, MemSize::Array);
 
         TestCodeNoteSize(L"[float] Test", 4U, MemSize::Float);
         TestCodeNoteSize(L"[float32] Test", 4U, MemSize::Float);

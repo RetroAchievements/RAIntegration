@@ -580,10 +580,22 @@ MemSize CodeNoteModel::GetImpliedPointerSize()
     return MemSize::ThirtyTwoBit;
 }
 
+static constexpr bool IsHexDigit(wchar_t c)
+{
+    if (c >= '0' && c <= '9')
+        return true;
+    if (c >= 'a' && c <= 'f')
+        return true;
+    if (c >= 'A' && c <= 'F')
+        return true;
+    return false;
+}
+
 CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& sWord) const
 {
     wchar_t cFirstLetter = '\0';
     bool bWordIsNumber = false;
+    bool bWordIsHexNumber = false;
     sWord.clear();
 
     for (; m_nIndex < m_nEndIndex; ++m_nIndex)
@@ -609,6 +621,19 @@ CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& 
                 sWord.push_back(cFirstLetter);
                 bWordIsNumber = false;
             }
+            else if (bWordIsHexNumber)
+            {
+                if (IsHexDigit(c))
+                {
+                    // continue hex number
+                    sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
+                }
+                else
+                {
+                    // transition from numeric to alpha
+                    break;
+                }
+            }
             else if (!bWordIsNumber)
             {
                 // continue word
@@ -626,9 +651,21 @@ CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& 
             {
                 // start of number
                 sWord.push_back(c);
-                bWordIsNumber = true;
+
+                if (c == '0' && m_nIndex < m_sNote.size() - 2 &&
+                    m_sNote.at(m_nIndex + 1) == 'x' &&
+                    IsHexDigit(m_sNote.at(m_nIndex + 2)))
+                {
+                    sWord.push_back(m_sNote.at(++m_nIndex));
+                    sWord.push_back(m_sNote.at(++m_nIndex));
+                    bWordIsHexNumber = true;
+                }
+                else
+                {
+                    bWordIsNumber = true;
+                }
             }
-            else if (bWordIsNumber)
+            else if (bWordIsNumber || bWordIsHexNumber)
             {
                 // continue number
                 sWord.push_back(c);
@@ -653,6 +690,8 @@ CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& 
 
     if (bWordIsNumber)
         return TokenType::Number;
+    if (bWordIsHexNumber)
+        return TokenType::HexNumber;
 
     switch (cFirstLetter)
     {
@@ -868,6 +907,21 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
 
                 if (nLastTokenType == Parser::TokenType::BigEndian)
                     m_nMemSize = MemSize::Double32BigEndian;
+            }
+        }
+        else if (nLastTokenType == Parser::TokenType::HexNumber)
+        {
+            if (nTokenType == Parser::TokenType::Bytes)
+            {
+                if (!bFoundSize || (bBytesFromBits && !bIsPointer))
+                {
+                    wchar_t* pEnd;
+                    m_nBytes = gsl::narrow_cast<unsigned int>(std::wcstoll(sPreviousWord.c_str(), &pEnd, 16));
+                    m_nMemSize = MemSize::Array;
+                    bBytesFromBits = false;
+                    bWordIsSize = true;
+                    bFoundSize = true;
+                }
             }
         }
 

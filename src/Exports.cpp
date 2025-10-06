@@ -344,13 +344,16 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
         vmMessage->SetImage(ra::ui::ImageType::UserPic, pUser->username);
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmMessage);
     }
-    else if (sErrorMessage && *sErrorMessage)
-    {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", ra::Widen(sErrorMessage));
-    }
     else
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", L"Please login again.");
+        if (sErrorMessage && *sErrorMessage)
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", ra::Widen(sErrorMessage));
+        else
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", L"Please login again.");
+
+        // show the login dialog box
+        ra::ui::viewmodels::LoginViewModel vmLogin;
+        vmLogin.ShowModal();
     }
 }
 

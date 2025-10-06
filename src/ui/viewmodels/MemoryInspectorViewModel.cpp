@@ -119,8 +119,14 @@ void MemoryInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeA
             const auto nAddress = GetCurrentAddress();
             pCodeNotes->SetCodeNote(nAddress, args.tNewValue);
 
-            // don't immediately save, the user may be about to publish. instead, set a flag to
-            // do the save when the address changes.
+            // don't immediately save. the user may make further changes, or be about
+            // to publish. instead, set a flag to do the save when the address changes.
+            if (m_nUncommittedNoteAddress != nAddress)
+            {
+                m_nUncommittedNoteAddress = nAddress;
+                m_sOriginalNoteValue = args.tOldValue;
+            }
+
             UpdateNoteButtons();
         }
     }
@@ -128,9 +134,9 @@ void MemoryInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeA
     WindowViewModelBase::OnValueChanged(args);
 }
 
-void MemoryInspectorViewModel::SaveNotes()
+void MemoryInspectorViewModel::SaveUncommittedNote()
 {
-    if (m_nSavedNoteAddress == 0xFFFFFFFF)
+    if (m_nUncommittedNoteAddress == 0xFFFFFFFF)
         return;
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -138,13 +144,13 @@ void MemoryInspectorViewModel::SaveNotes()
     if (pCodeNotes != nullptr)
     {
         std::wstring sEmpty;
-        const auto* pNote = pCodeNotes->FindCodeNote(m_nSavedNoteAddress);
+        const auto* pNote = pCodeNotes->FindCodeNote(m_nUncommittedNoteAddress);
         if (pNote == nullptr)
             pNote = &sEmpty;
 
-        if (*pNote != m_sSavedNote)
+        if (*pNote != m_sOriginalNoteValue)
         {
-            m_sSavedNote = *pNote;
+            m_nUncommittedNoteAddress = 0xFFFFFFFF;
 
             std::vector<ra::data::models::AssetModelBase*> vAssets;
             vAssets.push_back(pCodeNotes);
@@ -153,6 +159,9 @@ void MemoryInspectorViewModel::SaveNotes()
             UpdateNoteButtons();
         }
     }
+
+    m_nUncommittedNoteAddress = 0xFFFFFFFF;
+    m_sOriginalNoteValue.clear();
 }
 
 void MemoryInspectorViewModel::UpdateNoteButtons()
@@ -205,15 +214,16 @@ void MemoryInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const
     {
         // call the override that asks for an author to see if there's a non-indirect note at
         // the address. if so, use it.
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+
         const auto* pDirectNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
         if (pDirectNote)
         {
             // non indirect note found. normally, this will match sNewNote, but sometimes sNewNote
             // will be for an indirect note sharing the address, so always use the direct note
             m_bNoteIsIndirect = false;
-            SetCurrentAddressNote(pDirectNote->GetNote());
+            SetCurrentAddressNoteInternal(pDirectNote->GetNote());
         }
         else
         {
@@ -230,14 +240,14 @@ void MemoryInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const
                 m_bNoteIsIndirect = true;
             }
 
-            SetCurrentAddressNote(sNewNote);
+            SetCurrentAddressNoteInternal(sNewNote);
         }
 
         UpdateNoteButtons();
     }
 }
 
-void MemoryInspectorViewModel::SetCurrentAddressNote(const std::wstring& sValue)
+void MemoryInspectorViewModel::SetCurrentAddressNoteInternal(const std::wstring& sValue)
 {
     m_bSyncingCodeNote = true;
     SetValue(CurrentAddressNoteProperty, sValue);
@@ -249,10 +259,8 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddre
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
 
-    if (m_nSavedNoteAddress != 0xFFFFFFFF)
-        SaveNotes();
+    SaveUncommittedNote();
 
-    m_nSavedNoteAddress = nNewAddress;
     m_bNoteIsIndirect = false;
     const std::wstring* pNote = nullptr;
     if (pCodeNotes != nullptr)
@@ -273,18 +281,15 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddre
 
     if (pNote)
     {
-        m_sSavedNote = *pNote;
-
         const auto nIndirectSource = m_bNoteIsIndirect ? pCodeNotes->GetIndirectSource(nNewAddress) : 0xFFFFFFFF;
         if (nIndirectSource != 0xFFFFFFFF)
-            SetCurrentAddressNote(ra::StringPrintf(L"[Indirect from %s]\r\n%s", ra::ByteAddressToString(nIndirectSource), *pNote));
+            SetCurrentAddressNoteInternal(ra::StringPrintf(L"[Indirect from %s]\r\n%s", ra::ByteAddressToString(nIndirectSource), *pNote));
         else
-            SetCurrentAddressNote(*pNote);
+            SetCurrentAddressNoteInternal(*pNote);
     }
     else
     {
-        m_sSavedNote.clear();
-        SetCurrentAddressNote(L"");
+        SetCurrentAddressNoteInternal(L"");
     }
 
     UpdateNoteButtons();
@@ -367,7 +372,7 @@ void MemoryInspectorViewModel::PublishCurrentAddressNote()
     else
     {
         // if we flagged the text as modified to be written on address change, do so now
-        SaveNotes();
+        SaveUncommittedNote();
 
         UpdateNoteButtons();
     }
@@ -398,7 +403,7 @@ void MemoryInspectorViewModel::RevertCurrentAddressNote()
         const std::wstring pOriginalNoteCopy = *pOriginalNote;
         pCodeNotes->SetCodeNote(nAddress, pOriginalNoteCopy);
 
-        SaveNotes();
+        SaveUncommittedNote();
         UpdateNoteButtons();
     }
 }
@@ -469,19 +474,13 @@ void MemoryInspectorViewModel::ToggleBit(int nBit)
 
 void MemoryInspectorViewModel::OnBeforeActiveGameChanged()
 {
-    if (m_nSavedNoteAddress != 0xFFFFFFFF)
-    {
-        SaveNotes();
-
-        m_nSavedNoteAddress = 0xFFFFFFFF;
-        m_sSavedNote.clear();
-    }
+    SaveUncommittedNote();
 }
 
 void MemoryInspectorViewModel::OnActiveGameChanged()
 {
-    m_nSavedNoteAddress = 0xFFFFFFFF;
-    m_sSavedNote.clear();
+    m_nUncommittedNoteAddress = 0xFFFFFFFF;
+    m_sOriginalNoteValue.clear();
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (pGameContext.GameId() == 0)

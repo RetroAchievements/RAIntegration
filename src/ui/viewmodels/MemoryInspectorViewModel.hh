@@ -79,7 +79,7 @@ public:
     /// <summary>
     /// Sets the current address's note.
     /// </summary>
-    void SetCurrentAddressNote(const std::wstring& sValue);
+    void SetCurrentAddressNote(const std::wstring& sValue) { SetValue(CurrentAddressNoteProperty, sValue); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the current address note is editable.
@@ -165,6 +165,8 @@ public:
 
     void ToggleBit(int nBit);
 
+    bool IsNoteUncommitted() const noexcept { return m_nUncommittedNoteAddress != 0xFFFFFFFF; }
+
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
@@ -183,8 +185,9 @@ private:
     static const IntModelProperty CurrentAddressValueProperty;
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
 
+    void SetCurrentAddressNoteInternal(const std::wstring& sValue);
     void UpdateNoteButtons();
-    void SaveNotes();
+    void SaveUncommittedNote();
 
     MemorySearchViewModel m_pSearch;
     MemoryViewerViewModel m_pViewer;
@@ -192,8 +195,8 @@ private:
     bool m_bSyncingAddress = false;
     bool m_bSyncingCodeNote = false;
     bool m_bNoteIsIndirect = false;
-    ra::ByteAddress m_nSavedNoteAddress = 0xFFFFFFFF;
-    std::wstring m_sSavedNote;
+    ra::ByteAddress m_nUncommittedNoteAddress = 0xFFFFFFFF;
+    std::wstring m_sOriginalNoteValue;
 };
 
 } // namespace viewmodels

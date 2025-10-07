@@ -1478,8 +1478,19 @@ void AssetListViewModel::ResetSelected()
             }
         }
 
+        // if the current address note hasn't been flushed to disk, capture it and
+        // restore it after we refresh from disk.
+        auto& pMemoryInspector = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector;
+        std::wstring sCurrentNoteValue;
+        const bool bIsNoteUncommitted = pMemoryInspector.IsNoteUncommitted();
+        if (bIsNoteUncommitted)
+            sCurrentNoteValue = pMemoryInspector.GetCurrentAddressNote();
+
         // when resetting all, always read the file to pick up new items
         pGameContext.Assets().ReloadAssets(vAssetsToReset);
+
+        if (bIsNoteUncommitted)
+            pMemoryInspector.SetCurrentAddressNote(sCurrentNoteValue);
     }
     else
     {

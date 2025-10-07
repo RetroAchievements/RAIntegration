@@ -4545,6 +4545,40 @@ public:
         Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
     }
 
+    TEST_METHOD(TestResetSelectedAllKeepsModifiedCodeNote)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
+        vmAssetList.mockGameContext.InitializeCodeNotes();
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+            {
+                Assert::AreEqual(std::wstring(L"This will discard all unsaved changes and reset the assets to the last locally saved state."), vmMessageBox.GetMessage());
+
+                bDialogShown = true;
+                return DialogResult::Yes;
+            });
+
+        const ra::ByteAddress nAddress = 0x02;
+        vmAssetList.mockWindowManager.MemoryInspector.SetCurrentAddress(nAddress);
+        vmAssetList.mockWindowManager.MemoryInspector.SetCurrentAddressNote(L"foo");
+        Assert::IsTrue(vmAssetList.mockWindowManager.MemoryInspector.IsNoteUncommitted());
+
+        vmAssetList.ResetSelected();
+
+        Assert::IsTrue(bDialogShown);
+
+        Assert::IsTrue(vmAssetList.mockWindowManager.MemoryInspector.IsNoteUncommitted());
+        Assert::AreEqual(std::wstring(L"foo"), vmAssetList.mockWindowManager.MemoryInspector.GetCurrentAddressNote());
+        const auto* pNote = vmAssetList.mockGameContext.Assets().FindCodeNotes()->FindCodeNote(nAddress);
+        Assert::IsNotNull(pNote);
+        Assert::AreEqual(std::wstring(L"foo"), *pNote);
+    }
+
     TEST_METHOD(TestResetSelectedUnmodified)
     {
         AssetListViewModelHarness vmAssetList;

@@ -1239,6 +1239,9 @@ void AssetListViewModel::SaveSelected()
 #define MAKE_VERSION(major, minor, patch) (major * 10000 + minor * 100 + patch)
 #define RA_INTEGRATION_VERSION_LESS_THAN(major, minor, patch) (MAKE_VERSION(RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_PATCH) < MAKE_VERSION(major, minor, patch))
 
+#if RA_INTEGRATION_VERSION_LESS_THAN(1,4,0)
+#define VALIDATE_PRERELEASE_FUNCTIONALITY
+
 static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
 {
     if (!pCondSet) // there may not be a core group, that's okay.
@@ -1247,15 +1250,13 @@ static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
     for (const auto* pCondition = pCondSet->conditions; pCondition != nullptr; pCondition = pCondition->next)
     {
         /* rc_condition_t validation goes here */
-#if RA_INTEGRATION_VERSION_LESS_THAN(1,4,0)
-#define VALIDATE_PRERELEASE_FUNCTIONALITY
 //        if (pCondition->operand1.size == RC_MEMSIZE_MBF32_LE || pCondition->operand2.size == RC_MEMSIZE_MBF32_LE)
 //            return L"MBF32 LE size is pre-release functionality";
-#endif
     }
 
     return L"";
 }
+#endif
 
 static std::wstring ValidateTriggerLogic(const std::string& sTrigger)
 {

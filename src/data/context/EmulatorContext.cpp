@@ -711,7 +711,8 @@ bool EmulatorContext::IsValidAddress(ra::ByteAddress nAddress) const noexcept
 
 void EmulatorContext::AssertIsOnDoFrameThread() const
 {
-#if !defined(RA_UTEST)
+#if RA_INTEGRATION_VERSION_REVISION != 0
+ #if !defined(RA_UTEST)
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     if (!pRuntime.GetClient()->state.allow_background_memory_reads &&
         !pRuntime.IsOnDoFrameThread())
@@ -726,6 +727,7 @@ void EmulatorContext::AssertIsOnDoFrameThread() const
                 L"were doing when this occurred.");
         }
     }
+ #endif
 #endif
 }
 

@@ -300,7 +300,7 @@ protected:
     void UpdateUserAgent();
     void OnTotalMemorySizeChanged();
     virtual bool ValidateClientVersion(bool& bHardcore);
-    void AssertIsOnDoFrameThread() const;
+    void AssertIsOnDoFrameThread() const noexcept(false);
 
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;
     std::string m_sVersion;

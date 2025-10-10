@@ -671,12 +671,12 @@ void EmulatorContext::OnTotalMemorySizeChanged()
     else
         m_fFormatAddress = FormatAddressLarge;
 
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (NotifyTarget* target : vNotifyTargets)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        Expects(target != nullptr);
-        target->OnTotalMemorySizeChanged();
+        for (auto& target : m_vNotifyTargets.Targets())
+            target->OnTotalMemorySizeChanged();
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
@@ -967,14 +967,15 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, const uint8_t* pByte
 
     if (nBytesWritten > 0)
     {
-        // create a copy of the list of pointers in case it's modified by one of the callbacks
-        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-        for (NotifyTarget* target : vNotifyTargets)
+        if (m_vNotifyTargets.LockIfNotEmpty())
         {
-            Expects(target != nullptr);
+            for (auto& target : m_vNotifyTargets.Targets())
+            {
+                for (unsigned nIndex = 0; nIndex < nBytesWritten; ++nIndex)
+                    target->OnByteWritten(nAddress + nIndex, pBytes[nIndex]);
+            }
 
-            for (unsigned nIndex = 0; nIndex < nBytesWritten; ++nIndex)
-                target->OnByteWritten(nAddress + nIndex, pBytes[nIndex]);
+            m_vNotifyTargets.Unlock();
         }
     }
 }

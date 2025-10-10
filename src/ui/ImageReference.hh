@@ -4,6 +4,7 @@
 
 #include "ra_fwd.h"
 
+#include "data\NotifyTargetSet.hh"
 #include "services\ServiceLocator.hh"
 
 namespace ra {
@@ -93,26 +94,25 @@ public:
         virtual void OnImageChanged([[maybe_unused]] ImageType nType, [[maybe_unused]] const std::string& sName) noexcept(false) {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
-    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Add(pTarget); }
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Remove(pTarget); }
 
 protected:
     GSL_SUPPRESS_F6 IImageRepository() = default;
 
     void OnImageChanged(ImageType nType, const std::string& sName)
     {
-        // create a copy of the list of pointers in case it's modified by one of the callbacks
-        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-        for (NotifyTarget* target : vNotifyTargets)
+        if (m_vNotifyTargets.LockIfNotEmpty())
         {
-            Expects(target != nullptr);
-            target->OnImageChanged(nType, sName);
+            for (auto& target : m_vNotifyTargets.Targets())
+                target->OnImageChanged(nType, sName);
+
+            m_vNotifyTargets.Unlock();
         }
     }
 
 private:
-    using NotifyTargetSet = std::set<NotifyTarget*>;
-    NotifyTargetSet m_vNotifyTargets;
+    ra::data::NotifyTargetSet<NotifyTarget> m_vNotifyTargets;
 };
 
 class ImageReference

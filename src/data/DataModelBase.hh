@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ModelBase.hh"
+#include "NotifyTargetSet.hh"
 
 namespace ra {
 namespace data {
@@ -25,24 +26,18 @@ public:
         virtual void OnDataModelIntValueChanged([[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept(false) {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Add(pTarget); }
 
     void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
     {
 #ifdef RA_UTEST
         GSL_SUPPRESS_F6 Expects(!m_bDestructed);
 #endif
-        GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget);
+        m_vNotifyTargets.Remove(pTarget);
     }
 
 private:
-    using NotifyTargetSet = std::set<NotifyTarget*>;
-
-    /// <summary>
-    /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's
-    /// impossible to create a set of <c>NotifyTarget</c> references.
-    /// </summary>
-    NotifyTargetSet m_vNotifyTargets;
+    NotifyTargetSet<NotifyTarget> m_vNotifyTargets;
 
 public:
     /// <summary>

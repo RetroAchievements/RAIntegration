@@ -501,6 +501,9 @@
     <ClCompile Include="ui\viewmodels\MemoryWatchListViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="data\NotifyTargetSet_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

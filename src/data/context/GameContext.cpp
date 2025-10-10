@@ -634,23 +634,23 @@ uint32_t GameContext::GetGameId(uint32_t nSubsetId) const noexcept
 
 void GameContext::OnBeforeActiveGameChanged()
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (NotifyTarget* target : vNotifyTargets)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        Expects(target != nullptr);
-        target->OnBeforeActiveGameChanged();
+        for (auto& target : m_vNotifyTargets.Targets())
+            target->OnBeforeActiveGameChanged();
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
 void GameContext::OnActiveGameChanged()
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (NotifyTarget* target : vNotifyTargets)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        Expects(target != nullptr);
-        target->OnActiveGameChanged();
+        for (auto& target : m_vNotifyTargets.Targets())
+            target->OnActiveGameChanged();
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
@@ -658,12 +658,12 @@ void GameContext::BeginLoad()
 {
     if (m_nLoadCount.fetch_add(1) == 0)
     {
-        // create a copy of the list of pointers in case it's modified by one of the callbacks
-        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-        for (NotifyTarget* target : vNotifyTargets)
+        if (m_vNotifyTargets.LockIfNotEmpty())
         {
-            Expects(target != nullptr);
-            target->OnBeginGameLoad();
+            for (auto& target : m_vNotifyTargets.Targets())
+                target->OnBeginGameLoad();
+
+            m_vNotifyTargets.Unlock();
         }
     }
 }
@@ -675,12 +675,12 @@ void GameContext::EndLoad()
         for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
             m_vAssets.GetItemAt(nIndex)->Validate();
 
-        // create a copy of the list of pointers in case it's modified by one of the callbacks
-        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-        for (NotifyTarget* target : vNotifyTargets)
+        if (m_vNotifyTargets.LockIfNotEmpty())
         {
-            Expects(target != nullptr);
-            target->OnEndGameLoad();
+            for (auto& target : m_vNotifyTargets.Targets())
+                target->OnEndGameLoad();
+
+            m_vNotifyTargets.Unlock();
         }
     }
 }
@@ -699,29 +699,29 @@ void GameContext::DoFrame()
 
 void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
 {
-    if (!m_vNotifyTargets.empty() && !IsGameLoading())
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        // create a copy of the list of pointers in case it's modified by one of the callbacks
-        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-        for (NotifyTarget* target : vNotifyTargets)
+        if (!IsGameLoading())
         {
-            Expects(target != nullptr);
-            target->OnCodeNoteChanged(nAddress, sNewNote);
+            for (auto& target : m_vNotifyTargets.Targets())
+                target->OnCodeNoteChanged(nAddress, sNewNote);
         }
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
 void GameContext::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
 {
-    if (!m_vNotifyTargets.empty() && !IsGameLoading())
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        // create a copy of the list of pointers in case it's modified by one of the callbacks
-        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-        for (NotifyTarget* target : vNotifyTargets)
+        if (!IsGameLoading())
         {
-            Expects(target != nullptr);
-            target->OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
+            for (auto& target : m_vNotifyTargets.Targets())
+                target->OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
         }
+
+        m_vNotifyTargets.Unlock();
     }
 }
 

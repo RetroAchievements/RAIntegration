@@ -103,6 +103,27 @@ public:
     }
 
     /// <summary>
+    /// Removes all objects from the collection.
+    /// </summary>
+    void Clear() noexcept
+    {
+        if (!m_bLocked)
+        {
+            m_vNotifyTargets.clear();
+        }
+        else
+        {
+            m_vPendingChanges.clear();
+
+            // emplace_back may throw exceptions if the move constructor throws exceptions.
+            // Since we're only dealing with raw pointers, that will never happen.
+            GSL_SUPPRESS_F6
+            for (auto pIter : m_vNotifyTargets)
+                m_vPendingChanges.emplace_back(pIter, false);
+        }
+    }
+
+    /// <summary>
     /// Gets the objects in the collection.
     /// </summary>
     /// <remarks>

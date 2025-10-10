@@ -5,6 +5,7 @@
 #include "ViewModelBase.hh"
 
 #include "data\ModelCollectionBase.hh"
+#include "data\NotifyTargetSet.hh"
 
 namespace ra {
 namespace ui {
@@ -52,10 +53,10 @@ public:
     {
         if (!IsFrozen())
         {
-            if (m_vNotifyTargets.empty())
+            if (m_vNotifyTargets.Targets().empty())
                 StartWatching();
 
-            m_vNotifyTargets.insert(&pTarget);
+            m_vNotifyTargets.Add(pTarget);
         }
     }
 
@@ -65,11 +66,11 @@ public:
         Expects(!m_bDisposed);
 #endif
 
-        if (!m_vNotifyTargets.empty())
+        if (!m_vNotifyTargets.Targets().empty())
         {
-            m_vNotifyTargets.erase(&pTarget);
+            m_vNotifyTargets.Remove(pTarget);
 
-            if (m_vNotifyTargets.empty())
+            if (m_vNotifyTargets.Targets().empty())
                 StopWatching();
         }
     }
@@ -91,7 +92,7 @@ protected:
 
     bool IsWatching() const noexcept override
     {
-        return !IsFrozen() && !m_vNotifyTargets.empty();
+        return !IsFrozen() && !m_vNotifyTargets.Targets().empty();
     }
 
     void OnFrozen() noexcept override;
@@ -103,13 +104,7 @@ protected:
     void OnItemsChanged(const std::vector<gsl::index>& vChangedIndices) override;
 
 private:
-    using NotifyTargetSet = std::set<NotifyTarget*>;
-
-    /// <summary>
-    /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's
-    /// impossible to create a set of <c>NotifyTarget</c> references.
-    /// </summary>
-    NotifyTargetSet m_vNotifyTargets;
+    ra::data::NotifyTargetSet<NotifyTarget> m_vNotifyTargets;
 };
 
 template<class T>

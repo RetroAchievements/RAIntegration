@@ -14,7 +14,7 @@ void ViewModelCollectionBase::OnModelValueChanged(gsl::index nIndex,
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnViewModelBoolValueChanged(nIndex, args);
+            target.OnViewModelBoolValueChanged(nIndex, args);
 
         m_vNotifyTargets.Unlock();
     }
@@ -26,7 +26,7 @@ void ViewModelCollectionBase::OnModelValueChanged(gsl::index nIndex,
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnViewModelStringValueChanged(nIndex, args);
+            target.OnViewModelStringValueChanged(nIndex, args);
 
         m_vNotifyTargets.Unlock();
     }
@@ -38,7 +38,7 @@ void ViewModelCollectionBase::OnModelValueChanged(gsl::index nIndex,
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnViewModelIntValueChanged(nIndex, args);
+            target.OnViewModelIntValueChanged(nIndex, args);
 
         m_vNotifyTargets.Unlock();
     }
@@ -49,7 +49,7 @@ void ViewModelCollectionBase::OnBeginUpdate()
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnBeginViewModelCollectionUpdate();
+            target.OnBeginViewModelCollectionUpdate();
 
         m_vNotifyTargets.Unlock();
     }
@@ -60,7 +60,7 @@ void ViewModelCollectionBase::OnEndUpdate()
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnEndViewModelCollectionUpdate();
+            target.OnEndViewModelCollectionUpdate();
 
         m_vNotifyTargets.Unlock();
     }
@@ -73,7 +73,7 @@ void ViewModelCollectionBase::OnItemsRemoved(const std::vector<gsl::index>& vDel
         for (auto& target : m_vNotifyTargets.Targets())
         {
             for (auto nDeletedIndex : vDeletedIndices)
-                target->OnViewModelRemoved(nDeletedIndex);
+                target.OnViewModelRemoved(nDeletedIndex);
         }
 
         m_vNotifyTargets.Unlock();
@@ -87,7 +87,7 @@ void ViewModelCollectionBase::OnItemsAdded(const std::vector<gsl::index>& vNewIn
         for (auto& target : m_vNotifyTargets.Targets())
         {
             for (auto vNewIndex : vNewIndices)
-                target->OnViewModelAdded(vNewIndex);
+                target.OnViewModelAdded(vNewIndex);
         }
 
         m_vNotifyTargets.Unlock();
@@ -101,7 +101,7 @@ void ViewModelCollectionBase::OnItemsChanged(const std::vector<gsl::index>& vCha
         for (auto& target : m_vNotifyTargets.Targets())
         {
             for (auto vChangedIndex : vChangedIndices)
-                target->OnViewModelChanged(vChangedIndex);
+                target.OnViewModelChanged(vChangedIndex);
         }
 
         m_vNotifyTargets.Unlock();

@@ -17,6 +17,74 @@ namespace data {
 template<class TNotifyTarget>
 class NotifyTargetSet
 {
+private:
+    enum TargetState
+    {
+        Valid = 0,
+        AddPending,
+        RemovePending,
+    };
+    typedef struct Target
+    {
+        Target(TNotifyTarget& pTarget, TargetState nState)
+            : pTarget(&pTarget), nState(nState)
+        {
+        }
+
+        gsl::not_null<TNotifyTarget*> pTarget;
+        TargetState nState;
+    } Target;
+
+    using TargetList = std::vector<Target>;
+
+    class const_iterator : public std::iterator_traits<typename TargetList::const_iterator>
+    {
+    public:
+        TNotifyTarget& operator*() { return *m_pCurrent->pTarget; }
+
+        const_iterator& operator++()
+        {
+            ++m_pCurrent;
+            Skip();
+            return *this;
+        }
+
+        const_iterator operator++(int)
+        {
+            auto pBeforeIncrement = *this;
+            m_pCurrent++;
+            Skip();
+            return pBeforeIncrement;
+        }
+
+        bool operator==(const const_iterator& that) const
+        {
+            return m_pCurrent == that.m_pCurrent;
+        }
+
+        bool operator!=(const const_iterator& that) const
+        {
+            return !(*this == that);
+        }
+
+    private:
+        friend NotifyTargetSet;
+        const_iterator(typename TargetList::const_iterator pCurrent, const TargetList& pOwner)
+            : m_pCurrent(std::move(pCurrent)), m_pOwner(pOwner)
+        {
+            Skip();
+        }
+
+        void Skip()
+        {
+            while (m_pCurrent != m_pOwner.cend() && m_pCurrent->nState != TargetState::Valid)
+                ++m_pCurrent;
+        }
+
+        typename TargetList::const_iterator m_pCurrent;
+        const TargetList& m_pOwner;
+    };
+
 public:
     /// <summary>
     /// Adds an object reference to the collection.
@@ -26,19 +94,21 @@ public:
     /// </remarks>
     void Add(TNotifyTarget& pTarget) noexcept
     {
-        for (const auto pIter : m_vNotifyTargets)
+        for (auto& pIter : m_vNotifyTargets)
         {
-            if (pIter == &pTarget)
+            if (pIter.pTarget == &pTarget)
+            {
+                if (pIter.nState != TargetState::Valid)
+                    pIter.nState = m_nLockCount ? TargetState::AddPending : TargetState::Valid;
+
                 return;
+            }
         }
 
         // emplace_back may throw exceptions if the move constructor throws exceptions.
         // Since we're only dealing with raw pointers, that will never happen.
         GSL_SUPPRESS_F6
-        if (!m_bLocked)
-            m_vNotifyTargets.emplace_back(&pTarget);
-        else
-            MakePending(pTarget, true);
+        m_vNotifyTargets.emplace_back(pTarget, m_nLockCount ? TargetState::AddPending : TargetState::Valid);
     }
 
     /// <summary>
@@ -49,42 +119,20 @@ public:
     /// </remarks>
     void Remove(TNotifyTarget& pTarget) noexcept
     {
-        // nothing to do if list is empty.
-        if (m_vNotifyTargets.empty())
-            return;
-
-        // items are frequently detached while processing children. do a quick check
-        // to see if the last item is the target item to avoid scanning the list.
-        if (!m_bLocked && m_vNotifyTargets.back() == &pTarget)
-        {
-            m_vNotifyTargets.pop_back();
-            return;
-        }
-
         for (auto pIter = m_vNotifyTargets.begin(); pIter < m_vNotifyTargets.end(); ++pIter)
         {
-            if (*pIter == &pTarget)
+            if (pIter->pTarget == &pTarget)
             {
                 // std::vector erase and emplace_back may throw exceptions if the move
                 // constructor or assignment operator throw exceptions. Since we're
                 // only dealing with raw pointers, that will never happen.
                 GSL_SUPPRESS_F6
-                if (!m_bLocked)
+                if (!m_nLockCount)
                     m_vNotifyTargets.erase(pIter);
                 else
-                    MakePending(pTarget, false);
+                    pIter->nState = TargetState::RemovePending;
 
                 return;
-            }
-        }
-
-        // item not found in m_vNotifyTargets. if found in m_vPendingChanges, ensure it's marked for removal
-        for (auto& pPending : m_vPendingChanges)
-        {
-            if (pPending.first == &pTarget)
-            {
-                pPending.second = false;
-                break;
             }
         }
     }
@@ -99,21 +147,41 @@ public:
     /// </summary>
     void Clear() noexcept
     {
-        if (!m_bLocked)
+        if (!m_nLockCount)
         {
             m_vNotifyTargets.clear();
         }
         else
         {
-            m_vPendingChanges.clear();
-
-            // emplace_back may throw exceptions if the move constructor throws exceptions.
-            // Since we're only dealing with raw pointers, that will never happen.
-            GSL_SUPPRESS_F6
-            for (auto pIter : m_vNotifyTargets)
-                m_vPendingChanges.emplace_back(pIter, false);
+            for (auto& pIter : m_vNotifyTargets)
+                pIter.nState = TargetState::RemovePending;
         }
     }
+
+    class ValidTargets
+    {
+    public:
+        ValidTargets(const TargetList& pTargets)
+            : pBegin(pTargets.cbegin(), pTargets), pEnd(pTargets.cend(), pTargets)
+        {
+        }
+
+        auto begin() const { return pBegin; }
+        auto end() const { return pEnd; }
+
+        size_t size() const
+        {
+            size_t count = 0;
+            for (auto pIter = begin(); pIter != end(); ++pIter)
+                ++count;
+
+            return count;
+        }
+
+    private:
+        const_iterator pBegin;
+        const_iterator pEnd;
+    };
 
     /// <summary>
     /// Gets the objects in the collection.
@@ -122,9 +190,9 @@ public:
     /// Should be called within a <see cref="Lock"> block to ensure the collection
     /// isn't modified while it's being processed.
     /// </remarks>
-    const std::vector<gsl::not_null<TNotifyTarget*>>& Targets() const noexcept
+    const ValidTargets Targets() const noexcept
     {
-        return m_vNotifyTargets;
+        return ValidTargets(m_vNotifyTargets);
     }
 
     /// <summary>
@@ -142,7 +210,7 @@ public:
         if (m_vNotifyTargets.empty())
             return false;
 
-        m_bLocked = true;
+        ++m_nLockCount;
         return true;
     }
 
@@ -154,7 +222,7 @@ public:
     /// </remarks>
     void Lock() noexcept
     {
-        m_bLocked = true;
+        ++m_nLockCount;
     }
 
     /// <summary>
@@ -162,43 +230,30 @@ public:
     /// </summary>
     void Unlock()
     {
-        m_bLocked = false;
+        if (!m_nLockCount || --m_nLockCount)
+            return;
 
-        if (!m_vPendingChanges.empty())
+        auto pIter = m_vNotifyTargets.begin();
+        while (pIter < m_vNotifyTargets.end())
         {
-            for (const auto pIter : m_vPendingChanges)
+            switch (pIter->nState)
             {
-                if (pIter.second)
-                    m_vNotifyTargets.emplace_back(pIter.first);
-                else
-                    m_vNotifyTargets.erase(std::remove(m_vNotifyTargets.begin(), m_vNotifyTargets.end(), pIter.first), m_vNotifyTargets.end());
+                case TargetState::RemovePending:
+                    pIter = m_vNotifyTargets.erase(pIter);
+                    continue;
+
+                case TargetState::AddPending:
+                    pIter->nState = TargetState::Valid;
+                    break;
             }
 
-            m_vPendingChanges.clear();
+            ++pIter;
         }
     }
 
 private:
-    void MakePending(TNotifyTarget& pTarget, bool bPending) noexcept
-    {
-        for (auto& pPending : m_vPendingChanges)
-        {
-            if (pPending.first == &pTarget)
-            {
-                pPending.second = bPending;
-                return;
-            }
-        }
-
-        // std::vector emplace_back may throw exceptions if the move constructor throws
-        // exceptions. Since we're only dealing with raw pointers, that will never happen.
-        GSL_SUPPRESS_F6
-        m_vPendingChanges.emplace_back(&pTarget, bPending);
-    }
-
-    std::vector<gsl::not_null<TNotifyTarget*>> m_vNotifyTargets;
-    std::vector<std::pair<gsl::not_null<TNotifyTarget*>, bool>> m_vPendingChanges;
-    bool m_bLocked = false;
+    TargetList m_vNotifyTargets;
+    int m_nLockCount = 0;
 };
 
 } // namespace data

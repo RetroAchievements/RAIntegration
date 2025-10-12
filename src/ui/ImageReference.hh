@@ -105,7 +105,7 @@ protected:
         if (m_vNotifyTargets.LockIfNotEmpty())
         {
             for (auto& target : m_vNotifyTargets.Targets())
-                target->OnImageChanged(nType, sName);
+                target.OnImageChanged(nType, sName);
 
             m_vNotifyTargets.Unlock();
         }

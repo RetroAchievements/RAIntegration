@@ -674,7 +674,7 @@ void EmulatorContext::OnTotalMemorySizeChanged()
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnTotalMemorySizeChanged();
+            target.OnTotalMemorySizeChanged();
 
         m_vNotifyTargets.Unlock();
     }
@@ -972,7 +972,7 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, const uint8_t* pByte
             for (auto& target : m_vNotifyTargets.Targets())
             {
                 for (unsigned nIndex = 0; nIndex < nBytesWritten; ++nIndex)
-                    target->OnByteWritten(nAddress + nIndex, pBytes[nIndex]);
+                    target.OnByteWritten(nAddress + nIndex, pBytes[nIndex]);
             }
 
             m_vNotifyTargets.Unlock();
@@ -991,26 +991,26 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint3
     {
         uint32_t u32;
         uint8_t u8[4];
-    } u;
-    u.u32 = nValue;
+    } m_pCurrent;
+    m_pCurrent.u32 = nValue;
 
     switch (nSize)
     {
         case MemSize::EightBit:
-            WriteMemory(nAddress, u.u8, 1);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
 
         case MemSize::SixteenBit:
-            WriteMemory(nAddress, u.u8, 2);
+            WriteMemory(nAddress, m_pCurrent.u8, 2);
             break;
 
         case MemSize::TwentyFourBit:
-            WriteMemory(nAddress, u.u8, 3);
+            WriteMemory(nAddress, m_pCurrent.u8, 3);
             break;
 
         case MemSize::ThirtyTwoBit:
             // already little endian
-            WriteMemory(nAddress, u.u8, 4);
+            WriteMemory(nAddress, m_pCurrent.u8, 4);
             break;
 
         case MemSize::Float:
@@ -1020,67 +1020,67 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint3
         case MemSize::MBF32:
         case MemSize::MBF32LE:
             // assume the value has already been encoded into a 32-bit little endian value
-            WriteMemory(nAddress, u.u8, 4);
+            WriteMemory(nAddress, m_pCurrent.u8, 4);
             break;
 
         case MemSize::SixteenBitBigEndian:
-            u.u8[3] = u.u8[0];
-            u.u8[2] = u.u8[1];
-            WriteMemory(nAddress, &u.u8[2], 2);
+            m_pCurrent.u8[3] = m_pCurrent.u8[0];
+            m_pCurrent.u8[2] = m_pCurrent.u8[1];
+            WriteMemory(nAddress, &m_pCurrent.u8[2], 2);
             break;
 
         case MemSize::TwentyFourBitBigEndian:
-            u.u8[3] = u.u8[0];
-            u.u8[0] = u.u8[2];
-            u.u8[2] = u.u8[3];
-            WriteMemory(nAddress, u.u8, 3);
+            m_pCurrent.u8[3] = m_pCurrent.u8[0];
+            m_pCurrent.u8[0] = m_pCurrent.u8[2];
+            m_pCurrent.u8[2] = m_pCurrent.u8[3];
+            WriteMemory(nAddress, m_pCurrent.u8, 3);
             break;
 
         case MemSize::ThirtyTwoBitBigEndian:
-            u.u32 = ReverseBytes(nValue);
-            WriteMemory(nAddress, u.u8, 4);
+            m_pCurrent.u32 = ReverseBytes(nValue);
+            WriteMemory(nAddress, m_pCurrent.u8, 4);
             break;
 
         case MemSize::Bit_0:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x01) | (nValue & 1);
-            WriteMemory(nAddress, u.u8, 1);
+            m_pCurrent.u32 = (ReadMemoryByte(nAddress) & ~0x01) | (nValue & 1);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
         case MemSize::Bit_1:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x02) | ((nValue & 1) << 1);
-            WriteMemory(nAddress, u.u8, 1);
+            m_pCurrent.u32 = (ReadMemoryByte(nAddress) & ~0x02) | ((nValue & 1) << 1);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
         case MemSize::Bit_2:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x04) | ((nValue & 1) << 2);
-            WriteMemory(nAddress, u.u8, 1);
+            m_pCurrent.u32 = (ReadMemoryByte(nAddress) & ~0x04) | ((nValue & 1) << 2);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
         case MemSize::Bit_3:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x08) | ((nValue & 1) << 3);
-            WriteMemory(nAddress, u.u8, 1);
+            m_pCurrent.u32 = (ReadMemoryByte(nAddress) & ~0x08) | ((nValue & 1) << 3);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
         case MemSize::Bit_4:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x10) | ((nValue & 1) << 4);
-            WriteMemory(nAddress, u.u8, 1);
+            m_pCurrent.u32 = (ReadMemoryByte(nAddress) & ~0x10) | ((nValue & 1) << 4);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
         case MemSize::Bit_5:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x20) | ((nValue & 1) << 5);
-            WriteMemory(nAddress, u.u8, 1);
+            m_pCurrent.u32 = (ReadMemoryByte(nAddress) & ~0x20) | ((nValue & 1) << 5);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
         case MemSize::Bit_6:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x40) | ((nValue & 1) << 6);
-            WriteMemory(nAddress, u.u8, 1);
+            m_pCurrent.u32 = (ReadMemoryByte(nAddress) & ~0x40) | ((nValue & 1) << 6);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
         case MemSize::Bit_7:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x80) | ((nValue & 1) << 7);
-            WriteMemory(nAddress, u.u8, 1);
+            m_pCurrent.u32 = (ReadMemoryByte(nAddress) & ~0x80) | ((nValue & 1) << 7);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
 
         case MemSize::Nibble_Lower:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x0F) | (nValue & 0x0F);
-            WriteMemory(nAddress, u.u8, 1);
+            m_pCurrent.u32 = (ReadMemoryByte(nAddress) & ~0x0F) | (nValue & 0x0F);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
         case MemSize::Nibble_Upper:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0xF0) | ((nValue & 0x0F) << 4);
-            WriteMemory(nAddress, u.u8, 1);
+            m_pCurrent.u32 = (ReadMemoryByte(nAddress) & ~0xF0) | ((nValue & 0x0F) << 4);
+            WriteMemory(nAddress, m_pCurrent.u8, 1);
             break;
 
         default:

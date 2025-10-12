@@ -34,7 +34,7 @@ void DataModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnDataModelBoolValueChanged(args);
+            target.OnDataModelBoolValueChanged(args);
 
         m_vNotifyTargets.Unlock();
     }
@@ -88,7 +88,7 @@ void DataModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnDataModelStringValueChanged(args);
+            target.OnDataModelStringValueChanged(args);
 
         m_vNotifyTargets.Unlock();
     }
@@ -142,7 +142,7 @@ void DataModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnDataModelIntValueChanged(args);
+            target.OnDataModelIntValueChanged(args);
 
         m_vNotifyTargets.Unlock();
     }

@@ -8,7 +8,7 @@ void ViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnViewModelBoolValueChanged(args);
+            target.OnViewModelBoolValueChanged(args);
 
         m_vNotifyTargets.Unlock();
     }
@@ -21,7 +21,7 @@ void ViewModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnViewModelStringValueChanged(args);
+            target.OnViewModelStringValueChanged(args);
 
         m_vNotifyTargets.Unlock();
     }
@@ -34,7 +34,7 @@ void ViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnViewModelIntValueChanged(args);
+            target.OnViewModelIntValueChanged(args);
 
         m_vNotifyTargets.Unlock();
     }

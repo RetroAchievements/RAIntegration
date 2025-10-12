@@ -637,7 +637,7 @@ void GameContext::OnBeforeActiveGameChanged()
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnBeforeActiveGameChanged();
+            target.OnBeforeActiveGameChanged();
 
         m_vNotifyTargets.Unlock();
     }
@@ -648,7 +648,7 @@ void GameContext::OnActiveGameChanged()
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         for (auto& target : m_vNotifyTargets.Targets())
-            target->OnActiveGameChanged();
+            target.OnActiveGameChanged();
 
         m_vNotifyTargets.Unlock();
     }
@@ -661,7 +661,7 @@ void GameContext::BeginLoad()
         if (m_vNotifyTargets.LockIfNotEmpty())
         {
             for (auto& target : m_vNotifyTargets.Targets())
-                target->OnBeginGameLoad();
+                target.OnBeginGameLoad();
 
             m_vNotifyTargets.Unlock();
         }
@@ -678,7 +678,7 @@ void GameContext::EndLoad()
         if (m_vNotifyTargets.LockIfNotEmpty())
         {
             for (auto& target : m_vNotifyTargets.Targets())
-                target->OnEndGameLoad();
+                target.OnEndGameLoad();
 
             m_vNotifyTargets.Unlock();
         }
@@ -704,7 +704,7 @@ void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring
         if (!IsGameLoading())
         {
             for (auto& target : m_vNotifyTargets.Targets())
-                target->OnCodeNoteChanged(nAddress, sNewNote);
+                target.OnCodeNoteChanged(nAddress, sNewNote);
         }
 
         m_vNotifyTargets.Unlock();
@@ -718,7 +718,7 @@ void GameContext::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress n
         if (!IsGameLoading())
         {
             for (auto& target : m_vNotifyTargets.Targets())
-                target->OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
+                target.OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
         }
 
         m_vNotifyTargets.Unlock();

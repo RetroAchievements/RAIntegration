@@ -42,7 +42,7 @@ public:
         Assert::AreEqual({ 2U }, set.Targets().size());
 
         for (auto& str : set.Targets())
-            str->push_back('!');
+            str.push_back('!');
 
         Assert::AreEqual(std::string("one"), one);
         Assert::AreEqual(std::string("two!"), two);
@@ -54,7 +54,7 @@ public:
         Assert::AreEqual({ 0U }, set.Targets().size());
 
         for (auto& str : set.Targets())
-            str->push_back('?');
+            str.push_back('?');
 
         Assert::AreEqual(std::string("one"), one);
         Assert::AreEqual(std::string("two!"), two);
@@ -74,7 +74,7 @@ public:
 
         set.Lock();
         set.Add(one);
-        Assert::AreEqual({ 0U }, set.Targets().size());
+        Assert::AreEqual({ 0U }, set.Targets().size()); // add is delayed
         set.Unlock();
         Assert::AreEqual({ 1U }, set.Targets().size());
 
@@ -86,13 +86,13 @@ public:
 
         set.Lock();
         set.Remove(one);
-        Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 1U }, set.Targets().size()); // remove is skipped immediately
         set.Unlock();
         Assert::AreEqual({ 1U }, set.Targets().size());
 
         set.Lock();
         set.Remove(two);
-        Assert::AreEqual({ 1U }, set.Targets().size());
+        Assert::AreEqual({ 0U }, set.Targets().size());
         set.Unlock();
         Assert::AreEqual({ 0U }, set.Targets().size());
     }
@@ -119,24 +119,21 @@ public:
         // non empty set is locked by LockIfNotEmpty
         Assert::AreEqual(true, set.LockIfNotEmpty());
         set.Add(two);
-        Assert::AreEqual({ 1U }, set.Targets().size());
-
+        Assert::AreEqual({ 1U }, set.Targets().size()); // add is delayed
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
         // non empty set is locked by LockIfNotEmpty
         Assert::AreEqual(true, set.LockIfNotEmpty());
         set.Remove(one);
-        Assert::AreEqual({ 2U }, set.Targets().size());
-
+        Assert::AreEqual({ 1U }, set.Targets().size()); // remove is immediate
         set.Unlock();
         Assert::AreEqual({ 1U }, set.Targets().size());
 
         // non empty set is locked by LockIfNotEmpty
         Assert::AreEqual(true, set.LockIfNotEmpty());
         set.Remove(two);
-        Assert::AreEqual({ 1U }, set.Targets().size());
-
+        Assert::AreEqual({ 0U }, set.Targets().size()); // remove is immediate
         set.Unlock();
         Assert::AreEqual({ 0U }, set.Targets().size());
 
@@ -164,26 +161,26 @@ public:
         set.Lock();
         set.Add(three);
         set.Remove(one);
-        Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 1U }, set.Targets().size()); // add is delayed, remove is immediate
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
         set.Lock();
         set.Add(three);
         set.Remove(one);
-        Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 2U }, set.Targets().size()); // no changes actually occurred
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
         set.Lock();
         set.Add(four);
         set.Remove(four);
-        Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 2U }, set.Targets().size()); // add is delayed, but immediately removed
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
         for (auto& str : set.Targets())
-            str->push_back('!');
+            str.push_back('!');
 
         Assert::AreEqual(std::string("one"), one);
         Assert::AreEqual(std::string("two!"), two);

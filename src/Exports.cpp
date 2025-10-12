@@ -254,18 +254,15 @@ API HMENU CCONV _RA_CreatePopupMenu()
     ra::ui::viewmodels::LookupItemViewModelCollection vmMenuItems;
     ra::ui::viewmodels::IntegrationMenuViewModel::BuildMenu(vmMenuItems);
 
-    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(vmMenuItems.Count()); ++i)
+    for (const auto& pItem : vmMenuItems)
     {
-        const auto* pItem = vmMenuItems.GetItemAt(i);
-        Expects(pItem != nullptr);
-
-        const int nId = pItem->GetId();
+        const int nId = pItem.GetId();
         if (nId == 0)
             AppendMenu(hMenu, MF_SEPARATOR, 0U, nullptr);
-        else if (pItem->IsSelected())
-            AppendMenu(hMenu, MF_CHECKED, nId, pItem->GetLabel().c_str());
+        else if (pItem.IsSelected())
+            AppendMenu(hMenu, MF_CHECKED, nId, pItem.GetLabel().c_str());
         else
-            AppendMenu(hMenu, MF_STRING, nId, pItem->GetLabel().c_str());
+            AppendMenu(hMenu, MF_STRING, nId, pItem.GetLabel().c_str());
     }
 
     return hMenu;
@@ -279,24 +276,24 @@ API int CCONV _RA_GetPopupMenuItems(RA_MenuItem *pItems)
     vmMenuItems.Clear();
     ra::ui::viewmodels::IntegrationMenuViewModel::BuildMenu(vmMenuItems);
 
-    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(vmMenuItems.Count()); ++i)
+    RA_MenuItem* pItem = pItems;
+    for (const auto& vmItem : vmMenuItems)
     {
-        const auto* pItem = vmMenuItems.GetItemAt(i);
-        Expects(pItem != nullptr);
-
-        const int nId = pItem->GetId();
-        pItems[i].nID = nId;
+        const int nId = vmItem.GetId();
+        pItem->nID = nId;
 
         if (nId == 0)
         {
-            pItems[i].sLabel = nullptr;
-            pItems[i].bChecked = 0;
+            pItem->sLabel = nullptr;
+            pItem->bChecked = 0;
         }
         else
         {
-            pItems[i].sLabel = pItem->GetLabel().c_str();
-            pItems[i].bChecked = pItem->IsSelected() ? 1 : 0;
+            pItem->sLabel = vmItem.GetLabel().c_str();
+            pItem->bChecked = vmItem.IsSelected() ? 1 : 0;
         }
+
+        ++pItem;
     }
 
     return gsl::narrow_cast<int>(vmMenuItems.Count());
@@ -618,32 +615,15 @@ static void OnStateRestored()
 {
     auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
     pAssets.BeginUpdate();
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pAssets.Count()); ++nIndex)
+    for (auto& pAsset : pAssets)
     {
-        auto* pAsset = pAssets.GetItemAt(nIndex);
-        Expects(pAsset != nullptr);
-
-        switch (pAsset->GetType())
+        switch (pAsset.GetType())
         {
             case ra::data::models::AssetType::Achievement:
-            {
-                auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pAsset);
-                Expects(pAchievement != nullptr);
-
-                // synchronize the state
-                pAchievement->DoFrame();
-                break;
-            }
-
             case ra::data::models::AssetType::Leaderboard:
-            {
-                auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(pAsset);
-                Expects(pLeaderboard != nullptr);
-
                 // synchronize the state
-                pLeaderboard->DoFrame();
+                pAsset.DoFrame();
                 break;
-            }
         }
     }
     pAssets.EndUpdate();

@@ -44,6 +44,14 @@ void PointerInspectorViewModel::InitializeNotifyTargets()
     m_vmFields.InitializeNotifyTargets(false);
 }
 
+void PointerInspectorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == IsVisibleProperty && args.tNewValue)
+    {
+        DispatchMemoryRead([this]() { DoFrame(); });
+    }
+}
+
 void PointerInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == CurrentAddressProperty && !m_bSyncingAddress)
@@ -424,8 +432,8 @@ const ra::data::models::CodeNoteModel* PointerInspectorViewModel::UpdatePointerC
         PointerChain().RemoveAt(--nCount);
 
     DispatchMemoryRead([this]() {
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(PointerChain().Count()); i++)
-            PointerChain().GetItemAt(i)->EndInitialization();
+        for (auto& pItem : PointerChain())
+            pItem.EndInitialization();
 
         UpdatePointerChainValues();
     });
@@ -536,8 +544,8 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
         m_vmFields.Items().RemoveAt(--nCount);
 
     DispatchMemoryRead([this]() {
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count()); i++)
-            m_vmFields.Items().GetItemAt(i)->EndInitialization();
+        for (auto& pItem : m_vmFields.Items())
+            pItem.EndInitialization();
 
         UpdateValues();
     });
@@ -620,9 +628,9 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::StringBuilder& build
             m_bRebuildNodes = true;
     }
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count()); ++nIndex)
+    for (auto& pItem : m_vmFields.Items())
     {
-        pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nIndex);
+        pField = dynamic_cast<StructFieldViewModel*>(&pItem);
         if (!pField)
             continue;
 
@@ -790,35 +798,33 @@ void PointerInspectorViewModel::UpdateSourceCodeNote()
 
 void PointerInspectorViewModel::UpdatePointerChainValues()
 {
+    if (m_vPointerChain.Count() == 0)
+        return;
+
     ra::ByteAddress nAddress = 0;
-    const auto nCount = gsl::narrow_cast<gsl::index>(PointerChain().Count());
 
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
 
-    PointerChain().BeginUpdate();
+    m_vPointerChain.BeginUpdate();
 
-    for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
+    for (auto& pPointer : m_vPointerChain)
     {
-        auto* pPointer = PointerChain().GetItemAt(nIndex);
-        if (pPointer != nullptr)
+        nAddress += pPointer.m_nOffset;
+        pPointer.SetAddressWithoutUpdatingValue(nAddress);
+
+        if (pPointer.DoFrame())
+            UpdatePointerChainRowColor(pPointer);
+
+        nAddress = pPointer.GetCurrentValueRaw();
+        if (nAddress > 0)
         {
-            nAddress += pPointer->m_nOffset;
-            pPointer->SetAddressWithoutUpdatingValue(nAddress);
-
-            if (pPointer->DoFrame())
-                UpdatePointerChainRowColor(*pPointer);
-
-            nAddress = pPointer->GetCurrentValueRaw();
-            if (nAddress > 0)
-            {
-                const auto nAdjustedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
-                if (nAdjustedAddress != 0xFFFFFFFF)
-                    nAddress = nAdjustedAddress;
-            }
+            const auto nAdjustedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
+            if (nAdjustedAddress != 0xFFFFFFFF)
+                nAddress = nAdjustedAddress;
         }
     }
 
-    PointerChain().EndUpdate();
+    m_vPointerChain.EndUpdate();
 }
 
 void PointerInspectorViewModel::UpdatePointerChainRowColor(PointerInspectorViewModel::StructFieldViewModel& pPointer)
@@ -870,10 +876,9 @@ void PointerInspectorViewModel::UpdateValues()
 
     m_vmFields.Items().BeginUpdate();
 
-    const auto nCount = gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count());
-    for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
+    for (auto& pItem : m_vmFields.Items())
     {
-        auto* pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nIndex);
+        auto* pField = dynamic_cast<StructFieldViewModel*>(&pItem);
         if (pField != nullptr)
         {
             pField->SetAddress(nBaseAddress + pField->m_nOffset);
@@ -886,6 +891,9 @@ void PointerInspectorViewModel::UpdateValues()
 
 void PointerInspectorViewModel::DoFrame()
 {
+    if (!IsVisible())
+        return;
+
     UpdatePointerChainValues();
     UpdateValues();
 }

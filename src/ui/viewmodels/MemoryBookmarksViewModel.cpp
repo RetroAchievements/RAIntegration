@@ -144,9 +144,8 @@ bool MemoryBookmarksViewModel::IsModified() const
     if (m_vmMemoryWatchList.Items().Count() != m_nUnmodifiedBookmarkCount)
         return true;
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vmMemoryWatchList.Items().Count()); ++nIndex)
+    for (const auto& vmBookmark : m_vmMemoryWatchList.Items())
     {
-        const auto& vmBookmark = *m_vmMemoryWatchList.Items().GetItemAt(nIndex);
         if (vmBookmark.IsModified())
             return true;
     }
@@ -184,11 +183,8 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
 
 void MemoryBookmarksViewModel::OnEndGameLoad()
 {
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vmMemoryWatchList.Items().Count(); ++nIndex)
-    {
-        auto& vmBookmark = *m_vmMemoryWatchList.Items().GetItemAt(nIndex);
+    for (auto& vmBookmark : m_vmMemoryWatchList.Items())
         vmBookmark.UpdateRealNote();
-    }
 }
 
 void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmarksFile)
@@ -310,10 +306,8 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
     document.SetObject();
 
     rapidjson::Value bookmarks(rapidjson::kArrayType);
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vmMemoryWatchList.Items().Count(); ++nIndex)
+    for (auto& vmBookmark : m_vmMemoryWatchList.Items())
     {
-        auto& vmBookmark = *m_vmMemoryWatchList.Items().GetItemAt(nIndex);
-
         rapidjson::Value item(rapidjson::kObjectType);
 
         const auto nSize = vmBookmark.GetSize();
@@ -363,12 +357,11 @@ void MemoryBookmarksViewModel::DoFrame()
 
 bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const
 {
-    for (size_t nIndex = 0; nIndex < m_vmMemoryWatchList.Items().Count(); ++nIndex)
+    for (const auto& pBookmark : m_vmMemoryWatchList.Items())
     {
-        const auto* pBookmark = m_vmMemoryWatchList.Items().GetItemAt(nIndex);
-        if (pBookmark != nullptr && pBookmark->GetAddress() == nAddress)
+        if (pBookmark.GetAddress() == nAddress)
         {
-            if (!pBookmark->IsIndirectAddress() || pBookmark->IsIndirectAddressChainValid())
+            if (!pBookmark.IsIndirectAddress() || pBookmark.IsIndirectAddressChainValid())
                 return true;
         }
     }
@@ -378,9 +371,9 @@ bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const
 
 bool MemoryBookmarksViewModel::HasFrozenBookmark(ra::ByteAddress nAddress) const
 {
-    for (size_t nIndex = 0; nIndex < m_vmMemoryWatchList.Items().Count(); ++nIndex)
+    for (const auto& vmBookmark : m_vmMemoryWatchList.Items())
     {
-        const auto* pBookmark = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
+        auto* pBookmark = dynamic_cast<const MemoryBookmarkViewModel*>(&vmBookmark);
         if (pBookmark != nullptr && pBookmark->GetBehavior() == BookmarkBehavior::Frozen && pBookmark->GetAddress() == nAddress)
             return true;
     }
@@ -497,10 +490,10 @@ void MemoryBookmarksViewModel::OnEndViewModelCollectionUpdate()
 
 bool MemoryBookmarksViewModel::ShouldFreeze() const
 {
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vmMemoryWatchList.Items().Count(); ++nIndex)
+    for (const auto& vmBookmark : m_vmMemoryWatchList.Items())
     {
-        const auto& pBookmark = *m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
-        if (pBookmark.IsSelected() && pBookmark.GetBehavior() != BookmarkBehavior::Frozen)
+        auto* pBookmark = dynamic_cast<const MemoryBookmarkViewModel*>(&vmBookmark);
+        if (pBookmark != nullptr && pBookmark->IsSelected() && pBookmark->GetBehavior() != BookmarkBehavior::Frozen)
             return true;
     }
 
@@ -521,18 +514,18 @@ void MemoryBookmarksViewModel::ToggleFreezeSelected()
 
     if (ShouldFreeze())
     {
-        for (gsl::index nIndex = m_vmMemoryWatchList.Items().Count() - 1; nIndex >= 0; --nIndex)
+        for (auto& vmItem : m_vmMemoryWatchList.Items())
         {
-            auto* pItem = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
+            auto* pItem = dynamic_cast<MemoryBookmarkViewModel*>(&vmItem);
             if (pItem && pItem->IsSelected())
                 pItem->SetBehavior(BookmarkBehavior::Frozen);
         }
     }
     else
     {
-        for (gsl::index nIndex = m_vmMemoryWatchList.Items().Count() - 1; nIndex >= 0; --nIndex)
+        for (auto& vmItem : m_vmMemoryWatchList.Items())
         {
-            auto* pItem = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
+            auto* pItem = dynamic_cast<MemoryBookmarkViewModel*>(&vmItem);
             if (pItem && pItem->IsSelected() && pItem->GetBehavior() == BookmarkBehavior::Frozen)
                 pItem->SetBehavior(BookmarkBehavior::None);
         }
@@ -543,10 +536,10 @@ void MemoryBookmarksViewModel::ToggleFreezeSelected()
 
 bool MemoryBookmarksViewModel::ShouldPause() const
 {
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vmMemoryWatchList.Items().Count(); ++nIndex)
+    for (const auto& vmItem : m_vmMemoryWatchList.Items())
     {
-        const auto& pBookmark = *m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
-        if (pBookmark.IsSelected() && pBookmark.GetBehavior() != BookmarkBehavior::PauseOnChange)
+        const auto* pBookmark = dynamic_cast<const MemoryBookmarkViewModel*>(&vmItem);
+        if (pBookmark != nullptr && pBookmark->IsSelected() && pBookmark->GetBehavior() != BookmarkBehavior::PauseOnChange)
             return true;
     }
 
@@ -567,18 +560,18 @@ void MemoryBookmarksViewModel::TogglePauseSelected()
 
     if (ShouldPause())
     {
-        for (gsl::index nIndex = m_vmMemoryWatchList.Items().Count() - 1; nIndex >= 0; --nIndex)
+        for (auto& vmItem : m_vmMemoryWatchList.Items())
         {
-            auto* pItem = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
+            auto* pItem = dynamic_cast<MemoryBookmarkViewModel*>(&vmItem);
             if (pItem && pItem->IsSelected())
                 pItem->SetBehavior(BookmarkBehavior::PauseOnChange);
         }
     }
     else
     {
-        for (gsl::index nIndex = m_vmMemoryWatchList.Items().Count() - 1; nIndex >= 0; --nIndex)
+        for (auto& vmItem : m_vmMemoryWatchList.Items())
         {
-            auto* pItem = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
+            auto* pItem = dynamic_cast<MemoryBookmarkViewModel*>(&vmItem);
             if (pItem && pItem->IsSelected() && pItem->GetBehavior() == BookmarkBehavior::PauseOnChange)
                 pItem->SetBehavior(BookmarkBehavior::None);
         }
@@ -599,9 +592,9 @@ void MemoryBookmarksViewModel::MoveSelectedBookmarksDown()
 
 void MemoryBookmarksViewModel::ClearBehaviors()
 {
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vmMemoryWatchList.Items().Count()); ++nIndex)
+    for (auto& vmBookmark : m_vmMemoryWatchList.Items())
     {
-        auto* pBookmark = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
+        auto* pBookmark = dynamic_cast<MemoryBookmarkViewModel*>(&vmBookmark);
         if (pBookmark)
             pBookmark->SetBehavior(BookmarkBehavior::None);
     }

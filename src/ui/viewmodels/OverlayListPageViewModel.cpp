@@ -35,10 +35,9 @@ bool OverlayListPageViewModel::AssetAppearsInFilter(const ra::data::models::Asse
 
     const auto& pAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
     const auto& vFilteredAssets = pAssetList.FilteredAssets();
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(vFilteredAssets.Count()); ++nIndex)
+    for (const auto& vmAsset : vFilteredAssets)
     {
-        const auto* vmAsset = vFilteredAssets.GetItemAt(nIndex);
-        if (vmAsset && vmAsset->GetId() == nId && vmAsset->GetType() == nType)
+        if (vmAsset.GetId() == nId && vmAsset.GetType() == nType)
             return true;
     }
 
@@ -97,11 +96,10 @@ bool OverlayListPageViewModel::Update(double fElapsed)
         const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
 
         unsigned int nImagesPending = 0;
-        for (gsl::index nIndex = m_vItems.Count() - 1; nIndex >= 0; --nIndex)
+        for (const auto& pItem : m_vItems)
         {
-            const auto* pItem = m_vItems.GetItemAt(nIndex);
-            if (pItem && pItem->Image.Type() != ra::ui::ImageType::None &&
-                !pImageRepository.IsImageAvailable(pItem->Image.Type(), pItem->Image.Name()))
+            if (pItem.Image.Type() != ra::ui::ImageType::None &&
+                !pImageRepository.IsImageAvailable(pItem.Image.Type(), pItem.Image.Name()))
             {
                 ++nImagesPending;
             }

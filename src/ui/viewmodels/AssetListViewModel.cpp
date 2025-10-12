@@ -358,13 +358,12 @@ void AssetListViewModel::UpdateTotals()
     int nAchievementCount = 0;
     int nTotalPoints = 0;
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nIndex)
+    for (const auto& pAsset : m_vFilteredAssets)
     {
-        auto* pAsset = m_vFilteredAssets.GetItemAt(nIndex);
-        if (pAsset && pAsset->GetType() == ra::data::models::AssetType::Achievement)
+        if (pAsset.GetType() == ra::data::models::AssetType::Achievement)
         {
             ++nAchievementCount;
-            nTotalPoints += pAsset->GetPoints();
+            nTotalPoints += pAsset.GetPoints();
         }
     }
 
@@ -423,12 +422,8 @@ void AssetListViewModel::ApplyFilter()
     }
 
     // second pass: update visibility of each item in the source collection
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
-    {
-        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-        if (pAsset != nullptr)
-            AddOrRemoveFilteredItem(*pAsset);
-    }
+    for (const auto& pAsset : pGameContext.Assets())
+        AddOrRemoveFilteredItem(pAsset);
 
     m_vFilteredAssets.EndUpdate();
 
@@ -620,12 +615,11 @@ void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
 
 bool AssetListViewModel::HasSelection(ra::data::models::AssetType nAssetType) const
 {
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nIndex)
+    for (const auto& pItem : m_vFilteredAssets)
     {
-        const auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
-        if (pItem != nullptr && pItem->IsSelected())
+        if (pItem.IsSelected())
         {
-            if (nAssetType == ra::data::models::AssetType::None || nAssetType == pItem->GetType())
+            if (nAssetType == ra::data::models::AssetType::None || nAssetType == pItem.GetType())
                 return true;
         }
     }
@@ -710,95 +704,91 @@ void AssetListViewModel::DoUpdateButtons()
     {
         SetValue(CanCreateProperty, true);
 
-        for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
+        for (const auto& pItem : m_vFilteredAssets)
         {
-            const auto* pItem = m_vFilteredAssets.GetItemAt(i);
-            if (pItem != nullptr)
+            switch (pItem.GetChanges())
             {
-                switch (pItem->GetChanges())
+                case ra::data::models::AssetChanges::Modified:
+                case ra::data::models::AssetChanges::New:
+                    bHasModified = true;
+                    break;
+                case ra::data::models::AssetChanges::Unpublished:
+                    if (CanPublish(pItem.GetType()))
+                        bHasUnpublished = true;
+                    break;
+                default:
+                    break;
+            }
+
+            if (pItem.IsSelected())
+            {
+                bHasSelection = true;
+
+                switch (pItem.GetCategory())
                 {
-                    case ra::data::models::AssetChanges::Modified:
-                    case ra::data::models::AssetChanges::New:
-                        bHasModified = true;
+                    case ra::data::models::AssetCategory::Core:
+                        bHasCoreSelection = true;
                         break;
-                    case ra::data::models::AssetChanges::Unpublished:
-                        if (CanPublish(pItem->GetType()))
-                            bHasUnpublished = true;
+                    case ra::data::models::AssetCategory::Unofficial:
+                        bHasUnofficial = true;
+                        bHasUnofficialSelection = true;
+                        break;
+                    case ra::data::models::AssetCategory::Local:
+                        bHasLocalSelection = true;
                         break;
                     default:
                         break;
                 }
 
-                if (pItem->IsSelected())
-                {
-                    bHasSelection = true;
-
-                    switch (pItem->GetCategory())
-                    {
-                        case ra::data::models::AssetCategory::Core:
-                            bHasCoreSelection = true;
-                            break;
-                        case ra::data::models::AssetCategory::Unofficial:
-                            bHasUnofficial = true;
-                            bHasUnofficialSelection = true;
-                            break;
-                        case ra::data::models::AssetCategory::Local:
-                            bHasLocalSelection = true;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    if (ra::data::models::AssetModelBase::IsActive(pItem->GetState()))
-                        bHasActiveSelection = true;
-                    else
-                        bHasInactiveSelection = true;
-
-                    switch (pItem->GetChanges())
-                    {
-                        case ra::data::models::AssetChanges::New:
-                            bHasModifiedSelection = true;
-                            break;
-                        case ra::data::models::AssetChanges::Modified:
-                            bHasNonNewSelection = true;
-                            bHasModifiedSelection = true;
-                            break;
-                        case ra::data::models::AssetChanges::Unpublished:
-                            bHasNonNewSelection = true;
-                            if (CanPublish(pItem->GetType()))
-                                bHasUnpublishedSelection = true;
-                            break;
-                        default:
-                            bHasNonNewSelection = true;
-                            break;
-                    }
-
-                    switch (pItem->GetType())
-                    {
-                        case ra::data::models::AssetType::RichPresence:
-                            bHasRichPresenceSelection = true;
-                            break;
-                        default:
-                            bHasNonRichPresenceSelection = true;
-                            break;
-                    }
-                }
+                if (ra::data::models::AssetModelBase::IsActive(pItem.GetState()))
+                    bHasActiveSelection = true;
                 else
+                    bHasInactiveSelection = true;
+
+                switch (pItem.GetChanges())
                 {
-                    switch (pItem->GetCategory())
-                    {
-                        case ra::data::models::AssetCategory::Core:
-                            bHasCore = true;
-                            break;
-                        case ra::data::models::AssetCategory::Unofficial:
-                            bHasUnofficial = true;
-                            break;
-                        case ra::data::models::AssetCategory::Local:
-                            bHasLocal = true;
-                            break;
-                        default:
-                            break;
-                    }
+                    case ra::data::models::AssetChanges::New:
+                        bHasModifiedSelection = true;
+                        break;
+                    case ra::data::models::AssetChanges::Modified:
+                        bHasNonNewSelection = true;
+                        bHasModifiedSelection = true;
+                        break;
+                    case ra::data::models::AssetChanges::Unpublished:
+                        bHasNonNewSelection = true;
+                        if (CanPublish(pItem.GetType()))
+                            bHasUnpublishedSelection = true;
+                        break;
+                    default:
+                        bHasNonNewSelection = true;
+                        break;
+                }
+
+                switch (pItem.GetType())
+                {
+                    case ra::data::models::AssetType::RichPresence:
+                        bHasRichPresenceSelection = true;
+                        break;
+                    default:
+                        bHasNonRichPresenceSelection = true;
+                        break;
+                }
+            }
+            else
+            {
+                switch (pItem.GetCategory())
+                {
+                    case ra::data::models::AssetCategory::Core:
+                        bHasCore = true;
+                        break;
+                    case ra::data::models::AssetCategory::Unofficial:
+                        bHasUnofficial = true;
+                        break;
+                    case ra::data::models::AssetCategory::Local:
+                        bHasLocal = true;
+                        break;
+                    default:
+                        break;
                 }
             }
         }
@@ -929,12 +919,11 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 
-    for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
+    for (const auto& pItem : m_vFilteredAssets)
     {
-        const auto* pItem = m_vFilteredAssets.GetItemAt(i);
-        if (pItem != nullptr && pItem->IsSelected())
+        if (pItem.IsSelected())
         {
-            auto* pAsset = pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId());
+            auto* pAsset = pGameContext.Assets().FindAsset(pItem.GetType(), pItem.GetId());
             if (pAsset != nullptr)
             {
                 if (!pFilterFunction || pFilterFunction(*pAsset))
@@ -946,17 +935,13 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
     // no selected assets found, return all assets
     if (vSelectedAssets.empty())
     {
-        for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
+        for (const auto& pItem : m_vFilteredAssets)
         {
-            const auto* pItem = m_vFilteredAssets.GetItemAt(i);
-            if (pItem != nullptr)
+            auto* pAsset = pGameContext.Assets().FindAsset(pItem.GetType(), pItem.GetId());
+            if (pAsset != nullptr)
             {
-                auto* pAsset = pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId());
-                if (pAsset != nullptr)
-                {
-                    if (!pFilterFunction || pFilterFunction(*pAsset))
-                        vSelectedAssets.push_back(pAsset);
-                }
+                if (!pFilterFunction || pFilterFunction(*pAsset))
+                    vSelectedAssets.push_back(pAsset);
             }
         }
     }
@@ -1091,12 +1076,11 @@ void AssetListViewModel::SaveSelected()
     if (sSaveButtonText.at(0) == '&') // "&Save" / "&Save All"
     {
         // save - find the selected items (allow empty to mean all)
-        for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
+        for (const auto& pItem : m_vFilteredAssets)
         {
-            const auto* pItem = m_vFilteredAssets.GetItemAt(i);
-            if (pItem != nullptr && pItem->IsSelected())
+            if (pItem.IsSelected())
             {
-                auto* pAsset = pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId());
+                auto* pAsset = pGameContext.Assets().FindAsset(pItem.GetType(), pItem.GetId());
                 if (pAsset != nullptr)
                     vSelectedAssets.push_back(pAsset);
             }
@@ -1413,14 +1397,13 @@ void AssetListViewModel::ResetSelected()
 
     bool bCoreAssetSelected = false;
     std::vector<const AssetSummaryViewModel*> vSelectedAssets;
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nIndex)
+    for (const auto& pItem : m_vFilteredAssets)
     {
-        const auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
-        if (pItem != nullptr && pItem->IsSelected())
+        if (pItem.IsSelected())
         {
-            vSelectedAssets.push_back(pItem);
+            vSelectedAssets.push_back(&pItem);
 
-            bCoreAssetSelected |= (pItem->GetCategory() == ra::data::models::AssetCategory::Core);
+            bCoreAssetSelected |= (pItem.GetCategory() == ra::data::models::AssetCategory::Core);
         }
     }
 

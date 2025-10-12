@@ -137,6 +137,11 @@ public:
     /// Gets the item at the specified index.
     /// </summary>
     const T* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const T*>(GetModelAt(nIndex)); }
+
+    auto begin() { return CreateBeginIterator<T>(); }
+    auto end() { return CreateEndIterator<T>(); }
+    auto begin() const { return CreateConstBeginIterator<T>(); }
+    auto end() const { return CreateConstEndIterator<T>(); }
 };
 
 } // namespace data

@@ -97,11 +97,9 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, InPlaceEditorInf
 
     m_vVisibleItems.clear();
 
-    for (size_t i = 0; i < m_vmItems.Count(); ++i)
+    for (const auto& pItem : m_vmItems)
     {
-        const auto* pItem = m_vmItems.GetItemAt(i);
-        Expects(pItem != nullptr);
-        const auto nItemValue = pItem->GetId();
+        const auto nItemValue = pItem.GetId();
 
         if (vmItem != nullptr)
         {
@@ -111,7 +109,7 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, InPlaceEditorInf
             m_vVisibleItems.push_back(nItemValue);
         }
 
-        const auto nIndex = ComboBox_AddString(hInPlaceEditor, NativeStr(pItem->GetLabel()).c_str());
+        const auto nIndex = ComboBox_AddString(hInPlaceEditor, NativeStr(pItem.GetLabel()).c_str());
 
         if (nItemValue == nValue)
             ComboBox_SetCurSel(hInPlaceEditor, nIndex);

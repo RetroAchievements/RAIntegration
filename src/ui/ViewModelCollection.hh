@@ -172,6 +172,11 @@ public:
     /// </summary>
     template<class T2>
     const T2* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const T2*>(GetModelAt(nIndex)); }
+
+    auto begin() { return CreateBeginIterator<T>(); }
+    auto end() { return CreateEndIterator<T>(); }
+    auto begin() const { return CreateConstBeginIterator<T>(); }
+    auto end() const { return CreateConstEndIterator<T>(); }
 };
 
 } // namespace ui

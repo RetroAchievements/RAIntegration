@@ -186,8 +186,8 @@ void PointerFinderViewModel::Find()
                 continue;
 
             // flag all items as having not been seen - anything that's still not seen after merging will be discarded
-            for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vResults.Count()) - 1; nIndex >= 0; nIndex--)
-                m_vResults.GetItemAt(nIndex)->m_bMatched = false;
+            for (auto& pResult : m_vResults)
+                pResult.m_bMatched = false;
 
             // compare the two memory states
             ra::services::SearchResults pResults;
@@ -284,11 +284,9 @@ void PointerFinderViewModel::BookmarkSelected()
     if (!vmBookmarks.IsVisible())
         vmBookmarks.Show();
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vResults.Count()); nIndex++)
+    for (const auto& pItem : m_vResults)
     {
-        const auto* pItem = m_vResults.GetItemAt(nIndex);
-        Expects(pItem != nullptr);
-        if (pItem->IsSelected())
+        if (pItem.IsSelected())
         {
             MemSize nSize = MemSize::ThirtyTwoBit;
             switch (GetSearchType())
@@ -300,7 +298,7 @@ void PointerFinderViewModel::BookmarkSelected()
                     break;
             }
 
-            vmBookmarks.AddBookmark(pItem->m_nAddress, nSize);
+            vmBookmarks.AddBookmark(pItem.m_nAddress, nSize);
             break;
         }
     }
@@ -346,17 +344,15 @@ void PointerFinderViewModel::ExportResults() const
     }
     pTextWriter->WriteLine();
 
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vResults.Count(); ++nIndex)
+    for (const auto& pRow : m_vResults)
     {
-        const auto* pRow = m_vResults.GetItemAt(nIndex);
-        Expects(pRow != nullptr);
-        pTextWriter->Write(pRow->GetPointerAddress());
+        pTextWriter->Write(pRow.GetPointerAddress());
         pTextWriter->Write(",");
-        pTextWriter->Write(pRow->GetOffset());
+        pTextWriter->Write(pRow.GetOffset());
 
         for (gsl::index nState = 0; nState < gsl::narrow_cast<gsl::index>(m_vStates.size()); nState++)
         {
-            const auto& sValue = pRow->GetPointerValue(nState);
+            const auto& sValue = pRow.GetPointerValue(nState);
             if (!sValue.empty()) {
                 pTextWriter->Write(",");
                 pTextWriter->Write(sValue);

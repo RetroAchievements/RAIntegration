@@ -115,7 +115,7 @@ protected:
         uint32_t nDependentColumns;
     } PropertyColumnMapping;
     std::vector<PropertyColumnMapping> m_vPropertyColumns;
-    static int ComparePropertyColumnMappings(const GridBinding::PropertyColumnMapping& left, int nKey);
+    static int ComparePropertyColumnMappings(const GridBinding::PropertyColumnMapping& left, int nKey) noexcept;
     PropertyColumnMapping& GetPropertyColumnMapping(int nPropertyKey);
     void UpdateDependentColumns(gsl::index nIndex, uint32_t nDependentColumns);
 

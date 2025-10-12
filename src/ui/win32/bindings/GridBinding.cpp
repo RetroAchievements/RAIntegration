@@ -429,7 +429,7 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
         UpdateDependentColumns(nIndex, pPropertyMapping.nDependentColumns);
 }
 
-int GridBinding::ComparePropertyColumnMappings(const GridBinding::PropertyColumnMapping& left, int nKey)
+int GridBinding::ComparePropertyColumnMappings(const GridBinding::PropertyColumnMapping& left, int nKey) noexcept
 {
     return left.nKey < nKey;
 }

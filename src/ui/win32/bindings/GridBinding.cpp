@@ -357,16 +357,21 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
         return;
     }
 
-    for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
+    auto& pPropertyMapping = GetPropertyColumnMapping(args.Property.GetKey());
+    if (pPropertyMapping.nDependentColumns == 0xFFFFFFFF)
     {
-        const auto& pColumn = *m_vColumns.at(nColumnIndex);
-        if (pColumn.DependsOn(args.Property))
+        pPropertyMapping.nDependentColumns = 0;
+
+        for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
         {
-            InvokeOnUIThread([this, nIndex, nColumnIndex]() {
-                UpdateCell(nIndex, nColumnIndex);
-            });
+            const auto& pColumn = *m_vColumns.at(nColumnIndex);
+            if (pColumn.DependsOn(args.Property))
+                pPropertyMapping.nDependentColumns |= 1 << nColumnIndex;
         }
     }
+
+    if (pPropertyMapping.nDependentColumns)
+        UpdateDependentColumns(nIndex, pPropertyMapping.nDependentColumns);
 
     if (!m_vmItems->IsUpdating())
         OnEndViewModelCollectionUpdate();
@@ -386,70 +391,122 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
         });
     }
 
-    for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
+    auto& pPropertyMapping = GetPropertyColumnMapping(args.Property.GetKey());
+
+    if (pPropertyMapping.nDependentColumns == 0xFFFFFFFF)
     {
-        const auto& pColumn = *m_vColumns.at(nColumnIndex);
-        if (pColumn.DependsOn(args.Property))
+        pPropertyMapping.nDependentColumns = 0;
+
+        for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
         {
-            const auto* pCheckBoxColumn = dynamic_cast<const GridCheckBoxColumnBinding*>(&pColumn);
-            if (pCheckBoxColumn != nullptr)
-            {
-                InvokeOnUIThread([this, nRealIndex, nValue = args.tNewValue]() noexcept {
-                    ListView_SetCheckState(m_hWnd, nRealIndex, nValue);
-                });
-            }
-            else
-            {
-                UpdateCell(nIndex, nColumnIndex);
-            }
+            const auto& pColumn = *m_vColumns.at(nColumnIndex);
+            if (pColumn.DependsOn(args.Property))
+                pPropertyMapping.nDependentColumns |= 1 << nColumnIndex;
         }
     }
+
+    if (pPropertyMapping.nDependentColumns)
+        UpdateDependentColumns(nIndex, pPropertyMapping.nDependentColumns);
 }
 
 void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
-    for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
+    auto& pPropertyMapping = GetPropertyColumnMapping(args.Property.GetKey());
+
+    if (pPropertyMapping.nDependentColumns == 0xFFFFFFFF)
     {
-        const auto& pColumn = *m_vColumns.at(nColumnIndex);
-        if (pColumn.DependsOn(args.Property))
-            UpdateCell(nIndex, nColumnIndex);
+        pPropertyMapping.nDependentColumns = 0;
+
+        for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
+        {
+            const auto& pColumn = *m_vColumns.at(nColumnIndex);
+            if (pColumn.DependsOn(args.Property))
+                pPropertyMapping.nDependentColumns |= 1 << nColumnIndex;
+        }
     }
+
+    if (pPropertyMapping.nDependentColumns)
+        UpdateDependentColumns(nIndex, pPropertyMapping.nDependentColumns);
+}
+
+int GridBinding::ComparePropertyColumnMappings(const GridBinding::PropertyColumnMapping& left, int nKey)
+{
+    return left.nKey < nKey;
+}
+
+GridBinding::PropertyColumnMapping& GridBinding::GetPropertyColumnMapping(int nPropertyKey)
+{
+    auto iter = std::lower_bound(m_vPropertyColumns.begin(), m_vPropertyColumns.end(), nPropertyKey, ComparePropertyColumnMappings);
+    if (iter != m_vPropertyColumns.end() && iter->nKey == nPropertyKey)
+        return *iter;
+
+    m_vPropertyColumns.insert(iter, {nPropertyKey, 0xFFFFFFFF});
+    return GetPropertyColumnMapping(nPropertyKey);
+}
+
+void GridBinding::UpdateDependentColumns(gsl::index nIndex, uint32_t nDependentColumns)
+{
+    // if the sort column is affected, it's no longer sorted
+    if (m_nSortIndex >= 0 && (nDependentColumns & (1 << m_nSortIndex)))
+        m_nSortIndex = -1;
+
+    InvokeOnUIThread([this, nIndex, nDependentColumns]() {
+        auto nMask = nDependentColumns;
+        gsl::index nColumnIndex = 0;
+        do
+        {
+            if (nMask & 1)
+                UpdateCell(nIndex, nColumnIndex);
+
+            ++nColumnIndex;
+            nMask >>= 1;
+        } while (nMask);
+    });
 }
 
 void GridBinding::UpdateCell(gsl::index nIndex, gsl::index nColumnIndex)
 {
-    SuspendRedraw();
-
-    // if the affected data is in the sort column, it's no longer sorted
-    if (m_nSortIndex == nColumnIndex)
-        m_nSortIndex = -1;
+    assert(WindowBinding::IsOnUIThread());
 
     const auto nRealIndex = GetRealItemIndex(nIndex);
-    InvokeOnUIThread([this, nIndex, nRealIndex, nColumnIndex]() {
-        std::wstring sText;
 
-        LV_ITEMW item{};
-        item.mask = LVIF_TEXT;
-        item.iItem = gsl::narrow_cast<int>(nRealIndex);
-        item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
-
-        if (m_pScrollOffsetProperty)
+    if (nColumnIndex == 0)
+    {
+        const auto& pColumn = *m_vColumns.at(nColumnIndex);
+        const auto* pCheckBoxColumn = dynamic_cast<const GridCheckBoxColumnBinding*>(&pColumn);
+        if (pCheckBoxColumn != nullptr)
         {
-            item.pszText = LPSTR_TEXTCALLBACK;
+            const bool bValue = m_vmItems->GetItemValue(nIndex, pCheckBoxColumn->GetBoundProperty());
+            ListView_SetCheckState(m_hWnd, nRealIndex, bValue);
+            return;
         }
-        else
-        {
-            const auto& pColumn = *m_vColumns.at(nColumnIndex);
-            sText = pColumn.GetText(*m_vmItems, nIndex);
-            item.pszText = sText.data();
-        }
+    }
 
-        GSL_SUPPRESS_TYPE1
-        SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
+    SuspendRedraw();
 
-        ListView_RedrawItems(m_hWnd, nRealIndex, nRealIndex);
-        m_bForceRepaintItems = true;
-    });
+    std::wstring sText;
+
+    LV_ITEMW item{};
+    item.mask = LVIF_TEXT;
+    item.iItem = gsl::narrow_cast<int>(nRealIndex);
+    item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
+
+    if (m_pScrollOffsetProperty)
+    {
+        item.pszText = LPSTR_TEXTCALLBACK;
+    }
+    else
+    {
+        const auto& pColumn = *m_vColumns.at(nColumnIndex);
+        sText = pColumn.GetText(*m_vmItems, nIndex);
+        item.pszText = sText.data();
+    }
+
+    GSL_SUPPRESS_TYPE1
+    SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
+
+    ListView_RedrawItems(m_hWnd, nRealIndex, nRealIndex);
+    m_bForceRepaintItems = true;
 }
 
 void GridBinding::EnsureVisible(gsl::index nIndex)
@@ -660,11 +717,16 @@ void GridBinding::OnBeginViewModelCollectionUpdate() noexcept
 
 void GridBinding::OnEndViewModelCollectionUpdate()
 {
+    Redraw();
+}
+
+void GridBinding::Redraw()
+{
     if (m_hWnd)
     {
         if (!WindowBinding::IsOnUIThread())
         {
-            WindowBinding::InvokeOnUIThread([this]() { OnEndViewModelCollectionUpdate(); }, this);
+            WindowBinding::InvokeOnUIThread([this]() { Redraw(); }, this);
             return;
         }
 

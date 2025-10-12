@@ -83,6 +83,7 @@ public:
 protected:
     void SuspendRedraw();
     void UpdateLayout();
+    virtual void Redraw();
     virtual void UpdateAllItems();
     virtual void UpdateItems(gsl::index nColumn);
     virtual void UpdateCell(gsl::index nIndex, gsl::index nColumnIndex);
@@ -107,6 +108,16 @@ protected:
     void OnViewModelChanged(gsl::index nIndex) override;
     void OnBeginViewModelCollectionUpdate() noexcept override;
     void OnEndViewModelCollectionUpdate() override;
+
+    typedef struct PropertyColumnMapping
+    {
+        int nKey;
+        uint32_t nDependentColumns;
+    } PropertyColumnMapping;
+    std::vector<PropertyColumnMapping> m_vPropertyColumns;
+    static int ComparePropertyColumnMappings(const GridBinding::PropertyColumnMapping& left, int nKey);
+    PropertyColumnMapping& GetPropertyColumnMapping(int nPropertyKey);
+    void UpdateDependentColumns(gsl::index nIndex, uint32_t nDependentColumns);
 
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
     std::vector<int> m_vColumnWidths;

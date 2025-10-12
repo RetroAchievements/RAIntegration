@@ -20,6 +20,11 @@ static std::string GetLabel(PerformanceCheckpoint nCheckpoint)
         case PerformanceCheckpoint::OverlayManagerAdvanceFrame: sCheckpoint = "Overlay"; break;
         case PerformanceCheckpoint::MemoryBookmarksDoFrame: sCheckpoint = "Bookmarks"; break;
         case PerformanceCheckpoint::MemoryInspectorDoFrame: sCheckpoint = "Inspector"; break;
+        case PerformanceCheckpoint::AssetListDoFrame: sCheckpoint = "AssetList"; break;
+        case PerformanceCheckpoint::AssetEditorDoFrame: sCheckpoint = "AssetEditor"; break;
+        case PerformanceCheckpoint::PointerFinderDoFrame: sCheckpoint = "PointerFinder"; break;
+        case PerformanceCheckpoint::PointerInspectorDoFrame: sCheckpoint = "PointerInspector"; break;
+        case PerformanceCheckpoint::FrameEvents: sCheckpoint = "FrameEvents"; break;
         default: sCheckpoint = std::to_string(ra::etoi(nCheckpoint)); break;
     }
 
@@ -64,22 +69,22 @@ void PerformanceCounter::Stop()
 
         if (m_nTotalLaps % NUM_LAPS == 0) 
         {
-            RA_LOG("Lap averages: total: %d.%03d", nLapAverage / 1000, nLapAverage % 1000);
+            RA_LOG_INFO("Lap averages: total: %d.%03dms", nLapAverage / 1000, nLapAverage % 1000);
             for (gsl::index i = 0; i < ra::etoi(PerformanceCheckpoint::NUM_CHECKPOINTS); ++i)
             {
                 const auto nCheckpointTime = pLap.at(i);
                 if (nCheckpointTime != 0)
                 {
                     const auto nCheckpointAverage = m_nRollingTotals.at(i) / NUM_LAPS;
-                    RA_LOG(" %s: %d.%03d", GetLabel(ra::itoe<PerformanceCheckpoint>(i)), nCheckpointAverage / 1000, nCheckpointAverage % 1000);
+                    RA_LOG_INFO(" %s: %d.%03dms", GetLabel(ra::itoe<PerformanceCheckpoint>(i)), nCheckpointAverage / 1000, nCheckpointAverage % 1000);
                 }
             }
         }
         else if (nLapTime > 100) // ignore everything under 100us
         {
-            if (nLapTime > 2000) // to achieve 60 fps, emulator has to render ever 16ms, we don't want to use more than 2ms of that.
+            if (nLapTime > 2000) // to achieve 60 fps, emulator has to render every 16ms, we don't want to use more than 2ms of that.
             {
-                RA_LOG("Outstanding lap: %d.%03d (avg: %d.%03d)", nLapTime / 1000, nLapTime % 1000, nLapAverage / 1000, nLapAverage % 1000);
+                RA_LOG_INFO("Outstanding lap: %d.%03dms (avg: %d.%03dms)", nLapTime / 1000, nLapTime % 1000, nLapAverage / 1000, nLapAverage % 1000);
 
                 for (gsl::index i = 0; i < ra::etoi(PerformanceCheckpoint::NUM_CHECKPOINTS); ++i)
                 {
@@ -104,7 +109,7 @@ void PerformanceCounter::Stop()
 void PerformanceCounter::DumpCheckpoint(PerformanceCheckpoint nCheckpoint, int nCheckpointTime)
 {
     const auto nCheckpointAverage = m_nRollingTotals.at(ra::etoi(nCheckpoint)) / NUM_LAPS;
-    RA_LOG(" %s: %d.%03d (avg: %d.%03d)", GetLabel(nCheckpoint), nCheckpointTime / 1000, nCheckpointTime % 1000, nCheckpointAverage / 1000, nCheckpointAverage % 1000);
+    RA_LOG_INFO(" %s: %d.%03dms (avg: %d.%03dms)", GetLabel(nCheckpoint), nCheckpointTime / 1000, nCheckpointTime % 1000, nCheckpointAverage / 1000, nCheckpointAverage % 1000);
 }
 
 } // namespace services

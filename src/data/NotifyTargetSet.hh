@@ -36,22 +36,9 @@ public:
         // Since we're only dealing with raw pointers, that will never happen.
         GSL_SUPPRESS_F6
         if (!m_bLocked)
-        {
             m_vNotifyTargets.emplace_back(&pTarget);
-        }
         else
-        {
-            for (auto& pPending : m_vPendingChanges)
-            {
-                if (pPending.first == &pTarget)
-                {
-                    pPending.second = true;
-                    return;
-                }
-            }
-
-            m_vPendingChanges.emplace_back(&pTarget, true);
-        }
+            MakePending(pTarget, true);
     }
 
     /// <summary>
@@ -62,36 +49,36 @@ public:
     /// </remarks>
     void Remove(TNotifyTarget& pTarget) noexcept
     {
-        for (const auto pIter : m_vNotifyTargets)
+        // nothing to do if list is empty.
+        if (m_vNotifyTargets.empty())
+            return;
+
+        // items are frequently detached while processing children. do a quick check
+        // to see if the last item is the target item to avoid scanning the list.
+        if (!m_bLocked && m_vNotifyTargets.back() == &pTarget)
         {
-            if (pIter == &pTarget)
+            m_vNotifyTargets.pop_back();
+            return;
+        }
+
+        for (auto pIter = m_vNotifyTargets.begin(); pIter < m_vNotifyTargets.end(); ++pIter)
+        {
+            if (*pIter == &pTarget)
             {
                 // std::vector erase and emplace_back may throw exceptions if the move
                 // constructor or assignment operator throw exceptions. Since we're
-                // only dealing with raw pointers, that will never happen
+                // only dealing with raw pointers, that will never happen.
                 GSL_SUPPRESS_F6
                 if (!m_bLocked)
-                {
-                    m_vNotifyTargets.erase(std::remove(m_vNotifyTargets.begin(), m_vNotifyTargets.end(), pIter), m_vNotifyTargets.end());
-                }
+                    m_vNotifyTargets.erase(pIter);
                 else
-                {
-                    for (auto& pPending : m_vPendingChanges)
-                    {
-                        if (pPending.first == &pTarget)
-                        {
-                            pPending.second = false;
-                            return;
-                        }
-                    }
-
-                    m_vPendingChanges.emplace_back(&pTarget, false);
-                }
+                    MakePending(pTarget, false);
 
                 return;
             }
         }
 
+        // item not found in m_vNotifyTargets. if found in m_vPendingChanges, ensure it's marked for removal
         for (auto& pPending : m_vPendingChanges)
         {
             if (pPending.first == &pTarget)
@@ -101,6 +88,11 @@ public:
             }
         }
     }
+
+    /// <summary>
+    /// Gets whether the collection contains no items.
+    /// </summary>
+    bool IsEmpty() const noexcept { return m_vNotifyTargets.empty(); }
 
     /// <summary>
     /// Removes all objects from the collection.
@@ -187,6 +179,23 @@ public:
     }
 
 private:
+    void MakePending(TNotifyTarget& pTarget, bool bPending) noexcept
+    {
+        for (auto& pPending : m_vPendingChanges)
+        {
+            if (pPending.first == &pTarget)
+            {
+                pPending.second = bPending;
+                return;
+            }
+        }
+
+        // std::vector emplace_back may throw exceptions if the move constructor throws
+        // exceptions. Since we're only dealing with raw pointers, that will never happen.
+        GSL_SUPPRESS_F6
+        m_vPendingChanges.emplace_back(&pTarget, bPending);
+    }
+
     std::vector<gsl::not_null<TNotifyTarget*>> m_vNotifyTargets;
     std::vector<std::pair<gsl::not_null<TNotifyTarget*>, bool>> m_vPendingChanges;
     bool m_bLocked = false;

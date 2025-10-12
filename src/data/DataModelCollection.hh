@@ -47,11 +47,11 @@ public:
         virtual void OnEndDataModelCollectionUpdate() noexcept(false) {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget)
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept
     {
         if (!IsFrozen())
         {
-            if (m_vNotifyTargets.Targets().empty())
+            if (m_vNotifyTargets.IsEmpty())
                 StartWatching();
 
             m_vNotifyTargets.Add(pTarget);
@@ -64,11 +64,11 @@ public:
         Expects(!m_bDisposed);
 #endif
 
-        if (!m_vNotifyTargets.Targets().empty())
+        if (!m_vNotifyTargets.IsEmpty())
         {
             m_vNotifyTargets.Remove(pTarget);
 
-            if (m_vNotifyTargets.Targets().empty())
+            if (m_vNotifyTargets.IsEmpty())
                 StopWatching();
         }
     }
@@ -80,7 +80,7 @@ protected:
 
     bool IsWatching() const noexcept override 
     { 
-        return !IsFrozen() && !m_vNotifyTargets.Targets().empty();
+        return !IsFrozen() && !m_vNotifyTargets.IsEmpty();
     }
 
     void OnFrozen() noexcept override;

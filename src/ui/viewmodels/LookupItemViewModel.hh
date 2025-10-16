@@ -127,10 +127,10 @@ public:
         return GetItemValue(nIndex, LookupItemViewModel::LabelProperty);
     }
 
-    auto begin() { return CreateBeginIterator<LookupItemViewModel>(); }
-    auto end() { return CreateEndIterator<LookupItemViewModel>(); }
-    auto begin() const { return CreateConstBeginIterator<LookupItemViewModel>(); }
-    auto end() const { return CreateConstEndIterator<LookupItemViewModel>(); }
+    auto begin() noexcept { return CreateBeginIterator<LookupItemViewModel>(); }
+    auto end() noexcept { return CreateEndIterator<LookupItemViewModel>(); }
+    auto begin() const noexcept { return CreateConstBeginIterator<LookupItemViewModel>(); }
+    auto end() const noexcept { return CreateConstEndIterator<LookupItemViewModel>(); }
 };
 
 } // namespace viewmodels

@@ -138,10 +138,10 @@ public:
     /// </summary>
     const T* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const T*>(GetModelAt(nIndex)); }
 
-    auto begin() { return CreateBeginIterator<T>(); }
-    auto end() { return CreateEndIterator<T>(); }
-    auto begin() const { return CreateConstBeginIterator<T>(); }
-    auto end() const { return CreateConstEndIterator<T>(); }
+    auto begin() noexcept { return CreateBeginIterator<T>(); }
+    auto end() noexcept { return CreateEndIterator<T>(); }
+    auto begin() const noexcept { return CreateConstBeginIterator<T>(); }
+    auto end() const noexcept { return CreateConstEndIterator<T>(); }
 };
 
 } // namespace data

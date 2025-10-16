@@ -139,7 +139,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::HandlePauseOnChange()
     pFrameEventQueue.QueuePauseOnChange(sMessage);
 }
 
-bool MemoryBookmarksViewModel::IsModified() const
+bool MemoryBookmarksViewModel::IsModified() const noexcept
 {
     if (m_vmMemoryWatchList.Items().Count() != m_nUnmodifiedBookmarkCount)
         return true;
@@ -355,7 +355,7 @@ void MemoryBookmarksViewModel::DoFrame()
     m_vmMemoryWatchList.DoFrame();
 }
 
-bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const
+bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const noexcept
 {
     for (const auto& pBookmark : m_vmMemoryWatchList.Items())
     {

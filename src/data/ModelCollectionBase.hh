@@ -268,6 +268,136 @@ protected:
     bool m_bDisposed = false;
 #endif
 
+    template<class TItem>
+    class iterator : public std::iterator_traits<typename  std::vector<std::unique_ptr<ModelBase>>::iterator>
+    {
+        static_assert(std::is_base_of<ModelBase, TItem>{}, "T must be a subclass of ModelBase");
+
+    public:
+        iterator(typename std::vector<std::unique_ptr<ModelBase>>::const_iterator pCurrent, const std::vector<std::unique_ptr<ModelBase>>& pList) noexcept
+            : m_pCurrent(std::move(pCurrent)), m_pList(pList)
+        {
+            SkipMistyped();
+        }
+
+        TItem& operator*() noexcept
+        {
+            return *(dynamic_cast<TItem*>(m_pCurrent->get()));
+        }
+
+        iterator& operator++() noexcept
+        {
+            ++m_pCurrent;
+            SkipMistyped();
+            return *this;
+        }
+
+        iterator operator++(int) noexcept
+        {
+            auto pBeforeIncrement = *this;
+            m_pCurrent++;
+            SkipMistyped();
+            return pBeforeIncrement;
+        }
+
+        bool operator==(const iterator& that) const noexcept
+        {
+            return m_pCurrent == that.m_pCurrent;
+        }
+
+        bool operator!=(const iterator& that) const noexcept
+        {
+            return !(*this == that);
+        }
+
+    private:
+        void SkipMistyped() noexcept
+        {
+            while (m_pCurrent != m_pList.end() && dynamic_cast<const TItem*>(m_pCurrent->get()) == nullptr)
+                ++m_pCurrent;
+        }
+
+        typename std::vector<std::unique_ptr<ModelBase>>::const_iterator m_pCurrent;
+        const std::vector<std::unique_ptr<ModelBase>>& m_pList;
+    };
+
+    template<class TItem>
+    iterator<TItem> CreateBeginIterator() noexcept
+    {
+        return iterator<TItem>(m_vItems.cbegin(), m_vItems);
+    }
+
+    template<class TItem>
+    iterator<TItem> CreateEndIterator() noexcept
+    {
+        return iterator<TItem>(m_vItems.cbegin() + m_nSize, m_vItems);
+    }
+
+    template<class TItem>
+    class const_iterator : public std::iterator_traits<typename  std::vector<std::unique_ptr<ModelBase>>::const_iterator>
+    {
+        static_assert(std::is_base_of<ModelBase, TItem>{}, "T must be a subclass of ModelBase");
+
+    public:
+        const_iterator(typename std::vector<std::unique_ptr<ModelBase>>::const_iterator pCurrent, const std::vector<std::unique_ptr<ModelBase>>& pList) noexcept
+            : m_pCurrent(std::move(pCurrent)), m_pList(pList)
+        {
+            SkipMistyped();
+        }
+
+        const TItem& operator*() noexcept
+        {
+            return *(dynamic_cast<const TItem*>(m_pCurrent->get()));
+        }
+
+        const_iterator& operator++() noexcept
+        {
+            ++m_pCurrent;
+            SkipMistyped();
+            return *this;
+        }
+
+        const_iterator operator++(int) noexcept
+        {
+            auto pBeforeIncrement = *this;
+            m_pCurrent++;
+            SkipMistyped();
+            return pBeforeIncrement;
+        }
+
+        bool operator==(const const_iterator& that) const noexcept
+        {
+            return m_pCurrent == that.m_pCurrent;
+        }
+
+        bool operator!=(const const_iterator& that) const noexcept
+        {
+            return !(*this == that);
+        }
+
+    private:
+        void SkipMistyped() noexcept
+        {
+            while (m_pCurrent != m_pList.end() && dynamic_cast<const TItem*>(m_pCurrent->get()) == nullptr)
+                ++m_pCurrent;
+        }
+
+        typename std::vector<std::unique_ptr<ModelBase>>::const_iterator m_pCurrent;
+        const std::vector<std::unique_ptr<ModelBase>>& m_pList;
+    };
+
+    template<class TItem>
+    const_iterator<TItem> CreateConstBeginIterator() const noexcept
+    {
+        return const_iterator<TItem>(m_vItems.cbegin(), m_vItems);
+    }
+
+    template<class TItem>
+    const_iterator<TItem> CreateConstEndIterator() const noexcept
+    {
+        return const_iterator<TItem>(m_vItems.cbegin() + m_nSize, m_vItems);
+    }
+
 private:
     void UpdateIndices();
     void StartWatching(ModelBase& pModel, gsl::index nIndex) noexcept;

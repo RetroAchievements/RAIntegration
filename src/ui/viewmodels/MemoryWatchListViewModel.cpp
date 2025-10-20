@@ -69,36 +69,33 @@ void MemoryWatchListViewModel::InitializeNotifyTargets(bool syncNotes)
 
 void MemoryWatchListViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
 {
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vItems.Count(); ++nIndex)
+    for (auto& pItem : m_vItems)
     {
-        auto* pItem = m_vItems.GetItemAt(nIndex);
-        if (pItem && !pItem->IsIndirectAddress()) // ignore move events for indirect notes
+        if (!pItem.IsIndirectAddress()) // ignore move events for indirect notes
         {
-            const auto nCurrentAddress = pItem->GetAddress();
+            const auto nCurrentAddress = pItem.GetAddress();
             if (nCurrentAddress == nNewAddress)
-                pItem->SetRealNote(sNote);
+                pItem.SetRealNote(sNote);
             else if (nCurrentAddress == nOldAddress)
-                pItem->SetRealNote(L"");
+                pItem.SetRealNote(L"");
         }
     }
 }
 
 void MemoryWatchListViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
 {
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vItems.Count(); ++nIndex)
+    for (auto& pItem : m_vItems)
     {
-        auto* pItem = m_vItems.GetItemAt(nIndex);
-        if (pItem && !pItem->IsIndirectAddress() && pItem->GetAddress() == nAddress)
-            pItem->SetRealNote(sNewNote);
+        if (!pItem.IsIndirectAddress() && pItem.GetAddress() == nAddress)
+            pItem.SetRealNote(sNewNote);
     }
 }
 
 void MemoryWatchListViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t)
 {
     ra::data::context::EmulatorContext::DispatchesReadMemory::DispatchMemoryRead([this, nAddress]() {
-        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vItems.Count(); ++nIndex)
+        for (auto& pItem : m_vItems)
         {
-            auto& pItem = *m_vItems.GetItemAt(nIndex);
             const auto nItemAddress = pItem.GetAddress();
             if (nAddress < nItemAddress)
                 continue;
@@ -119,8 +116,8 @@ void MemoryWatchListViewModel::DoFrame()
     pEmulatorContext.RemoveNotifyTarget(*this);
 
     m_vItems.BeginUpdate();
-    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vItems.Count(); ++nIndex)
-        m_vItems.GetItemAt(nIndex)->DoFrame();
+    for (auto& pItem : m_vItems)
+        pItem.DoFrame();
     m_vItems.EndUpdate();
 
     pEmulatorContext.AddNotifyTarget(*this);
@@ -149,13 +146,11 @@ void MemoryWatchListViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, co
             const auto nAddress = pItem->GetAddress();
             const auto nBytes = pItem->GetSizeBytes();
             ra::data::context::EmulatorContext::DispatchesReadMemory::DispatchMemoryRead([this, nAddress, nBytes]() {
-                for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vItems.Count(); ++nIndex)
+                for (auto& pItem : m_vItems)
                 {
-                    auto* pItem = m_vItems.GetItemAt(nIndex);
-                    Expects(pItem != nullptr);
-                    const auto nItemAddress = pItem->GetAddress();
-                    if (nItemAddress >= nAddress && nItemAddress < nAddress + pItem->GetSizeBytes())
-                        pItem->UpdateCurrentValue();
+                    const auto nItemAddress = pItem.GetAddress();
+                    if (nItemAddress >= nAddress && nItemAddress < nAddress + pItem.GetSizeBytes())
+                        pItem.UpdateCurrentValue();
                 }
             });
         }

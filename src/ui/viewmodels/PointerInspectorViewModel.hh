@@ -238,6 +238,7 @@ public:
     void BookmarkCurrentField() const;
 
 protected:
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
 

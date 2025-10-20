@@ -335,14 +335,11 @@ void MemorySearchViewModel::OnFilterRangeChanged()
     if (!ParseFilterRange(nStart, nEnd))
         return;
 
-    for (gsl::index nIndex = 1; nIndex < ra::to_signed(m_vPredefinedFilterRanges.Count()); ++nIndex)
+    for (const auto& pEntry : m_vPredefinedFilterRanges)
     {
-        const auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
-        Ensures(pEntry != nullptr);
-
-        if (pEntry->GetStartAddress() == nStart && pEntry->GetEndAddress() == nEnd)
+        if (pEntry.GetStartAddress() == nStart && pEntry.GetEndAddress() == nEnd)
         {
-            SetPredefinedFilterRange(pEntry->GetId());
+            SetPredefinedFilterRange(pEntry.GetId());
             return;
         }
     }
@@ -385,24 +382,21 @@ void MemorySearchViewModel::DoFrame()
         std::wstring sFormattedValue;
 
         gsl::index nIndex = GetScrollOffset();
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
+        for (auto& pRow : m_vResults)
         {
-            auto* pRow = m_vResults.GetItemAt(i);
-            Expects(pRow != nullptr);
-
             pCurrentResults.pResults.GetMatchingAddress(nIndex++, pResult);
 
             const auto nPreviousValue = pResult.nValue;
-            UpdateResult(*pRow, pCurrentResults.pResults, pResult, false, pEmulatorContext);
+            UpdateResult(pRow, pCurrentResults.pResults, pResult, false, pEmulatorContext);
 
             // when updating an existing result, check to see if it's been modified and update the tracker
-            if (!pRow->bHasBeenModified && pResult.nValue != nPreviousValue)
+            if (!pRow.bHasBeenModified && pResult.nValue != nPreviousValue)
             {
                 pCurrentResults.vModifiedAddresses.insert(pResult.nAddress);
-                pRow->bHasBeenModified = true;
+                pRow.bHasBeenModified = true;
             }
 
-            pRow->UpdateRowColor();
+            pRow.UpdateRowColor();
         }
     }
 
@@ -1003,12 +997,11 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
 
 void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote)
 {
-    for (gsl::index i = 0; i < ra::to_signed(m_vResults.Count()); ++i)
+    for (auto& pRow : m_vResults)
     {
-        auto* pRow = m_vResults.GetItemAt(i);
-        if (pRow != nullptr && pRow->nAddress == nAddress)
+        if (pRow.nAddress == nAddress)
         {
-            pRow->UpdateCodeNote(sNote);
+            pRow.UpdateCodeNote(sNote);
             break;
         }
     }
@@ -1016,22 +1009,12 @@ void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
 
 void MemorySearchViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
 {
-    for (gsl::index i = 0; i < ra::to_signed(m_vResults.Count()); ++i)
+    for (auto& pRow : m_vResults)
     {
-        auto* pRow = m_vResults.GetItemAt(i);
-        if (pRow != nullptr)
-        {
-            if (pRow->nAddress == nOldAddress)
-            {
-                pRow->UpdateCodeNote(L"");
-                break;
-            }
-            else if (pRow->nAddress == nNewAddress)
-            {
-                pRow->UpdateCodeNote(sNote);
-                break;
-            }
-        }
+        if (pRow.nAddress == nOldAddress)
+            pRow.UpdateCodeNote(L"");
+        else if (pRow.nAddress == nNewAddress)
+            pRow.UpdateCodeNote(sNote);
     }
 }
 

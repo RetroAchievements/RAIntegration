@@ -17,11 +17,10 @@ namespace context {
 
 ra::data::models::AssetModelBase* GameAssets::FindAsset(ra::data::models::AssetType nType, uint32_t nId)
 {
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
+    for (auto& pAsset : *this)
     {
-        auto* pAsset = GetItemAt(nIndex);
-        if (pAsset != nullptr && pAsset->GetID() == nId && pAsset->GetType() == nType)
-            return pAsset;
+        if (pAsset.GetID() == nId && pAsset.GetType() == nType)
+            return &pAsset;
     }
 
     return nullptr;
@@ -29,11 +28,10 @@ ra::data::models::AssetModelBase* GameAssets::FindAsset(ra::data::models::AssetT
 
 const ra::data::models::AssetModelBase* GameAssets::FindAsset(ra::data::models::AssetType nType, uint32_t nId) const
 {
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
+    for (const auto& pAsset : *this)
     {
-        auto* pAsset = GetItemAt(nIndex);
-        if (pAsset != nullptr && pAsset->GetID() == nId && pAsset->GetType() == nType)
-            return pAsset;
+        if (pAsset.GetID() == nId && pAsset.GetType() == nType)
+            return &pAsset;
     }
 
     return nullptr;
@@ -67,16 +65,12 @@ ra::data::models::AssetCategory GameAssets::MostPublishedAssetCategory() const
     bool bHasLocalAssets = false;
     bool bHasUnpublishedAssets = false;
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
+    for (const auto& pAsset : *this)
     {
-        const auto* pAsset = GetItemAt(nIndex);
-        if (pAsset == nullptr)
-            continue;
-
         // we really only care about published achievements and
         // leaderboards. if a set only has published rich presence
         // or code notes, don't consider it a published set.
-        switch (pAsset->GetType())
+        switch (pAsset.GetType())
         {
             case ra::data::models::AssetType::Achievement:
             case ra::data::models::AssetType::Leaderboard:
@@ -86,7 +80,7 @@ ra::data::models::AssetCategory GameAssets::MostPublishedAssetCategory() const
                 continue;
         }
 
-        switch (pAsset->GetCategory())
+        switch (pAsset.GetCategory())
         {
             case ra::data::models::AssetCategory::Local:
                 bHasLocalAssets = true;
@@ -158,31 +152,27 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
     {
         // when reloading all, populate vRemainingAssetsToReload with all local assets
         // or modified assets so they'll be discarded if no longer in the local file
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
+        for (auto& pAsset : *this)
         {
-            auto* pAsset = GetItemAt(nIndex);
-            if (pAsset)
+            if (pAsset.GetChanges() != ra::data::models::AssetChanges::None ||
+                pAsset.GetCategory() == ra::data::models::AssetCategory::Local)
             {
-                if (pAsset->GetChanges() != ra::data::models::AssetChanges::None ||
-                    pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
+                switch (pAsset.GetType())
                 {
-                    switch (pAsset->GetType())
-                    {
-                        // ignore LocalBadges container
-                        case ra::data::models::AssetType::LocalBadges:
-                            continue;
+                    // ignore LocalBadges container
+                    case ra::data::models::AssetType::LocalBadges:
+                        continue;
 
-                        // ignore RichPresence model (it's not actually stored in the XXX-User file)
-                        case ra::data::models::AssetType::RichPresence:
-                            continue;
+                    // ignore RichPresence model (it's not actually stored in the XXX-User file)
+                    case ra::data::models::AssetType::RichPresence:
+                        continue;
 
-                        // ignore CodeNotes model (it's actually a collection of notes)
-                        case ra::data::models::AssetType::CodeNotes:
-                            continue;
-                    }
-
-                    vRemainingAssetsToReload.push_back(pAsset);
+                    // ignore CodeNotes model (it's actually a collection of notes)
+                    case ra::data::models::AssetType::CodeNotes:
+                        continue;
                 }
+
+                vRemainingAssetsToReload.push_back(&pAsset);
             }
         }
     }
@@ -369,13 +359,9 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
     }
 
     bool bHasDeleted = false;
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
+    for (auto& pAsset : *this)
     {
-        auto* pItem = GetItemAt(nIndex);
-        if (pItem == nullptr)
-            continue;
-
-        switch (pItem->GetChanges())
+        switch (pAsset.GetChanges())
         {
             case ra::data::models::AssetChanges::None:
                 // non-modified committed items don't need to be serialized
@@ -396,8 +382,8 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
                 bool bUpdate = vAssetsToSave.empty();
                 if (!bUpdate)
                 {
-                    const auto nID = pItem->GetID();
-                    const auto nType = pItem->GetType();
+                    const auto nID = pAsset.GetID();
+                    const auto nType = pAsset.GetType();
                     for (const auto& pScan : vAssetsToSave)
                     {
                         if (pScan->GetID() == nID && pScan->GetType() == nType)
@@ -411,19 +397,19 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
                 // if it's selected for update, commit the changes before flushing
                 if (bUpdate)
                 {
-                    pItem->UpdateLocalCheckpoint();
+                    pAsset.UpdateLocalCheckpoint();
 
                     // reverted back to committed state, no need to serialize
-                    if (pItem->GetChanges() == ra::data::models::AssetChanges::None)
+                    if (pAsset.GetChanges() == ra::data::models::AssetChanges::None)
                         continue;
                 }
-                else if (pItem->GetCategory() != ra::data::models::AssetCategory::Local)
+                else if (pAsset.GetCategory() != ra::data::models::AssetCategory::Local)
                 {
                     // if there's no unpublished changes and the item is not selected, ignore it
-                    if (!pItem->HasUnpublishedChanges())
+                    if (!pAsset.HasUnpublishedChanges())
                         continue;
                 }
-                else if (pItem->GetChanges() == ra::data::models::AssetChanges::New)
+                else if (pAsset.GetChanges() == ra::data::models::AssetChanges::New)
                 {
                     // unselected new item has no local state to maintain
                     continue;
@@ -432,7 +418,7 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
         }
 
         // serialize the item
-        switch (pItem->GetType())
+        switch (pAsset.GetType())
         {
             case ra::data::models::AssetType::Achievement:
                 break;
@@ -449,16 +435,16 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
                 continue;
         }
 
-        pData->Write(std::to_string(pItem->GetID()));
+        pData->Write(std::to_string(pAsset.GetID()));
 
-        const auto nSubsetId = pItem->GetSubsetID();
+        const auto nSubsetId = pAsset.GetSubsetID();
         if (nSubsetId > 0 && nSubsetId != nPrimarySubsetId)
         {
             pData->Write("|");
             pData->Write(std::to_string(nSubsetId));
         }
 
-        pItem->Serialize(*pData);
+        pAsset.Serialize(*pData);
         pData->WriteLine();
     }
 

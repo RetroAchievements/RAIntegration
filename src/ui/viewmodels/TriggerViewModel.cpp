@@ -239,16 +239,15 @@ bool TriggerViewModel::GroupViewModel::UpdateMeasuredFlags()
 
 void TriggerViewModel::SerializeAppend(std::string& sBuffer) const
 {
-    for (gsl::index nGroup = 0; nGroup < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++nGroup)
+    bool first = true;
+    for (const auto& vmGroup : m_vGroups)
     {
-        const auto* vmGroup = m_vGroups.GetItemAt(nGroup);
-        if (vmGroup != nullptr)
-        {
-            if (nGroup != 0)
-                sBuffer.push_back(m_bIsValue ? '$' : 'S');
+        if (first)
+            first = false;
+        else
+            sBuffer.push_back(m_bIsValue ? '$' : 'S');
 
-            sBuffer.append(vmGroup->GetSerialized());
-        }
+        sBuffer.append(vmGroup.GetSerialized());
     }
 }
 
@@ -1153,12 +1152,11 @@ void TriggerViewModel::UpdateVersionAndRestoreHits()
 {
     // WARNING: this method should only be called when the number and type of conditions is known to not change
     std::vector<unsigned> vCurrentHits;
-    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
+    for (auto& pGroup : m_vGroups)
     {
-        auto* pGroup = m_vGroups.GetItemAt(i);
-        if (pGroup != nullptr && pGroup->m_pConditionSet)
+        if (pGroup.m_pConditionSet)
         {
-            const auto* pCondition = pGroup->m_pConditionSet->conditions;
+            const auto* pCondition = pGroup.m_pConditionSet->conditions;
             while (pCondition != nullptr)
             {
                 vCurrentHits.push_back(pCondition->current_hits);
@@ -1170,12 +1168,11 @@ void TriggerViewModel::UpdateVersionAndRestoreHits()
     UpdateVersion();
 
     gsl::index nHitIndex = 0;
-    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
+    for (auto& pGroup : m_vGroups)
     {
-        auto* pGroup = m_vGroups.GetItemAt(i);
-        if (pGroup != nullptr && pGroup->m_pConditionSet)
+        if (pGroup.m_pConditionSet)
         {
-            auto* pCondition = pGroup->m_pConditionSet->conditions;
+            auto* pCondition = pGroup.m_pConditionSet->conditions;
             while (pCondition != nullptr)
             {
                 pCondition->current_hits = vCurrentHits.at(nHitIndex++);
@@ -1234,12 +1231,8 @@ void TriggerViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
         if (!m_vGroups.IsUpdating())
         {
             bool bChanged = false;
-            for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
-            {
-                auto* pGroup = m_vGroups.GetItemAt(i);
-                if (pGroup != nullptr)
-                    bChanged |= pGroup->UpdateMeasuredFlags();
-            }
+            for (auto& pGroup : m_vGroups)
+                bChanged |= pGroup.UpdateMeasuredFlags();
 
             if (bChanged)
                 UpdateVersionAndRestoreHits();
@@ -1362,16 +1355,12 @@ void TriggerViewModel::ToggleDecimal()
     m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
     m_vConditions.BeginUpdate();
 
-    for (gsl::index nIndex = m_vConditions.Count() - 1; nIndex >= 0; --nIndex)
+    for (auto& pItem : m_vConditions)
     {
-        auto* pItem = m_vConditions.GetItemAt(nIndex);
-        if (!pItem)
-            continue;
-
-        if (pItem->GetSourceType() == TriggerOperandType::Value)
-            pItem->SetSourceValue(ParseNumeric(pItem->GetSourceValue()));
-        if (pItem->GetTargetType() == TriggerOperandType::Value)
-            pItem->SetTargetValue(ParseNumeric(pItem->GetTargetValue()));
+        if (pItem.GetSourceType() == TriggerOperandType::Value)
+            pItem.SetSourceValue(ParseNumeric(pItem.GetSourceValue()));
+        if (pItem.GetTargetType() == TriggerOperandType::Value)
+            pItem.SetTargetValue(ParseNumeric(pItem.GetTargetValue()));
     }
 
     m_vConditions.EndUpdate();
@@ -1642,12 +1631,8 @@ void TriggerViewModel::UpdateGroupColors(const rc_trigger_t* pTrigger)
     if (pTrigger == nullptr)
     {
         // no trigger, or trigger not active, disable highlights
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
-        {
-            auto* pGroup = m_vGroups.GetItemAt(i);
-            if (pGroup != nullptr)
-                pGroup->SetColor(nDefaultColor);
-        }
+        for (auto& pGroup : m_vGroups)
+            pGroup.SetColor(nDefaultColor);
 
         return;
     }
@@ -1657,16 +1642,15 @@ void TriggerViewModel::UpdateGroupColors(const rc_trigger_t* pTrigger)
     if (!pTrigger->has_hits)
     {
         // trigger has been reset, or is waiting
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
+        for (auto& pGroup : m_vGroups)
         {
-            auto* pGroup = m_vGroups.GetItemAt(i);
-            if (pGroup == nullptr || pGroup->m_pConditionSet == nullptr)
+            if (pGroup.m_pConditionSet == nullptr)
                 continue;
 
             bool bIsReset = false;
-            if (pGroup->m_pConditionSet->num_reset_conditions > 0)
+            if (pGroup.m_pConditionSet->num_reset_conditions > 0)
             {
-                rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+                rc_condition_t* pCondition = pGroup.m_pConditionSet->conditions;
                 for (; pCondition != nullptr; pCondition = pCondition->next)
                 {
                     // if the second is_true bit is non-zero, the condition was responsible for resetting the trigger.
@@ -1679,28 +1663,27 @@ void TriggerViewModel::UpdateGroupColors(const rc_trigger_t* pTrigger)
             }
 
             if (bIsReset)
-                pGroup->SetColor(pTheme.ColorTriggerResetTrue());
+                pGroup.SetColor(pTheme.ColorTriggerResetTrue());
             else
-                pGroup->SetColor(nDefaultColor);
+                pGroup.SetColor(nDefaultColor);
         }
     }
     else
     {
         // trigger is active
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
+        for (auto& pGroup : m_vGroups)
         {
-            auto* pGroup = m_vGroups.GetItemAt(i);
-            if (pGroup == nullptr || pGroup->m_pConditionSet == nullptr)
+            if (pGroup.m_pConditionSet == nullptr)
                 continue;
 
-            if (pGroup->m_pConditionSet->is_paused)
+            if (pGroup.m_pConditionSet->is_paused)
             {
-                pGroup->SetColor(pTheme.ColorTriggerPauseTrue());
+                pGroup.SetColor(pTheme.ColorTriggerPauseTrue());
             }
             else
             {
                 bool bIsTrue = true;
-                rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+                rc_condition_t* pCondition = pGroup.m_pConditionSet->conditions;
                 for (; bIsTrue && pCondition != nullptr; pCondition = pCondition->next)
                 {
                     // target hitcount met, ignore current truthiness
@@ -1726,9 +1709,9 @@ void TriggerViewModel::UpdateGroupColors(const rc_trigger_t* pTrigger)
                 }
 
                 if (bIsTrue)
-                    pGroup->SetColor(pTheme.ColorTriggerIsTrue());
+                    pGroup.SetColor(pTheme.ColorTriggerIsTrue());
                 else
-                    pGroup->SetColor(nDefaultColor);
+                    pGroup.SetColor(nDefaultColor);
             }
         }
     }

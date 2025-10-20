@@ -643,13 +643,9 @@ public:
             bChanged = false;
 
             pMenuItem = s_pIntegrationMenu->items;
-            for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmMenuItems.Count()); ++nIndex, ++pMenuItem)
+            for (const auto& pItem : vmMenuItems)
             {
-                const auto* pItem = vmMenuItems.GetItemAt(nIndex);
-                if (!pItem)
-                    continue;
-
-                const auto nId = ra::to_unsigned(pItem->GetId());
+                const auto nId = ra::to_unsigned(pItem.GetId());
                 if (pMenuItem->id != nId)
                 {
                     if (pMenuItem->id == 0 || nId == 0)
@@ -661,32 +657,29 @@ public:
                     pMenuItem->id = nId;
                 }
 
-                pMenuItem->checked = pItem->IsSelected() ? 1 : 0;
+                pMenuItem->checked = pItem.IsSelected() ? 1 : 0;
             }
 
             if (!bChanged)
             {
                 pMenuItem = s_pIntegrationMenu->items;
-                for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmMenuItems.Count());
-                     ++nIndex, ++pMenuItem)
+                for (const auto& pItem : vmMenuItems)
                 {
-                    const auto* pItem = vmMenuItems.GetItemAt(nIndex);
-                    if (!pItem)
-                        continue;
-
                     if (pMenuItem->label)
                     {
-                        if (ra::Narrow(pItem->GetLabel()) != pMenuItem->label)
+                        if (ra::Narrow(pItem.GetLabel()) != pMenuItem->label)
                         {
                             bChanged = true;
                             break;
                         }
                     }
-                    else if (!pItem->GetLabel().empty())
+                    else if (!pItem.GetLabel().empty())
                     {
                         bChanged = true;
                         break;
                     }
+
+                    ++pMenuItem;
                 }
             }
         }
@@ -705,22 +698,23 @@ public:
             rc_buffer_alloc(&s_pIntegrationMenuBuffer, sizeof(rc_client_raintegration_menu_item_t) * vmMenuItems.Count()));
 
         pMenuItem = s_pIntegrationMenu->items;
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmMenuItems.Count()); ++nIndex, ++pMenuItem)
+        for (const auto& pItem : vmMenuItems)
         {
-            const auto* pItem = vmMenuItems.GetItemAt(nIndex);
-            const auto nId = pItem ? pItem->GetId() : 0;
+            const auto nId = pItem.GetId();
             if (nId == 0)
             {
                 memset(pMenuItem, 0, sizeof(*pMenuItem));
             }
             else
             {
-                pMenuItem->label = rc_buffer_strcpy(&s_pIntegrationMenuBuffer, ra::Narrow(pItem->GetLabel()).c_str());
+                pMenuItem->label = rc_buffer_strcpy(&s_pIntegrationMenuBuffer, ra::Narrow(pItem.GetLabel()).c_str());
                 pMenuItem->id = nId;
-                pMenuItem->checked = pItem->IsSelected();
+                pMenuItem->checked = pItem.IsSelected();
             }
 
             pMenuItem->enabled = (nId != IDM_RA_FILES_LOGIN);
+
+            ++pMenuItem;
         }
 
         s_pIntegrationMenu->num_items = gsl::narrow_cast<uint32_t>(pMenuItem - s_pIntegrationMenu->items);
@@ -746,12 +740,11 @@ public:
         ra::ui::viewmodels::LookupItemViewModelCollection vmMenuItems;
         ra::ui::viewmodels::IntegrationMenuViewModel::BuildMenu(vmMenuItems);
 
-        for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(vmMenuItems.Count()) - 1; nIndex >= 0; --nIndex)
+        for (const auto& pItem : vmMenuItems)
         {
-            const auto* pItem = vmMenuItems.GetItemAt(nIndex);
-            if (pItem && pItem->GetId() == nMenuItemId)
+            if (pItem.GetId() == nMenuItemId)
             {
-                const uint8_t checked = pItem->IsSelected() ? 1 : 0;
+                const uint8_t checked = pItem.IsSelected() ? 1 : 0;
                 if (pMenuItem->checked != checked)
                 {
                     pMenuItem->checked = checked;
@@ -1223,12 +1216,11 @@ API void CCONV _Rcheevos_SetRAIntegrationEventHandler(rc_client_t* client, rc_cl
 API int CCONV _Rcheevos_HasModifications(void)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
+    for (const auto& pAsset : pGameContext.Assets())
     {
-        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-        if (pAsset && pAsset->IsModified())
+        if (pAsset.IsModified())
         {
-            switch (pAsset->GetType())
+            switch (pAsset.GetType())
             {
                 case ra::data::models::AssetType::Achievement:
                 case ra::data::models::AssetType::Leaderboard:

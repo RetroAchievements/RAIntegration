@@ -88,7 +88,7 @@ public:
     /// <summary>
     /// Determines if a bookmark exists for the specified address.
     /// </summary>
-    bool HasBookmark(ra::ByteAddress nAddress) const;
+    bool HasBookmark(ra::ByteAddress nAddress) const noexcept;
 
     /// <summary>
     /// Determines if a bookmark that is frozen exists for the specified address.
@@ -170,7 +170,7 @@ protected:
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnEndViewModelCollectionUpdate() override;
 
-    bool IsModified() const;
+    bool IsModified() const noexcept;
     size_t m_nUnmodifiedBookmarkCount = 0;
 
 private:

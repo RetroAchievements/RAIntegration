@@ -126,6 +126,11 @@ public:
         const auto nIndex = FindItemIndex(LookupItemViewModel::IdProperty, nId);
         return GetItemValue(nIndex, LookupItemViewModel::LabelProperty);
     }
+
+    auto begin() noexcept { return CreateBeginIterator<LookupItemViewModel>(); }
+    auto end() noexcept { return CreateEndIterator<LookupItemViewModel>(); }
+    auto begin() const noexcept { return CreateConstBeginIterator<LookupItemViewModel>(); }
+    auto end() const noexcept { return CreateConstEndIterator<LookupItemViewModel>(); }
 };
 
 } // namespace viewmodels

@@ -41,18 +41,17 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
     const auto& pWindowManager = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>();
     const auto& pFilteredAssets = pWindowManager.AssetList.FilteredAssets();
     bool bSawLocal = false;
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pFilteredAssets.Count()); ++nIndex)
+    for (const auto& pAssetSummary : pFilteredAssets)
     {
-        const auto* pAssetSummary = pFilteredAssets.GetItemAt(nIndex);
-        if (pAssetSummary && pAssetSummary->GetType() == ra::data::models::AssetType::Achievement)
+        if (pAssetSummary.GetType() == ra::data::models::AssetType::Achievement)
         {
-            if (pAssetSummary->GetCategory() == ra::data::models::AssetCategory::Local)
+            if (pAssetSummary.GetCategory() == ra::data::models::AssetCategory::Local)
             {
                 bSawLocal = true;
             }
             else
             {
-                const auto* pAchievement = pGameContext.Assets().FindAchievement(pAssetSummary->GetId());
+                const auto* pAchievement = pGameContext.Assets().FindAchievement(pAssetSummary.GetId());
                 if (pAchievement)
                 {
                     auto& vmAchievement = m_vAchievements.Add();

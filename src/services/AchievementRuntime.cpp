@@ -122,23 +122,19 @@ static int RichPresenceOverride(rc_client_t*, char buffer[], size_t buffer_size)
             return snprintf(buffer, buffer_size, "Inspecting Memory in Hardcore mode");
 
         const char* sMessage = "Inspecting Memory";
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++i)
+        for (const auto& pAsset : pGameContext.Assets())
         {
-            const auto* pAsset = pGameContext.Assets().GetItemAt(i);
-            if (pAsset)
+            if (!pAsset.IsShownInList())
+                continue;
+
+            if (pAsset.GetCategory() == ra::data::models::AssetCategory::Local)
             {
-                if (!pAsset->IsShownInList())
-                    continue;
-
-                if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
-                {
-                    sMessage = "Developing Achievements";
-                    break;
-                }
-
-                if (pAsset->GetChanges() != ra::data::models::AssetChanges::None)
-                    sMessage = "Fixing Achievements";
+                sMessage = "Developing Achievements";
+                break;
             }
+
+            if (pAsset.GetChanges() != ra::data::models::AssetChanges::None)
+                sMessage = "Fixing Achievements";
         }
 
         return snprintf(buffer, buffer_size, "%s", sMessage);
@@ -815,17 +811,15 @@ private:
         std::vector<ra::data::models::LeaderboardModel*> vCoreLeaderboards;
         std::vector<ra::data::models::LeaderboardModel*> vLocalLeaderboards;
 
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vAssets.Count()); ++nIndex)
+        for (auto& pAsset : vAssets)
         {
-            auto* pAsset = vAssets.GetItemAt(nIndex);
-            Expects(pAsset != nullptr);
-            if (pAsset->GetSubsetID() != nSubsetId)
+            if (pAsset.GetSubsetID() != nSubsetId)
                 continue;
 
-            if (pAsset->GetChanges() == ra::data::models::AssetChanges::Deleted)
+            if (pAsset.GetChanges() == ra::data::models::AssetChanges::Deleted)
                 continue;
 
-            auto* vmAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pAsset);
+            auto* vmAchievement = dynamic_cast<ra::data::models::AchievementModel*>(&pAsset);
             if (vmAchievement != nullptr)
             {
                 if (vmAchievement->GetCategory() == ra::data::models::AssetCategory::Local)
@@ -836,7 +830,7 @@ private:
                 continue;
             }
 
-            auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(pAsset);
+            auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(&pAsset);
             if (vmLeaderboard != nullptr)
             {
                 if (vmLeaderboard->GetCategory() == ra::data::models::AssetCategory::Local)
@@ -1527,11 +1521,9 @@ static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
     std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
+    for (auto& vmAsset : pGameContext.Assets())
     {
-        auto* vmAsset = pGameContext.Assets().GetItemAt(nIndex);
-
-        const auto* vmAchievement = dynamic_cast<ra::data::models::AchievementModel*>(vmAsset);
+        const auto* vmAchievement = dynamic_cast<ra::data::models::AchievementModel*>(&vmAsset);
         if (vmAchievement != nullptr)
         {
             if (vmAchievement->IsPauseOnReset())
@@ -1544,7 +1536,7 @@ static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
             continue;
         }
 
-        const auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(vmAsset);
+        const auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(&vmAsset);
         if (vmLeaderboard != nullptr)
         {
             using namespace ra::bitwise_ops;
@@ -2015,11 +2007,14 @@ static void ShowCompletionPopup(uint32_t nGameId, const std::wstring& sTitle, ui
 static void HandleSubsetCompletedEvent(const rc_client_subset_t& pSubset)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    for (const auto& pGameSubset : pGameContext.Subsets()) {
-        if (pGameSubset.AchievementSetID() == pSubset.id) {
+    for (const auto& pGameSubset : pGameContext.Subsets())
+    {
+        if (pGameSubset.AchievementSetID() == pSubset.id)
+        {
             uint32_t nPoints = 0;
-            for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex) {
-                const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pGameContext.Assets().GetItemAt(nIndex));
+            for (const auto& pAsset : pGameContext.Assets())
+            {
+                const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pAsset);
                 if (pAchievement && pAchievement->GetSubsetID() == pSubset.id && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
                     nPoints += pAchievement->GetPoints();
             }

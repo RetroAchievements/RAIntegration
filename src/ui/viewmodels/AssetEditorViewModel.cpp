@@ -377,13 +377,11 @@ void AssetEditorViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolMod
 {
     if (args.Property == LookupItemViewModel::IsSelectedProperty)
     {
-        for (gsl::index i = 0; i < ra::to_signed(m_vLeaderboardParts.Count()); ++i)
+        for (const auto& pItem : m_vLeaderboardParts)
         {
-            const auto* pItem = m_vLeaderboardParts.GetItemAt(i);
-            Expects(pItem != nullptr);
-            if (pItem->IsSelected())
+            if (pItem.IsSelected())
             {
-                SetValue(SelectedLeaderboardPartProperty, pItem->GetId());
+                SetValue(SelectedLeaderboardPartProperty, pItem.GetId());
                 return;
             }
         }
@@ -593,12 +591,8 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
                         // disable notifications while updating the selected group to prevent re-entrancy
                         m_vLeaderboardParts.RemoveNotifyTarget(*this);
 
-                        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vLeaderboardParts.Count()); ++nIndex)
-                        {
-                            auto* pItem = m_vLeaderboardParts.GetItemAt(nIndex);
-                            if (pItem != nullptr)
-                                pItem->SetSelected(pItem->GetId() == args.tNewValue);
-                        }
+                        for (auto& pItem : m_vLeaderboardParts)
+                            pItem.SetSelected(pItem.GetId() == args.tNewValue);
 
                         m_vLeaderboardParts.AddNotifyTarget(*this);
 
@@ -943,12 +937,8 @@ static void UpdateLeaderboardPartColors(ViewModelCollection<AssetEditorViewModel
     if (pLeaderboard == nullptr)
     {
         // no leaderboard, or leaderboard not active, disable highlights
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(vLeaderboardParts.Count()); ++i)
-        {
-            auto* pLeaderboardPart = vLeaderboardParts.GetItemAt(i);
-            if (pLeaderboardPart != nullptr)
-                pLeaderboardPart->SetColor(nDefaultColor);
-        }
+        for (auto& pLeaderboardPart : vLeaderboardParts)
+            pLeaderboardPart.SetColor(nDefaultColor);
 
         return;
     }

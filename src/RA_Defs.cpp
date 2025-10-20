@@ -140,7 +140,7 @@ ValueFormat ValueFormatFromString(const std::string& sFormat) noexcept
 unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
 {
     // this leverages the fact that Windows uses IEE754 floats
-    union m_pCurrent
+    union u
     {
         float fValue;
         unsigned nValue;
@@ -188,7 +188,7 @@ unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
 float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept
 {
     // this leverages the fact that Windows uses IEE754 floats
-    union m_pCurrent
+    union u
     {
         float fValue;
         unsigned nValue;

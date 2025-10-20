@@ -1,5 +1,6 @@
 #include "MultiLineGridBinding.hh"
 
+#include "GridCheckBoxColumnBinding.hh"
 #include "GridTextColumnBinding.hh"
 
 #include "RA_StringUtils.h"
@@ -81,60 +82,79 @@ void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, cons
 {
     bool bRebuildAll = false;
 
-    for (gsl::index nColumn = 0; nColumn < ra::to_signed(m_vColumns.size()); ++nColumn)
+    auto& pPropertyMapping = GetPropertyColumnMapping(args.Property.GetKey());
+
+    if (pPropertyMapping.nDependentColumns == 0xFFFFFFFF)
     {
-        const auto* pColumn = m_vColumns.at(nColumn).get();
-        if (pColumn && SupportsMultipleLines(pColumn) && pColumn->DependsOn(args.Property))
+        pPropertyMapping.nDependentColumns = 0;
+
+        for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
         {
-            auto& pItemMetrics = m_vItemMetrics.at(nIndex);
-            const auto nChars = GetMaxCharsForColumn(nColumn);
-            std::vector<unsigned int> vLineBreaks;
-            const auto sText = pColumn->GetText(*m_vmItems, nIndex);
-
-            GetLineBreaks(sText, nChars, vLineBreaks);
-
-            if (vLineBreaks.empty())
-            {
-                pItemMetrics.mColumnLineOffsets.erase(gsl::narrow_cast<int>(nColumn));
-            }
-            else
-            {
-                auto& pColumnLineBreaks = pItemMetrics.mColumnLineOffsets[gsl::narrow_cast<int>(nColumn)];
-                pColumnLineBreaks.swap(vLineBreaks);
-            }
-
-            unsigned nLinesNeeded = 1;
-            for (const auto& pPair : pItemMetrics.mColumnLineOffsets)
-            {
-                if (pPair.second.size() + 1 > nLinesNeeded)
-                    nLinesNeeded = gsl::narrow_cast<unsigned int>(pPair.second.size()) + 1;
-            }
-
-            if (!m_vmItems->IsUpdating())
-            {
-                if (nLinesNeeded != pItemMetrics.nNumLines)
-                {
-                    bRebuildAll = true;
-                }
-                else
-                {
-                    InvokeOnUIThread([this, nIndex, nColumn]() {
-                        UpdateCell(nIndex, nColumn);
-                    });
-                }
-            }
+            const auto& pColumn = *m_vColumns.at(nColumnIndex);
+            if (pColumn.DependsOn(args.Property))
+                pPropertyMapping.nDependentColumns |= 1 << nColumnIndex;
         }
     }
 
+    if (pPropertyMapping.nDependentColumns)
+    {
+        auto nDependentColumns = pPropertyMapping.nDependentColumns;
+        gsl::index nColumn = 0;
+        do
+        {
+            if (nDependentColumns & 1)
+            {
+                const auto* pColumn = m_vColumns.at(nColumn).get();
+                if (pColumn && SupportsMultipleLines(pColumn))
+                {
+                    auto& pItemMetrics = m_vItemMetrics.at(nIndex);
+                    const auto nChars = GetMaxCharsForColumn(nColumn);
+                    std::vector<unsigned int> vLineBreaks;
+                    const auto sText = pColumn->GetText(*m_vmItems, nIndex);
+
+                    GetLineBreaks(sText, nChars, vLineBreaks);
+
+                    if (vLineBreaks.empty())
+                    {
+                        pItemMetrics.mColumnLineOffsets.erase(gsl::narrow_cast<int>(nColumn));
+                    }
+                    else
+                    {
+                        auto& pColumnLineBreaks = pItemMetrics.mColumnLineOffsets[gsl::narrow_cast<int>(nColumn)];
+                        pColumnLineBreaks.swap(vLineBreaks);
+                    }
+
+                    unsigned nLinesNeeded = 1;
+                    for (const auto& pPair : pItemMetrics.mColumnLineOffsets)
+                    {
+                        if (pPair.second.size() + 1 > nLinesNeeded)
+                            nLinesNeeded = gsl::narrow_cast<unsigned int>(pPair.second.size()) + 1;
+                    }
+
+                    if (!m_vmItems->IsUpdating())
+                    {
+                        if (nLinesNeeded != pItemMetrics.nNumLines)
+                            bRebuildAll = true;
+                    }
+                }
+            }
+
+            ++nColumn;
+            nDependentColumns >>= 1;
+        } while (nDependentColumns);
+    }
+
     if (bRebuildAll)
-        OnEndViewModelCollectionUpdate();
+        Redraw();
+    else
+        UpdateDependentColumns(nIndex, pPropertyMapping.nDependentColumns);
 }
 
-void MultiLineGridBinding::OnEndViewModelCollectionUpdate()
+void MultiLineGridBinding::Redraw()
 {
     InvokeOnUIThread([this]() {
         GridBinding::UpdateAllItems();
-        GridBinding::OnEndViewModelCollectionUpdate();
+        GridBinding::Redraw();
     });
 }
 
@@ -248,6 +268,16 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
 void MultiLineGridBinding::UpdateCell(gsl::index nIndex, gsl::index nColumnIndex)
 {
     const auto& pColumn = *m_vColumns.at(nColumnIndex);
+    if (nColumnIndex == 0)
+    {
+        const auto* pCheckBoxColumn = dynamic_cast<const GridCheckBoxColumnBinding*>(&pColumn);
+        if (pCheckBoxColumn != nullptr)
+        {
+            GridBinding::UpdateCell(nIndex, nColumnIndex);
+            return;
+        }
+    }
+
     auto sText = pColumn.GetText(*m_vmItems, nIndex);
     const auto& pItemMetrics = m_vItemMetrics.at(nIndex);
 

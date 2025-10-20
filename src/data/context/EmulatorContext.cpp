@@ -553,13 +553,12 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     pGameContext.DoFrame();
 
     // Disable any modified assets
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
+    for (auto& pAsset : pGameContext.Assets())
     {
-        auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-        if (pAsset != nullptr && pAsset->GetChanges() != ra::data::models::AssetChanges::None)
+        if (pAsset.GetChanges() != ra::data::models::AssetChanges::None)
         {
-            if (pAsset->IsActive())
-                pAsset->SetState(ra::data::models::AssetState::Inactive);
+            if (pAsset.IsActive())
+                pAsset.SetState(ra::data::models::AssetState::Inactive);
         }
     }
 

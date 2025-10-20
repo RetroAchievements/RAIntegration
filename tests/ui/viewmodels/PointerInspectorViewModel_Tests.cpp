@@ -54,6 +54,8 @@ private:
             mockUserContext.SetUsername("Author");
 
             mockGameContext.InitializeCodeNotes();
+
+            SetIsVisible(true);
         }
 
         ~PointerInspectorViewModelHarness() = default;

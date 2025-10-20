@@ -270,13 +270,11 @@ void CodeNotesViewModel::OnEndViewModelCollectionUpdate()
 void CodeNotesViewModel::OnSelectedItemsChanged()
 {
     bool bHasModifiedSelectedItem = false;
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vNotes.Count()); nIndex++)
+    for (const auto& pNote : m_vNotes)
     {
-        const auto* pNote = m_vNotes.GetItemAt(nIndex);
-        Ensures(pNote != nullptr);
-        if (pNote->IsSelected())
+        if (pNote.IsSelected())
         {
-            if (pNote->IsModified())
+            if (pNote.IsModified())
             {
                 bHasModifiedSelectedItem = true;
                 break;
@@ -303,15 +301,13 @@ void CodeNotesViewModel::BookmarkSelected() const
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
 
     int nCount = 0;
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vNotes.Count()); ++nIndex)
+    for (const auto& pNote : m_vNotes)
     {
-        const auto* pNote = m_vNotes.GetItemAt(nIndex);
-        Ensures(pNote != nullptr);
-        if (pNote->IsSelected())
+        if (pNote.IsSelected())
         {
             MemSize nSize = MemSize::Unknown;
 
-            const auto* pCodeNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(pNote->nAddress, false) : nullptr;
+            const auto* pCodeNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(pNote.nAddress, false) : nullptr;
             if (pCodeNote != nullptr)
             {
                 nSize = pCodeNote->GetMemSize();
@@ -324,7 +320,7 @@ void CodeNotesViewModel::BookmarkSelected() const
 
             if (nSize == MemSize::Unknown)
             {
-                switch (pNote->nBytes)
+                switch (pNote.nBytes)
                 {
                     default:
                     case 1:
@@ -341,7 +337,7 @@ void CodeNotesViewModel::BookmarkSelected() const
                 }
             }
 
-            vmBookmarks.AddBookmark(pNote->nAddress, nSize);
+            vmBookmarks.AddBookmark(pNote.nAddress, nSize);
 
             if (++nCount == 100)
                 break;
@@ -356,12 +352,10 @@ void CodeNotesViewModel::BookmarkSelected() const
 
 void CodeNotesViewModel::GetSelectedModifiedNoteAddresses(std::vector<ra::ByteAddress>& vAddresses)
 {
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vNotes.Count()); nIndex++)
+    for (const auto& pNote : m_vNotes)
     {
-        const auto* pNote = m_vNotes.GetItemAt(nIndex);
-        Ensures(pNote != nullptr);
-        if (pNote->IsSelected() && pNote->IsModified())
-            vAddresses.push_back(pNote->nAddress);
+        if (pNote.IsSelected() && pNote.IsModified())
+            vAddresses.push_back(pNote.nAddress);
     }
 }
 

@@ -181,12 +181,11 @@ API int CCONV _RA_ConfirmLoadNewRom(int bQuittingApp)
     bool bLocalModified = false;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
+    for (const auto& pAsset : pGameContext.Assets())
     {
-        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pGameContext.Assets().GetItemAt(nIndex));
-        if (pAchievement != nullptr && pAchievement->IsModified())
+        if (pAsset.IsModified() && pAsset.IsShownInList())
         {
-            switch (pAchievement->GetCategory())
+            switch (pAsset.GetCategory())
             {
                 case ra::data::models::AssetCategory::Local:
                     bLocalModified = true;

@@ -316,17 +316,16 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
 
         // modified assets should start in the inactive state
         size_t nLocalAssets = 0;
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+        for (auto& pAsset : m_vAssets)
         {
-            auto* pAsset = m_vAssets.GetItemAt(nIndex);
-            if (pAsset != nullptr && pAsset->GetChanges() != ra::data::models::AssetChanges::None)
+            if (pAsset.GetChanges() != ra::data::models::AssetChanges::None)
             {
-                if (pAsset->HasUnpublishedChanges())
+                if (pAsset.HasUnpublishedChanges())
                     ++nLocalAssets;
 
-                if (pAsset->IsActive())
+                if (pAsset.IsActive())
                 {
-                    if (pAsset->GetType() == ra::data::models::AssetType::RichPresence &&
+                    if (pAsset.GetType() == ra::data::models::AssetType::RichPresence &&
                         ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>()
                             .RichPresenceMonitor.IsVisible())
                     {
@@ -335,7 +334,7 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
                         continue;
                     }
 
-                    pAsset->SetState(ra::data::models::AssetState::Inactive);
+                    pAsset.SetState(ra::data::models::AssetState::Inactive);
                 }
             }
         }
@@ -672,8 +671,8 @@ void GameContext::EndLoad()
 {
     if (m_nLoadCount.fetch_sub(1) == 1)
     {
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
-            m_vAssets.GetItemAt(nIndex)->Validate();
+        for (auto& pAsset : m_vAssets)
+            pAsset.Validate();
 
         if (m_vNotifyTargets.LockIfNotEmpty())
         {
@@ -689,12 +688,8 @@ void GameContext::DoFrame()
 {
     std::lock_guard<std::mutex> lock(m_mLoadMutex);
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
-    {
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
-        if (pItem != nullptr)
-            pItem->DoFrame();
-    }
+    for (auto& pAsset : m_vAssets)
+        pAsset.DoFrame();
 }
 
 void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)

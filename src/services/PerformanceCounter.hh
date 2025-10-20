@@ -41,7 +41,7 @@ private:
 
     struct Measurement
     {
-        Measurement(PerformanceCheckpoint nCheckpoint, std::chrono::steady_clock::time_point tWhen)
+        Measurement(PerformanceCheckpoint nCheckpoint, std::chrono::steady_clock::time_point tWhen) noexcept
         {
             this->nCheckpoint = nCheckpoint;
             this->tWhen = tWhen;
@@ -57,7 +57,7 @@ private:
     
     using Lap = std::array<int, static_cast<size_t>(PerformanceCheckpoint::NUM_CHECKPOINTS)>;
     Lap m_nRollingTotals;
-    int m_nLapTotal;
+    int m_nLapTotal = 0;
 
     static constexpr size_t NUM_LAPS = 3600; // once per minute, log overall averages
     std::array<Lap, NUM_LAPS> m_vLaps;

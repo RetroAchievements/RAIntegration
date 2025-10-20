@@ -32,11 +32,11 @@ protected:
     void UpdateAllItems() override;
     void UpdateItems(gsl::index nColumn) override;
     void UpdateCell(gsl::index nIndex, gsl::index nColumnIndex) override;
+    void Redraw() override;
 
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnViewModelAdded(gsl::index nIndex) override;
     void OnViewModelRemoved(gsl::index nIndex) override;
-    void OnEndViewModelCollectionUpdate() override;
 
 private:
     gsl::index GetIndexForLine(gsl::index nLine) const;

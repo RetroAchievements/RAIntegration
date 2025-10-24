@@ -526,6 +526,38 @@ public:
         AssertIndirectNote(note, 0x448, L"[32-bit BE] Not-nested number", MemSize::ThirtyTwoBitBigEndian, 4);
     }
 
+    TEST_METHOD(TestNestedPointerRepeatedNodes)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"Pointer [32bit]\r\n"
+            L"+0x308\r\n"
+            L"++0x428 | (32-bit pointer) Award - Tee Hee Two\r\n"
+            L"+++0x24C | Flag\r\n"
+            L"+0x308\r\n"
+            L"++0x438 | (32-bit pointer) Award - Pretty Woman\r\n"
+            L"+++0x24C | Flag";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
+
+        // expect individual nodes to be merged together
+        const auto* sharedNote = AssertIndirectNote(note, 0x308,
+            L"+0x428 | (32-bit pointer) Award - Tee Hee Two\r\n"
+            L"++0x24C | Flag\r\n"
+            L"+0x438 | (32-bit pointer) Award - Pretty Woman\r\n"
+            L"++0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+
+        const auto* offsetNote = AssertIndirectNote(*sharedNote, 0x428,
+            L"(32-bit pointer) Award - Tee Hee Two\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+
+        offsetNote = AssertIndirectNote(*sharedNote, 0x438,
+            L"(32-bit pointer) Award - Pretty Woman\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+    }
+
     TEST_METHOD(TestImpliedPointerChain)
     {
         CodeNoteModelHarness note;

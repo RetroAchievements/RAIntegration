@@ -1068,7 +1068,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
                     ++pEnd;
             }
         }
-        const auto sNote = sNextNote.substr(pEnd - sNextNote.c_str());
+        const auto sNoteBody = sNextNote.substr(pEnd - sNextNote.c_str());
         const auto nAddress = gsl::narrow_cast<ra::ByteAddress>(nOffset);
 
         CodeNoteModel* pExistingNote = nullptr;
@@ -1086,7 +1086,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
             // if the existing note is a pointer, merge the new note data into it.
             // if the existing note is not a pointer, ignore the new note data.
             if (pExistingNote->IsPointer())
-                pExistingNote->SetNote(pExistingNote->GetNote() + L"\r\n" + sNote, true);
+                pExistingNote->SetNote(pExistingNote->GetNote() + L"\r\n" + sNoteBody, true);
         }
         else
         {
@@ -1094,7 +1094,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
             offsetNote.SetAuthor(m_sAuthor);
             offsetNote.SetAddress(nAddress);
 
-            offsetNote.SetNote(sNote, true);
+            offsetNote.SetNote(sNoteBody, true);
             pointerData->HasPointers |= offsetNote.IsPointer();
 
             const auto nRangeOffset = nOffset + offsetNote.GetBytes();

@@ -10,7 +10,7 @@ struct IUnknown;
 // file via a "#ifndef RA_UTEST".
 
 // these functions are redefined for the unit tests
-static std::wstring GetIntegrationPath();
+static std::wstring GetIntegrationPath(const wchar_t* sFilename);
 
 // ALSO NOTE: the cpp file is pulled in directly, instead of using the header file so we
 // can access the file-scoped methods and variables. The cpp file will include the header
@@ -21,7 +21,7 @@ static std::wstring GetIntegrationPath();
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-static std::wstring GetIntegrationPath()
+static std::wstring GetIntegrationPath(const wchar_t* sFilename)
 {
     // attempt to locate the DLL. assume it lives in a folder above the test folder:
     // - bin/release/RA_Integration.dll
@@ -43,7 +43,7 @@ static std::wstring GetIntegrationPath()
         {
             while (iIndex > 0 && sBuffer[iIndex - 1] != '\\' && sBuffer[iIndex - 1] != '/')
                 --iIndex;
-            wcscpy_s(&sBuffer[iIndex], sizeof(sBuffer) / sizeof(sBuffer[0]) - iIndex, L"RA_Integration.dll");
+            wcscpy_s(&sBuffer[iIndex], sizeof(sBuffer) / sizeof(sBuffer[0]) - iIndex, sFilename);
 
             DWORD dwAttrib = GetFileAttributesW(sBuffer);
             if (dwAttrib != INVALID_FILE_ATTRIBUTES)

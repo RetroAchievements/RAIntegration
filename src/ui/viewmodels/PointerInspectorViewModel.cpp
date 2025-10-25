@@ -779,12 +779,14 @@ void PointerInspectorViewModel::UpdateSourceCodeNote()
 
             // update the field note pointers
             gsl::index nNoteIndex = 0;
-            m_pCurrentNote->EnumeratePointerNotes([this, &nNoteIndex]
-                (ra::ByteAddress, const ra::data::models::CodeNoteModel& pOffsetNote)
-                {
-                    m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNoteIndex++)->m_pNote = &pOffsetNote;
-                    return true;
-                });
+            if (m_pCurrentNote) {
+                m_pCurrentNote->EnumeratePointerNotes([this, &nNoteIndex]
+                    (ra::ByteAddress, const ra::data::models::CodeNoteModel& pOffsetNote)
+                        {
+                            m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNoteIndex++)->m_pNote = &pOffsetNote;
+                            return true;
+                        });
+            }
             for (; nNoteIndex < gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count()); ++nNoteIndex)
                 m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNoteIndex)->m_pNote = nullptr;
 

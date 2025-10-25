@@ -998,9 +998,6 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
     nIndex += 2; // "\n+"
     do
     {
-        CodeNoteModel offsetNote;
-        offsetNote.SetAuthor(m_sAuthor);
-
         // the next note starts when we find a '+' at the start of a line.
         auto nNextIndex = sNote.find(L"\n+", nIndex);
         auto nStopIndex = nNextIndex;
@@ -1071,16 +1068,40 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
                     ++pEnd;
             }
         }
+        const auto sNoteBody = sNextNote.substr(pEnd - sNextNote.c_str());
+        const auto nAddress = gsl::narrow_cast<ra::ByteAddress>(nOffset);
 
-        offsetNote.SetNote(sNextNote.substr(pEnd - sNextNote.c_str()), true);
-        pointerData->HasPointers |= offsetNote.IsPointer();
+        CodeNoteModel* pExistingNote = nullptr;
+        for (auto& pOffsetNote : pointerData->OffsetNotes)
+        {
+            if (pOffsetNote.GetAddress() == nAddress)
+            {
+                pExistingNote = &pOffsetNote;
+                break;
+            }
+        }
 
-        offsetNote.SetAddress(gsl::narrow_cast<ra::ByteAddress>(nOffset));
+        if (pExistingNote != nullptr)
+        {
+            // if the existing note is a pointer, merge the new note data into it.
+            // if the existing note is not a pointer, ignore the new note data.
+            if (pExistingNote->IsPointer())
+                pExistingNote->SetNote(pExistingNote->GetNote() + L"\r\n" + sNoteBody, true);
+        }
+        else
+        {
+            CodeNoteModel offsetNote;
+            offsetNote.SetAuthor(m_sAuthor);
+            offsetNote.SetAddress(nAddress);
 
-        const auto nRangeOffset = nOffset + offsetNote.GetBytes();
-        pointerData->OffsetRange = std::max(pointerData->OffsetRange, nRangeOffset);
+            offsetNote.SetNote(sNoteBody, true);
+            pointerData->HasPointers |= offsetNote.IsPointer();
 
-        pointerData->OffsetNotes.push_back(std::move(offsetNote));
+            const auto nRangeOffset = nOffset + offsetNote.GetBytes();
+            pointerData->OffsetRange = std::max(pointerData->OffsetRange, nRangeOffset);
+
+            pointerData->OffsetNotes.push_back(std::move(offsetNote));
+        }
 
         if (nNextIndex == std::string::npos)
             break;

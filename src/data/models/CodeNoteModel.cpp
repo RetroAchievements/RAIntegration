@@ -854,7 +854,6 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
                 {
                     const auto nBits = _wtoi(sPreviousWord.c_str());
                     m_nBytes = (nBits + 7) / 8;
-                    m_nMemSize = MemSize::Unknown;
                     bBytesFromBits = true;
                     bWordIsSize = true;
                     bFoundSize = true;
@@ -865,14 +864,15 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
                 if (!bFoundSize || (bBytesFromBits && !bIsPointer))
                 {
                     m_nBytes = _wtoi(sPreviousWord.c_str());
-                    m_nMemSize = MemSize::Unknown;
                     bBytesFromBits = false;
                     bWordIsSize = true;
                     bFoundSize = true;
                 }
             }
 
-            if (bWordIsSize)
+            if (bWordIsSize &&
+                (m_nMemSize == MemSize::Unknown ||      // size not yet determined
+                 MemSizeBytes(m_nMemSize) != m_nBytes)) // size mismatch
             {
                 switch (m_nBytes)
                 {

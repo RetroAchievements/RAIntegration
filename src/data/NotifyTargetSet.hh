@@ -11,8 +11,8 @@ namespace data {
 /// A collection of pointers to other objects.
 /// </summary>
 /// <remarks>
-/// These are not allocated object and do not need to be free'd. It's
-/// impossible to create a set of references.
+/// These are not allocated objects and do not need to be free'd.
+/// This behaves like a set of references, which isn't allowed.
 /// </summary>
 template<class TNotifyTarget>
 class NotifyTargetSet
@@ -21,47 +21,6 @@ private:
     using TargetList = std::vector<TNotifyTarget*>;
 
 public:
-    /// <summary>
-    /// Adds an object reference to the collection.
-    /// </summary>
-    void Add(TNotifyTarget& pTarget) noexcept
-    {
-        GSL_SUPPRESS_F6 // operator == for pointers won't throw an exception
-        auto pIter = std::find(m_vNotifyTargets.begin(), m_vNotifyTargets.end(), &pTarget);
-        if (pIter == m_vNotifyTargets.end())
-        {
-            GSL_SUPPRESS_F6 // copy/move constructors for pointers won't throw exceptions
-            m_vNotifyTargets.push_back(&pTarget);
-        }
-    }
-
-    /// <summary>
-    /// Removes an object reference from the collection.
-    /// </summary>
-    void Remove(TNotifyTarget& pTarget) noexcept
-    {
-        GSL_SUPPRESS_F6 // operator == for pointers won't throw an exception
-        auto pIter = std::find(m_vNotifyTargets.begin(), m_vNotifyTargets.end(), &pTarget);
-        if (pIter != m_vNotifyTargets.end())
-            m_vNotifyTargets.erase(pIter);
-    }
-
-    /// <summary>
-    /// Gets whether the collection contains no items.
-    /// </summary>
-    bool IsEmpty() const noexcept
-    {
-        return m_vNotifyTargets.empty();
-    }
-
-    /// <summary>
-    /// Removes all objects from the collection.
-    /// </summary>
-    void Clear() noexcept
-    {
-        m_vNotifyTargets.clear();
-    }
-
     class ValidTargets
     {
     public:
@@ -136,10 +95,82 @@ public:
     /// </remarks>
     const ValidTargets Targets() const noexcept
     {
-        if (!m_pTargetListChain)
-            return ValidTargets(m_vNotifyTargets);
+        if (!m_pTargetList)
+        {
+            GSL_SUPPRESS_F6 m_pTargetList = std::make_unique<TargetListNode>();
+        }
 
-        return ValidTargets(m_pTargetListChain->vTargetList);
+        return ValidTargets(m_pTargetList->vTargetList);
+    }
+
+    /// <summary>
+    /// Adds an object reference to the collection.
+    /// </summary>
+    GSL_SUPPRESS_F6 // this should only throw an exception if we're out of memory
+    void Add(TNotifyTarget& pTarget) noexcept
+    {
+        if (!m_pTargetList)
+        {
+            m_pTargetList = std::make_unique<TargetListNode>();
+        }
+        else
+        {
+            const auto& vNotifyTargets = m_pTargetList->vTargetList;
+            auto pIter = std::find(vNotifyTargets.begin(), vNotifyTargets.end(), &pTarget);
+            if (pIter != vNotifyTargets.end())
+                return;
+
+            EnsureMutable();
+        }
+
+        m_pTargetList->vTargetList.push_back(&pTarget);
+    }
+
+    /// <summary>
+    /// Removes an object reference from the collection.
+    /// </summary>
+    GSL_SUPPRESS_F6 // processing collection of raw pointers should never throw an exception
+    void Remove(TNotifyTarget& pTarget) noexcept
+    {
+        if (!m_pTargetList)
+            return;
+
+        gsl::not_null<TargetList*> vNotifyTargets = gsl::make_not_null(&m_pTargetList->vTargetList);
+        auto pIter = std::find(vNotifyTargets->begin(), vNotifyTargets->end(), &pTarget);
+        if (pIter == vNotifyTargets->end())
+            return;
+
+        EnsureMutable();
+
+        if (vNotifyTargets != &m_pTargetList->vTargetList)
+        {
+            // m_pTargetList changed. find the element in the new list.
+            vNotifyTargets = gsl::make_not_null(&m_pTargetList->vTargetList);
+            pIter = std::find(vNotifyTargets->begin(), vNotifyTargets->end(), &pTarget);
+        }
+
+        if (pIter != vNotifyTargets->end())
+            vNotifyTargets->erase(pIter);
+    }
+
+    /// <summary>
+    /// Removes all objects from the collection.
+    /// </summary>
+    void Clear() noexcept
+    {
+        if (m_pTargetList)
+        {
+            EnsureMutable();
+            m_pTargetList->vTargetList.clear();
+        }
+    }
+
+    /// <summary>
+    /// Gets whether the collection contains no items.
+    /// </summary>
+    bool IsEmpty() const noexcept
+    {
+        return !m_pTargetList || m_pTargetList->vTargetList.empty();
     }
 
     /// <summary>
@@ -152,12 +183,12 @@ public:
     /// <remarks>
     /// Changes made to the collection while locked won't appear until the collection is unlocked.
     /// </remarks>
-    bool LockIfNotEmpty()
+    bool LockIfNotEmpty() noexcept
     {
-        if (m_vNotifyTargets.empty())
+        if (IsEmpty())
             return false;
 
-        Lock();
+        ++m_pTargetList->nLockCount;
         return true;
     }
 
@@ -167,11 +198,15 @@ public:
     /// <remarks>
     /// Changes made to the collection while locked won't appear until the collection is unlocked.
     /// </remarks>
-    void Lock()
+    void Lock() noexcept
     {
-        auto pTargetListChain = std::make_unique<TargetListChain>(m_vNotifyTargets);
-        pTargetListChain->pNext = std::move(m_pTargetListChain);
-        m_pTargetListChain = std::move(pTargetListChain);
+        if (!m_pTargetList)
+        {
+            GSL_SUPPRESS_F6 // this should only throw an exception if we're out of memory
+            m_pTargetList = std::make_unique<TargetListNode>();
+        }
+
+        ++m_pTargetList->nLockCount;
     }
 
     /// <summary>
@@ -179,32 +214,56 @@ public:
     /// </summary>
     void Unlock() noexcept
     {
-        if (m_pTargetListChain != nullptr)
-            m_pTargetListChain = std::move(m_pTargetListChain->pNext);
+        if (!m_pTargetList)
+            return;
+
+        if (m_pTargetList->nLockCount > 0)
+        {
+            // list not modified. release lock
+            --m_pTargetList->nLockCount;
+        }
+        else if (m_pTargetList->pNext)
+        {
+            // list modified. release lock on copy of list (in m_pTargetList->pNext).
+            // if there are no more locks on the copy, discard it.
+            if (--m_pTargetList->pNext->nLockCount == 0)
+                m_pTargetList->pNext = std::move(m_pTargetList->pNext->pNext);
+        }
     }
 
 private:
-    TargetList m_vNotifyTargets;
-
-    struct TargetListChain
+    struct TargetListNode
     {
     public:
-        TargetListChain(const TargetList& vTargetList)
-            : vTargetList(vTargetList.begin(), vTargetList.end())
+        TargetListNode() noexcept {}
+        TargetListNode(const TargetList& vTargetList)
+            : vTargetList(vTargetList)
         {
         }
-        ~TargetListChain() noexcept = default;
+        ~TargetListNode() noexcept = default;
 
-        TargetListChain(const TargetListChain&) noexcept = delete;
-        TargetListChain& operator=(const TargetListChain&) noexcept = delete;
-        TargetListChain(TargetListChain&&) noexcept = default;
-        TargetListChain& operator=(TargetListChain&&) noexcept = default;
+        TargetListNode(const TargetListNode&) noexcept = delete;
+        TargetListNode& operator=(const TargetListNode&) noexcept = delete;
+        TargetListNode(TargetListNode&&) noexcept = default;
+        TargetListNode& operator=(TargetListNode&&) noexcept = default;
 
-        const TargetList vTargetList;
-        std::unique_ptr<TargetListChain> pNext;
+        TargetList vTargetList;
+        std::unique_ptr<TargetListNode> pNext;
+        int nLockCount = 0;
     };
 
-    std::unique_ptr<TargetListChain> m_pTargetListChain;
+    mutable std::unique_ptr<TargetListNode> m_pTargetList;
+
+    void EnsureMutable() noexcept
+    {
+        if (m_pTargetList->nLockCount)
+        {
+            // current list is locked, clone it so it can be mutated
+            GSL_SUPPRESS_F6 auto pTargetList = std::make_unique<TargetListNode>(m_pTargetList->vTargetList);
+            pTargetList->pNext = std::move(m_pTargetList);
+            m_pTargetList = std::move(pTargetList);
+        }
+    }
 };
 
 } // namespace data

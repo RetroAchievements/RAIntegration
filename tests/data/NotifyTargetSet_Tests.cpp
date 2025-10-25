@@ -70,29 +70,37 @@ public:
         std::string three = "three";
         std::string four = "four";
 
-        Assert::AreEqual({ 0U }, set.Targets().size());
+        auto targets = set.Targets();
+        Assert::AreEqual({ 0U }, targets.size());
 
         set.Lock();
         set.Add(one);
-        Assert::AreEqual({ 0U }, set.Targets().size()); // add is delayed
-        set.Unlock();
         Assert::AreEqual({ 1U }, set.Targets().size());
+        Assert::AreEqual({ 0U }, targets.size());
+        set.Unlock();
+        targets = set.Targets();
+        Assert::AreEqual({ 1U }, targets.size());
 
         set.Lock();
         set.Add(two);
-        Assert::AreEqual({ 1U }, set.Targets().size());
-        set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 1U }, targets.size());
+        set.Unlock();
+        targets = set.Targets();
+        Assert::AreEqual({ 2U }, targets.size());
 
         set.Lock();
         set.Remove(one);
-        Assert::AreEqual({ 2U }, set.Targets().size());
-        set.Unlock();
         Assert::AreEqual({ 1U }, set.Targets().size());
+        Assert::AreEqual({ 2U }, targets.size());
+        set.Unlock();
+        targets = set.Targets();
+        Assert::AreEqual({ 1U }, targets.size());
 
         set.Lock();
         set.Remove(two);
-        Assert::AreEqual({ 1U }, set.Targets().size());
+        Assert::AreEqual({ 0U }, set.Targets().size());
+        Assert::AreEqual({ 1U }, targets.size());
         set.Unlock();
         Assert::AreEqual({ 0U }, set.Targets().size());
     }
@@ -118,22 +126,28 @@ public:
 
         // non empty set is locked by LockIfNotEmpty
         Assert::AreEqual(true, set.LockIfNotEmpty());
+        auto targets = set.Targets();
         set.Add(two);
-        Assert::AreEqual({ 1U }, set.Targets().size());
+        Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 1U }, targets.size());
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
         // non empty set is locked by LockIfNotEmpty
         Assert::AreEqual(true, set.LockIfNotEmpty());
+        targets = set.Targets();
         set.Remove(one);
-        Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 1U }, set.Targets().size());
+        Assert::AreEqual({ 2U }, targets.size());
         set.Unlock();
         Assert::AreEqual({ 1U }, set.Targets().size());
 
         // non empty set is locked by LockIfNotEmpty
         Assert::AreEqual(true, set.LockIfNotEmpty());
+        targets = set.Targets();
         set.Remove(two);
-        Assert::AreEqual({ 1U }, set.Targets().size());
+        Assert::AreEqual({ 0U }, set.Targets().size());
+        Assert::AreEqual({ 1U }, targets.size());
         set.Unlock();
         Assert::AreEqual({ 0U }, set.Targets().size());
 
@@ -151,31 +165,39 @@ public:
 
         Assert::AreEqual({ 0U }, set.Targets().size());
 
+        auto targets = set.Targets();
         set.Lock();
         set.Add(one);
         set.Add(two);
-        Assert::AreEqual({ 0U }, set.Targets().size());
+        Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 0U }, targets.size());
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
+        targets = set.Targets();
         set.Lock();
         set.Add(three);
         set.Remove(one);
         Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 2U }, targets.size());
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
+        targets = set.Targets();
         set.Lock();
         set.Add(three);
         set.Remove(one);
         Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 2U }, targets.size());
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
+        targets = set.Targets();
         set.Lock();
         set.Add(four);
         set.Remove(four);
         Assert::AreEqual({ 2U }, set.Targets().size());
+        Assert::AreEqual({ 2U }, targets.size());
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 

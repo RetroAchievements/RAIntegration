@@ -86,13 +86,13 @@ public:
 
         set.Lock();
         set.Remove(one);
-        Assert::AreEqual({ 1U }, set.Targets().size()); // remove is skipped immediately
+        Assert::AreEqual({ 2U }, set.Targets().size());
         set.Unlock();
         Assert::AreEqual({ 1U }, set.Targets().size());
 
         set.Lock();
         set.Remove(two);
-        Assert::AreEqual({ 0U }, set.Targets().size());
+        Assert::AreEqual({ 1U }, set.Targets().size());
         set.Unlock();
         Assert::AreEqual({ 0U }, set.Targets().size());
     }
@@ -119,21 +119,21 @@ public:
         // non empty set is locked by LockIfNotEmpty
         Assert::AreEqual(true, set.LockIfNotEmpty());
         set.Add(two);
-        Assert::AreEqual({ 1U }, set.Targets().size()); // add is delayed
+        Assert::AreEqual({ 1U }, set.Targets().size());
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
         // non empty set is locked by LockIfNotEmpty
         Assert::AreEqual(true, set.LockIfNotEmpty());
         set.Remove(one);
-        Assert::AreEqual({ 1U }, set.Targets().size()); // remove is immediate
+        Assert::AreEqual({ 2U }, set.Targets().size());
         set.Unlock();
         Assert::AreEqual({ 1U }, set.Targets().size());
 
         // non empty set is locked by LockIfNotEmpty
         Assert::AreEqual(true, set.LockIfNotEmpty());
         set.Remove(two);
-        Assert::AreEqual({ 0U }, set.Targets().size()); // remove is immediate
+        Assert::AreEqual({ 1U }, set.Targets().size());
         set.Unlock();
         Assert::AreEqual({ 0U }, set.Targets().size());
 
@@ -161,21 +161,21 @@ public:
         set.Lock();
         set.Add(three);
         set.Remove(one);
-        Assert::AreEqual({ 1U }, set.Targets().size()); // add is delayed, remove is immediate
+        Assert::AreEqual({ 2U }, set.Targets().size());
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
         set.Lock();
         set.Add(three);
         set.Remove(one);
-        Assert::AreEqual({ 2U }, set.Targets().size()); // no changes actually occurred
+        Assert::AreEqual({ 2U }, set.Targets().size());
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 
         set.Lock();
         set.Add(four);
         set.Remove(four);
-        Assert::AreEqual({ 2U }, set.Targets().size()); // add is delayed, but immediately removed
+        Assert::AreEqual({ 2U }, set.Targets().size());
         set.Unlock();
         Assert::AreEqual({ 2U }, set.Targets().size());
 

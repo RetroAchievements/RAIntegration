@@ -18,169 +18,113 @@ template<class TNotifyTarget>
 class NotifyTargetSet
 {
 private:
-    enum TargetState
-    {
-        Valid = 0,
-        AddPending,
-        RemovePending,
-    };
-    typedef struct Target
-    {
-        Target(TNotifyTarget& pTarget, TargetState nState)
-            : pTarget(&pTarget), nState(nState)
-        {
-        }
-
-        gsl::not_null<TNotifyTarget*> pTarget;
-        TargetState nState;
-    } Target;
-
-    using TargetList = std::vector<Target>;
-
-    class const_iterator : public std::iterator_traits<typename TargetList::const_iterator>
-    {
-    public:
-        TNotifyTarget& operator*() { return *m_pCurrent->pTarget; }
-
-        const_iterator& operator++()
-        {
-            ++m_pCurrent;
-            Skip();
-            return *this;
-        }
-
-        const_iterator operator++(int)
-        {
-            auto pBeforeIncrement = *this;
-            m_pCurrent++;
-            Skip();
-            return pBeforeIncrement;
-        }
-
-        bool operator==(const const_iterator& that) const
-        {
-            return m_pCurrent == that.m_pCurrent;
-        }
-
-        bool operator!=(const const_iterator& that) const
-        {
-            return !(*this == that);
-        }
-
-    private:
-        friend NotifyTargetSet;
-        const_iterator(typename TargetList::const_iterator pCurrent, const TargetList& pOwner)
-            : m_pCurrent(std::move(pCurrent)), m_pOwner(pOwner)
-        {
-            Skip();
-        }
-
-        void Skip()
-        {
-            while (m_pCurrent != m_pOwner.cend() && m_pCurrent->nState != TargetState::Valid)
-                ++m_pCurrent;
-        }
-
-        typename TargetList::const_iterator m_pCurrent;
-        const TargetList& m_pOwner;
-    };
+    using TargetList = std::vector<TNotifyTarget*>;
 
 public:
     /// <summary>
     /// Adds an object reference to the collection.
     /// </summary>
-    /// <remarks>
-    /// If the collection is <see cref="Lock">ed, the add will be queued.
-    /// </remarks>
     void Add(TNotifyTarget& pTarget) noexcept
     {
-        for (auto& pIter : m_vNotifyTargets)
+        GSL_SUPPRESS_F6 // operator == for pointers won't throw an exception
+        auto pIter = std::find(m_vNotifyTargets.begin(), m_vNotifyTargets.end(), &pTarget);
+        if (pIter == m_vNotifyTargets.end())
         {
-            if (pIter.pTarget == &pTarget)
-            {
-                if (pIter.nState != TargetState::Valid)
-                    pIter.nState = m_nLockCount ? TargetState::AddPending : TargetState::Valid;
-
-                return;
-            }
+            GSL_SUPPRESS_F6 // copy/move constructors for pointers won't throw exceptions
+            m_vNotifyTargets.push_back(&pTarget);
         }
-
-        // emplace_back may throw exceptions if the move constructor throws exceptions.
-        // Since we're only dealing with raw pointers, that will never happen.
-        GSL_SUPPRESS_F6
-        m_vNotifyTargets.emplace_back(pTarget, m_nLockCount ? TargetState::AddPending : TargetState::Valid);
     }
 
     /// <summary>
     /// Removes an object reference from the collection.
     /// </summary>
-    /// <remarks>
-    /// If the collection is <see cref="Lock">ed, the remove will be queued.
-    /// </remarks>
     void Remove(TNotifyTarget& pTarget) noexcept
     {
-        for (auto pIter = m_vNotifyTargets.begin(); pIter < m_vNotifyTargets.end(); ++pIter)
-        {
-            if (pIter->pTarget == &pTarget)
-            {
-                // std::vector erase and emplace_back may throw exceptions if the move
-                // constructor or assignment operator throw exceptions. Since we're
-                // only dealing with raw pointers, that will never happen.
-                GSL_SUPPRESS_F6
-                if (!m_nLockCount)
-                    m_vNotifyTargets.erase(pIter);
-                else
-                    pIter->nState = TargetState::RemovePending;
-
-                return;
-            }
-        }
+        GSL_SUPPRESS_F6 // operator == for pointers won't throw an exception
+        auto pIter = std::find(m_vNotifyTargets.begin(), m_vNotifyTargets.end(), &pTarget);
+        if (pIter != m_vNotifyTargets.end())
+            m_vNotifyTargets.erase(pIter);
     }
 
     /// <summary>
     /// Gets whether the collection contains no items.
     /// </summary>
-    bool IsEmpty() const noexcept { return m_vNotifyTargets.empty(); }
+    bool IsEmpty() const noexcept
+    {
+        return m_vNotifyTargets.empty();
+    }
 
     /// <summary>
     /// Removes all objects from the collection.
     /// </summary>
     void Clear() noexcept
     {
-        if (!m_nLockCount)
-        {
-            m_vNotifyTargets.clear();
-        }
-        else
-        {
-            for (auto& pIter : m_vNotifyTargets)
-                pIter.nState = TargetState::RemovePending;
-        }
+        m_vNotifyTargets.clear();
     }
 
     class ValidTargets
     {
     public:
-        ValidTargets(const TargetList& pTargets)
-            : pBegin(pTargets.cbegin(), pTargets), pEnd(pTargets.cend(), pTargets)
+        ValidTargets(const TargetList& pTargets) noexcept
+            : m_pBegin(pTargets.cbegin()), m_pEnd(pTargets.cend())
         {
         }
+        ~ValidTargets() noexcept = default;
 
-        auto begin() const { return pBegin; }
-        auto end() const { return pEnd; }
+        ValidTargets(const ValidTargets&) noexcept = default;
+        ValidTargets& operator=(const ValidTargets&) noexcept = default;
+        ValidTargets(ValidTargets&&) noexcept = default;
+        ValidTargets& operator=(ValidTargets&&) noexcept = default;
 
-        size_t size() const
+        class const_iterator : public std::iterator_traits<typename TargetList::const_iterator>
         {
-            size_t count = 0;
-            for (auto pIter = begin(); pIter != end(); ++pIter)
-                ++count;
+        public:
+            TNotifyTarget& operator*() noexcept { return *(*m_pCurrent); }
 
-            return count;
+            const_iterator& operator++() noexcept
+            {
+                ++m_pCurrent;
+                return *this;
+            }
+
+            const_iterator operator++(int)
+            {
+                auto pBeforeIncrement = *this;
+                m_pCurrent++;
+                return pBeforeIncrement;
+            }
+
+            bool operator==(const const_iterator& that) const noexcept
+            {
+                return m_pCurrent == that.m_pCurrent;
+            }
+
+            bool operator!=(const const_iterator& that) const noexcept
+            {
+                return !(*this == that);
+            }
+
+        private:
+            friend class ValidTargets;
+            const_iterator(typename TargetList::const_iterator pCurrent) noexcept
+                : m_pCurrent(std::move(pCurrent))
+            {
+            }
+
+            typename TargetList::const_iterator m_pCurrent;
+        };
+
+        auto begin() const noexcept { return m_pBegin; }
+        auto end() const noexcept { return m_pEnd; }
+
+        size_t size() const 
+        {
+            return m_pEnd.m_pCurrent - m_pBegin.m_pCurrent;
         }
 
     private:
-        const_iterator pBegin;
-        const_iterator pEnd;
+        const_iterator m_pBegin;
+        const_iterator m_pEnd;
     };
 
     /// <summary>
@@ -192,7 +136,10 @@ public:
     /// </remarks>
     const ValidTargets Targets() const noexcept
     {
-        return ValidTargets(m_vNotifyTargets);
+        if (!m_pTargetListChain)
+            return ValidTargets(m_vNotifyTargets);
+
+        return ValidTargets(m_pTargetListChain->vTargetList);
     }
 
     /// <summary>
@@ -205,12 +152,12 @@ public:
     /// <remarks>
     /// Changes made to the collection while locked won't appear until the collection is unlocked.
     /// </remarks>
-    bool LockIfNotEmpty() noexcept
+    bool LockIfNotEmpty()
     {
         if (m_vNotifyTargets.empty())
             return false;
 
-        ++m_nLockCount;
+        Lock();
         return true;
     }
 
@@ -220,40 +167,44 @@ public:
     /// <remarks>
     /// Changes made to the collection while locked won't appear until the collection is unlocked.
     /// </remarks>
-    void Lock() noexcept
+    void Lock()
     {
-        ++m_nLockCount;
+        auto pTargetListChain = std::make_unique<TargetListChain>(m_vNotifyTargets);
+        pTargetListChain->pNext = std::move(m_pTargetListChain);
+        m_pTargetListChain = std::move(pTargetListChain);
     }
 
     /// <summary>
     /// Unlocks the collection and applies any pending changes.
     /// </summary>
-    void Unlock()
+    void Unlock() noexcept
     {
-        if (!m_nLockCount || --m_nLockCount)
-            return;
-
-        auto pIter = m_vNotifyTargets.begin();
-        while (pIter < m_vNotifyTargets.end())
-        {
-            switch (pIter->nState)
-            {
-                case TargetState::RemovePending:
-                    pIter = m_vNotifyTargets.erase(pIter);
-                    continue;
-
-                case TargetState::AddPending:
-                    pIter->nState = TargetState::Valid;
-                    break;
-            }
-
-            ++pIter;
-        }
+        if (m_pTargetListChain != nullptr)
+            m_pTargetListChain = std::move(m_pTargetListChain->pNext);
     }
 
 private:
     TargetList m_vNotifyTargets;
-    int m_nLockCount = 0;
+
+    struct TargetListChain
+    {
+    public:
+        TargetListChain(const TargetList& vTargetList)
+            : vTargetList(vTargetList.begin(), vTargetList.end())
+        {
+        }
+        ~TargetListChain() noexcept = default;
+
+        TargetListChain(const TargetListChain&) noexcept = delete;
+        TargetListChain& operator=(const TargetListChain&) noexcept = delete;
+        TargetListChain(TargetListChain&&) noexcept = default;
+        TargetListChain& operator=(TargetListChain&&) noexcept = default;
+
+        const TargetList vTargetList;
+        std::unique_ptr<TargetListChain> pNext;
+    };
+
+    std::unique_ptr<TargetListChain> m_pTargetListChain;
 };
 
 } // namespace data

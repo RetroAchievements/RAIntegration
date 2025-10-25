@@ -495,6 +495,16 @@ API void _RA_NavigateOverlay(const ControllerInput* pInput)
 
 API void CCONV _RA_SetPaused(int bIsPaused)
 {
+    if (bIsPaused)
+    {
+        auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+        if (!rc_client_can_pause(pClient, nullptr))
+        {
+            ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().Unpause();
+            return;
+        }
+    }
+
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     if (bIsPaused)
         pOverlayManager.ShowOverlay();

@@ -406,7 +406,7 @@
     <ResourceCompile Include="RA_Shared.rc" />
     <ResourceCompile Include="RA_Version.rc">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_DEBUG;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_USING_V110_SDK71_;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release-xp|x64'">_USING_V110_SDK71_;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release-vista|x64'">_USING_V110_SDK71_;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
@@ -426,7 +426,8 @@
   <PropertyGroup Label="Globals">
     <ProjectName>RA_Integration</ProjectName>
     <ProjectGuid>{825CB292-F069-4B27-82CF-3417746ACDF3}</ProjectGuid>
-    <TargetName>RA_Integration</TargetName>
+    <TargetName Condition="'$(Platform)'!='x64'">RA_Integration</TargetName>
+    <TargetName Condition="'$(Platform)'=='x64'">RA_Integration-x64</TargetName>
     <RootNamespace>RA_Integration</RootNamespace>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>

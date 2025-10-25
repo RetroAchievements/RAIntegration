@@ -10,8 +10,10 @@
 
 #ifdef _WIN64
 #define RA_INTEGRATION_VERSION_PRODUCT_ARCH RA_INTEGRATION_VERSION_PRODUCT " (x64)"
+#define RA_INTEGRATION_ORIGINAL_FILENAME "RA_Integration-x64.dll"
 #else
 #define RA_INTEGRATION_VERSION_PRODUCT_ARCH RA_INTEGRATION_VERSION_PRODUCT " (x86)"
+#define RA_INTEGRATION_ORIGINAL_FILENAME "RA_Integration.dll"
 #endif
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -78,7 +80,7 @@ BEGIN
             VALUE "FileVersion", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_PATCH, RA_INTEGRATION_VERSION_REVISION
             VALUE "InternalName", "RA_Integration"
             VALUE "LegalCopyright", "Copyright (C) 2025 retroachievements.org"
-            VALUE "OriginalFilename", "RA_Integration.dll"
+            VALUE "OriginalFilename", RA_INTEGRATION_ORIGINAL_FILENAME
             VALUE "ProductName", "RetroAchievements Integration Toolkit"
             VALUE "ProductVersion", RA_INTEGRATION_VERSION_PRODUCT_ARCH
         END

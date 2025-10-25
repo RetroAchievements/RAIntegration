@@ -1407,7 +1407,7 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
                     }
                     else
                     {
-                        const auto nIndex = GetVisibleItemIndex(pInfo->nItemIndex);
+                        const auto nIndex = GetVisibleItemIndex(gsl::narrow_cast<int>(pInfo->nItemIndex));
                         m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, true);
                     }
                 }

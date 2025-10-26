@@ -141,6 +141,22 @@ void AssetListViewModel::OnActiveGameChanged()
     ApplyFilter();
 }
 
+void AssetListViewModel::OnCodeNoteChanged(ra::ByteAddress, const std::wstring&)
+{
+    RevalidateNoteAssetValidationWarnings();
+}
+
+void AssetListViewModel::RevalidateNoteAssetValidationWarnings()
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    for (auto& pAsset : pGameContext.Assets())
+    {
+        const auto& sValidationError = pAsset.GetValidationError();
+        if (sValidationError.find(L"code note") != std::wstring::npos)
+            pAsset.Validate();
+    }
+}
+
 void AssetListViewModel::OnDataModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
     // sync this property through to the summary view model

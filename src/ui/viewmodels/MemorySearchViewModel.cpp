@@ -23,9 +23,10 @@ constexpr size_t SEARCH_ROWS_DISPLAYED = 9; // needs to be one higher than actua
 constexpr size_t SEARCH_MAX_HISTORY = 50;
 
 constexpr int MEMORY_RANGE_ALL = 0;
-constexpr int MEMORY_RANGE_SYSTEM = 1;
-constexpr int MEMORY_RANGE_GAME = 2;
-constexpr int MEMORY_RANGE_CUSTOM = 3;
+constexpr int MEMORY_RANGE_SYSTEM = -1;
+constexpr int MEMORY_RANGE_EXTRA = -2;
+constexpr int MEMORY_RANGE_CUSTOM = -3;
+constexpr int MEMORY_RANGE_MANAGE = -4;
 
 const IntModelProperty MemorySearchViewModel::PredefinedFilterRangeProperty("MemorySearchViewModel", "PredefinedFilterRange", MEMORY_RANGE_ALL);
 const StringModelProperty MemorySearchViewModel::FilterRangeProperty("MemorySearchViewModel", "FilterRange", L"");
@@ -172,137 +173,149 @@ void MemorySearchViewModel::InitializeNotifyTargets()
     pGameContext.AddNotifyTarget(*this);
 }
 
+void MemorySearchViewModel::OnBeforeActiveGameChanged()
+{
+    RebuildPredefinedFilterRanges();
+
+    SetPredefinedFilterRange(MEMORY_RANGE_ALL);
+}
+
 void MemorySearchViewModel::OnTotalMemorySizeChanged()
 {
-    ra::ByteAddress nGameRamStart = 0U;
-    ra::ByteAddress nGameRamEnd = 0U;
+    RebuildPredefinedFilterRanges();
+
+    const auto nTotalBankSize = gsl::narrow_cast<ra::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().TotalMemorySize());
+    SetValue(CanBeginNewSearchProperty, (nTotalBankSize > 0U));
+    SetValue(TotalMemorySizeProperty, nTotalBankSize);
+}
+
+void MemorySearchViewModel::RebuildPredefinedFilterRanges()
+{
+    ra::ByteAddress nExtraRamStart = 0U;
+    ra::ByteAddress nExtraRamEnd = 0U;
     ra::ByteAddress nSystemRamStart = 0U;
     ra::ByteAddress nSystemRamEnd = 0U;
+    ra::ByteAddress nAllRamEnd = 0U;
+
+    std::vector<PredefinedFilterRangeViewModel> vmRanges;
+    auto nPreviousAddressType = ra::data::context::ConsoleContext::AddressType::Unused;
 
     for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().MemoryRegions())
     {
-        if (pRegion.Type == ra::data::context::ConsoleContext::AddressType::SystemRAM)
+        nAllRamEnd = pRegion.EndAddress;
+
+        switch (pRegion.Type)
         {
-            if (nSystemRamEnd == 0U)
-            {
-                nSystemRamStart = pRegion.StartAddress;
+            case ra::data::context::ConsoleContext::AddressType::Unused:
+            case ra::data::context::ConsoleContext::AddressType::VirtualRAM:
+            case ra::data::context::ConsoleContext::AddressType::ReadOnlyMemory:
+            case ra::data::context::ConsoleContext::AddressType::HardwareController:
+            case ra::data::context::ConsoleContext::AddressType::VideoRAM:
+                // don't create filter regions for these.
+                // reset the previous type to ensure the next block doesn't get merged to the last one.
+                nPreviousAddressType = ra::data::context::ConsoleContext::AddressType::Unused;
+                continue;
+
+            case ra::data::context::ConsoleContext::AddressType::SystemRAM:
+                if (nSystemRamEnd == 0)
+                    nSystemRamStart = pRegion.StartAddress;
                 nSystemRamEnd = pRegion.EndAddress;
-            }
-            else if (pRegion.StartAddress == nSystemRamEnd + 1)
-            {
-                nSystemRamEnd = pRegion.EndAddress;
-            }
+                break;
+
+            case ra::data::context::ConsoleContext::AddressType::SaveRAM:
+                if (nExtraRamEnd == 0)
+                    nExtraRamStart = pRegion.StartAddress;
+                nExtraRamEnd = pRegion.EndAddress;
+                break;
         }
-        else if (pRegion.Type == ra::data::context::ConsoleContext::AddressType::SaveRAM)
+
+        const auto sDescription = ra::Widen(pRegion.Description);
+        if (pRegion.Type == nPreviousAddressType && vmRanges.back().GetLabel() == sDescription)
         {
-            if (nGameRamEnd == 0U)
-            {
-                nGameRamStart = pRegion.StartAddress;
-                nGameRamEnd = pRegion.EndAddress;
-            }
-            else if (pRegion.StartAddress == nGameRamEnd + 1)
-            {
-                nGameRamEnd = pRegion.EndAddress;
-            }
+            vmRanges.back().SetEndAddress(pRegion.EndAddress);
+            continue;
+        }
+
+        nPreviousAddressType = pRegion.Type;
+        auto& vmRange = vmRanges.emplace_back(gsl::narrow_cast<int>(vmRanges.size() + 1), sDescription);
+        vmRange.SetStartAddress(pRegion.StartAddress);
+        vmRange.SetEndAddress(pRegion.EndAddress);
+    }
+
+    for (const auto& vmRange : vmRanges)
+    {
+        if (vmRange.GetEndAddress() == nSystemRamEnd && vmRange.GetStartAddress() == nSystemRamStart)
+        {
+            // system defined range already exists for "All System RAM"
+            nSystemRamEnd = 0U;
+        }
+        else if (vmRange.GetEndAddress() == nExtraRamEnd && vmRange.GetStartAddress() == nExtraRamStart)
+        {
+            // system defined range already exists for "All Game RAM"
+            nExtraRamEnd = 0U;
         }
     }
 
     m_vPredefinedFilterRanges.BeginUpdate();
 
-    const auto nTotalBankSize = gsl::narrow_cast<ra::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().TotalMemorySize());
-    if (nGameRamEnd >= nTotalBankSize)
+    gsl::index nIndex = 0;
+    DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_ALL, L"All", 0U, nAllRamEnd, false);
+
+    if (vmRanges.size() == 1 &&
+        vmRanges.front().GetEndAddress() == nAllRamEnd &&
+        vmRanges.front().GetStartAddress() == 0)
     {
-        if (nTotalBankSize == 0U)
+        // single defined range is "All Memory". don't list it separately.
+    }
+    else
+    {
+        if (nSystemRamEnd != 0U && (nSystemRamStart != 0 || nSystemRamEnd != nAllRamEnd))
+            DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_SYSTEM, L"All System Memory", nSystemRamStart, nSystemRamEnd, true);
+
+        if (nExtraRamEnd != 0U && (nExtraRamStart != 0 || nExtraRamEnd != nAllRamEnd))
+            DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_EXTRA, L"All Extra Memory", nExtraRamStart, nExtraRamEnd, true);
+
+        for (const auto& vmRange : vmRanges)
         {
-            nGameRamEnd = 0U;
-        }
-        else
-        {
-            nGameRamEnd = nTotalBankSize - 1;
-            if (nGameRamEnd < nGameRamStart)
-                nGameRamStart = nGameRamEnd = 0;
+            DefinePredefinedFilterRange(nIndex, gsl::narrow_cast<int>(nIndex),
+                vmRange.GetLabel(), vmRange.GetStartAddress(), vmRange.GetEndAddress(), true);
+            ++nIndex;
         }
     }
 
-    if (nSystemRamEnd >= nTotalBankSize)
-    {
-        if (nTotalBankSize == 0U)
-            nSystemRamEnd = 0U;
-        else
-            nSystemRamEnd = nTotalBankSize - 1;
-    }
+    // TODO: add user-defined custom ranges
 
-    auto nIndex = m_vPredefinedFilterRanges.FindItemIndex(ra::ui::viewmodels::LookupItemViewModel::IdProperty, MEMORY_RANGE_SYSTEM);
-    if (nSystemRamEnd != 0U)
-    {
-        const auto sLabel = ra::StringPrintf(L"System Memory (%s-%s)", ra::ByteAddressToString(nSystemRamStart), ra::ByteAddressToString(nSystemRamEnd));
+    DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_CUSTOM, L"Custom", 0, 0, false);
+    DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_MANAGE, L"Customize...", 0, 0, false);
 
-        auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
-        if (pEntry == nullptr)
-        {
-            pEntry = &m_vPredefinedFilterRanges.Add(MEMORY_RANGE_SYSTEM, sLabel);
-            Ensures(pEntry != nullptr);
-        }
-        else
-        {
-            pEntry->SetLabel(sLabel);
-        }
-
-        pEntry->SetStartAddress(nSystemRamStart);
-        pEntry->SetEndAddress(nSystemRamEnd);
-    }
-    else if (nIndex >= 0)
-    {
-        m_vPredefinedFilterRanges.RemoveAt(nIndex);
-    }
-
-    nIndex = m_vPredefinedFilterRanges.FindItemIndex(ra::ui::viewmodels::LookupItemViewModel::IdProperty, MEMORY_RANGE_GAME);
-    if (nGameRamEnd != 0U)
-    {
-        const auto sLabel = ra::StringPrintf(L"Game Memory (%s-%s)", ra::ByteAddressToString(nGameRamStart), ra::ByteAddressToString(nGameRamEnd));
-
-        auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
-        if (pEntry == nullptr)
-        {
-            pEntry = &m_vPredefinedFilterRanges.Add(MEMORY_RANGE_GAME, sLabel);
-            Ensures(pEntry != nullptr);
-        }
-        else
-        {
-            pEntry->SetLabel(sLabel);
-        }
-
-        pEntry->SetStartAddress(nGameRamStart);
-        pEntry->SetEndAddress(nGameRamEnd);
-    }
-    else if (nIndex >= 0)
-    {
-        m_vPredefinedFilterRanges.RemoveAt(nIndex);
-    }
-
-    for (gsl::index nInsert = 0; nInsert < gsl::narrow_cast<gsl::index>(m_vPredefinedFilterRanges.Count()); ++nInsert)
-    {
-        gsl::index nMinimumIndex = nInsert;
-        int nMinimum = m_vPredefinedFilterRanges.GetItemValue(nInsert, ra::ui::viewmodels::LookupItemViewModel::IdProperty);
-
-        for (gsl::index nScan = nInsert + 1; nScan < gsl::narrow_cast<gsl::index>(m_vPredefinedFilterRanges.Count()); ++nScan)
-        {
-            const int nScanId = m_vPredefinedFilterRanges.GetItemValue(nScan, ra::ui::viewmodels::LookupItemViewModel::IdProperty);
-            if (nScanId < nMinimum)
-            {
-                nMinimumIndex = nScan;
-                nMinimum = nScanId;
-            }
-        }
-
-        if (nMinimumIndex != nInsert)
-            m_vPredefinedFilterRanges.MoveItem(nMinimumIndex, nInsert);
-    }
+    while (m_vPredefinedFilterRanges.Count() > gsl::narrow_cast<size_t>(nIndex))
+        m_vPredefinedFilterRanges.RemoveAt(m_vPredefinedFilterRanges.Count() - 1);
 
     m_vPredefinedFilterRanges.EndUpdate();
+}
 
-    SetValue(CanBeginNewSearchProperty, (nTotalBankSize > 0U));
-    SetValue(TotalMemorySizeProperty, nTotalBankSize);
+void MemorySearchViewModel::DefinePredefinedFilterRange(gsl::index nIndex, int nId, const std::wstring& sLabel, ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, bool bIncludeRangeInLabel)
+{
+    auto* pItem = m_vPredefinedFilterRanges.GetItemAt(nIndex);
+    if (pItem == nullptr)
+    {
+        auto pNewItem = std::make_unique<PredefinedFilterRangeViewModel>(nId, sLabel);
+        pItem = &m_vPredefinedFilterRanges.Append(std::move(pNewItem));
+    }
+
+    pItem->SetId(nId);
+    pItem->SetStartAddress(nStartAddress);
+    pItem->SetEndAddress(nEndAddress);
+
+    if (bIncludeRangeInLabel)
+    {
+        pItem->SetLabel(ra::StringPrintf(L"%s (%s-%s)", sLabel,
+            ra::ByteAddressToString(nStartAddress), ra::ByteAddressToString(nEndAddress)));
+    }
+    else
+    {
+        pItem->SetLabel(sLabel);
+    }
 }
 
 void MemorySearchViewModel::OnPredefinedFilterRangeChanged()

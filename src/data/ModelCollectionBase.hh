@@ -269,7 +269,7 @@ protected:
 #endif
 
     template<class TItem>
-    class iterator : public std::iterator_traits<typename  std::vector<std::unique_ptr<ModelBase>>::iterator>
+    class iterator : public std::iterator_traits<typename std::vector<std::unique_ptr<ModelBase>>::iterator>
     {
         static_assert(std::is_base_of<ModelBase, TItem>{}, "T must be a subclass of ModelBase");
 
@@ -334,7 +334,7 @@ protected:
     }
 
     template<class TItem>
-    class const_iterator : public std::iterator_traits<typename  std::vector<std::unique_ptr<ModelBase>>::const_iterator>
+    class const_iterator : public std::iterator_traits<typename std::vector<std::unique_ptr<ModelBase>>::const_iterator>
     {
         static_assert(std::is_base_of<ModelBase, TItem>{}, "T must be a subclass of ModelBase");
 

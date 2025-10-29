@@ -46,16 +46,7 @@ void MemoryRegionsViewModel::OnViewModelStringValueChanged(gsl::index nIndex, co
             else
             {
                 pItem->SetInvalid(false);
-                bool hasInvalid = false;
-                for (const auto& pRegion : m_vRegions)
-                {
-                    if (pRegion.IsInvalid())
-                    {
-                        hasInvalid = true;
-                        break;
-                    }
-                }
-                SetValue(CanSaveProperty, !hasInvalid);
+                UpdateCanSave();
             }
         }
     }
@@ -139,6 +130,8 @@ void MemoryRegionsViewModel::RemoveRegion()
     if (pItem == nullptr || !pItem->IsCustom())
         return;
 
+    const bool bWasInvalid = pItem->IsInvalid();
+
     // remove the item
     m_vRegions.RemoveAt(nIndex);
 
@@ -148,6 +141,9 @@ void MemoryRegionsViewModel::RemoveRegion()
 
     // clear the selected item index
     SetSelectedRegionIndex(-1);
+
+    if (bWasInvalid)
+        UpdateCanSave();
 }
 
 void MemoryRegionsViewModel::InitializeRegions()
@@ -194,11 +190,26 @@ void MemoryRegionsViewModel::InitializeRegions()
     m_vRegions.AddNotifyTarget(*this);
 }
 
+void MemoryRegionsViewModel::UpdateCanSave()
+{
+    bool hasInvalid = false;
+    for (const auto& pRegion : m_vRegions)
+    {
+        if (pRegion.IsInvalid())
+        {
+            hasInvalid = true;
+            break;
+        }
+    }
+
+    SetValue(CanSaveProperty, !hasInvalid);
+}
+
 void MemoryRegionsViewModel::SaveCustomRegions()
 {
     auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
     auto* pMemoryRegions = pAssets.FindMemoryRegions();
-    if (pMemoryRegions != nullptr)
+    if (pMemoryRegions == nullptr)
     {
         auto pNewMemoryRegions = std::make_unique<ra::data::models::MemoryRegionsModel>();
         pMemoryRegions = dynamic_cast<ra::data::models::MemoryRegionsModel*>(&pAssets.Append(std::move(pNewMemoryRegions)));

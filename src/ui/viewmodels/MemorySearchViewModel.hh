@@ -499,6 +499,7 @@ protected:
 
     // GameContext::NotifyTarget
     void OnBeforeActiveGameChanged() override;
+    void OnActiveGameChanged() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote) override;
     void OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) override;
 

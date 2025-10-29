@@ -136,6 +136,7 @@ protected:
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
 
 private:
+    void UpdateCanSave();
     void SaveCustomRegions();
 
     ViewModelCollection<MemoryRegionViewModel> m_vRegions;

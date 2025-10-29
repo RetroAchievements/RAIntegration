@@ -177,9 +177,17 @@ void MemorySearchViewModel::InitializeNotifyTargets()
 
 void MemorySearchViewModel::OnBeforeActiveGameChanged()
 {
+    // reset filter list and select All option when starting to change game
     RebuildPredefinedFilterRanges();
-
     SetPredefinedFilterRange(MEMORY_RANGE_ALL);
+}
+
+void MemorySearchViewModel::OnActiveGameChanged()
+{
+    // rebuild list with custom filters once the game has loaded
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    if (pGameContext.Assets().FindMemoryRegions() != nullptr)
+        RebuildPredefinedFilterRanges();
 }
 
 void MemorySearchViewModel::OnTotalMemorySizeChanged()
@@ -285,11 +293,20 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
         }
     }
 
-    // TODO: add user-defined custom ranges
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pMemoryRegions = pGameContext.Assets().FindMemoryRegions();
+    if (pMemoryRegions)
+    {
+        for (const auto& pRegion : pMemoryRegions->CustomRegions())
+        {
+            DefinePredefinedFilterRange(nIndex, gsl::narrow_cast<int>(nIndex),
+                pRegion.sLabel, pRegion.nStartAddress, pRegion.nEndAddress, true);
+            ++nIndex;
+        }
+    }
 
     DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_CUSTOM, L"Custom", 0, 0, false);
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (pGameContext.GameId() != 0)
         DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_MANAGE, L"Customize...", 0, 0, false);
 

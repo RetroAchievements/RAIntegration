@@ -76,20 +76,35 @@ public:
     {
     }
 
-    bool DependsOn(const ra::ui::StringModelProperty& pProperty) const noexcept override
+    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const noexcept override
     {
-        return pProperty == MemoryRegionsViewModel::MemoryRegionViewModel::IsInvalidProperty;
+        if (pProperty == MemoryRegionsViewModel::MemoryRegionViewModel::IsInvalidProperty)
+            return true;
+
+        return RegionGridTextColumnBinding::DependsOn(pProperty);
+    }
+
+    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
+    {
+        m_bIgnoreValidation = true;
+        HWND hWnd = RegionGridTextColumnBinding::CreateInPlaceEditor(hParent, pInfo);
+        m_bIgnoreValidation = false;
+
+        return hWnd;
     }
 
     std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
     {
         auto sLabel = RegionGridTextColumnBinding::GetText(vmItems, nIndex);
 
-        if (vmItems.GetItemValue(nIndex, MemoryRegionsViewModel::MemoryRegionViewModel::IsInvalidProperty))
+        if (!m_bIgnoreValidation && vmItems.GetItemValue(nIndex, MemoryRegionsViewModel::MemoryRegionViewModel::IsInvalidProperty))
             sLabel.append(L"\U000026A0"); // 26A0 - Warning Sign
 
         return sLabel;
     }
+
+private:
+    bool m_bIgnoreValidation = false;
 };
 
 // ------------------------------------
@@ -98,7 +113,7 @@ MemoryRegionsDialog::MemoryRegionsDialog(MemoryRegionsViewModel& vmMemoryRegions
     : DialogBase(vmMemoryRegions),
     m_bindRegions(vmMemoryRegions)
 {
-    //m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Code Notes");
+    m_bindWindow.SetInitialPosition(RelativePosition::Far, RelativePosition::Near, "Memory Regions");
 
     auto pLabelColumn = std::make_unique<RegionGridTextColumnBinding>(
         MemoryRegionsViewModel::MemoryRegionViewModel::LabelProperty);
@@ -106,6 +121,7 @@ MemoryRegionsDialog::MemoryRegionsDialog(MemoryRegionsViewModel& vmMemoryRegions
     pLabelColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 200);
     pLabelColumn->SetReadOnly(false);
     m_bindRegions.BindColumn(0, std::move(pLabelColumn));
+    m_bindRegions.SetPrimaryEditColumn(0);
 
     auto pRangeColumn = std::make_unique<ValidatedRegionGridTextColumnBinding>(
         MemoryRegionsViewModel::MemoryRegionViewModel::RangeProperty);

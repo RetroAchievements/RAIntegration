@@ -5,10 +5,12 @@
 
 #include "services\IClock.hh"
 #include "services\IFileSystem.hh"
+#include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\IDesktop.hh"
 #include "ui\viewmodels\FileDialogViewModel.hh"
+#include "ui\viewmodels\MemoryRegionsViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\ProgressViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
@@ -286,7 +288,10 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
     // TODO: add user-defined custom ranges
 
     DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_CUSTOM, L"Custom", 0, 0, false);
-    DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_MANAGE, L"Customize...", 0, 0, false);
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    if (pGameContext.GameId() != 0)
+        DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_MANAGE, L"Customize...", 0, 0, false);
 
     while (m_vPredefinedFilterRanges.Count() > gsl::narrow_cast<size_t>(nIndex))
         m_vPredefinedFilterRanges.RemoveAt(m_vPredefinedFilterRanges.Count() - 1);
@@ -318,14 +323,37 @@ void MemorySearchViewModel::DefinePredefinedFilterRange(gsl::index nIndex, int n
     }
 }
 
-void MemorySearchViewModel::OnPredefinedFilterRangeChanged()
+void MemorySearchViewModel::OnPredefinedFilterRangeChanged(const IntModelProperty::ChangeArgs& args)
 {
-    const auto nValue = GetPredefinedFilterRange();
+    const auto nValue = args.tNewValue;
     if (nValue == MEMORY_RANGE_ALL)
     {
         m_bSelectingFilter = true;
         SetFilterRange(L"");
         m_bSelectingFilter = false;
+        return;
+    }
+
+    if (nValue == MEMORY_RANGE_MANAGE)
+    {
+        const auto& pWindowManager = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>();
+        MemoryRegionsViewModel vmRegions;
+        if (vmRegions.ShowModal(pWindowManager.MemoryInspector) == ra::ui::DialogResult::OK)
+            RebuildPredefinedFilterRanges();
+
+        // change the selection back to the old value asynchronously as the synchronous
+        // flow will continue processing the current args, and we don't want that to
+        // overwrite the change back to the old value.
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([this, nOldValue = args.tOldValue]()
+        {
+            Sleep(10); // ensure the other event has been fully handled
+
+            // if the previous item was deleted, just select the all option
+            if (m_vPredefinedFilterRanges.FindItemIndex(ra::ui::viewmodels::LookupItemViewModel::IdProperty, nOldValue) == -1)
+                SetPredefinedFilterRange(MEMORY_RANGE_ALL);
+            else
+                SetPredefinedFilterRange(nOldValue);
+        });
         return;
     }
 
@@ -1090,7 +1118,7 @@ void MemorySearchViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
     }
     else if (args.Property == PredefinedFilterRangeProperty)
     {
-        OnPredefinedFilterRangeChanged();
+        OnPredefinedFilterRangeChanged(args);
     }
     else if (args.Property == SearchTypeProperty)
     {

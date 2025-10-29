@@ -438,6 +438,12 @@
     <ClCompile Include="ui\viewmodels\MemoryWatchListViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryRegionsViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\MemoryRegionsDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -1102,6 +1108,12 @@
     </ClInclude>
     <ClInclude Include="api\UpdateRichPresence.hh">
       <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\MemoryRegionsViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\MemoryRegionsDialog.hh">
+      <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

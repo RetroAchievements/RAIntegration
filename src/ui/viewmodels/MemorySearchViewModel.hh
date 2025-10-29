@@ -517,7 +517,7 @@ private:
         ra::services::SearchResult& pResult, bool bForceFilterCheck,
         const ra::data::context::EmulatorContext& pEmulatorContext);
 
-    void OnPredefinedFilterRangeChanged();
+    void OnPredefinedFilterRangeChanged(const IntModelProperty::ChangeArgs& args);
     void OnFilterRangeChanged();
 
     ViewModelCollection<PredefinedFilterRangeViewModel> m_vPredefinedFilterRanges;

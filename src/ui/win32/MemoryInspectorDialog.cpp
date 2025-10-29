@@ -170,6 +170,9 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     m_bindValueType.BindSelectedItem(MemorySearchViewModel::ValueTypeProperty);
 
     m_bindFilterValue.BindText(vmMemoryInspector.Search().FilterValueProperty);
+    m_bindWindow.BindEnabled(IDC_RA_SEARCHRANGES, MemorySearchViewModel::CanBeginNewSearchProperty);
+    m_bindWindow.BindEnabled(IDC_RA_SEARCHRANGE, MemorySearchViewModel::CanBeginNewSearchProperty);
+    m_bindWindow.BindEnabled(IDC_RA_SEARCHTYPE, MemorySearchViewModel::CanBeginNewSearchProperty);
     m_bindWindow.BindEnabled(IDC_RA_RESET_FILTER, MemorySearchViewModel::CanBeginNewSearchProperty);
     m_bindWindow.BindEnabled(IDC_RA_COMPARISON, MemorySearchViewModel::CanFilterProperty);
     m_bindWindow.BindEnabled(IDC_RA_SPECIAL_FILTER, MemorySearchViewModel::CanFilterProperty);

@@ -339,6 +339,7 @@
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryBookmarksViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryInspectorViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\MemoryRegionsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemorySearchViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryViewerViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryWatchListViewModel.cpp" />

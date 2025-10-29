@@ -444,6 +444,9 @@
     <ClCompile Include="ui\win32\MemoryRegionsDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\MemoryRegionsModel.cpp">
+      <Filter>Data\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -1114,6 +1117,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\MemoryRegionsDialog.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\MemoryRegionsModel.hh">
+      <Filter>Data\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

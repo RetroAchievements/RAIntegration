@@ -44,6 +44,7 @@ public:
     }
     void SetActiveGameId(unsigned int nGameId) noexcept { m_nActiveGameId = nGameId; }
 
+    void NotifyBeforeActiveGameChanged() { OnBeforeActiveGameChanged(); }
     void NotifyActiveGameChanged() { OnActiveGameChanged(); }
 
     void NotifyGameLoad() { BeginLoad(); EndLoad(); }

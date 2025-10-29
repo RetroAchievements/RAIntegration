@@ -8,6 +8,7 @@
 #include "data\models\AchievementModel.hh"
 #include "data\models\CodeNotesModel.hh"
 #include "data\models\LeaderboardModel.hh"
+#include "data\models\MemoryRegionsModel.hh"
 #include "data\models\RichPresenceModel.hh"
 
 namespace ra {
@@ -106,6 +107,22 @@ public:
     const ra::data::models::CodeNotesModel* FindCodeNotes() const
     {
         return dynamic_cast<const ra::data::models::CodeNotesModel*>(FindAsset(ra::data::models::AssetType::CodeNotes, 0));
+    }
+
+    /// <summary>
+    /// Finds the memory regions asset.
+    /// </summary>
+    ra::data::models::MemoryRegionsModel* FindMemoryRegions()
+    {
+        return dynamic_cast<ra::data::models::MemoryRegionsModel*>(FindAsset(ra::data::models::AssetType::MemoryRegions, 0));
+    }
+
+    /// <summary>
+    /// Finds the memory regions asset.
+    /// </summary>
+    const ra::data::models::MemoryRegionsModel* FindMemoryRegions() const
+    {
+        return dynamic_cast<const ra::data::models::MemoryRegionsModel*>(FindAsset(ra::data::models::AssetType::MemoryRegions, 0));
     }
 
     /// <summary>

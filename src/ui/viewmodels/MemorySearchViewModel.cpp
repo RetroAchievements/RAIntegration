@@ -336,8 +336,10 @@ void MemorySearchViewModel::OnPredefinedFilterRangeChanged(const IntModelPropert
 
     if (nValue == MEMORY_RANGE_MANAGE)
     {
-        const auto& pWindowManager = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>();
         MemoryRegionsViewModel vmRegions;
+        vmRegions.InitializeRegions();
+
+        const auto& pWindowManager = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>();
         if (vmRegions.ShowModal(pWindowManager.MemoryInspector) == ra::ui::DialogResult::OK)
             RebuildPredefinedFilterRanges();
 
@@ -373,7 +375,7 @@ void MemorySearchViewModel::OnPredefinedFilterRangeChanged(const IntModelPropert
 void MemorySearchViewModel::OnFilterRangeChanged()
 {
     ra::ByteAddress nStart, nEnd;
-    if (!ParseFilterRange(nStart, nEnd))
+    if (!ra::data::models::MemoryRegionsModel::ParseFilterRange(GetFilterRange(), nStart, nEnd))
         return;
 
     for (const auto& pEntry : m_vPredefinedFilterRanges)
@@ -445,89 +447,6 @@ void MemorySearchViewModel::DoFrame()
     m_vResults.EndUpdate();
 }
 
-inline static constexpr auto ParseAddress(const wchar_t* ptr, ra::ByteAddress& address) noexcept
-{
-    if (ptr == nullptr)
-        return ptr;
-
-    if (*ptr == '$')
-    {
-        ++ptr;
-    }
-    else if (ptr[0] == '0' && ptr[1] == 'x')
-    {
-        ptr += 2;
-    }
-
-    address = 0;
-    while (*ptr)
-    {
-        if (*ptr >= '0' && *ptr <= '9')
-        {
-            address <<= 4;
-            address += (*ptr - '0');
-        }
-        else if (*ptr >= 'a' && *ptr <= 'f')
-        {
-            address <<= 4;
-            address += (*ptr - 'a' + 10);
-        }
-        else if (*ptr >= 'A' && *ptr <= 'F')
-        {
-            address <<= 4;
-            address += (*ptr - 'A' + 10);
-        }
-        else
-            break;
-
-        ++ptr;
-    }
-
-    return ptr;
-}
-
-bool MemorySearchViewModel::ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd)
-{
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto nMax = gsl::narrow_cast<ra::ByteAddress>(pEmulatorContext.TotalMemorySize()) - 1;
-
-    const std::wstring& sRange = GetFilterRange();
-    if (sRange.empty())
-    {
-        // no range specified, search all
-        nStart = 0;
-        nEnd = nMax;
-        return true;
-    }
-
-    auto ptr = ParseAddress(sRange.data(), nStart);
-    Expects(ptr != nullptr);
-
-    nEnd = nStart;
-    if (nStart > nMax)
-        return false;
-
-    while (iswspace(*ptr))
-        ++ptr;
-
-    if (*ptr == '-')
-    {
-        ++ptr;
-        while (iswspace(*ptr))
-            ++ptr;
-
-        ptr = ParseAddress(ptr, nEnd);
-        Expects(ptr != nullptr);
-
-        if (nEnd > nMax)
-            nEnd = nMax;
-        else if (nEnd < nStart)
-            std::swap(nStart, nEnd);
-    }
-
-    return (*ptr == '\0');
-}
-
 void MemorySearchViewModel::ClearResults()
 {
     if (m_bIsContinuousFiltering)
@@ -553,7 +472,7 @@ void MemorySearchViewModel::ClearResults()
 void MemorySearchViewModel::BeginNewSearch()
 {
     ra::ByteAddress nStart, nEnd;
-    if (!ParseFilterRange(nStart, nEnd))
+    if (!ra::data::models::MemoryRegionsModel::ParseFilterRange(GetFilterRange(), nStart, nEnd))
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Invalid address range");
         return;

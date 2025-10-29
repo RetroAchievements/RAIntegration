@@ -504,6 +504,15 @@
     <ClCompile Include="..\src\ui\viewmodels\MemoryRegionsViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\data\models\MemoryRegionsModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp">
+      <Filter>Tests\Data\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryRegionsViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

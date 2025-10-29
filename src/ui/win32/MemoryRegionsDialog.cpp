@@ -64,7 +64,31 @@ public:
         if (!pItems.GetItemValue(pInfo.nItemIndex, MemoryRegionsViewModel::MemoryRegionViewModel::IsCustomProperty))
             return nullptr;
 
-        ra::ui::win32::bindings::GridTextColumnBinding::CreateInPlaceEditor(hParent, pInfo);
+        return ra::ui::win32::bindings::GridTextColumnBinding::CreateInPlaceEditor(hParent, pInfo);
+    }
+};
+
+class ValidatedRegionGridTextColumnBinding : public RegionGridTextColumnBinding
+{
+public:
+    ValidatedRegionGridTextColumnBinding(const StringModelProperty& pBoundProperty) noexcept
+        : RegionGridTextColumnBinding(pBoundProperty)
+    {
+    }
+
+    bool DependsOn(const ra::ui::StringModelProperty& pProperty) const noexcept override
+    {
+        return pProperty == MemoryRegionsViewModel::MemoryRegionViewModel::IsInvalidProperty;
+    }
+
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        auto sLabel = RegionGridTextColumnBinding::GetText(vmItems, nIndex);
+
+        if (vmItems.GetItemValue(nIndex, MemoryRegionsViewModel::MemoryRegionViewModel::IsInvalidProperty))
+            sLabel.append(L"\U000026A0"); // 26A0 - Warning Sign
+
+        return sLabel;
     }
 };
 
@@ -80,18 +104,21 @@ MemoryRegionsDialog::MemoryRegionsDialog(MemoryRegionsViewModel& vmMemoryRegions
         MemoryRegionsViewModel::MemoryRegionViewModel::LabelProperty);
     pLabelColumn->SetHeader(L"Address");
     pLabelColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 200);
+    pLabelColumn->SetReadOnly(false);
     m_bindRegions.BindColumn(0, std::move(pLabelColumn));
 
-    auto pRangeColumn = std::make_unique<RegionGridTextColumnBinding>(
+    auto pRangeColumn = std::make_unique<ValidatedRegionGridTextColumnBinding>(
         MemoryRegionsViewModel::MemoryRegionViewModel::RangeProperty);
     pRangeColumn->SetHeader(L"Range");
     pRangeColumn->SetWidth(GridColumnBinding::WidthType::Fill, 50);
+    pRangeColumn->SetReadOnly(false);
     m_bindRegions.BindColumn(1, std::move(pRangeColumn));
 
     m_bindRegions.BindItems(vmMemoryRegions.Regions());
     m_bindRegions.BindIsSelected(MemoryRegionsViewModel::MemoryRegionViewModel::IsSelectedProperty);
 
     m_bindWindow.BindEnabled(IDC_RA_REMOVE_REGION, MemoryRegionsViewModel::CanRemoveRegionProperty);
+    m_bindWindow.BindEnabled(IDOK, MemoryRegionsViewModel::CanSaveProperty);
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_LBX_REGIONS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);

@@ -16,7 +16,7 @@ class MemoryRegionsViewModel : public WindowViewModelBase,
     protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
 public:
-    GSL_SUPPRESS_F6 MemoryRegionsViewModel() noexcept;
+    GSL_SUPPRESS_F6 MemoryRegionsViewModel();
     ~MemoryRegionsViewModel() = default;
 
     MemoryRegionsViewModel(const MemoryRegionsViewModel&) noexcept = delete;
@@ -56,6 +56,21 @@ public:
         /// Sets whether the region is a custom region.
         /// </summary>
         void SetCustom(bool bValue) { SetValue(IsCustomProperty, bValue); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for whether the region is invalid.
+        /// </summary>
+        static const BoolModelProperty IsInvalidProperty;
+
+        /// <summary>
+        /// Gets whether the region is invalid.
+        /// </summary>
+        bool IsInvalid() const { return GetValue(IsInvalidProperty); }
+
+        /// <summary>
+        /// Sets whether the region is invalid.
+        /// </summary>
+        void SetInvalid(bool bValue) { SetValue(IsInvalidProperty, bValue); }
     };
 
     /// <summary>
@@ -67,6 +82,16 @@ public:
     /// Gets whether a region can be removed.
     /// </summary>
     bool CanRemove() const { return GetValue(CanRemoveRegionProperty); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether regions can be saved.
+    /// </summary>
+    static const BoolModelProperty CanSaveProperty;
+
+    /// <summary>
+    /// Gets whether regions can be saved.
+    /// </summary>
+    bool CanSave() const { return GetValue(CanSaveProperty); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the selected region.
@@ -99,6 +124,7 @@ public:
         return m_vRegions;
     }
 
+    void InitializeRegions();
     void AddNewRegion();
     void RemoveRegion();
 
@@ -106,6 +132,7 @@ protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     // ra::ui::ViewModelCollectionBase::NotifyTarget
+    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
 
 private:

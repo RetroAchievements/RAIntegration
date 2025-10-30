@@ -1055,34 +1055,37 @@ void SyncClientExternalHardcoreState()
     const int bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? 1 : 0;
 
     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    if (rc_client_get_hardcore_enabled(pRuntime.GetClient()) != bHardcore)
+    auto* pClient = pRuntime.GetClient();
+    if (rc_client_get_hardcore_enabled(pClient) != bHardcore)
     {
         std::vector<uint32_t> vActiveUnofficialAchievements;
         bool bHasUnofficialAchievements = false;
 
-        const auto* subset = pRuntime.GetClient()->game->subsets;
-        for (; subset; subset = subset->next) {
-            if (!subset->active)
-                continue;
+        if (pClient->game) {
+            const auto* subset = pClient->game->subsets;
+            for (; subset; subset = subset->next) {
+                if (!subset->active)
+                    continue;
 
-            const auto* achievement = subset->achievements;
-            const auto* stop = achievement + subset->public_.num_achievements;
-            for (; achievement < stop; ++achievement) {
-                if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL) {
-                    bHasUnofficialAchievements = true;
+                const auto* achievement = subset->achievements;
+                const auto* stop = achievement + subset->public_.num_achievements;
+                for (; achievement < stop; ++achievement) {
+                    if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL) {
+                        bHasUnofficialAchievements = true;
 
-                    if (achievement->public_.state == RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE)
-                        vActiveUnofficialAchievements.push_back(achievement->public_.id);
+                        if (achievement->public_.state == RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE)
+                            vActiveUnofficialAchievements.push_back(achievement->public_.id);
+                    }
                 }
             }
         }
 
-        rc_client_set_hardcore_enabled(pRuntime.GetClient(), bHardcore);
+        rc_client_set_hardcore_enabled(pClient, bHardcore);
 
         // rc_client automatically activates unofficial achievements on hardcore change.
         // go through and deactivate anything that wasn't active before the switch.
         if (bHasUnofficialAchievements) {
-            subset = pRuntime.GetClient()->game->subsets;
+            const auto* subset = pClient->game->subsets;
             for (; subset; subset = subset->next) {
                 if (!subset->active)
                     continue;

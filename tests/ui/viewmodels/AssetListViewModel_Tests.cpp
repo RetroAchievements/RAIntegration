@@ -1421,7 +1421,7 @@ public:
         vmAchievement.SetTrigger("A:0x1234");
         vmAchievement.UpdateLocalCheckpoint();
         Assert::IsFalse(vmAchievement.Validate());
-        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), pItem->GetWarning());
+        Assert::AreEqual(std::wstring(L"Condition 1: AddSource condition type expects another condition to follow"), pItem->GetWarning());
     }
 
     TEST_METHOD(TestSyncAddItem)
@@ -2616,7 +2616,7 @@ public:
         const auto& sText = vmAssetList.GetUserFile(L"22");
         AssertContains(sText, "1:\"A:0x1234\":Test1b:Desc1:::::5:::::12345");
 
-        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), pItem->GetValidationError());
+        Assert::AreEqual(std::wstring(L"Condition 1: AddSource condition type expects another condition to follow"), pItem->GetValidationError());
 
         pItem->SetName(L"Test1c");
         vmAssetList.SaveSelected();
@@ -2753,7 +2753,7 @@ public:
         pItem->SetTrigger("A:0x1234");
         pItem->UpdateLocalCheckpoint();
         Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
-        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), pItem->GetValidationError());
+        Assert::AreEqual(std::wstring(L"Condition 1: AddSource condition type expects another condition to follow"), pItem->GetValidationError());
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
@@ -2765,7 +2765,7 @@ public:
         Assert::AreEqual({ 1U }, vmAssetList.PublishedAssets.size());
         Assert::IsTrue(pItem == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
         Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
-        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), pItem->GetValidationError());
+        Assert::AreEqual(std::wstring(L"Condition 1: AddSource condition type expects another condition to follow"), pItem->GetValidationError());
 
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(SaveButtonState::Demote);

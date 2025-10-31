@@ -243,15 +243,15 @@ public:
         leaderboard.CreateLocalCheckpoint();
 
         Assert::IsFalse(leaderboard.Validate());
-        Assert::AreEqual(std::wstring(L"Start: Final condition type expects another condition to follow"), leaderboard.GetValidationError());
+        Assert::AreEqual(std::wstring(L"Start: Condition 1: AndNext condition type expects another condition to follow"), leaderboard.GetValidationError());
 
         leaderboard.SetStartTrigger("0xH1234=1");
         Assert::IsFalse(leaderboard.Validate());
-        Assert::AreEqual(std::wstring(L"Cancel: Final condition type expects another condition to follow"), leaderboard.GetValidationError());
+        Assert::AreEqual(std::wstring(L"Cancel: Condition 1: AndNext condition type expects another condition to follow"), leaderboard.GetValidationError());
 
         leaderboard.SetCancelTrigger("0xH1234=2");
         Assert::IsFalse(leaderboard.Validate());
-        Assert::AreEqual(std::wstring(L"Submit: Final condition type expects another condition to follow"), leaderboard.GetValidationError());
+        Assert::AreEqual(std::wstring(L"Submit: Condition 1: AndNext condition type expects another condition to follow"), leaderboard.GetValidationError());
 
         leaderboard.SetSubmitTrigger("0xH1234=3");
         Assert::IsTrue(leaderboard.Validate());

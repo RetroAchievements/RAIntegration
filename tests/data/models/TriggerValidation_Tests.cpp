@@ -46,16 +46,16 @@ public:
 
     TEST_METHOD(TestLastConditionCombining)
     {
-        AssertValidation("0xH1234=1_A:0xH2345=2", L"Final condition type expects another condition to follow");
-        AssertValidation("0xH1234=1_B:0xH2345=2", L"Final condition type expects another condition to follow");
-        AssertValidation("0xH1234=1_C:0xH2345=2", L"Final condition type expects another condition to follow");
-        AssertValidation("0xH1234=1_D:0xH2345=2", L"Final condition type expects another condition to follow");
-        AssertValidation("0xH1234=1_N:0xH2345=2", L"Final condition type expects another condition to follow");
-        AssertValidation("0xH1234=1_O:0xH2345=2", L"Final condition type expects another condition to follow");
-        AssertValidation("0xH1234=1_Z:0xH2345=2", L"Final condition type expects another condition to follow");
+        AssertValidation("0xH1234=1_A:0xH2345=2", L"Condition 2: AddSource condition type expects another condition to follow");
+        AssertValidation("0xH1234=1_B:0xH2345=2", L"Condition 2: SubSource condition type expects another condition to follow");
+        AssertValidation("0xH1234=1_C:0xH2345=2", L"Condition 2: AddHits condition type expects another condition to follow");
+        AssertValidation("0xH1234=1_D:0xH2345=2", L"Condition 2: SubHits condition type expects another condition to follow");
+        AssertValidation("0xH1234=1_N:0xH2345=2", L"Condition 2: AndNext condition type expects another condition to follow");
+        AssertValidation("0xH1234=1_O:0xH2345=2", L"Condition 2: OrNext condition type expects another condition to follow");
+        AssertValidation("0xH1234=1_Z:0xH2345=2", L"Condition 2: ResetNextIf condition type expects another condition to follow");
 
-        AssertValidation("0xH1234=1_A:0xH2345=2S0x3456=1", L"Core Final condition type expects another condition to follow");
-        AssertValidation("0x3456=1S0xH1234=1_A:0xH2345=2", L"Alt1 Final condition type expects another condition to follow");
+        AssertValidation("0xH1234=1_A:0xH2345=2S0x3456=1", L"Core Condition 2: AddSource condition type expects another condition to follow");
+        AssertValidation("0x3456=1S0xH1234=1_A:0xH2345=2", L"Alt1 Condition 2: AddSource condition type expects another condition to follow");
     }
 
     TEST_METHOD(TestMiddleConditionCombining)
@@ -81,36 +81,36 @@ public:
 
         AssertValidation("0xH1234=255", L"");
         AssertValidation("0xH1234!=255", L"");
-        AssertValidation("0xH1234>255", L"Condition 1: Comparison is never true");
+        AssertValidation("0xH1234>255", L"Condition 1: Comparison is never true (max 255)");
         AssertValidation("0xH1234>=255", L"");
         AssertValidation("0xH1234<255", L"");
-        AssertValidation("0xH1234<=255", L"Condition 1: Comparison is always true");
+        AssertValidation("0xH1234<=255", L"Condition 1: Comparison is always true (max 255)");
 
         AssertValidation("R:0xH1234<255_0xH2345=1.1.", L"");
-        AssertValidation("R:0xH1234<=255_0xH2345=1.1.", L"Condition 1: Comparison is always true");
+        AssertValidation("R:0xH1234<=255_0xH2345=1.1.", L"Condition 1: Comparison is always true (max 255)");
 
-        AssertValidation("0xH1234=256", L"Condition 1: Comparison is never true");
-        AssertValidation("0xH1234!=256", L"Condition 1: Comparison is always true");
-        AssertValidation("0xH1234>256", L"Condition 1: Comparison is never true");
-        AssertValidation("0xH1234>=256", L"Condition 1: Comparison is never true");
-        AssertValidation("0xH1234<256", L"Condition 1: Comparison is always true");
-        AssertValidation("0xH1234<=256", L"Condition 1: Comparison is always true");
+        AssertValidation("0xH1234=256", L"Condition 1: Comparison is never true (max 255)");
+        AssertValidation("0xH1234!=256", L"Condition 1: Comparison is always true (max 255)");
+        AssertValidation("0xH1234>256", L"Condition 1: Comparison is never true (max 255)");
+        AssertValidation("0xH1234>=256", L"Condition 1: Comparison is never true (max 255)");
+        AssertValidation("0xH1234<256", L"Condition 1: Comparison is always true (max 255)");
+        AssertValidation("0xH1234<=256", L"Condition 1: Comparison is always true (max 255)");
 
         AssertValidation("0x 1234>=65535", L"");
-        AssertValidation("0x 1234>=65536", L"Condition 1: Comparison is never true");
+        AssertValidation("0x 1234>=65536", L"Condition 1: Comparison is never true (max 65535)");
 
         AssertValidation("0xW1234>=16777215", L"");
-        AssertValidation("0xW1234>=16777216", L"Condition 1: Comparison is never true");
+        AssertValidation("0xW1234>=16777216", L"Condition 1: Comparison is never true (max 16777215)");
 
         AssertValidation("0xX1234>=4294967295", L"");
-        AssertValidation("0xX1234>4294967295", L"Condition 1: Comparison is never true");
+        AssertValidation("0xX1234>4294967295", L"Condition 1: Comparison is never true (max 4294967295)");
 
         AssertValidation("0xT1234>=1", L"");
-        AssertValidation("0xT1234>1", L"Condition 1: Comparison is never true");
+        AssertValidation("0xT1234>1", L"Condition 1: Comparison is never true (max 1)");
 
         // AddSource max is the sum of all parts (255+255=510)
         AssertValidation("A:0xH1234_0xH1235<510", L"");
-        AssertValidation("A:0xH1234_0xH1235<=510", L"Condition 2: Comparison is always true");
+        AssertValidation("A:0xH1234_0xH1235<=510", L"Condition 2: Comparison is always true (max 510)");
 
         // SubSource max is always 0xFFFFFFFF
         AssertValidation("B:0xH1234_0xH1235<510", L"");

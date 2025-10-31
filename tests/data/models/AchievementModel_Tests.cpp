@@ -137,7 +137,7 @@ public:
 
         // Validation checks the uncommited state.
         Assert::IsFalse(achievement.Validate());
-        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), achievement.GetValidationError());
+        Assert::AreEqual(std::wstring(L"Condition 1: AddSource condition type expects another condition to follow"), achievement.GetValidationError());
 
         // Validation checks the uncommited state.
         achievement.UpdateLocalCheckpoint();
@@ -148,11 +148,11 @@ public:
 
         // Restoring the local checkpoint automatically updates the validation error.
         achievement.RestoreLocalCheckpoint();
-        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), achievement.GetValidationError());
+        Assert::AreEqual(std::wstring(L"Condition 1: AddSource condition type expects another condition to follow"), achievement.GetValidationError());
 
         // Fixing the error does not automatically update the validation error.
         achievement.SetTrigger("0xH1234=1");
-        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), achievement.GetValidationError());
+        Assert::AreEqual(std::wstring(L"Condition 1: AddSource condition type expects another condition to follow"), achievement.GetValidationError());
 
         // Committing the fix does update the validation error.
         achievement.UpdateLocalCheckpoint();

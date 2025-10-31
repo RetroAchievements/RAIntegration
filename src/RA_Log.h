@@ -7,7 +7,6 @@
 #ifdef RA_UTEST
 
 #define RA_LOG_LEVEL(lvl, ...)
-#define RA_LOG(...)
 
 #else
 

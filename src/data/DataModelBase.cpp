@@ -31,15 +31,12 @@ void DataModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
         }
     }
 
-    if (!m_vNotifyTargets.empty())
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        // create a copy of the list of pointers in case it's modified by one of the callbacks
-        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-        for (NotifyTarget* target : vNotifyTargets)
-        {
-            Expects(target != nullptr);
-            target->OnDataModelBoolValueChanged(args);
-        }
+        for (auto& target : m_vNotifyTargets.Targets())
+            target.OnDataModelBoolValueChanged(args);
+
+        m_vNotifyTargets.Unlock();
     }
 
     ModelBase::OnValueChanged(args);
@@ -88,15 +85,12 @@ void DataModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
         }
     }
 
-    if (!m_vNotifyTargets.empty())
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        // create a copy of the list of pointers in case it's modified by one of the callbacks
-        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-        for (NotifyTarget* target : vNotifyTargets)
-        {
-            Expects(target != nullptr);
-            target->OnDataModelStringValueChanged(args);
-        }
+        for (auto& target : m_vNotifyTargets.Targets())
+            target.OnDataModelStringValueChanged(args);
+
+        m_vNotifyTargets.Unlock();
     }
 
     ModelBase::OnValueChanged(args);
@@ -145,15 +139,12 @@ void DataModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
         }
     }
 
-    if (!m_vNotifyTargets.empty())
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        // create a copy of the list of pointers in case it's modified by one of the callbacks
-        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-        for (NotifyTarget* target : vNotifyTargets)
-        {
-            Expects(target != nullptr);
-            target->OnDataModelIntValueChanged(args);
-        }
+        for (auto& target : m_vNotifyTargets.Targets())
+            target.OnDataModelIntValueChanged(args);
+
+        m_vNotifyTargets.Unlock();
     }
 
     ModelBase::OnValueChanged(args);

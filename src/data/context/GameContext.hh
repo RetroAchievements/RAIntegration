@@ -153,8 +153,8 @@ public:
         virtual void OnCodeNoteMoved(ra::ByteAddress, ra::ByteAddress, const std::wstring&) noexcept(false) {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
-    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Add(pTarget); }
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Remove(pTarget); }
 
     void DoFrame();
 
@@ -195,7 +195,6 @@ public:
     uint32_t GetGameId(uint32_t nSubsetId) const noexcept;
 
 private:
-    using NotifyTargetSet = std::set<NotifyTarget*>;
     void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused);
     void MigrateSubsetUserFiles();
 
@@ -220,11 +219,7 @@ protected:
     std::vector<Subset> m_vSubsets;
 
 private:
-    /// <summary>
-    /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's
-    /// impossible to create a set of <c>NotifyTarget</c> references.
-    /// </summary>
-    NotifyTargetSet m_vNotifyTargets;
+    NotifyTargetSet<NotifyTarget> m_vNotifyTargets;
 
     GameAssets m_vAssets;
 

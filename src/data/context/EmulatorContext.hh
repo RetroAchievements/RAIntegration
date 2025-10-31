@@ -9,6 +9,7 @@
 
 #include <string>
 
+#include "data\NotifyTargetSet.hh"
 #include "data\search\MemBlock.hh"
 
 namespace ra {
@@ -287,12 +288,11 @@ public:
         virtual void OnByteWritten(ra::ByteAddress, uint8_t) noexcept(false) {}
     };
 
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
-    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Add(pTarget); }
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Remove(pTarget); }
 
 private:
-    using NotifyTargetSet = std::set<NotifyTarget*>;
-    NotifyTargetSet m_vNotifyTargets;
+    mutable ra::data::NotifyTargetSet<NotifyTarget> m_vNotifyTargets;
 
     void WriteMemory(ra::ByteAddress nAddress, const uint8_t* pBytes, size_t nByteCount) const;
 

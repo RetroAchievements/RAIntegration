@@ -5,106 +5,106 @@ namespace ui {
 
 void ViewModelCollectionBase::OnFrozen() noexcept
 {
-    m_vNotifyTargets.clear();
+    m_vNotifyTargets.Clear();
 }
 
 void ViewModelCollectionBase::OnModelValueChanged(gsl::index nIndex,
     const BoolModelProperty::ChangeArgs& args)
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (NotifyTarget* target : vNotifyTargets)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        Expects(target != nullptr);
-        target->OnViewModelBoolValueChanged(nIndex, args);
+        for (auto& target : m_vNotifyTargets.Targets())
+            target.OnViewModelBoolValueChanged(nIndex, args);
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
 void ViewModelCollectionBase::OnModelValueChanged(gsl::index nIndex,
     const StringModelProperty::ChangeArgs& args)
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (NotifyTarget* target : vNotifyTargets)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        Expects(target != nullptr);
-        target->OnViewModelStringValueChanged(nIndex, args);
+        for (auto& target : m_vNotifyTargets.Targets())
+            target.OnViewModelStringValueChanged(nIndex, args);
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
 void ViewModelCollectionBase::OnModelValueChanged(gsl::index nIndex,
     const IntModelProperty::ChangeArgs& args)
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (NotifyTarget* target : vNotifyTargets)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        Expects(target != nullptr);
-        target->OnViewModelIntValueChanged(nIndex, args);
+        for (auto& target : m_vNotifyTargets.Targets())
+            target.OnViewModelIntValueChanged(nIndex, args);
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
 void ViewModelCollectionBase::OnBeginUpdate()
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (NotifyTarget* target : vNotifyTargets)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        Expects(target != nullptr);
-        target->OnBeginViewModelCollectionUpdate();
+        for (auto& target : m_vNotifyTargets.Targets())
+            target.OnBeginViewModelCollectionUpdate();
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
 void ViewModelCollectionBase::OnEndUpdate()
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (NotifyTarget* target : vNotifyTargets)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        Expects(target != nullptr);
-        target->OnEndViewModelCollectionUpdate();
+        for (auto& target : m_vNotifyTargets.Targets())
+            target.OnEndViewModelCollectionUpdate();
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
 void ViewModelCollectionBase::OnItemsRemoved(const std::vector<gsl::index>& vDeletedIndices)
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (auto nDeletedIndex : vDeletedIndices)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        for (NotifyTarget* target : vNotifyTargets)
+        for (auto& target : m_vNotifyTargets.Targets())
         {
-            Expects(target != nullptr);
-            target->OnViewModelRemoved(nDeletedIndex);
+            for (auto nDeletedIndex : vDeletedIndices)
+                target.OnViewModelRemoved(nDeletedIndex);
         }
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
 void ViewModelCollectionBase::OnItemsAdded(const std::vector<gsl::index>& vNewIndices)
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (auto vNewIndex : vNewIndices)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        for (NotifyTarget* target : vNotifyTargets)
+        for (auto& target : m_vNotifyTargets.Targets())
         {
-            Expects(target != nullptr);
-            target->OnViewModelAdded(vNewIndex);
+            for (auto vNewIndex : vNewIndices)
+                target.OnViewModelAdded(vNewIndex);
         }
+
+        m_vNotifyTargets.Unlock();
     }
 }
 
 void ViewModelCollectionBase::OnItemsChanged(const std::vector<gsl::index>& vChangedIndices)
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (auto vChangedIndex : vChangedIndices)
+    if (m_vNotifyTargets.LockIfNotEmpty())
     {
-        for (NotifyTarget* target : vNotifyTargets)
+        for (auto& target : m_vNotifyTargets.Targets())
         {
-            Expects(target != nullptr);
-            target->OnViewModelChanged(vChangedIndex);
+            for (auto vChangedIndex : vChangedIndices)
+                target.OnViewModelChanged(vChangedIndex);
         }
+
+        m_vNotifyTargets.Unlock();
     }
 }
 

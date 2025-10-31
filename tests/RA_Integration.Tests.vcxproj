@@ -393,6 +393,7 @@
     <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp" />
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
     <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
+    <ClCompile Include="data\NotifyTargetSet_Tests.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="mocks\MockAchievementRuntime.cpp" />
     <ClCompile Include="services\AchievementLogicSerializer_Tests.cpp" />

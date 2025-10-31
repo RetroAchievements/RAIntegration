@@ -228,6 +228,7 @@
     <ClInclude Include="data\models\MemoryRegionsModel.hh" />
     <ClInclude Include="data\models\RichPresenceModel.hh" />
     <ClInclude Include="data\models\TriggerValidation.hh" />
+    <ClInclude Include="data\NotifyTargetSet.hh" />
     <ClInclude Include="data\search\MemBlock.hh" />
     <ClInclude Include="data\Types.hh" />
     <ClInclude Include="Exports.hh" />

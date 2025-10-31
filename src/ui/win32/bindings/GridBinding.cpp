@@ -1393,6 +1393,25 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
             if (pInfo->nItemIndex >= 0)
             {
                 pInfo->nColumnIndex = pnmItemActivate->iSubItem;
+
+                // if the user is Ctrl+clicking, the first Ctrl+click will select the row
+                // without triggering an NM_CLICK event. The second Ctrl+click will
+                // deselect the row and trigger an NM_CLICK EVENT. If we're opening an
+                // IPE, reselect the deselected row.
+                const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
+                if (bControlHeld)
+                {
+                    if (m_fUpdateSelectedItems)
+                    {
+                        m_fUpdateSelectedItems(pInfo->nItemIndex, pInfo->nItemIndex, true);
+                    }
+                    else
+                    {
+                        const auto nIndex = GetVisibleItemIndex(gsl::narrow_cast<int>(pInfo->nItemIndex));
+                        m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, true);
+                    }
+                }
+
                 OpenIPE(pInfo, *pColumn);
             }
         }

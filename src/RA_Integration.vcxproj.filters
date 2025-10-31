@@ -1121,6 +1121,9 @@
     <ClInclude Include="data\models\MemoryRegionsModel.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
+    <ClInclude Include="data\NotifyTargetSet.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

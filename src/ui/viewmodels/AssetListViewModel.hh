@@ -306,6 +306,7 @@ private:
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
+    void OnCodeNoteChanged(ra::ByteAddress, const std::wstring&) override;
 
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
@@ -338,6 +339,8 @@ private:
     gsl::index GetFilteredAssetIndex(const ra::data::models::AssetModelBase& pAsset) const;
     void ApplyFilter();
     bool m_bInitializingFilter = false;
+
+    void RevalidateNoteAssetValidationWarnings();
 
     ViewModelCollection<AssetSummaryViewModel> m_vFilteredAssets;
 

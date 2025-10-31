@@ -158,10 +158,9 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (m_nLoadedGameId != pGameContext.GameId())
     {
-        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-
         if (m_nLoadedGameId != 0 && IsModified())
         {
+            auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
             auto pWriter = pLocalStorage.WriteText(ra::services::StorageItemType::Bookmarks, std::to_wstring(m_nLoadedGameId));
             if (pWriter != nullptr)
                 SaveBookmarks(*pWriter);
@@ -174,9 +173,13 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
 
         if (m_nLoadedGameId != 0)
         {
-            auto pReader = pLocalStorage.ReadText(ra::services::StorageItemType::Bookmarks, std::to_wstring(m_nLoadedGameId));
-            if (pReader != nullptr)
-                LoadBookmarks(*pReader);
+            DispatchMemoryRead([this]()
+            {
+                auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+                auto pReader = pLocalStorage.ReadText(ra::services::StorageItemType::Bookmarks, std::to_wstring(m_nLoadedGameId));
+                if (pReader != nullptr)
+                    LoadBookmarks(*pReader);
+            });
         }
     }
 }

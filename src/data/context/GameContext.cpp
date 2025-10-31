@@ -399,6 +399,8 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
 #endif
 
+    std::lock_guard<std::mutex> lock(m_mLoadMutex);
+
     for (auto* pSubset = pClient->game->subsets; pSubset; pSubset = pSubset->next)
     {
         // achievements

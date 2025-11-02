@@ -336,10 +336,20 @@ static bool IsValue(const std::wstring& sNote, size_t nIndex, size_t nStopIndex,
     if (nStopIndex == std::string::npos)
         nStopIndex = sNote.length();
 
-    while (nIndex < nStopIndex && isspace(sNote.at(nIndex)))
+    while (nIndex < nStopIndex)
+    {
+        const wchar_t c = sNote.at(nIndex);
+        if (c >= 256 || !isspace(c))
+            break;
         ++nIndex;
-    while (nStopIndex > nIndex && isspace(sNote.at(nStopIndex - 1)))
+    }
+    while (nStopIndex > nIndex)
+    {
+        const wchar_t c = sNote.at(nStopIndex - 1);
+        if (c >= 256 || !isspace(c))
+            break;
         --nStopIndex;
+    }
 
     bHex = false;
 
@@ -401,13 +411,15 @@ static bool IsBitX(const std::wstring& sNote, size_t nIndex, size_t nStopIndex)
     if (c != 't' && c != 'T')
         return false;
 
-    if (!isdigit(sNote.at(nIndex + 3)))
+    c = sNote.at(nIndex + 3);
+    if (c < '0' || c > '9')
         return false;
 
     nIndex += 4;
     while (nIndex < nStopIndex)
     {
-        if (!isspace(sNote.at(nIndex++)))
+        c = sNote.at(nIndex++);
+        if (c < 256 && !isspace(c))
             return false;
     }
 
@@ -518,7 +530,7 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
                 // "pointer" not found
                 ExtractSize(sLine, false);
             }
-            else if (sLine.length() > nPointerIndex + 8 && isalpha(sLine.at(nPointerIndex + 7)))
+            else if (sLine.length() > nPointerIndex + 8 && iswalpha(sLine.at(nPointerIndex + 7)))
             {
                 // extra trailing letters - assume "pointers"
                 ExtractSize(sLine, false);
@@ -1020,8 +1032,13 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
             // remove trailing whitespace
             if (nStopIndex != std::wstring::npos)
             {
-                while (nStopIndex > 0 && isspace(sNote.at(nStopIndex - 1)))
-                    nStopIndex--;
+                while (nStopIndex > 0)
+                {
+                    const wchar_t c = sNote.at(nStopIndex - 1);
+                    if (c >= 256 || !isspace(c))
+                        break;
+                    --nStopIndex;
+                }
             }
         }
 
@@ -1044,12 +1061,12 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
         }
 
         // if there are any error processing offsets, don't treat this as a pointer note
-        if (!pEnd || isalnum(*pEnd))
+        if (!pEnd || iswalnum(*pEnd))
             return;
 
         // skip over [whitespace] [optional separator] [whitespace]
         const wchar_t* pStop = sNextNote.c_str() + sNextNote.length();
-        while (pEnd < pStop && isspace(*pEnd) && *pEnd != '\n')
+        while (pEnd < pStop && *pEnd < 256 && isspace(*pEnd) && *pEnd != '\n')
             ++pEnd;
 
         if (pEnd < pStop)
@@ -1059,12 +1076,12 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
                 // no separator. found an unannotated note
                 ++pEnd;
             }
-            else if (!isalnum(*pEnd))
+            else if (!iswalnum(*pEnd) && *pEnd != '[' && *pEnd != '(') // assume brackets are not a separator
             {
                 // found a separator. skip it and any following whitespace
                 ++pEnd;
 
-                while (pEnd < pStop && isspace(*pEnd))
+                while (pEnd < pStop && *pEnd < 256 && isspace(*pEnd))
                     ++pEnd;
             }
         }
@@ -1171,11 +1188,21 @@ std::wstring CodeNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPointe
         }
     } while (nTokenType != ra::data::models::CodeNoteModel::Parser::TokenType::None);
 
-    while (nStartIndex > 0 && isspace(sNote.at(nStartIndex - 1)))
-        nStartIndex--;
+    while (nStartIndex > 0)
+    {
+        const wchar_t c = sNote.at(nStartIndex - 1);
+        if (c >= 256 || !isspace(c))
+            break;
+        --nStartIndex;
+    }
 
-    while (nEndIndex < sNote.length() - 1 && isspace(sNote.at(nEndIndex + 1)))
-        nEndIndex++;
+    while (nEndIndex < sNote.length() - 1)
+    {
+        const wchar_t c = sNote.at(nEndIndex + 1);
+        if (c >= 256 || !isspace(c))
+            break;
+        ++nEndIndex;
+    }
 
     std::wstring sNoteCopy = sNote;
     sNoteCopy.erase(nStartIndex, nEndIndex - nStartIndex + 1);

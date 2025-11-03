@@ -136,7 +136,7 @@ void MemoryRegionsViewModel::RemoveRegion()
     m_vRegions.RemoveAt(nIndex);
 
     // update the IDs on the remaining items
-    while (nIndex < m_vRegions.Count())
+    while (nIndex < gsl::narrow_cast<int>(m_vRegions.Count()))
         pItem->SetId(nIndex++);
 
     // clear the selected item index

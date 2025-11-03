@@ -76,7 +76,7 @@ public:
     {
     }
 
-    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const noexcept override
+    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const override
     {
         if (pProperty == MemoryRegionsViewModel::MemoryRegionViewModel::IsInvalidProperty)
             return true;

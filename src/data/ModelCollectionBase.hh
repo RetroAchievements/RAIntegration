@@ -269,13 +269,13 @@ protected:
 #endif
 
     template<class TItem>
-    class iterator : public std::iterator_traits<typename  std::vector<std::unique_ptr<ModelBase>>::iterator>
+    class iterator : public std::iterator_traits<typename std::vector<std::unique_ptr<ModelBase>>::iterator>
     {
         static_assert(std::is_base_of<ModelBase, TItem>{}, "T must be a subclass of ModelBase");
 
     public:
-        iterator(const std::vector<std::unique_ptr<ModelBase>>& pList, size_t nIndex) noexcept
-            : m_pList(pList), m_nIndex(nIndex)
+        iterator(const std::vector<std::unique_ptr<ModelBase>>& pList, size_t nIndex, size_t nStop) noexcept
+            : m_pList(pList), m_nIndex(nIndex), m_nStop(nStop)
         {
             SkipMistyped();
         }
@@ -287,14 +287,14 @@ protected:
 
         iterator& operator++() noexcept
         {
-            Advance();
+            MoveNext();
             return *this;
         }
 
         iterator operator++(int) noexcept
         {
             auto pBeforeIncrement = *this;
-            Advance();
+            MoveNext();
             return pBeforeIncrement;
         }
 
@@ -309,9 +309,9 @@ protected:
         }
 
     private:
-        void Advance() noexcept
+        void MoveNext() noexcept
         {
-            if (m_nIndex < m_pList.size())
+            if (m_nIndex != 0xFFFFFFFF && m_nIndex < m_nStop)
             {
                 ++m_nIndex;
                 SkipMistyped();
@@ -320,7 +320,7 @@ protected:
 
         void SkipMistyped() noexcept
         {
-            while (m_nIndex < m_pList.size())
+            while (m_nIndex < m_nStop && m_nIndex < m_pList.size())
             {
                 GSL_SUPPRESS_BOUNDS4
                 auto* pItem = dynamic_cast<TItem*>(m_pList[m_nIndex].get());
@@ -331,33 +331,37 @@ protected:
                 }
                 ++m_nIndex;
             }
+
+            m_nIndex = 0xFFFFFFFF;
+            m_pCurrent = nullptr;
         }
 
         TItem* m_pCurrent = nullptr;
         const std::vector<std::unique_ptr<ModelBase>>& m_pList;
         size_t m_nIndex = 0;
+        size_t m_nStop = 0;
     };
 
     template<class TItem>
     iterator<TItem> CreateBeginIterator() noexcept
     {
-        return iterator<TItem>(m_vItems, 0);
+        return iterator<TItem>(m_vItems, 0, m_nSize);
     }
 
     template<class TItem>
     iterator<TItem> CreateEndIterator() noexcept
     {
-        return iterator<TItem>(m_vItems, m_nSize);
+        return iterator<TItem>(m_vItems, 0xFFFFFFFF, m_nSize);
     }
 
     template<class TItem>
-    class const_iterator : public std::iterator_traits<typename  std::vector<std::unique_ptr<ModelBase>>::const_iterator>
+    class const_iterator : public std::iterator_traits<typename std::vector<std::unique_ptr<ModelBase>>::const_iterator>
     {
         static_assert(std::is_base_of<ModelBase, TItem>{}, "T must be a subclass of ModelBase");
 
     public:
-        const_iterator(const std::vector<std::unique_ptr<ModelBase>>& pList, size_t nIndex) noexcept
-            : m_pList(pList), m_nIndex(nIndex)
+        const_iterator(const std::vector<std::unique_ptr<ModelBase>>& pList, size_t nIndex, size_t nStop) noexcept
+            : m_pList(pList), m_nIndex(nIndex), m_nStop(nStop)
         {
             SkipMistyped();
         }
@@ -369,14 +373,14 @@ protected:
 
         const_iterator& operator++() noexcept
         {
-            Advance();
+            MoveNext();
             return *this;
         }
 
         const_iterator operator++(int) noexcept
         {
             auto pBeforeIncrement = *this;
-            Advance();
+            MoveNext();
             return pBeforeIncrement;
         }
 
@@ -391,9 +395,9 @@ protected:
         }
 
     private:
-        void Advance() noexcept
+        void MoveNext() noexcept
         {
-            if (m_nIndex < m_pList.size())
+            if (m_nIndex != 0xFFFFFFFF && m_nIndex < m_nStop)
             {
                 ++m_nIndex;
                 SkipMistyped();
@@ -402,7 +406,7 @@ protected:
 
         void SkipMistyped() noexcept
         {
-            while (m_nIndex < m_pList.size())
+            while (m_nIndex < m_nStop && m_nIndex < m_pList.size())
             {
                 GSL_SUPPRESS_BOUNDS4
                 auto* pItem = dynamic_cast<const TItem*>(m_pList[m_nIndex].get());
@@ -413,23 +417,27 @@ protected:
                 }
                 ++m_nIndex;
             }
+
+            m_nIndex = 0xFFFFFFFF;
+            m_pCurrent = nullptr;
         }
 
         const TItem* m_pCurrent = nullptr;
         const std::vector<std::unique_ptr<ModelBase>>& m_pList;
         size_t m_nIndex = 0;
+        size_t m_nStop = 0;
     };
 
     template<class TItem>
     const_iterator<TItem> CreateConstBeginIterator() const noexcept
     {
-        return const_iterator<TItem>(m_vItems, 0);
+        return const_iterator<TItem>(m_vItems, 0, m_nSize);
     }
 
     template<class TItem>
     const_iterator<TItem> CreateConstEndIterator() const noexcept
     {
-        return const_iterator<TItem>(m_vItems, m_nSize);
+        return const_iterator<TItem>(m_vItems, 0xFFFFFFFF, m_nSize);
     }
 
 private:

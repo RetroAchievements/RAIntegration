@@ -185,12 +185,7 @@ void AchievementModel::DoFrame()
         return;
 
     const auto* pTrigger = m_pAchievement->trigger;
-    if (pTrigger == nullptr)
-    {
-        if (IsActive())
-            SetState(AssetState::Inactive);
-    }
-    else
+    if (pTrigger != nullptr)
     {
         switch (pTrigger->state)
         {
@@ -229,13 +224,15 @@ void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
 
     if (!bIsActive && bWasActive)
     {
-        Expects(m_pAchievement->trigger != nullptr);
-        m_pCapturedTriggerHits.Capture(m_pAchievement->trigger, GetTrigger());
-
-        if (m_pAchievement->trigger->state == RC_TRIGGER_STATE_PRIMED)
+        if (m_pAchievement->trigger)
         {
-            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-            pRuntime.RaiseClientEvent(*m_pAchievement, RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE);
+            m_pCapturedTriggerHits.Capture(m_pAchievement->trigger, GetTrigger());
+
+            if (m_pAchievement->trigger->state == RC_TRIGGER_STATE_PRIMED)
+            {
+                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+                pRuntime.RaiseClientEvent(*m_pAchievement, RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE);
+            }
         }
     }
     else if (bIsActive && !bWasActive)
@@ -529,9 +526,16 @@ void AchievementModel::Attach(struct rc_client_achievement_info_t& pAchievement,
 
     m_pAchievement = &pAchievement;
 
-    m_bCaptureTrigger = false;
-    DoFrame(); // sync state
-    m_bCaptureTrigger = true;
+    if (pAchievement.trigger)
+    {
+        m_bCaptureTrigger = false;
+        DoFrame(); // sync state from trigger
+        m_bCaptureTrigger = true;
+    }
+    else
+    {
+        SetState(AssetState::Inactive);
+    }
 }
 
 void AchievementModel::ReplaceAttached(struct rc_client_achievement_info_t& pAchievement)

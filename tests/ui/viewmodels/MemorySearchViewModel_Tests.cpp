@@ -1356,62 +1356,155 @@ public:
         Assert::IsTrue(search.Results().GetItemAt(0)->IsSelected());
     }
 
-    TEST_METHOD(TestPredefinedFilterRanges)
+    TEST_METHOD(TestPredefinedFilterRangeNone)
     {
+        // no memory ranges defined
         MemorySearchViewModelHarness search;
 
-        // no memory ranges defined
         Assert::AreEqual({ 2U }, search.PredefinedFilterRanges().Count());
         Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
-        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
+        Assert::AreEqual(-3, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+    }
 
-        // only system range defined
-        search.mockConsoleContext.AddMemoryRegion(0U, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
-        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+    TEST_METHOD(TestPredefinedFilterRangeNoneWithGame)
+    {
+        // no memory ranges defined
+        MemorySearchViewModelHarness search;
+        Assert::AreEqual({ 2U }, search.PredefinedFilterRanges().Count());
+
+        // as soon as a game starts loading, the "Customize..." item is added
+        search.mockGameContext.SetGameId(1);
+        search.mockGameContext.NotifyBeforeActiveGameChanged();
 
         Assert::AreEqual({ 3U }, search.PredefinedFilterRanges().Count());
         Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
-        Assert::AreEqual(1, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
-        Assert::AreEqual(std::wstring(L"System Memory (0x0000-0xffff)"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
-        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(2)->GetId());
-        Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(-3, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(-4, search.PredefinedFilterRanges().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Customize..."), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
+    }
 
+    TEST_METHOD(TestPredefinedFilterRangeOnlySystem)
+    {
+        // only system range defined
+        MemorySearchViewModelHarness search;
+        search.mockConsoleContext.AddMemoryRegion(0U, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
+        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+
+        Assert::AreEqual({ 2U }, search.PredefinedFilterRanges().Count());
+        Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(-3, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+    }
+
+    TEST_METHOD(TestPredefinedFilterRangeSystemAndCartridge)
+    {
         // system and game ranges defined
-        search.mockConsoleContext.ResetMemoryRegions();
-        search.mockConsoleContext.AddMemoryRegion(0U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
+        MemorySearchViewModelHarness search;
+        search.mockConsoleContext.AddMemoryRegion(0U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM");
         search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
 
         Assert::AreEqual({ 4U }, search.PredefinedFilterRanges().Count());
         Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
         Assert::AreEqual(1, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
-        Assert::AreEqual(std::wstring(L"System Memory (0x0000-0xbfff)"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(std::wstring(L"System RAM (0x0000-0xbfff)"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
         Assert::AreEqual(2, search.PredefinedFilterRanges().GetItemAt(2)->GetId());
-        Assert::AreEqual(std::wstring(L"Game Memory (0xe000-0xefff)"), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
-        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Cartridge RAM (0xe000-0xefff)"), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(-3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(3)->GetLabel());
+    }
 
-        // multiple system and game ranges defined
-        search.mockConsoleContext.ResetMemoryRegions();
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xF000U, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
+    TEST_METHOD(TestPredefinedFilterRangeMergeSimilar)
+    {
+        // multiple similar system and game ranges defined
+        MemorySearchViewModelHarness search;
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
+        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xF000U, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM");
         search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
 
         Assert::AreEqual({ 4U }, search.PredefinedFilterRanges().Count());
         Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
         Assert::AreEqual(1, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
-        Assert::AreEqual(std::wstring(L"System Memory (0x0000-0xbfff)"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(std::wstring(L"System RAM (0x0000-0xbfff)"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
         Assert::AreEqual(2, search.PredefinedFilterRanges().GetItemAt(2)->GetId());
-        Assert::AreEqual(std::wstring(L"Game Memory (0xe000-0xffff)"), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
-        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Cartridge RAM (0xe000-0xffff)"), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(-3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(3)->GetLabel());
+    }
+
+    TEST_METHOD(TestPredefinedFilterRangeDontMergeDistinct)
+    {
+        // multiple distinct system and game ranges defined
+        MemorySearchViewModelHarness search;
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM 1");
+        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM 2");
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM 1");
+        search.mockConsoleContext.AddMemoryRegion(0xF000U, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM 2");
+        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+
+        Assert::AreEqual({ 8U }, search.PredefinedFilterRanges().Count());
+        Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(-1, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"All System Memory (0x0000-0xbfff)"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(-2, search.PredefinedFilterRanges().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"All Extra Memory (0xe000-0xffff)"), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"System RAM 1 (0x0000-0x7fff)"), search.PredefinedFilterRanges().GetItemAt(3)->GetLabel());
+        Assert::AreEqual(4, search.PredefinedFilterRanges().GetItemAt(4)->GetId());
+        Assert::AreEqual(std::wstring(L"System RAM 2 (0x8000-0xbfff)"), search.PredefinedFilterRanges().GetItemAt(4)->GetLabel());
+        Assert::AreEqual(5, search.PredefinedFilterRanges().GetItemAt(5)->GetId());
+        Assert::AreEqual(std::wstring(L"Cartridge RAM 1 (0xe000-0xefff)"), search.PredefinedFilterRanges().GetItemAt(5)->GetLabel());
+        Assert::AreEqual(6, search.PredefinedFilterRanges().GetItemAt(6)->GetId());
+        Assert::AreEqual(std::wstring(L"Cartridge RAM 2 (0xf000-0xffff)"), search.PredefinedFilterRanges().GetItemAt(6)->GetLabel());
+        Assert::AreEqual(-3, search.PredefinedFilterRanges().GetItemAt(7)->GetId());
+        Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(7)->GetLabel());
+    }
+
+    TEST_METHOD(TestPredefinedFilterRangeSuperfluous)
+    {
+        // non-system/cartridge memory regions should be ignored
+        MemorySearchViewModelHarness search;
+        search.mockConsoleContext.AddMemoryRegion(0x0000U, 0x00FFU, ra::data::context::ConsoleContext::AddressType::HardwareController, "Interrupt Vector");
+        search.mockConsoleContext.AddMemoryRegion(0x0100U, 0x014FU, ra::data::context::ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge Header");
+        search.mockConsoleContext.AddMemoryRegion(0x0150U, 0x3FFFU, ra::data::context::ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM (fixed)");
+        search.mockConsoleContext.AddMemoryRegion(0x4000U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM (paged)");
+        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0x97FFU, ra::data::context::ConsoleContext::AddressType::VideoRAM, "Title RAM");
+        search.mockConsoleContext.AddMemoryRegion(0x9800U, 0x9BFFU, ra::data::context::ConsoleContext::AddressType::VideoRAM, "BG1 map data");
+        search.mockConsoleContext.AddMemoryRegion(0x9C00U, 0x9FFFU, ra::data::context::ConsoleContext::AddressType::VideoRAM, "MD2 map data");
+        search.mockConsoleContext.AddMemoryRegion(0xA000U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM (bank 0)");
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM (fixed)");
+        search.mockConsoleContext.AddMemoryRegion(0xD000U, 0xDFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM (fixed)");
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xFDFFU, ra::data::context::ConsoleContext::AddressType::VirtualRAM, "Echo RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xFE00U, 0xFE9FU, ra::data::context::ConsoleContext::AddressType::VideoRAM, "Sprite RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xFEA0U, 0xFEFFU, ra::data::context::ConsoleContext::AddressType::Unused, "");
+        search.mockConsoleContext.AddMemoryRegion(0xFF00U, 0xFF7FU, ra::data::context::ConsoleContext::AddressType::HardwareController, "Hardware I/O");
+        search.mockConsoleContext.AddMemoryRegion(0xFF80U, 0xFFFEU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "Quick RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xFFFFU, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::HardwareController, "Interrupt Enable");
+        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+
+        Assert::AreEqual({ 6U }, search.PredefinedFilterRanges().Count());
+        Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(-1, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"All System Memory (0xc000-0xfffe)"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(2, search.PredefinedFilterRanges().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Cartridge RAM (bank 0) (0xa000-0xbfff)"), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"System RAM (fixed) (0xc000-0xdfff)"), search.PredefinedFilterRanges().GetItemAt(3)->GetLabel());
+        Assert::AreEqual(4, search.PredefinedFilterRanges().GetItemAt(4)->GetId());
+        Assert::AreEqual(std::wstring(L"Quick RAM (0xff80-0xfffe)"), search.PredefinedFilterRanges().GetItemAt(4)->GetLabel());
+        Assert::AreEqual(-3, search.PredefinedFilterRanges().GetItemAt(5)->GetId());
+        Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(5)->GetLabel());
     }
 
     TEST_METHOD(TestPredefinedFilterRangeAll)
@@ -1461,10 +1554,10 @@ public:
         search.SetPredefinedFilterRange(0);
         Assert::AreEqual(std::wstring(L""), search.GetFilterRange());
 
-        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
+        Assert::AreEqual(-3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Custom (0x0000-0x1fff)"), search.PredefinedFilterRanges().GetItemAt(3)->GetLabel());
 
-        search.SetPredefinedFilterRange(3);
+        search.SetPredefinedFilterRange(-3);
         Assert::AreEqual(std::wstring(L"0x0000-0x1fff"), search.GetFilterRange());
     }
 

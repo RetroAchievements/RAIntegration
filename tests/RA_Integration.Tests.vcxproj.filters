@@ -501,6 +501,18 @@
     <ClCompile Include="ui\viewmodels\MemoryWatchListViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\MemoryRegionsViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\models\MemoryRegionsModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp">
+      <Filter>Tests\Data\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryRegionsViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
     <ClCompile Include="data\NotifyTargetSet_Tests.cpp">
       <Filter>Tests\Data</Filter>
     </ClCompile>

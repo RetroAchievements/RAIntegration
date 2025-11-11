@@ -498,13 +498,17 @@ protected:
     void OnTotalMemorySizeChanged() override;
 
     // GameContext::NotifyTarget
+    void OnBeforeActiveGameChanged() override;
+    void OnActiveGameChanged() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote) override;
     void OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
     void SaveResults(ra::services::TextWriter& sFile, std::function<bool(int)> pProgressCallback) const;
 
 private:
-    bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
+    void RebuildPredefinedFilterRanges();
+    void DefinePredefinedFilterRange(gsl::index nIndex, int nId, const std::wstring& sLabel, ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, bool bIncludeRangeInLabel);
+
     void BeginNewSearch(ra::ByteAddress nStart, ra::ByteAddress nEnd);
     void ApplyContinuousFilter();
     void UpdateResults();
@@ -513,7 +517,7 @@ private:
         ra::services::SearchResult& pResult, bool bForceFilterCheck,
         const ra::data::context::EmulatorContext& pEmulatorContext);
 
-    void OnPredefinedFilterRangeChanged();
+    void OnPredefinedFilterRangeChanged(const IntModelProperty::ChangeArgs& args);
     void OnFilterRangeChanged();
 
     ViewModelCollection<PredefinedFilterRangeViewModel> m_vPredefinedFilterRanges;

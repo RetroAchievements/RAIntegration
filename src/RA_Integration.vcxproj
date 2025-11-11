@@ -74,6 +74,7 @@
     <ClCompile Include="data\models\CodeNotesModel.cpp" />
     <ClCompile Include="data\models\LeaderboardModel.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel.cpp" />
+    <ClCompile Include="data\models\MemoryRegionsModel.cpp" />
     <ClCompile Include="data\models\RichPresenceModel.cpp" />
     <ClCompile Include="data\models\TriggerValidation.cpp" />
     <ClCompile Include="data\search\MemBlock.cpp" />
@@ -123,6 +124,7 @@
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemoryBookmarksViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemoryInspectorViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\MemoryRegionsViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemorySearchViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemoryViewerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemoryWatchListViewModel.cpp" />
@@ -169,6 +171,7 @@
     <ClCompile Include="ui\win32\LoginDialog.cpp" />
     <ClCompile Include="ui\win32\MemoryBookmarksDialog.cpp" />
     <ClCompile Include="ui\win32\MemoryInspectorDialog.cpp" />
+    <ClCompile Include="ui\win32\MemoryRegionsDialog.cpp" />
     <ClCompile Include="ui\win32\MessageBoxDialog.cpp" />
     <ClCompile Include="ui\win32\NewAssetDialog.cpp" />
     <ClCompile Include="ui\win32\OverlaySettingsDialog.cpp" />
@@ -222,6 +225,7 @@
     <ClInclude Include="data\models\CodeNotesModel.hh" />
     <ClInclude Include="data\models\LeaderboardModel.hh" />
     <ClInclude Include="data\models\LocalBadgesModel.hh" />
+    <ClInclude Include="data\models\MemoryRegionsModel.hh" />
     <ClInclude Include="data\models\RichPresenceModel.hh" />
     <ClInclude Include="data\models\TriggerValidation.hh" />
     <ClInclude Include="data\NotifyTargetSet.hh" />
@@ -329,6 +333,7 @@
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemoryBookmarksViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemoryInspectorViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\MemoryRegionsViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemorySearchViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemoryViewerViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemoryWatchListViewModel.hh" />
@@ -389,6 +394,7 @@
     <ClInclude Include="ui\win32\LoginDialog.hh" />
     <ClInclude Include="ui\win32\MemoryBookmarksDialog.hh" />
     <ClInclude Include="ui\win32\MemoryInspectorDialog.hh" />
+    <ClInclude Include="ui\win32\MemoryRegionsDialog.hh" />
     <ClInclude Include="ui\win32\MessageBoxDialog.hh" />
     <ClInclude Include="ui\win32\NewAssetDialog.hh" />
     <ClInclude Include="ui\win32\OverlaySettingsDialog.hh" />

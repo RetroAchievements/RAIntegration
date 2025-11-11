@@ -152,6 +152,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
         ra::ui::viewmodels::LookupItemViewModel::IdProperty,
         ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
     m_bindSearchRanges.BindSelectedItem(MemorySearchViewModel::PredefinedFilterRangeProperty);
+    m_bindSearchRanges.SetDropDownWidth(250);
 
     m_bindSearchRange.BindText(MemorySearchViewModel::FilterRangeProperty);
 
@@ -169,6 +170,9 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     m_bindValueType.BindSelectedItem(MemorySearchViewModel::ValueTypeProperty);
 
     m_bindFilterValue.BindText(vmMemoryInspector.Search().FilterValueProperty);
+    m_bindWindow.BindEnabled(IDC_RA_SEARCHRANGES, MemorySearchViewModel::CanBeginNewSearchProperty);
+    m_bindWindow.BindEnabled(IDC_RA_SEARCHRANGE, MemorySearchViewModel::CanBeginNewSearchProperty);
+    m_bindWindow.BindEnabled(IDC_RA_SEARCHTYPE, MemorySearchViewModel::CanBeginNewSearchProperty);
     m_bindWindow.BindEnabled(IDC_RA_RESET_FILTER, MemorySearchViewModel::CanBeginNewSearchProperty);
     m_bindWindow.BindEnabled(IDC_RA_COMPARISON, MemorySearchViewModel::CanFilterProperty);
     m_bindWindow.BindEnabled(IDC_RA_SPECIAL_FILTER, MemorySearchViewModel::CanFilterProperty);
@@ -300,8 +304,6 @@ BOOL MemoryInspectorDialog::OnInitDialog()
 {
     // Search Range
     m_bindSearchRanges.SetControl(*this, IDC_RA_SEARCHRANGES);
-    ::SendMessage(GetDlgItem(GetHWND(), IDC_RA_SEARCHRANGES), CB_SETDROPPEDWIDTH, 200, 0);
-
     m_bindSearchRange.SetControl(*this, IDC_RA_SEARCHRANGE);
 
     // New Search

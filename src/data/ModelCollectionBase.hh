@@ -269,40 +269,38 @@ protected:
 #endif
 
     template<class TItem>
-    class iterator : public std::iterator_traits<typename std::vector<std::unique_ptr<ModelBase>>::iterator>
+    class iterator
     {
         static_assert(std::is_base_of<ModelBase, TItem>{}, "T must be a subclass of ModelBase");
 
     public:
-        iterator(typename std::vector<std::unique_ptr<ModelBase>>::const_iterator pCurrent, const std::vector<std::unique_ptr<ModelBase>>& pList) noexcept
-            : m_pCurrent(std::move(pCurrent)), m_pList(pList)
+        iterator(const std::vector<std::unique_ptr<ModelBase>>& pList, size_t nIndex, size_t nStop) noexcept
+            : m_pList(pList), m_nIndex(nIndex), m_nStop(nStop)
         {
             SkipMistyped();
         }
 
         TItem& operator*() noexcept
         {
-            return *(dynamic_cast<TItem*>(m_pCurrent->get()));
+            return *m_pCurrent;
         }
 
         iterator& operator++() noexcept
         {
-            ++m_pCurrent;
-            SkipMistyped();
+            MoveNext();
             return *this;
         }
 
         iterator operator++(int) noexcept
         {
             auto pBeforeIncrement = *this;
-            m_pCurrent++;
-            SkipMistyped();
+            MoveNext();
             return pBeforeIncrement;
         }
 
         bool operator==(const iterator& that) const noexcept
         {
-            return m_pCurrent == that.m_pCurrent;
+            return m_nIndex == that.m_nIndex && &m_pList == &that.m_pList;
         }
 
         bool operator!=(const iterator& that) const noexcept
@@ -311,91 +309,61 @@ protected:
         }
 
     private:
-        void SkipMistyped() noexcept
+        void MoveNext() noexcept
         {
-            while (m_pCurrent != m_pList.end() && dynamic_cast<const TItem*>(m_pCurrent->get()) == nullptr)
-                ++m_pCurrent;
+            if (m_nIndex != 0xFFFFFFFF && m_nIndex < m_nStop)
+            {
+                ++m_nIndex;
+                SkipMistyped();
+            }
         }
 
-        typename std::vector<std::unique_ptr<ModelBase>>::const_iterator m_pCurrent;
+        void SkipMistyped() noexcept
+        {
+            while (m_nIndex < m_nStop && m_nIndex < m_pList.size())
+            {
+                GSL_SUPPRESS_BOUNDS4
+                auto* pItem = dynamic_cast<TItem*>(m_pList[m_nIndex].get());
+                if (pItem != nullptr)
+                {
+                    m_pCurrent = pItem;
+                    return;
+                }
+                ++m_nIndex;
+            }
+
+            m_nIndex = 0xFFFFFFFF;
+            m_pCurrent = nullptr;
+        }
+
+        TItem* m_pCurrent = nullptr;
         const std::vector<std::unique_ptr<ModelBase>>& m_pList;
+        size_t m_nIndex = 0;
+        size_t m_nStop = 0;
     };
 
     template<class TItem>
     iterator<TItem> CreateBeginIterator() noexcept
     {
-        return iterator<TItem>(m_vItems.cbegin(), m_vItems);
+        return iterator<TItem>(m_vItems, 0, m_nSize);
     }
 
     template<class TItem>
     iterator<TItem> CreateEndIterator() noexcept
     {
-        return iterator<TItem>(m_vItems.cbegin() + m_nSize, m_vItems);
+        return iterator<TItem>(m_vItems, 0xFFFFFFFF, m_nSize);
     }
 
     template<class TItem>
-    class const_iterator : public std::iterator_traits<typename std::vector<std::unique_ptr<ModelBase>>::const_iterator>
+    iterator<const TItem> CreateConstBeginIterator() const noexcept
     {
-        static_assert(std::is_base_of<ModelBase, TItem>{}, "T must be a subclass of ModelBase");
-
-    public:
-        const_iterator(typename std::vector<std::unique_ptr<ModelBase>>::const_iterator pCurrent, const std::vector<std::unique_ptr<ModelBase>>& pList) noexcept
-            : m_pCurrent(std::move(pCurrent)), m_pList(pList)
-        {
-            SkipMistyped();
-        }
-
-        const TItem& operator*() noexcept
-        {
-            return *(dynamic_cast<const TItem*>(m_pCurrent->get()));
-        }
-
-        const_iterator& operator++() noexcept
-        {
-            ++m_pCurrent;
-            SkipMistyped();
-            return *this;
-        }
-
-        const_iterator operator++(int) noexcept
-        {
-            auto pBeforeIncrement = *this;
-            m_pCurrent++;
-            SkipMistyped();
-            return pBeforeIncrement;
-        }
-
-        bool operator==(const const_iterator& that) const noexcept
-        {
-            return m_pCurrent == that.m_pCurrent;
-        }
-
-        bool operator!=(const const_iterator& that) const noexcept
-        {
-            return !(*this == that);
-        }
-
-    private:
-        void SkipMistyped() noexcept
-        {
-            while (m_pCurrent != m_pList.end() && dynamic_cast<const TItem*>(m_pCurrent->get()) == nullptr)
-                ++m_pCurrent;
-        }
-
-        typename std::vector<std::unique_ptr<ModelBase>>::const_iterator m_pCurrent;
-        const std::vector<std::unique_ptr<ModelBase>>& m_pList;
-    };
-
-    template<class TItem>
-    const_iterator<TItem> CreateConstBeginIterator() const noexcept
-    {
-        return const_iterator<TItem>(m_vItems.cbegin(), m_vItems);
+        return iterator<const TItem>(m_vItems, 0, m_nSize);
     }
 
     template<class TItem>
-    const_iterator<TItem> CreateConstEndIterator() const noexcept
+    iterator<const TItem> CreateConstEndIterator() const noexcept
     {
-        return const_iterator<TItem>(m_vItems.cbegin() + m_nSize, m_vItems);
+        return iterator<const TItem>(m_vItems, 0xFFFFFFFF, m_nSize);
     }
 
 private:

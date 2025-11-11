@@ -170,12 +170,21 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     // ignore CodeNotes model (it's actually a collection of notes)
                     case ra::data::models::AssetType::CodeNotes:
                         continue;
+
+
+                    // ignore MemoryRegions model (it's actually a collection of regions)
+                    case ra::data::models::AssetType::MemoryRegions:
+                        continue;
                 }
 
                 vRemainingAssetsToReload.push_back(&pAsset);
             }
         }
     }
+
+    auto* pMemoryRegions = FindMemoryRegions();
+    if (pMemoryRegions)
+        pMemoryRegions->ResetCustomRegions();
 
     std::string sLine;
     pData->GetLine(sLine); // version used to create the file
@@ -207,6 +216,11 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
             case 'N':
                 nType = ra::data::models::AssetType::CodeNotes;
                 pTokenizer.Consume('N');
+                break;
+
+            case 'M':
+                nType = ra::data::models::AssetType::MemoryRegions;
+                pTokenizer.Consume('M');
                 break;
 
             default:
@@ -280,6 +294,17 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     if (pAsset)
                         pAsset->Deserialize(pTokenizer);
 
+                    continue;
+
+                case ra::data::models::AssetType::MemoryRegions:
+                    if (!pMemoryRegions)
+                    {
+                        auto pNewMemoryRegions = std::make_unique<ra::data::models::MemoryRegionsModel>();
+                        pAsset = &Append(std::move(pNewMemoryRegions));
+                        pMemoryRegions = dynamic_cast<ra::data::models::MemoryRegionsModel*>(pAsset);
+                    }
+
+                    pMemoryRegions->Deserialize(pTokenizer);
                     continue;
             }
 
@@ -429,6 +454,10 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
 
             case ra::data::models::AssetType::CodeNotes:
                 pData->Write("N");
+                break;
+
+            case ra::data::models::AssetType::MemoryRegions:
+                pData->Write("M");
                 break;
 
             case ra::data::models::AssetType::RichPresence:

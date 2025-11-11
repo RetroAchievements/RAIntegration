@@ -21,6 +21,7 @@ enum class AssetType
     RichPresence,
     LocalBadges,
     CodeNotes,
+    MemoryRegions,
 };
 
 enum class AssetCategory

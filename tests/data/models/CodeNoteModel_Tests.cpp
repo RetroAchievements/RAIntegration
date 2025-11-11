@@ -500,6 +500,29 @@ public:
         AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
     }
 
+    TEST_METHOD(TestNestedPointerBracketNotSeparator)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"Pointer [32bit]\r\n"
+            L"+0x428 [32bit] Pointer - Award - Tee Hee Two\r\n"
+            L"--- +0x24C [8bit] Flag\r\n"
+            L"+0x438 [32bit] Pointer - Award - Pretty Woman\r\n"
+            L"--- +0x24C [8bit] Flag";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
+
+        const auto* offsetNote = AssertIndirectNote(note, 0x428,
+            L"[32bit] Pointer - Award - Tee Hee Two\r\n+0x24C [8bit] Flag", MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"[8bit] Flag", MemSize::EightBit, 1);
+
+        offsetNote = AssertIndirectNote(note, 0x438,
+            L"[32bit] Pointer - Award - Pretty Woman\r\n+0x24C [8bit] Flag", MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"[8bit] Flag", MemSize::EightBit, 1);
+    }
+
     TEST_METHOD(TestNestedPointerMultiLine)
     {
         CodeNoteModelHarness note;

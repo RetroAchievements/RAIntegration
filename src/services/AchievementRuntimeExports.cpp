@@ -1055,9 +1055,64 @@ void SyncClientExternalHardcoreState()
     const int bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? 1 : 0;
 
     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    if (rc_client_get_hardcore_enabled(pRuntime.GetClient()) != bHardcore)
+    auto* pClient = pRuntime.GetClient();
+    if (rc_client_get_hardcore_enabled(pClient) != bHardcore)
     {
-        rc_client_set_hardcore_enabled(pRuntime.GetClient(), bHardcore);
+        std::vector<uint32_t> vActiveUnofficialAchievements;
+        bool bHasUnofficialAchievements = false;
+
+        if (pClient->game) {
+            const auto* subset = pClient->game->subsets;
+            for (; subset; subset = subset->next) {
+                if (!subset->active)
+                    continue;
+
+                const auto* achievement = subset->achievements;
+                const auto* stop = achievement + subset->public_.num_achievements;
+                for (; achievement < stop; ++achievement) {
+                    if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL) {
+                        bHasUnofficialAchievements = true;
+
+                        if (achievement->public_.state == RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE)
+                            vActiveUnofficialAchievements.push_back(achievement->public_.id);
+                    }
+                }
+            }
+        }
+
+        rc_client_set_hardcore_enabled(pClient, bHardcore);
+
+        // rc_client automatically activates unofficial achievements on hardcore change.
+        // go through and deactivate anything that wasn't active before the switch.
+        if (bHasUnofficialAchievements) {
+            const auto* subset = pClient->game->subsets;
+            for (; subset; subset = subset->next) {
+                if (!subset->active)
+                    continue;
+
+                auto* achievement = subset->achievements;
+                const auto* stop = achievement + subset->public_.num_achievements;
+                for (; achievement < stop; ++achievement) {
+                    if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL) {
+                        if (achievement->public_.state == RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE) {
+                            bool bFound = false;
+                            for (const auto id : vActiveUnofficialAchievements) {
+                                if (id == achievement->public_.id) {
+                                    bFound = true;
+                                    break;
+                                }
+                            }
+                            if (!bFound) {
+                                achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
+
+                                if (achievement->trigger)
+                                    achievement->trigger->state = RC_TRIGGER_STATE_INACTIVE;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         if (!ra::services::AchievementRuntimeExports::IsUpdatingHardcore())
             ra::services::AchievementRuntimeExports::RaiseIntegrationEvent(RC_CLIENT_RAINTEGRATION_EVENT_HARDCORE_CHANGED);

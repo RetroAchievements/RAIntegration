@@ -104,6 +104,7 @@ public:
         TestCodeNoteSize(L"[16-bit BigEndian] Test", 2U, MemSize::SixteenBitBigEndian);
         TestCodeNoteSize(L"[16-bit-BE] Test", 2U, MemSize::SixteenBitBigEndian);
         TestCodeNoteSize(L"[4-bit BE] Test", 1U, MemSize::EightBit);
+        TestCodeNoteSize(L"[US] Test [32-bit BE]", 4U, MemSize::ThirtyTwoBitBigEndian);
 
         TestCodeNoteSize(L"8 BYTE Test", 8U, MemSize::Array);
         TestCodeNoteSize(L"Test 8 BYTE", 8U, MemSize::Array);

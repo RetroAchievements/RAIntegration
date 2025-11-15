@@ -1,7 +1,7 @@
 #include "GameIdentifier.hh"
 
-#include "RA_Log.h"
-#include "RA_StringUtils.h"
+#include "util\Log.hh"
+#include "util\Strings.hh"
 
 #include <rc_hash.h>
 

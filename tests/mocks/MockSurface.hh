@@ -2,8 +2,6 @@
 #define RA_SERVICES_MOCK_SURFACE_HH
 #pragma once
 
-#include "ra_fwd.h"
-
 #include "ui\drawing\ISurface.hh"
 
 namespace ra {

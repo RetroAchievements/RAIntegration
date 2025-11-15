@@ -21,17 +21,18 @@ static std::wstring GetIntegrationPath(const wchar_t* sFilename);
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
+#pragma warning(disable: C2084) // function already has a body
 static std::wstring GetIntegrationPath(const wchar_t* sFilename)
 {
     // attempt to locate the DLL. assume it lives in a folder above the test folder:
     // - bin/release/RA_Integration.dll
     // - bin/release/tests/RA_Interface.tests.dll
 
-    wchar_t sBuffer[2048];
+    wchar_t sBuffer[2048] = L"";
 
     HMODULE hm;
     if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-        (LPCSTR)&GetIntegrationPath, &hm))
+        (LPCWSTR)&GetIntegrationPath, &hm))
     {
         swprintf_s(sBuffer, sizeof(sBuffer) / sizeof(sBuffer[0]), L"GetModuleHandle failed with error %d", GetLastError());
         Assert::Fail(sBuffer);

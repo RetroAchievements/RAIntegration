@@ -2,8 +2,6 @@
 #define RA_UI_IMAGEREPOSITORY_H
 #pragma once
 
-#include "ra_fwd.h"
-
 #include "data\NotifyTargetSet.hh"
 #include "services\ServiceLocator.hh"
 

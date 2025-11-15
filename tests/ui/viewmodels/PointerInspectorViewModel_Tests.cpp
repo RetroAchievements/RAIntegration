@@ -65,6 +65,7 @@ private:
         PointerInspectorViewModelHarness(PointerInspectorViewModelHarness&&) noexcept = delete;
         PointerInspectorViewModelHarness& operator=(PointerInspectorViewModelHarness&&) noexcept = delete;
 
+        GSL_SUPPRESS_C128
         void DoFrame()
         {
             mockGameContext.DoFrame(); // ensure note pointers get updated

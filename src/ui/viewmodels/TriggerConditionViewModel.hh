@@ -2,14 +2,14 @@
 #define RA_UI_TRIGGERCONDITIONVIEWMODEL_H
 #pragma once
 
-#include "ui\ViewModelBase.hh"
-#include "ui\Types.hh"
-
 #include "data\Types.hh"
 
 #include "services\AchievementLogicSerializer.hh"
 
-#include "ra_utility.h"
+#include "ui\ViewModelBase.hh"
+#include "ui\Types.hh"
+
+#include "util\TypeCasts.hh"
 
 struct rc_condition_t;
 

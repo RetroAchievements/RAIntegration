@@ -49,7 +49,7 @@ private:
         {
             GSL_SUPPRESS_F6 mockWindowManager.AssetList.InitializeNotifyTargets();
 
-            mockGameContext.SetGameTitle(L"Game Title");
+            GSL_SUPPRESS_F6 mockGameContext.SetGameTitle(L"Game Title");
         }
 
         ItemViewModel* GetItem(gsl::index nIndex) { return m_vItems.GetItemAt(nIndex); }

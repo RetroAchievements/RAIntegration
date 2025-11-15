@@ -25,9 +25,9 @@ private:
     class RichPresenceModelHarness : public RichPresenceModel
     {
     public:
-        RichPresenceModelHarness()
+        RichPresenceModelHarness() noexcept
         {
-            mockRuntime.MockGame();
+            GSL_SUPPRESS_F6 mockRuntime.MockGame();
         }
 
         ra::data::context::mocks::MockGameContext mockGameContext;

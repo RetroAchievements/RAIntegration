@@ -5,7 +5,7 @@
 #include "services\ILogger.hh"
 
 #ifndef NDEBUG
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 #endif
 
 namespace ra {

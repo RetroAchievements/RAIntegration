@@ -1,6 +1,6 @@
 #include "OverlayFriendsPageViewModel.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "api\FetchUserFriends.hh"
 

@@ -3,9 +3,11 @@
 #include "AchievementRuntimeExports.hh"
 #include "Exports.hh"
 #include "RA_Defs.h"
-#include "RA_Log.h"
+#include "RA_Json.h"
 #include "RA_Resource.h"
-#include "RA_StringUtils.h"
+#include "util\EnumOps.hh"
+#include "util\Log.hh"
+#include "util\Strings.hh"
 
 #include "RA_md5factory.h"
 
@@ -2828,7 +2830,7 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     return true;
 }
 
-bool AchievementRuntime::LoadProgressFromBuffer(const uint8_t* pBuffer)
+bool AchievementRuntime::LoadProgressFromBuffer(const uint8_t* pBuffer) noexcept
 {
     if (rc_client_deserialize_progress(GetClient(), pBuffer) == RC_OK)
     {
@@ -2861,7 +2863,7 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
     RA_LOG_INFO("Runtime state written to %s", sSaveStateFilename);
 }
 
-int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) const
+int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) const noexcept
 {
     const int nSize = gsl::narrow_cast<int>(rc_client_progress_size(GetClient()));
     if (nSize <= nBufferSize)

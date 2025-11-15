@@ -4,7 +4,7 @@
 
 #include "services\TextReader.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 namespace ra {
 namespace services {

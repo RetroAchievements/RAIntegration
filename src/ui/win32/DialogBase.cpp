@@ -5,9 +5,9 @@
 #include "ui\win32\bindings\NumericUpDownBinding.hh"
 #include "ui\win32\bindings\WindowBinding.hh"
 
-#include "RA_Core.h" // g_RAMainWnd, g_hThisDLLInst
+#include "util\EnumOps.hh"
 
-#include "ra_utility.h"
+#include "RA_Core.h" // g_RAMainWnd, g_hThisDLLInst
 
 #define WM_QUEUED_ACTION WM_USER + 1
 
@@ -72,8 +72,8 @@ void DialogBase::Destroy() noexcept
     }
 }
 
-_Use_decl_annotations_ HWND DialogBase::CreateDialogWindow(const TCHAR* restrict sResourceId,
-                                                           IDialogPresenter* const restrict pDialogPresenter) noexcept
+_Use_decl_annotations_ HWND DialogBase::CreateDialogWindow(const TCHAR* _RESTRICT sResourceId,
+                                                           IDialogPresenter* const _RESTRICT pDialogPresenter) noexcept
 {
     GSL_SUPPRESS_TYPE1 m_hWnd = ::CreateDialogParam(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc, reinterpret_cast<LPARAM>(this));
     if (m_hWnd)
@@ -107,8 +107,8 @@ static INT_PTR CALLBACK StaticModalDialogProc(HWND hDlg, UINT uMsg, WPARAM wPara
     return result;
 }
 
-_Use_decl_annotations_ void DialogBase::CreateModalWindow(const TCHAR* restrict sResourceId,
-                                                          IDialogPresenter* const restrict pDialogPresenter,
+_Use_decl_annotations_ void DialogBase::CreateModalWindow(const TCHAR* _RESTRICT sResourceId,
+                                                          IDialogPresenter* const _RESTRICT pDialogPresenter,
                                                           HWND hParentWnd) noexcept
 {
     m_pDialogPresenter = pDialogPresenter;

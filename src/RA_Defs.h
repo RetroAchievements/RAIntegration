@@ -2,7 +2,7 @@
 #define RA_DEFS_H
 #pragma once
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #if !(RA_EXPORTS || RA_UTEST)
 #include "windows_nodefines.h"
@@ -26,7 +26,7 @@
 //	Version Information is integrated into tags
 #else
 
-#include "RA_Log.h"
+#include "util\Log.hh"
 #include "RA_Json.h"
 
 //	RA-Only
@@ -103,7 +103,7 @@ public:
         pLT ={ rect.left, rect.top };
         pRB ={ rect.right, rect.bottom };
 
-        HWND__* const restrict parentHwnd = ::GetParent(contentHwnd);
+        HWND__* const _RESTRICT parentHwnd = ::GetParent(contentHwnd);
         check = ::ScreenToClient(parentHwnd, &pLT);
         assert(check != 0);
         check = ::ScreenToClient(parentHwnd, &pRB);
@@ -168,13 +168,5 @@ namespace ra {
 _NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
 _NODISCARD ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress);
 } // namespace ra
-
-#if _MBCS
-_CONSTANT_VAR RA_MAX_PATH{ _MAX_PATH }; // multibyte max path
-#elif _UNICODE
-_CONSTANT_VAR RA_MAX_PATH{ 32767 }; // Unicode max path
-#else
-#error Unknown character set detected!
-#endif /* _MBCS */
 
 #endif // !RA_DEFS_H

@@ -2,7 +2,7 @@
 
 #include "RA_BuildVer.h"
 #include "RA_Defs.h"
-#include "RA_Log.h"
+#include "util\Log.hh"
 #include "RA_Resource.h"
 
 #include "api\IServer.hh"

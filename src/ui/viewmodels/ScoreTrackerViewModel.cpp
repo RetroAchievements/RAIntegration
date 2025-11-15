@@ -1,7 +1,5 @@
 #include "ScoreTrackerViewModel.hh"
 
-#include "ra_math.h"
-
 #include "ui\OverlayTheme.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 

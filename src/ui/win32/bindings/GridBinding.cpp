@@ -1,6 +1,6 @@
 #include "GridBinding.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "GridCheckBoxColumnBinding.hh"
 #include "GridTextColumnBinding.hh"

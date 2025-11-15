@@ -4,6 +4,7 @@
 
 #include "RA_Defs.h"
 #include "RA_md5factory.h"
+#include "util\Log.hh"
 
 #include "data\context\GameContext.hh"
 

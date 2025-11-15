@@ -1,6 +1,7 @@
 #include "RA_Defs.h"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
+#include "services\ServiceLocator.hh"
 
 #include "data\context\EmulatorContext.hh"
 

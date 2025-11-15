@@ -1,6 +1,6 @@
 #include "SearchImpl.hh"
 
-#include "ra_utility.h"
+#include "util\TypeCasts.hh"
 
 #include <algorithm>
 

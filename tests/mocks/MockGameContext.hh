@@ -32,7 +32,7 @@ public:
     /// <summary>
     /// Sets the unique identifier of the currently loaded game.
     /// </summary>
-    void SetGameId(unsigned int nGameId) noexcept 
+    void SetGameId(unsigned int nGameId) 
     {
         m_nGameId = m_nActiveGameId = nGameId;
 
@@ -99,6 +99,7 @@ public:
                 auto* pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
                 if (pCodeNotes)
                 {
+                    GSL_SUPPRESS_TYPE3
                     auto* pNote = const_cast<ra::data::models::CodeNoteModel*>(pCodeNotes->FindCodeNoteModel(nAddress, false));
                     if (pNote && pNote->IsPointer())
                     {
@@ -143,6 +144,7 @@ public:
         return true;
     }
 
+    GSL_SUPPRESS_C128
     void InitializeFromAchievementRuntime();
 
     void MockSubset(uint32_t nSubsetId, const std::string& sName, SubsetType nType = SubsetType::Bonus)

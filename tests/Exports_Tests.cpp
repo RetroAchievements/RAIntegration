@@ -3,7 +3,7 @@
 #include "Exports.hh"
 
 #include "RA_BuildVer.h"
-#include "RA_Emulators.h"
+#include "RAInterface\RA_Emulators.h"
 #include "RA_Resource.h"
 
 #include "tests\mocks\MockAchievementRuntime.hh"

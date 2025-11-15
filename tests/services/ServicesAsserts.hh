@@ -2,7 +2,7 @@
 #define RA_UNITTEST_SERVICESHELPERS_H
 #pragma once
 
-#include "ra_utility.h"
+#include "util\TypeCasts.hh"
 
 #include "services\Http.hh"
 

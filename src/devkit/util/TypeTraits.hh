@@ -1,20 +1,10 @@
-#ifndef RA_TYPE_TRAITS_H
-#define RA_TYPE_TRAITS_H
+#ifndef RA_TYPE_TRAITS_HH
+#define RA_TYPE_TRAITS_HH
 #pragma once
 
-#if _HAS_CXX17
-#ifndef _CONSTANT_VAR
-#define _CONSTANT_VAR inline constexpr auto
-#endif // !_CONSTANT_VAR
-#else
-#ifndef _CONSTANT_VAR
-#define _CONSTANT_VAR constexpr auto
-#endif // !_CONSTANT_VAR
-#endif // _HAS_CXX17
+#include "Compat.hh"
 
-#ifndef _CONSTANT_FN
-#define _CONSTANT_FN _CONSTANT_VAR
-#endif // !_CONSTANT_FN
+#include <type_traits>
 
 namespace ra {
 namespace detail {
@@ -157,4 +147,4 @@ _CONSTANT_VAR is_literal_type_v{detail::is_literal_type<LiteralType>::value};
 
 } // namespace ra
 
-#endif // !RA_TYPE_TRAITS_H
+#endif // !RA_TYPE_TRAITS_HH

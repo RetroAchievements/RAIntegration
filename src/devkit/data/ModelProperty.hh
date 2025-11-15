@@ -2,7 +2,10 @@
 #define RA_DATA_MODEL_PROPERTY_H
 #pragma once
 
-#include "ra_fwd.h"
+#include "util/Compat.hh"
+#include "util/GSL.hh"
+
+#include <map>
 
 namespace ra {
 namespace data {
@@ -59,12 +62,9 @@ protected:
     explicit ModelPropertyBase(_In_ int nKey) noexcept { m_nKey = nKey; } // for binary search
 
 private:
-    int m_nKey{};
-    const char* m_sTypeName{};
-    const char* m_sPropertyName{};
-
-    static std::vector<ModelPropertyBase*> s_vProperties;
-    static int s_nNextKey;
+    int m_nKey = 0;
+    const char* m_sTypeName = nullptr;
+    const char* m_sPropertyName = nullptr;
 };
 
 template<class T>
@@ -74,7 +74,8 @@ public:
     explicit ModelProperty(const char* sTypeName, const char* sPropertyName, T tDefaultValue) :
         ModelPropertyBase(sTypeName, sPropertyName),
         m_tDefaultValue(tDefaultValue)
-    {}
+    {
+    }
 
     /// <summary>
     /// Gets the default value for the property.

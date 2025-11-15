@@ -1,7 +1,5 @@
 #include "ui\ViewModelCollection.hh"
 
-#include "ra_fwd.h"
-
 #include "..\RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

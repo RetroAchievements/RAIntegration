@@ -2,7 +2,7 @@
 #define RA_SERVICES_MOCK_SERVER_HH
 #pragma once
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "api\IServer.hh"
 #include "services\ServiceLocator.hh"
@@ -32,7 +32,7 @@ public:
     {
         m_mHandlers.insert_or_assign(
             std::string(TApi::Name()),
-            [fHandler = std::move(fHandler)](const void* restrict pRequest, void* restrict pResponse) 
+            [fHandler = std::move(fHandler)](const void* _RESTRICT pRequest, void* _RESTRICT pResponse) 
         {
                 const auto* pTRequest = static_cast<const typename TApi::Request*>(pRequest);
                 auto* pTResponse = static_cast<typename TApi::Response*>(pResponse);
@@ -158,7 +158,7 @@ protected:
     }
 
 private:
-    std::unordered_map<std::string, std::function<bool(const void* restrict, void* restrict)>> m_mHandlers;
+    std::unordered_map<std::string, std::function<bool(const void* _RESTRICT, void* _RESTRICT)>> m_mHandlers;
 
     ra::services::ServiceLocator::ServiceOverride<ra::api::IServer> m_Override;
 };

@@ -1,6 +1,6 @@
 #include "PopupViewModelBase.hh"
 
-#include "ra_math.h"
+#include "util\TypeCasts.hh"
 
 #include "services\IConfiguration.hh"
 

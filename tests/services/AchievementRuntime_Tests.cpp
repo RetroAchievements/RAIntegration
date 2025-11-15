@@ -70,7 +70,7 @@ public:
 
     void MockGame()
     {
-        rc_client_game_info_t* game = (rc_client_game_info_t*)calloc(1, sizeof(rc_client_game_info_t));
+        rc_client_game_info_t* game = static_cast<rc_client_game_info_t*>(calloc(1, sizeof(rc_client_game_info_t)));
         Expects(game != nullptr);
         rc_buffer_init(&game->buffer);
         rc_runtime_init(&game->runtime);
@@ -80,7 +80,7 @@ public:
         game->public_.badge_name = "012345";
         game->public_.title = "Game Title";
 
-        auto* core_subset = (rc_client_subset_info_t*)rc_buffer_alloc(&game->buffer, sizeof(rc_client_subset_info_t));
+        auto* core_subset = static_cast<rc_client_subset_info_t*>(rc_buffer_alloc(&game->buffer, sizeof(rc_client_subset_info_t)));
         memset(core_subset, 0, sizeof(*core_subset));
         core_subset->public_.id = game->public_.id;
         core_subset->public_.title = game->public_.title;
@@ -93,9 +93,9 @@ public:
         GetClient()->game = game;
     }
 
-    void ResetEvents() { m_vEvents.clear(); }
+    void ResetEvents() noexcept { m_vEvents.clear(); }
 
-    size_t GetEventCount() const { return m_vEvents.size(); }
+    size_t GetEventCount() const noexcept { return m_vEvents.size(); }
 
     void AssertEvent(uint32_t nType, uint32_t nRecordId = 0)
     {
@@ -142,12 +142,12 @@ public:
             Assert::Fail(ra::StringPrintf(L"Event %u not found.", nType).c_str());
     }
 
-    void RaiseEvent(const rc_client_event_t& event)
+    void RaiseEvent(const rc_client_event_t& event) noexcept
     {
         m_fRealEventHandler(&event, GetClient());
     }
 
-    void ProcessCapturedEvents()
+    void ProcessCapturedEvents() noexcept
     {
         for (const auto& pEvent : m_vEvents)
             RaiseEvent(pEvent);
@@ -178,7 +178,7 @@ public:
         auto* game = GetClient()->game;
         auto* ach = AddAchievement(game, pSubset, nId, ra::StringPrintf("Ach%u", nId).c_str());
 
-        auto nSize = rc_trigger_size(sTrigger.c_str());
+        const auto nSize = rc_trigger_size(sTrigger.c_str());
         void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
         ach->trigger = rc_parse_trigger(trigger_buffer, sTrigger.c_str(), nullptr, 0);
         ActivateAchievement(ach);
@@ -186,13 +186,13 @@ public:
         return ach;
     }
 
-    void ActivateAchievement(rc_client_achievement_info_t* pAchievement)
+    void ActivateAchievement(rc_client_achievement_info_t* pAchievement) noexcept
     {
         pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         pAchievement->trigger->state = RC_TRIGGER_STATE_WAITING;
     }
 
-    void DeactivateAchievement(rc_client_achievement_info_t* pAchievement)
+    void DeactivateAchievement(rc_client_achievement_info_t* pAchievement) noexcept
     {
         pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
         pAchievement->trigger->state = RC_TRIGGER_STATE_INACTIVE;
@@ -237,7 +237,7 @@ public:
         rc_client_game_info_t* game = GetClient()->game;
         auto* lboard = AddLeaderboard(game, GetCoreSubset(game), nId, ra::StringPrintf("Leaderboard%u", nId).c_str());
 
-        auto nSize = rc_lboard_size(sDefinition.c_str());
+        const auto nSize = rc_lboard_size(sDefinition.c_str());
         void* lboard_buffer = rc_buffer_alloc(&game->buffer, nSize);
         lboard->lboard = rc_parse_lboard(lboard_buffer, sDefinition.c_str(), nullptr, 0);
         ActivateLeaderboard(lboard);
@@ -250,7 +250,7 @@ public:
         rc_client_game_info_t* game = GetClient()->game;
         auto* lboard = AddLeaderboard(game, GetLocalSubset(game), nId, ra::StringPrintf("Leaderboard%u", nId).c_str());
 
-        auto nSize = rc_lboard_size(sDefinition.c_str());
+        const auto nSize = rc_lboard_size(sDefinition.c_str());
         void* lboard_buffer = rc_buffer_alloc(&game->buffer, nSize);
         lboard->lboard = rc_parse_lboard(lboard_buffer, sDefinition.c_str(), nullptr, 0);
         ActivateLeaderboard(lboard);
@@ -258,13 +258,13 @@ public:
         return lboard;
     }
 
-    void ActivateLeaderboard(rc_client_leaderboard_info_t* pLeaderboard)
+    void ActivateLeaderboard(rc_client_leaderboard_info_t* pLeaderboard) noexcept
     {
         pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
         pLeaderboard->lboard->state = RC_LBOARD_STATE_ACTIVE;
     }
 
-    void DeactivateLeaderboard(rc_client_leaderboard_info_t* pLeaderboard)
+    void DeactivateLeaderboard(rc_client_leaderboard_info_t* pLeaderboard) noexcept
     {
         pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_INACTIVE;
         pLeaderboard->lboard->state = RC_LBOARD_STATE_INACTIVE;
@@ -296,10 +296,10 @@ public:
         return mockGameContext.Assets().FindLeaderboard(pLeaderboard->public_.id);
     }
 
-    void SyncToRuntime()
+    void SyncToRuntime() noexcept
     {
         // toggling hardcore will reset the runtime with appropriately active achievements
-        bool bHardcoreEnabled = rc_client_get_hardcore_enabled(GetClient());
+        const bool bHardcoreEnabled = rc_client_get_hardcore_enabled(GetClient());
         rc_client_set_hardcore_enabled(GetClient(), !bHardcoreEnabled);
         rc_client_set_hardcore_enabled(GetClient(), bHardcoreEnabled);
 
@@ -335,6 +335,7 @@ public:
         }
     }
 
+    GSL_SUPPRESS_TYPE1
     void SaveProgressToString(std::string& sBuffer)
     {
         const size_t nSize = SaveProgressToBuffer(reinterpret_cast<uint8_t*>(sBuffer.data()), gsl::narrow_cast<int>(sBuffer.size()));
@@ -345,7 +346,8 @@ public:
         }
     }
 
-    bool LoadProgressFromString(const std::string& sBuffer)
+    GSL_SUPPRESS_TYPE1
+    bool LoadProgressFromString(const std::string& sBuffer) noexcept
     {
         return LoadProgressFromBuffer(reinterpret_cast<const uint8_t*>(sBuffer.data()));
     }
@@ -365,6 +367,7 @@ public:
     }
 
 private:
+    GSL_SUPPRESS_CON3
     static void CaptureEventHandler(const rc_client_event_t* pEvent, rc_client_t* pClient)
     {
         auto* harness = static_cast<AchievementRuntimeHarness*>(rc_client_get_userdata(pClient));
@@ -374,7 +377,7 @@ private:
 
     std::vector<rc_client_event_t> m_vEvents;
 
-    static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name)
+    static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name) noexcept
     {
         rc_client_subset_info_t *subset = game->subsets, **next = &game->subsets;
         for (; subset; subset = subset->next)
@@ -385,7 +388,7 @@ private:
             next = &subset->next;
         }
 
-        subset = (rc_client_subset_info_t*)rc_buffer_alloc(&game->buffer, sizeof(rc_client_subset_info_t));
+        subset = static_cast<rc_client_subset_info_t*>(rc_buffer_alloc(&game->buffer, sizeof(rc_client_subset_info_t)));
         memset(subset, 0, sizeof(*subset));
         subset->public_.id = subset_id;
         strcpy_s(subset->public_.badge_name, sizeof(subset->public_.badge_name), game->public_.badge_name);
@@ -397,12 +400,12 @@ private:
         return subset;
     }
 
-    static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game)
+    static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game) noexcept
     {
         return GetSubset(game, game->public_.id, game->public_.title);
     }
 
-    static rc_client_subset_info_t* GetLocalSubset(rc_client_game_info_t* game)
+    static rc_client_subset_info_t* GetLocalSubset(rc_client_game_info_t* game) noexcept
     {
         return GetSubset(game, ra::data::context::GameAssets::LocalSubsetId, "Local");
     }
@@ -413,8 +416,8 @@ private:
         if (subset->public_.num_achievements % 8 == 0)
         {
             const uint32_t new_count = subset->public_.num_achievements + 8;
-            rc_client_achievement_info_t* new_achievements = (rc_client_achievement_info_t*)rc_buffer_alloc(
-                &game->buffer, sizeof(rc_client_achievement_info_t) * new_count);
+            rc_client_achievement_info_t* new_achievements = static_cast<rc_client_achievement_info_t*>(rc_buffer_alloc(
+                &game->buffer, sizeof(rc_client_achievement_info_t) * new_count));
 
             if (subset->public_.num_achievements > 0)
             {
@@ -455,8 +458,8 @@ private:
         if (subset->public_.num_leaderboards % 8 == 0)
         {
             const uint32_t new_count = subset->public_.num_leaderboards + 8;
-            rc_client_leaderboard_info_t* new_leaderboards = (rc_client_leaderboard_info_t*)rc_buffer_alloc(
-                &game->buffer, sizeof(rc_client_leaderboard_info_t) * new_count);
+            rc_client_leaderboard_info_t* new_leaderboards = static_cast<rc_client_leaderboard_info_t*>(rc_buffer_alloc(
+                &game->buffer, sizeof(rc_client_leaderboard_info_t) * new_count));
 
             if (subset->public_.num_leaderboards > 0)
             {
@@ -621,7 +624,7 @@ public:
         auto vmNewAchievement = std::make_unique<ra::data::models::AchievementModel>();
         vmNewAchievement->Attach(*pAchievement, ra::data::models::AssetCategory::Core, "0xH0000=1");
         vmNewAchievement->SetSubsetID(1U);
-        auto& vmAchievement = reinterpret_cast<ra::data::models::AchievementModel&>(runtime.mockGameContext.Assets().Append(std::move(vmNewAchievement)));
+        const auto& vmAchievement = reinterpret_cast<ra::data::models::AchievementModel&>(runtime.mockGameContext.Assets().Append(std::move(vmNewAchievement)));
 
         // SyncAssets should generate a new core subset with the merged achievement
         runtime.SyncAssets();
@@ -867,7 +870,7 @@ public:
     }
     */
 
-    static rc_condition_t* GetCondition(AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond) noexcept
+    static rc_condition_t* GetCondition(const AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond) noexcept
     {
         rc_trigger_t* pTrigger = harness.GetAchievementTrigger(nId);
         rc_condset_t* pCondset = pTrigger->requirement;
@@ -888,14 +891,14 @@ public:
         return pCondition;
     }
 
-    static void SetConditionHitCount(AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond, int nHits)
+    static void SetConditionHitCount(const AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond, int nHits)
     {
         rc_condition_t* pCond = GetCondition(harness, nId, nGroup, nCond);
         Assert::IsNotNull(pCond);
         pCond->current_hits = ra::to_unsigned(nHits);
     }
 
-    static void AssertConditionHitCount(AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond, int nHits)
+    static void AssertConditionHitCount(const AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond, int nHits)
     {
         const rc_condition_t* pCond = GetCondition(harness, nId, nGroup, nCond);
         Assert::IsNotNull(pCond);
@@ -3610,7 +3613,7 @@ public:
             Assert::AreEqual({16}, server_response->body_length);
             Assert::AreEqual(200, server_response->http_status_code);
 
-            *((bool*)callback_data) = true;
+            *(static_cast<bool*>(callback_data)) = true;
         };
 
         runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
@@ -3641,7 +3644,7 @@ public:
             Assert::AreEqual({36}, server_response->body_length);
             Assert::AreEqual(200, server_response->http_status_code);
 
-            *((bool*)callback_data) = true;
+            *(static_cast<bool*>(callback_data)) = true;
         };
 
         runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
@@ -3671,7 +3674,7 @@ public:
             Assert::AreEqual({77}, server_response->body_length);
             Assert::AreEqual(404, server_response->http_status_code);
 
-            *((bool*)callback_data) = true;
+            *(static_cast<bool*>(callback_data)) = true;
         };
 
         runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
@@ -3705,7 +3708,7 @@ public:
             Assert::AreEqual({38}, server_response->body_length);
             Assert::AreEqual(200, server_response->http_status_code);
 
-            *((bool*)callback_data) = true;
+            *(static_cast<bool*>(callback_data)) = true;
         };
 
         runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
@@ -3740,7 +3743,7 @@ public:
             Assert::AreEqual({77}, server_response->body_length);
             Assert::AreEqual(404, server_response->http_status_code);
 
-            *((bool*)callback_data) = true;
+            *(static_cast<bool*>(callback_data)) = true;
         };
 
         runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
@@ -3772,7 +3775,7 @@ public:
             Assert::AreEqual({77}, server_response->body_length);
             Assert::AreEqual(404, server_response->http_status_code);
 
-            *((bool*)callback_data) = true;
+            *(static_cast<bool*>(callback_data)) = true;
         };
 
         runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
@@ -3801,7 +3804,7 @@ public:
             Assert::AreEqual({16}, server_response->body_length);
             Assert::AreEqual(200, server_response->http_status_code);
 
-            *((bool*)callback_data) = true;
+            *(static_cast<bool*>(callback_data)) = true;
         };
 
         runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
@@ -3830,7 +3833,7 @@ public:
             Assert::AreEqual({16}, server_response->body_length);
             Assert::AreEqual(200, server_response->http_status_code);
 
-            *((bool*)callback_data) = true;
+            *(static_cast<bool*>(callback_data)) = true;
         };
 
         runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());

@@ -2,8 +2,6 @@
 #define RA_UI_VIEW_MODEL_BASE_H
 #pragma once
 
-#include "ra_fwd.h"
-
 #include "data\ModelBase.hh"
 #include "data\NotifyTargetSet.hh"
 
@@ -36,7 +34,7 @@ public:
 
     void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
     {
-#ifdef RA_UTEST
+#ifdef DEBUG
         GSL_SUPPRESS_F6 Expects(!m_bDestructed);
 #endif
         m_vNotifyTargets.Remove(pTarget);

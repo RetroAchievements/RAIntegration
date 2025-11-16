@@ -4,7 +4,7 @@
 
 #include "ModelBase.hh"
 
-#include "ra_utility.h"
+#include "util\TypeCasts.hh"
 
 namespace ra {
 namespace data {

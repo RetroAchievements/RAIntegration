@@ -14,6 +14,9 @@
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
+#include "util\EnumOps.hh"
+#include "util\Log.hh"
+
 using ra::ui::viewmodels::MemoryBookmarksViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;
 

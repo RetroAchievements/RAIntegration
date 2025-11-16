@@ -2,8 +2,6 @@
 #define RA_ACHIEVEMENT_LOGIC_SERIALIZER_HH
 #pragma once
 
-#include "ra_fwd.h"
-
 #include "data\Types.hh"
 
 #include "data\models\CodeNoteModel.hh"

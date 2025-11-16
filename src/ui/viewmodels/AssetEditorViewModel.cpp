@@ -13,6 +13,8 @@
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
+#include "util\EnumOps.hh"
+
 #include <rcheevos\src\rcheevos\rc_internal.h>
 
 namespace ra {

@@ -30,7 +30,7 @@ public:
 
     void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
     {
-#ifdef RA_UTEST
+#ifdef DEBUG
         GSL_SUPPRESS_F6 Expects(!m_bDestructed);
 #endif
         m_vNotifyTargets.Remove(pTarget);

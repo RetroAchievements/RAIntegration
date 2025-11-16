@@ -4,7 +4,7 @@
 
 #include "ControlBinding.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "ui\ViewModelCollection.hh"
 #include "ui\viewmodels\LookupItemViewModel.hh"

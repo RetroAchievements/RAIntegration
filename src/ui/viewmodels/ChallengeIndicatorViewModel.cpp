@@ -1,6 +1,6 @@
 #include "ChallengeIndicatorViewModel.hh"
 
-#include "ra_math.h"
+#include "util\TypeCasts.hh"
 
 #include "ui\OverlayTheme.hh"
 #include "ui\viewmodels\OverlayManager.hh"

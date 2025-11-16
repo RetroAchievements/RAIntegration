@@ -2,9 +2,9 @@
 
 #include "Exports.hh"
 #include "RA_BuildVer.h"
-#include "RA_Log.h"
 #include "RA_Resource.h"
-#include "RA_StringUtils.h"
+#include "util\Log.hh"
+#include "util\Strings.hh"
 
 #include "api\LatestClient.hh"
 

@@ -1,6 +1,6 @@
 #include "UnknownGameViewModel.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "api\FetchGamesList.hh"
 #include "api\SubmitNewTitle.hh"

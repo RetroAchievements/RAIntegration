@@ -158,7 +158,7 @@ public:
         gamesPage.mockSessions.MockSession(3U, 1234567890U, std::chrono::seconds(5000));
 
         bool bHttpRequesterCalled = false;
-        ra::services::mocks::MockHttpRequester mockHttp([&bHttpRequesterCalled](const ra::services::Http::Request&) {
+        ra::services::mocks::MockHttpRequester mockHttp([&bHttpRequesterCalled](const ra::services::Http::Request&) noexcept {
             bHttpRequesterCalled = true;
             return ra::services::Http::Response();
         });

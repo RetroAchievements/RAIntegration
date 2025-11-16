@@ -94,7 +94,7 @@ public:
     bool IsDebuggerPresent() const noexcept override { return m_bDebuggerPresent; }
     void SetDebuggerPresent(bool bValue) noexcept { m_bDebuggerPresent = bValue; }
 
-    bool IsOnUIThread() const override { return true; }
+    bool IsOnUIThread() const noexcept override { return true; }
     void InvokeOnUIThread(std::function<void()> fAction) const override { fAction(); }
 
 private:

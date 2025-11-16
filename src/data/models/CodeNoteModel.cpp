@@ -5,8 +5,7 @@
 
 #include "services\ServiceLocator.hh"
 
-#include "RA_StringUtils.h"
-#include "ra_utility.h"
+#include "util\Strings.hh"
 
 namespace ra {
 namespace data {

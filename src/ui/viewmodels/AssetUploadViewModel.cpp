@@ -14,7 +14,7 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "RA_Defs.h"
-#include "RA_Log.h"
+#include "util\Log.hh"
 
 #include <rcheevos/include/rc_api_runtime.h>
 

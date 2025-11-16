@@ -1,9 +1,9 @@
 #include "SessionTracker.hh"
 
 #include "Exports.hh"
-#include "RA_Log.h"
 #include "RA_md5factory.h"
-#include "RA_StringUtils.h"
+#include "util\Log.hh"
+#include "util\Strings.hh"
 
 #include "data\context\GameContext.hh"
 

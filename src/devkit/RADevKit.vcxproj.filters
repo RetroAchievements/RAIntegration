@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="$(SolutionDir)\src\base.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="data">
+      <UniqueIdentifier>{b8643d27-258d-476b-854a-da94989facbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{a189cb4e-de59-400e-9d9b-f3d601b41605}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="services">
+      <UniqueIdentifier>{f4590fbd-6bec-47dc-a679-380442fca29e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="data\ModelProperty.hh">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ServiceLocator.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ILogger.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="util\GSL.hh">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="util\Compat.hh">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="util\Strings.hh">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="util\Log.hh">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="util\TypeCasts.hh">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="util\TypeTraits.hh">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="util\EnumOps.hh">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IMessageDispatcher.hh" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="data\ModelProperty.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="util\GSL.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="util\Strings.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

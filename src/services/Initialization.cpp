@@ -16,6 +16,7 @@
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
 #include "services\impl\JsonFileConfiguration.hh"
+#include "services\impl\MessageDispatcher.hh"
 #include "services\impl\ThreadPool.hh"
 #include "services\impl\WindowsAudioSystem.hh"
 #include "services\impl\WindowsClipboard.hh"
@@ -110,6 +111,9 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
 
     auto pDesktop = std::make_unique<ra::ui::win32::Desktop>();
     ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(std::move(pDesktop));
+
+    auto pMessageDispatcher = std::make_unique<ra::services::impl::MessageDispatcher>();
+    ra::services::ServiceLocator::Provide<ra::services::IMessageDispatcher>(std::move(pMessageDispatcher));
 
     auto pEmulatorContext = std::make_unique<ra::data::context::EmulatorContext>();
     pEmulatorContext->Initialize(nEmulatorId, sClientName);

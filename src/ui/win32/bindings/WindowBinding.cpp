@@ -1,7 +1,7 @@
 #include "WindowBinding.hh"
 
 #include "RA_Core.h"
-#include "RA_Log.h"
+#include "util\Log.hh"
 #include "RA_Resource.h"
 
 #include "data\ModelProperty.hh"

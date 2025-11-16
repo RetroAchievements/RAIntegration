@@ -1,19 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <RA_DIR>$(SolutionDir)</RA_DIR>
-    <RapidJSON_IncludeDir>$(RA_DIR)rapidjson\include\</RapidJSON_IncludeDir>
-    <rcheevos_IncludePath>$(RA_DIR)rcheevos\include\</rcheevos_IncludePath>
-    <RAInterface_IncludePath>$(RA_DIR)RAInterface</RAInterface_IncludePath>
-    <RA_SourceDir>$(RA_DIR)src\</RA_SourceDir>
-    <GSL_IncludeDir>$(RA_DIR)GSL\include\</GSL_IncludeDir>
-    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RAInterface_IncludePath);$(RapidJSON_IncludeDir);$(rcheevos_IncludePath);$(GSL_IncludeDir)</RA_IncludePath>
-    <XPDeprecationWarning>true</XPDeprecationWarning>
+    <RapidJSON_IncludeDir>$(SolutionDir)rapidjson\include\</RapidJSON_IncludeDir>
+    <rcheevos_IncludePath>$(SolutionDir)rcheevos\include\</rcheevos_IncludePath>
+    <RAInterface_IncludePath>$(SolutionDir)RAInterface</RAInterface_IncludePath>
+    <RA_SourceDir>$(SolutionDir)src\</RA_SourceDir>
+    <RA_DevKitSourceDir>$(SolutionDir)src\devkit\</RA_DevKitSourceDir>
+    <GSL_IncludePath>$(SolutionDir)GSL\include\</GSL_IncludePath>
+    <MSTest_IncludePath>$(VCInstallDir)UnitTest\include\</MSTest_IncludePath>
+    <RA_IncludePath>$(RA_DevKitSourceDir);$(RA_SourceDir);$(rcheevos_IncludePath);$(GSL_IncludePath)</RA_IncludePath>
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Analysis'">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CodeAnalysisRuleSet>$(RA_SourceDir)\ra_rules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <CAExcludePath>$(RapidJSON_IncludeDir);$(CAExcludePath)</CAExcludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <LinkIncremental>false</LinkIncremental>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -22,42 +37,80 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <ClCompile>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <WarningLevel>Level4</WarningLevel>
+      <AdditionalIncludeDirectories>$(RA_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FloatingPointExceptions>true</FloatingPointExceptions>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-      <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(RA_IncludePath)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <WarningLevel>Level4</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <PreprocessorDefinitions>_ARCH=$(PlatformArchitecture);RC_CLIENT_SUPPORTS_HASH;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <CharacterSet>Unicode</CharacterSet>
+      <UseOfMfc>false</UseOfMfc>
     </ClCompile>
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)RAInterface\MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
-    </PreBuildEvent>
-    <PostBuildEvent>
-      <Command>
-         IF "$(LocalDebuggerWorkingDirectory)"=="" GOTO done
-         IF NOT EXIST $(LocalDebuggerWorkingDirectory) GOTO done
-         echo Copying $(Configuration) DLL to $(LocalDebuggerWorkingDirectory)
-         copy /y $(TargetPath) $(LocalDebuggerWorkingDirectory)\$(TargetFileName)
-         :done
-      </Command>
-    </PostBuildEvent>
     <Link>
-      <ProgramDatabaseFile>$(LocalDebuggerWorkingDirectory)\$(TargetName).pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
       <IgnoreSpecificDefaultLibraries>libc.lib, libcmt.lib, libcd.lib, libcmtd.lib, msvcrtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <ShowIncludes>false</ShowIncludes>
+      <EnablePREfast>false</EnablePREfast>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>  
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Analysis'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <ShowIncludes>false</ShowIncludes>
+      <ConformanceMode>true</ConformanceMode>
+      <EnablePREfast>true</EnablePREfast>
+      <TreatWarningAsError>true</TreatWarningAsError>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
-    <BuildMacro Include="RA_DIR">
-      <Value>$(RA_DIR)</Value>
-      <EnvironmentVariable>true</EnvironmentVariable>
-    </BuildMacro>
     <BuildMacro Include="RapidJSON_IncludeDir">
       <Value>$(RapidJSON_IncludeDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
@@ -74,16 +127,16 @@
       <Value>$(RA_SourceDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
-    <BuildMacro Include="GSL_IncludeDir">
-      <Value>$(GSL_IncludeDir)</Value>
+    <BuildMacro Include="RA_DevKitSourceDir">
+      <Value>$(RA_DevKitSourceDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="GSL_IncludePath">
+      <Value>$(GSL_IncludePath)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
     <BuildMacro Include="RA_IncludePath">
       <Value>$(RA_IncludePath)</Value>
-      <EnvironmentVariable>true</EnvironmentVariable>
-    </BuildMacro>
-    <BuildMacro Include="XPDeprecationWarning">
-      <Value>$(XPDeprecationWarning)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
   </ItemGroup>

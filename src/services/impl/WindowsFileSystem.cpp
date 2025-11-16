@@ -1,7 +1,7 @@
 #include "WindowsFileSystem.hh"
 
-#include "RA_Log.h"
-#include "RA_StringUtils.h"
+#include "util\Log.hh"
+#include "util\Strings.hh"
 
 #include "services\impl\FileTextReader.hh"
 #include "services\impl\FileTextWriter.hh"

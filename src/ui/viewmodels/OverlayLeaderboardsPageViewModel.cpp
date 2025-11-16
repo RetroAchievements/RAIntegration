@@ -1,6 +1,6 @@
 #include "OverlayLeaderboardsPageViewModel.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "api\FetchLeaderboardInfo.hh"
 

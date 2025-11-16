@@ -43,14 +43,9 @@ private:
             mockEmulatorContext.MockMemory(pMemory, nMemorySize);
         }
 
-        const std::set<unsigned int>& GetSelectedItems() const
+        const std::set<unsigned int>& GetSelectedItems() const noexcept
         {
             return m_vSelectedConditions;
-        }
-
-        int GetScrollOffset() const
-        {
-            return GetValue(ScrollOffsetProperty);
         }
 
         void SetScrollOffset(int nOffset)

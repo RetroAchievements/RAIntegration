@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Analysis|Win32">
+      <Configuration>Analysis</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Analysis|x64">
+      <Configuration>Analysis</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(SolutionDir)\src\base.props">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>RADevKit</ProjectName>
+    <ProjectGuid>{8AE21D54-F905-44E1-90E5-D22E346BFF39}</ProjectGuid>
+    <TargetName>RADevKit</TargetName>
+    <RootNamespace>ra</RootNamespace>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)\src\base.props" />
+  </ImportGroup>
+  <ItemGroup>
+    <ClCompile Include="data\ModelProperty.cpp" />
+    <ClCompile Include="util\GSL.cpp" />
+    <ClCompile Include="util\Strings.cpp" />
+    <ClInclude Include="data\ModelProperty.hh" />
+    <ClInclude Include="services\ILogger.hh" />
+    <ClInclude Include="services\IMessageDispatcher.hh" />
+    <ClInclude Include="services\ServiceLocator.hh" />
+    <ClInclude Include="util\Compat.hh" />
+    <ClInclude Include="util\EnumOps.hh" />
+    <ClInclude Include="util\GSL.hh" />
+    <ClInclude Include="util\Log.hh" />
+    <ClInclude Include="util\Strings.hh" />
+    <ClInclude Include="util\TypeCasts.hh" />
+    <ClInclude Include="util\TypeTraits.hh" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

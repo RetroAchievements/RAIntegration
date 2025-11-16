@@ -21,7 +21,7 @@
 
 #include "Exports.hh"
 #include "RA_BuildVer.h"
-#include "RA_Log.h"
+#include "util\Log.hh"
 
 namespace ra {
 namespace ui {

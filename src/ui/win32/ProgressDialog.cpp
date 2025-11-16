@@ -1,6 +1,6 @@
 #include "ProgressDialog.hh"
 
-#include "RA_Log.h"
+#include "util\Log.hh"
 #include "RA_Resource.h"
 
 using ra::ui::viewmodels::ProgressViewModel;

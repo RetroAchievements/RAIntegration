@@ -37,7 +37,7 @@ public:
         pResponse.nHttpStatus = 200;
     }
 
-    void OnBeforeResponse(const std::string& sRequestParams, std::function<void()>&& fHandler);
+    void OnBeforeResponse(const std::string& sRequestParams, const std::function<void()>&& fHandler);
 
     void MockUser(const std::string& sUsername, const std::string& sApiToken);
 
@@ -52,7 +52,7 @@ public:
     rc_client_achievement_info_t* MockSubsetAchievement(uint32_t nSubsetId, uint32_t nId, const char* sTitle = nullptr);
 
     rc_client_achievement_info_t* ActivateAchievement(uint32_t nId, const std::string& sTrigger);
-    void UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode);
+    void UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode) noexcept;
 
     rc_client_leaderboard_info_t* MockLeaderboard(uint32_t nId, const char* sTitle = nullptr);
     rc_client_leaderboard_info_t* MockLeaderboardWithLboard(uint32_t nId, const char* sTitle = nullptr);
@@ -64,8 +64,8 @@ public:
 
     void AssertNoPendingRequests() const;
 
-    std::map<uint32_t, std::string>& GetAchievementDefinitions() { return m_mAchievementDefinitions; }
-    std::map<uint32_t, std::string>& GetLeaderboardDefinitions() { return m_mLeaderboardDefinitions; }
+    std::map<uint32_t, std::string>& GetAchievementDefinitions() noexcept { return m_mAchievementDefinitions; }
+    std::map<uint32_t, std::string>& GetLeaderboardDefinitions() noexcept { return m_mLeaderboardDefinitions; }
 
 private:
     static void MockServerCall(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,

@@ -1,7 +1,7 @@
 #ifndef RA_UI_OVERLAY_MANAGER_H
 #define RA_UI_OVERLAY_MANAGER_H
 
-#include "RA_Interface.h"
+#include "RAInterface\RA_Interface.h"
 
 #include "OverlayViewModel.hh"
 #include "ChallengeIndicatorViewModel.hh"

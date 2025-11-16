@@ -1,7 +1,7 @@
 #include "FrameEventQueue.hh"
 
 #include "RA_Defs.h"
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"

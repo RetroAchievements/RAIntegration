@@ -2,7 +2,7 @@
 
 #include "RA_Defs.h"
 #include "RA_Json.h"
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "data\Types.hh"
 #include "data\context\ConsoleContext.hh"

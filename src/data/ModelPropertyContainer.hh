@@ -2,9 +2,7 @@
 #define RA_DATA_MODEL_PROPERTY_CONTAINER_H
 #pragma once
 
-#include "ra_fwd.h"
-
-#include "ModelProperty.hh"
+#include "data\ModelProperty.hh"
 
 namespace ra {
 namespace data {
@@ -14,7 +12,7 @@ class ModelPropertyContainer
 public:
     GSL_SUPPRESS_F6 ModelPropertyContainer() = default;
 
-#ifdef RA_UTEST
+#ifdef DEBUG
     virtual ~ModelPropertyContainer() noexcept {
         m_bDestructed = true;
     }

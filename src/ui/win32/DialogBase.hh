@@ -29,8 +29,8 @@ public:
     /// <param name="sResourceId">The resource identifier defining the dialog.</param>
     /// <param name="pDialogPresenter">Callback to call when the dialog is closed.</param>
     /// <returns>Handle of the window.</returns>
-    _NODISCARD HWND CreateDialogWindow(_In_ const TCHAR* restrict sResourceId,
-                                       _In_ IDialogPresenter* const restrict pDialogPresenter) noexcept;
+    _NODISCARD HWND CreateDialogWindow(_In_ const TCHAR* _RESTRICT sResourceId,
+                                       _In_ IDialogPresenter* const _RESTRICT pDialogPresenter) noexcept;
 
     /// <summary>
     /// Creates the dialog window and does not return until the window is closed.
@@ -38,8 +38,8 @@ public:
     /// <param name="sResourceId">The resource identifier defining the dialog.</param>
     /// <param name="pDialogPresenter">Callback to call when the dialog is closed.</param>
     /// <param name="hParentWnd">Window to use as the parent of the modal window.</param>
-    void CreateModalWindow(_In_ const TCHAR* restrict sResourceId,
-                           _In_ IDialogPresenter* const restrict pDialogPresenter, HWND hParentWnd) noexcept;
+    void CreateModalWindow(_In_ const TCHAR* _RESTRICT sResourceId,
+                           _In_ IDialogPresenter* const _RESTRICT pDialogPresenter, HWND hParentWnd) noexcept;
 
     /// <summary>
     /// Gets the <see cref="HWND" /> for the dialog.

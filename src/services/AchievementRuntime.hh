@@ -2,8 +2,6 @@
 #define RA_SERVICES_ACHIEVEMENT_RUNTIME_HH
 #pragma once
 
-#include "ra_fwd.h"
-
 #include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\models\AchievementModel.hh"
@@ -68,11 +66,9 @@ public:
 
     static std::string GetAchievementBadge(const rc_client_achievement_t& pAchievement);
 
-    void GetSubsets(std::vector<std::pair<uint32_t, std::wstring>>& vSubsets) const;
-
     void RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const noexcept;
 
-    void UpdateActiveAchievements();
+    void UpdateActiveAchievements() noexcept(false);
     void UpdateActiveLeaderboards() noexcept;
 
     /// <summary>
@@ -124,7 +120,7 @@ public:
     /// </summary>
     /// <param name="pBuffer">The buffer to read from.</param>
     /// <returns><c>true</c> if the achievement HitCounts were modified, <c>false</c> if not.</returns>
-    bool LoadProgressFromBuffer(const uint8_t* pBuffer);
+    bool LoadProgressFromBuffer(const uint8_t* pBuffer) noexcept(false);
 
     /// <summary>
     /// Writes HitCount data for active achievements to a save state file.
@@ -142,7 +138,7 @@ public:
     /// nBufferSize - in which case the caller should allocate the specified amount
     /// and call again.
     /// </returns>
-    int SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) const;
+    int SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) const noexcept(false);
 
     /// <summary>
     /// Gets whether achievement processing is temporarily suspended.

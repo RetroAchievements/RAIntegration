@@ -35,7 +35,7 @@ public:
         GameAssetsHarness() noexcept
         {
             GSL_SUPPRESS_F6 mockGameContext.SetGameTitle(L"GameName");
-            mockRuntime.MockGame();
+            GSL_SUPPRESS_F6 mockRuntime.MockGame();
         }
 
         void SaveAllAssets()

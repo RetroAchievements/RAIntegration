@@ -3,9 +3,11 @@
 #include "AchievementRuntimeExports.hh"
 #include "Exports.hh"
 #include "RA_Defs.h"
-#include "RA_Log.h"
+#include "RA_Json.h"
 #include "RA_Resource.h"
-#include "RA_StringUtils.h"
+#include "util\EnumOps.hh"
+#include "util\Log.hh"
+#include "util\Strings.hh"
 
 #include "RA_md5factory.h"
 

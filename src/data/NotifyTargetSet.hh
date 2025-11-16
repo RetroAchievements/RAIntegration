@@ -2,7 +2,7 @@
 #define RA_DATA_NOTIFYTARGET_SET_H
 #pragma once
 
-#include "ra_fwd.h"
+#include "util\GSL.hh"
 
 namespace ra {
 namespace data {
@@ -76,7 +76,7 @@ public:
         auto begin() const noexcept { return m_pBegin; }
         auto end() const noexcept { return m_pEnd; }
 
-        size_t size() const 
+        size_t size() const noexcept
         {
             return m_pEnd.m_pCurrent - m_pBegin.m_pCurrent;
         }

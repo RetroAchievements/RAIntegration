@@ -1,4 +1,11 @@
-#include "RA_StringUtils.h"
+#include "Strings.hh"
+
+#include "TypeCasts.hh"
+
+// TODO: not rely on Windows API
+// for ::MultiByteToWideChar and ::WideCharToMultiByte
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
 namespace ra {
 

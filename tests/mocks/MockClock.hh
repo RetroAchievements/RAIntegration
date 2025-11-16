@@ -2,10 +2,10 @@
 #define RA_SERVICES_MOCK_CLOCK_HH
 #pragma once
 
-#include "ra_fwd.h"
-
 #include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
+
+#include "util\GSL.hh"
 
 namespace ra {
 namespace services {

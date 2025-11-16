@@ -2,9 +2,9 @@
 #define RA_UI_OVERLAY_THEME_H
 #pragma once
 
-#include "ra_fwd.h"
+#include "util\GSL.hh"
 
-#include "ui/Types.hh"
+#include "ui\Types.hh"
 
 namespace ra {
 namespace ui {

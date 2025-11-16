@@ -55,9 +55,9 @@ private:
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-        IntegrationMenuViewModelHarness()
+        IntegrationMenuViewModelHarness() noexcept
         {
-            mockAchievementRuntime.MockGame();
+            GSL_SUPPRESS_F6 mockAchievementRuntime.MockGame();
         }
 
         void BuildMenu()

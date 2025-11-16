@@ -3,7 +3,7 @@
 #include "GridCheckBoxColumnBinding.hh"
 #include "GridTextColumnBinding.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 namespace ra {
 namespace ui {

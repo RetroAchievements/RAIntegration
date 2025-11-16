@@ -1,6 +1,6 @@
 #include "MemBlock.hh"
 
-#include "ra_fwd.h"
+#include "util\GSL.hh"
 
 namespace ra {
 namespace data {

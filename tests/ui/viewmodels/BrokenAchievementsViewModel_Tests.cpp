@@ -33,7 +33,7 @@ private:
         BrokenAchievementsViewModelHarness() noexcept
         {
             GSL_SUPPRESS_F6 mockWindowManager.AssetList.InitializeNotifyTargets();
-            mockConfiguration.SetHostUrl("http://host");
+            GSL_SUPPRESS_F6 mockConfiguration.SetHostUrl("http://host");
         }
 
         void MockAchievements()

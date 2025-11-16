@@ -1,7 +1,7 @@
 #include "OverlayListPageViewModel.hh"
 
-#include "ra_math.h"
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
+#include "util\TypeCasts.hh"
 
 #include "services\IThreadPool.hh"
 

@@ -2,6 +2,7 @@
 
 #include "DisconnectedServer.hh"
 #include "RA_Defs.h"
+#include "util\Log.hh"
 
 #include "RA_md5factory.h"
 
@@ -351,7 +352,7 @@ static bool ValidateResponse(int nResult, const rc_api_response_t& api_response,
     return true;
 }
 
-static bool DoUpload(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
+static bool DoUpload(const std::string& sHost, const char* _RESTRICT sApiName, const char* _RESTRICT sRequestName,
     const std::wstring& sFilePath, ApiResponseBase& pResponse, rapidjson::Document& document)
 {
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();

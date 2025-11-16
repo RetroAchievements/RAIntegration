@@ -16,6 +16,9 @@
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
+#include "util\EnumOps.hh"
+#include "util\Log.hh"
+
 using ra::data::models::AssetModelBase;
 using ra::data::models::AchievementModel;
 using ra::ui::viewmodels::AssetEditorViewModel;

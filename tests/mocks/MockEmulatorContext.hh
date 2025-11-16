@@ -107,7 +107,7 @@ public:
     { 
         m_mMemoryValues[nAddress] = nValue;
 
-        if (nAddress + 4 > m_nTotalMemorySize)
+        if (gsl::narrow_cast<size_t>(nAddress) + 4 > m_nTotalMemorySize)
         {
             const size_t nNewMemorySize = gsl::narrow_cast<size_t>(nAddress) + 4;
             ClearMemoryBlocks();
@@ -130,7 +130,7 @@ public:
     bool IsMemoryInsecure() const noexcept override { return m_bMemoryInsecure; }
 
 private:
-    static uint8_t ReadMemoryHelper(uint32_t nAddress) noexcept
+    static uint8_t ReadMemoryHelper(uint32_t nAddress)
     {
         const auto* mockEmulator =
             dynamic_cast<const MockEmulatorContext*>(&ra::services::ServiceLocator::Get<EmulatorContext>());
@@ -166,7 +166,7 @@ private:
         return mockEmulator->m_pMemory.at(nAddress);
     }
 
-    static void WriteMemoryHelper(uint32_t nAddress, uint8_t nValue) noexcept
+    static void WriteMemoryHelper(uint32_t nAddress, uint8_t nValue)
     {
         auto* mockEmulator =
             dynamic_cast<MockEmulatorContext*>(&ra::services::ServiceLocator::GetMutable<EmulatorContext>());

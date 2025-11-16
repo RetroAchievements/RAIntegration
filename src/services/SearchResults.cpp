@@ -1,7 +1,7 @@
 #include "SearchResults.h"
 
 #include "RA_Defs.h"
-#include "ra_utility.h"
+#include "util\Log.hh"
 
 #include "data\context\EmulatorContext.hh"
 

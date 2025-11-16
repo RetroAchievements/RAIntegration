@@ -38,9 +38,9 @@ private:
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::ui::mocks::MockDesktop mockDesktop;
 
-        UnknownGameViewModelHarness()
+        UnknownGameViewModelHarness() noexcept
         {
-            mockUserContext.Initialize("User", "ApiToken");
+            GSL_SUPPRESS_F6 mockUserContext.Initialize("User", "ApiToken");
         }
 
         void MockGameTitles()

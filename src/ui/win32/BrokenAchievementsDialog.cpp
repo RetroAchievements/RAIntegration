@@ -8,6 +8,8 @@
 #include "ui\win32\bindings\GridCheckBoxColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
+#include "util\EnumOps.hh"
+
 using ra::ui::viewmodels::BrokenAchievementsViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;
 

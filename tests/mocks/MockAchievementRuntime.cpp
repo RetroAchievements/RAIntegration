@@ -5,7 +5,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "CppUnitTest.h"
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "data\context\GameAssets.hh"
 
@@ -16,7 +16,7 @@ namespace ra {
 namespace services {
 namespace mocks {
 
-void MockAchievementRuntime::OnBeforeResponse(const std::string& sRequestParams, std::function<void()>&& fHandler)
+void MockAchievementRuntime::OnBeforeResponse(const std::string& sRequestParams, const std::function<void()>&& fHandler)
 {
     for (auto& pResponse : m_vResponses)
     {
@@ -44,7 +44,7 @@ void MockAchievementRuntime::MockUser(const std::string& sUsername, const std::s
 
 void MockAchievementRuntime::MockGame()
 {
-    rc_client_game_info_t* game = (rc_client_game_info_t*)calloc(1, sizeof(rc_client_game_info_t));
+    rc_client_game_info_t* game = static_cast<rc_client_game_info_t*>(calloc(1, sizeof(rc_client_game_info_t)));
     Expects(game != nullptr);
     rc_buffer_init(&game->buffer);
     rc_runtime_init(&game->runtime);
@@ -65,7 +65,7 @@ void MockAchievementRuntime::MockGame()
     }
 }
 
-static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name)
+static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name) noexcept
 {
     rc_client_subset_info_t* subset = game->subsets, **next = &game->subsets;
     for (; subset; subset = subset->next)
@@ -76,7 +76,7 @@ static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t 
         next = &subset->next;
     }
 
-    subset = (rc_client_subset_info_t*)rc_buffer_alloc(&game->buffer, sizeof(rc_client_subset_info_t));
+    subset = static_cast<rc_client_subset_info_t*>(rc_buffer_alloc(&game->buffer, sizeof(rc_client_subset_info_t)));
     memset(subset, 0, sizeof(*subset));
     subset->public_.id = subset_id;
     strcpy_s(subset->public_.badge_name, sizeof(subset->public_.badge_name), game->public_.badge_name);
@@ -106,8 +106,8 @@ static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
     if (subset->public_.num_achievements % 8 == 0)
     {
         const uint32_t new_count = subset->public_.num_achievements + 8;
-        rc_client_achievement_info_t* new_achievements = (rc_client_achievement_info_t*)rc_buffer_alloc(
-            &game->buffer, sizeof(rc_client_achievement_info_t) * new_count);
+        rc_client_achievement_info_t* new_achievements = static_cast<rc_client_achievement_info_t*>(rc_buffer_alloc(
+            &game->buffer, sizeof(rc_client_achievement_info_t) * new_count));
 
         if (subset->public_.num_achievements > 0)
         {
@@ -176,7 +176,7 @@ rc_client_achievement_info_t* MockAchievementRuntime::MockAchievementWithTrigger
     rc_client_game_info_t* game = GetClient()->game;
     rc_client_achievement_info_t* achievement = AddAchievement(game, GetCoreSubset(game), nId, sTitle);
 
-    achievement->trigger = (rc_trigger_t*)rc_buffer_alloc(&game->buffer, sizeof(rc_trigger_t));
+    achievement->trigger = static_cast<rc_trigger_t*>(rc_buffer_alloc(&game->buffer, sizeof(rc_trigger_t)));
     memset(achievement->trigger, 0, sizeof(*achievement->trigger));
     achievement->trigger->state = RC_TRIGGER_STATE_ACTIVE;
 
@@ -190,7 +190,7 @@ rc_client_achievement_info_t* MockAchievementRuntime::ActivateAchievement(uint32
 
     m_mAchievementDefinitions[nId] = sTrigger;
 
-    auto nSize = rc_trigger_size(sTrigger.c_str());
+    const auto nSize = rc_trigger_size(sTrigger.c_str());
     if (nSize > 0)
     {
         void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
@@ -201,7 +201,7 @@ rc_client_achievement_info_t* MockAchievementRuntime::ActivateAchievement(uint32
     return achievement;
 }
 
-void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode)
+void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode) noexcept
 {
     pAchievement->public_.unlocked |= nMode;
 
@@ -242,14 +242,14 @@ rc_client_achievement_info_t* MockAchievementRuntime::MockLocalAchievement(uint3
     return AddAchievement(game, GetLocalSubset(game), nId, sTitle);
 }
 
-static rc_client_leaderboard_info_t* AddLeaderboard(rc_client_t* client, rc_client_game_info_t* game,
+static rc_client_leaderboard_info_t* AddLeaderboard(const rc_client_t* client, rc_client_game_info_t* game,
     rc_client_subset_info_t* subset, uint32_t nId, const char* sTitle)
 {
     if (subset->public_.num_leaderboards % 8 == 0)
     {
         const uint32_t new_count = subset->public_.num_leaderboards + 8;
-        rc_client_leaderboard_info_t* new_leaderboards = (rc_client_leaderboard_info_t*)rc_buffer_alloc(
-            &game->buffer, sizeof(rc_client_leaderboard_info_t) * new_count);
+        rc_client_leaderboard_info_t* new_leaderboards = static_cast<rc_client_leaderboard_info_t*>(rc_buffer_alloc(
+            &game->buffer, sizeof(rc_client_leaderboard_info_t) * new_count));
 
         if (subset->public_.num_leaderboards > 0)
         {
@@ -294,7 +294,7 @@ rc_client_leaderboard_info_t* MockAchievementRuntime::MockLeaderboardWithLboard(
     rc_client_game_info_t* game = GetClient()->game;
     rc_client_leaderboard_info_t* leaderboard = AddLeaderboard(GetClient(), game, GetCoreSubset(game), nId, sTitle);
 
-    leaderboard->lboard = (rc_lboard_t*)rc_buffer_alloc(&game->buffer, sizeof(rc_lboard_t));
+    leaderboard->lboard = static_cast<rc_lboard_t*>(rc_buffer_alloc(&game->buffer, sizeof(rc_lboard_t)));
     memset(leaderboard->lboard, 0, sizeof(*leaderboard->lboard));
     leaderboard->lboard->state = static_cast<uint8_t>(
         rc_client_get_hardcore_enabled(GetClient()) ? RC_LBOARD_STATE_ACTIVE : RC_LBOARD_STATE_INACTIVE);
@@ -315,7 +315,7 @@ rc_client_leaderboard_info_t* MockAchievementRuntime::ActivateLeaderboard(uint32
 
     m_mLeaderboardDefinitions[nId] = sDefinition;
 
-    auto nSize = rc_lboard_size(sDefinition.c_str());
+    const auto nSize = rc_lboard_size(sDefinition.c_str());
     void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
     leaderboard->lboard = rc_parse_lboard(trigger_buffer, sDefinition.c_str(), nullptr, 0);
     leaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;

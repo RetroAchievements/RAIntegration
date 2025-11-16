@@ -1218,7 +1218,7 @@ public:
         bookmarks.AddBookmark(4, MemSize::SixteenBit);
         bookmarks.AddBookmark(5, MemSize::EightBit);
 
-        auto& bookmark1 = *bookmarks.GetBookmark(0);
+        const auto& bookmark1 = *bookmarks.GetBookmark(0);
         Assert::AreEqual(std::wstring(L"04030201"), bookmark1.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"00000000"), bookmark1.GetPreviousValue());
         Assert::AreEqual(0U, bookmark1.GetChanges());
@@ -1229,7 +1229,7 @@ public:
         Assert::AreEqual(0U, bookmark2.GetChanges());
         bookmark2.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::Frozen); // OnEditMemory should ignore frozen bookmarks
 
-        auto& bookmark3 = *bookmarks.GetBookmark(2);
+        const auto& bookmark3 = *bookmarks.GetBookmark(2);
         Assert::AreEqual(std::wstring(L"0403"), bookmark3.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0000"), bookmark3.GetPreviousValue());
         Assert::AreEqual(0U, bookmark3.GetChanges());
@@ -1245,12 +1245,12 @@ public:
             return DialogResult::None;
         });
 
-        auto& bookmark4b = *bookmarks.GetBookmark(4);
+        const auto& bookmark4b = *bookmarks.GetBookmark(4);
         Assert::AreEqual(std::wstring(L"0504"), bookmark4b.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0000"), bookmark4b.GetPreviousValue());
         Assert::AreEqual(0U, bookmark4b.GetChanges());
 
-        auto& bookmark5 = *bookmarks.GetBookmark(5);
+        const auto& bookmark5 = *bookmarks.GetBookmark(5);
         Assert::AreEqual(std::wstring(L"05"), bookmark5.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"00"), bookmark5.GetPreviousValue());
         Assert::AreEqual(0U, bookmark5.GetChanges());

@@ -1,7 +1,7 @@
 #include "PointerFinderViewModel.hh"
 
 #include "RA_Defs.h"
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "data/context/EmulatorContext.hh"
 #include "data/context/GameContext.hh"

@@ -1,8 +1,5 @@
 #include "MemoryViewerControlBinding.hh"
 
-#include "ra_fwd.h"
-#include "ra_utility.h"
-
 #include "ui/EditorTheme.hh"
 #include "ui/drawing/gdi/GDISurface.hh"
 

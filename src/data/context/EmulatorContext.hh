@@ -5,7 +5,6 @@
 #include "RAInterface\RA_Emulators.h"
 
 #include "data\Types.hh"
-#include "ra_fwd.h"
 
 #include <string>
 

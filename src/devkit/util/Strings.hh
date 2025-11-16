@@ -1,8 +1,16 @@
-#ifndef RA_STRINGUTILS_H
-#define RA_STRINGUTILS_H
+#ifndef RA_STRINGS_HH
+#define RA_STRINGS_HH
 #pragma once
 
-#include "ra_utility.h"
+#include "Compat.hh"
+#include "GSL.hh"
+#include "TypeCasts.hh"
+#include "TypeTraits.hh"
+
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include <variant>
 
 namespace ra {
 
@@ -382,7 +390,7 @@ public:
     }
 
     template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename T, typename... Ts>
-    void AppendPrintf(const CharT* const restrict pFormat, const T& restrict value, Ts&&... args)
+    void AppendPrintf(const CharT* const _RESTRICT pFormat, const T& _RESTRICT value, Ts&&... args)
     {
         auto* pScan = pFormat;
         Expects(pScan != nullptr);
@@ -497,11 +505,11 @@ private:
     public:
         explicit PendingString(std::string&& arg) noexcept : String{std::move(arg)}, DataType{Type::String} {}
         explicit PendingString(std::wstring&& arg) noexcept : WString{std::move(arg)}, DataType{Type::WString} {}
-        explicit PendingString(_In_z_ const char* const restrict ptr, std::size_t len) noexcept :
+        explicit PendingString(_In_z_ const char* const _RESTRICT ptr, std::size_t len) noexcept :
             Ref{std::string_view{ptr, len}},
             DataType{Type::CharRef}
         {}
-        explicit PendingString(_In_z_ const wchar_t* const restrict ptr, std::size_t len) noexcept :
+        explicit PendingString(_In_z_ const wchar_t* const _RESTRICT ptr, std::size_t len) noexcept :
             Ref{std::wstring_view{ptr, len}},
             DataType{Type::WCharRef}
         {}
@@ -574,7 +582,7 @@ std::wstring BuildWString(Ts&&... args)
 /// Constructs a <see cref="std::basic_string" /> from a format string and parameters
 /// </summary>
 template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename... Ts>
-_NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* const __restrict sFormat, Ts&&... args)
+_NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* const _RESTRICT sFormat, Ts&&... args)
 {
     Expects(sFormat != nullptr);
 
@@ -768,7 +776,7 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const std::basic_string<Ch
 /// </summary>
 template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
 GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const std::basic_string<CharT>& sString,
-                                                 _In_ const CharT* restrict sMatch) noexcept
+                                                 _In_ const CharT* _RESTRICT sMatch) noexcept
 {
     const auto sMatchLen = tcslen_s(sMatch);
     if (sMatchLen > sString.length())
@@ -781,8 +789,8 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const std::basic_string<Ch
 /// Determines if <paramref name="sString" /> starts with <paramref name="sMatch" />.
 /// </summary>
 template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
-GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const CharT* restrict sString,
-                                                 _In_ const CharT* restrict sMatch) noexcept
+GSL_SUPPRESS_F6 _NODISCARD bool StringStartsWith(_In_ const CharT* _RESTRICT sString,
+                                                 _In_ const CharT* _RESTRICT sMatch) noexcept
 {
     const auto sMatchLen = tcslen_s(sMatch);
     if (sMatchLen > tcslen_s(sString))
@@ -809,7 +817,7 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const std::basic_string<Char
 /// </summary>
 template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
 GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const std::basic_string<CharT>& sString,
-                                               _In_ const CharT* restrict sMatch) noexcept
+                                               _In_ const CharT* _RESTRICT sMatch) noexcept
 {
     const auto sMatchLen = tcslen_s(sMatch);
     if (sMatchLen > sString.length())
@@ -822,8 +830,8 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const std::basic_string<Char
 /// Determines if <paramref name="sString" /> ends with <paramref name="sMatch" />.
 /// </summary>
 template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
-GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const CharT* restrict sString,
-                                               _In_ const CharT* restrict sMatch) noexcept
+GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const CharT* _RESTRICT sString,
+                                               _In_ const CharT* _RESTRICT sMatch) noexcept
 {
     const auto sMatchLen = tcslen_s(sMatch);
     const auto sStringLen = tcslen_s(sString);
@@ -875,4 +883,4 @@ std::string Base64(const std::string& sString);
 #define NativeStrType std::string
 #endif
 
-#endif // !RA_STRINGUTILS_H
+#endif // !RA_STRINGS_HH

@@ -27,9 +27,9 @@ private:
     class AchievementModelHarness : public AchievementModel
     {
     public:
-        AchievementModelHarness()
+        AchievementModelHarness() noexcept
         {
-            mockRuntime.MockGame();
+            GSL_SUPPRESS_F6 mockRuntime.MockGame();
         }
 
         ra::data::context::mocks::MockGameContext mockGameContext;

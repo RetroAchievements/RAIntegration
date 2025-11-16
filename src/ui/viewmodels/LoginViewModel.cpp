@@ -1,8 +1,8 @@
 #include "LoginViewModel.hh"
 
 #include "Exports.hh"
-#include "RA_Interface.h"
-#include "RA_StringUtils.h"
+#include "RAInterface\RA_Interface.h"
+#include "util\Strings.hh"
 
 #include "api\impl\ConnectedServer.hh"
 

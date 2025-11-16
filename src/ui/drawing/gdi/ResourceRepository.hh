@@ -4,7 +4,7 @@
 
 #include "ui\Types.hh"
 
-#include "ra_utility.h"
+#include "util\EnumOps.hh"
 
 namespace ra {
 namespace ui {

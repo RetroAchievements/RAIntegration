@@ -3,7 +3,7 @@
 
 #include "PopupViewModelBase.hh"
 
-#include "RA_Interface.h"
+#include "RAInterface\RA_Interface.h"
 
 namespace ra {
 namespace ui {

@@ -89,19 +89,30 @@
 
 #pragma warning(pop)
 
-#if RA_UTEST
-#include <CodeAnalysis\Warnings.h>
-#pragma warning(push)
-#pragma warning(disable : ALL_CPPCORECHECK_WARNINGS)
-#include "CppUnitTest.h"
-#pragma warning(pop)
-#endif /* RA_UTEST */
-
 /* rcheevos stuff */
 #pragma warning(push)
-#pragma warning(disable : 4201) // nameless struct
-#include <rcheevos.h>
+ #pragma warning(disable : 4201) // nameless struct
+ #include <rcheevos.h>
 #pragma warning(pop)
+
 #pragma warning(pop)
+
+#if RA_UTEST
+ #include <CodeAnalysis\Warnings.h>
+ #pragma warning(push)
+  #pragma warning(disable : ALL_CPPCORECHECK_WARNINGS ALL_CODE_ANALYSIS_WARNINGS)
+  #include "CppUnitTest.h"
+ #pragma warning(pop)
+
+ /* This has to be globally disabled in the unit tests because it occurs in the
+  * macros provided by the framework (i.e. TEST_METHOD).
+  */
+ #pragma warning(disable: 26477) /* Use 'nullptr' rather than 0 or NULL (es.47). */
+
+ /* TODO: update all the failures related to these messages in the unit tests */
+ #pragma warning(disable: 26429) /* Symbol is never tested for nullness, it can be marked as not_null (f.23).  */
+ #pragma warning(disable: 26462) /* X is assigned only once, mark it as a pointer to const (con.4). */
+
+#endif /* RA_UTEST */
 
 #endif /* !PCH_H */

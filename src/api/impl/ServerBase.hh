@@ -4,7 +4,7 @@
 
 #include "api/IServer.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include <string>
 
@@ -98,7 +98,7 @@ public:
 
 protected:
     template<typename TResponse>
-    inline typename TResponse UnsupportedApi(const char* const restrict apiName) const
+    inline typename TResponse UnsupportedApi(const char* const _RESTRICT apiName) const
     {
         static_assert(std::is_base_of<ApiResponseBase, TResponse>::value, "TResponse must derive from ApiResponseBase");
 

@@ -1,7 +1,5 @@
 #include "ui\ViewModelBase.hh"
 
-#include "ra_fwd.h"
-
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {

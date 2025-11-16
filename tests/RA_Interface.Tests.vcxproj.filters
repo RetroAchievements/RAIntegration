@@ -3,4 +3,7 @@
   <ItemGroup>
     <ClCompile Include="RA_Interface_Tests.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="$(SolutionDir)\src\base.props" />
+  </ItemGroup>
 </Project>

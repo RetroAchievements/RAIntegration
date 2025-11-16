@@ -34,8 +34,8 @@ public:
     /// <returns>The current value of the property for this object.</returns>
     bool GetValue(const BoolModelProperty& pProperty) const
     {
-        const IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
-        return gsl::narrow_cast<bool>(iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
+        const int* pValue = FindValue(pProperty.GetKey());
+        return pValue ? (*pValue != 0) : pProperty.GetDefaultValue();
     }
 
     /// <summary>
@@ -58,8 +58,11 @@ public:
     /// <returns>The current value of the property for this object.</returns>
     const std::wstring& GetValue(const StringModelProperty& pProperty) const
     {
-        const StringModelProperty::ValueMap::const_iterator iter = m_mStringValues.find(pProperty.GetKey());
-        return (iter != m_mStringValues.end() ? iter->second : pProperty.GetDefaultValue());
+        const int* pValue = FindValue(pProperty.GetKey());
+        if (pValue == nullptr)
+            return pProperty.GetDefaultValue();
+
+        return GetString(*pValue);
     }
 
     /// <summary>
@@ -82,8 +85,8 @@ public:
     /// <returns>The current value of the property for this object.</returns>
     int GetValue(const IntModelProperty& pProperty) const
     {
-        const IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
-        return (iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
+        const int* pValue = FindValue(pProperty.GetKey());
+        return pValue ? *pValue : pProperty.GetDefaultValue();
     }
 
     /// <summary>
@@ -100,8 +103,26 @@ public:
     virtual void OnValueChanged(const IntModelProperty::ChangeArgs& args) noexcept(false);
 
 private:
-    StringModelProperty::ValueMap m_mStringValues;
-    IntModelProperty::ValueMap m_mIntValues;
+    typedef struct ModelPropertyValue
+    {
+        ModelPropertyValue(int nKey, int nValue)
+            : nKey(nKey), nValue(nValue)
+        {
+        }
+
+        int nKey;
+        int nValue;
+    } ModelPropertyValue;
+    std::vector<ModelPropertyValue> m_vValues;
+
+    typedef struct ModelPropertyStrings
+    {
+        static constexpr size_t ChunkCount = 4;
+
+        std::wstring sStrings[ChunkCount];
+        std::unique_ptr<struct ModelPropertyStrings> pNext;
+    } ModelPropertyStrings;
+    std::unique_ptr<ModelPropertyStrings> m_pStrings;
 
 #ifdef _DEBUG
     /// <summary>
@@ -109,6 +130,13 @@ private:
     /// </summary>
     std::map<std::string, std::wstring> m_mDebugValues;
 #endif
+
+    static std::wstring s_sEmpty;
+
+    static int CompareModelPropertyKey(const ModelPropertyValue& left, int nKey) noexcept;
+    const int* FindValue(int nKey) const;
+    const std::wstring& GetString(int nIndex) const;
+    int LoadIntoEmptyStringSlot(const std::wstring& sValue);
 };
 
 } // namespace data

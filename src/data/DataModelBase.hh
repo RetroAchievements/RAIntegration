@@ -138,8 +138,9 @@ protected:
         /// </summary>
         const bool* GetPreviousValue(const BoolModelProperty& pProperty) const
         {
-            const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(pProperty.GetKey());
-            GSL_SUPPRESS_TYPE1 return (iter != m_mOriginalIntValues.end()) ? reinterpret_cast<const bool*>(&iter->second) : nullptr;
+            const ModelPropertyValue* pValue = FindValue(pProperty.GetKey());
+            GSL_SUPPRESS_TYPE1
+            return pValue ? reinterpret_cast<const bool*>(&pValue->nValue) : nullptr;
         }
 
         /// <summary>
@@ -148,8 +149,8 @@ protected:
         /// </summary>
         const std::wstring* GetPreviousValue(const StringModelProperty& pProperty) const
         {
-            const StringModelProperty::ValueMap::const_iterator iter = m_mOriginalStringValues.find(pProperty.GetKey());
-            return (iter != m_mOriginalStringValues.end()) ? &iter->second : nullptr;
+            const ModelPropertyValue* pValue = FindValue(pProperty.GetKey());
+            return pValue ? &pValue->sValue : nullptr;
         }
 
         /// <summary>
@@ -158,8 +159,8 @@ protected:
         /// </summary>
         const int* GetPreviousValue(const IntModelProperty& pProperty) const
         {
-            const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(pProperty.GetKey());
-            return (iter != m_mOriginalIntValues.end()) ? &iter->second : nullptr;
+            const ModelPropertyValue* pValue = FindValue(pProperty.GetKey());
+            return pValue ? &pValue->nValue : nullptr;
         }
 
         /// <summary>
@@ -185,7 +186,7 @@ protected:
         /// </summary>
         bool IsModified() const noexcept
         {
-            return (!m_mOriginalIntValues.empty() || !m_mOriginalStringValues.empty());
+            return !m_vOriginalValues.empty();
         }
 
         /// <summary>
@@ -195,8 +196,7 @@ protected:
         /// <returns><c>true</c> if modified, <c>false</c> if not.</returns>
         bool IsModified(const BoolModelProperty& pProperty) const
         {
-            const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(pProperty.GetKey());
-            return (iter != m_mOriginalIntValues.end());
+            return FindValue(pProperty.GetKey()) != nullptr;
         }
 
         /// <summary>
@@ -206,8 +206,7 @@ protected:
         /// <returns><c>true</c> if modified, <c>false</c> if not.</returns>
         bool IsModified(const StringModelProperty& pProperty) const
         {
-            const StringModelProperty::ValueMap::const_iterator iter = m_mOriginalStringValues.find(pProperty.GetKey());
-            return (iter != m_mOriginalStringValues.end());
+            return FindValue(pProperty.GetKey()) != nullptr;
         }
 
         /// <summary>
@@ -217,8 +216,7 @@ protected:
         /// <returns><c>true</c> if modified, <c>false</c> if not.</returns>
         bool IsModified(const IntModelProperty& pProperty) const
         {
-            const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(pProperty.GetKey());
-            return (iter != m_mOriginalIntValues.end());
+            return FindValue(pProperty.GetKey()) != nullptr;
         }
 
         void Revert(DataModelBase& vmViewModel);
@@ -228,17 +226,21 @@ protected:
 
         // allow DataModelCollectionBase to call GetValue(Property) directly.
         friend class DataModelCollectionBase;
-
+        
     private:
-        StringModelProperty::ValueMap m_mOriginalStringValues;
-        IntModelProperty::ValueMap m_mOriginalIntValues;
-
+        typedef struct ModelPropertyValue
+        {
 #ifdef _DEBUG
-        /// <summary>
-        /// Complete list of values as strings for viewing in the debugger
-        /// </summary>
-        std::map<std::string, std::wstring> m_mDebugOriginalValues;
+            const char* pPropertyName;
 #endif
+            int nKey;
+            int nValue;
+            std::wstring sValue;
+        } ModelPropertyValue;
+        std::vector<ModelPropertyValue> m_vOriginalValues;
+
+        static int CompareModelPropertyKey(const ModelPropertyValue& left, int nKey) noexcept;
+        const ModelPropertyValue* FindValue(int nKey) const;
     };
 
     std::unique_ptr<Transaction> m_pTransaction;

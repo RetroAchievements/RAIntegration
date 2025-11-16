@@ -21,7 +21,6 @@ static std::wstring GetIntegrationPath(const wchar_t* sFilename);
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-#pragma warning(disable: C2084) // function already has a body
 static std::wstring GetIntegrationPath(const wchar_t* sFilename)
 {
     // attempt to locate the DLL. assume it lives in a folder above the test folder:

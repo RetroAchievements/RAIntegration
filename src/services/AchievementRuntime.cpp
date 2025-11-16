@@ -2830,7 +2830,7 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     return true;
 }
 
-bool AchievementRuntime::LoadProgressFromBuffer(const uint8_t* pBuffer) noexcept
+bool AchievementRuntime::LoadProgressFromBuffer(const uint8_t* pBuffer)
 {
     if (rc_client_deserialize_progress(GetClient(), pBuffer) == RC_OK)
     {
@@ -2863,7 +2863,7 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
     RA_LOG_INFO("Runtime state written to %s", sSaveStateFilename);
 }
 
-int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) const noexcept
+int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) const
 {
     const int nSize = gsl::narrow_cast<int>(rc_client_progress_size(GetClient()));
     if (nSize <= nBufferSize)

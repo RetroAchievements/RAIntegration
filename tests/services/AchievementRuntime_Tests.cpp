@@ -347,7 +347,7 @@ public:
     }
 
     GSL_SUPPRESS_TYPE1
-    bool LoadProgressFromString(const std::string& sBuffer) noexcept
+    bool LoadProgressFromString(const std::string& sBuffer)
     {
         return LoadProgressFromBuffer(reinterpret_cast<const uint8_t*>(sBuffer.data()));
     }

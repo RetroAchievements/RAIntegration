@@ -55,5 +55,10 @@
   <ItemGroup>
     <ClCompile Include="RA_Interface_Tests.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\RA_Integration.vcxproj">
+      <Project>{825cb292-f069-4b27-82cf-3417746acdf3}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

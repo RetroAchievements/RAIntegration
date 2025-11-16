@@ -55,9 +55,6 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
     </ClCompile>
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)RAInterface\MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
-    </PreBuildEvent>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -65,6 +62,9 @@
   <ItemGroup>
     <ProjectReference Include="..\src\devkit\RADevKit.vcxproj">
       <Project>{8ae21d54-f905-44e1-90e5-d22e346bff39}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\src\RA_Integration.vcxproj">
+      <Project>{825cb292-f069-4b27-82cf-3417746acdf3}</Project>
     </ProjectReference>
     <ProjectReference Include="..\src\rcheevos.vcxproj">
       <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>

@@ -233,8 +233,8 @@ protected:
 #ifdef _DEBUG
             const char* pPropertyName;
 #endif
-            int nKey;
-            int nValue;
+            int nKey = 0;
+            int nValue = 0;
             std::wstring sValue;
         } ModelPropertyValue;
         std::vector<ModelPropertyValue> m_vOriginalValues;

@@ -53,7 +53,7 @@ void ModelPropertyContainer::OnValueChanged(const BoolModelProperty::ChangeArgs&
 {
 }
 
-const std::wstring& ModelPropertyContainer::GetString(int nIndex) const
+const std::wstring& ModelPropertyContainer::GetString(int nIndex) const noexcept
 {
     if (nIndex < 0)
         return s_sEmpty;
@@ -68,28 +68,28 @@ const std::wstring& ModelPropertyContainer::GetString(int nIndex) const
     if (!pStrings)
         return s_sEmpty;
 
-    return pStrings->sStrings[nIndex];
+    return gsl::at(pStrings->sStrings, nIndex);
 }
 
 int ModelPropertyContainer::LoadIntoEmptyStringSlot(const std::wstring& sValue)
 {
     int nValue = 0;
 
-    std::unique_ptr<ModelPropertyStrings>* pPrevious = &m_pStrings;
+    gsl::not_null<std::unique_ptr<ModelPropertyStrings>*> pPrevious = gsl::make_not_null(&m_pStrings);
     for (auto* pStrings = m_pStrings.get(); pStrings; pStrings = pStrings->pNext.get())
     {
         for (size_t i = 0; i < ModelPropertyStrings::ChunkCount; i++)
         {
-            if (pStrings->sStrings[i].empty())
+            if (gsl::at(pStrings->sStrings, i).empty())
             {
-                pStrings->sStrings[i] = sValue;
+                gsl::at(pStrings->sStrings, i) = sValue;
                 return nValue;
             }
 
             ++nValue;
         }
 
-        pPrevious = &pStrings->pNext;
+        pPrevious = gsl::make_not_null(&pStrings->pNext);
     }
 
     // no empty slot found, allocate one
@@ -129,7 +129,7 @@ void ModelPropertyContainer::SetValue(const StringModelProperty& pProperty, cons
     else 
     {
         pOldValue = &sOldValue;
-        std::wstring* sString = &sOldValue;
+        gsl::not_null<std::wstring*> sString = gsl::make_not_null(&sOldValue);
 
         if (iter->nValue == -1)
         {
@@ -152,7 +152,7 @@ void ModelPropertyContainer::SetValue(const StringModelProperty& pProperty, cons
 
             Expects(pStrings != nullptr);
 
-            sString = &pStrings->sStrings[nIndex];
+            sString = gsl::make_not_null(&gsl::at(pStrings->sStrings, nIndex));
             if (sValue == *sString)
                 return;
 

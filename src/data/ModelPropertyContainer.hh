@@ -105,7 +105,7 @@ public:
 private:
     typedef struct ModelPropertyValue
     {
-        ModelPropertyValue(int nKey, int nValue)
+        ModelPropertyValue(int nKey, int nValue) noexcept
             : nKey(nKey), nValue(nValue)
         {
         }
@@ -135,7 +135,7 @@ private:
 
     static int CompareModelPropertyKey(const ModelPropertyValue& left, int nKey) noexcept;
     const int* FindValue(int nKey) const;
-    const std::wstring& GetString(int nIndex) const;
+    const std::wstring& GetString(int nIndex) const noexcept;
     int LoadIntoEmptyStringSlot(const std::wstring& sValue);
 };
 

@@ -65,8 +65,7 @@ void MemoryWatchViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     }
     else if (args.Property == MemoryWatchViewModel::SizeProperty)
     {
-        m_nSize = ra::itoe<MemSize>(args.tNewValue);
-        OnSizeChanged();
+        OnSizeChanged(args);
     }
     else if (args.Property == MemoryWatchViewModel::AddressProperty)
     {
@@ -148,8 +147,9 @@ static rc_condition_t* FindMeasuredCondition(rc_value_t* pValue) noexcept
     return nullptr;
 }
 
-void MemoryWatchViewModel::OnSizeChanged()
+void MemoryWatchViewModel::OnSizeChanged(const IntModelProperty::ChangeArgs& args)
 {
+    m_nSize = ra::itoe<MemSize>(args.tNewValue);
     switch (m_nSize)
     {
         case MemSize::BitCount:
@@ -166,8 +166,36 @@ void MemoryWatchViewModel::OnSizeChanged()
     {
         m_bModified = true;
 
+        if (!m_sIndirectAddress.empty())
+        {
+            // update the serialized indirect address string
+            std::string sOldSerialized;
+            ra::services::AchievementLogicSerializer::AppendConditionType(sOldSerialized, TriggerConditionType::Measured);
+            ra::services::AchievementLogicSerializer::AppendOperand(
+                sOldSerialized, ra::services::TriggerOperandType::Address, ra::itoe<MemSize>(args.tOldValue), 0U);
+            auto nZeroIndex = sOldSerialized.find("00");
+            if (nZeroIndex != std::string::npos)
+            {
+                sOldSerialized.resize(nZeroIndex);
+                const auto nIndex = m_sIndirectAddress.find(sOldSerialized);
+                if (nIndex != std::string::npos)
+                {
+                    std::string sNewSerialized;
+                    ra::services::AchievementLogicSerializer::AppendOperand(
+                        sNewSerialized, ra::services::TriggerOperandType::Address, m_nSize, 0U);
+                    nZeroIndex = sNewSerialized.find("00");
+                    if (nZeroIndex != std::string::npos)
+                    {
+                        sNewSerialized.resize(nZeroIndex);
+                        m_sIndirectAddress.replace(nIndex + 2, sOldSerialized.length() - 2, sNewSerialized);
+                    }
+                }
+            }
+        }
+
         if (m_pValue)
         {
+            // update the runtime evaluation logic
             const auto* pCondition = FindMeasuredCondition(m_pValue);
             if (pCondition)
             {

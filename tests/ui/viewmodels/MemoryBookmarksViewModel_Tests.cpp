@@ -472,6 +472,33 @@ public:
         Assert::AreEqual(std::string("{\"Bookmarks\":[{\"MemAddr\":\"0xH04d2\",\"Decimal\":true}]}"), sContents);
     }
 
+    TEST_METHOD(TestSaveBookmarksIndirectSizeChanged)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
+
+        Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Items().Count());
+        bookmarks.AddBookmark("I:0xG005c7d80&536870911_M:fH00000038");
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
+        Assert::AreEqual(MemSize::Double32, bookmarks.GetBookmark(0)->GetSize());
+
+        bookmarks.GetBookmark(0)->SetSize(MemSize::Double32BigEndian);
+        Assert::IsTrue(bookmarks.IsModified());
+
+        bookmarks.mockGameContext.SetGameId(0U);
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.mockGameContext.NotifyGameLoad();
+
+        Assert::IsFalse(bookmarks.IsModified());
+        const std::string& sContents = bookmarks.mockLocalStorage.GetStoredData(ra::services::StorageItemType::Bookmarks, L"3");
+        Assert::AreEqual(std::string("{\"Bookmarks\":[{\"MemAddr\":\"I:0xG005c7d80&536870911_M:fI00000038\"}]}"), sContents);
+    }
+
     TEST_METHOD(TestCodeNoteChanged)
     {
         MemoryBookmarksViewModelHarness bookmarks;

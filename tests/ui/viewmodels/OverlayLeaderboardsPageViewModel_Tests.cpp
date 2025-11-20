@@ -34,9 +34,9 @@ private:
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-        OverlayLeaderboardsPageViewModelHarness()
+        OverlayLeaderboardsPageViewModelHarness() noexcept
         {
-            mockGameContext.SetGameTitle(L"Game Title");
+            GSL_SUPPRESS_F6 mockGameContext.SetGameTitle(L"Game Title");
         }
 
         ItemViewModel* GetItem(gsl::index nIndex) { return m_vItems.GetItemAt(nIndex); }

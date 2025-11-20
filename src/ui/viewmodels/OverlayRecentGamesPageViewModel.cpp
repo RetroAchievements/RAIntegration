@@ -1,6 +1,6 @@
 #include "OverlayRecentGamesPageViewModel.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "api\impl\OfflineServer.hh"
 

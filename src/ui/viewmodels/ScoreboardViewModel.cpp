@@ -1,6 +1,6 @@
 #include "ScoreboardViewModel.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "ui\OverlayTheme.hh"
 

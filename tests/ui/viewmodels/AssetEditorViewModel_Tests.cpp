@@ -49,7 +49,7 @@ private:
             // DoFrame tests expect the dialog to be visible
             GSL_SUPPRESS_F6 SetIsVisible(true);
 
-            mockRuntime.MockGame();
+            GSL_SUPPRESS_F6 mockRuntime.MockGame();
         }
 
         ~AssetEditorViewModelHarness()

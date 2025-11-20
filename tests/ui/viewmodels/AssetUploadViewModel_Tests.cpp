@@ -36,9 +36,9 @@ private:
     class AssetUploadViewModelHarness : public AssetUploadViewModel
     {
     public:
-        AssetUploadViewModelHarness()
+        AssetUploadViewModelHarness() noexcept
         {
-            mockGameContext.SetGameId(GameId);
+            GSL_SUPPRESS_F6 mockGameContext.SetGameId(GameId);
         }
 
         static constexpr unsigned GameId = 22U;

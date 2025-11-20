@@ -1,6 +1,6 @@
 #include "NewAssetViewModel.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "data\context\GameContext.hh"
 

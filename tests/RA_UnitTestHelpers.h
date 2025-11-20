@@ -2,9 +2,7 @@
 #define RA_UNITTESTHELPERS_H
 #pragma once
 
-#include "ra_utility.h"
-
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "data\Types.hh"
 

@@ -1,5 +1,5 @@
-#ifndef RA_LOG_H
-#define RA_LOG_H
+#ifndef RA_LOG_HH
+#define RA_LOG_HH
 #pragma once
 
 #include "services\ILogger.hh"
@@ -10,9 +10,8 @@
 
 #else
 
-#include "RA_StringUtils.h"
-
 #include "services\ServiceLocator.hh"
+#include "util\Strings.hh"
 
 #define RA_LOG_LEVEL(lvl, ...) \
 { \
@@ -27,4 +26,4 @@
 #define RA_LOG_WARN(...) RA_LOG_LEVEL(ra::services::LogLevel::Warn, __VA_ARGS__)
 #define RA_LOG_ERR(...) RA_LOG_LEVEL(ra::services::LogLevel::Error, __VA_ARGS__)
 
-#endif // !RA_LOG_H
+#endif // !RA_LOG_HH

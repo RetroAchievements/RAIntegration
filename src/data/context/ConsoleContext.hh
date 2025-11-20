@@ -3,8 +3,8 @@
 #pragma once
 
 #include "RAInterface\RA_Consoles.h"
-#include "ra_fwd.h"
 #include "data\Types.hh"
+#include "util\GSL.hh"
 
 #include <string>
 

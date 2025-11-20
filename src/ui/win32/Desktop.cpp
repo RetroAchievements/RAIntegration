@@ -28,7 +28,7 @@
 #include "ui/win32/bindings/ControlBinding.hh"
 #include "ui/win32/bindings/MemoryViewerControlBinding.hh"
 
-#include "RA_Log.h"
+#include "util\Log.hh"
 
 #include <TlHelp32.h>
 

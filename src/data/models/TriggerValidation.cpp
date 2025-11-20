@@ -1,6 +1,6 @@
 #include "TriggerValidation.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 #include "RA_Defs.h"
 
 #include "data/context/ConsoleContext.hh"

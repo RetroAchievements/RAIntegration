@@ -176,7 +176,7 @@ private:
 
         AssetListViewModelHarness() noexcept
         {
-            mockRuntime.MockGame();
+            GSL_SUPPRESS_F6 mockRuntime.MockGame();
 
             GSL_SUPPRESS_F6 InitializeNotifyTargets();
         }
@@ -402,14 +402,14 @@ private:
         }
 
     private:
-        void EnsureCoreSubset() const
+        void EnsureCoreSubset() const noexcept
         {
             auto* pGame = mockRuntime.GetClient()->game;
             if (!pGame->subsets)
             {
                 // populate a minimal core subset just to prevent a null reference error
                 auto* pSubset =
-                    (rc_client_subset_info_t*)rc_buffer_alloc(&pGame->buffer, sizeof(rc_client_subset_info_t));
+                    static_cast<rc_client_subset_info_t*>(rc_buffer_alloc(&pGame->buffer, sizeof(rc_client_subset_info_t)));
                 memset(pSubset, 0, sizeof(*pSubset));
                 pSubset->public_.id = mockGameContext.ActiveGameId();
                 pSubset->public_.title = pGame->public_.title;
@@ -628,9 +628,9 @@ private:
         class MockAchievementModel : public ra::data::models::AchievementModel
         {
         public:
-            MockAchievementModel()
+            MockAchievementModel() noexcept
             {
-                m_pInfo = std::make_unique<rc_client_achievement_info_t>();
+                GSL_SUPPRESS_F6 m_pInfo = std::make_unique<rc_client_achievement_info_t>();
                 memset(m_pInfo.get(), 0, sizeof(rc_client_achievement_info_t));
             }
 
@@ -3359,12 +3359,14 @@ public:
 
         // both achievements should be loaded in the runtime
         auto* pClient = vmAssetList.mockRuntime.GetClient();
-        auto* pAch1 = (rc_client_achievement_info_t*)rc_client_get_achievement_info(pClient, 111000001U);
+        GSL_SUPPRESS_TYPE1
+        auto* pAch1 = reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, 111000001U));
         Expects(pAch1 != nullptr);
         Assert::IsNull(pAch1->trigger); // trigger not set until activated
         Assert::AreEqual({0}, pAch1->public_.points);
 
-        auto* pAch2 = (rc_client_achievement_info_t*)rc_client_get_achievement_info(pClient, 111000002U);
+        GSL_SUPPRESS_TYPE1
+        auto* pAch2 = reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, 111000002U));
         Expects(pAch2 != nullptr);
         Assert::IsNull(pAch2->trigger);
         Assert::AreEqual({0}, pAch2->public_.points);
@@ -4563,7 +4565,7 @@ public:
                 return DialogResult::Yes;
             });
 
-        const ra::ByteAddress nAddress = 0x02;
+        constexpr ra::ByteAddress nAddress = 0x02;
         vmAssetList.mockWindowManager.MemoryInspector.SetCurrentAddress(nAddress);
         vmAssetList.mockWindowManager.MemoryInspector.SetCurrentAddressNote(L"foo");
         Assert::IsTrue(vmAssetList.mockWindowManager.MemoryInspector.IsNoteUncommitted());

@@ -1,6 +1,6 @@
 #include "MessageBoxDialog.hh"
 
-#include "RA_StringUtils.h"
+#include "util\Strings.hh"
 
 #include "services/ServiceLocator.hh"
 

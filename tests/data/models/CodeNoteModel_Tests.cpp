@@ -639,10 +639,10 @@ public:
         CodeNoteModelHarness note;
         note.mockConsoleContext.AddMemoryRegion(0, 0x7F, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80000000);
         std::array<unsigned char, 256> memory{};
-        memory[0x04] = 0x10; // pointer@0x04 = 0x80000010
-        memory[0x07] = 0x80;
-        memory[0x14] = 0x20; // pointer@0x14 = 0x80000020
-        memory[0x17] = 0x80;
+        memory.at(0x04) = 0x10; // pointer@0x04 = 0x80000010
+        memory.at(0x07) = 0x80;
+        memory.at(0x14) = 0x20; // pointer@0x14 = 0x80000020
+        memory.at(0x17) = 0x80;
         note.mockEmulatorContext.MockMemory(memory);
         const std::wstring sNote =
             L"[32-bit pointer] root\r\n"
@@ -669,10 +669,10 @@ public:
         CodeNoteModelHarness note;
         note.mockConsoleContext.AddMemoryRegion(0, 0x7F, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80000000);
         std::array<unsigned char, 256> memory{};
-        memory[0x04] = 0x10; // pointer@0x04 = 0x80000010
-        memory[0x07] = 0x80;
-        memory[0x08] = 0x20; // pointer@0x08 = 0x80000020
-        memory[0x0B] = 0x80;
+        memory.at(0x04) = 0x10; // pointer@0x04 = 0x80000010
+        memory.at(0x07) = 0x80;
+        memory.at(0x08) = 0x20; // pointer@0x08 = 0x80000020
+        memory.at(0x0B) = 0x80;
         note.mockEmulatorContext.MockMemory(memory);
         const std::wstring sNote =
             L"[32-bit pointer] root\r\n"

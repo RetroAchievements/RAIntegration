@@ -1,6 +1,5 @@
 #include "MemoryRegionsDialog.hh"
 
-#include "RA_Log.h"
 #include "RA_Resource.h"
 
 #include "ui\IDesktop.hh"
@@ -9,6 +8,9 @@
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
+
+#include "util\EnumOps.hh"
+#include "util\Log.hh"
 
 using ra::ui::viewmodels::MemoryRegionsViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;

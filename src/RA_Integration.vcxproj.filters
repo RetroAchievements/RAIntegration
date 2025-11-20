@@ -19,9 +19,6 @@
     <Filter Include="Services\Impl">
       <UniqueIdentifier>{3b94374b-a06e-4994-b6f8-3a2f5e215803}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Helpers">
-      <UniqueIdentifier>{cd433aa7-9c74-461e-ba0e-3ce327a59b7a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="UI\ViewModels">
       <UniqueIdentifier>{0badbd6c-a477-4f69-b999-f27b050c3a17}</UniqueIdentifier>
     </Filter>
@@ -95,9 +92,6 @@
     </ClCompile>
     <ClCompile Include="ui\win32\Desktop.cpp">
       <Filter>UI\Win32</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_StringUtils.cpp">
-      <Filter>Services</Filter>
     </ClCompile>
     <ClCompile Include="RA_Json.cpp">
       <Filter>Services</Filter>
@@ -333,9 +327,6 @@
     <ClCompile Include="data\context\UserContext.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
-    <ClCompile Include="data\ModelProperty.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="data\ModelPropertyContainer.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -491,17 +482,11 @@
     <ClInclude Include="services\SearchResults.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="ra_fwd.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
     <ClInclude Include="services\IFileSystem.hh">
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\WindowsFileSystem.hh">
       <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_StringUtils.h">
-      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\StringTextReader.hh">
       <Filter>Services\Impl</Filter>
@@ -619,9 +604,6 @@
     </ClInclude>
     <ClInclude Include="Exports.hh">
       <Filter>Interface</Filter>
-    </ClInclude>
-    <ClInclude Include="ra_math.h">
-      <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="api\ApiCall.hh">
       <Filter>API</Filter>
@@ -926,9 +908,6 @@
     <ClInclude Include="data\ModelPropertyContainer.hh">
       <Filter>Data</Filter>
     </ClInclude>
-    <ClInclude Include="data\ModelProperty.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="data\DataModelBase.hh">
       <Filter>Data</Filter>
     </ClInclude>
@@ -1124,6 +1103,9 @@
     <ClInclude Include="data\NotifyTargetSet.hh">
       <Filter>Data</Filter>
     </ClInclude>
+    <ClInclude Include="services\impl\MessageDispatcher.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">
@@ -1134,12 +1116,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ra_type_traits.h">
-      <Filter>Helpers</Filter>
-    </None>
-    <None Include="ra_utility.h">
-      <Filter>Helpers</Filter>
-    </None>
-    <None Include="base.props" />
+    <None Include="$(SolutionDir)\src\base.props" />
   </ItemGroup>
 </Project>

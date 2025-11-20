@@ -2,7 +2,7 @@
 
 #ifdef PERFORMANCE_COUNTERS
 
-#include "RA_Log.h"
+#include "util\Log.hh"
 
 #include "IClock.hh"
 

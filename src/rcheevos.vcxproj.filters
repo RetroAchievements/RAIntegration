@@ -123,4 +123,7 @@
     </Natvis>
     <Natvis Include="..\rcheevos\src\rc_client_types.natvis" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="$(SolutionDir)\src\base.props" />
+  </ItemGroup>
 </Project>

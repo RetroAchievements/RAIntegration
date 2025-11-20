@@ -10,6 +10,9 @@
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
+#include "util\EnumOps.hh"
+#include "util\Log.hh"
+
 using ra::ui::viewmodels::MemoryInspectorViewModel;
 using ra::ui::viewmodels::MemorySearchViewModel;
 using ra::ui::viewmodels::MemoryViewerViewModel;

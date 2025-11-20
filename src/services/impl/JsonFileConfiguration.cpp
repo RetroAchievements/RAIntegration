@@ -1,9 +1,8 @@
 #include "JsonFileConfiguration.hh"
 
 #include "RA_Json.h"
-#include "RA_Log.h"
-#include "RA_StringUtils.h"
-#include "ra_utility.h"
+#include "util\Log.hh"
+#include "util\Strings.hh"
 
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"

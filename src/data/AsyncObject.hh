@@ -2,7 +2,7 @@
 #define RA_DATA_ASYNCOBJECT_HH
 #pragma once
 
-#include "ra_fwd.h"
+#include "util\GSL.hh"
 
 namespace ra {
 namespace data {

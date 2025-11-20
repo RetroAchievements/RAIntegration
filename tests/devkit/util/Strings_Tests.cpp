@@ -1,8 +1,6 @@
-#include "RA_Defs.h"
+#include "util\Strings.hh"
 
-#include "RA_UnitTestHelpers.h"
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+#include "testutil\CppUnitTest.hh"
 
 namespace ra {
 

@@ -50,18 +50,23 @@ public:
         ResetExternalRcheevosClient();
     }
 
+    AchievementRuntimeExportsHarness(const AchievementRuntimeExportsHarness&) noexcept = delete;
+    AchievementRuntimeExportsHarness& operator=(const AchievementRuntimeExportsHarness&) noexcept = delete;
+    AchievementRuntimeExportsHarness(AchievementRuntimeExportsHarness&&) noexcept = delete;
+    AchievementRuntimeExportsHarness& operator=(AchievementRuntimeExportsHarness&&) noexcept = delete;
+
     ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
     ra::data::context::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockConfiguration mockConfiguration;
 
-    void InitializeEventHandler()
+    void InitializeEventHandler() noexcept
     {
         s_pRuntimeHarness = this;
 
         _Rcheevos_SetRAIntegrationEventHandler(&m_pExternalClient, DispatchRAIntegrationEvent);
     }
 
-    void InitializeClientEventHandler()
+    void InitializeClientEventHandler() noexcept
     {
         s_pRuntimeHarness = this;
 
@@ -108,13 +113,13 @@ public:
         Assert::Fail(ra::StringPrintf(L"MENUITEM check changed event not seen for %d", nMenuItemId).c_str());
     }
 
-    void ResetSeenEvents()
+    void ResetSeenEvents() noexcept
     {
         m_nEventsSeen = 0;
         m_vMenuItemsChanged.clear();
     }
 
-    void InitializeMemoryFunctions()
+    void InitializeMemoryFunctions() noexcept
     {
         s_pRuntimeHarness = this;
 
@@ -180,12 +185,14 @@ private:
         return nBytesAvailable;
     }
 
+    GSL_SUPPRESS_CON3
     static void DispatchWriteMemory(uint32_t address, uint8_t* buffer, uint32_t num_bytes, rc_client_t* client)
     {
         Assert::AreEqual((void*)&s_pRuntimeHarness->m_pExternalClient, (void*)client);
 
-        if (s_pRuntimeHarness->m_vMockMemory.size() < address + num_bytes + 1)
-            s_pRuntimeHarness->m_vMockMemory.resize(address + num_bytes + 1);
+        const auto nNextAddress = gsl::narrow_cast<size_t>(address + num_bytes + 1);
+        if (s_pRuntimeHarness->m_vMockMemory.size() < nNextAddress)
+            s_pRuntimeHarness->m_vMockMemory.resize(nNextAddress);
 
         memcpy(&s_pRuntimeHarness->m_vMockMemory.at(address), buffer, num_bytes);
     }
@@ -229,7 +236,8 @@ private:
         Assert::AreEqual({0}, pItem->checked);
     };
 
-    static void AssertV1Exports(rc_client_external_t& pClient)
+    GSL_SUPPRESS_TYPE4
+    static void AssertV1Exports(const rc_client_external_t& pClient)
     {
         Assert::IsNotNull((void*)pClient.destroy, L"destory not set");
 
@@ -289,13 +297,15 @@ private:
         Assert::IsNotNull((void*)pClient.deserialize_progress, L"deserialize_progress not set");
     }
 
-    static void AssertV2Exports(rc_client_external_t & pClient)
+    GSL_SUPPRESS_TYPE4
+        static void AssertV2Exports(const rc_client_external_t & pClient)
     {
         Assert::IsNotNull((void*)pClient.add_game_hash, L"add_game_hash not set");
         Assert::IsNotNull((void*)pClient.load_unknown_game, L"load_unknown_game not set");
     }
 
-    static void AssertV3Exports(rc_client_external_t & pClient)
+    GSL_SUPPRESS_TYPE4
+        static void AssertV3Exports(const rc_client_external_t & pClient)
     {
         Assert::IsNotNull((void*)pClient.get_user_info_v3, L"get_user_info_v3 not set");
         Assert::IsNotNull((void*)pClient.get_game_info_v3, L"get_game_info_v3 not set");

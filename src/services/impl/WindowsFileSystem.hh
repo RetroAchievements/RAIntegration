@@ -2,7 +2,7 @@
 #define RA_SERVICES_WIN32_FILESYSTEM_HH
 #pragma once
 
-#include "ra_fwd.h"
+#include "util\GSL.hh"
 
 #include "services\IFileSystem.hh"
 

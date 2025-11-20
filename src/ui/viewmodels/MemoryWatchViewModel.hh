@@ -280,7 +280,7 @@ protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
 
     void OnValueChanged();
-    void OnSizeChanged();
+    void OnSizeChanged(const IntModelProperty::ChangeArgs& args);
 
     uint32_t ReadValue();
 

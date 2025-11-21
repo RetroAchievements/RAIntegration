@@ -5,6 +5,20 @@ namespace data {
 
 const BoolModelProperty DataModelBase::IsModifiedProperty("DataModelBase", "IsModified", false);
 
+int DataModelBase::Transaction::CompareModelPropertyKey(const DataModelBase::Transaction::ModelPropertyValue& left, int nKey) noexcept
+{
+    return left.nKey < nKey;
+}
+
+const DataModelBase::Transaction::ModelPropertyValue* DataModelBase::Transaction::FindValue(int nKey) const
+{
+    const auto iter = std::lower_bound(m_vOriginalValues.begin(), m_vOriginalValues.end(), nKey, CompareModelPropertyKey);
+    if (iter == m_vOriginalValues.end() || iter->nKey != nKey)
+        return nullptr;
+
+    return &(*iter);
+}
+
 void DataModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (&args != m_pEndUpdateChangeArgs)
@@ -44,18 +58,21 @@ void DataModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 
 void DataModelBase::Transaction::ValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(args.Property.GetKey());
-    if (iter == m_mOriginalIntValues.end())
+    auto iter = std::lower_bound(m_vOriginalValues.begin(), m_vOriginalValues.end(), args.Property.GetKey(), CompareModelPropertyKey);
+    if (iter == m_vOriginalValues.end() || iter->nKey != args.Property.GetKey())
     {
-        m_mOriginalIntValues.insert_or_assign(args.Property.GetKey(), static_cast<int>(args.tOldValue));
-
+        ModelPropertyValue value;
+        value.nKey = args.Property.GetKey();
+        value.nValue = args.tOldValue ? 1 : 0;
 #ifdef _DEBUG
-        m_mDebugOriginalValues.insert_or_assign(args.Property.GetPropertyName(), args.tOldValue ? L"true" : L"false");
+        value.sValue = args.tOldValue ? L"true" : L"false";
+        value.pPropertyName = args.Property.GetPropertyName();
 #endif
+        m_vOriginalValues.insert(iter, std::move(value));
     }
-    else
+    else if (args.tNewValue == (iter->nValue != 0))
     {
-        m_mOriginalIntValues.erase(iter);
+        m_vOriginalValues.erase(iter);
     }
 }
 
@@ -98,18 +115,21 @@ void DataModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 
 void DataModelBase::Transaction::ValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    const StringModelProperty::ValueMap::const_iterator iter = m_mOriginalStringValues.find(args.Property.GetKey());
-    if (iter == m_mOriginalStringValues.end())
+    auto iter = std::lower_bound(m_vOriginalValues.begin(), m_vOriginalValues.end(), args.Property.GetKey(), CompareModelPropertyKey);
+    if (iter == m_vOriginalValues.end() || iter->nKey != args.Property.GetKey())
     {
-        m_mOriginalStringValues.insert_or_assign(args.Property.GetKey(), args.tOldValue);
-
+        ModelPropertyValue value;
+        value.nKey = args.Property.GetKey();
+        value.nValue = 0;
+        value.sValue = args.tOldValue;
 #ifdef _DEBUG
-        m_mDebugOriginalValues.insert_or_assign(args.Property.GetPropertyName(), args.tOldValue);
+        value.pPropertyName = args.Property.GetPropertyName();
 #endif
+        m_vOriginalValues.insert(iter, std::move(value));
     }
-    else if (args.tNewValue == iter->second)
+    else if (args.tNewValue == iter->sValue)
     {
-        m_mOriginalStringValues.erase(iter);
+        m_vOriginalValues.erase(iter);
     }
 }
 
@@ -152,21 +172,23 @@ void DataModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 
 void DataModelBase::Transaction::ValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(args.Property.GetKey());
-    if (iter == m_mOriginalIntValues.end())
+    auto iter = std::lower_bound(m_vOriginalValues.begin(), m_vOriginalValues.end(), args.Property.GetKey(), CompareModelPropertyKey);
+    if (iter == m_vOriginalValues.end() || iter->nKey != args.Property.GetKey())
     {
-        m_mOriginalIntValues.insert_or_assign(args.Property.GetKey(), args.tOldValue);
-
+        ModelPropertyValue value;
+        value.nKey = args.Property.GetKey();
+        value.nValue = args.tOldValue;
+        value.sValue.clear();
 #ifdef _DEBUG
-        m_mDebugOriginalValues.insert_or_assign(args.Property.GetPropertyName(), std::to_wstring(args.tOldValue));
+        value.pPropertyName = args.Property.GetPropertyName();
 #endif
+        m_vOriginalValues.insert(iter, std::move(value));
     }
-    else if (args.tNewValue == iter->second)
+    else if (args.tNewValue == iter->nValue)
     {
-        m_mOriginalIntValues.erase(iter);
+        m_vOriginalValues.erase(iter);
     }
 }
-
 
 void DataModelBase::BeginUpdate()
 {
@@ -272,35 +294,30 @@ void DataModelBase::Transaction::Revert(DataModelBase& pModel)
 {
     // swap out the map while we process it to prevent re-entrant calls to ValueChanged from
     // modifying it while we're iterating
-    IntModelProperty::ValueMap mOriginalIntValues;
-    mOriginalIntValues.swap(m_mOriginalIntValues);
-    for (const auto& pPair : mOriginalIntValues)
+    std::vector<ModelPropertyValue> vOriginalValues;
+    vOriginalValues.swap(m_vOriginalValues);
+    for (const auto& pValue : vOriginalValues)
     {
-        const auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pPair.first);
+        const auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pValue.nKey);
+
         const IntModelProperty* pIntProperty = dynamic_cast<const IntModelProperty*>(pProperty);
         if (pIntProperty != nullptr)
         {
-            pModel.SetValue(*pIntProperty, pPair.second);
+            pModel.SetValue(*pIntProperty, pValue.nValue);
         }
         else
         {
-            const BoolModelProperty* pBoolProperty = dynamic_cast<const BoolModelProperty*>(pProperty);
-            if (pBoolProperty != nullptr)
+            const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
+            if (pStringProperty != nullptr)
             {
-                pModel.SetValue(*pBoolProperty, pPair.second);
+                pModel.SetValue(*pStringProperty, pValue.sValue);
             }
-        }
-    }
-
-    StringModelProperty::ValueMap mOriginalStringValues;
-    mOriginalStringValues.swap(m_mOriginalStringValues);
-    for (const auto& pPair : mOriginalStringValues)
-    {
-        const auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pPair.first);
-        const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
-        if (pStringProperty != nullptr)
-        {
-            pModel.SetValue(*pStringProperty, pPair.second);
+            else
+            {
+                const BoolModelProperty* pBoolProperty = dynamic_cast<const BoolModelProperty*>(pProperty);
+                if (pBoolProperty != nullptr)
+                    pModel.SetValue(*pBoolProperty, (pValue.nValue != 0));
+            }
         }
     }
 }
@@ -310,55 +327,51 @@ void DataModelBase::Transaction::Commit(const DataModelBase& pModel)
     if (!m_pNext)
         return;
 
-    for (const auto& pPair : m_mOriginalIntValues)
+    auto& pNextOriginalValues = m_pNext->m_vOriginalValues;
+    for (const auto& pValue : m_vOriginalValues)
     {
-        const auto pScan = m_pNext->m_mOriginalIntValues.find(pPair.first);
-        if (pScan == m_pNext->m_mOriginalIntValues.end())
+        const auto iter = std::lower_bound(pNextOriginalValues.begin(), pNextOriginalValues.end(), pValue.nKey, CompareModelPropertyKey);
+        if (iter == pNextOriginalValues.end() || iter->nKey != pValue.nKey)
         {
             // field was not modified in parent, move the original value into the parent
-            m_pNext->m_mOriginalIntValues.insert_or_assign(pPair.first, pPair.second);
+            ModelPropertyValue value;
+            value.nKey = pValue.nKey;
+            value.nValue = pValue.nValue;
+            value.sValue = pValue.sValue;
+#ifdef _DEBUG
+            value.pPropertyName = pValue.pPropertyName;
+#endif
+            pNextOriginalValues.insert(iter, std::move(value));
         }
         else
         {
             // field was modified in parent - if it's been modified back, remove the modification tracker
             // otherwise, leave the previous original value in place.
-            const auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pPair.first);
+            const auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pValue.nKey);
+
             const IntModelProperty* pIntProperty = dynamic_cast<const IntModelProperty*>(pProperty);
             if (pIntProperty != nullptr)
             {
-                if (pModel.GetValue(*pIntProperty) == pScan->second)
-                    m_pNext->m_mOriginalIntValues.erase(pScan);
+                if (pModel.GetValue(*pIntProperty) == iter->nValue)
+                    pNextOriginalValues.erase(iter);
             }
             else
             {
-                const BoolModelProperty* pBoolProperty = dynamic_cast<const BoolModelProperty*>(pProperty);
-                if (pBoolProperty != nullptr)
+                const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
+                if (pStringProperty != nullptr)
                 {
-                    if (pModel.GetValue(*pBoolProperty) == gsl::narrow_cast<bool>(pScan->second))
-                        m_pNext->m_mOriginalIntValues.erase(pScan);
+                    if (pModel.GetValue(*pStringProperty) == iter->sValue)
+                        pNextOriginalValues.erase(iter);
                 }
-            }
-        }
-    }
-
-    for (const auto& pPair : m_mOriginalStringValues)
-    {
-        const auto pScan = m_pNext->m_mOriginalStringValues.find(pPair.first);
-        if (pScan == m_pNext->m_mOriginalStringValues.end())
-        {
-            // field was not modified in parent, move the original value into the parent
-            m_pNext->m_mOriginalStringValues.insert_or_assign(pPair.first, pPair.second);
-        }
-        else
-        {
-            // field was modified in parent - if it's been modified back, remove the modification tracker
-            // otherwise, leave the previous original value in place.
-            const auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pPair.first);
-            const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
-            if (pStringProperty != nullptr)
-            {
-                if (pModel.GetValue(*pStringProperty) == pScan->second)
-                    m_pNext->m_mOriginalStringValues.erase(pScan);
+                else
+                {
+                    const BoolModelProperty* pBoolProperty = dynamic_cast<const BoolModelProperty*>(pProperty);
+                    if (pBoolProperty != nullptr)
+                    {
+                        if (pModel.GetValue(*pBoolProperty) == (iter->nValue != 0))
+                            pNextOriginalValues.erase(iter);
+                    }
+                }
             }
         }
     }

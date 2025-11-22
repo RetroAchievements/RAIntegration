@@ -67,14 +67,17 @@ void MemoryRegionsModel::AddCustomRegion(ra::ByteAddress nStartAddress, ra::Byte
     pRegion.nEndAddress = nEndAddress;
 
     m_vRegions.push_back(pRegion);
+
+    // setting changes to Unpublished forces a write without attempting to consolidate modifications
+    SetValue(ChangesProperty, ra::etoi(AssetChanges::Unpublished));
 }
 
 void MemoryRegionsModel::ResetCustomRegions()
 {
     m_vRegions.clear();
 
-    // setting changes to Unpublished forces a write without attempting to consolidate modifications
-    SetValue(ChangesProperty, ra::etoi(AssetChanges::Unpublished));
+    // nothing should be written if custom regions is empty
+    SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
 }
 
 static bool ParseAddress(const wchar_t** pointer, ra::ByteAddress& address) noexcept

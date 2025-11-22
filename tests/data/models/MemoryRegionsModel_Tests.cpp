@@ -92,7 +92,7 @@ public:
         pTokenizer.Consume(':');
 
         Assert::IsTrue(regions.Deserialize(pTokenizer));
-        Assert::AreEqual(AssetChanges::None, regions.GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, regions.GetChanges());
         regions.AssertRegion(0x1234, 0x2345, L"My region");
     }
 
@@ -106,7 +106,7 @@ public:
         pTokenizer.Consume(':');
 
         Assert::IsTrue(regions.Deserialize(pTokenizer));
-        Assert::AreEqual(AssetChanges::None, regions.GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, regions.GetChanges());
         regions.AssertRegion(0x1234, 0x2345, L"My \"region\"");
     }
 

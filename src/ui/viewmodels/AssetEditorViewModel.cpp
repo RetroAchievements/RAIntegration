@@ -678,6 +678,14 @@ static void AppendTrigger(std::string& sDefinition, const std::string& sTrigger)
         sDefinition += sTrigger;
 }
 
+static void AppendValue(std::string& sDefinition, const std::string& sValue)
+{
+    if (sValue.empty())
+        sDefinition += "0";
+    else
+        sDefinition += sValue;
+}
+
 void AssetEditorViewModel::OnTriggerChanged(bool bIsLoading)
 {
     const std::string& sTrigger = Trigger().Serialize();
@@ -715,9 +723,9 @@ void AssetEditorViewModel::OnTriggerChanged(bool bIsLoading)
 
         sDefinition.append("::VAL:");
         if (nSelectedPart == LeaderboardPart::Value)
-            AppendTrigger(sDefinition, sTrigger);
+            AppendValue(sDefinition, sTrigger);
         else
-            AppendTrigger(sDefinition, pLeaderboard->GetValueDefinition());
+            AppendValue(sDefinition, pLeaderboard->GetValueDefinition());
 
         nSize = rc_lboard_size(sDefinition.c_str());
     }

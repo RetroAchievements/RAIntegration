@@ -813,7 +813,7 @@ public:
         leaderboard->SetStartTrigger("0=1");
         leaderboard->SetCancelTrigger("0=1");
         leaderboard->SetSubmitTrigger("0=1");
-        leaderboard->SetValueDefinition("0=1");
+        leaderboard->SetValueDefinition("0");
         leaderboard->Validate();
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationWarning());

@@ -3,23 +3,42 @@
 namespace ra {
 namespace data {
 
+std::wstring ModelPropertyContainer::s_sEmpty;
+
+int ModelPropertyContainer::CompareModelPropertyKey(const ModelPropertyContainer::ModelPropertyValue& left, int nKey) noexcept
+{
+    return left.nKey < nKey;
+}
+
+const int* ModelPropertyContainer::FindValue(int nKey) const
+{
+    const auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), nKey, CompareModelPropertyKey);
+    if (iter == m_vValues.end() || iter->nKey != nKey)
+        return nullptr;
+
+    return &iter->nValue;
+}
+
 void ModelPropertyContainer::SetValue(const BoolModelProperty& pProperty, bool bValue)
 {
-    const IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
-
-    if (bValue == pProperty.GetDefaultValue())
+    const int nValue = bValue ? 1 : 0;
+    auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
+    if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
     {
-        if (iter == m_mIntValues.end())
+        if (bValue == pProperty.GetDefaultValue())
             return;
 
-        m_mIntValues.erase(iter);
+        m_vValues.emplace(iter, pProperty.GetKey(), nValue);
     }
     else
     {
-        if (iter != m_mIntValues.end())
+        if (nValue == iter->nValue)
             return;
 
-        m_mIntValues.insert_or_assign(pProperty.GetKey(), static_cast<int>(bValue));
+        if (bValue == pProperty.GetDefaultValue())
+            m_vValues.erase(iter);
+        else
+            iter->nValue = nValue;
     }
 
 #ifdef _DEBUG
@@ -34,42 +53,123 @@ void ModelPropertyContainer::OnValueChanged(const BoolModelProperty::ChangeArgs&
 {
 }
 
-void ModelPropertyContainer::SetValue(const StringModelProperty& pProperty, const std::wstring& sValue)
+const std::wstring& ModelPropertyContainer::GetString(int nIndex) const noexcept
 {
-    const StringModelProperty::ValueMap::iterator iter = m_mStringValues.find(pProperty.GetKey());
-    std::wstring sOldValue;
-    const std::wstring* pOldValue{};
+    if (nIndex < 0)
+        return s_sEmpty;
 
-    if (sValue == pProperty.GetDefaultValue())
+    const ModelPropertyStrings* pStrings = m_pStrings.get();
+    while (nIndex >= ModelPropertyStrings::ChunkCount && pStrings)
     {
-        if (iter == m_mStringValues.end())
+        pStrings = pStrings->pNext.get();
+        nIndex -= ModelPropertyStrings::ChunkCount;
+    }
+
+    if (!pStrings)
+        return s_sEmpty;
+
+    return gsl::at(pStrings->sStrings, nIndex);
+}
+
+int ModelPropertyContainer::LoadIntoEmptyStringSlot(const std::wstring& sValue)
+{
+    int nValue = 0;
+
+    gsl::not_null<std::unique_ptr<ModelPropertyStrings>*> pPrevious = gsl::make_not_null(&m_pStrings);
+    for (auto* pStrings = m_pStrings.get(); pStrings; pStrings = pStrings->pNext.get())
+    {
+        for (size_t i = 0; i < ModelPropertyStrings::ChunkCount; i++)
         {
-            // value didn't change
-            return;
+            if (gsl::at(pStrings->sStrings, i).empty())
+            {
+                gsl::at(pStrings->sStrings, i) = sValue;
+                return nValue;
+            }
+
+            ++nValue;
         }
 
-        // changed to default value, remove from map
-        sOldValue = iter->second;
+        pPrevious = gsl::make_not_null(&pStrings->pNext);
+    }
+
+    // no empty slot found, allocate one
+    *pPrevious = std::make_unique<ModelPropertyStrings>();
+    (*pPrevious)->sStrings[0] = sValue;
+    return nValue;
+}
+
+void ModelPropertyContainer::SetValue(const StringModelProperty& pProperty, const std::wstring& sValue)
+{
+    const std::wstring* pOldValue = nullptr;
+    std::wstring sOldValue;
+
+    auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
+    if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
+    {
+        // no entry for property. if setting to default, do nothing
+        if (sValue == pProperty.GetDefaultValue())
+            return;
+
+        // find a slot for the new value
+        int nValue = 0;
+        if (sValue.empty())
+        {
+            // negative value for empty string
+            nValue = -1;
+        }
+        else
+        {
+            // find an empty slot (not in use)
+            nValue = LoadIntoEmptyStringSlot(sValue);
+        }
+
+        m_vValues.emplace(iter, pProperty.GetKey(), nValue);
+        pOldValue = &pProperty.GetDefaultValue();
+    }
+    else 
+    {
         pOldValue = &sOldValue;
-        m_mStringValues.erase(iter);
-    }
-    else if (iter == m_mStringValues.end())
-    {
-        // not in map, add it
-        pOldValue = &(pProperty.GetDefaultValue());
-        m_mStringValues.insert_or_assign(pProperty.GetKey(), sValue);
-    }
-    else if (iter->second != sValue)
-    {
-        // update map
-        sOldValue = iter->second;
-        pOldValue = &sOldValue;
-        iter->second = sValue;
-    }
-    else
-    {
-        // value didn't change
-        return;
+        gsl::not_null<std::wstring*> sString = gsl::make_not_null(&sOldValue);
+
+        if (iter->nValue == -1)
+        {
+            // negative nValue is empty string. if new value is also empty, do nothing
+            if (sValue.empty())
+                return;
+
+            iter->nValue = LoadIntoEmptyStringSlot(sValue);
+        }
+        else
+        {
+            // find the current value. if the new value is the same, do nothing
+            ModelPropertyStrings* pStrings = m_pStrings.get();
+            int nIndex = iter->nValue;
+            while (nIndex >= ModelPropertyStrings::ChunkCount && pStrings)
+            {
+                pStrings = pStrings->pNext.get();
+                nIndex -= ModelPropertyStrings::ChunkCount;
+            }
+
+            Expects(pStrings != nullptr);
+
+            sString = gsl::make_not_null(&gsl::at(pStrings->sStrings, nIndex));
+            if (sValue == *sString)
+                return;
+
+            // move the current value into a temporary variable for the ChangeArgs
+            sString->swap(sOldValue);
+
+            if (sValue == pProperty.GetDefaultValue())
+            {
+                // setting value back to default. eliminate the value pair.
+                m_vValues.erase(iter);
+            }
+            else
+            {
+                // put the new string in the slot.
+                *sString = sValue;
+            }
+        }
     }
 
 #ifdef _DEBUG
@@ -86,35 +186,26 @@ void ModelPropertyContainer::OnValueChanged(const StringModelProperty::ChangeArg
 
 void ModelPropertyContainer::SetValue(const IntModelProperty& pProperty, int nValue)
 {
-    const IntModelProperty::ValueMap::iterator iter = m_mIntValues.find(pProperty.GetKey());
-    int nOldValue{};
-
-    if (nValue == pProperty.GetDefaultValue())
+    int nOldValue = 0;
+    auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
+    if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
     {
-        // already default, do nothing
-        if (iter == m_mIntValues.end())
+        nOldValue = pProperty.GetDefaultValue();
+        if (nValue == nOldValue)
             return;
 
-        // changed to default value, remove from map
-        nOldValue = iter->second;
-        m_mIntValues.erase(iter);
-    }
-    else if (iter == m_mIntValues.end())
-    {
-        // not in map, add it
-        m_mIntValues.insert_or_assign(pProperty.GetKey(), nValue);
-        nOldValue = pProperty.GetDefaultValue();
-    }
-    else if (iter->second != nValue)
-    {
-        // update map
-        nOldValue = iter->second;
-        iter->second = nValue;
+        m_vValues.emplace(iter, pProperty.GetKey(), nValue);
     }
     else
     {
-        // value didn't change
-        return;
+        nOldValue = iter->nValue;
+        if (nValue == nOldValue)
+            return;
+
+        if (nValue == pProperty.GetDefaultValue())
+            m_vValues.erase(iter);
+        else
+            iter->nValue = nValue;
     }
 
 #ifdef _DEBUG

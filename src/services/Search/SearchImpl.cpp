@@ -14,11 +14,9 @@ bool SearchImpl::ContainsAddress(const SearchResults& srResults, ra::ByteAddress
         return false;
 
     nAddress = ConvertFromRealAddress(nAddress);
-    for (const auto& pBlock : srResults.m_vBlocks)
-    {
-        if (pBlock.ContainsAddress(nAddress))
-            return pBlock.ContainsMatchingAddress(nAddress);
-    }
+    const auto nIndex = GetIndexOfBlockForVirtualAddress(srResults, nAddress);
+    if (nIndex < srResults.m_vBlocks.size())
+        return srResults.m_vBlocks.at(nIndex).ContainsMatchingAddress(nAddress);
 
     return false;
 }
@@ -167,11 +165,40 @@ bool SearchImpl::GetMatchingAddress(const SearchResults& srResults, gsl::index n
     return false;
 }
 
+size_t SearchImpl::GetIndexOfBlockForVirtualAddress(const SearchResults& srResults, uint32_t nAddress)
+{
+    size_t nIndexLow = 0;
+    size_t nIndexHigh = srResults.m_vBlocks.size();
+
+    while (nIndexLow < nIndexHigh)
+    {
+        const size_t nIndexMid = (nIndexLow + nIndexHigh) / 2;
+        const auto& pBlockMid = srResults.m_vBlocks.at(nIndexMid);
+        if (nAddress < pBlockMid.GetFirstAddress())
+        {
+            nIndexHigh = nIndexMid;
+            continue;
+        }
+
+        const uint32_t nOffset = nAddress - pBlockMid.GetFirstAddress();
+        if (nOffset >= pBlockMid.GetMaxAddresses())
+        {
+            nIndexLow = nIndexMid + 1;
+            continue;
+        }
+
+        return nIndexMid;
+    }
+
+    return (size_t)-1;
+}
+
 bool SearchImpl::GetValueAtVirtualAddress(const SearchResults& srResults, SearchResult& result) const noexcept
 {
-    for (const auto& block : srResults.m_vBlocks)
+    const auto nIndex = GetIndexOfBlockForVirtualAddress(srResults, result.nAddress);
+    if (nIndex < srResults.m_vBlocks.size())
     {
-        if (GetValueFromMemBlock(block, result))
+        if (GetValueFromMemBlock(srResults.m_vBlocks.at(nIndex), result))
             return true;
     }
 

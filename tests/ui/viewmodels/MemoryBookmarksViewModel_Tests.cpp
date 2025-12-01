@@ -1941,7 +1941,7 @@ public:
         Assert::AreEqual(std::wstring(L"fa3e8842"), bookmark.GetCurrentValue());
     }
 
-    TEST_METHOD(TestDoFrameFrozenBookmarks)
+    TEST_METHOD(TestDoFrameFrozenBookmarkInvalidIndirectAddress)
     {
         MemoryBookmarksViewModelHarness bookmarks;
         std::array<unsigned char, 32> memory{};
@@ -1949,12 +1949,9 @@ public:
         bookmarks.mockConsoleContext.AddMemoryRegion(0U, 16,
                                                      ra::data::context::ConsoleContext::AddressType::SystemRAM);
 
-        bookmarks.AddBookmark("M:0xX0000");
         bookmarks.AddBookmark("I:0xX0004_M:0xH0008");
-        auto* pBookmark1 = bookmarks.GetBookmark(0);
-        Expects(pBookmark1 != nullptr);
-        auto* pBookmark2 = bookmarks.GetBookmark(1);
-        Expects(pBookmark2 != nullptr);
+        auto* pBookmark = bookmarks.GetBookmark(0);
+        Expects(pBookmark != nullptr);
 
         memory.at(0) = 6;
         memory.at(1) = 1;
@@ -1962,16 +1959,11 @@ public:
         memory.at(12) = 7;
         bookmarks.DoFrame();
 
-        Assert::AreEqual(0U, pBookmark1->GetAddress());
-        Assert::IsFalse(pBookmark1->IsIndirectAddress());
-        Assert::AreEqual(std::wstring(L"00000106"), pBookmark1->GetCurrentValue());
+        Assert::AreEqual(12U, pBookmark->GetAddress());
+        Assert::IsTrue(pBookmark->IsIndirectAddress());
+        Assert::AreEqual(std::wstring(L"07"), pBookmark->GetCurrentValue());
 
-        Assert::AreEqual(12U, pBookmark2->GetAddress());
-        Assert::IsTrue(pBookmark2->IsIndirectAddress());
-        Assert::AreEqual(std::wstring(L"07"), pBookmark2->GetCurrentValue());
-
-        pBookmark1->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
-        pBookmark2->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+        pBookmark->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
 
         memory.at(0) = 3;
         memory.at(12) = 4;
@@ -1979,12 +1971,8 @@ public:
         bookmarks.DoFrame();
 
         // frozen values should be written back to memory
-        Assert::AreEqual(0U, pBookmark1->GetAddress());
-        Assert::AreEqual(std::wstring(L"00000106"), pBookmark1->GetCurrentValue());
-        Assert::AreEqual({6}, memory.at(0));
-
-        Assert::AreEqual(12U, pBookmark2->GetAddress());
-        Assert::AreEqual(std::wstring(L"07"), pBookmark2->GetCurrentValue());
+        Assert::AreEqual(12U, pBookmark->GetAddress());
+        Assert::AreEqual(std::wstring(L"07"), pBookmark->GetCurrentValue());
         Assert::AreEqual({7}, memory.at(12));
 
         // console says only 16 bytes are valid. if pointer points beyond that, it shouldn't write
@@ -1992,7 +1980,7 @@ public:
         Assert::AreEqual({0}, memory.at(28));
 
         bookmarks.DoFrame();
-        Assert::AreEqual({28}, pBookmark2->GetAddress()); // address updated
+        Assert::AreEqual({28}, pBookmark->GetAddress());  // address updated
         Assert::AreEqual({0}, memory.at(28));             // but not memory
 
         // null is implicitly invalid
@@ -2000,8 +1988,158 @@ public:
         Assert::AreEqual({0}, memory.at(8));
 
         bookmarks.DoFrame();
-        Assert::AreEqual({8}, pBookmark2->GetAddress()); // address updated
+        Assert::AreEqual({8}, pBookmark->GetAddress());  // address updated
         Assert::AreEqual({0}, memory.at(8));             // but not memory
+
+        // pointing at valid data again
+        memory.at(4) = 6;
+        Assert::AreEqual({0}, memory.at(14));
+
+        bookmarks.DoFrame();
+        Assert::AreEqual({14}, pBookmark->GetAddress());  // address updated
+        Assert::AreEqual({7}, memory.at(14));             // but not memory
+    }
+
+private:
+    void FrozenTest(const std::string& sDefinition, uint8_t* pMemory, const std::wstring& sDisplay, uint8_t* pModifiedMemory)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        std::array<unsigned char, 32> memory{};
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+        bookmarks.mockConsoleContext.AddMemoryRegion(0U, 16,
+            ra::data::context::ConsoleContext::AddressType::SystemRAM);
+
+        memory.at(4) = 4;
+        memory.at(8) = pMemory[0];
+        memory.at(9) = pMemory[1];
+        memory.at(10) = pMemory[2];
+        memory.at(11) = pMemory[3];
+        memory.at(12) = pMemory[0];
+        memory.at(13) = pMemory[1];
+        memory.at(14) = pMemory[2];
+        memory.at(15) = pMemory[3];
+
+        bookmarks.AddBookmark(sDefinition);
+        auto* pBookmark1 = bookmarks.GetBookmark(0);
+        Expects(pBookmark1 != nullptr);
+
+        bookmarks.AddBookmark("I:0xX0004_" + sDefinition);
+        auto* pBookmark2 = bookmarks.GetBookmark(1);
+        Expects(pBookmark2 != nullptr);
+
+        bookmarks.DoFrame();
+
+        Assert::AreEqual(8U, pBookmark1->GetAddress());
+        Assert::AreEqual(sDisplay, pBookmark1->GetCurrentValue());
+        Assert::AreEqual(12U, pBookmark2->GetAddress());
+        Assert::AreEqual(sDisplay, pBookmark2->GetCurrentValue());
+
+        pBookmark1->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+        pBookmark2->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+
+        memory.at(8) = pModifiedMemory[0];
+        memory.at(9) = pModifiedMemory[1];
+        memory.at(10) = pModifiedMemory[2];
+        memory.at(11) = pModifiedMemory[3];
+        memory.at(12) = pModifiedMemory[0];
+        memory.at(13) = pModifiedMemory[1];
+        memory.at(14) = pModifiedMemory[2];
+        memory.at(15) = pModifiedMemory[3];
+
+        bookmarks.DoFrame();
+
+        // frozen values should be written back to memory
+        Assert::AreEqual(8U, pBookmark1->GetAddress());
+        Assert::AreEqual(sDisplay, pBookmark1->GetCurrentValue());
+        Assert::AreEqual(pMemory[0], memory.at(8));
+        Assert::AreEqual(pMemory[1], memory.at(9));
+        Assert::AreEqual(pMemory[2], memory.at(10));
+        Assert::AreEqual(pMemory[3], memory.at(11));
+
+        Assert::AreEqual(12U, pBookmark2->GetAddress());
+        Assert::AreEqual(sDisplay, pBookmark2->GetCurrentValue());
+        Assert::AreEqual(pMemory[0], memory.at(12));
+        Assert::AreEqual(pMemory[1], memory.at(13));
+        Assert::AreEqual(pMemory[2], memory.at(14));
+        Assert::AreEqual(pMemory[3], memory.at(15));
+    }
+
+public:
+    TEST_METHOD(TestDoFrameFrozenEightBit)
+    {
+        uint8_t pMemoryA[4] = { 0x90, 0x01, 0x00, 0x00 }; // 90 => 144
+        uint8_t pMemoryB[4] = { 0x91, 0x01, 0x00, 0x00 }; // 91 => 145
+        FrozenTest("M:0xH0008", pMemoryA, L"90", pMemoryB);
+    }
+
+    TEST_METHOD(TestDoFrameFrozenSixteenBit)
+    {
+        uint8_t pMemoryA[4] = { 0x90, 0x01, 0x00, 0x00 }; // 0190 => 400
+        uint8_t pMemoryB[4] = { 0x91, 0x01, 0x00, 0x00 }; // 0191 => 401
+        FrozenTest("M:0x 0008", pMemoryA, L"0190", pMemoryB);
+    }
+
+    TEST_METHOD(TestDoFrameFrozenSixteenBitBE)
+    {
+        uint8_t pMemoryA[4] = { 0x01, 0x90, 0x00, 0x00 }; // 0190 => 400
+        uint8_t pMemoryB[4] = { 0x01, 0x91, 0x00, 0x00 }; // 0191 => 401
+        FrozenTest("M:0xI0008", pMemoryA, L"0190", pMemoryB);
+    }
+
+    TEST_METHOD(TestDoFrameFrozenThirtyTwoBit)
+    {
+        uint8_t pMemoryA[4] = { 0x90, 0x01, 0x00, 0x00 }; // 00000190 => 400
+        uint8_t pMemoryB[4] = { 0x91, 0x01, 0x00, 0x00 }; // 00000191 => 401
+        FrozenTest("M:0xX0008", pMemoryA, L"00000190", pMemoryB);
+    }
+
+    TEST_METHOD(TestDoFrameFrozenThirtyTwoBitBE)
+    {
+        uint8_t pMemoryA[4] = { 0x00, 0x00, 0x01, 0x90 }; // 00000190 => 400
+        uint8_t pMemoryB[4] = { 0x00, 0x00, 0x01, 0x91 }; // 00000191 => 401
+        FrozenTest("M:0xG0008", pMemoryA, L"00000190", pMemoryB);
+    }
+
+    TEST_METHOD(TestDoFrameFrozenFloat)
+    {
+        uint8_t pMemoryA[4] = { 0x00, 0x00, 0xC6, 0x42 }; // 42C60000 => 99.0
+        uint8_t pMemoryB[4] = { 0x00, 0x00, 0xB4, 0x42 }; // 42B40000 => 90.0
+        FrozenTest("M:fF0008", pMemoryA, L"99.0", pMemoryB);
+    }
+
+    TEST_METHOD(TestDoFrameFrozenFloatBE)
+    {
+        uint8_t pMemoryA[4] = { 0x42, 0xC6, 0x00, 0x00 }; // 42C60000 => 99.0
+        uint8_t pMemoryB[4] = { 0x42, 0xB4, 0x00, 0x00 }; // 42B40000 => 90.0
+        FrozenTest("M:fB0008", pMemoryA, L"99.0", pMemoryB);
+    }
+
+    TEST_METHOD(TestDoFrameFrozenDouble32)
+    {
+        uint8_t pMemoryA[4] = { 0x00, 0xC0, 0x28, 0x40 }; // 4028C000 => 12.375
+        uint8_t pMemoryB[4] = { 0xDF, 0x07, 0x51, 0x40 }; // 405107DF => 68.123
+        FrozenTest("M:fH0008", pMemoryA, L"12.375", pMemoryB);
+    }
+
+    TEST_METHOD(TestDoFrameFrozenDouble32BE)
+    {
+        uint8_t pMemoryA[4] = { 0x40, 0x28, 0xC0, 0x00 }; // 4028C000 => 12.375
+        uint8_t pMemoryB[4] = { 0x40, 0x51, 0x07, 0xDF }; // 405107DF => 68.123
+        FrozenTest("M:fI0008", pMemoryA, L"12.375", pMemoryB);
+    }
+
+    TEST_METHOD(TestDoFrameFrozenMBF32)
+    {
+        uint8_t pMemoryA[4] = { 0x87, 0x46, 0x00, 0x00 }; // 87460000 => 99.0
+        uint8_t pMemoryB[4] = { 0x84, 0x20, 0x00, 0x00 }; // 84200000 => 10.0
+        FrozenTest("M:fM0008", pMemoryA, L"99.0", pMemoryB);
+    }
+
+    TEST_METHOD(TestDoFrameFrozenMBF32LE)
+    {
+        uint8_t pMemoryA[4] = { 0x00, 0x00, 0x46, 0x87 }; // 87460000 => 99.0
+        uint8_t pMemoryB[4] = { 0x00, 0x00, 0x20, 0x84 }; // 84200000 => 10.0
+        FrozenTest("M:fL0008", pMemoryA, L"99.0", pMemoryB);
     }
 };
 

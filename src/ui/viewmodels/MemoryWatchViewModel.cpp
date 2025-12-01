@@ -234,8 +234,9 @@ uint32_t MemoryWatchViewModel::ReadValue()
 
         if (m_nSize != MemSize::Text)
         {
+            // if value is a float, convert it back to the raw bytes appropriate for the size
             if (ra::data::MemSizeIsFloat(m_nSize))
-                rc_typed_value_convert(&value, RC_VALUE_TYPE_FLOAT);
+                return ra::data::FloatToU32(value.value.f32, m_nSize);
 
             return value.value.u32;
         }
@@ -381,12 +382,6 @@ std::wstring MemoryWatchViewModel::BuildCurrentValue() const
         ra::services::SearchResults pResults;
         pResults.Initialize(m_nAddress, MaxTextBookmarkLength, ra::services::SearchType::AsciiText);
         return pResults.GetFormattedValue(m_nAddress, MemSize::Text);
-    }
-
-    if (m_pValue && ra::data::MemSizeIsFloat(m_nSize)) {
-        // m_nValue will have already been converted to a little-endian float
-        // by rc_evaluate_value_typed in ReadValue.
-        return ra::data::MemSizeFormat(m_nValue, MemSize::Float, GetFormat());
     }
 
     return ra::data::MemSizeFormat(m_nValue, m_nSize, GetFormat());

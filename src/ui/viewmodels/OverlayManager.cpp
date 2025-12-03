@@ -194,7 +194,7 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
             {
                 // render pass - items that should appear over other items should be drawn last
                 if (!m_vScoreboards.empty())
-                    RenderPopup(pSurface, m_vScoreboards.front());
+                    RenderPopup(pSurface, *m_vScoreboards.front());
                 for (const auto& pScoreTracker : m_vScoreTrackers)
                     RenderPopup(pSurface, *pScoreTracker);
                 for (const auto& pChallengeIndicator : m_vChallengeIndicators)
@@ -275,13 +275,13 @@ void OverlayManager::RemoveScoreTracker(uint32_t nTrackerId)
         RequestRender();
 }
 
-void OverlayManager::QueueScoreboard(ra::LeaderboardID nLeaderboardId, ScoreboardViewModel&& vmScoreboard)
+void OverlayManager::QueueScoreboard(ra::LeaderboardID nLeaderboardId, std::unique_ptr<ScoreboardViewModel> pScoreboard)
 {
-    vmScoreboard.SetPopupId(nLeaderboardId);
+    pScoreboard->SetPopupId(nLeaderboardId);
 
     {
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
-        m_vScoreboards.push_back(std::move(vmScoreboard));
+        m_vScoreboards.push_back(std::move(pScoreboard));
     }
 
     RequestRender();
@@ -400,7 +400,7 @@ void OverlayManager::ClearPopups()
             pPopup->SetDestroyPending();
 
         for (auto& pScoreboard : m_vScoreboards)
-            pScoreboard.SetDestroyPending();
+            pScoreboard->SetDestroyPending();
 
         for (auto& pChallengeIndicator : m_vChallengeIndicators)
             pChallengeIndicator->SetDestroyPending();
@@ -421,7 +421,7 @@ void OverlayManager::ClearLeaderboardPopups()
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
 
         for (auto& pScoreboard : m_vScoreboards)
-            pScoreboard.SetDestroyPending();
+            pScoreboard->SetDestroyPending();
 
         for (auto& pTracker : m_vScoreTrackers)
             pTracker->SetDestroyPending();
@@ -616,9 +616,9 @@ void OverlayManager::UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, Po
 
 void OverlayManager::UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed)
 {
-    assert(!m_vScoreboards.empty());
+    auto* pActiveScoreboard = !m_vScoreboards.empty() ? m_vScoreboards.front().get() : nullptr;
+    Expects(pActiveScoreboard != nullptr);
 
-    auto* pActiveScoreboard = &m_vScoreboards.front();
     UpdatePopup(pSurface, pPopupLocations, fElapsed, *pActiveScoreboard);
 
     while (pActiveScoreboard->IsAnimationComplete() || pActiveScoreboard->IsDestroyPending())
@@ -627,7 +627,8 @@ void OverlayManager::UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface,
         if (m_vScoreboards.empty())
             return;
 
-        pActiveScoreboard = &m_vScoreboards.front();
+        pActiveScoreboard = m_vScoreboards.front().get();
+        Expects(pActiveScoreboard != nullptr);
         pActiveScoreboard->BeginAnimation();
         pActiveScoreboard->UpdateRenderImage(0.0);
         UpdatePopup(pSurface, pPopupLocations, fElapsed, *pActiveScoreboard);
@@ -783,7 +784,7 @@ void OverlayManager::UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double f
             RenderPopupClippedX(pSurface, *pTracker, nOverlayRight);
 
         if (!m_vScoreboards.empty())
-            RenderPopupClippedX(pSurface, m_vScoreboards.front(), nOverlayRight);
+            RenderPopupClippedX(pSurface, *m_vScoreboards.front(), nOverlayRight);
 
         if (!m_vPopupMessages.empty())
             RenderPopupClippedX(pSurface, *m_vPopupMessages.front(), nOverlayRight);
@@ -804,7 +805,7 @@ void OverlayManager::UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double f
             RenderPopup(pSurface, *pTracker);
 
         if (!m_vScoreboards.empty())
-            RenderPopup(pSurface, m_vScoreboards.front());
+            RenderPopup(pSurface, *m_vScoreboards.front());
 
         if (!m_vPopupMessages.empty())
             RenderPopup(pSurface, *m_vPopupMessages.front());

@@ -12,6 +12,8 @@ int ModelPropertyContainer::CompareModelPropertyKey(const ModelPropertyContainer
 
 const int* ModelPropertyContainer::FindValue(int nKey) const
 {
+    std::lock_guard<std::mutex> pLock(m_mMutex);
+
     const auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), nKey, CompareModelPropertyKey);
     if (iter == m_vValues.end() || iter->nKey != nKey)
         return nullptr;
@@ -22,28 +24,32 @@ const int* ModelPropertyContainer::FindValue(int nKey) const
 void ModelPropertyContainer::SetValue(const BoolModelProperty& pProperty, bool bValue)
 {
     const int nValue = bValue ? 1 : 0;
-    auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
-    if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
     {
-        if (bValue == pProperty.GetDefaultValue())
-            return;
+        std::lock_guard<std::mutex> pLock(m_mMutex);
 
-        m_vValues.emplace(iter, pProperty.GetKey(), nValue);
-    }
-    else
-    {
-        if (nValue == iter->nValue)
-            return;
+        auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
+        if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
+        {
+            if (bValue == pProperty.GetDefaultValue())
+                return;
 
-        if (bValue == pProperty.GetDefaultValue())
-            m_vValues.erase(iter);
+            m_vValues.emplace(iter, pProperty.GetKey(), nValue);
+        }
         else
-            iter->nValue = nValue;
-    }
+        {
+            if (nValue == iter->nValue)
+                return;
+
+            if (bValue == pProperty.GetDefaultValue())
+                m_vValues.erase(iter);
+            else
+                iter->nValue = nValue;
+        }
 
 #ifdef _DEBUG
-    m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), bValue ? L"true" : L"false");
+        m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), bValue ? L"true" : L"false");
 #endif
+    }
 
     const BoolModelProperty::ChangeArgs args{ pProperty, !bValue, bValue };
     OnValueChanged(args);
@@ -103,78 +109,83 @@ void ModelPropertyContainer::SetValue(const StringModelProperty& pProperty, cons
     const std::wstring* pOldValue = nullptr;
     std::wstring sOldValue;
 
-    auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
-    if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
     {
-        // no entry for property. if setting to default, do nothing
-        if (sValue == pProperty.GetDefaultValue())
-            return;
+        std::lock_guard<std::mutex> pLock(m_mMutex);
 
-        // find a slot for the new value
-        int nValue = 0;
-        if (sValue.empty())
+        auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
+        if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
         {
-            // negative value for empty string
-            nValue = -1;
-        }
-        else
-        {
-            // find an empty slot (not in use)
-            nValue = LoadIntoEmptyStringSlot(sValue);
-        }
-
-        m_vValues.emplace(iter, pProperty.GetKey(), nValue);
-        pOldValue = &pProperty.GetDefaultValue();
-    }
-    else 
-    {
-        pOldValue = &sOldValue;
-        gsl::not_null<std::wstring*> sString = gsl::make_not_null(&sOldValue);
-
-        if (iter->nValue == -1)
-        {
-            // negative nValue is empty string. if new value is also empty, do nothing
-            if (sValue.empty())
-                return;
-
-            iter->nValue = LoadIntoEmptyStringSlot(sValue);
-        }
-        else
-        {
-            // find the current value. if the new value is the same, do nothing
-            ModelPropertyStrings* pStrings = m_pStrings.get();
-            int nIndex = iter->nValue;
-            while (nIndex >= ModelPropertyStrings::ChunkCount && pStrings)
-            {
-                pStrings = pStrings->pNext.get();
-                nIndex -= ModelPropertyStrings::ChunkCount;
-            }
-
-            Expects(pStrings != nullptr);
-
-            sString = gsl::make_not_null(&gsl::at(pStrings->sStrings, nIndex));
-            if (sValue == *sString)
-                return;
-
-            // move the current value into a temporary variable for the ChangeArgs
-            sString->swap(sOldValue);
-
+            // no entry for property. if setting to default, do nothing
             if (sValue == pProperty.GetDefaultValue())
+                return;
+
+            // find a slot for the new value
+            int nValue = 0;
+            if (sValue.empty())
             {
-                // setting value back to default. eliminate the value pair.
-                m_vValues.erase(iter);
+                // negative value for empty string
+                nValue = -1;
             }
             else
             {
-                // put the new string in the slot.
-                *sString = sValue;
+                // find an empty slot (not in use)
+                nValue = LoadIntoEmptyStringSlot(sValue);
+            }
+
+            m_vValues.emplace(iter, pProperty.GetKey(), nValue);
+            pOldValue = &pProperty.GetDefaultValue();
+        }
+        else
+        {
+            pOldValue = &sOldValue;
+            gsl::not_null<std::wstring*> sString = gsl::make_not_null(&sOldValue);
+
+            if (iter->nValue == -1)
+            {
+                // negative nValue is empty string. if new value is also empty, do nothing
+                if (sValue.empty())
+                    return;
+
+                iter->nValue = LoadIntoEmptyStringSlot(sValue);
+            }
+            else
+            {
+                // find the current value. if the new value is the same, do nothing
+                ModelPropertyStrings* pStrings = m_pStrings.get();
+                int nIndex = iter->nValue;
+                while (nIndex >= ModelPropertyStrings::ChunkCount && pStrings)
+                {
+                    pStrings = pStrings->pNext.get();
+                    nIndex -= ModelPropertyStrings::ChunkCount;
+                }
+
+                if (pStrings == nullptr)
+                    return;
+
+                sString = gsl::make_not_null(&gsl::at(pStrings->sStrings, nIndex));
+                if (sValue == *sString)
+                    return;
+
+                // move the current value into a temporary variable for the ChangeArgs
+                sString->swap(sOldValue);
+
+                if (sValue == pProperty.GetDefaultValue())
+                {
+                    // setting value back to default. eliminate the value pair.
+                    m_vValues.erase(iter);
+                }
+                else
+                {
+                    // put the new string in the slot.
+                    *sString = sValue;
+                }
             }
         }
-    }
 
 #ifdef _DEBUG
-    m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), sValue);
+        m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), sValue);
 #endif
+    }
 
     const StringModelProperty::ChangeArgs args{ pProperty, *pOldValue, sValue };
     OnValueChanged(args);
@@ -187,30 +198,34 @@ void ModelPropertyContainer::OnValueChanged(const StringModelProperty::ChangeArg
 void ModelPropertyContainer::SetValue(const IntModelProperty& pProperty, int nValue)
 {
     int nOldValue = 0;
-    auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
-    if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
     {
-        nOldValue = pProperty.GetDefaultValue();
-        if (nValue == nOldValue)
-            return;
+        std::lock_guard<std::mutex> pLock(m_mMutex);
 
-        m_vValues.emplace(iter, pProperty.GetKey(), nValue);
-    }
-    else
-    {
-        nOldValue = iter->nValue;
-        if (nValue == nOldValue)
-            return;
+        auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
+        if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
+        {
+            nOldValue = pProperty.GetDefaultValue();
+            if (nValue == nOldValue)
+                return;
 
-        if (nValue == pProperty.GetDefaultValue())
-            m_vValues.erase(iter);
+            m_vValues.emplace(iter, pProperty.GetKey(), nValue);
+        }
         else
-            iter->nValue = nValue;
-    }
+        {
+            nOldValue = iter->nValue;
+            if (nValue == nOldValue)
+                return;
+
+            if (nValue == pProperty.GetDefaultValue())
+                m_vValues.erase(iter);
+            else
+                iter->nValue = nValue;
+        }
 
 #ifdef _DEBUG
-    m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), std::to_wstring(nValue));
+        m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), std::to_wstring(nValue));
 #endif
+    }
 
     const IntModelProperty::ChangeArgs args{ pProperty, nOldValue, nValue };
     OnValueChanged(args);

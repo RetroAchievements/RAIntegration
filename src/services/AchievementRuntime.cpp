@@ -2093,11 +2093,11 @@ static void ShowSimplifiedScoreboard(const rc_client_leaderboard_t& pLeaderboard
         return;
     }
 
-    ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
-    vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard.title));
+    auto vmScoreboard = std::make_unique<ra::ui::viewmodels::ScoreboardViewModel>();
+    vmScoreboard->SetHeaderText(ra::Widen(pLeaderboard.title));
 
     const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
-    auto& pEntryViewModel = vmScoreboard.Entries().Add();
+    auto& pEntryViewModel = vmScoreboard->Entries().Add();
     pEntryViewModel.SetRank(0);
     pEntryViewModel.SetScore(ra::Widen(pLeaderboard.tracker_value));
     pEntryViewModel.SetUserName(ra::Widen(pUserName));
@@ -2239,8 +2239,8 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
         return;
     }
 
-    ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
-    vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard.title));
+    auto vmScoreboard = std::make_unique<ra::ui::viewmodels::ScoreboardViewModel>();
+    vmScoreboard->SetHeaderText(ra::Widen(pLeaderboard.title));
 
     const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
     constexpr uint32_t nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
@@ -2250,7 +2250,7 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
     const auto* pStop = pEntry + std::min(pScoreboard.num_top_entries, nEntriesDisplayed);
     for (; pEntry < pStop; ++pEntry)
     {
-        auto& pEntryViewModel = vmScoreboard.Entries().Add();
+        auto& pEntryViewModel = vmScoreboard->Entries().Add();
         pEntryViewModel.SetRank(pEntry->rank);
         pEntryViewModel.SetScore(ra::Widen(pEntry->score));
         pEntryViewModel.SetUserName(ra::Widen(pEntry->username));
@@ -2267,7 +2267,7 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
 
     if (!bSeenPlayer)
     {
-        auto* pEntryViewModel = vmScoreboard.Entries().GetItemAt(6);
+        auto* pEntryViewModel = vmScoreboard->Entries().GetItemAt(6);
         if (pEntryViewModel != nullptr)
         {
             pEntryViewModel->SetRank(pScoreboard.new_rank);

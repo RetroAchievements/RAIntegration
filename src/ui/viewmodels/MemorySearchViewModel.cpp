@@ -207,7 +207,7 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
     ra::ByteAddress nSystemRamEnd = 0U;
     ra::ByteAddress nAllRamEnd = 0U;
 
-    std::vector<PredefinedFilterRangeViewModel> vmRanges;
+    std::vector<ra::data::context::ConsoleContext::MemoryRegion> vmRanges;
     auto nPreviousAddressType = ra::data::context::ConsoleContext::AddressType::Unused;
 
     for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().MemoryRegions())
@@ -239,27 +239,27 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
                 break;
         }
 
-        const auto sDescription = ra::Widen(pRegion.Description);
-        if (pRegion.Type == nPreviousAddressType && vmRanges.back().GetLabel() == sDescription)
+        if (pRegion.Type == nPreviousAddressType && vmRanges.back().Description == pRegion.Description)
         {
-            vmRanges.back().SetEndAddress(pRegion.EndAddress);
+            vmRanges.back().EndAddress = pRegion.EndAddress;
             continue;
         }
 
         nPreviousAddressType = pRegion.Type;
-        auto& vmRange = vmRanges.emplace_back(gsl::narrow_cast<int>(vmRanges.size() + 1), sDescription);
-        vmRange.SetStartAddress(pRegion.StartAddress);
-        vmRange.SetEndAddress(pRegion.EndAddress);
+        auto& vmRange = vmRanges.emplace_back();
+        vmRange.Description = pRegion.Description;
+        vmRange.StartAddress = pRegion.StartAddress;
+        vmRange.EndAddress = pRegion.EndAddress;
     }
 
     for (const auto& vmRange : vmRanges)
     {
-        if (vmRange.GetEndAddress() == nSystemRamEnd && vmRange.GetStartAddress() == nSystemRamStart)
+        if (vmRange.EndAddress == nSystemRamEnd && vmRange.StartAddress == nSystemRamStart)
         {
             // system defined range already exists for "All System RAM"
             nSystemRamEnd = 0U;
         }
-        else if (vmRange.GetEndAddress() == nExtraRamEnd && vmRange.GetStartAddress() == nExtraRamStart)
+        else if (vmRange.EndAddress == nExtraRamEnd && vmRange.StartAddress == nExtraRamStart)
         {
             // system defined range already exists for "All Game RAM"
             nExtraRamEnd = 0U;
@@ -272,8 +272,8 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
     DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_ALL, L"All", 0U, nAllRamEnd, false);
 
     if (vmRanges.size() == 1 &&
-        vmRanges.front().GetEndAddress() == nAllRamEnd &&
-        vmRanges.front().GetStartAddress() == 0)
+        vmRanges.front().EndAddress == nAllRamEnd &&
+        vmRanges.front().StartAddress == 0)
     {
         // single defined range is "All Memory". don't list it separately.
     }
@@ -288,7 +288,7 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
         for (const auto& vmRange : vmRanges)
         {
             DefinePredefinedFilterRange(nIndex, gsl::narrow_cast<int>(nIndex),
-                vmRange.GetLabel(), vmRange.GetStartAddress(), vmRange.GetEndAddress(), true);
+                ra::Widen(vmRange.Description), vmRange.StartAddress, vmRange.EndAddress, true);
             ++nIndex;
         }
     }

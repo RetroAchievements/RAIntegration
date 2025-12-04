@@ -16,7 +16,7 @@ public:
     /// <summary>
     /// Determines whether the <see cref="AsyncObject" /> that owns this handle is waiting to be destructed.
     /// </summary>
-    /// <remarks>Allows for early exit in long running code keeping the object alive</remarks>
+    /// <remarks>Allows for early exit in long running code keeping the object alive.</remarks>
     bool IsDestroying() const noexcept { return m_bDestroying; }
 
     /// <summary>
@@ -25,15 +25,15 @@ public:
     bool IsDestroyed() const noexcept { return m_bDestroyed; }
 
 private:
+    std::mutex m_mtxDestroy;
     bool m_bDestroyed = false;
     bool m_bDestroying = false;
 
-    // allow AsyncKeepAlive access to m_pMutex
+    // allow AsyncKeepAlive access to m_mtxDestroy
     friend class AsyncKeepAlive;
 
-    // allow AsyncObject access to m_pMutex and SetDestroyed()
+    // allow AsyncObject access to SetDestroyed()
     friend class AsyncObject;
-    std::mutex m_pMutex;
 
     GSL_SUPPRESS_F6 void SetDestroyed() noexcept
     {
@@ -41,7 +41,7 @@ private:
         m_bDestroying = true;
 
         // then wait for anything holding the lock
-        std::lock_guard<std::mutex> guard(m_pMutex);
+        std::lock_guard<std::mutex> guard(m_mtxDestroy);
 
         // then mark as destroyed
         m_bDestroyed = true;
@@ -54,7 +54,7 @@ private:
 class AsyncKeepAlive
 {
 public:
-    AsyncKeepAlive(AsyncHandle& pAsyncHandle) : m_pLock(pAsyncHandle.m_pMutex) {}
+    AsyncKeepAlive(AsyncHandle& pAsyncHandle) : m_pLock(pAsyncHandle.m_mtxDestroy) {}
 
 private:
     std::lock_guard<std::mutex> m_pLock;
@@ -67,7 +67,7 @@ private:
 /// Inheriting from <see cref="AsyncObject"> does not inherently prevent destruction of the
 /// "this" pointer unless used in conjunction with an <see cref="AsyncKeepAlive"> object.
 /// While an AsyncKeepAlive object has a reference to the AsyncObject's <see cref="AsyncHandle">,
-/// he AsyncObject's destructor will wait until the code guarded by the AsyncKeepAlive completes.
+/// the AsyncObject's destructor will wait until the code guarded by the AsyncKeepAlive completes.
 /// </remarks>
 /// <example>
 ///     run_async([this, asyncHandle = CreateAsyncHandle()]{
@@ -126,19 +126,6 @@ protected:
 
         assert(m_pAsyncHandle == nullptr);
     }
-
-    /// <summary>
-    /// Marks a block of code as requiring exclusive access to the object.
-    /// (prevents other threads from accessing their guarded blocks while the lock is held).
-    /// </summary>
-    class LockGuard
-    {
-    public:
-        LockGuard(AsyncObject& pAsyncObject) : m_pLock(pAsyncObject.CreateAsyncHandle()->m_pMutex) {}
-
-    private:
-        std::lock_guard<std::mutex> m_pLock;
-    };
 
 private:
     std::shared_ptr<AsyncHandle> m_pAsyncHandle;

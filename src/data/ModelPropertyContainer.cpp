@@ -12,7 +12,7 @@ int ModelPropertyContainer::CompareModelPropertyKey(const ModelPropertyContainer
 
 const int* ModelPropertyContainer::FindValue(int nKey) const
 {
-    std::lock_guard<std::mutex> pLock(m_mMutex);
+    std::lock_guard<std::mutex> pLock(m_mtxData);
 
     const auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), nKey, CompareModelPropertyKey);
     if (iter == m_vValues.end() || iter->nKey != nKey)
@@ -25,7 +25,7 @@ void ModelPropertyContainer::SetValue(const BoolModelProperty& pProperty, bool b
 {
     const int nValue = bValue ? 1 : 0;
     {
-        std::lock_guard<std::mutex> pLock(m_mMutex);
+        std::lock_guard<std::mutex> pLock(m_mtxData);
 
         auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
         if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
@@ -110,7 +110,7 @@ void ModelPropertyContainer::SetValue(const StringModelProperty& pProperty, cons
     std::wstring sOldValue;
 
     {
-        std::lock_guard<std::mutex> pLock(m_mMutex);
+        std::lock_guard<std::mutex> pLock(m_mtxData);
 
         auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
         if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
@@ -199,7 +199,7 @@ void ModelPropertyContainer::SetValue(const IntModelProperty& pProperty, int nVa
 {
     int nOldValue = 0;
     {
-        std::lock_guard<std::mutex> pLock(m_mMutex);
+        std::lock_guard<std::mutex> pLock(m_mtxData);
 
         auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
         if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())

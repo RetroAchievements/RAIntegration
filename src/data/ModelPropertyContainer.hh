@@ -140,8 +140,7 @@ private:
     const std::wstring& GetString(int nIndex) const noexcept;
     int LoadIntoEmptyStringSlot(const std::wstring& sValue);
 
-protected:
-    mutable std::mutex m_mMutex;
+    mutable std::mutex m_mtxData;
 };
 
 } // namespace data

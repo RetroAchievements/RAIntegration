@@ -190,9 +190,10 @@ size_t SearchImpl::GetIndexOfBlockForVirtualAddress(const SearchResults& srResul
         return nIndexMid;
     }
 
-    return (size_t)-1;
+    return static_cast<size_t>(-1);
 }
 
+GSL_SUPPRESS_F6
 bool SearchImpl::GetValueAtVirtualAddress(const SearchResults& srResults, SearchResult& result) const noexcept
 {
     const auto nIndex = GetIndexOfBlockForVirtualAddress(srResults, result.nAddress);

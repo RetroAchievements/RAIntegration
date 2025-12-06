@@ -289,14 +289,9 @@ protected:
     // Removes the result associated to the specified virtual address from the collection of matched addresses.
     static bool ExcludeAddress(SearchResults& srResults, ra::ByteAddress nAddress)
     {
-        for (auto& pBlock : srResults.m_vBlocks)
-        {
-            if (pBlock.ContainsAddress(nAddress))
-            {
-                pBlock.ExcludeMatchingAddress(nAddress);
-                return true;
-            }
-        }
+        const auto nIndex = GetIndexOfBlockForVirtualAddress(srResults, nAddress);
+        if (nIndex < srResults.m_vBlocks.size())
+            srResults.m_vBlocks.at(nIndex).ExcludeMatchingAddress(nAddress);
 
         return false;
     }
@@ -310,6 +305,9 @@ protected:
     /// <remarks>Sets result.nValue to the value from the captured memory, and changes result.nAddress to a real
     /// address</remarks>
     virtual bool GetValueFromMemBlock(const MemBlock& block, SearchResult& result) const noexcept;
+
+    // Gets the index of the block in srResults containing the provided virtual address.
+    static size_t GetIndexOfBlockForVirtualAddress(const SearchResults& srResults, uint32_t nAddress);
 
     virtual uint32_t BuildValue(const uint8_t* ptr) const noexcept;
 

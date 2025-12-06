@@ -379,8 +379,8 @@ public:
     {
         OverlayManagerHarness overlay;
         {
-            ScoreboardViewModel vmScoreboard;
-            vmScoreboard.SetHeaderText(L"HeaderText");
+            auto vmScoreboard = std::make_unique<ScoreboardViewModel>();
+            vmScoreboard->SetHeaderText(L"HeaderText");
             overlay.QueueScoreboard(3, std::move(vmScoreboard));
         }
 
@@ -394,8 +394,8 @@ public:
     {
         OverlayManagerHarness overlay;
         {
-            ScoreboardViewModel vmScoreboard;
-            vmScoreboard.SetHeaderText(L"HeaderText");
+            auto vmScoreboard = std::make_unique<ScoreboardViewModel>();
+            vmScoreboard->SetHeaderText(L"HeaderText");
             overlay.QueueScoreboard(3, std::move(vmScoreboard));
         }
 

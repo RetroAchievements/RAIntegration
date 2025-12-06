@@ -228,7 +228,8 @@ public:
     /// <summary>
     /// Adds a scoreboard for a leaderboard.
     /// </summary>
-    void QueueScoreboard(ra::LeaderboardID nLeaderboardId, ScoreboardViewModel&& vmScoreboard);
+    /// <remarks>Ownership of <param ref="pScoreboard"> must be transferred via std::move()</remarks>
+    void QueueScoreboard(ra::LeaderboardID nLeaderboardId, std::unique_ptr<ScoreboardViewModel> pScoreboard);
 
     /// <summary>
     /// Gets the scoreboard associated to the specified leaderboard.
@@ -240,8 +241,8 @@ public:
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto& pScoreboard : m_vScoreboards)
         {
-            if (ra::to_unsigned(pScoreboard.GetPopupId()) == nLeaderboardId)
-                return &pScoreboard;
+            if (ra::to_unsigned(pScoreboard->GetPopupId()) == nLeaderboardId)
+                return pScoreboard.get();
         }
 
         return nullptr;
@@ -327,7 +328,7 @@ protected:
     std::deque<std::unique_ptr<PopupMessageViewModel>> m_vPopupMessages;
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
     std::vector<std::unique_ptr<ChallengeIndicatorViewModel>> m_vChallengeIndicators;
-    std::deque<ScoreboardViewModel> m_vScoreboards;
+    std::deque<std::unique_ptr<ScoreboardViewModel>> m_vScoreboards;
     std::unique_ptr<ra::ui::viewmodels::ProgressTrackerViewModel> m_vmProgressTracker;
 
     bool m_bIsRendering = false;

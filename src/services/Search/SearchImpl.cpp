@@ -190,7 +190,7 @@ size_t SearchImpl::GetIndexOfBlockForVirtualAddress(const SearchResults& srResul
         return nIndexMid;
     }
 
-    return static_cast<size_t>(-1);
+    return gsl::narrow_cast<size_t>(-1);
 }
 
 GSL_SUPPRESS_F6

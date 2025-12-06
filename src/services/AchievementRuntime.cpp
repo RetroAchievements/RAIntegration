@@ -713,7 +713,7 @@ private:
                             memcpy(pLeaderboard, pSrcLeaderboard, sizeof(*pLeaderboard));
 
                             // if the leaderboard is running, we have to also copy the current value and tracker reference
-                            if (pSrcLeaderboard->lboard->state == RC_LBOARD_STATE_STARTED)
+                            if (pSrcLeaderboard->lboard && pSrcLeaderboard->lboard->state == RC_LBOARD_STATE_STARTED)
                             {
                                 pPublishedSubset = m_pClient->game->subsets;
                                 for (; pPublishedSubset; pPublishedSubset = pPublishedSubset->next)

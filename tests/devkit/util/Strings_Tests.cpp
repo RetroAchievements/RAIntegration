@@ -46,6 +46,7 @@ public:
         Assert::AreEqual(std::wstring(L"Test"), Widen(L"Test"));
         Assert::AreEqual(std::wstring(L"Test"), Widen(std::string("Test")));
         Assert::AreEqual(std::wstring(L"Test"), Widen(std::wstring(L"Test")));
+        Assert::AreEqual(std::wstring(L"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-=_+"), Widen(std::string("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-=_+")));
 
         // U+1F30F - EARTH GLOBE ASIA-AUSTRALIA
         Assert::AreEqual(std::wstring(L"\xD83C\xDF0F"), Widen("\xF0\x9F\x8C\x8F"));

@@ -4,6 +4,8 @@
 
 #include "data\ModelProperty.hh"
 
+#include <mutex>
+
 namespace ra {
 namespace data {
 
@@ -24,8 +26,8 @@ public:
 
     ModelPropertyContainer(const ModelPropertyContainer&) = delete;
     ModelPropertyContainer& operator=(const ModelPropertyContainer&) = delete;
-    GSL_SUPPRESS_F6 ModelPropertyContainer(ModelPropertyContainer&&) = default;
-    GSL_SUPPRESS_F6 ModelPropertyContainer& operator=(ModelPropertyContainer&&) = default;
+    GSL_SUPPRESS_F6 ModelPropertyContainer(ModelPropertyContainer&&) = delete;
+    GSL_SUPPRESS_F6 ModelPropertyContainer& operator=(ModelPropertyContainer&&) = delete;
 
     /// <summary>
     /// Gets the value associated to the requested boolean property.
@@ -137,6 +139,8 @@ private:
     const int* FindValue(int nKey) const;
     const std::wstring& GetString(int nIndex) const noexcept;
     int LoadIntoEmptyStringSlot(const std::wstring& sValue);
+
+    mutable std::mutex m_mtxData;
 };
 
 } // namespace data

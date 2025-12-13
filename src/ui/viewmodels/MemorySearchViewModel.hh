@@ -51,6 +51,11 @@ public:
         {
         }
 
+        PredefinedFilterRangeViewModel(const PredefinedFilterRangeViewModel&) = delete;
+        PredefinedFilterRangeViewModel& operator=(const PredefinedFilterRangeViewModel&) = delete;
+        PredefinedFilterRangeViewModel(PredefinedFilterRangeViewModel&&) = default;
+        PredefinedFilterRangeViewModel& operator=(PredefinedFilterRangeViewModel&&) = default;
+
         /// <summary>
         /// The <see cref="ModelProperty" /> for the start address of the predefined filter range.
         /// </summary>

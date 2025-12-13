@@ -375,7 +375,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     if (pAchievement == nullptr)
         return;
 
-    auto& vmAchievement = m_vAchievementDetails.emplace(nAchievementID, AchievementViewModel{}).first->second;
+    auto& vmAchievement = m_vAchievementDetails[nAchievementID];
     vmAchievement.SetCreatedDate(ra::Widen(ra::FormatDateTime(pAchievement->created_time)));
     vmAchievement.SetModifiedDate(ra::Widen(ra::FormatDateTime(pAchievement->updated_time)));
 

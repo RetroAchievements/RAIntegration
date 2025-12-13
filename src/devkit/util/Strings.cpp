@@ -4,37 +4,46 @@
 
 namespace ra {
 
-static size_t CalculateUtf8Length(const wchar_t* sText, size_t nTextLength, bool& bAsciiOnlyOut)
+static size_t CalculateUtf8Length(const wchar_t* sText, size_t nTextLength, bool& bAsciiOnlyOut) noexcept
 {
+    if (!sText || !nTextLength)
+    {
+        bAsciiOnlyOut = true;
+        return 0;
+    }
+
     bool bAsciiOnly = true;
     size_t nUtf8Length = 0;
 
-    const uint16_t* pSrc = reinterpret_cast<const uint16_t*>(sText);
-    const uint16_t* pStop = pSrc + nTextLength;
-    while (pSrc < pStop)
+    GSL_SUPPRESS_TYPE1 const uint16_t* pSrc = reinterpret_cast<const uint16_t*>(sText);
+    if (pSrc)
     {
-        const auto c = *pSrc++;
-        if (c < 0x80)
+        const uint16_t* pStop = pSrc + nTextLength;
+        while (pSrc < pStop)
         {
-            ++nUtf8Length;
-            continue;
-        }
+            const auto c = *pSrc++;
+            if (c < 0x80)
+            {
+                ++nUtf8Length;
+                continue;
+            }
 
-        bAsciiOnly = false;
+            bAsciiOnly = false;
 
-        if (c < 0x800)
-        {
-            nUtf8Length += 2;
-        }
-        else if (c >= 0xD800 && c <= 0xDBFF && *pSrc >= 0xDC00 && *pSrc <= 0xDFFF)
-        {
-            // two surrogate pairs will take four bytes total
-            nUtf8Length += 4;
-            ++pSrc;
-        }
-        else
-        {
-            nUtf8Length += 3;
+            if (c < 0x800)
+            {
+                nUtf8Length += 2;
+            }
+            else if (c >= 0xD800 && c <= 0xDBFF && *pSrc >= 0xDC00 && *pSrc <= 0xDFFF)
+            {
+                // two surrogate pairs will take four bytes total
+                nUtf8Length += 4;
+                ++pSrc;
+            }
+            else
+            {
+                nUtf8Length += 3;
+            }
         }
     }
 
@@ -44,15 +53,21 @@ static size_t CalculateUtf8Length(const wchar_t* sText, size_t nTextLength, bool
 
 static std::string Narrow(const wchar_t* sText, size_t sTextLength)
 {
+    if (!sText)
+        return {};
+
     bool bAsciiOnly = true;
     const auto nUtf8Length = CalculateUtf8Length(sText, sTextLength, bAsciiOnly);
 
     std::string sResult;
     sResult.resize(nUtf8Length);
-    uint8_t* pOut = reinterpret_cast<uint8_t*>(sResult.data());
+    GSL_SUPPRESS_TYPE1 uint8_t* pOut = reinterpret_cast<uint8_t*>(sResult.data());
 
-    const uint16_t* pSrc = reinterpret_cast<const uint16_t*>(sText);
+    GSL_SUPPRESS_TYPE1 const uint16_t* pSrc = reinterpret_cast<const uint16_t*>(sText);
     const uint16_t* pStop = pSrc + sTextLength;
+
+    if (!pOut || !pSrc)
+        return sResult;
 
     if (bAsciiOnly)
     {
@@ -73,8 +88,8 @@ static std::string Narrow(const wchar_t* sText, size_t sTextLength)
 
         if (c < 0x800)
         {
-            *pOut++ = 0xC0 | (c >> 6);
-            *pOut++ = 0x80 | (c & 0x3F);
+            *pOut++ = 0xC0 | gsl::narrow_cast<uint8_t>(c >> 6);
+            *pOut++ = 0x80 | gsl::narrow_cast<uint8_t>(c & 0x3F);
             continue;
         }
 
@@ -96,11 +111,11 @@ static std::string Narrow(const wchar_t* sText, size_t sTextLength)
                 else
                 {
                     // decode surrogate pair
-                    uint32_t cx = (((c & 0x03FF) << 10) | (c2 & 0x3FF)) + 0x10000;
-                    *pOut++ = 0xF0 | (cx >> 18);
-                    *pOut++ = 0x80 | ((cx >> 12) & 0x3F);
-                    *pOut++ = 0x80 | ((cx >> 6) & 0x3F);
-                    *pOut++ = 0x80 | (cx & 0x3F);
+                    const uint32_t cx = (((c & 0x03FF) << 10) | (c2 & 0x3FF)) + 0x10000;
+                    *pOut++ = 0xF0 | gsl::narrow_cast<uint8_t>(cx >> 18);
+                    *pOut++ = 0x80 | gsl::narrow_cast<uint8_t>((cx >> 12) & 0x3F);
+                    *pOut++ = 0x80 | gsl::narrow_cast<uint8_t>((cx >> 6) & 0x3F);
+                    *pOut++ = 0x80 | gsl::narrow_cast<uint8_t>(cx & 0x3F);
                     ++pSrc;
                     continue;
                 }
@@ -113,7 +128,7 @@ static std::string Narrow(const wchar_t* sText, size_t sTextLength)
     }
 
     *pOut = '\0';
-    const auto nActualSize = pOut - reinterpret_cast<uint8_t*>(sResult.data());
+    GSL_SUPPRESS_TYPE1 const auto nActualSize = pOut - reinterpret_cast<uint8_t*>(sResult.data());
     sResult.resize(nActualSize);
     return sResult;
 }
@@ -149,58 +164,72 @@ static const uint8_t UTF_NUM_TRAIL_BYTES[128] =
     3,3,3,3,3,3,3,3,4,4,4,4,5,5,0,0  // 0xf0-0xff
 };
 
-static size_t CalculateUnicodeLength(const char* sText, size_t nTextLength, bool& bAsciiOnlyOut)
+static size_t CalculateUnicodeLength(const char* sText, size_t nTextLength, bool& bAsciiOnlyOut) noexcept
 {
+    if (!sText || !nTextLength)
+    {
+        bAsciiOnlyOut = true;
+        return 0;
+    }
+
     bool bAsciiOnly = true;
 
     size_t nUnicodeLength = 0;
     size_t nRemaining = nTextLength;
-    const uint64_t* p64 = reinterpret_cast<const uint64_t*>(sText);
-    while (nRemaining > 8) {
-        // if any byte is not an ASCII character, switch to the slower algorithm
-        if (*p64 & 0x8080808080808080)
-            break;
+    GSL_SUPPRESS_TYPE1 const uint64_t* p64 = reinterpret_cast<const uint64_t*>(sText);
+    if (p64)
+    {
+        while (nRemaining > 8)
+        {
+            // if any byte is not an ASCII character, switch to the slower algorithm
+            if (*p64 & 0x8080808080808080)
+                break;
 
-        ++p64;
-        nUnicodeLength += 8;
-        nRemaining -= 8;
+            ++p64;
+            nUnicodeLength += 8;
+            nRemaining -= 8;
+        }
     }
 
-    const uint8_t* p8 = reinterpret_cast<const uint8_t*>(p64);
-    while (nRemaining) {
-        --nRemaining;
-        ++nUnicodeLength;
-
-        const uint8_t c = *p8++;
-        if ((c & 0x80) == 0)
+    GSL_SUPPRESS_TYPE1 const uint8_t* p8 = reinterpret_cast<const uint8_t*>(p64);
+    if (p8)
+    {
+        while (nRemaining)
         {
-            // single byte character
-            continue;
-        }
-
-        bAsciiOnly = false;
-
-        if ((c & 0x40) == 0)
-        {
-            // trail byte without lead
-            continue;
-        }
-
-        auto nAdditional = UTF_NUM_TRAIL_BYTES[c & 0x7F];
-        if (nAdditional > nRemaining) // not enough remaining
-            break;
-
-        if (nAdditional > 3)
-        {
-            // 5/6 byte UTF-8 sequences not supported in UTF-16 - will be replaced with xFFFD
-        }
-        else if (nAdditional == 3)
-        {
-            // extra space for surrogate pair
+            --nRemaining;
             ++nUnicodeLength;
-        }
 
-        nRemaining -= nAdditional;
+            const uint8_t c = *p8++;
+            if ((c & 0x80) == 0)
+            {
+                // single byte character
+                continue;
+            }
+
+            bAsciiOnly = false;
+
+            if ((c & 0x40) == 0)
+            {
+                // trail byte without lead
+                continue;
+            }
+
+            GSL_SUPPRESS_BOUNDS4 const auto nAdditional = UTF_NUM_TRAIL_BYTES[c & 0x7F];
+            if (nAdditional > nRemaining) // not enough remaining
+                break;
+
+            if (nAdditional > 3)
+            {
+                // 5/6 byte UTF-8 sequences not supported in UTF-16 - will be replaced with xFFFD
+            }
+            else if (nAdditional == 3)
+            {
+                // extra space for surrogate pair
+                ++nUnicodeLength;
+            }
+
+            nRemaining -= nAdditional;
+        }
     }
 
     bAsciiOnlyOut = bAsciiOnly;
@@ -209,15 +238,21 @@ static size_t CalculateUnicodeLength(const char* sText, size_t nTextLength, bool
 
 static std::wstring Widen(const char* sText, size_t nTextLength)
 {
+    if (!sText)
+        return {};
+
     bool bAsciiOnly = true;
     const auto nUnicodeLength = CalculateUnicodeLength(sText, nTextLength, bAsciiOnly);
 
     std::wstring sResult;
     sResult.resize(nUnicodeLength);
-    uint16_t* pOut = reinterpret_cast<uint16_t*>(sResult.data());
+    GSL_SUPPRESS_TYPE1 uint16_t* pOut = reinterpret_cast<uint16_t*>(sResult.data());
 
-    const uint8_t* pSrc = reinterpret_cast<const uint8_t*>(sText);
+    GSL_SUPPRESS_TYPE1 const uint8_t* pSrc = reinterpret_cast<const uint8_t*>(sText);
     const uint8_t* pStop = pSrc + nTextLength;
+
+    if (!pOut || !pSrc)
+        return sResult;
 
     if (bAsciiOnly)
     {
@@ -243,7 +278,7 @@ static std::wstring Widen(const char* sText, size_t nTextLength)
             continue;
         }
 
-        auto nAdditional = UTF_NUM_TRAIL_BYTES[c & 0x7F];
+        GSL_SUPPRESS_BOUNDS4 auto nAdditional = UTF_NUM_TRAIL_BYTES[c & 0x7F];
         if (pSrc + nAdditional > pStop)
         {
             // not enough data
@@ -259,7 +294,7 @@ static std::wstring Widen(const char* sText, size_t nTextLength)
         bool bInvalid = false;
         while (nAdditional)
         {
-            const char c2 = *pSrc++;
+            const uint8_t c2 = *pSrc++;
             bInvalid |= ((c2 & 0xC0) != 0x80);
             nAccumulator <<= 6;
             nAccumulator |= (c2 & 0x3F);
@@ -289,7 +324,7 @@ static std::wstring Widen(const char* sText, size_t nTextLength)
     }
 
     *pOut = '\0';
-    const auto nActualSize = pOut - reinterpret_cast<uint16_t*>(sResult.data());
+    GSL_SUPPRESS_TYPE1 const auto nActualSize = pOut - reinterpret_cast<uint16_t*>(sResult.data());
     sResult.resize(nActualSize);
     return sResult;
 }

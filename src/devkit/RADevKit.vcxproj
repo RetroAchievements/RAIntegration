@@ -48,10 +48,22 @@
     <Import Project="$(SolutionDir)\src\base.props" />
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="data\DataModelBase.cpp" />
+    <ClCompile Include="data\DataModelCollection.cpp" />
+    <ClCompile Include="data\ModelBase.cpp" />
+    <ClCompile Include="data\ModelCollectionBase.cpp" />
     <ClCompile Include="data\ModelProperty.cpp" />
+    <ClCompile Include="data\ModelPropertyContainer.cpp" />
     <ClCompile Include="util\GSL.cpp" />
     <ClCompile Include="util\Strings.cpp" />
+    <ClInclude Include="data\AsyncObject.hh" />
+    <ClInclude Include="data\DataModelBase.hh" />
+    <ClInclude Include="data\DataModelCollection.hh" />
+    <ClInclude Include="data\ModelBase.hh" />
+    <ClInclude Include="data\ModelCollectionBase.hh" />
     <ClInclude Include="data\ModelProperty.hh" />
+    <ClInclude Include="data\ModelPropertyContainer.hh" />
+    <ClInclude Include="data\NotifyTargetSet.hh" />
     <ClInclude Include="services\ILogger.hh" />
     <ClInclude Include="services\IMessageDispatcher.hh" />
     <ClInclude Include="services\ServiceLocator.hh" />

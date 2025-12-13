@@ -5,6 +5,8 @@
 #include "ModelBase.hh"
 #include "NotifyTargetSet.hh"
 
+#include <set>
+
 namespace ra {
 namespace data {
 

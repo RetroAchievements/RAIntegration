@@ -327,21 +327,6 @@
     <ClCompile Include="data\context\UserContext.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
-    <ClCompile Include="data\ModelPropertyContainer.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="data\DataModelBase.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="data\ModelCollectionBase.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="data\ModelBase.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="data\DataModelCollection.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="data\models\AssetModelBase.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
@@ -713,9 +698,6 @@
     <ClInclude Include="api\FetchLeaderboardInfo.hh">
       <Filter>API</Filter>
     </ClInclude>
-    <ClInclude Include="data\AsyncObject.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="ui\OverlayTheme.hh">
       <Filter>UI</Filter>
     </ClInclude>
@@ -905,21 +887,6 @@
     <ClInclude Include="data\context\UserContext.hh">
       <Filter>Data\Context</Filter>
     </ClInclude>
-    <ClInclude Include="data\ModelPropertyContainer.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="data\DataModelBase.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="data\DataModelCollection.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="data\ModelCollectionBase.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="data\ModelBase.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="data\models\AssetModelBase.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
@@ -1099,12 +1066,6 @@
     </ClInclude>
     <ClInclude Include="data\models\MemoryRegionsModel.hh">
       <Filter>Data\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="data\NotifyTargetSet.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="services\impl\MessageDispatcher.hh">
-      <Filter>Services\Impl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,15 @@
     <ClCompile Include="util\Strings_Tests.cpp">
       <Filter>util</Filter>
     </ClCompile>
+    <ClCompile Include="data\DataModelBase_Tests.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelPropertyContainer_Tests.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\NotifyTargetSet_Tests.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

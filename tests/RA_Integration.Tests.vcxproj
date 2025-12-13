@@ -81,11 +81,6 @@
     <ClCompile Include="..\src\data\context\GameContext.cpp" />
     <ClCompile Include="..\src\data\context\SessionTracker.cpp" />
     <ClCompile Include="..\src\data\context\UserContext.cpp" />
-    <ClCompile Include="..\src\data\DataModelCollection.cpp" />
-    <ClCompile Include="..\src\data\ModelBase.cpp" />
-    <ClCompile Include="..\src\data\ModelCollectionBase.cpp" />
-    <ClCompile Include="..\src\data\ModelPropertyContainer.cpp" />
-    <ClCompile Include="..\src\data\DataModelBase.cpp" />
     <ClCompile Include="..\src\data\models\AchievementModel.cpp" />
     <ClCompile Include="..\src\data\models\AssetModelBase.cpp" />
     <ClCompile Include="..\src\data\models\CapturedTriggerHits.cpp" />
@@ -168,8 +163,6 @@
     <ClCompile Include="data\context\GameAssets_Tests.cpp" />
     <ClCompile Include="data\context\GameContext_Tests.cpp" />
     <ClCompile Include="data\context\SessionTracker_Tests.cpp" />
-    <ClCompile Include="data\DataModelBase_Tests.cpp" />
-    <ClCompile Include="data\ModelPropertyContainer_Tests.cpp" />
     <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
     <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
     <ClCompile Include="data\models\CapturedTriggerHits_Tests.cpp" />
@@ -180,7 +173,6 @@
     <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp" />
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
     <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
-    <ClCompile Include="data\NotifyTargetSet_Tests.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="mocks\MockAchievementRuntime.cpp" />
     <ClCompile Include="services\AchievementLogicSerializer_Tests.cpp" />

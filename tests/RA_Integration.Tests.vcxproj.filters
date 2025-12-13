@@ -330,27 +330,6 @@
     <ClCompile Include="data\context\GameContext_Tests.cpp">
       <Filter>Tests\Data\Context</Filter>
     </ClCompile>
-    <ClCompile Include="data\ModelPropertyContainer_Tests.cpp">
-      <Filter>Tests\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\ModelPropertyContainer.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\DataModelBase_Tests.cpp">
-      <Filter>Tests\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\DataModelBase.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\DataModelCollection.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\ModelBase.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\ModelCollectionBase.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\data\models\AchievementModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -500,9 +479,6 @@
     </ClCompile>
     <ClCompile Include="ui\viewmodels\MemoryRegionsViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
-    </ClCompile>
-    <ClCompile Include="data\NotifyTargetSet_Tests.cpp">
-      <Filter>Tests\Data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

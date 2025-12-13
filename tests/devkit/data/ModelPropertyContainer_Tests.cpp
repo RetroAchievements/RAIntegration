@@ -1,6 +1,6 @@
 #include "data\ModelPropertyContainer.hh"
 
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+#include "testutil\CppUnitTest.hh"
 
 namespace ra {
 namespace data {

@@ -1403,7 +1403,7 @@ public:
                                       L"2: 0x00000302 & 0x000001ff -> 0x00000102\r\n"
                                       L"3: 0x00000102 * 0x00000002 -> 0x00000204\r\n"
                                       L"4: 0x00000204 + 0x00000004 -> 0x00000208"),
-            pCondition5->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
+                         pCondition5->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
         Assert::AreEqual(std::wstring(L""), pCondition5->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
 
         // $0010 = 0x0000 + 0x04 + 0x0208 = 0x020c
@@ -1563,6 +1563,34 @@ public:
                          pCondition10->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L""), pCondition10->GetTooltip(TriggerConditionViewModel::TargetTypeProperty));
         Assert::AreEqual(std::wstring(L"6"), pCondition10->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipRecallInvalid)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.mockGameContext.InitializeCodeNotes();
+        vmTrigger.Parse("A:{recall}_0xH0000=1");
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+
+        const auto* pCondition1 = vmTrigger.Conditions().GetItemAt(0);
+        Expects(pCondition1 != nullptr);
+
+        // there is no Remember condition to point to
+        Assert::AreEqual(std::wstring(L"0x00000000 (recall)\r\n[invalid recall]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+    }
+
+    TEST_METHOD(TestTooltipRecallInvalidInPauseIf)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.mockGameContext.InitializeCodeNotes();
+        vmTrigger.Parse("K:0xH0001*2_1=1_N:{recall}!=0_P:0xH0000=1");
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+
+        const auto* pCondition3 = vmTrigger.Conditions().GetItemAt(2);
+        Expects(pCondition3 != nullptr);
+
+        // there is a Remember condition to point to, but it won't be processed until after this condition
+        Assert::AreEqual(std::wstring(L"0x00000000 (recall)\r\n[invalid recall]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
     }
 
     TEST_METHOD(TestIsModifying)

@@ -431,7 +431,12 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
     {
         const auto nType = GetSourceType();
         if (nType == TriggerOperandType::Value)
+        {
+            if (IsAddressType(GetTargetType()) && ra::data::MemSizeBits(GetTargetSize()) >= 8)
+                return GetPotentialEnumValueTooltip(GetSourceAddress(), GetTargetAddress());
+
             return GetValueTooltip(GetSourceAddress());
+        }
 
         if (nType == TriggerOperandType::Float)
             return L"";
@@ -455,7 +460,12 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
     {
         const auto nType = GetTargetType();
         if (nType == TriggerOperandType::Value)
+        {
+            if (IsAddressType(GetSourceType()) && ra::data::MemSizeBits(GetSourceSize()) >= 8)
+                return GetPotentialEnumValueTooltip(GetTargetAddress(), GetSourceAddress());
+
             return GetValueTooltip(GetTargetAddress());
+        }
 
         if (nType == TriggerOperandType::Float)
             return L"";
@@ -495,6 +505,33 @@ std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProp
     }
 
     return L"";
+}
+
+std::wstring TriggerConditionViewModel::GetPotentialEnumValueTooltip(unsigned int nValue, ra::ByteAddress nCompareAddress) const
+{
+    const ra::data::models::CodeNoteModel* pNote = nullptr;
+
+    if (IsIndirect())
+    {
+        std::wstring sPointerChain;
+        GetIndirectAddress(nCompareAddress, sPointerChain, &pNote);
+    }
+    else
+    {
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+        if (pCodeNotes)
+            pNote = pCodeNotes->FindCodeNoteModel(nCompareAddress);
+    }
+
+    if (pNote != nullptr)
+    {
+        const auto pEnumText = pNote->GetEnumText(nValue);
+        if (!pEnumText.empty())
+            return std::wstring(pEnumText);
+    }
+
+    return GetValueTooltip(nValue);
 }
 
 std::wstring TriggerConditionViewModel::GetValueTooltip(unsigned int nValue)

@@ -26,6 +26,7 @@ public:
     const unsigned int GetBytes() const noexcept { return m_nBytes; }
     const MemSize GetMemSize() const noexcept { return m_nMemSize; }
     const MemFormat GetDefaultMemFormat() const noexcept { return m_nMemFormat; }
+    std::wstring_view GetEnumText(uint32_t nValue) const;
 
     void SetAuthor(const std::string& sAuthor) { m_sAuthor = sAuthor; }
     void SetAddress(ra::ByteAddress nAddress) noexcept { m_nAddress = nAddress; }
@@ -98,6 +99,15 @@ private:
     unsigned int m_nBytes = 1;
     MemSize m_nMemSize = MemSize::Unknown;
     MemFormat m_nMemFormat = MemFormat::Dec;
+
+    enum EnumState {
+        None,
+        Hex,
+        Dec,
+        Unknown,
+    };
+    mutable EnumState m_nEnumState = EnumState::Unknown;
+    static EnumState DetermineEnumState(const std::wstring_view svNote);
 
     struct PointerData;
     std::unique_ptr<PointerData> m_pPointerData;

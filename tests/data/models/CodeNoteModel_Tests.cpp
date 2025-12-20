@@ -728,6 +728,150 @@ public:
         Assert::IsNotNull(pObj2Note);
         Assert::AreEqual(28U, pObj2Note->GetPointerAddress());
     }
+
+    TEST_METHOD(TestGetEnumTextSimple)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"[8-bit] Color\r\n"
+            L"0=None\r\n"
+            L"1=Red\r\n"
+            L"2=Green\r\n"
+            L"3=Blue\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring_view(L"0=None"), note.GetEnumText(0));
+        Assert::AreEqual(std::wstring_view(L"1=Red"), note.GetEnumText(1));
+        Assert::AreEqual(std::wstring_view(L"2=Green"), note.GetEnumText(2));
+        Assert::AreEqual(std::wstring_view(L"3=Blue"), note.GetEnumText(3));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(4));
+    }
+
+    TEST_METHOD(TestGetEnumTextSingleLine)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote = L"Color (0=None, 1=Red, 2=Green, 3=Blue)";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring_view(L"0=None"), note.GetEnumText(0));
+        Assert::AreEqual(std::wstring_view(L"1=Red"), note.GetEnumText(1));
+        Assert::AreEqual(std::wstring_view(L"2=Green"), note.GetEnumText(2));
+        Assert::AreEqual(std::wstring_view(L"3=Blue"), note.GetEnumText(3));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(4));
+    }
+
+    TEST_METHOD(TestGetEnumTextSingleLineAlternateFormat)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote = L"Color [0: None, 1: Red, 2: Green, 3: Blue]";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring_view(L"0: None"), note.GetEnumText(0));
+        Assert::AreEqual(std::wstring_view(L"1: Red"), note.GetEnumText(1));
+        Assert::AreEqual(std::wstring_view(L"2: Green"), note.GetEnumText(2));
+        Assert::AreEqual(std::wstring_view(L"3: Blue"), note.GetEnumText(3));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(4));
+    }
+
+    TEST_METHOD(TestGetEnumTextHexPrefix0x)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"[8-bit] Color\r\n"
+            L"0x00=None\r\n"
+            L"0x10=Red\r\n"
+            L"0x4C=Green\r\n"
+            L"0xA3=Blue\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring_view(L"0x00=None"), note.GetEnumText(0x00));
+        Assert::AreEqual(std::wstring_view(L"0x10=Red"), note.GetEnumText(0x10));
+        Assert::AreEqual(std::wstring_view(L"0x4C=Green"), note.GetEnumText(0x4C));
+        Assert::AreEqual(std::wstring_view(L"0xA3=Blue"), note.GetEnumText(0xA3));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(0x2A));
+    }
+
+    TEST_METHOD(TestGetEnumTextHexPrefixH)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"[8-bit] Color\r\n"
+            L"h00=None\r\n"
+            L"h10=Red\r\n"
+            L"h4c=Green\r\n"
+            L"ha3=Blue\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring_view(L"h00=None"), note.GetEnumText(0x00));
+        Assert::AreEqual(std::wstring_view(L"h10=Red"), note.GetEnumText(0x10));
+        Assert::AreEqual(std::wstring_view(L"h4c=Green"), note.GetEnumText(0x4C));
+        Assert::AreEqual(std::wstring_view(L"ha3=Blue"), note.GetEnumText(0xA3));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(0x2A));
+    }
+
+    TEST_METHOD(TestGetEnumTextHexPrefixNone)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"[8-bit] Color\r\n"
+            L"00=None\r\n"
+            L"10=Red\r\n"
+            L"4C=Green\r\n"
+            L"A3=Blue\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring_view(L"00=None"), note.GetEnumText(0x00));
+        Assert::AreEqual(std::wstring_view(L"10=Red"), note.GetEnumText(0x10));
+        Assert::AreEqual(std::wstring_view(L"4C=Green"), note.GetEnumText(0x4C));
+        Assert::AreEqual(std::wstring_view(L"A3=Blue"), note.GetEnumText(0xA3));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(0x2A));
+    }
+
+    TEST_METHOD(TestGetEnumTextRange)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"[8-bit] Color\r\n"
+            L"0-3=None\r\n"
+            L"4-7=Red\r\n"
+            L"9-12=Green\r\n"
+            L"15-18=Blue\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring_view(L"0-3=None"), note.GetEnumText(0));
+        Assert::AreEqual(std::wstring_view(L"4-7=Red"), note.GetEnumText(4));
+        Assert::AreEqual(std::wstring_view(L"4-7=Red"), note.GetEnumText(5));
+        Assert::AreEqual(std::wstring_view(L"4-7=Red"), note.GetEnumText(6));
+        Assert::AreEqual(std::wstring_view(L"4-7=Red"), note.GetEnumText(7));
+        Assert::AreEqual(std::wstring_view(L"9-12=Green"), note.GetEnumText(10));
+        Assert::AreEqual(std::wstring_view(L"15-18=Blue"), note.GetEnumText(17));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(8));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(20));
+    }
+
+    TEST_METHOD(TestGetEnumTextIndirect)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"[32-bit pointer] Data\r\n"
+            L"0=NULL\r\n"
+            L"+0x02|Color\r\n"
+            L"1=Red\r\n"
+            L"2=Green\r\n"
+            L"+0x04|Alternate Color\r\n"
+            L"3=Blue\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring_view(L"0=NULL"), note.GetEnumText(0));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(2));
+
+        const auto* pSubNote = note.GetPointerNoteAtOffset(0x02);
+        Assert::IsNotNull(pSubNote);
+        Assert::AreEqual(std::wstring_view(), pSubNote->GetEnumText(0));
+        Assert::AreEqual(std::wstring_view(L"1=Red"), pSubNote->GetEnumText(1));
+        Assert::AreEqual(std::wstring_view(L"2=Green"), pSubNote->GetEnumText(2));
+        Assert::AreEqual(std::wstring_view(), pSubNote->GetEnumText(3));
+    }
 };
 
 } // namespace tests

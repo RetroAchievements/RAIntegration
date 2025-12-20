@@ -1237,6 +1237,244 @@ void CodeNoteModel::EnumeratePointerNotes(ra::ByteAddress nPointerAddress,
     }
 }
 
+static uint32_t Convert(std::wstring_view svValue, bool isHex) noexcept
+{
+    uint32_t nValue = 0;
+    if (isHex)
+    {
+        for (const auto c : svValue)
+        {
+            nValue <<= 4;
+            if (c <= '9')
+                nValue |= (c - '0');
+            else if (c <= 'F')
+                nValue |= (c - 'A' + 10);
+            else
+                nValue |= (c - 'a' + 10);
+        }
+    }
+    else
+    {
+        for (const auto c : svValue)
+        {
+            nValue *= 10;
+            nValue += (c - '0');
+        }
+    }
+
+    return nValue;
+}
+
+static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHigh, bool isHex)
+{
+    if (svRange.size() > 2 && svRange.at(0) == L'0' && svRange.at(1) == L'x')
+        svRange = svRange.substr(2);
+    else if (svRange.size() > 1 && (svRange.at(0) == L'h' || svRange.at(0) == L'H'))
+        svRange = svRange.substr(1);
+
+    size_t nIndex = 0;
+    while (nIndex < svRange.size() && IsHexDigit(svRange.at(nIndex)))
+        ++nIndex;
+
+    if (nIndex == 0)
+        return false;
+
+    const auto svLow = svRange.substr(0, nIndex);
+    std::wstring_view svHigh;
+
+    while (nIndex < svRange.size() && isspace(svRange.at(nIndex)))
+        ++nIndex;
+
+    if (nIndex < svRange.size())
+    {
+        if (svRange.at(nIndex++) != '-')
+            return false;
+
+        const auto nStart = nIndex;
+        while (nIndex < svRange.size() && IsHexDigit(svRange.at(nIndex)))
+            ++nIndex;
+
+        if (nIndex == nStart)
+            return false;
+
+        svHigh = svRange.substr(nStart, nIndex);
+    }
+
+    nLow = Convert(svLow, isHex);
+    nHigh = svHigh.empty() ? nLow : Convert(svHigh, isHex);
+
+    return true;
+}
+
+static bool MatchEnumText(const std::wstring_view svValue, uint32_t nValue, bool isHex)
+{
+    const auto nSplit = svValue.find_first_of(L"=:");
+    if (nSplit == std::wstring::npos)
+        return false;
+
+    const auto svLeft = svValue.substr(0, nSplit);
+
+    uint32_t nLow, nHigh;
+    if (ParseRange(svLeft, nLow, nHigh, isHex))
+    {
+        if (nValue >= nLow && nValue <= nHigh)
+            return true;
+    }
+    else if (svValue.at(nSplit) == L'=')
+    {
+        auto svRight = svValue.substr(nSplit + 1);
+        while (!svRight.empty() && isspace(svRight.at(0)))
+            svRight.remove_prefix(1);
+
+        if (ParseRange(svRight, nLow, nHigh, isHex))
+        {
+            if (nValue >= nLow && nValue <= nHigh)
+                return true;
+        }
+    }
+
+    return false;
+}
+
+static std::wstring_view GetValues(const std::wstring_view svLine)
+{
+    const auto nSplit = svLine.find_first_of(L"=:");
+    if (nSplit == std::wstring::npos)
+        return {};
+
+    size_t nRightBracket = svLine.size() + 1;
+    const auto nLeftBracket = svLine.find_last_of(L"([{", nSplit);
+    if (nLeftBracket == std::wstring::npos)
+        return svLine;
+
+    switch (svLine.at(nLeftBracket))
+    {
+        case '(':
+            nRightBracket = svLine.find(L')', nSplit);
+            break;
+        case '[':
+            nRightBracket = svLine.find(L']', nSplit);
+            break;
+        case '{':
+            nRightBracket = svLine.find(L'}', nSplit);
+            break;
+    }
+
+    if (nRightBracket == std::wstring::npos)
+        return svLine;
+
+    return svLine.substr(nLeftBracket + 1, nRightBracket - nLeftBracket - 1);
+}
+
+CodeNoteModel::EnumState CodeNoteModel::DetermineEnumState(const std::wstring_view svNote)
+{
+    EnumState nState = EnumState::None;
+    size_t nStart = 0;
+    while (nStart < svNote.size())
+    {
+        auto nEnd = svNote.find_first_of(L"\n\r", nStart);
+
+        if (nStart != nEnd)
+        {
+            const auto svLine = svNote.substr(nStart, nEnd - nStart);
+            const auto svValues = GetValues(svLine);
+            if (!svValues.empty())
+            {
+                size_t nFront = 0;
+                do {
+                    const auto nComma = svValues.find_first_of(L",;", nFront);
+                    const auto svValue = (nComma == std::wstring::npos) ? svValues.substr(nFront) : svValues.substr(nFront, nComma - nFront);
+
+                    const auto nSplit = svValue.find_first_of(L"=:");
+                    if (nSplit != std::wstring::npos)
+                    {
+                        uint32_t nLow, nHigh;
+                        const auto svLeft = svValue.substr(0, nSplit);
+                        if (ParseRange(svLeft, nLow, nHigh, true))
+                        {
+                            if (svLeft.find_first_of(L"ABCDEFabcdefHhx") != std::wstring::npos)
+                                return EnumState::Hex;
+
+                            nState = EnumState::Dec;
+                        }
+                    }
+
+                    if (nComma == std::wstring::npos)
+                        break;
+
+                    nFront = nComma + 1;
+                    while (nFront < svValues.size() && isspace(svValues.at(nFront)))
+                        ++nFront;
+                } while (nFront < svValues.size());
+            }
+        }
+
+        while (nEnd < svNote.size() && (svNote.at(nEnd) == L'\n' || svNote.at(nEnd) == L'\r'))
+            ++nEnd;
+
+        nStart = nEnd;
+    }
+
+    return nState;
+
+}
+
+std::wstring_view CodeNoteModel::GetEnumText(uint32_t nValue) const
+{
+    if (m_nEnumState == EnumState::None)
+        return {};
+
+    std::wstring_view svNote(m_sNote);
+
+    if (m_pPointerData != nullptr)
+        svNote = svNote.substr(0, m_pPointerData->HeaderLength);
+
+    if (m_nEnumState == EnumState::Unknown)
+    {
+        m_nEnumState = DetermineEnumState(svNote);
+        if (m_nEnumState == EnumState::None)
+            return {};
+    }
+
+    const bool isHex = (m_nEnumState == EnumState::Hex);
+    size_t nStart = 0;
+    while (nStart < svNote.size())
+    {
+        auto nEnd = svNote.find_first_of(L"\n\r", nStart);
+
+        if (nStart != nEnd)
+        {
+            const auto svLine = svNote.substr(nStart, nEnd - nStart);
+            const auto svValues = GetValues(svLine);
+            if (!svValues.empty())
+            {
+                size_t nFront = 0;
+                do {
+                    const auto nComma = svValues.find_first_of(L",;", nFront);
+                    const auto svValue = (nComma == std::wstring::npos) ? svValues.substr(nFront) : svValues.substr(nFront, nComma - nFront);
+
+                    if (MatchEnumText(svValue, nValue, isHex))
+                        return svValue;
+
+                    if (nComma == std::wstring::npos)
+                        break;
+
+                    nFront = nComma + 1;
+                    while (nFront < svValues.size() && isspace(svValues.at(nFront)))
+                        ++nFront;
+                } while (nFront < svValues.size());
+            }
+        }
+
+        while (nEnd < svNote.size() && (svNote.at(nEnd) == L'\n' || svNote.at(nEnd) == L'\r'))
+            ++nEnd;
+
+        nStart = nEnd;
+    }
+
+    return {};
+}
+
 } // namespace models
 } // namespace data
 } // namespace ra

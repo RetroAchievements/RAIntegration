@@ -732,6 +732,17 @@ public:
         Assert::AreEqual(std::wstring(L""), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 
+    TEST_METHOD(TestTooltipValueEnum)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetCodeNote({ 0x0099U }, L"Color {02=Red, 06=Brown}");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        condition.Parse("0xH0099=2");
+
+        Assert::AreEqual(std::wstring(L"0x0099\r\nColor {02=Red, 06=Brown}"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"02=Red"), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
     TEST_METHOD(TestTooltipValueHex)
     {
         TriggerConditionViewModelHarness condition;

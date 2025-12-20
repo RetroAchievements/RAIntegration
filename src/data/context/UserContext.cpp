@@ -3,6 +3,8 @@
 #include "Exports.hh"
 #include "util\Strings.hh"
 
+#include "context\IRcClient.hh"
+
 #include "api\impl\DisconnectedServer.hh"
 
 #include "data\context\EmulatorContext.hh"
@@ -36,7 +38,7 @@ void UserContext::Logout()
 
     _RA_ActivateGame(0U);
 
-    auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     rc_client_logout(pClient);
 
     m_sUsername.clear();

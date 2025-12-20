@@ -83,5 +83,5 @@ public:
 };
 
 } // namespace tests
-} // namespace ui
+} // namespace data
 } // namespace ra

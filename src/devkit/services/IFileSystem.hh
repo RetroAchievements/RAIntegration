@@ -5,6 +5,10 @@
 #include "services/TextReader.hh"
 #include "services/TextWriter.hh"
 
+#include <chrono>
+#include <memory>
+
+// prevent aliasing if this file is included in a Windows project
 #undef CreateDirectory
 #undef DeleteFile
 #undef MoveFile

@@ -9,13 +9,14 @@
 
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
+#include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -1157,6 +1158,7 @@ public:
     TEST_METHOD(TestRichPresence)
     {
         AssetUploadViewModelHarness vmUpload;
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockLocalStorage mockStorage;
         mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, std::to_wstring(vmUpload.GameId), "Display:\nThis is a test.");

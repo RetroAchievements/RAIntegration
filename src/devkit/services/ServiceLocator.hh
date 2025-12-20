@@ -8,6 +8,8 @@
 #include "util\Strings.hh"
 #endif
 
+#include <stdexcept>
+
 namespace ra {
 namespace services {
 
@@ -78,13 +80,12 @@ public:
     /// </summary>
     static bool IsShuttingDown() noexcept;
 
-#ifdef RA_UTEST
     /// <summary>
     /// Provides a temporary implementation of an interface for the duration of the scope of the ServiceOverride.
     /// The original implementation will be restored when the <see cref="ServiceOverride"/> goes out of scope.
     /// </summary>
     /// <remarks>
-    /// Primarily used in unit tests.
+    /// Intended for use only in unit tests.
     /// </remarks>
     template <class TClass>
     class ServiceOverride
@@ -128,7 +129,6 @@ public:
         TClass* m_pPreviousInstance;
         bool m_bPreviousDestroy;
     };
-#endif
 
 private:
     template <class TClass>
@@ -149,10 +149,7 @@ private:
         }
 
         static std::unique_ptr<TClass> s_pInstance;
-
-#ifdef RA_UTEST
         static bool s_bDestroy;
-#endif
 
     private:
         static void ThrowNoServiceProvidedException()
@@ -193,10 +190,8 @@ private:
 template <class TClass>
 std::unique_ptr<TClass> ServiceLocator::Service<TClass>::s_pInstance;
 
-#ifdef RA_UTEST
 template<class TClass>
 bool ServiceLocator::Service<TClass>::s_bDestroy = true;
-#endif
 
 } // namespace services
 } // namespace ra

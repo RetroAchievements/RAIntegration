@@ -2,10 +2,14 @@
 #define RA_SERVICES_MOCK_ACHIEVEMENT_RUNTIME_HH
 #pragma once
 
+#include "context\IRcClient.hh"
+
 #include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 
 #include <rcheevos\src\rc_client_internal.h>
+
+#include "tests\devkit\testutil\CppUnitTest.hh"
 
 namespace ra {
 namespace services {
@@ -14,30 +18,24 @@ namespace mocks {
 class MockAchievementRuntime : public AchievementRuntime
 {
 public:
-    MockAchievementRuntime() noexcept : m_Override(this)
+    GSL_SUPPRESS_F6 MockAchievementRuntime()
+        : AchievementRuntime(false), m_Override(this)
     {
-        /* intercept server requests */
-        GetClient()->callbacks.server_call = MockServerCall;
+        Assert::IsTrue(ra::services::ServiceLocator::Exists<context::IRcClient>(), L"MockAchievementRuntime requires MockRcClient");
 
-        /* disable logging */
-        rc_client_enable_logging(GetClient(), RC_CLIENT_LOG_LEVEL_NONE, nullptr);
+        InitializeRcClient();
     }
 
-    bool IsAchievementSupported(ra::AchievementID nAchievement) noexcept
+    rc_client_t* GetClient() const
+    {
+        return ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    }
+
+    bool IsAchievementSupported(ra::AchievementID nAchievement)
     {
         const auto* pAchievement = GetAchievementTrigger(nAchievement);
         return (pAchievement != nullptr && pAchievement->state != RC_TRIGGER_STATE_DISABLED);
     }
-
-    void MockResponse(const std::string& sRequestParams, const std::string& sResponseBody)
-    {
-        auto& pResponse = m_vResponses.emplace_back();
-        pResponse.sRequestParams = sRequestParams;
-        pResponse.sResponseBody = sResponseBody;
-        pResponse.nHttpStatus = 200;
-    }
-
-    void OnBeforeResponse(const std::string& sRequestParams, const std::function<void()>&& fHandler);
 
     void MockUser(const std::string& sUsername, const std::string& sApiToken);
 
@@ -52,7 +50,7 @@ public:
     rc_client_achievement_info_t* MockSubsetAchievement(uint32_t nSubsetId, uint32_t nId, const char* sTitle = nullptr);
 
     rc_client_achievement_info_t* ActivateAchievement(uint32_t nId, const std::string& sTrigger);
-    void UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode) noexcept;
+    void UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode);
 
     rc_client_leaderboard_info_t* MockLeaderboard(uint32_t nId, const char* sTitle = nullptr);
     rc_client_leaderboard_info_t* MockLeaderboardWithLboard(uint32_t nId, const char* sTitle = nullptr);
@@ -60,31 +58,11 @@ public:
 
     rc_client_leaderboard_info_t* ActivateLeaderboard(uint32_t nId, const std::string& sDefinition);
 
-    void AssertCalled(const std::string& sRequestParams) const;
-
-    void AssertNoPendingRequests() const;
-
     std::map<uint32_t, std::string>& GetAchievementDefinitions() noexcept { return m_mAchievementDefinitions; }
     std::map<uint32_t, std::string>& GetLeaderboardDefinitions() noexcept { return m_mLeaderboardDefinitions; }
 
 private:
-    static void MockServerCall(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,
-                               void* pCallbackData, rc_client_t*);
-
     ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_Override;
-
-    typedef struct MockApiResponse
-    {
-        std::string sRequestParams;
-        std::string sResponseBody;
-        int nHttpStatus = 0;
-        bool bSeen = 0;
-        rc_client_server_callback_t fAsyncCallback = nullptr;
-        void* pAsyncCallbackData = nullptr;
-        std::function<void()> fBeforeResponse = nullptr;
-    } MockApiResponse;
-
-    std::vector<MockApiResponse> m_vResponses;
 
     std::map<uint32_t, std::string> m_mAchievementDefinitions;
     std::map<uint32_t, std::string> m_mLeaderboardDefinitions;

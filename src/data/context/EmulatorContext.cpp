@@ -8,6 +8,8 @@
 
 #include "api\LatestClient.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\GameContext.hh"
 #include "data\context\UserContext.hh"
 
@@ -712,8 +714,9 @@ void EmulatorContext::AssertIsOnDoFrameThread() const
 {
 #if RA_INTEGRATION_VERSION_REVISION != 0
  #if !defined(RA_UTEST)
+    const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    if (!pRuntime.GetClient()->state.allow_background_memory_reads &&
+    if (!pClient->state.allow_background_memory_reads &&
         !pRuntime.IsOnDoFrameThread())
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();

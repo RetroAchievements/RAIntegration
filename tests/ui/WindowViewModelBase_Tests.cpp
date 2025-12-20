@@ -2,8 +2,8 @@
 
 #include "services\ServiceLocator.hh"
 #include "ui\IDesktop.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockThreadPool.hh"
 
 #include "tests\ui\UIAsserts.hh"
 

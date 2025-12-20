@@ -16,6 +16,21 @@
     <ClCompile Include="data\NotifyTargetSet_Tests.cpp">
       <Filter>data</Filter>
     </ClCompile>
+    <ClCompile Include="services\Http_Tests.cpp">
+      <Filter>services</Filter>
+    </ClCompile>
+    <ClCompile Include="services\StringTextReader_Tests.cpp">
+      <Filter>services</Filter>
+    </ClCompile>
+    <ClCompile Include="services\StringTextWriter_Tests.cpp">
+      <Filter>services</Filter>
+    </ClCompile>
+    <ClCompile Include="context\mocks\MockRcClient.cpp">
+      <Filter>context\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="context\impl\RcClient_Tests.cpp">
+      <Filter>context\impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -30,10 +45,43 @@
     <Filter Include="testutil">
       <UniqueIdentifier>{0704504a-6093-4bb9-99a9-f5ea8c402401}</UniqueIdentifier>
     </Filter>
+    <Filter Include="services">
+      <UniqueIdentifier>{5dfaedb4-60c7-4f8d-9a06-f3735660ae5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="services\mocks">
+      <UniqueIdentifier>{9df95fa0-ef11-4cb2-8d6b-01e2c4c8b482}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="context">
+      <UniqueIdentifier>{19350e49-175f-4616-a497-f66709581251}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="context\mocks">
+      <UniqueIdentifier>{2c9c1d76-8769-478a-8a03-88a2834f3b5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="context\impl">
+      <UniqueIdentifier>{ecc72096-a8e6-4c8e-bd30-2cf087d72df8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="testutil\CppUnitTest.hh">
       <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockThreadPool.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockFileSystem.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockHttpRequester.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\HttpAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="context\mocks\MockRcClient.hh">
+      <Filter>context\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockLogger.hh">
+      <Filter>services\mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

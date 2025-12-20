@@ -11,6 +11,8 @@
 
 #include "RA_md5factory.h"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
@@ -185,275 +187,56 @@ static uint32_t IdentifyUnknownHash(uint32_t console_id, const char* hash, rc_cl
 
 AchievementRuntime::AchievementRuntime()
 {
-    m_pClient.reset(rc_client_create(AchievementRuntime::ReadMemory, AchievementRuntime::ServerCallAsync));
+	InitializeRcClient();
+}
 
-    m_pClient->callbacks.can_submit_achievement_unlock = CanSubmitAchievementUnlock;
-    m_pClient->callbacks.can_submit_leaderboard_entry = CanSubmitLeaderboardEntry;
-    m_pClient->callbacks.rich_presence_override = RichPresenceOverride;
-    m_pClient->callbacks.identify_unknown_hash = IdentifyUnknownHash;
+AchievementRuntime::AchievementRuntime(bool bInitializeRcClient)
+{
+	if (bInitializeRcClient)
+		InitializeRcClient();
+}
+
+void AchievementRuntime::InitializeRcClient()
+{
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    Expects(pClient != nullptr);
+
+    rc_client_set_read_memory_function(pClient, AchievementRuntime::ReadMemory);
+
+    pClient->callbacks.can_submit_achievement_unlock = CanSubmitAchievementUnlock;
+    pClient->callbacks.can_submit_leaderboard_entry = CanSubmitLeaderboardEntry;
+    pClient->callbacks.rich_presence_override = RichPresenceOverride;
+    pClient->callbacks.identify_unknown_hash = IdentifyUnknownHash;
 
 #ifndef RA_UTEST
-    rc_client_enable_logging(m_pClient.get(), RC_CLIENT_LOG_LEVEL_VERBOSE, AchievementRuntime::LogMessage);
-
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.IsCustomHost())
-        rc_client_set_host(m_pClient.get(), pConfiguration.GetHostUrl().c_str());
+        rc_client_set_host(pClient, pConfiguration.GetHostUrl().c_str());
 
     const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-    rc_client_set_hardcore_enabled(m_pClient.get(), bHardcore ? 1 : 0);
+    rc_client_set_hardcore_enabled(pClient, bHardcore ? 1 : 0);
 
     if (pConfiguration.IsCustomHost())
-        rc_client_set_host(m_pClient.get(), pConfiguration.GetHostUrl().c_str());
+        rc_client_set_host(pClient, pConfiguration.GetHostUrl().c_str());
 #endif
 
-    rc_client_set_event_handler(m_pClient.get(), EventHandler);
-    m_pClient->state.allow_leaderboards_in_softcore = true;
-
-    rc_client_set_unofficial_enabled(m_pClient.get(), 1);
+    rc_client_set_event_handler(pClient, EventHandler);
 }
 
-AchievementRuntime::~AchievementRuntime() { Shutdown(); }
-
-static void DummyEventHandler(const rc_client_event_t*, rc_client_t*) noexcept
+AchievementRuntime::~AchievementRuntime()
 {
-}
-
-void AchievementRuntime::Shutdown() noexcept
-{
-    if (m_pClient != nullptr)
+    if (!ra::services::ServiceLocator::IsShuttingDown() &&
+        ra::services::ServiceLocator::Exists<ra::context::IRcClient>())
     {
-        // don't need to handle events while shutting down
-        rc_client_set_event_handler(m_pClient.get(), DummyEventHandler);
-
-        rc_client_destroy(m_pClient.release());
+        GSL_SUPPRESS_F6
+        ra::services::ServiceLocator::GetMutable<ra::context::IRcClient>().Shutdown();
     }
-}
-
-void AchievementRuntime::LogMessage(const char* sMessage, const rc_client_t*)
-{
-    const auto& pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>();
-    if (pLogger.IsEnabled(ra::services::LogLevel::Info))
-        pLogger.LogMessage(ra::services::LogLevel::Info, sMessage);
 }
 
 uint32_t AchievementRuntime::ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes, rc_client_t*)
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     return pEmulatorContext.ReadMemory(nAddress, pBuffer, nBytes);
-}
-
-static void ConvertHttpResponseToApiServerResponse(rc_api_server_response_t& pResponse,
-                                                   const ra::services::Http::Response& httpResponse,
-                                                   std::string& sErrorBuffer)
-{
-    memset(&pResponse, 0, sizeof(pResponse));
-    pResponse.http_status_code = ra::etoi(httpResponse.StatusCode());
-    pResponse.body = httpResponse.Content().c_str();
-    pResponse.body_length = httpResponse.Content().length();
-
-    if (pResponse.http_status_code > 599 || pResponse.body_length == 0)
-    {
-        const auto& pHttpRequestService = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
-        sErrorBuffer = pHttpRequestService.GetStatusCodeText(pResponse.http_status_code);
-        pResponse.body = sErrorBuffer.c_str();
-        pResponse.body_length = sErrorBuffer.length();
-        pResponse.http_status_code = pHttpRequestService.IsRetryable(pResponse.http_status_code) ?
-            RC_API_SERVER_RESPONSE_RETRYABLE_CLIENT_ERROR : RC_API_SERVER_RESPONSE_CLIENT_ERROR;
-    }
-}
-
-static std::string GetParam(const ra::services::Http::Request& httpRequest, const std::string& sParam)
-{
-    std::string sScan = "&" + sParam + "=";
-    auto nIndex = httpRequest.GetPostData().find(sScan);
-
-    if (nIndex == std::string::npos)
-    {
-        const auto nLen = sScan.length() - 1;
-        if (httpRequest.GetPostData().length() < nLen)
-            return "";
-
-        if (httpRequest.GetPostData().compare(0, nLen, sScan, 1, nLen) != 0)
-            return "";
-
-        nIndex = nLen;
-    }
-    else
-    {
-        nIndex += sScan.length();
-    }
-
-    auto nIndex2 = httpRequest.GetPostData().find('&', nIndex);
-    if (nIndex2 == std::string::npos)
-        nIndex2 = httpRequest.GetPostData().length();
-
-    return std::string(httpRequest.GetPostData(), nIndex, nIndex2 - nIndex);
-}
-
-static ra::services::Http::Response AchievementDataNotFound(const std::string& sGameId)
-{
-    return ra::services::Http::Response(ra::services::Http::StatusCode::NotFound,
-        ra::StringPrintf("{\"Success\":false,\"Error\":\"Achievement data for game %s not found in cache\"}", sGameId));
-}
-
-static ra::services::Http::Response HandleOfflineRequest(const ra::services::Http::Request& httpRequest, const std::string sApi)
-{
-    if (sApi == "ping")
-        return ra::services::Http::Response(ra::services::Http::StatusCode::OK, "{\"Success\":true}");
-
-    if (sApi == "achievementsets")
-    {
-        const auto sGameHash = GetParam(httpRequest, "m");
-        const auto nGameId = ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().IdentifyHash(sGameHash);
-
-        // see if the data is available in the cache
-        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
-        if (pData == nullptr)
-            return AchievementDataNotFound(std::to_string(nGameId));
-
-        const auto nSize = pData->GetSize();
-        std::string sContents;
-        sContents.resize(nSize + 1);
-        GSL_SUPPRESS_TYPE1 pData->GetBytes(reinterpret_cast<uint8_t*>(sContents.data()), nSize);
-
-        if (sContents.find(",\"Sets\":[") == std::string::npos) // ignore patch response - only return achievementsets response
-            return AchievementDataNotFound(std::to_string(nGameId));
-
-        return ra::services::Http::Response(ra::services::Http::StatusCode::OK, sContents);
-    }
-
-    if (sApi == "patch")
-    {
-        const auto sGameId = GetParam(httpRequest, "g");
-
-        // see if the data is available in the cache
-        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, ra::Widen(sGameId));
-        if (pData == nullptr)
-            return AchievementDataNotFound(sGameId);
-
-        std::string sContents = "{\"Success\":true,\"PatchData\":";
-        std::string sLine;
-        while (pData->GetLine(sLine))
-            sContents.append(sLine);
-        sContents.push_back('}');
-
-        return ra::services::Http::Response(ra::services::Http::StatusCode::OK, sContents);
-    }
-
-    if (sApi == "startsession")
-        return ra::services::Http::Response(ra::services::Http::StatusCode::OK, "{\"Success\":true}");
-
-    return ra::services::Http::Response(ra::services::Http::StatusCode::NotImplemented,
-        ra::StringPrintf("{\"Success\":false,\"Error\":\"No offline implementation for %s\"}", sApi));
-}
-
-void AchievementRuntime::AsyncServerCall(const rc_api_request_t* pRequest,
-                                         AsyncServerCallCallback fCallback, void* pCallbackData) const
-{
-    struct callback_pair_t
-    {
-        AsyncServerCallCallback fCallback;
-        void* pCallbackData;
-    };
-
-    auto* pCallbackPair = static_cast<callback_pair_t*>(malloc(sizeof(callback_pair_t)));
-    Expects(pCallbackPair != nullptr);
-    pCallbackPair->fCallback = fCallback;
-    pCallbackPair->pCallbackData = pCallbackData;
-
-    ServerCallAsync(pRequest,
-        [](const rc_api_server_response_t* server_response, void* callback_data)
-        {
-            Expects(server_response != nullptr);
-            Expects(callback_data != nullptr);
-            auto* pCallbackPair = static_cast<callback_pair_t*>(callback_data);
-            pCallbackPair->fCallback(*server_response, pCallbackPair->pCallbackData);
-            free(pCallbackPair);
-        },
-        pCallbackPair, nullptr);
-}
-
-void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,
-                                         void* pCallbackData, rc_client_t*)
-{
-    ra::services::Http::Request httpRequest(pRequest->url);
-    httpRequest.SetPostData(pRequest->post_data);
-    httpRequest.SetContentType(pRequest->content_type);
-
-    std::string sApi;
-    auto nIndex = httpRequest.GetPostData().find("r=", 0, 2);
-    if (nIndex != std::string::npos)
-    {
-        nIndex += 2;
-        for (; nIndex < httpRequest.GetPostData().length(); ++nIndex)
-        {
-            const char c = httpRequest.GetPostData().at(nIndex);
-            if (c == '&')
-                break;
-
-            sApi.push_back(c);
-        }
-
-        std::string sParams;
-        bool redacted = false;
-        for (const char c : httpRequest.GetPostData())
-        {
-            if (c == '=')
-            {
-                const auto param = sParams.back();
-                redacted = (param == 't') || (param == 'p' && ra::StringStartsWith(sApi, "login"));
-
-                if (redacted)
-                {
-                    sParams.append("=[redacted]");
-                    continue;
-                }
-            }
-            else if (c == '&')
-            {
-                redacted = false;
-            }
-            else if (redacted)
-            {
-                continue;
-            }
-
-            sParams.push_back(c);
-        }
-        RA_LOG_INFO(">> %s request: %s", sApi.c_str(), sParams.c_str());
-    }
-
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
-    {
-        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
-            [httpRequest = std::move(httpRequest), fCallback, pCallbackData, sApi]()
-        {
-            ra::services::Http::Response httpResponse = HandleOfflineRequest(httpRequest, sApi);
-            RA_LOG_INFO("<< %s response (offline) (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
-
-            rc_api_server_response_t pResponse;
-            std::string sErrorBuffer;
-            ConvertHttpResponseToApiServerResponse(pResponse, httpResponse, sErrorBuffer);
-
-            fCallback(&pResponse, pCallbackData);
-        });
-    }
-    else
-    {
-        httpRequest.CallAsync([fCallback, pCallbackData, sApi](const ra::services::Http::Response& httpResponse)
-        {
-            rc_api_server_response_t pResponse;
-            std::string sErrorBuffer;
-            ConvertHttpResponseToApiServerResponse(pResponse, httpResponse, sErrorBuffer);
-
-            RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
-
-            fCallback(&pResponse, pCallbackData);
-        });
-    }
 }
 
 typedef struct QueueMemoryReadData
@@ -473,7 +256,8 @@ static void DispatchMemoryRead(struct rc_client_scheduled_callback_data_t* callb
 
 void AchievementRuntime::QueueMemoryRead(std::function<void()>&& fCallback) const
 {
-    if (GetClient()->state.allow_background_memory_reads)
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    if (pClient->state.allow_background_memory_reads)
     {
         fCallback();
         return;
@@ -495,7 +279,7 @@ void AchievementRuntime::QueueMemoryRead(std::function<void()>&& fCallback) cons
     scheduled_callback->callback = DispatchMemoryRead;
     scheduled_callback->data = data;
 
-    rc_client_schedule_callback(GetClient(), scheduled_callback);
+    rc_client_schedule_callback(pClient, scheduled_callback);
 
     // We have to assume the client will call rc_client_do_frame or rc_client_idle in a
     // timely manner or the callback won't get called and the UI will appear unresponsive.
@@ -962,9 +746,11 @@ public:
 
 void AchievementRuntime::SyncAssets()
 {
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
     if (m_pClientSynchronizer == nullptr)
         m_pClientSynchronizer.reset(new ClientSynchronizer());
-    m_pClientSynchronizer->SyncAssets(GetClient());
+    m_pClientSynchronizer->SyncAssets(pClient);
 }
 
 void AchievementRuntime::AttachMemory(void* pMemory)
@@ -999,9 +785,11 @@ static rc_client_achievement_info_t* GetAchievementInfo(rc_client_t* pClient, ra
     return nullptr;
 }
 
-rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId) const noexcept
+rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId) const
 {
-    rc_client_achievement_info_t* achievement = GetAchievementInfo(GetClient(), nId);
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
+    rc_client_achievement_info_t* achievement = GetAchievementInfo(pClient, nId);
     return (achievement != nullptr) ? achievement->trigger : nullptr;
 }
 
@@ -1037,9 +825,9 @@ std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_
     return sBadgeName;
 }
 
-void AchievementRuntime::RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const noexcept
+void AchievementRuntime::RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const
 {
-    auto* client = GetClient();
+    auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (client->game && client->callbacks.event_handler)
     {
         rc_client_event_t pEvent;
@@ -1052,7 +840,7 @@ void AchievementRuntime::RaiseClientEvent(rc_client_achievement_info_t& pAchieve
 
 void AchievementRuntime::UpdateActiveAchievements()
 {
-    auto* client = GetClient();
+    auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (client->game)
     {
         rc_mutex_lock(&client->state.mutex);
@@ -1085,9 +873,9 @@ void AchievementRuntime::UpdateActiveAchievements()
     }
 }
 
-void AchievementRuntime::UpdateActiveLeaderboards() noexcept
+void AchievementRuntime::UpdateActiveLeaderboards()
 {
-    auto* client = GetClient();
+    auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (client->game)
     {
         rc_mutex_lock(&client->state.mutex);
@@ -1118,15 +906,17 @@ static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra
     return nullptr;
 }
 
-rc_lboard_t* AchievementRuntime::GetLeaderboardDefinition(ra::LeaderboardID nId) const noexcept
+rc_lboard_t* AchievementRuntime::GetLeaderboardDefinition(ra::LeaderboardID nId) const
 {
-    rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(GetClient(), nId);
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
+    rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(pClient, nId);
     return (leaderboard != nullptr) ? leaderboard->lboard : nullptr;
 }
 
-void AchievementRuntime::ReleaseLeaderboardTracker(ra::LeaderboardID nId) noexcept
+void AchievementRuntime::ReleaseLeaderboardTracker(ra::LeaderboardID nId)
 {
-    auto* pClient = GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(pClient, nId);
     if (leaderboard)
     {
@@ -1149,9 +939,11 @@ void AchievementRuntime::ReleaseLeaderboardTracker(ra::LeaderboardID nId) noexce
     }
 }
 
-bool AchievementRuntime::HasRichPresence() const noexcept
+bool AchievementRuntime::HasRichPresence() const
 {
-    return m_nRichPresenceParseResult != RC_OK || rc_client_has_rich_presence(GetClient());
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
+    return m_nRichPresenceParseResult != RC_OK || rc_client_has_rich_presence(pClient);
 }
 
 std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
@@ -1165,8 +957,10 @@ std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
     if (!HasRichPresence())
         return L"No Rich Presence defined.";
 
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
     char sRichPresence[256];
-    if (rc_client_get_rich_presence_message(GetClient(), sRichPresence, sizeof(sRichPresence)) > 0)
+    if (rc_client_get_rich_presence_message(pClient, sRichPresence, sizeof(sRichPresence)) > 0)
         return ra::Widen(sRichPresence);
 
     return L"";
@@ -1174,7 +968,8 @@ std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
 
 bool AchievementRuntime::ActivateRichPresence(const std::string& sScript)
 {
-    auto* game = GetClient()->game;
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    auto* game = pClient->game;
     if (!game)
     {
         // game still loading - assume success
@@ -1183,7 +978,7 @@ bool AchievementRuntime::ActivateRichPresence(const std::string& sScript)
     auto* runtime = &game->runtime;
     Expects(runtime != nullptr);
 
-    rc_mutex_lock(&GetClient()->state.mutex);
+    rc_mutex_lock(&pClient->state.mutex);
 
     if (sScript.empty())
     {
@@ -1198,7 +993,7 @@ bool AchievementRuntime::ActivateRichPresence(const std::string& sScript)
             m_nRichPresenceParseResult = rc_richpresence_size_lines(sScript.c_str(), &m_nRichPresenceErrorLine);
     }
 
-    rc_mutex_unlock(&GetClient()->state.mutex);
+    rc_mutex_unlock(&pClient->state.mutex);
 
     return (m_nRichPresenceParseResult == RC_OK);
 }
@@ -1208,30 +1003,38 @@ bool AchievementRuntime::ActivateRichPresence(const std::string& sScript)
 void AchievementRuntime::BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
                                             rc_client_callback_t fCallback, void* pCallbackData)
 {
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
     GSL_SUPPRESS_R3
-    auto* pCallbackWrapper = new CallbackWrapper(m_pClient.get(), fCallback, pCallbackData);
+    auto* pCallbackWrapper = new CallbackWrapper(pClient, fCallback, pCallbackData);
     BeginLoginWithPassword(sUsername.c_str(), sPassword.c_str(), pCallbackWrapper);
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginLoginWithPassword(const char* sUsername, const char* sPassword,
-                                                                 CallbackWrapper* pCallbackWrapper) noexcept
+                                                                     CallbackWrapper* pCallbackWrapper)
 {
-    return rc_client_begin_login_with_password(GetClient(), sUsername, sPassword, AchievementRuntime::LoginCallback,
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
+    return rc_client_begin_login_with_password(pClient, sUsername, sPassword, AchievementRuntime::LoginCallback,
                                                pCallbackWrapper);
 }
 
 void AchievementRuntime::BeginLoginWithToken(const std::string& sUsername, const std::string& sApiToken,
                                          rc_client_callback_t fCallback, void* pCallbackData)
 {
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
     GSL_SUPPRESS_R3
-    auto* pCallbackWrapper = new CallbackWrapper(m_pClient.get(), fCallback, pCallbackData);
+    auto* pCallbackWrapper = new CallbackWrapper(pClient, fCallback, pCallbackData);
     BeginLoginWithToken(sUsername.c_str(), sApiToken.c_str(), pCallbackWrapper);
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginLoginWithToken(const char* sUsername, const char* sApiToken,
-                                                              CallbackWrapper* pCallbackWrapper) noexcept
+                                                                  CallbackWrapper* pCallbackWrapper)
 {
-    return rc_client_begin_login_with_token(GetClient(), sUsername, sApiToken, AchievementRuntime::LoginCallback,
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
+    return rc_client_begin_login_with_token(pClient, sUsername, sApiToken, AchievementRuntime::LoginCallback,
                                             pCallbackWrapper);
 }
 
@@ -1277,8 +1080,10 @@ void AchievementRuntime::LoginCallback(int nResult, const char* sErrorMessage, r
 void AchievementRuntime::BeginLoadGame(const std::string& sHash, unsigned id, rc_client_callback_t fCallback,
                                    void* pCallbackData)
 {
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
     GSL_SUPPRESS_R3
-    auto* pCallbackWrapper = new LoadGameCallbackWrapper(m_pClient.get(), fCallback, pCallbackData);
+    auto* pCallbackWrapper = new LoadGameCallbackWrapper(pClient, fCallback, pCallbackData);
     BeginLoadGame(sHash.c_str(), id, pCallbackWrapper);
 }
 
@@ -1365,9 +1170,9 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, unsigned id,
-                                                        CallbackWrapper* pCallbackWrapper) noexcept
+                                                            CallbackWrapper* pCallbackWrapper)
 {
-    auto* client = GetClient();
+    auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
     // unload the game and free any additional memory we allocated for local changes
     UnloadGame();
@@ -1389,9 +1194,9 @@ rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, u
 
 rc_client_async_handle_t* AchievementRuntime::BeginIdentifyAndLoadGame(uint32_t console_id, const char* file_path,
                                                                        const uint8_t* data, size_t data_size,
-                                                                       CallbackWrapper* pCallbackWrapper) noexcept
+                                                                       CallbackWrapper* pCallbackWrapper)
 {
-    auto* client = GetClient();
+    auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
     // unload the game and free any additional memory we allocated for local changes
     rc_client_unload_game(client);
@@ -1445,7 +1250,7 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
                     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
 
                     // create the virtual association so rc_client will fetch by game id instead of by hash
-                    auto* client_hash = rc_client_find_game_hash(pRuntime.GetClient(), pClient->game->public_.hash);
+                    auto* client_hash = rc_client_find_game_hash(pClient, pClient->game->public_.hash);
                     client_hash->game_id = nGameId;
                     client_hash->is_unknown = 1;
 
@@ -1482,15 +1287,15 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginIdentifyAndChangeMedia(const char* file_path,
-    const uint8_t* data, size_t data_size, CallbackWrapper* pCallbackWrapper) noexcept
+    const uint8_t* data, size_t data_size, CallbackWrapper* pCallbackWrapper)
 {
-    auto* client = GetClient();
+    auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     return rc_client_begin_identify_and_change_media(client, file_path, data, data_size, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
 }
 
-rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept
+rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* sHash, CallbackWrapper* pCallbackWrapper)
 {
-    auto* client = GetClient();
+    auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     return rc_client_begin_change_media(client, sHash, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
 }
 
@@ -1508,9 +1313,11 @@ void AchievementRuntime::ChangeMediaCallback(int nResult, const char* sErrorMess
     delete wrapper;
 }
 
-void AchievementRuntime::UnloadGame() noexcept
+void AchievementRuntime::UnloadGame()
 {
-    rc_client_unload_game(GetClient());
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
+    rc_client_unload_game(pClient);
     m_pClientSynchronizer.reset();
     s_mAchievementPopups.clear();
 }
@@ -1691,11 +1498,13 @@ static void RaisePauseOnChangeEvents(
 
 void AchievementRuntime::DoFrame()
 {
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
     m_hDoFrameThread = GetCurrentThreadId();
 
     if (m_bPaused)
     {
-        rc_client_idle(GetClient());
+        rc_client_idle(pClient);
         return;
     }
 
@@ -1703,9 +1512,9 @@ void AchievementRuntime::DoFrame()
     std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mLeaderboardsWithHits;
     std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mActiveLeaderboards;
 
-    PrepareForPauseOnChangeEvents(GetClient(), vAchievementsWithHits, mLeaderboardsWithHits, mActiveLeaderboards);
+    PrepareForPauseOnChangeEvents(pClient, vAchievementsWithHits, mLeaderboardsWithHits, mActiveLeaderboards);
 
-    rc_client_do_frame(GetClient());
+    rc_client_do_frame(pClient);
 
     if (!vAchievementsWithHits.empty())
         RaisePauseOnChangeEvents(vAchievementsWithHits);
@@ -1713,9 +1522,9 @@ void AchievementRuntime::DoFrame()
         RaisePauseOnChangeEvents(mLeaderboardsWithHits, mActiveLeaderboards);
 }
 
-void AchievementRuntime::Idle() const noexcept
+void AchievementRuntime::Idle() const
 {
-    auto* pClient = GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (!pClient)
         return;
 
@@ -1744,12 +1553,14 @@ void AchievementRuntime::Idle() const noexcept
         rc_client_idle(pClient);
 }
 
-void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress) noexcept
+void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress)
 {
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
     // this should only be called from DetectUnsupportedAchievements or indirectly via Process,
     // both of which aquire the lock, so we shouldn't try to acquire it here.
     // we can also avoid checking m_bInitialized
-    rc_runtime_invalidate_address(&GetClient()->game->runtime, nAddress);
+    rc_runtime_invalidate_address(&pClient->game->runtime, nAddress);
 }
 
 static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchievement)
@@ -2452,9 +2263,10 @@ void AchievementRuntime::EventHandler(const rc_client_event_t* pEvent, rc_client
 
 /* ---- Runtime State ----- */
 
-void AchievementRuntime::ResetRuntime() noexcept
+void AchievementRuntime::ResetRuntime()
 {
-    rc_client_reset(GetClient());
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    rc_client_reset(pClient);
 }
 
 static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigger_t* pTrigger,
@@ -2782,9 +2594,11 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
 
 bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
 {
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
     if (sLoadStateFilename == nullptr)
     {
-        rc_client_deserialize_progress(GetClient(), nullptr);
+        rc_client_deserialize_progress(pClient, nullptr);
         return false;
     }
 
@@ -2795,7 +2609,7 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     auto pFile = pFileSystem.OpenTextFile(sAchievementStateFile);
     if (pFile == nullptr || !pFile->GetLine(sContents))
     {
-        rc_client_deserialize_progress(GetClient(), nullptr);
+        rc_client_deserialize_progress(pClient, nullptr);
         return false;
     }
 
@@ -2807,21 +2621,21 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
         pFile->SetPosition({0});
         pFile->GetBytes(&pBuffer.front(), nSize);
 
-        if (rc_client_deserialize_progress(GetClient(), &pBuffer.front()) == RC_OK)
+        if (rc_client_deserialize_progress(pClient, &pBuffer.front()) == RC_OK)
         {
             RA_LOG_INFO("Runtime state loaded from %s", sLoadStateFilename);
         }
     }
     else if (sContents == "v2")
     {
-        if (LoadProgressV2(GetClient(), *pFile))
+        if (LoadProgressV2(pClient, *pFile))
         {
             RA_LOG_INFO("Runtime state (v2) loaded from %s", sLoadStateFilename);
         }
     }
     else
     {
-        if (LoadProgressV1(GetClient(), sContents))
+        if (LoadProgressV1(pClient, sContents))
         {
             RA_LOG_INFO("Runtime state (v1) loaded from %s", sLoadStateFilename);
         }
@@ -2832,7 +2646,9 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
 
 bool AchievementRuntime::LoadProgressFromBuffer(const uint8_t* pBuffer)
 {
-    if (rc_client_deserialize_progress(GetClient(), pBuffer) == RC_OK)
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
+    if (rc_client_deserialize_progress(pClient, pBuffer) == RC_OK)
     {
         RA_LOG_INFO("Runtime state loaded from buffer");
     }
@@ -2853,11 +2669,12 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
         return;
     }
 
-    const auto nSize = rc_client_progress_size(GetClient());
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    const auto nSize = rc_client_progress_size(pClient);
     std::string sSerialized;
     sSerialized.resize(nSize);
     GSL_SUPPRESS_TYPE1 const auto pData = reinterpret_cast<uint8_t*>(sSerialized.data());
-    rc_client_serialize_progress(GetClient(), pData);
+    rc_client_serialize_progress(pClient, pData);
     pFile->Write(sSerialized);
 
     RA_LOG_INFO("Runtime state written to %s", sSaveStateFilename);
@@ -2865,10 +2682,11 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
 
 int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) const
 {
-    const int nSize = gsl::narrow_cast<int>(rc_client_progress_size(GetClient()));
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    const int nSize = gsl::narrow_cast<int>(rc_client_progress_size(pClient));
     if (nSize <= nBufferSize)
     {
-        rc_client_serialize_progress(GetClient(), pBuffer);
+        rc_client_serialize_progress(pClient, pBuffer);
         RA_LOG_INFO("Runtime state written to buffer (%d/%d bytes)", nSize, nBufferSize);
     }
     else if (nBufferSize > 0) // 0 size buffer indicates caller is asking for size, don't log - we'll capture the actual save soon.

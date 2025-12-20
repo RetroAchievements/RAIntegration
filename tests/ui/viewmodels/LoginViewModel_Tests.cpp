@@ -3,6 +3,7 @@
 #include "ui\viewmodels\LoginViewModel.hh"
 
 #include "tests\ui\UIAsserts.hh"
+#include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -13,14 +14,6 @@
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
-using ra::api::mocks::MockServer;
-using ra::data::context::mocks::MockEmulatorContext;
-using ra::data::context::mocks::MockSessionTracker;
-using ra::data::context::mocks::MockUserContext;
-using ra::services::mocks::MockConfiguration;
-using ra::services::mocks::MockAchievementRuntime;
-
-using ra::ui::mocks::MockDesktop;
 
 namespace ra {
 namespace ui {
@@ -35,20 +28,21 @@ private:
     public:
         GSL_SUPPRESS_F6 LoginViewModelHarness() : LoginViewModel(L"User") {}
 
-        MockConfiguration mockConfiguration;
-        MockAchievementRuntime mockAchievementRuntime;
-        MockDesktop mockDesktop;
-        MockServer mockServer;
-        MockUserContext mockUserContext;
-        MockEmulatorContext mockEmulatorContext;
-        MockSessionTracker mockSessionTracker;
+        ra::context::mocks::MockRcClient mockRcClient;
+        ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
+        ra::ui::mocks::MockDesktop mockDesktop;
+        ra::api::mocks::MockServer mockServer;
+        ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::context::mocks::MockSessionTracker mockSessionTracker;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
     };
 
 public:
     TEST_METHOD(TestInitialValueFromConfiguration)
     {
-        MockConfiguration mockConfiguration;
+        ra::services::mocks::MockConfiguration mockConfiguration;
         mockConfiguration.SetUsername("Flower");
         LoginViewModel vmLogin;
         Assert::AreEqual(std::wstring(L"Flower"), vmLogin.GetUsername());
@@ -70,7 +64,7 @@ public:
         vmLogin.SetPassword(L"Pa$$w0rd");
         Assert::IsFalse(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
-        vmLogin.mockAchievementRuntime.AssertNoPendingRequests();
+        vmLogin.mockRcClient.AssertNoPendingRequests();
     }
 
     TEST_METHOD(TestLoginNoPassword)
@@ -87,13 +81,13 @@ public:
         vmLogin.SetPassword(L"");
         Assert::IsFalse(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
-        vmLogin.mockAchievementRuntime.AssertNoPendingRequests();
+        vmLogin.mockRcClient.AssertNoPendingRequests();
     }
 
     TEST_METHOD(TestLoginSuccessful)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
+        vmLogin.mockRcClient.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
             "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -136,7 +130,7 @@ public:
     TEST_METHOD(TestLoginSuccessfulAppTitle)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
+        vmLogin.mockRcClient.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
             "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -181,7 +175,7 @@ public:
     TEST_METHOD(TestLoginInvalidPassword)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=User&p=Pa%24%24w0rd",
+        vmLogin.mockRcClient.MockResponse("r=login2&u=User&p=Pa%24%24w0rd",
             "{\"Success\":false,\"Error\":\"Invalid User/Password combination. Please try again\"}");
 
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
@@ -201,7 +195,7 @@ public:
     TEST_METHOD(TestLoginSuccessfulRememberPassword)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
+        vmLogin.mockRcClient.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
             "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");

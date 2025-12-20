@@ -2,6 +2,8 @@
 #define RA_SERVICES_TEXTREADER
 #pragma once
 
+#include <string>
+
 namespace ra {
 namespace services {
 
@@ -17,24 +19,24 @@ public:
     /// <summary>
     /// Reads the next line from the input.
     /// </summary>
-    /// <param name="sLine">The string to read the next line into.</param>
+    /// <param name="sLine">[out] The string to read the next line into.</param>
     /// <returns><c>true</c> if a line was read, <c>false</c> if the end of the input was reached.</returns>
-    virtual bool GetLine(_Out_ std::string& sLine) = 0;
+    virtual bool GetLine(std::string& sLine) = 0;
 
     /// <summary>
     /// Reads the next line from the input.
     /// </summary>
-    /// <param name="sLine">The string to read the next line into.</param>
+    /// <param name="sLine">[out] The string to read the next line into.</param>
     /// <returns><c>true</c> if a line was read, <c>false</c> if the end of the input was reached.</returns>
-    virtual bool GetLine(_Out_ std::wstring& sLine) = 0;
+    virtual bool GetLine(std::wstring& sLine) = 0;
     
     /// <summary>
     /// Reads the specified number of bytes from the input.
     /// </summary>
     /// <param name="pBuffer">The buffer to read into.</param>
     /// <param name="nBytes">The number of bytes to read.</param>
-    /// <returns>The number of bytes copied to the buffer.</returns>
-    virtual size_t GetBytes(_Inout_ uint8_t pBuffer[], _In_ size_t nBytes) = 0;
+    /// <returns>The number of bytes conpied to the buffer.</returns>
+    virtual size_t GetBytes(uint8_t pBuffer[], size_t nBytes) = 0;
 
     /// <summary>
     /// Gets the current read offset within the input.

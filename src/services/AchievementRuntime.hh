@@ -29,16 +29,6 @@ public:
     AchievementRuntime(AchievementRuntime&&) noexcept = delete;
     AchievementRuntime& operator=(AchievementRuntime&&) noexcept = delete;
 
-    /// <summary>
-    /// Shuts down the runtime.
-    /// </summary>
-    void Shutdown() noexcept;
-
-    /// <summary>
-    /// Gets the underlying rc_client object for directly calling into rcheevos.
-    /// </summary>
-    rc_client_t* GetClient() const noexcept { return m_pClient.get(); }
-
     void BeginLoginWithToken(const std::string& sUsername, const std::string& sApiToken,
                              rc_client_callback_t fCallback, void* pCallbackData);
     void BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
@@ -46,7 +36,7 @@ public:
 
     void BeginLoadGame(const std::string& sHash, unsigned id,
                        rc_client_callback_t fCallback, void* pCallbackData);
-    void UnloadGame() noexcept;
+    void UnloadGame();
 
     /// <summary>
     /// Syncs data in Assets to rc_client.
@@ -56,28 +46,28 @@ public:
     /// <summary>
     /// Clears all active achievements/leaderboards/rich presence from the runtime.
     /// </summary>
-    void ResetRuntime() noexcept;
+    void ResetRuntime();
 
     /// <summary>
     /// Gets the raw trigger for the achievement.
     /// </summary>
-    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const noexcept;
+    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const;
     const rc_client_achievement_info_t* GetPublishedAchievementInfo(ra::AchievementID nId) const;
 
     static std::string GetAchievementBadge(const rc_client_achievement_t& pAchievement);
 
-    void RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const noexcept;
+    void RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const;
 
     void UpdateActiveAchievements() noexcept(false);
-    void UpdateActiveLeaderboards() noexcept;
+    void UpdateActiveLeaderboards();
 
     /// <summary>
     /// Gets the raw definition for the leaderboard.
     /// </summary>
-    rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const noexcept;
+    rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const;
     const rc_client_leaderboard_info_t* GetPublishedLeaderboardInfo(ra::LeaderboardID nId) const;
 
-    void ReleaseLeaderboardTracker(ra::LeaderboardID nId) noexcept;
+    void ReleaseLeaderboardTracker(ra::LeaderboardID nId);
 
     /// <summary>
     /// Specifies the rich presence to process each frame.
@@ -89,14 +79,14 @@ public:
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
     /// </summary>
-    bool HasRichPresence() const noexcept;
+    bool HasRichPresence() const;
 
     /// <summary>
     /// Gets the current rich presence display string.
     /// </summary>
     std::wstring GetRichPresenceDisplayString() const;
 
-    void InvalidateAddress(ra::ByteAddress nAddress) noexcept;
+    void InvalidateAddress(ra::ByteAddress nAddress);
 
     /// <summary>
     /// Processes all active achievements for the current frame.
@@ -106,7 +96,7 @@ public:
     /// <summary>
     /// Processes stuff not related to a frame.
     /// </summary>
-    void Idle() const noexcept;
+    void Idle() const;
 
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.
@@ -149,12 +139,6 @@ public:
     /// Sets whether achievement processing should be temporarily suspended.
     /// </summary>
     void SetPaused(bool bValue) noexcept { m_bPaused = bValue; }
-
-    typedef void (*AsyncServerCallCallback)(const rc_api_server_response_t& pResponse, void* pCallbackData);
-    /// <summary>
-    /// Makes an asynchronous rc_api server call
-    /// </summary>
-    void AsyncServerCall(const rc_api_request_t* pRequest, AsyncServerCallCallback fCallback, void* pCallbackData) const;
 
     void QueueMemoryRead(std::function<void()>&& fCallback) const;
     bool IsOnDoFrameThread() const noexcept { return m_hDoFrameThread && GetCurrentThreadId() == m_hDoFrameThread; }
@@ -206,10 +190,13 @@ public:
     void AttachMemory(void* pMemory);
     bool DetachMemory(void* pMemory) noexcept;
 
+protected:
+    AchievementRuntime(bool bInitializeRcClient);
+    void InitializeRcClient();
+
 private:
     bool m_bPaused = false;
     DWORD m_hDoFrameThread = 0;
-    std::unique_ptr<rc_client_t> m_pClient;
 
     class ClientSynchronizer;
     std::unique_ptr<ClientSynchronizer> m_pClientSynchronizer;
@@ -217,10 +204,7 @@ private:
     int m_nRichPresenceParseResult = RC_OK;
     int m_nRichPresenceErrorLine = 0;
 
-    static void LogMessage(const char* sMessage, const rc_client_t* pClient);
     static uint32_t ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes, rc_client_t* pClient);
-    static void ServerCallAsync(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,
-                                void* pCallbackData, rc_client_t* pClient);
     static void EventHandler(const rc_client_event_t* pEvent, rc_client_t* pClient);
 
     class CallbackWrapper
@@ -254,9 +238,9 @@ private:
     friend class AchievementRuntimeExports;
 
     rc_client_async_handle_t* BeginLoginWithPassword(const char* sUsername, const char* sPassword,
-                                                     CallbackWrapper* pCallbackWrapper) noexcept;
+                                                     CallbackWrapper* pCallbackWrapper);
     rc_client_async_handle_t* BeginLoginWithToken(const char* sUsername, const char* sApiToken,
-                                                  CallbackWrapper* pCallbackWrapper) noexcept;
+                                                  CallbackWrapper* pCallbackWrapper);
     static void LoginCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata);
 
     class LoadGameCallbackWrapper : public CallbackWrapper
@@ -270,16 +254,16 @@ private:
         std::map<uint32_t, std::string> m_mLeaderboardDefinitions;
     };
 
-    rc_client_async_handle_t* BeginLoadGame(const char* sHash, unsigned id, CallbackWrapper* pCallbackWrapper) noexcept;
+    rc_client_async_handle_t* BeginLoadGame(const char* sHash, unsigned id, CallbackWrapper* pCallbackWrapper);
     static void LoadGameCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata);
 
     rc_client_async_handle_t* BeginIdentifyAndLoadGame(uint32_t console_id, const char* file_path,
                                                        const uint8_t* data, size_t data_size,
-                                                       CallbackWrapper* pCallbackWrapper) noexcept;
+                                                       CallbackWrapper* pCallbackWrapper);
 
     rc_client_async_handle_t* BeginIdentifyAndChangeMedia(const char* file_path, const uint8_t* data, size_t data_size,
-                                                          CallbackWrapper* pCallbackWrapper) noexcept;
-    rc_client_async_handle_t* BeginChangeMedia(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept;
+                                                          CallbackWrapper* pCallbackWrapper);
+    rc_client_async_handle_t* BeginChangeMedia(const char* sHash, CallbackWrapper* pCallbackWrapper);
     static void ChangeMediaCallback(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata);
 
     static void PostProcessGameDataResponse(const rc_api_server_response_t* server_response,

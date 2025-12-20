@@ -8,6 +8,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
+#include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -32,6 +33,7 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
             GSL_SUPPRESS_F6 InitializeNotifyTargets();
         }
 
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockConfiguration mockConfiguration;

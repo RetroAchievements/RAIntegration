@@ -7,6 +7,8 @@
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\SessionTracker.hh"
@@ -133,7 +135,8 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
         {
             m_nGameId = 0;
 
-            rc_client_unload_game(pRuntime.GetClient());
+            auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+            rc_client_unload_game(pClient);
 
             OnActiveGameChanged();
         }
@@ -193,8 +196,8 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
     }
     else
     {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        auto* pGame = rc_client_get_game_info(pClient.GetClient());
+        const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        const auto* pGame = rc_client_get_game_info(pClient);
         if (pGame == nullptr || pGame->id == 0)
         {
             // invalid hash
@@ -213,7 +216,7 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
         else
         {
             rc_client_user_game_summary_t pSummary;
-            rc_client_get_user_game_summary(pClient.GetClient(), &pSummary);
+            rc_client_get_user_game_summary(pClient, &pSummary);
 
             // show "game loaded" popup
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
@@ -389,7 +392,7 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
 void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std::string> mAchievementDefinitions,
                                                    const std::map<uint32_t, std::string> mLeaderboardDefinitions)
 {
-    const auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     const auto* pGame = rc_client_get_game_info(pClient);
     m_nGameId = GetRealGameId(pGame->id);
     m_sGameTitle = ra::Widen(pGame->title);

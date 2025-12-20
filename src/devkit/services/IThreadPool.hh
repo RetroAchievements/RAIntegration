@@ -2,6 +2,8 @@
 #define RA_SERVICES_ITHREADPOOL_HH
 #pragma once
 
+#include <chrono>
+
 namespace ra {
 namespace services {
 

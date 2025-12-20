@@ -9,6 +9,7 @@ namespace ra {
 namespace services {
 
 bool ServiceLocator::IsInitialized() noexcept { return true; }
+bool ServiceLocator::IsShuttingDown() noexcept { return false; }
 
 namespace mocks {
 

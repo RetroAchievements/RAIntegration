@@ -4,6 +4,8 @@
 #include "RA_Json.h"
 #include "util\Strings.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\Types.hh"
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
@@ -447,8 +449,8 @@ bool MemoryWatchViewModel::UpdateCurrentAddressFromIndirectAddress()
 
 void MemoryWatchViewModel::SetIndirectAddress(const std::string& sSerialized)
 {
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    auto* pGame = pRuntime.GetClient()->game;
+    const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    auto* pGame = pClient->game;
 
     rc_preparse_state_t preparse;
     rc_init_preparse_state(&preparse);

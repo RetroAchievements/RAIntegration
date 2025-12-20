@@ -1,5 +1,6 @@
 #include "services\impl\StringTextReader.hh"
-#include "tests\RA_UnitTestHelpers.h"
+
+#include "testutil\CppUnitTest.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

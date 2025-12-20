@@ -2,8 +2,8 @@
 
 #include "ui\viewmodels\ProgressViewModel.hh"
 
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\ui\UIAsserts.hh"
-#include "tests\mocks\MockThreadPool.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

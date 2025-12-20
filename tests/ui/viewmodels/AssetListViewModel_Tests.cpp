@@ -14,19 +14,20 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
-#include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockSurface.hh"
-#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
@@ -159,6 +160,7 @@ private:
     class AssetListViewModelHarness : public AssetListViewModel
     {
     public:
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
@@ -402,7 +404,7 @@ private:
         }
 
     private:
-        void EnsureCoreSubset() const noexcept
+        void EnsureCoreSubset() const
         {
             auto* pGame = mockRuntime.GetClient()->game;
             if (!pGame->subsets)

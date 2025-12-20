@@ -1,6 +1,6 @@
 #include "ui\OverlayTheme.hh"
 
-#include "tests\mocks\MockFileSystem.hh"
+#include "tests\devkit\services\mocks\MockFileSystem.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

@@ -18,7 +18,7 @@ public:
     {
     }
 
-    bool GetLine(_Out_ std::string& sLine) override
+    bool GetLine(std::string& sLine) override
     {
         if (!std::getline(m_iStream, sLine))
             return false;
@@ -27,8 +27,7 @@ public:
         return true;
     }
 
-	_Success_(return)
-    _NODISCARD bool GetLine(_Out_ std::wstring& sLine) override
+    _NODISCARD bool GetLine(std::wstring& sLine) override
     {
         std::string sNarrowLine;
         if (!std::getline(m_iStream, sNarrowLine))
@@ -38,7 +37,7 @@ public:
         return true;
     }
 
-    size_t GetBytes(_Inout_ uint8_t pBuffer[], _In_ size_t nBytes) override
+    size_t GetBytes(uint8_t pBuffer[], size_t nBytes) override
     {
         const auto nPos = GetPosition();
         char* pCharBuffer;

@@ -1,7 +1,7 @@
 #include "services\impl\JsonFileConfiguration.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
-#include "tests\mocks\MockFileSystem.hh"
+#include "tests\devkit\services\mocks\MockFileSystem.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

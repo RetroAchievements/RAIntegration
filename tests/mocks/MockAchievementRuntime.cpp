@@ -16,21 +16,6 @@ namespace ra {
 namespace services {
 namespace mocks {
 
-void MockAchievementRuntime::OnBeforeResponse(const std::string& sRequestParams, const std::function<void()>&& fHandler)
-{
-    for (auto& pResponse : m_vResponses)
-    {
-        if (pResponse.sRequestParams == sRequestParams)
-        {
-            pResponse.fBeforeResponse = fHandler;
-            return;
-        }
-    }
-
-    Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
-        ra::StringPrintf(L"No response registered for: %s", sRequestParams).c_str());
-}
-
 void MockAchievementRuntime::MockUser(const std::string& sUsername, const std::string& sApiToken)
 {
     m_sUsername = sUsername;
@@ -201,7 +186,7 @@ rc_client_achievement_info_t* MockAchievementRuntime::ActivateAchievement(uint32
     return achievement;
 }
 
-void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode) noexcept
+void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode)
 {
     pAchievement->public_.unlocked |= nMode;
 
@@ -323,66 +308,6 @@ rc_client_leaderboard_info_t* MockAchievementRuntime::ActivateLeaderboard(uint32
     return leaderboard;
 }
 
-void MockAchievementRuntime::AssertCalled(const std::string& sRequestParams) const
-{
-    for (auto& pResponse : m_vResponses)
-    {
-        if (pResponse.sRequestParams == sRequestParams)
-        {
-            Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(pResponse.bSeen);
-            return;
-        }
-    }
-
-    Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
-        ra::StringPrintf(L"Could not find mock response for %s", sRequestParams).c_str());
-}
-
-void MockAchievementRuntime::AssertNoPendingRequests() const
-{
-    for (auto& pResponse : m_vResponses)
-    {
-        if (pResponse.fAsyncCallback != nullptr && !pResponse.bSeen)
-        {
-            Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
-                ra::StringPrintf(L"Unexpected request pending for %s", pResponse.sRequestParams).c_str());
-            return;
-        }
-    }
-}
-
-void MockAchievementRuntime::MockServerCall(const rc_api_request_t* pRequest,
-     rc_client_server_callback_t fCallback, void* pCallbackData, rc_client_t*)
-{
-    auto* pClient = dynamic_cast<MockAchievementRuntime*>(&ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>());
-    std::string sRequestParams = pRequest->post_data;
-
-    for (auto& pResponse : pClient->m_vResponses)
-    {
-        if (pResponse.sRequestParams == sRequestParams)
-        {
-            pResponse.bSeen = true;
-
-            if (pResponse.fBeforeResponse)
-                pResponse.fBeforeResponse();
-
-            rc_api_server_response_t pServerResponse;
-            memset(&pServerResponse, 0, sizeof(pServerResponse));
-            pServerResponse.http_status_code = pResponse.nHttpStatus;
-            pServerResponse.body = pResponse.sResponseBody.c_str();
-            pServerResponse.body_length = pResponse.sResponseBody.length();
-
-            fCallback(&pServerResponse, pCallbackData);
-            return;
-        }
-    }
-
-    auto& pResponse = pClient->m_vResponses.emplace_back();
-    pResponse.sRequestParams = sRequestParams;
-    pResponse.fAsyncCallback = fCallback;
-    pResponse.pAsyncCallbackData = pCallbackData;
-}
-
 } // namespace mocks
 } // namespace services
 
@@ -392,9 +317,10 @@ namespace mocks {
 
 void MockEmulatorContext::SetRuntimeMemorySize(size_t nBytes)
 {
-    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+    if (ra::services::ServiceLocator::Exists<ra::context::IRcClient>())
     {
-        auto* pGame = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient()->game;
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        auto* pGame = pClient->game;
         if (pGame && pGame->max_valid_address == 0U)
             pGame->max_valid_address = gsl::narrow_cast<uint32_t>(nBytes);
     }

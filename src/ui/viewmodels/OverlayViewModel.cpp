@@ -2,6 +2,8 @@
 
 #include "util\Strings.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\EmulatorContext.hh"
 #include "data\context\UserContext.hh"
 
@@ -163,7 +165,7 @@ void OverlayViewModel::CreateRenderImage()
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-    const auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+    const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     const auto* pUser = rc_client_get_user_info(pClient);
     const auto sPoints = ra::StringPrintf(L"%u Points", !pUser ? 0 : bHardcore ? pUser->score : pUser->score_softcore);
     const auto szPoints = m_pSurface->MeasureText(nSubFont, sPoints);

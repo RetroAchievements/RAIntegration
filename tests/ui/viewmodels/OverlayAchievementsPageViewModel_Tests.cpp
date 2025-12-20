@@ -2,6 +2,8 @@
 
 #include "ui\viewmodels\OverlayAchievementsPageViewModel.hh"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -11,7 +13,6 @@
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockSurface.hh"
-#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 #include "tests\data\DataAsserts.hh"
@@ -33,6 +34,7 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockSessionTracker mockSessionTracker;
         ra::data::context::mocks::MockUserContext mockUserContext;

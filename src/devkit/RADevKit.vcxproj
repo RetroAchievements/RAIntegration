@@ -47,15 +47,28 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)\src\base.props" />
   </ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>RC_CLIENT_SUPPORTS_HASH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(RapidJSON_IncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)RAInterface\MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="context\impl\RcClient.cpp" />
     <ClCompile Include="data\DataModelBase.cpp" />
     <ClCompile Include="data\DataModelCollection.cpp" />
     <ClCompile Include="data\ModelBase.cpp" />
     <ClCompile Include="data\ModelCollectionBase.cpp" />
     <ClCompile Include="data\ModelProperty.cpp" />
     <ClCompile Include="data\ModelPropertyContainer.cpp" />
+    <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="util\GSL.cpp" />
     <ClCompile Include="util\Strings.cpp" />
+    <ClInclude Include="context\impl\RcClient.hh" />
+    <ClInclude Include="context\IRcClient.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\DataModelBase.hh" />
     <ClInclude Include="data\DataModelCollection.hh" />
@@ -64,9 +77,19 @@
     <ClInclude Include="data\ModelProperty.hh" />
     <ClInclude Include="data\ModelPropertyContainer.hh" />
     <ClInclude Include="data\NotifyTargetSet.hh" />
+    <ClInclude Include="services\Http.hh" />
+    <ClInclude Include="services\IFileSystem.hh" />
+    <ClInclude Include="services\IHttpRequester.hh" />
     <ClInclude Include="services\ILogger.hh" />
     <ClInclude Include="services\IMessageDispatcher.hh" />
+    <ClInclude Include="services\impl\FileTextReader.hh" />
+    <ClInclude Include="services\impl\FileTextWriter.hh" />
+    <ClInclude Include="services\impl\StringTextReader.hh" />
+    <ClInclude Include="services\impl\StringTextWriter.hh" />
+    <ClInclude Include="services\IThreadPool.hh" />
     <ClInclude Include="services\ServiceLocator.hh" />
+    <ClInclude Include="services\TextReader.hh" />
+    <ClInclude Include="services\TextWriter.hh" />
     <ClInclude Include="util\Compat.hh" />
     <ClInclude Include="util\EnumOps.hh" />
     <ClInclude Include="util\GSL.hh" />
@@ -74,6 +97,11 @@
     <ClInclude Include="util\Strings.hh" />
     <ClInclude Include="util\TypeCasts.hh" />
     <ClInclude Include="util\TypeTraits.hh" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\rcheevos.vcxproj">
+      <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -8,6 +8,8 @@
 #include "api\IServer.hh"
 #include "api\impl\OfflineServer.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
@@ -25,6 +27,7 @@
 #include "services\Initialization.hh"
 #include "services\PerformanceCounter.hh"
 #include "services\ServiceLocator.hh"
+#include "services\impl\OfflineRcClient.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
 #include "ui\viewmodels\IntegrationMenuViewModel.hh"
@@ -96,6 +99,7 @@ static void InitializeOfflineMode()
     pConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
 
     ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<ra::api::impl::OfflineServer>());
+    ra::services::ServiceLocator::Provide<ra::context::IRcClient>(std::make_unique<ra::services::impl::OfflineRcClient>());
 
     auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
     const auto& sUsername = pConfiguration.GetUsername();
@@ -111,7 +115,7 @@ static void InitializeOfflineMode()
         pSessionTracker.Initialize(sUsername);
     }
 
-    auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     pClient->user.username = rc_buffer_strcpy(&pClient->state.buffer, pUserContext.GetUsername().c_str());
     pClient->user.display_name = rc_buffer_strcpy(&pClient->state.buffer, pUserContext.GetDisplayName().c_str());
     pClient->user.token = rc_buffer_strcpy(&pClient->state.buffer, pConfiguration.GetApiToken().c_str());
@@ -369,13 +373,13 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
     }
     else
     {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
 
         if (bBlocking)
         {
             ra::services::AchievementRuntime::Synchronizer pSynchronizer;
 
-            pClient.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
+            pRuntime.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
                 [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
                     auto* pSynchronizer = static_cast<ra::services::AchievementRuntime::Synchronizer*>(pUserdata);
                     Expects(pSynchronizer != nullptr);
@@ -387,13 +391,14 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
 
             pSynchronizer.Wait();
 
+            auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
             HandleLoginResponse(pSynchronizer.GetResult(), pSynchronizer.GetErrorMessage().c_str(),
-                                pClient.GetClient(), nullptr);
+                                pClient, nullptr);
         }
         else
         {
-            pClient.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
-                                        HandleLoginResponse, static_cast<void*>(nullptr));
+            pRuntime.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
+                                         HandleLoginResponse, static_cast<void*>(nullptr));
         }
     }
 }
@@ -497,7 +502,7 @@ API void CCONV _RA_SetPaused(int bIsPaused)
 {
     if (bIsPaused)
     {
-        auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         if (!rc_client_can_pause(pClient, nullptr))
         {
             ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().Unpause();

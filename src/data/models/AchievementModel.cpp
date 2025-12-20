@@ -1,5 +1,7 @@
 #include "AchievementModel.hh"
 
+#include "context\IRcClient.hh"
+
 #include "util\Log.hh"
 
 #include "data\context\GameContext.hh"
@@ -248,8 +250,7 @@ void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
 
 void AchievementModel::SyncState()
 {
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    auto* pClient = pRuntime.GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
     rc_mutex_lock(&pClient->state.mutex);
 
@@ -265,6 +266,7 @@ void AchievementModel::SyncState()
                 const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
                 m_tUnlock = pClock.Now();
 
+                const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
                 if (pRuntime.HasRichPresence())
                     SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
             }
@@ -427,7 +429,7 @@ void AchievementModel::SyncTrigger()
             return;
         }
 
-        auto* pClient = pRuntime.GetClient();
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         auto* pGame = pClient->game;
         Expects(pGame != nullptr);
 

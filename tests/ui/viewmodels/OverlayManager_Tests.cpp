@@ -4,6 +4,8 @@
 
 #include "ui\OverlayTheme.hh"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
@@ -13,7 +15,6 @@
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockSurface.hh"
-#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
@@ -32,6 +33,7 @@ private:
     class OverlayManagerHarness : public OverlayManager
     {
     public:
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;

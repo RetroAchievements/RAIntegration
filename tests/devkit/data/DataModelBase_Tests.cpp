@@ -1197,5 +1197,5 @@ const IntModelProperty DataModelBase_Tests::DataModelHarness::TransactionalIntPr
 const BoolModelProperty DataModelBase_Tests::DataModelHarness::TransactionalBoolProperty("DataModelHarness", "TransactionalBool", false);
 
 } // namespace tests
-} // namespace ui
+} // namespace data
 } // namespace ra

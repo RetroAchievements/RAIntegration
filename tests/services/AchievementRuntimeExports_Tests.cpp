@@ -4,6 +4,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -14,6 +15,8 @@
 #include <rcheevos\src\rc_client_external.h>
 #include <rcheevos\src\rc_client_internal.h>
 #include <rcheevos\include\rc_client_raintegration.h>
+
+#include "context\IRcClient.hh"
 
 #include "Exports.hh"
 #include "RA_BuildVer.h"
@@ -38,11 +41,15 @@ constexpr int ResetEventBit = (1 << 24);
 class AchievementRuntimeExportsHarness : public AchievementRuntime
 {
 public:
-    GSL_SUPPRESS_F6 AchievementRuntimeExportsHarness() : m_Override(this)
+    GSL_SUPPRESS_F6 AchievementRuntimeExportsHarness() : AchievementRuntime(false), m_Override(this)
     {
+        InitializeRcClient();
+
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+
         mockUserContext.Initialize("User", "ApiToken");
-        GetClient()->user.display_name = "UserDisplay";
-        GetClient()->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
+        pClient->user.display_name = "UserDisplay";
+        pClient->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
     }
 
     ~AchievementRuntimeExportsHarness()
@@ -55,9 +62,15 @@ public:
     AchievementRuntimeExportsHarness(AchievementRuntimeExportsHarness&&) noexcept = delete;
     AchievementRuntimeExportsHarness& operator=(AchievementRuntimeExportsHarness&&) noexcept = delete;
 
+    ra::context::mocks::MockRcClient mockRcClient;
     ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
     ra::data::context::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockConfiguration mockConfiguration;
+
+    rc_client_t* GetClient() const
+    {
+        return ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    }
 
     void InitializeEventHandler() noexcept
     {

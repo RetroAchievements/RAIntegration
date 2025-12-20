@@ -2,6 +2,8 @@
 
 #include "Exports.hh"
 
+#include "context\IRcClient.hh"
+
 #include "util\Log.hh"
 
 #include "data\context\SessionTracker.hh"
@@ -148,7 +150,7 @@ static int DoShutdown()
             pDesktop.CloseWindow(pWindowManager.PointerFinder);
     }
 
-    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().Shutdown();
+    ra::services::ServiceLocator::GetMutable<ra::context::IRcClient>().Shutdown();
 
     ra::services::Initialization::Shutdown();
 

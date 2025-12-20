@@ -4,6 +4,8 @@
 
 #include "api\FetchLeaderboardInfo.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\GameContext.hh"
 #include "data\context\UserContext.hh"
 
@@ -65,7 +67,7 @@ void OverlayLeaderboardsPageViewModel::Refresh()
     m_bHasDetail = true;
 
     // leaderboard list
-    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
     std::vector<rc_client_subset_info_t*> vDeactivatedSubsets;
     const auto& pAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
@@ -218,7 +220,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     if (m_vLeaderboardRanks.find(vmItem.GetId()) != m_vLeaderboardRanks.end()) // already populated
         return;
 
-    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+    const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     const auto nLeaderboardId = vmItem.GetId();
     GSL_SUPPRESS_TYPE1 const auto* pLeaderboard =
         reinterpret_cast<const rc_client_leaderboard_info_t*>(rc_client_get_leaderboard_info(pClient, nLeaderboardId));

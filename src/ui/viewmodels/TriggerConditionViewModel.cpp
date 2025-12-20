@@ -856,10 +856,15 @@ static void BuildRecallTooltip(std::wstring& sTooltip,
             BuildRecallTooltip(sTooltip, mRememberRef, pIter->second.first, *pIter->second.second, *pRecallOperand);
     }
 
-    sTooltip += ra::StringPrintf(L"\r\n%u: ", gsl::narrow_cast<uint32_t>(nConditionIndex + 1));
-
-    if (pOperand.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+    if (!pOperand.value.memref)
     {
+        // if memref is null, a Remember couldn't be found for the {recall}
+        sTooltip.append(L"\r\n[invalid recall]");
+    }
+    else if (pOperand.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+    {
+        sTooltip += ra::StringPrintf(L"\r\n%u: ", gsl::narrow_cast<uint32_t>(nConditionIndex + 1));
+
         GSL_SUPPRESS_TYPE1 const rc_modified_memref_t* combining_memref =
             reinterpret_cast<rc_modified_memref_t*>(pOperand.value.memref);
         if (combining_memref->modifier_type == RC_OPERATOR_INDIRECT_READ)
@@ -945,7 +950,7 @@ std::wstring TriggerConditionViewModel::GetRecallTooltip(bool bOperand2) const
     if (pLastRememberCondition)
         BuildRecallTooltip(sTooltip, mRememberRef, nLastRememberIndex, *pLastRememberCondition, *pOperand);
     else
-        sTooltip += L"???";
+        sTooltip += L"\r\n[invalid recall]";
 
     return sTooltip;
 }

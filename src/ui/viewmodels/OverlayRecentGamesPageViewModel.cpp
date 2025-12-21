@@ -74,7 +74,6 @@ void OverlayRecentGamesPageViewModel::Refresh()
             auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
             for (const auto nGameId : vPendingGames)
             {
-                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
                 auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
                 if (pData != nullptr)
                 {

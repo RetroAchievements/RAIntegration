@@ -86,7 +86,7 @@ public:
     /// </summary>
     std::wstring GetRichPresenceDisplayString() const;
 
-    void InvalidateAddress(ra::ByteAddress nAddress);
+    void InvalidateAddress(ra::data::ByteAddress nAddress);
 
     /// <summary>
     /// Processes all active achievements for the current frame.

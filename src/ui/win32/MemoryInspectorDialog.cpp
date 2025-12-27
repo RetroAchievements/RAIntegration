@@ -92,8 +92,8 @@ void MemoryInspectorDialog::SearchResultsGridBinding::UpdateColumnWidths()
     constexpr int nPadding = 6;
 
     // value column
-    auto nMaxChars = (ra::data::MemSizeBits(nSize) + 3) / 4; // 4 bits per nibble
-    if (nSize == MemSize::BitCount)
+    auto nMaxChars = (ra::data::Memory::SizeBits(nSize) + 3) / 4; // 4 bits per nibble
+    if (nSize == ra::data::Memory::Size::BitCount)
         nMaxChars = 9;
     else if (nMaxChars == 0)
         nMaxChars = 16;
@@ -102,7 +102,7 @@ void MemoryInspectorDialog::SearchResultsGridBinding::UpdateColumnWidths()
 
     // address column
     nWidth = ra::ui::win32::bindings::GridAddressColumnBinding::CalculateWidth();
-    if (nSize == MemSize::Nibble_Lower)
+    if (nSize == ra::data::Memory::Size::Nibble_Lower)
         nWidth += nCharWidth; // 0x1234L
     m_vColumns.at(0)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
 }
@@ -249,10 +249,10 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     m_bindWindow.BindEnabled(IDC_RA_REVERT_NOTE, MemoryInspectorViewModel::CanRevertCurrentAddressNoteProperty);
 
     // Memory Viewer
-    m_bindViewer8Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::EightBit));
-    m_bindViewer16Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::SixteenBit));
-    m_bindViewer32Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::ThirtyTwoBit));
-    m_bindViewer32BitBE.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::ThirtyTwoBitBigEndian));
+    m_bindViewer8Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(ra::data::Memory::Size::EightBit));
+    m_bindViewer16Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(ra::data::Memory::Size::SixteenBit));
+    m_bindViewer32Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(ra::data::Memory::Size::ThirtyTwoBit));
+    m_bindViewer32BitBE.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(ra::data::Memory::Size::ThirtyTwoBitBigEndian));
     m_bindWindow.BindLabel(IDC_RA_MEMBITS, MemoryInspectorViewModel::CurrentAddressBitsProperty);
     m_bindWindow.BindVisible(IDC_RA_MEMBITS_TITLE, MemoryInspectorViewModel::CurrentBitsVisibleProperty);
     m_bindWindow.BindVisible(IDC_RA_MEMBITS, MemoryInspectorViewModel::CurrentBitsVisibleProperty);
@@ -488,7 +488,7 @@ INT_PTR CALLBACK MemoryInspectorDialog::DialogProc(HWND hDlg, UINT uMsg, WPARAM 
 
             // ignore if not 8-bit mode
             auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
-            if (vmMemoryInspector->Viewer().GetSize() != MemSize::EightBit)
+            if (vmMemoryInspector->Viewer().GetSize() != ra::data::Memory::Size::EightBit)
                 break;
 
             POINT ptCursor{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };

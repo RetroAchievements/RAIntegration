@@ -231,7 +231,7 @@ uint8_t* MemBlock::AllocateMatchingAddresses() noexcept
     return &m_vAddresses[0];
 }
 
-void MemBlock::SetMatchingAddresses(std::vector<ra::ByteAddress>& vAddresses, gsl::index nFirstIndex, gsl::index nLastIndex)
+void MemBlock::SetMatchingAddresses(std::vector<ra::data::ByteAddress>& vAddresses, gsl::index nFirstIndex, gsl::index nLastIndex)
 {
     m_nMatchingAddresses = gsl::narrow_cast<unsigned int>(nLastIndex - nFirstIndex) + 1;
 
@@ -267,7 +267,7 @@ void MemBlock::CopyMatchingAddresses(const MemBlock& pSource)
     }
 }
 
-void MemBlock::ExcludeMatchingAddress(ra::ByteAddress nAddress)
+void MemBlock::ExcludeMatchingAddress(ra::data::ByteAddress nAddress)
 {
     const auto nAddressesSize = (m_nMaxAddresses + 7) / 8;
     unsigned char* pAddresses = nullptr;
@@ -292,7 +292,7 @@ void MemBlock::ExcludeMatchingAddress(ra::ByteAddress nAddress)
     --m_nMatchingAddresses;
 }
 
-bool MemBlock::ContainsAddress(ra::ByteAddress nAddress) const noexcept
+bool MemBlock::ContainsAddress(ra::data::ByteAddress nAddress) const noexcept
 {
     if (nAddress < m_nFirstAddress)
         return false;
@@ -301,7 +301,7 @@ bool MemBlock::ContainsAddress(ra::ByteAddress nAddress) const noexcept
     return (nAddress < m_nMaxAddresses);
 }
 
-bool MemBlock::ContainsMatchingAddress(ra::ByteAddress nAddress) const
+bool MemBlock::ContainsMatchingAddress(ra::data::ByteAddress nAddress) const
 {
     if (nAddress < m_nFirstAddress)
         return false;
@@ -319,15 +319,15 @@ bool MemBlock::ContainsMatchingAddress(ra::ByteAddress nAddress) const
     return (pAddresses[nIndex >> 3] & nBit);
 }
 
-ra::ByteAddress MemBlock::GetMatchingAddress(gsl::index nIndex) const noexcept
+ra::data::ByteAddress MemBlock::GetMatchingAddress(gsl::index nIndex) const noexcept
 {
     if (AreAllAddressesMatching())
-        return m_nFirstAddress + gsl::narrow_cast<ra::ByteAddress>(nIndex);
+        return m_nFirstAddress + gsl::narrow_cast<ra::data::ByteAddress>(nIndex);
 
     const auto nAddressesSize = (m_nMaxAddresses + 7) / 8;
     const uint8_t* pAddresses = (nAddressesSize > sizeof(m_vAddresses)) ? m_pAddresses : &m_vAddresses[0];
-    ra::ByteAddress nAddress = m_nFirstAddress;
-    const ra::ByteAddress nStop = m_nFirstAddress + m_nMaxAddresses;
+    ra::data::ByteAddress nAddress = m_nFirstAddress;
+    const ra::data::ByteAddress nStop = m_nFirstAddress + m_nMaxAddresses;
     uint8_t nMask = 0x01;
 
     if (pAddresses != nullptr)

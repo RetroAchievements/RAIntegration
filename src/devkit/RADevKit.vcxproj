@@ -60,6 +60,7 @@
     <ClCompile Include="context\impl\RcClient.cpp" />
     <ClCompile Include="data\DataModelBase.cpp" />
     <ClCompile Include="data\DataModelCollection.cpp" />
+    <ClCompile Include="data\Memory.cpp" />
     <ClCompile Include="data\ModelBase.cpp" />
     <ClCompile Include="data\ModelCollectionBase.cpp" />
     <ClCompile Include="data\ModelProperty.cpp" />
@@ -72,6 +73,7 @@
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\DataModelBase.hh" />
     <ClInclude Include="data\DataModelCollection.hh" />
+    <ClInclude Include="data\Memory.hh" />
     <ClInclude Include="data\ModelBase.hh" />
     <ClInclude Include="data\ModelCollectionBase.hh" />
     <ClInclude Include="data\ModelProperty.hh" />

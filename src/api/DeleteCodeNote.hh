@@ -4,7 +4,7 @@
 
 #include "ApiCall.hh"
 
-#include "data\Types.hh"
+#include "data\Memory.hh"
 
 namespace ra {
 namespace api {
@@ -22,7 +22,7 @@ public:
     struct Request : ApiRequestBase
     {
         unsigned int GameId{ 0U };
-        ra::ByteAddress Address{ 0U };
+        ra::data::ByteAddress Address{ 0U };
 
         using Callback = std::function<void(const Response& response)>;
 

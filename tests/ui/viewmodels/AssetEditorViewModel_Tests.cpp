@@ -13,6 +13,7 @@
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockClock.hh"
@@ -1355,11 +1356,11 @@ public:
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
 
@@ -1377,11 +1378,11 @@ public:
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
     }
@@ -1401,11 +1402,11 @@ public:
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
 
@@ -1418,11 +1419,11 @@ public:
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
     }
@@ -1446,11 +1447,11 @@ public:
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
 
@@ -1468,11 +1469,11 @@ public:
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
     }
@@ -1726,7 +1727,7 @@ public:
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::None, (int)pCondition->GetOperator());
@@ -1745,7 +1746,7 @@ public:
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x2222"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::None, (int)pCondition->GetOperator());

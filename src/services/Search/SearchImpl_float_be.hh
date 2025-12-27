@@ -11,7 +11,7 @@ namespace search {
 class FloatBESearchImpl : public FloatSearchImpl
 {
 public:
-    MemSize GetMemSize() const noexcept override { return MemSize::FloatBigEndian; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::FloatBigEndian; }
 
 protected:
     float BuildFloatValue(const unsigned char* ptr) const noexcept override
@@ -21,7 +21,7 @@ protected:
 
     uint32_t DeconstructFloatValue(float fValue) const noexcept override
     {
-        return ra::data::FloatToU32(fValue, MemSize::FloatBigEndian);
+        return ra::data::Memory::FloatToU32(fValue, ra::data::Memory::Size::FloatBigEndian);
     }
 };
 

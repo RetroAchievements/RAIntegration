@@ -14,7 +14,7 @@ namespace models {
 struct CodeNoteModel::PointerData
 {
     uint32_t RawPointerValue = 0xFFFFFFFF;       // last raw value of pointer captured
-    ra::ByteAddress PointerAddress = 0xFFFFFFFF; // raw pointer value converted to RA address
+    ra::data::ByteAddress PointerAddress = 0xFFFFFFFF; // raw pointer value converted to RA address
     unsigned int OffsetRange = 0;                // highest offset captured within pointer block
     unsigned int HeaderLength = 0;               // length of note text not associated to OffsetNotes
     bool HasPointers = false;                    // true if there are nested pointers
@@ -61,7 +61,7 @@ std::wstring CodeNoteModel::GetPointerDescription() const
     return m_pPointerData != nullptr ? m_sNote.substr(0, m_pPointerData->HeaderLength) : std::wstring();
 }
 
-ra::ByteAddress CodeNoteModel::GetPointerAddress() const noexcept
+ra::data::ByteAddress CodeNoteModel::GetPointerAddress() const noexcept
 {
     return m_pPointerData != nullptr ? m_pPointerData->PointerAddress : 0xFFFFFFFF;
 }
@@ -81,7 +81,7 @@ bool CodeNoteModel::HasNestedPointers() const noexcept
     return m_pPointerData != nullptr && m_pPointerData->HasPointers;
 }
 
-static ra::ByteAddress ConvertPointer(ra::ByteAddress nAddress)
+static ra::data::ByteAddress ConvertPointer(ra::data::ByteAddress nAddress)
 {
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
     const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
@@ -91,7 +91,7 @@ static ra::ByteAddress ConvertPointer(ra::ByteAddress nAddress)
     return nAddress;
 }
 
-void CodeNoteModel::UpdateRawPointerValue(ra::ByteAddress nAddress, const ra::data::context::EmulatorContext& pEmulatorContext,
+void CodeNoteModel::UpdateRawPointerValue(ra::data::ByteAddress nAddress, const ra::data::context::EmulatorContext& pEmulatorContext,
                                           NoteMovedFunction fNoteMovedCallback)
 {
     if (m_pPointerData == nullptr)
@@ -163,7 +163,7 @@ const CodeNoteModel* CodeNoteModel::GetPointerNoteAtOffset(int nOffset) const
     return nullptr;
 }
 
-std::pair<ra::ByteAddress, const CodeNoteModel*> CodeNoteModel::GetPointerNoteAtAddress(ra::ByteAddress nAddress) const
+std::pair<ra::data::ByteAddress, const CodeNoteModel*> CodeNoteModel::GetPointerNoteAtAddress(ra::data::ByteAddress nAddress) const
 {
     if (m_pPointerData == nullptr)
         return {0, nullptr};
@@ -259,7 +259,7 @@ bool CodeNoteModel::GetPointerChainRecursive(std::vector<const CodeNoteModel*>& 
     return false;
 }
 
-bool CodeNoteModel::GetPreviousAddress(ra::ByteAddress nBeforeAddress, ra::ByteAddress& nPreviousAddress) const
+bool CodeNoteModel::GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra::data::ByteAddress& nPreviousAddress) const
 {
     if (m_pPointerData == nullptr)
         return false;
@@ -286,7 +286,7 @@ bool CodeNoteModel::GetPreviousAddress(ra::ByteAddress nBeforeAddress, ra::ByteA
     return bResult;
 }
 
-bool CodeNoteModel::GetNextAddress(ra::ByteAddress nAfterAddress, ra::ByteAddress& nNextAddress) const
+bool CodeNoteModel::GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data::ByteAddress& nNextAddress) const
 {
     if (m_pPointerData == nullptr)
         return false;
@@ -460,7 +460,7 @@ void CodeNoteModel::CheckForHexEnum(size_t nNextIndex)
         {
             if (bHex)
             {
-                m_nMemFormat = MemFormat::Hex;
+                m_nMemFormat = Memory::Format::Hex;
                 break;
             }
             else if (bAllValuesPotentialHex)
@@ -473,13 +473,13 @@ void CodeNoteModel::CheckForHexEnum(size_t nNextIndex)
         }
         else if (IsBitX(m_sNote, nIndex, nSplitIndex)) // bit1=Happy
         {
-            m_nMemFormat = MemFormat::Hex;
+            m_nMemFormat = Memory::Format::Hex;
             break;
         }
     }
 
     if (bAllValuesPotentialHex && bFoundPotentialHexValueWithLeadingZero)
-        m_nMemFormat = MemFormat::Hex;
+        m_nMemFormat = Memory::Format::Hex;
 }
 
 void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
@@ -488,7 +488,7 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
         return;
 
     m_sNote = sNote;
-    m_nMemFormat = MemFormat::Dec;
+    m_nMemFormat = Memory::Format::Dec;
 
     std::wstring sLine;
     size_t nIndex = 0;
@@ -508,7 +508,7 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
             if (sLine.at(0) == '+' && bImpliedPointer)
             {
                 m_nMemSize = GetImpliedPointerSize();
-                m_nBytes = ra::data::MemSizeBytes(m_nMemSize);
+                m_nBytes = Memory::SizeBytes(m_nMemSize);
 
                 // found a line starting with a plus sign, bit no pointer annotation. bImpliedPointer
                 // must be true. assume the parent note is not described. pass -1 as the note size
@@ -539,13 +539,13 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
                 // found "pointer"
                 ExtractSize(sLine, true);
 
-                m_nMemFormat = MemFormat::Hex;
+                m_nMemFormat = Memory::Format::Hex;
 
-                if (m_nMemSize == MemSize::Unknown)
+                if (m_nMemSize == Memory::Size::Unknown)
                 {
                     // pointer size not specified. assume 32-bit
                     m_nMemSize = GetImpliedPointerSize();
-                    m_nBytes = ra::data::MemSizeBytes(m_nMemSize);
+                    m_nBytes = Memory::SizeBytes(m_nMemSize);
                 }
 
                 // if there are any lines starting with a plus sign, extract the indirect code notes
@@ -564,7 +564,7 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
                 break;
             }
 
-            if (m_nMemSize != MemSize::Unknown) // found a size. stop processing.
+            if (m_nMemSize != Memory::Size::Unknown) // found a size. stop processing.
                 break;
         }
 
@@ -574,21 +574,21 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
         nIndex = nNextIndex + 1;
     } while (true);
 
-    if (m_nMemFormat == MemFormat::Dec) // implicitly ignored nested notes as pointers will be flagged as hex
+    if (m_nMemFormat == Memory::Format::Dec) // implicitly ignored nested notes as pointers will be flagged as hex
         CheckForHexEnum(nNextIndex);
 }
 
-MemSize CodeNoteModel::GetImpliedPointerSize()
+Memory::Size CodeNoteModel::GetImpliedPointerSize()
 {
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
 
-    MemSize nSize;
+    Memory::Size nSize;
     uint32_t nMask;
     uint32_t nOffset;
     if (pConsoleContext.GetRealAddressConversion(&nSize, &nMask, &nOffset))
         return nSize;
 
-    return MemSize::ThirtyTwoBit;
+    return Memory::Size::ThirtyTwoBit;
 }
 
 static constexpr bool IsHexDigit(wchar_t c)
@@ -758,7 +758,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
 {
     // provide defaults in case no matches are found
     m_nBytes = 1;
-    m_nMemSize = MemSize::Unknown;
+    m_nMemSize = Memory::Size::Unknown;
 
     // "Nbit" smallest possible note - and that's just the size annotation
     if (sNote.length() < 4)
@@ -788,14 +788,14 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
                 if (nBits == 32)
                 {
                     m_nBytes = 4;
-                    m_nMemSize = MemSize::MBF32;
+                    m_nMemSize = Memory::Size::MBF32;
                     bWordIsSize = true;
                     bFoundSize = true;
                 }
                 else if (nBits == 40)
                 {
                     m_nBytes = 5;
-                    m_nMemSize = MemSize::MBF32;
+                    m_nMemSize = Memory::Size::MBF32;
                     bWordIsSize = true;
                     bFoundSize = true;
                 }
@@ -803,14 +803,14 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
             else if (nLastTokenType == Parser::TokenType::Double && sWord == L"32")
             {
                 m_nBytes = 4;
-                m_nMemSize = MemSize::Double32;
+                m_nMemSize = Memory::Size::Double32;
                 bWordIsSize = true;
                 bFoundSize = true;
             }
         }
         else if (nTokenType == Parser::TokenType::BCD || nTokenType == Parser::TokenType::Hex)
         {
-            m_nMemFormat = MemFormat::Hex;
+            m_nMemFormat = Memory::Format::Hex;
         }
         else if (nTokenType == Parser::TokenType::ASCII)
         {
@@ -820,17 +820,17 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
         {
             if (nTokenType == Parser::TokenType::Float)
             {
-                if (m_nMemSize == MemSize::ThirtyTwoBit)
+                if (m_nMemSize == Memory::Size::ThirtyTwoBit)
                 {
-                    m_nMemSize = MemSize::Float;
+                    m_nMemSize = Memory::Size::Float;
                     bWordIsSize = true; // allow trailing be/bigendian
                 }
             }
             else if (nTokenType == Parser::TokenType::Double)
             {
-                if (m_nMemSize == MemSize::ThirtyTwoBit || m_nBytes == 8)
+                if (m_nMemSize == Memory::Size::ThirtyTwoBit || m_nBytes == 8)
                 {
-                    m_nMemSize = MemSize::Double32;
+                    m_nMemSize = Memory::Size::Double32;
                     bWordIsSize = true; // allow trailing be/bigendian
                 }
             }
@@ -838,23 +838,23 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
             {
                 switch (m_nMemSize)
                 {
-                    case MemSize::SixteenBit: m_nMemSize = MemSize::SixteenBitBigEndian; break;
-                    case MemSize::TwentyFourBit: m_nMemSize = MemSize::TwentyFourBitBigEndian; break;
-                    case MemSize::ThirtyTwoBit: m_nMemSize = MemSize::ThirtyTwoBitBigEndian; break;
-                    case MemSize::Float: m_nMemSize = MemSize::FloatBigEndian; break;
-                    case MemSize::Double32: m_nMemSize = MemSize::Double32BigEndian; break;
+                    case Memory::Size::SixteenBit: m_nMemSize = Memory::Size::SixteenBitBigEndian; break;
+                    case Memory::Size::TwentyFourBit: m_nMemSize = Memory::Size::TwentyFourBitBigEndian; break;
+                    case Memory::Size::ThirtyTwoBit: m_nMemSize = Memory::Size::ThirtyTwoBitBigEndian; break;
+                    case Memory::Size::Float: m_nMemSize = Memory::Size::FloatBigEndian; break;
+                    case Memory::Size::Double32: m_nMemSize = Memory::Size::Double32BigEndian; break;
                     default: break;
                 }
             }
             else if (nTokenType == Parser::TokenType::LittleEndian)
             {
-                if (m_nMemSize == MemSize::MBF32)
-                    m_nMemSize = MemSize::MBF32LE;
+                if (m_nMemSize == Memory::Size::MBF32)
+                    m_nMemSize = Memory::Size::MBF32LE;
             }
             else if (nTokenType == Parser::TokenType::MBF)
             {
                 if (m_nBytes == 4 || m_nBytes == 5)
-                    m_nMemSize = MemSize::MBF32;
+                    m_nMemSize = Memory::Size::MBF32;
             }
         }
         else if (nLastTokenType == Parser::TokenType::Number)
@@ -882,17 +882,17 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
             }
 
             if (bWordIsSize &&
-                (m_nMemSize == MemSize::Unknown ||      // size not yet determined
-                 MemSizeBytes(m_nMemSize) != m_nBytes)) // size mismatch
+                (m_nMemSize == Memory::Size::Unknown ||      // size not yet determined
+                 Memory::SizeBytes(m_nMemSize) != m_nBytes)) // size mismatch
             {
                 switch (m_nBytes)
                 {
                     case 0: m_nBytes = 1; break; // Unexpected size, reset to defaults (1 byte, Unknown)
-                    case 1: m_nMemSize = MemSize::EightBit; break;
-                    case 2: m_nMemSize = MemSize::SixteenBit; break;
-                    case 3: m_nMemSize = MemSize::TwentyFourBit; break;
-                    case 4: m_nMemSize = MemSize::ThirtyTwoBit; break;
-                    default: m_nMemSize = MemSize::Array; break;
+                    case 1: m_nMemSize = Memory::Size::EightBit; break;
+                    case 2: m_nMemSize = Memory::Size::SixteenBit; break;
+                    case 3: m_nMemSize = Memory::Size::TwentyFourBit; break;
+                    case 4: m_nMemSize = Memory::Size::ThirtyTwoBit; break;
+                    default: m_nMemSize = Memory::Size::Array; break;
                 }
             }
         }
@@ -901,11 +901,11 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
             if (!bFoundSize)
             {
                 m_nBytes = 4;
-                m_nMemSize = MemSize::Float;
+                m_nMemSize = Memory::Size::Float;
                 bWordIsSize = true; // allow trailing be/bigendian
 
                 if (nLastTokenType == Parser::TokenType::BigEndian)
-                    m_nMemSize = MemSize::FloatBigEndian;
+                    m_nMemSize = Memory::Size::FloatBigEndian;
             }
         }
         else if (nTokenType == Parser::TokenType::Double)
@@ -913,11 +913,11 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
             if (!bFoundSize)
             {
                 m_nBytes = 8;
-                m_nMemSize = MemSize::Double32;
+                m_nMemSize = Memory::Size::Double32;
                 bWordIsSize = true; // allow trailing be/bigendian
 
                 if (nLastTokenType == Parser::TokenType::BigEndian)
-                    m_nMemSize = MemSize::Double32BigEndian;
+                    m_nMemSize = Memory::Size::Double32BigEndian;
             }
         }
         else if (nLastTokenType == Parser::TokenType::HexNumber)
@@ -928,7 +928,7 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
                 {
                     wchar_t* pEnd;
                     m_nBytes = gsl::narrow_cast<unsigned int>(std::wcstoll(sPreviousWord.c_str(), &pEnd, 16));
-                    m_nMemSize = MemSize::Array;
+                    m_nMemSize = Memory::Size::Array;
                     bBytesFromBits = false;
                     bWordIsSize = true;
                     bFoundSize = true;
@@ -959,8 +959,8 @@ void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
         }
     } while (true);
 
-    if (m_nMemSize == MemSize::Array && bFoundASCII)
-        m_nMemSize = MemSize::Text;
+    if (m_nMemSize == Memory::Size::Array && bFoundASCII)
+        m_nMemSize = Memory::Size::Text;
 }
 
 static void RemoveIndentPrefix(std::wstring& sNote)
@@ -1085,7 +1085,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
             }
         }
         const auto sNoteBody = sNextNote.substr(pEnd - sNextNote.c_str());
-        const auto nAddress = gsl::narrow_cast<ra::ByteAddress>(nOffset);
+        const auto nAddress = gsl::narrow_cast<ra::data::ByteAddress>(nOffset);
 
         CodeNoteModel* pExistingNote = nullptr;
         for (auto& pOffsetNote : pointerData->OffsetNotes)
@@ -1127,7 +1127,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
 
     // assume anything annotated as a 32-bit pointer will read a real (non-translated) address and
     // flag it to be converted to an RA address when evaluating indirect notes in DoFrame()
-    if (m_nMemSize == MemSize::ThirtyTwoBit || m_nMemSize == MemSize::ThirtyTwoBitBigEndian)
+    if (m_nMemSize == Memory::Size::ThirtyTwoBit || m_nMemSize == Memory::Size::ThirtyTwoBitBigEndian)
     {
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         const auto nMaxAddress = pEmulatorContext.TotalMemorySize();
@@ -1213,7 +1213,7 @@ std::wstring CodeNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPointe
 }
 
 void CodeNoteModel::EnumeratePointerNotes(
-    std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const
+    std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const
 {
     if (m_pPointerData == nullptr)
         return;
@@ -1224,8 +1224,8 @@ void CodeNoteModel::EnumeratePointerNotes(
         EnumeratePointerNotes(m_pPointerData->PointerAddress, fCallback);
 }
 
-void CodeNoteModel::EnumeratePointerNotes(ra::ByteAddress nPointerAddress,
-    std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const
+void CodeNoteModel::EnumeratePointerNotes(ra::data::ByteAddress nPointerAddress,
+    std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const
 {
     if (m_pPointerData == nullptr)
         return;

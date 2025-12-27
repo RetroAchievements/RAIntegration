@@ -88,12 +88,12 @@ public:
     /// <summary>
     /// Determines if a bookmark exists for the specified address.
     /// </summary>
-    bool HasBookmark(ra::ByteAddress nAddress) const noexcept;
+    bool HasBookmark(ra::data::ByteAddress nAddress) const noexcept;
 
     /// <summary>
     /// Determines if a bookmark that is frozen exists for the specified address.
     /// </summary>
-    bool HasFrozenBookmark(ra::ByteAddress nAddress) const;
+    bool HasFrozenBookmark(ra::data::ByteAddress nAddress) const;
 
     /// <summary>
     /// Gets the list of selectable behaviors for each bookmark.
@@ -106,7 +106,7 @@ public:
     /// <summary>
     /// Adds a bookmark to the list.
     /// </summary>
-    void AddBookmark(ra::ByteAddress nAddress, MemSize nSize);
+    void AddBookmark(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize);
 
     /// <summary>
     /// Adds a bookmark to the list.

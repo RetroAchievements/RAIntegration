@@ -5,6 +5,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -60,12 +61,12 @@ private:
 
         size_t GetTotalMemorySize() const noexcept { return m_nTotalMemorySize; }
 
-        unsigned char GetByte(ra::ByteAddress nAddress) const
+        unsigned char GetByte(ra::data::ByteAddress nAddress) const
         {
             return m_pMemory[nAddress - GetFirstAddress()];
         }
 
-        unsigned char GetColor(ra::ByteAddress nAddress) const
+        unsigned char GetColor(ra::data::ByteAddress nAddress) const
         {
             return gsl::narrow_cast<unsigned char>(ra::itoe<TextColor>(m_pColor[nAddress - GetFirstAddress()]));
         }
@@ -107,7 +108,7 @@ public:
         Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
         Assert::AreEqual({ 0U }, viewer.GetTotalMemorySize());
         Assert::AreEqual({ 8U }, viewer.GetNumVisibleLines());
-        Assert::AreEqual(MemSize::EightBit, viewer.GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, viewer.GetSize());
         Assert::IsTrue(viewer.NeedsRedraw());
 
         viewer.InitializeMemory(128);
@@ -116,7 +117,7 @@ public:
         Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
         Assert::AreEqual({ 128U }, viewer.GetTotalMemorySize());
         Assert::AreEqual({ 8U }, viewer.GetNumVisibleLines());
-        Assert::AreEqual(MemSize::EightBit, viewer.GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, viewer.GetSize());
         Assert::IsTrue(viewer.NeedsRedraw());
 
         Assert::AreEqual({ 0U }, viewer.GetByte(0U));
@@ -172,7 +173,7 @@ public:
         Assert::AreEqual({ 36U }, viewer.GetAddress());
         Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(0U));
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(36U));
-        for (ra::ByteAddress i = 1; i < 128; ++i)
+        for (ra::data::ByteAddress i = 1; i < 128; ++i)
         {
             if (i != 36)
                 Assert::AreEqual(COLOR_BLACK, viewer.GetColor(i));
@@ -185,7 +186,7 @@ public:
         Assert::AreEqual({ 368U }, viewer.GetFirstAddress()); // (444 & ~0x0F) - 4 * 16
         Assert::AreEqual({ 444U }, viewer.GetAddress());
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(444U));
-        for (ra::ByteAddress i = 1; i < 128; ++i)
+        for (ra::data::ByteAddress i = 1; i < 128; ++i)
         {
             if (i != 444 - 368)
                 Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(i + 368));
@@ -197,7 +198,7 @@ public:
         Assert::AreEqual({ 288U }, viewer.GetFirstAddress()); // (360U & ~0x0F) - 4 * 16
         Assert::AreEqual({ 360U }, viewer.GetAddress());
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(360U));
-        for (ra::ByteAddress i = 1; i < 128; ++i)
+        for (ra::data::ByteAddress i = 1; i < 128; ++i)
         {
             if (i != 360 - 288)
                 Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(i + 288));
@@ -224,7 +225,7 @@ public:
         Assert::AreEqual({ 444U }, viewer.GetAddress());
         Assert::AreEqual({ 368U }, viewer.GetFirstAddress()); // (444 & ~0x0F) - 4 * 16
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(444U));
-        for (ra::ByteAddress i = 1; i < 128; ++i)
+        for (ra::data::ByteAddress i = 1; i < 128; ++i)
         {
             if (i != 444 - 368)
                 Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(i + 368));
@@ -252,7 +253,7 @@ public:
         Assert::AreEqual({ 1023U }, viewer.GetAddress());
         Assert::AreEqual({ 896U }, viewer.GetFirstAddress()); // (1023 & ~0x0F) - 4 * 16
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1023U));
-        for (ra::ByteAddress i = 1; i < 128; ++i)
+        for (ra::data::ByteAddress i = 1; i < 128; ++i)
         {
             if (i != 1023 - 896)
                 Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(i + 896));
@@ -766,7 +767,7 @@ public:
     {
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
-        viewer.SetSize(MemSize::SixteenBit);
+        viewer.SetSize(ra::data::Memory::Size::SixteenBit);
         viewer.MockRender();
 
         Assert::AreEqual({ 0U }, viewer.GetAddress());
@@ -890,7 +891,7 @@ public:
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
         viewer.SetFirstAddress(128U);
-        viewer.SetSize(MemSize::SixteenBit);
+        viewer.SetSize(ra::data::Memory::Size::SixteenBit);
         viewer.SetAddress(130U);
         viewer.MockRender();
 
@@ -962,7 +963,7 @@ public:
     {
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
-        viewer.SetSize(MemSize::SixteenBit);
+        viewer.SetSize(ra::data::Memory::Size::SixteenBit);
         viewer.MockRender();
 
         Assert::AreEqual({ 0U }, viewer.GetAddress());
@@ -1018,7 +1019,7 @@ public:
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
         viewer.SetFirstAddress(128U);
-        viewer.SetSize(MemSize::SixteenBit);
+        viewer.SetSize(ra::data::Memory::Size::SixteenBit);
         viewer.SetAddress(130U);
         viewer.MockRender();
 
@@ -1076,7 +1077,7 @@ public:
     {
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
-        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         viewer.MockRender();
 
         Assert::AreEqual({ 0U }, viewer.GetAddress());
@@ -1249,7 +1250,7 @@ public:
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
         viewer.SetFirstAddress(128U);
-        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         viewer.SetAddress(132U);
         viewer.MockRender();
 
@@ -1355,7 +1356,7 @@ public:
     {
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
-        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         viewer.MockRender();
 
         Assert::AreEqual({ 0U }, viewer.GetAddress());
@@ -1415,7 +1416,7 @@ public:
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
         viewer.SetFirstAddress(128U);
-        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         viewer.SetAddress(132U);
         viewer.MockRender();
 
@@ -1480,7 +1481,7 @@ public:
     {
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
-        viewer.SetSize(MemSize::SixteenBit);
+        viewer.SetSize(ra::data::Memory::Size::SixteenBit);
         viewer.MockRender();
 
         Assert::AreEqual({ 0U }, viewer.GetAddress());
@@ -1547,7 +1548,7 @@ public:
     {
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
-        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         viewer.MockRender();
 
         Assert::AreEqual({ 0U }, viewer.GetAddress());
@@ -1617,7 +1618,7 @@ public:
     {
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256);
-        viewer.SetSize(MemSize::ThirtyTwoBitBigEndian);
+        viewer.SetSize(ra::data::Memory::Size::ThirtyTwoBitBigEndian);
         viewer.MockRender();
 
         Assert::AreEqual({0U}, viewer.GetAddress());
@@ -1743,7 +1744,7 @@ public:
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256); // 16 rows of 16 bytes
 
-        Assert::AreEqual(MemSize::EightBit, viewer.GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, viewer.GetSize());
         Assert::AreEqual({ 0U }, viewer.GetAddress());
         Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
 
@@ -1803,8 +1804,8 @@ public:
         MemoryViewerViewModelHarness viewer;
         viewer.InitializeMemory(256); // 16 rows of 16 bytes
 
-        viewer.SetSize(MemSize::SixteenBit);
-        Assert::AreEqual(MemSize::SixteenBit, viewer.GetSize());
+        viewer.SetSize(ra::data::Memory::Size::SixteenBit);
+        Assert::AreEqual(ra::data::Memory::Size::SixteenBit, viewer.GetSize());
         Assert::AreEqual({ 0U }, viewer.GetAddress());
         Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
 
@@ -1873,7 +1874,7 @@ public:
 
         // reset and try again in 16-bit mode
         viewer.SetFirstAddress(0x40U);
-        viewer.SetSize(MemSize::SixteenBit);
+        viewer.SetSize(ra::data::Memory::Size::SixteenBit);
         viewer.SetFirstAddress(0x60U);
         Assert::AreEqual({ 0x5FU }, viewer.GetAddress());
 
@@ -1885,7 +1886,7 @@ public:
         // reset and try again in 32-bit mode
         viewer.SetFirstAddress(0x40U);
         viewer.SetAddress(0x5FU);
-        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         viewer.SetFirstAddress(0x60U);
         Assert::AreEqual({ 0x5FU }, viewer.GetAddress());
 
@@ -1968,21 +1969,21 @@ public:
         Assert::AreEqual({ 0xFFU }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Increase by 1 from 0x0 should result to 0x0001
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0x0U);
+        viewer.mockEmulatorContext.WriteMemory(0x0U, ra::data::Memory::Size::SixteenBit, 0x0U);
         viewer.IncreaseCurrentValue(1);
-        Assert::AreEqual({ 0x1U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0x1U }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
 
         // Increase by 1 from 0xFFFF should not change the value
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0xFFFFU);
+        viewer.mockEmulatorContext.WriteMemory(0x0U, ra::data::Memory::Size::SixteenBit, 0xFFFFU);
         viewer.IncreaseCurrentValue(1);
-        Assert::AreEqual({ 0xFFFFU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0xFFFFU }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
 
         // ignore if readonly
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0x0U);
+        viewer.mockEmulatorContext.WriteMemory(0x0U, ra::data::Memory::Size::SixteenBit, 0x0U);
         viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         viewer.IncreaseCurrentValue(1);
-        Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
     }
 
     TEST_METHOD(TestIncreaseCurrentValueBySixTeen)
@@ -2011,21 +2012,21 @@ public:
         Assert::AreEqual({ 0xFFU }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Increase by 16 from 0x0 should result to 0x0010
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0x0U);
+        viewer.mockEmulatorContext.WriteMemory(0x0U, ra::data::Memory::Size::SixteenBit, 0x0U);
         viewer.IncreaseCurrentValue(16);
-        Assert::AreEqual({ 0x10U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0x10U }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
 
         // Increase by 16 from 0xFFFF should not change the value
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0xFFFFU);
+        viewer.mockEmulatorContext.WriteMemory(0x0U, ra::data::Memory::Size::SixteenBit, 0xFFFFU);
         viewer.IncreaseCurrentValue(16);
-        Assert::AreEqual({ 0xFFFFU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0xFFFFU }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
 
         // ignore if readonly
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0x0U);
+        viewer.mockEmulatorContext.WriteMemory(0x0U, ra::data::Memory::Size::SixteenBit, 0x0U);
         viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         viewer.IncreaseCurrentValue(16);
-        Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
     }
 
     TEST_METHOD(TestDecreaseCurrentValueByOne)
@@ -2055,20 +2056,20 @@ public:
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Decrease by 1 from 0x0 should not change the value
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0X0U);
+        viewer.mockEmulatorContext.WriteMemory(0x0U, ra::data::Memory::Size::SixteenBit, 0X0U);
         viewer.DecreaseCurrentValue(1);
-        Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
 
         // Decrease by 1 from 0xFFFF should result to 0XFFFE
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0XFFFFU);
+        viewer.mockEmulatorContext.WriteMemory(0x0U, ra::data::Memory::Size::SixteenBit, 0XFFFFU);
         viewer.DecreaseCurrentValue(1);
-        Assert::AreEqual({ 0xFFFEU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0xFFFEU }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
 
         // ignore if readonly
         viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         viewer.DecreaseCurrentValue(1);
-        Assert::AreEqual({ 0xFFFEU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0xFFFEU }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
     }
 
     TEST_METHOD(TestDecreaseCurrentValueBySixteen)
@@ -2098,20 +2099,20 @@ public:
         Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
 
         // Decrease by 16 from 0x0 should not change the value
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0x0U);
+        viewer.mockEmulatorContext.WriteMemory(0x0U, ra::data::Memory::Size::SixteenBit, 0x0U);
         viewer.DecreaseCurrentValue(16);
-        Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0x0U }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
 
         // Decrease by 16 from 0xFFFF should result to 0XFFEF
-        viewer.mockEmulatorContext.WriteMemory(0x0U, MemSize::SixteenBit, 0xFFFFU);
+        viewer.mockEmulatorContext.WriteMemory(0x0U, ra::data::Memory::Size::SixteenBit, 0xFFFFU);
         viewer.DecreaseCurrentValue(16);
-        Assert::AreEqual({ 0xFFEFU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0xFFEFU }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
 
         // ignore if readonly
         viewer.SetReadOnly(true);
         Assert::IsTrue(viewer.IsReadOnly());
         viewer.DecreaseCurrentValue(16);
-        Assert::AreEqual({ 0xFFEFU }, viewer.mockEmulatorContext.ReadMemory(0U, MemSize::SixteenBit));
+        Assert::AreEqual({ 0xFFEFU }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
     }
 };
 

@@ -8,6 +8,7 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -31,7 +32,7 @@ private:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
     };
 
-    void TestCodeNoteSize(const std::wstring& sNote, unsigned int nExpectedBytes, MemSize nExpectedSize)
+    void TestCodeNoteSize(const std::wstring& sNote, unsigned int nExpectedBytes, Memory::Size nExpectedSize)
     {
         CodeNoteModel note;
         note.SetNote(sNote);
@@ -40,7 +41,7 @@ private:
         Assert::AreEqual(nExpectedSize, note.GetMemSize(), sNote.c_str());
     }
 
-    void TestCodeNoteFormat(const std::wstring& sNote, MemFormat nExpectedFormat)
+    void TestCodeNoteFormat(const std::wstring& sNote, Memory::Format nExpectedFormat)
     {
         CodeNoteModel note;
         note.SetNote(sNote);
@@ -49,7 +50,7 @@ private:
     }
 
     const CodeNoteModel* AssertIndirectNote(const CodeNoteModel& note, unsigned int nOffset,
-        const std::wstring& sExpectedNote, MemSize nExpectedSize, unsigned int nExpectedBytes)
+        const std::wstring& sExpectedNote, Memory::Size nExpectedSize, unsigned int nExpectedBytes)
     {
         const auto* offsetNote = note.GetPointerNoteAtOffset(nOffset);
         Assert::IsNotNull(offsetNote, ra::StringPrintf(L"No note found at offset 0x%04x", nOffset).c_str());
@@ -66,127 +67,127 @@ private:
 public:
     TEST_METHOD(TestExtractSize)
     {
-        TestCodeNoteSize(L"", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"Test", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"16-bit Test", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"Test 16-bit", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"Test 16-bi", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"[16-bit] Test", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"[16 bit] Test", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"[16 Bit] Test", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"[16-bit BCD] Test", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"[24-bit] Test", 3U, MemSize::TwentyFourBit);
-        TestCodeNoteSize(L"[32-bit] Test", 4U, MemSize::ThirtyTwoBit);
-        TestCodeNoteSize(L"[32 bit] Test", 4U, MemSize::ThirtyTwoBit);
-        TestCodeNoteSize(L"[32bit] Test", 4U, MemSize::ThirtyTwoBit);
-        TestCodeNoteSize(L"Test [16-bit]", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"Test (16-bit)", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"Test (16 bits)", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"[64-bit] Test", 8U, MemSize::Array);
-        TestCodeNoteSize(L"[128-bit] Test", 16U, MemSize::Array);
-        TestCodeNoteSize(L"[17-bit] Test", 3U, MemSize::TwentyFourBit);
-        TestCodeNoteSize(L"[100-bit] Test", 13U, MemSize::Array);
-        TestCodeNoteSize(L"[0-bit] Test", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"[1-bit] Test", 1U, MemSize::EightBit);
-        TestCodeNoteSize(L"[4-bit] Test", 1U, MemSize::EightBit);
-        TestCodeNoteSize(L"[8-bit] Test", 1U, MemSize::EightBit);
-        TestCodeNoteSize(L"[9-bit] Test", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"bit", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"9bit", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"-bit", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"Test", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"16-bit Test", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"Test 16-bit", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"Test 16-bi", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"[16-bit] Test", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"[16 bit] Test", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"[16 Bit] Test", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"[16-bit BCD] Test", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"[24-bit] Test", 3U, Memory::Size::TwentyFourBit);
+        TestCodeNoteSize(L"[32-bit] Test", 4U, Memory::Size::ThirtyTwoBit);
+        TestCodeNoteSize(L"[32 bit] Test", 4U, Memory::Size::ThirtyTwoBit);
+        TestCodeNoteSize(L"[32bit] Test", 4U, Memory::Size::ThirtyTwoBit);
+        TestCodeNoteSize(L"Test [16-bit]", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"Test (16-bit)", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"Test (16 bits)", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"[64-bit] Test", 8U, Memory::Size::Array);
+        TestCodeNoteSize(L"[128-bit] Test", 16U, Memory::Size::Array);
+        TestCodeNoteSize(L"[17-bit] Test", 3U, Memory::Size::TwentyFourBit);
+        TestCodeNoteSize(L"[100-bit] Test", 13U, Memory::Size::Array);
+        TestCodeNoteSize(L"[0-bit] Test", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"[1-bit] Test", 1U, Memory::Size::EightBit);
+        TestCodeNoteSize(L"[4-bit] Test", 1U, Memory::Size::EightBit);
+        TestCodeNoteSize(L"[8-bit] Test", 1U, Memory::Size::EightBit);
+        TestCodeNoteSize(L"[9-bit] Test", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"bit", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"9bit", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"-bit", 1U, Memory::Size::Unknown);
 
-        TestCodeNoteSize(L"[16-bit BE] Test", 2U, MemSize::SixteenBitBigEndian);
-        TestCodeNoteSize(L"[24-bit BE] Test", 3U, MemSize::TwentyFourBitBigEndian);
-        TestCodeNoteSize(L"[32-bit BE] Test", 4U, MemSize::ThirtyTwoBitBigEndian);
-        TestCodeNoteSize(L"Test [32-bit BE]", 4U, MemSize::ThirtyTwoBitBigEndian);
-        TestCodeNoteSize(L"Test (32-bit BE)", 4U, MemSize::ThirtyTwoBitBigEndian);
-        TestCodeNoteSize(L"Test 32-bit BE", 4U, MemSize::ThirtyTwoBitBigEndian);
-        TestCodeNoteSize(L"[16-bit BigEndian] Test", 2U, MemSize::SixteenBitBigEndian);
-        TestCodeNoteSize(L"[16-bit-BE] Test", 2U, MemSize::SixteenBitBigEndian);
-        TestCodeNoteSize(L"[4-bit BE] Test", 1U, MemSize::EightBit);
-        TestCodeNoteSize(L"[US] Test [32-bit BE]", 4U, MemSize::ThirtyTwoBitBigEndian);
+        TestCodeNoteSize(L"[16-bit BE] Test", 2U, Memory::Size::SixteenBitBigEndian);
+        TestCodeNoteSize(L"[24-bit BE] Test", 3U, Memory::Size::TwentyFourBitBigEndian);
+        TestCodeNoteSize(L"[32-bit BE] Test", 4U, Memory::Size::ThirtyTwoBitBigEndian);
+        TestCodeNoteSize(L"Test [32-bit BE]", 4U, Memory::Size::ThirtyTwoBitBigEndian);
+        TestCodeNoteSize(L"Test (32-bit BE)", 4U, Memory::Size::ThirtyTwoBitBigEndian);
+        TestCodeNoteSize(L"Test 32-bit BE", 4U, Memory::Size::ThirtyTwoBitBigEndian);
+        TestCodeNoteSize(L"[16-bit BigEndian] Test", 2U, Memory::Size::SixteenBitBigEndian);
+        TestCodeNoteSize(L"[16-bit-BE] Test", 2U, Memory::Size::SixteenBitBigEndian);
+        TestCodeNoteSize(L"[4-bit BE] Test", 1U, Memory::Size::EightBit);
+        TestCodeNoteSize(L"[US] Test [32-bit BE]", 4U, Memory::Size::ThirtyTwoBitBigEndian);
 
-        TestCodeNoteSize(L"8 BYTE Test", 8U, MemSize::Array);
-        TestCodeNoteSize(L"Test 8 BYTE", 8U, MemSize::Array);
-        TestCodeNoteSize(L"Test 8 BYT", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"[2 Byte] Test", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"[4 Byte] Test", 4U, MemSize::ThirtyTwoBit);
-        TestCodeNoteSize(L"[4 Byte - Float] Test", 4U, MemSize::Float);
-        TestCodeNoteSize(L"[Float - 4 Byte] Test", 4U, MemSize::Float);
-        TestCodeNoteSize(L"[32-bit Float] Test", 4U, MemSize::Float);
-        TestCodeNoteSize(L"[Float 32-bit] Test", 4U, MemSize::Float);
-        TestCodeNoteSize(L"[8 Byte] Test", 8U, MemSize::Array);
-        TestCodeNoteSize(L"[0x80 Bytes] Test", 128U, MemSize::Array);
-        TestCodeNoteSize(L"[0xa8 bytes] Test", 168U, MemSize::Array);
-        TestCodeNoteSize(L"Test [0xE Bytes]", 14U, MemSize::Array);
-        TestCodeNoteSize(L"Test [0xET Bytes]", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"Test [0xE.3 Bytes]", 3U, MemSize::TwentyFourBit);
-        TestCodeNoteSize(L"[2 byte] Test", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"[2-byte] Test", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"Test (6 bytes)", 6U, MemSize::Array);
-        TestCodeNoteSize(L"[2byte] Test", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"[100 Bytes] Test", 100U, MemSize::Array);
+        TestCodeNoteSize(L"8 BYTE Test", 8U, Memory::Size::Array);
+        TestCodeNoteSize(L"Test 8 BYTE", 8U, Memory::Size::Array);
+        TestCodeNoteSize(L"Test 8 BYT", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"[2 Byte] Test", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"[4 Byte] Test", 4U, Memory::Size::ThirtyTwoBit);
+        TestCodeNoteSize(L"[4 Byte - Float] Test", 4U, Memory::Size::Float);
+        TestCodeNoteSize(L"[Float - 4 Byte] Test", 4U, Memory::Size::Float);
+        TestCodeNoteSize(L"[32-bit Float] Test", 4U, Memory::Size::Float);
+        TestCodeNoteSize(L"[Float 32-bit] Test", 4U, Memory::Size::Float);
+        TestCodeNoteSize(L"[8 Byte] Test", 8U, Memory::Size::Array);
+        TestCodeNoteSize(L"[0x80 Bytes] Test", 128U, Memory::Size::Array);
+        TestCodeNoteSize(L"[0xa8 bytes] Test", 168U, Memory::Size::Array);
+        TestCodeNoteSize(L"Test [0xE Bytes]", 14U, Memory::Size::Array);
+        TestCodeNoteSize(L"Test [0xET Bytes]", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"Test [0xE.3 Bytes]", 3U, Memory::Size::TwentyFourBit);
+        TestCodeNoteSize(L"[2 byte] Test", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"[2-byte] Test", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"Test (6 bytes)", 6U, Memory::Size::Array);
+        TestCodeNoteSize(L"[2byte] Test", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"[100 Bytes] Test", 100U, Memory::Size::Array);
 
-        TestCodeNoteSize(L"[float] Test", 4U, MemSize::Float);
-        TestCodeNoteSize(L"[float32] Test", 4U, MemSize::Float);
-        TestCodeNoteSize(L"Test float", 4U, MemSize::Float);
-        TestCodeNoteSize(L"Test floa", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"is floating", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"has floated", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"16-afloat", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"[float be] Test", 4U, MemSize::FloatBigEndian);
-        TestCodeNoteSize(L"[float bigendian] Test", 4U, MemSize::FloatBigEndian);
-        TestCodeNoteSize(L"[be float] Test", 4U, MemSize::FloatBigEndian);
-        TestCodeNoteSize(L"[bigendian float] Test", 4U, MemSize::FloatBigEndian);
-        TestCodeNoteSize(L"[32-bit] pointer to float", 4U, MemSize::ThirtyTwoBit);
+        TestCodeNoteSize(L"[float] Test", 4U, Memory::Size::Float);
+        TestCodeNoteSize(L"[float32] Test", 4U, Memory::Size::Float);
+        TestCodeNoteSize(L"Test float", 4U, Memory::Size::Float);
+        TestCodeNoteSize(L"Test floa", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"is floating", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"has floated", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"16-afloat", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"[float be] Test", 4U, Memory::Size::FloatBigEndian);
+        TestCodeNoteSize(L"[float bigendian] Test", 4U, Memory::Size::FloatBigEndian);
+        TestCodeNoteSize(L"[be float] Test", 4U, Memory::Size::FloatBigEndian);
+        TestCodeNoteSize(L"[bigendian float] Test", 4U, Memory::Size::FloatBigEndian);
+        TestCodeNoteSize(L"[32-bit] pointer to float", 4U, Memory::Size::ThirtyTwoBit);
 
-        TestCodeNoteSize(L"[64-bit double] Test", 8U, MemSize::Double32);
-        TestCodeNoteSize(L"[64-bit double BE] Test", 8U, MemSize::Double32BigEndian);
-        TestCodeNoteSize(L"[double] Test", 8U, MemSize::Double32);
-        TestCodeNoteSize(L"[double BE] Test", 8U, MemSize::Double32BigEndian);
-        TestCodeNoteSize(L"[double32] Test", 4U, MemSize::Double32);
-        TestCodeNoteSize(L"[double32 BE] Test", 4U, MemSize::Double32BigEndian);
-        TestCodeNoteSize(L"[double64] Test", 8U, MemSize::Double32);
+        TestCodeNoteSize(L"[64-bit double] Test", 8U, Memory::Size::Double32);
+        TestCodeNoteSize(L"[64-bit double BE] Test", 8U, Memory::Size::Double32BigEndian);
+        TestCodeNoteSize(L"[double] Test", 8U, Memory::Size::Double32);
+        TestCodeNoteSize(L"[double BE] Test", 8U, Memory::Size::Double32BigEndian);
+        TestCodeNoteSize(L"[double32] Test", 4U, Memory::Size::Double32);
+        TestCodeNoteSize(L"[double32 BE] Test", 4U, Memory::Size::Double32BigEndian);
+        TestCodeNoteSize(L"[double64] Test", 8U, Memory::Size::Double32);
 
-        TestCodeNoteSize(L"[MBF32] Test", 4U, MemSize::MBF32);
-        TestCodeNoteSize(L"[MBF40] Test", 5U, MemSize::MBF32);
-        TestCodeNoteSize(L"[MBF32 float] Test", 4U, MemSize::MBF32);
-        TestCodeNoteSize(L"[MBF80] Test", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"[MBF320] Test", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"[MBF-32] Test", 4U, MemSize::MBF32);
-        TestCodeNoteSize(L"[32-bit MBF] Test", 4U, MemSize::MBF32);
-        TestCodeNoteSize(L"[40-bit MBF] Test", 5U, MemSize::MBF32);
-        TestCodeNoteSize(L"[MBF] Test", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"Test MBF32", 4U, MemSize::MBF32);
-        TestCodeNoteSize(L"[MBF32 LE] Test", 4U, MemSize::MBF32LE);
-        TestCodeNoteSize(L"[MBF40-LE] Test", 5U, MemSize::MBF32LE);
+        TestCodeNoteSize(L"[MBF32] Test", 4U, Memory::Size::MBF32);
+        TestCodeNoteSize(L"[MBF40] Test", 5U, Memory::Size::MBF32);
+        TestCodeNoteSize(L"[MBF32 float] Test", 4U, Memory::Size::MBF32);
+        TestCodeNoteSize(L"[MBF80] Test", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"[MBF320] Test", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"[MBF-32] Test", 4U, Memory::Size::MBF32);
+        TestCodeNoteSize(L"[32-bit MBF] Test", 4U, Memory::Size::MBF32);
+        TestCodeNoteSize(L"[40-bit MBF] Test", 5U, Memory::Size::MBF32);
+        TestCodeNoteSize(L"[MBF] Test", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"Test MBF32", 4U, Memory::Size::MBF32);
+        TestCodeNoteSize(L"[MBF32 LE] Test", 4U, Memory::Size::MBF32LE);
+        TestCodeNoteSize(L"[MBF40-LE] Test", 5U, Memory::Size::MBF32LE);
 
-        TestCodeNoteSize(L"42=bitten", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"42-bitten", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"bit by bit", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"bit1=chest", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"42=bitten", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"42-bitten", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"bit by bit", 1U, Memory::Size::Unknown);
+        TestCodeNoteSize(L"bit1=chest", 1U, Memory::Size::Unknown);
 
-        TestCodeNoteSize(L"Bite count (16-bit)", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"Number of bits collected (32 bits)", 4U, MemSize::ThirtyTwoBit);
+        TestCodeNoteSize(L"Bite count (16-bit)", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"Number of bits collected (32 bits)", 4U, Memory::Size::ThirtyTwoBit);
 
-        TestCodeNoteSize(L"100 32-bit pointers [400 bytes]", 400U, MemSize::Array);
-        TestCodeNoteSize(L"[400 bytes] 100 32-bit pointers", 400U, MemSize::Array);
+        TestCodeNoteSize(L"100 32-bit pointers [400 bytes]", 400U, Memory::Size::Array);
+        TestCodeNoteSize(L"[400 bytes] 100 32-bit pointers", 400U, Memory::Size::Array);
 
-        TestCodeNoteSize(L"[NTSCU]\r\n[16-bit] Test\r\n", 2U, MemSize::SixteenBit);
-        TestCodeNoteSize(L"[24-bit]\r\nIt's really 32-bit, but the top byte will never be non-zero\r\n", 3U, MemSize::TwentyFourBit);
+        TestCodeNoteSize(L"[NTSCU]\r\n[16-bit] Test\r\n", 2U, Memory::Size::SixteenBit);
+        TestCodeNoteSize(L"[24-bit]\r\nIt's really 32-bit, but the top byte will never be non-zero\r\n", 3U, Memory::Size::TwentyFourBit);
 
-        TestCodeNoteSize(L"[13-bytes ASCII] Character Name", 13U, MemSize::Text);
+        TestCodeNoteSize(L"[13-bytes ASCII] Character Name", 13U, Memory::Size::Text);
     }
 
     TEST_METHOD(TestExtractFormat)
     {
-        TestCodeNoteFormat(L"", MemFormat::Dec);
-        TestCodeNoteFormat(L"Test", MemFormat::Dec);
-        TestCodeNoteFormat(L"16-bit Test", MemFormat::Dec);
-        TestCodeNoteFormat(L"Test 16-bit", MemFormat::Dec);
-        TestCodeNoteFormat(L"[16-bit] Test", MemFormat::Dec);
+        TestCodeNoteFormat(L"", Memory::Format::Dec);
+        TestCodeNoteFormat(L"Test", Memory::Format::Dec);
+        TestCodeNoteFormat(L"16-bit Test", Memory::Format::Dec);
+        TestCodeNoteFormat(L"Test 16-bit", Memory::Format::Dec);
+        TestCodeNoteFormat(L"[16-bit] Test", Memory::Format::Dec);
 
-        TestCodeNoteFormat(L"[16-bit BCD] Test", MemFormat::Hex);
+        TestCodeNoteFormat(L"[16-bit BCD] Test", Memory::Format::Hex);
     }
 
     TEST_METHOD(TestExtractFormatIndirect)
@@ -202,16 +203,16 @@ public:
             L"+10 - Bombs Remaining\r\n";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat()); // pointer
-        Assert::AreEqual(MemFormat::Dec, note.GetPointerNoteAtOffset(3)->GetDefaultMemFormat()); // bombs defused
-        Assert::AreEqual(MemFormat::Hex, note.GetPointerNoteAtOffset(4)->GetDefaultMemFormat()); // bomb timer
-        Assert::AreEqual(MemFormat::Dec, note.GetPointerNoteAtOffset(10)->GetDefaultMemFormat()); // bombs remaining
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat()); // pointer
+        Assert::AreEqual(Memory::Format::Dec, note.GetPointerNoteAtOffset(3)->GetDefaultMemFormat()); // bombs defused
+        Assert::AreEqual(Memory::Format::Hex, note.GetPointerNoteAtOffset(4)->GetDefaultMemFormat()); // bomb timer
+        Assert::AreEqual(Memory::Format::Dec, note.GetPointerNoteAtOffset(10)->GetDefaultMemFormat()); // bombs remaining
 
         const auto* nestedNote = note.GetPointerNoteAtOffset(8);
         Expects(nestedNote != nullptr);
-        Assert::AreEqual(MemFormat::Hex, nestedNote->GetDefaultMemFormat()); // bomb info pointer
-        Assert::AreEqual(MemFormat::Dec, nestedNote->GetPointerNoteAtOffset(0)->GetDefaultMemFormat()); // type
-        Assert::AreEqual(MemFormat::Hex, nestedNote->GetPointerNoteAtOffset(4)->GetDefaultMemFormat());  // color
+        Assert::AreEqual(Memory::Format::Hex, nestedNote->GetDefaultMemFormat()); // bomb info pointer
+        Assert::AreEqual(Memory::Format::Dec, nestedNote->GetPointerNoteAtOffset(0)->GetDefaultMemFormat()); // type
+        Assert::AreEqual(Memory::Format::Hex, nestedNote->GetPointerNoteAtOffset(4)->GetDefaultMemFormat());  // color
     }
 
     TEST_METHOD(TestExtractFormatImplied)
@@ -226,7 +227,7 @@ public:
             L"68=Credits\r\n";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemFormat::Dec, note.GetDefaultMemFormat());
+        Assert::AreEqual(Memory::Format::Dec, note.GetDefaultMemFormat());
 
         // could be decimal values, but padded to size. assume hex
         const std::wstring sNote2 =
@@ -236,7 +237,7 @@ public:
             L"0068=Credits\r\n";
         note.SetNote(sNote2);
 
-        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
 
         // definitely hex
         const std::wstring sNote3 =
@@ -247,7 +248,7 @@ public:
             L"0068=Credits\r\n";
         note.SetNote(sNote3);
 
-        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
 
         // alternate separator
         const std::wstring sNote4 =
@@ -258,7 +259,7 @@ public:
             L"0068: Credits\r\n";
         note.SetNote(sNote4);
 
-        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
 
         // alternate separator
         const std::wstring sNote5 =
@@ -269,7 +270,7 @@ public:
             L"0068 -> Credits\r\n";
         note.SetNote(sNote5);
 
-        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
 
         // 0x prefix
         const std::wstring sNote6 =
@@ -279,7 +280,7 @@ public:
             L"0x68=Credits\r\n";
         note.SetNote(sNote6);
 
-        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
 
         // h prefix
         const std::wstring sNote7 =
@@ -289,7 +290,7 @@ public:
             L"68h=Credits\r\n";
         note.SetNote(sNote7);
 
-        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
     }
 
     TEST_METHOD(TestExtractFormatBits)
@@ -304,7 +305,7 @@ public:
             L"b2=third\r\n";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
 
         // bit0 explicitly handled for 8-bit size
         const std::wstring sNote2 =
@@ -314,7 +315,7 @@ public:
             L"bit2 = third\r\n";
         note.SetNote(sNote2);
 
-        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
 
         // bit0 allowed for larger sizes
         const std::wstring sNote3 =
@@ -324,7 +325,7 @@ public:
             L"bit2 = third\r\n";
         note.SetNote(sNote3);
 
-        Assert::AreEqual(MemFormat::Hex, note.GetDefaultMemFormat());
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
     }
 
     TEST_METHOD(TestGetPointerNoteAtOffset)
@@ -336,12 +337,12 @@ public:
             L"+04 - Bomb Timer";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::TwentyFourBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::TwentyFourBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         // extracted notes for offset fields
-        AssertIndirectNote(note, 3U, L"Bombs Defused", MemSize::Unknown, 1);
-        AssertIndirectNote(note, 4U, L"Bomb Timer", MemSize::Unknown, 1);
+        AssertIndirectNote(note, 3U, L"Bombs Defused", Memory::Size::Unknown, 1);
+        AssertIndirectNote(note, 4U, L"Bomb Timer", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestGetPointerNoteAtOffsetMultiline)
@@ -354,7 +355,7 @@ public:
             L"---FRAGGER_HEAD = Fragger Helmet";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         // extracted notes for offset fields
@@ -362,7 +363,7 @@ public:
                            L"Equipment - Head - String[24 Bytes]\r\n"
                            L"---DEFAULT_HEAD = Barry's Head\r\n"
                            L"---FRAGGER_HEAD = Fragger Helmet",
-                           MemSize::Array, 24);
+                           Memory::Size::Array, 24);
     }
 
     TEST_METHOD(TestGetPointerNoteAtOffsetMultilineWithHeader)
@@ -376,7 +377,7 @@ public:
             L"---FRAGGER_HEAD = Fragger Helmet";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         // extracted notes for offset fields
@@ -384,7 +385,7 @@ public:
                            L"Equipment - Head - String[24 Bytes]\r\n"
                            L"---DEFAULT_HEAD = Barry's Head\r\n"
                            L"---FRAGGER_HEAD = Fragger Helmet",
-                           MemSize::Array, 24);
+                           Memory::Size::Array, 24);
     }
 
     TEST_METHOD(TestHeaderedPointer)
@@ -400,14 +401,14 @@ public:
             L"+0x1B5CE = Lap";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::SixteenBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::SixteenBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         // extracted notes for offset fields (note: pointer base default is $0000)
-        AssertIndirectNote(note, 0x1B56EU, L"Current Position", MemSize::Unknown, 1);
-        AssertIndirectNote(note, 0x1B57EU, L"Total Racers\r\n\r\nFree Run:", MemSize::Unknown, 1);
-        AssertIndirectNote(note, 0x1B5BEU, L"Seconds 0x", MemSize::Unknown, 1);
-        AssertIndirectNote(note, 0x1B5CEU, L"Lap", MemSize::Unknown, 1);
+        AssertIndirectNote(note, 0x1B56EU, L"Current Position", Memory::Size::Unknown, 1);
+        AssertIndirectNote(note, 0x1B57EU, L"Total Racers\r\n\r\nFree Run:", Memory::Size::Unknown, 1);
+        AssertIndirectNote(note, 0x1B5BEU, L"Seconds 0x", Memory::Size::Unknown, 1);
+        AssertIndirectNote(note, 0x1B5CEU, L"Lap", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestPointerOverlap)
@@ -421,13 +422,13 @@ public:
             L"+6 = Job Level (8-bit)";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         // extracted notes for offset fields (note: pointer base default is $0000)
-        AssertIndirectNote(note, 2, L"EXP (32-bit)", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(note, 5, L"Base Level (8-bit)", MemSize::EightBit, 1);
-        AssertIndirectNote(note, 6, L"Job Level (8-bit)", MemSize::EightBit, 1);
+        AssertIndirectNote(note, 2, L"EXP (32-bit)", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(note, 5, L"Base Level (8-bit)", Memory::Size::EightBit, 1);
+        AssertIndirectNote(note, 6, L"Job Level (8-bit)", Memory::Size::EightBit, 1);
     }
 
     TEST_METHOD(TestNestedPointer)
@@ -441,16 +442,16 @@ public:
             L"--- +0x24C | Flag";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         const auto* offsetNote = AssertIndirectNote(note, 0x428,
-            L"Pointer - Award - Tee Hee Two (32bit)\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+            L"Pointer - Award - Tee Hee Two (32bit)\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
 
         offsetNote = AssertIndirectNote(note, 0x438,
-            L"Pointer - Award - Pretty Woman (32bit)\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+            L"Pointer - Award - Pretty Woman (32bit)\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestUnannotatedPointerChain)
@@ -464,18 +465,18 @@ public:
             L"++0x24C | Flag";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         const auto* offsetNote = AssertIndirectNote(
-            note, 0x428, L"Award - Tee Hee Two\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+            note, 0x428, L"Award - Tee Hee Two\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
         Assert::AreEqual(std::wstring(L"Award - Tee Hee Two"), offsetNote->GetPointerDescription());
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
 
         offsetNote = AssertIndirectNote(note, 0x438, L"Award - Pretty Woman\r\n+0x24C | Flag",
-                                        MemSize::ThirtyTwoBit, 4);
+                                        Memory::Size::ThirtyTwoBit, 4);
         Assert::AreEqual(std::wstring(L"Award - Pretty Woman"), offsetNote->GetPointerDescription());
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestNestedPointerAlternateFormat)
@@ -489,16 +490,16 @@ public:
             L"++0x24C | Flag";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         const auto* offsetNote = AssertIndirectNote(note, 0x428,
-            L"(32-bit pointer) Award - Tee Hee Two\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+            L"(32-bit pointer) Award - Tee Hee Two\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
 
         offsetNote = AssertIndirectNote(note, 0x438,
-            L"(32-bit pointer) Award - Pretty Woman\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+            L"(32-bit pointer) Award - Pretty Woman\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestNestedPointerBracketNotSeparator)
@@ -512,16 +513,16 @@ public:
             L"--- +0x24C [8bit] Flag";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         const auto* offsetNote = AssertIndirectNote(note, 0x428,
-            L"[32bit] Pointer - Award - Tee Hee Two\r\n+0x24C [8bit] Flag", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"[8bit] Flag", MemSize::EightBit, 1);
+            L"[32bit] Pointer - Award - Tee Hee Two\r\n+0x24C [8bit] Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"[8bit] Flag", Memory::Size::EightBit, 1);
 
         offsetNote = AssertIndirectNote(note, 0x438,
-            L"[32bit] Pointer - Award - Pretty Woman\r\n+0x24C [8bit] Flag", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"[8bit] Flag", MemSize::EightBit, 1);
+            L"[32bit] Pointer - Award - Pretty Woman\r\n+0x24C [8bit] Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"[8bit] Flag", Memory::Size::EightBit, 1);
     }
 
     TEST_METHOD(TestNestedPointerMultiLine)
@@ -539,18 +540,18 @@ public:
             L"+0x448 | [32-bit BE] Not-nested number";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         const auto* offsetNote = AssertIndirectNote(note, 0x428, L"Obj1 pointer\r\n+0x24C | [16-bit] State\r\n-- Increments",
-                                                    MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"[16-bit] State\r\n-- Increments", MemSize::SixteenBit, 2);
+                                                    Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"[16-bit] State\r\n-- Increments", Memory::Size::SixteenBit, 2);
 
         offsetNote = AssertIndirectNote(note, 0x438, L"Obj2 pointer\r\n+0x08 | Flag\r\n-- b0=quest1 complete\r\n-- b1=quest2 complete",
-                                        MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x08, L"Flag\r\n-- b0=quest1 complete\r\n-- b1=quest2 complete", MemSize::Unknown, 1);
+                                        Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x08, L"Flag\r\n-- b0=quest1 complete\r\n-- b1=quest2 complete", Memory::Size::Unknown, 1);
 
-        AssertIndirectNote(note, 0x448, L"[32-bit BE] Not-nested number", MemSize::ThirtyTwoBitBigEndian, 4);
+        AssertIndirectNote(note, 0x448, L"[32-bit BE] Not-nested number", Memory::Size::ThirtyTwoBitBigEndian, 4);
     }
 
     TEST_METHOD(TestNestedPointerRepeatedNodes)
@@ -566,7 +567,7 @@ public:
             L"+++0x24C | Flag";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         // expect individual nodes to be merged together
@@ -574,15 +575,15 @@ public:
             L"+0x428 | (32-bit pointer) Award - Tee Hee Two\r\n"
             L"++0x24C | Flag\r\n"
             L"+0x438 | (32-bit pointer) Award - Pretty Woman\r\n"
-            L"++0x24C | Flag", MemSize::ThirtyTwoBit, 4);
+            L"++0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
 
         const auto* offsetNote = AssertIndirectNote(*sharedNote, 0x428,
-            L"(32-bit pointer) Award - Tee Hee Two\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+            L"(32-bit pointer) Award - Tee Hee Two\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
 
         offsetNote = AssertIndirectNote(*sharedNote, 0x438,
-            L"(32-bit pointer) Award - Pretty Woman\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+            L"(32-bit pointer) Award - Pretty Woman\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestImpliedPointerChain)
@@ -597,17 +598,17 @@ public:
             L"+++0x8008 = Second [32-bits]";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::TwentyFourBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::TwentyFourBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         const auto* nestedNote = AssertIndirectNote(note, 0x8318,
-            L"+0x8014\r\n++0x8004 = First [32-bits]\r\n++0x8008 = Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+            L"+0x8014\r\n++0x8004 = First [32-bits]\r\n++0x8008 = Second [32-bits]", Memory::Size::ThirtyTwoBit, 4);
         Assert::AreEqual(std::wstring(L""), nestedNote->GetPointerDescription());
         const auto* nestedNote2 = AssertIndirectNote(*nestedNote, 0x8014,
-            L"+0x8004 = First [32-bits]\r\n+0x8008 = Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+            L"+0x8004 = First [32-bits]\r\n+0x8008 = Second [32-bits]", Memory::Size::ThirtyTwoBit, 4);
         Assert::AreEqual(std::wstring(L""), nestedNote2->GetPointerDescription());
-        AssertIndirectNote(*nestedNote2, 0x8004, L"First [32-bits]", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*nestedNote2, 0x8008, L"Second [32-bits]", MemSize::ThirtyTwoBit, 4);
+        AssertIndirectNote(*nestedNote2, 0x8004, L"First [32-bits]", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*nestedNote2, 0x8008, L"Second [32-bits]", Memory::Size::ThirtyTwoBit, 4);
     }
 
     TEST_METHOD(TestArrayPointer)
@@ -621,17 +622,17 @@ public:
             L"--- +0x24C | Flag";
         note.SetNote(sNote);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
         Assert::AreEqual(std::wstring(L"Pointer [32bit] (80 bytes)"), note.GetPointerDescription());
 
         const auto* offsetNote = AssertIndirectNote(
-            note, 0x428, L"Pointer - Award - Tee Hee Two (32bit)\r\n+0x24C | Flag", MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+            note, 0x428, L"Pointer - Award - Tee Hee Two (32bit)\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
 
         offsetNote = AssertIndirectNote(note, 0x438, L"Pointer - Award - Pretty Woman (32bit)\r\n+0x24C | Flag",
-                                        MemSize::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", MemSize::Unknown, 1);
+                                        Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestPointerOverflow)
@@ -652,9 +653,9 @@ public:
         note.SetNote(sNote);
         note.UpdateRawPointerValue(0x04, note.mockEmulatorContext, nullptr);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
 
-        note.EnumeratePointerNotes([](ra::ByteAddress nAddress, const CodeNoteModel& nOffsetNote)
+        note.EnumeratePointerNotes([](ra::data::ByteAddress nAddress, const CodeNoteModel& nOffsetNote)
             {
                 Assert::AreEqual(0x14U, nAddress);
                 Assert::AreEqual(0x80000004U, nOffsetNote.GetAddress());
@@ -682,9 +683,9 @@ public:
         note.SetNote(sNote);
         note.UpdateRawPointerValue(0x04, note.mockEmulatorContext, nullptr);
 
-        Assert::AreEqual(MemSize::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
 
-        note.EnumeratePointerNotes([](ra::ByteAddress nAddress, const CodeNoteModel& nOffsetNote)
+        note.EnumeratePointerNotes([](ra::data::ByteAddress nAddress, const CodeNoteModel& nOffsetNote)
             {
                 Assert::AreEqual(0x08U, nAddress);
                 Assert::AreEqual(0xFFFFFFF8U, nOffsetNote.GetAddress());

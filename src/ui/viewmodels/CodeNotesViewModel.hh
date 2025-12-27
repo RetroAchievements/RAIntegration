@@ -104,7 +104,7 @@ public:
         void SetModified(bool bModified);
         bool IsModified() const noexcept { return m_bModified; }
 
-        ra::ByteAddress nAddress = 0;
+        ra::data::ByteAddress nAddress = 0;
         unsigned int nBytes = 1;
 
     private:
@@ -203,7 +203,7 @@ protected:
     // ra::data::context::GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
-    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
+    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
     // ra::ui::ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
@@ -211,7 +211,7 @@ protected:
 
 private:
     void OnSelectedItemsChanged();
-    void GetSelectedModifiedNoteAddresses(std::vector<ra::ByteAddress>& vAddresses);
+    void GetSelectedModifiedNoteAddresses(std::vector<ra::data::ByteAddress>& vAddresses);
 
     ViewModelCollection<CodeNoteViewModel> m_vNotes;
     size_t m_nUnfilteredNotesCount = 0U;

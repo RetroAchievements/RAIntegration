@@ -7,6 +7,7 @@
 #include "tests\ui\UIAsserts.hh"
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -100,14 +101,14 @@ private:
             mockThreadPool.SetSynchronous(true);
         }
 
-        const std::vector<ra::ByteAddress>& GetPublishedAddresses() const noexcept { return m_nPublishedAddresses; }
+        const std::vector<ra::data::ByteAddress>& GetPublishedAddresses() const noexcept { return m_nPublishedAddresses; }
 
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> m_themeOverride;
-        std::vector<ra::ByteAddress> m_nPublishedAddresses;
+        std::vector<ra::data::ByteAddress> m_nPublishedAddresses;
     };
 
-    void AssertRow(CodeNotesViewModelHarness& notes, gsl::index nRow, ra::ByteAddress nAddress,
+    void AssertRow(CodeNotesViewModelHarness& notes, gsl::index nRow, ra::data::ByteAddress nAddress,
         const wchar_t* sAddress, const wchar_t* sNote)
     {
         auto* pRow = notes.Notes().GetItemAt(nRow);
@@ -618,13 +619,13 @@ public:
         const auto& pBookmarks = notes.mockWindowManager.MemoryBookmarks.Bookmarks();
         Assert::AreEqual({ 4U }, pBookmarks.Items().Count());
         Assert::AreEqual({ 0x0010U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
         Assert::AreEqual({ 0x0016U }, pBookmarks.Items().GetItemAt(1)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.Items().GetItemAt(1)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pBookmarks.Items().GetItemAt(1)->GetSize());
         Assert::AreEqual({ 0x0022U }, pBookmarks.Items().GetItemAt(2)->GetAddress());
-        Assert::AreEqual(MemSize::SixteenBit, pBookmarks.Items().GetItemAt(2)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::SixteenBit, pBookmarks.Items().GetItemAt(2)->GetSize());
         Assert::AreEqual({ 0x0040U }, pBookmarks.Items().GetItemAt(3)->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(3)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pBookmarks.Items().GetItemAt(3)->GetSize());
 
         notes.mockGameContext.SetCodeNote(0x0016, L"[32-bit BE] Score");
         notes.Notes().GetItemAt(0)->SetSelected(false);
@@ -634,7 +635,7 @@ public:
         notes.BookmarkSelected();
         Assert::AreEqual({ 5U }, pBookmarks.Items().Count());
         Assert::AreEqual({ 0x0016U }, pBookmarks.Items().GetItemAt(4)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, pBookmarks.Items().GetItemAt(4)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBitBigEndian, pBookmarks.Items().GetItemAt(4)->GetSize());
     }
 
     TEST_METHOD(TestModifiedIndicator)

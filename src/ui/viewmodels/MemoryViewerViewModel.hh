@@ -33,7 +33,7 @@ public:
     void InitializeNotifyTargets();
     void DetachNotifyTargets() noexcept;
 
-    void InitializeFixedViewer(const ra::ByteAddress nAddress);
+    void InitializeFixedViewer(const ra::data::ByteAddress nAddress);
 
     void DoFrame();
 
@@ -92,12 +92,12 @@ public:
     /// <summary>
     /// Gets the address of the selected byte.
     /// </summary>
-    ByteAddress GetAddress() const { return GetValue(AddressProperty); }
+    ra::data::ByteAddress GetAddress() const { return GetValue(AddressProperty); }
 
     /// <summary>
     /// Sets the address of the selected byte.
     /// </summary>
-    void SetAddress(ByteAddress value);
+    void SetAddress(ra::data::ByteAddress value);
 
     /// <summary>
     /// Gets whether or not the address is fixed.
@@ -117,12 +117,12 @@ public:
     /// <summary>
     /// Gets the address of the first visible byte.
     /// </summary>
-    ByteAddress GetFirstAddress() const { return GetValue(FirstAddressProperty); }
+    ra::data::ByteAddress GetFirstAddress() const { return GetValue(FirstAddressProperty); }
 
     /// <summary>
     /// Sets the address of the first visible byte.
     /// </summary>
-    void SetFirstAddress(ByteAddress nValue);
+    void SetFirstAddress(ra::data::ByteAddress nValue);
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the number of visible lines.
@@ -155,12 +155,12 @@ public:
     /// <summary>
     /// Gets the memory word size.
     /// </summary>
-    MemSize GetSize() const { return ra::itoe<MemSize>(GetValue(SizeProperty)); }
+    ra::data::Memory::Size GetSize() const { return ra::itoe<ra::data::Memory::Size>(GetValue(SizeProperty)); }
 
     /// <summary>
     /// Sets the memory word size.
     /// </summary>
-    void SetSize(MemSize value) { SetValue(SizeProperty, ra::etoi(value)); }
+    void SetSize(ra::data::Memory::Size value) { SetValue(SizeProperty, ra::etoi(value)); }
 
     void OnClick(int nX, int nY);
     void OnResized(int nWidth, int nHeight);
@@ -177,7 +177,7 @@ public:
     void AdvanceCursorPage();
     void RetreatCursorPage();
 
-    uint8_t GetValueAtAddress(ra::ByteAddress nAddress) const;
+    uint8_t GetValueAtAddress(ra::data::ByteAddress nAddress) const;
     void IncreaseCurrentValue(uint32_t nModifier);
     void DecreaseCurrentValue(uint32_t nModifier);
 
@@ -186,12 +186,12 @@ protected:
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
-    void OnCodeNoteChanged(ra::ByteAddress, const std::wstring&) override;
-    void OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) override;
+    void OnCodeNoteChanged(ra::data::ByteAddress, const std::wstring&) override;
+    void OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
     // EmulatorContext::NotifyTarget
     void OnTotalMemorySizeChanged() override;
-    void OnByteWritten(ra::ByteAddress nAddress, uint8_t nValue) override;
+    void OnByteWritten(ra::data::ByteAddress nAddress, uint8_t nValue) override;
 
     uint8_t* m_pMemory;
     uint8_t* m_pColor;
@@ -200,7 +200,7 @@ protected:
     static ra::ui::Size s_szChar;
 
     int m_nSelectedNibble = 0;
-    ra::ByteAddress m_nTotalMemorySize = 0;
+    ra::data::ByteAddress m_nTotalMemorySize = 0;
     bool m_bReadOnly = false;
     bool m_bAddressFixed = false;
     bool m_bHasFocus = false;
@@ -225,12 +225,12 @@ private:
     void RenderMemory();
     void WriteChar(int nX, int nY, TextColor nColor, int hexChar);
 
-    void UpdateColor(ra::ByteAddress nAddress);
+    void UpdateColor(ra::data::ByteAddress nAddress);
     void UpdateColors();
     void UpdateInvalidRegions();
-    void UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength);
+    void UpdateHighlight(ra::data::ByteAddress nAddress, int nNewLength, int nOldLength);
 
-    void ReadMemory(ra::ByteAddress nFirstAddress, int nNumVisibleLines);
+    void ReadMemory(ra::data::ByteAddress nFirstAddress, int nNumVisibleLines);
     int NibblesPerWord() const;
     int GetSelectedNibbleOffset() const;
     void UpdateSelectedNibble(int nNewNibble);
@@ -238,7 +238,7 @@ private:
     void DetermineIfASCIIShouldBeVisible();
 
     std::unique_ptr<uint8_t[]> m_pBuffer;
-    ra::ByteAddress m_nQueuedReadAddress = 0xFFFFFFFF;
+    ra::data::ByteAddress m_nQueuedReadAddress = 0xFFFFFFFF;
 
     std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
     static std::unique_ptr<ra::ui::drawing::ISurface> s_pFontSurface;

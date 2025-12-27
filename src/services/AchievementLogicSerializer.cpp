@@ -69,7 +69,7 @@ void AchievementLogicSerializer::AppendConditionType(std::string& sBuffer, Trigg
     sBuffer.push_back(':');
 }
 
-void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, uint32_t nValue)
+void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size nSize, uint32_t nValue)
 {
     switch (nType)
     {
@@ -117,69 +117,69 @@ void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOper
 
     switch (nSize)
     {
-        case MemSize::BitCount:              sBuffer.push_back('K'); break;
-        case MemSize::Bit_0:                 sBuffer.push_back('M'); break;
-        case MemSize::Bit_1:                 sBuffer.push_back('N'); break;
-        case MemSize::Bit_2:                 sBuffer.push_back('O'); break;
-        case MemSize::Bit_3:                 sBuffer.push_back('P'); break;
-        case MemSize::Bit_4:                 sBuffer.push_back('Q'); break;
-        case MemSize::Bit_5:                 sBuffer.push_back('R'); break;
-        case MemSize::Bit_6:                 sBuffer.push_back('S'); break;
-        case MemSize::Bit_7:                 sBuffer.push_back('T'); break;
-        case MemSize::Nibble_Lower:          sBuffer.push_back('L'); break;
-        case MemSize::Nibble_Upper:          sBuffer.push_back('U'); break;
-        case MemSize::EightBit:              sBuffer.push_back('H'); break;
-        case MemSize::TwentyFourBit:         sBuffer.push_back('W'); break;
-        case MemSize::ThirtyTwoBit:          sBuffer.push_back('X'); break;
-        case MemSize::SixteenBit:            sBuffer.push_back(' '); break;
-        case MemSize::ThirtyTwoBitBigEndian: sBuffer.push_back('G'); break;
-        case MemSize::SixteenBitBigEndian:   sBuffer.push_back('I'); break;
-        case MemSize::TwentyFourBitBigEndian:sBuffer.push_back('J'); break;
+        case ra::data::Memory::Size::BitCount:              sBuffer.push_back('K'); break;
+        case ra::data::Memory::Size::Bit_0:                 sBuffer.push_back('M'); break;
+        case ra::data::Memory::Size::Bit_1:                 sBuffer.push_back('N'); break;
+        case ra::data::Memory::Size::Bit_2:                 sBuffer.push_back('O'); break;
+        case ra::data::Memory::Size::Bit_3:                 sBuffer.push_back('P'); break;
+        case ra::data::Memory::Size::Bit_4:                 sBuffer.push_back('Q'); break;
+        case ra::data::Memory::Size::Bit_5:                 sBuffer.push_back('R'); break;
+        case ra::data::Memory::Size::Bit_6:                 sBuffer.push_back('S'); break;
+        case ra::data::Memory::Size::Bit_7:                 sBuffer.push_back('T'); break;
+        case ra::data::Memory::Size::Nibble_Lower:          sBuffer.push_back('L'); break;
+        case ra::data::Memory::Size::Nibble_Upper:          sBuffer.push_back('U'); break;
+        case ra::data::Memory::Size::EightBit:              sBuffer.push_back('H'); break;
+        case ra::data::Memory::Size::TwentyFourBit:         sBuffer.push_back('W'); break;
+        case ra::data::Memory::Size::ThirtyTwoBit:          sBuffer.push_back('X'); break;
+        case ra::data::Memory::Size::SixteenBit:            sBuffer.push_back(' '); break;
+        case ra::data::Memory::Size::ThirtyTwoBitBigEndian: sBuffer.push_back('G'); break;
+        case ra::data::Memory::Size::SixteenBitBigEndian:   sBuffer.push_back('I'); break;
+        case ra::data::Memory::Size::TwentyFourBitBigEndian:sBuffer.push_back('J'); break;
 
-        case MemSize::Float:
+        case ra::data::Memory::Size::Float:
             sBuffer.pop_back();
             sBuffer.pop_back();
             sBuffer.push_back('f');
             sBuffer.push_back('F');
             break;
 
-        case MemSize::FloatBigEndian:
+        case ra::data::Memory::Size::FloatBigEndian:
             sBuffer.pop_back();
             sBuffer.pop_back();
             sBuffer.push_back('f');
             sBuffer.push_back('B');
             break;
 
-        case MemSize::Double32:
+        case ra::data::Memory::Size::Double32:
             sBuffer.pop_back();
             sBuffer.pop_back();
             sBuffer.push_back('f');
             sBuffer.push_back('H');
             break;
 
-        case MemSize::Double32BigEndian:
+        case ra::data::Memory::Size::Double32BigEndian:
             sBuffer.pop_back();
             sBuffer.pop_back();
             sBuffer.push_back('f');
             sBuffer.push_back('I');
             break;
 
-        case MemSize::MBF32:
+        case ra::data::Memory::Size::MBF32:
             sBuffer.pop_back();
             sBuffer.pop_back();
             sBuffer.push_back('f');
             sBuffer.push_back('M');
             break;
 
-        case MemSize::MBF32LE:
+        case ra::data::Memory::Size::MBF32LE:
             sBuffer.pop_back();
             sBuffer.pop_back();
             sBuffer.push_back('f');
             sBuffer.push_back('L');
             break;
 
-        case MemSize::Array:
-        case MemSize::Text:
+        case ra::data::Memory::Size::Array:
+        case ra::data::Memory::Size::Text:
             /* not a real size, use 32-bit BE as best approximation */
             sBuffer.push_back('G');
             break;
@@ -192,7 +192,7 @@ void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOper
     sBuffer.append(ra::ByteAddressToString(nValue), 2);
 }
 
-void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize, float fValue)
+void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size, float fValue)
 {
     switch (nType)
     {
@@ -303,7 +303,7 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
     if (!pLeafNote.GetPointerChain(vChain, pRootNote))
         return std::string();
 
-    MemSize nSize = MemSize::ThirtyTwoBit;
+    auto nSize = ra::data::Memory::Size::ThirtyTwoBit;
     uint32_t nMask = 0xFFFFFFFF;
     uint32_t nOffset = 0;
 
@@ -319,7 +319,7 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
 
     std::string sBuffer;
     size_t nBitmaskOffset = std::string::npos;
-    ra::ByteAddress nPointerBase = 0, nAddress = 0;
+    ra::data::ByteAddress nPointerBase = 0, nAddress = 0;
     for (size_t i = 0; i < vChain.size() - 1; ++i)
     {
         const auto* pNote = vChain.at(i);
@@ -344,16 +344,16 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
         if (nOffset != 0)
         {
             AppendOperator(sBuffer, ra::services::TriggerOperatorType::Subtract);
-            AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, MemSize::ThirtyTwoBit, nOffset);
+            AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nOffset);
         }
         else if (nMask != 0xFFFFFFFF)
         {
-            const auto nBitsMask = ra::to_unsigned((1 << ra::data::MemSizeBits(nSize)) - 1);
+            const auto nBitsMask = ra::to_unsigned((1 << ra::data::Memory::SizeBits(nSize)) - 1);
             if (nMask != nBitsMask)
             {
                 nBitmaskOffset = sBuffer.length();
                 AppendOperator(sBuffer, ra::services::TriggerOperatorType::BitwiseAnd);
-                AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, MemSize::ThirtyTwoBit, nMask);
+                AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nMask);
             }
         }
 
@@ -370,8 +370,8 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
     AppendConditionType(sBuffer, ra::services::TriggerConditionType::Measured);
 
     nSize = pLeafNote.GetMemSize();
-    if (nSize == MemSize::Unknown)
-        nSize = MemSize::EightBit;
+    if (nSize == ra::data::Memory::Size::Unknown)
+        nSize = ra::data::Memory::Size::EightBit;
 
     AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, nAddress);
 

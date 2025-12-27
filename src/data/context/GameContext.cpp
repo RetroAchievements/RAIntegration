@@ -254,10 +254,10 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
             auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
             pCodeNotes->Refresh(
                 m_nGameId,
-                [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
+                [this](ra::data::ByteAddress nAddress, const std::wstring& sNewNote) {
                     OnCodeNoteChanged(nAddress, sNewNote);
                 },
-                [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring sNote) {
+                [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring sNote) {
                     OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
                 },
                 [this]() {
@@ -697,7 +697,7 @@ void GameContext::DoFrame()
         pAsset.DoFrame();
 }
 
-void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
+void GameContext::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
@@ -711,7 +711,7 @@ void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring
     }
 }
 
-void GameContext::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
+void GameContext::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     if (m_vNotifyTargets.LockIfNotEmpty())
     {

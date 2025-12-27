@@ -11,7 +11,7 @@ namespace search {
 class SixteenBitBigEndianSearchImpl : public SixteenBitSearchImpl
 {
 public:
-    MemSize GetMemSize() const noexcept override { return MemSize::SixteenBitBigEndian; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::SixteenBitBigEndian; }
 
 protected:
     unsigned int BuildValue(const uint8_t* ptr) const noexcept override
@@ -25,7 +25,7 @@ protected:
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         SearchImpl::ApplyConstantFilter(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nConstantValue, vMatches);
@@ -33,7 +33,7 @@ protected:
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         SearchImpl::ApplyCompareFilter(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);

@@ -4,7 +4,7 @@
 
 #include "AssetModelBase.hh"
 
-#include "data/Types.hh"
+#include "data/Memory.hh"
 
 namespace ra {
 namespace data {
@@ -28,16 +28,16 @@ public:
     struct MemoryRegion
     {
         std::wstring sLabel;
-        ra::ByteAddress nStartAddress = 0;
-        ra::ByteAddress nEndAddress = 0;
+        ra::data::ByteAddress nStartAddress = 0;
+        ra::data::ByteAddress nEndAddress = 0;
     };
 
     const std::vector<MemoryRegion>& CustomRegions() const noexcept { return m_vRegions; }
 
     void ResetCustomRegions();
-    void AddCustomRegion(ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, const std::wstring& sLabel);
+    void AddCustomRegion(ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, const std::wstring& sLabel);
 
-    static bool ParseFilterRange(const std::wstring& sRange, _Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
+    static bool ParseFilterRange(const std::wstring& sRange, _Out_ ra::data::ByteAddress& nStart, _Out_ ra::data::ByteAddress& nEnd);
 
 protected:
 

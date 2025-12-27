@@ -3,7 +3,7 @@
 #pragma once
 
 #include "RAInterface\RA_Consoles.h"
-#include "data\Types.hh"
+#include "data\Memory.hh"
 #include "util\GSL.hh"
 
 #include <string>
@@ -77,9 +77,9 @@ public:
 
     struct MemoryRegion
     {
-        ra::ByteAddress StartAddress = 0U;
-        ra::ByteAddress EndAddress = 0U;
-        ra::ByteAddress RealAddress = 0U;
+        ra::data::ByteAddress StartAddress = 0U;
+        ra::data::ByteAddress EndAddress = 0U;
+        ra::data::ByteAddress RealAddress = 0U;
         AddressType Type = AddressType::Unknown;
         std::string Description;
     };
@@ -93,19 +93,19 @@ public:
     /// Gets the memory region containing the specified address.
     /// </summary>
     /// <returns>Matching <see cref="MemoryRegion"/>, <c>nullptr</c> if not found.
-    const MemoryRegion* GetMemoryRegion(ra::ByteAddress nAddress) const;
+    const MemoryRegion* GetMemoryRegion(ra::data::ByteAddress nAddress) const;
 
     /// <summary>
     /// Converts a real address into the "RetroAchievements" address where the data should be.
     /// </summary>
     /// <returns>Converted address, or <c>0xFFFFFFFF</c> if conversion could not be completed.
-    ra::ByteAddress ByteAddressFromRealAddress(ra::ByteAddress nRealAddress) const noexcept;
+    ra::data::ByteAddress ByteAddressFromRealAddress(ra::data::ByteAddress nRealAddress) const noexcept;
 
     /// <summary>
     /// Converts an "RetroAchievements" address into a real address where the data might be found.
     /// </summary>
     /// <returns>Converted address, or <c>0xFFFFFFFF</c> if conversion could not be completed.
-    ra::ByteAddress RealAddressFromByteAddress(ra::ByteAddress nRealAddress) const noexcept;
+    ra::data::ByteAddress RealAddressFromByteAddress(ra::data::ByteAddress nRealAddress) const noexcept;
 
     /// <summary>
     /// Gets the read size and mask to use for reading a pointer from memory and converting it to
@@ -115,19 +115,19 @@ public:
     /// <param name="nMask">[out] the mask to apply (if 0xFFFFFFFF, no mask is necessary).</param>
     /// <param name="nOffset">[out] the offset to apply (if 0, no offset is necessary).</param>
     /// <returns><c>true<c> if a mapping was found, <c>false</c> if not.</returns>
-    bool GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMask, uint32_t* nOffset) const;
+    bool GetRealAddressConversion(Memory::Size* nReadSize, uint32_t* nMask, uint32_t* nOffset) const;
 
     /// <summary>
     /// Gets the maximum valid address for the console.
     /// </summary>
-    ra::ByteAddress MaxAddress() const noexcept { return m_nMaxAddress; }
+    ra::data::ByteAddress MaxAddress() const noexcept { return m_nMaxAddress; }
 
 protected:
     ConsoleID m_nId{};
     std::wstring m_sName;
 
     std::vector<MemoryRegion> m_vRegions;
-    ra::ByteAddress m_nMaxAddress = 0;
+    ra::data::ByteAddress m_nMaxAddress = 0;
 };
 
 } // namespace context

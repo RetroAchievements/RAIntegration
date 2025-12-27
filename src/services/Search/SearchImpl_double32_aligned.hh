@@ -15,7 +15,7 @@ public:
 
     unsigned int GetPadding() const noexcept override { return 7U; }
 
-    bool ContainsAddress(const SearchResults& srResults, ra::ByteAddress nAddress) const override
+    bool ContainsAddress(const SearchResults& srResults, ra::data::ByteAddress nAddress) const override
     {
         if ((nAddress & 7) != 4)
             return false;
@@ -35,12 +35,12 @@ public:
         return nBytes / 8;
     }
 
-    ra::ByteAddress ConvertFromRealAddress(ra::ByteAddress nAddress) const noexcept override
+    ra::data::ByteAddress ConvertFromRealAddress(ra::data::ByteAddress nAddress) const noexcept override
     {
         return nAddress / 8;
     }
 
-    ra::ByteAddress ConvertToRealAddress(ra::ByteAddress nAddress) const noexcept override
+    ra::data::ByteAddress ConvertToRealAddress(ra::data::ByteAddress nAddress) const noexcept override
     {
         return nAddress * 8;
     }
@@ -48,7 +48,7 @@ public:
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         pBytes += 4; // we're only looking at the four most significant bytes
 
@@ -69,7 +69,7 @@ protected:
     GSL_SUPPRESS_TYPE1
         void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         // cannot use base implementation because we need to offset pBytes and pBlockBytes
         const auto* pBlockBytes = pPreviousBlock.GetBytes() + 4;
@@ -86,7 +86,7 @@ protected:
             const float fValue2 = BuildFloatValue(pBlockBytes) + fAdjustment;
             if (CompareValues(fValue1, fValue2, nComparison))
             {
-                const ra::ByteAddress nAddress = nBlockAddress +
+                const ra::data::ByteAddress nAddress = nBlockAddress +
                     ConvertFromRealAddress(gsl::narrow_cast<uint32_t>(pScan - pBytes - 4));
                 if (pPreviousBlock.HasMatchingAddress(pMatchingAddresses, nAddress))
                     vMatches.push_back(nAddress);

@@ -50,16 +50,16 @@ public:
 private:
     static bool IsHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex)
     {
-        const auto nSize = ra::itoe<MemSize>(vmItems.GetItemValue(nIndex, ra::ui::viewmodels::MemoryWatchViewModel::SizeProperty));
+        const auto nSize = ra::itoe<ra::data::Memory::Size>(vmItems.GetItemValue(nIndex, ra::ui::viewmodels::MemoryWatchViewModel::SizeProperty));
         switch (nSize)
         {
-            case MemSize::Float:
-            case MemSize::FloatBigEndian:
-            case MemSize::Double32:
-            case MemSize::Double32BigEndian:
-            case MemSize::MBF32:
-            case MemSize::MBF32LE:
-            case MemSize::Text:
+            case ra::data::Memory::Size::Float:
+            case ra::data::Memory::Size::FloatBigEndian:
+            case ra::data::Memory::Size::Double32:
+            case ra::data::Memory::Size::Double32BigEndian:
+            case ra::data::Memory::Size::MBF32:
+            case ra::data::Memory::Size::MBF32LE:
+            case ra::data::Memory::Size::Text:
                 return true;
 
             default:

@@ -16,40 +16,6 @@ namespace ra {
 namespace data {
 namespace models {
 
-MemSize TriggerValidation::MapRcheevosMemSize(char nSize) noexcept
-{
-    switch (nSize)
-    {
-        case RC_MEMSIZE_BIT_0: return MemSize::Bit_0;
-        case RC_MEMSIZE_BIT_1: return MemSize::Bit_1;
-        case RC_MEMSIZE_BIT_2: return MemSize::Bit_2;
-        case RC_MEMSIZE_BIT_3: return MemSize::Bit_3;
-        case RC_MEMSIZE_BIT_4: return MemSize::Bit_4;
-        case RC_MEMSIZE_BIT_5: return MemSize::Bit_5;
-        case RC_MEMSIZE_BIT_6: return MemSize::Bit_6;
-        case RC_MEMSIZE_BIT_7: return MemSize::Bit_7;
-        case RC_MEMSIZE_LOW: return MemSize::Nibble_Lower;
-        case RC_MEMSIZE_HIGH: return MemSize::Nibble_Upper;
-        case RC_MEMSIZE_8_BITS: return MemSize::EightBit;
-        case RC_MEMSIZE_16_BITS: return MemSize::SixteenBit;
-        case RC_MEMSIZE_24_BITS: return MemSize::TwentyFourBit;
-        case RC_MEMSIZE_32_BITS: return MemSize::ThirtyTwoBit;
-        case RC_MEMSIZE_BITCOUNT: return MemSize::BitCount;
-        case RC_MEMSIZE_16_BITS_BE: return MemSize::SixteenBitBigEndian;
-        case RC_MEMSIZE_24_BITS_BE: return MemSize::TwentyFourBitBigEndian;
-        case RC_MEMSIZE_32_BITS_BE: return MemSize::ThirtyTwoBitBigEndian;
-        case RC_MEMSIZE_FLOAT: return MemSize::Float;
-        case RC_MEMSIZE_FLOAT_BE: return MemSize::FloatBigEndian;
-        case RC_MEMSIZE_MBF32: return MemSize::MBF32;
-        case RC_MEMSIZE_MBF32_LE: return MemSize::MBF32LE;
-        case RC_MEMSIZE_DOUBLE32: return MemSize::Double32;
-        case RC_MEMSIZE_DOUBLE32_BE: return MemSize::Double32BigEndian;
-        default:
-            assert(!"Unsupported operand size");
-            return MemSize::EightBit;
-    }
-}
-
 static bool ValidateLeaderboardCondSet(const rc_condset_t* pCondSet, std::wstring& sError)
 {
     if (!pCondSet)
@@ -95,17 +61,17 @@ static bool ValidateLeaderboardTrigger(const rc_trigger_t* pTrigger, std::wstrin
 static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::data::models::CodeNotesModel& pNotes,
                                      std::wstring& sError)
 {
-    const auto nMemRefSize = TriggerValidation::MapRcheevosMemSize(pOperand.size);
+    const auto nMemRefSize = Memory::SizeFromRcheevosSize(pOperand.size);
 
     const auto nAddress = pOperand.value.memref->address;
-    ra::ByteAddress nStartAddress = nAddress;
-    MemSize nNoteSize = MemSize::Unknown;
+    ra::data::ByteAddress nStartAddress = nAddress;
+    Memory::Size nNoteSize = Memory::Size::Unknown;
 
     const auto* pNote = pNotes.FindCodeNoteModel(nAddress, false);
     if (pNote)
     {
         // ignore bit/nibble reads inside a known address
-        if (nMemRefSize == MemSize::BitCount || MemSizeBits(nMemRefSize) < 8)
+        if (nMemRefSize == Memory::Size::BitCount || Memory::SizeBits(nMemRefSize) < 8)
             return true;
 
         nNoteSize = pNote->GetMemSize();
@@ -127,22 +93,22 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
         return true;
 
     // "array" and "text" are not real sizes to validate against
-    if (nNoteSize == MemSize::Array || nNoteSize == MemSize::Text)
+    if (nNoteSize == Memory::Size::Array || nNoteSize == Memory::Size::Text)
         return true;
 
-    if (nNoteSize == MemSize::Unknown)
+    if (nNoteSize == Memory::Size::Unknown)
     {
         // note exists, but did not specify a size. assume 8-bit
-        if (MemSizeBits(nMemRefSize) <= 8)
+        if (Memory::SizeBits(nMemRefSize) <= 8)
             return true;
 
-        sError = ra::StringPrintf(L"%s read of address %s differs from implied code note size %s", MemSizeString(nMemRefSize),
-                                  ra::ByteAddressToString(nAddress).substr(2), MemSizeString(MemSize::EightBit));
+        sError = ra::StringPrintf(L"%s read of address %s differs from implied code note size %s", Memory::SizeString(nMemRefSize),
+                                  ra::ByteAddressToString(nAddress).substr(2), Memory::SizeString(Memory::Size::EightBit));
     }
     else
     {
-        sError = ra::StringPrintf(L"%s read of address %s differs from code note size %s", MemSizeString(nMemRefSize),
-                                  ra::ByteAddressToString(nAddress).substr(2), MemSizeString(nNoteSize));
+        sError = ra::StringPrintf(L"%s read of address %s differs from code note size %s", Memory::SizeString(nMemRefSize),
+                                  ra::ByteAddressToString(nAddress).substr(2), Memory::SizeString(nNoteSize));
     }
 
     if (nStartAddress != nAddress)

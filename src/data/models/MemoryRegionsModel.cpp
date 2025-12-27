@@ -59,7 +59,7 @@ bool MemoryRegionsModel::Deserialize(ra::Tokenizer& pTokenizer)
     return true;
 }
 
-void MemoryRegionsModel::AddCustomRegion(ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, const std::wstring& sLabel)
+void MemoryRegionsModel::AddCustomRegion(ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, const std::wstring& sLabel)
 {
     MemoryRegion pRegion;
     pRegion.sLabel = sLabel;
@@ -80,7 +80,7 @@ void MemoryRegionsModel::ResetCustomRegions()
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
 }
 
-static bool ParseAddress(const wchar_t** pointer, ra::ByteAddress& address) noexcept
+static bool ParseAddress(const wchar_t** pointer, ra::data::ByteAddress& address) noexcept
 {
     if (pointer == nullptr)
         return false;
@@ -132,10 +132,10 @@ static bool ParseAddress(const wchar_t** pointer, ra::ByteAddress& address) noex
     return true;
 }
 
-bool MemoryRegionsModel::ParseFilterRange(const std::wstring& sRange, _Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd)
+bool MemoryRegionsModel::ParseFilterRange(const std::wstring& sRange, _Out_ ra::data::ByteAddress& nStart, _Out_ ra::data::ByteAddress& nEnd)
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto nMax = gsl::narrow_cast<ra::ByteAddress>(pEmulatorContext.TotalMemorySize()) - 1;
+    const auto nMax = gsl::narrow_cast<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize()) - 1;
 
     if (sRange.empty())
     {

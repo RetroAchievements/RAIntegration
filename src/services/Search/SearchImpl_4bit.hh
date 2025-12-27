@@ -10,24 +10,24 @@ namespace search {
 
 class FourBitSearchImpl : public SearchImpl
 {
-    MemSize GetMemSize() const noexcept override { return MemSize::Nibble_Lower; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::Nibble_Lower; }
 
     unsigned int GetAddressCountForBytes(unsigned int nBytes) const noexcept override
     {
         return nBytes * 2;
     }
 
-    ra::ByteAddress ConvertFromRealAddress(ra::ByteAddress nAddress) const noexcept override
+    ra::data::ByteAddress ConvertFromRealAddress(ra::data::ByteAddress nAddress) const noexcept override
     {
         return nAddress * 2;
     }
 
-    ra::ByteAddress ConvertToRealAddress(ra::ByteAddress nAddress) const noexcept override
+    ra::data::ByteAddress ConvertToRealAddress(ra::data::ByteAddress nAddress) const noexcept override
     {
         return nAddress / 2;
     }
 
-    bool ContainsAddress(const SearchResults& srResults, ra::ByteAddress nAddress) const override
+    bool ContainsAddress(const SearchResults& srResults, ra::data::ByteAddress nAddress) const override
     {
         nAddress <<= 1;
 
@@ -43,7 +43,7 @@ class FourBitSearchImpl : public SearchImpl
     bool ExcludeResult(SearchResults& srResults, const SearchResult& pResult) const override
     {
         auto nAddress = pResult.nAddress << 1;
-        if (pResult.nSize == MemSize::Nibble_Upper)
+        if (pResult.nSize == ra::data::Memory::Size::Nibble_Upper)
             nAddress |= 1;
 
         return ExcludeAddress(srResults, nAddress);
@@ -51,7 +51,7 @@ class FourBitSearchImpl : public SearchImpl
 
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
         const auto* pMatchingAddresses = pPreviousBlock.GetMatchingAddressPointer();
@@ -79,7 +79,7 @@ class FourBitSearchImpl : public SearchImpl
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         const auto* pBlockBytes = pPreviousBlock.GetBytes();
         const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
@@ -113,7 +113,7 @@ protected:
     bool GetValueFromMemBlock(const MemBlock& block, SearchResult& result) const noexcept override
     {
         if (result.nAddress & 1)
-            result.nSize = MemSize::Nibble_Upper;
+            result.nSize = ra::data::Memory::Size::Nibble_Upper;
 
         result.nAddress >>= 1;
 
@@ -123,7 +123,7 @@ protected:
 
         result.nValue = BuildValue(block.GetBytes() + nOffset);
 
-        if (result.nSize == MemSize::Nibble_Lower)
+        if (result.nSize == ra::data::Memory::Size::Nibble_Lower)
             result.nValue &= 0x0F;
         else
             result.nValue = (result.nValue >> 4) & 0x0F;

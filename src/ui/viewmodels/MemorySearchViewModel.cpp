@@ -41,7 +41,7 @@ const StringModelProperty MemorySearchViewModel::FilterValueProperty("MemorySear
 const StringModelProperty MemorySearchViewModel::FilterSummaryProperty("MemorySearchViewModel", "FilterSummary", L"");
 const IntModelProperty MemorySearchViewModel::ResultCountProperty("MemorySearchViewModel", "ResultCount", 0);
 const StringModelProperty MemorySearchViewModel::ResultCountTextProperty("MemorySearchViewModel", "ResultCountText", L"0");
-const IntModelProperty MemorySearchViewModel::ResultMemSizeProperty("MemorySearchViewModel", "ResultMemSize", ra::etoi(MemSize::EightBit));
+const IntModelProperty MemorySearchViewModel::ResultMemSizeProperty("MemorySearchViewModel", "ResultMemSize", ra::etoi(ra::data::Memory::Size::EightBit));
 const IntModelProperty MemorySearchViewModel::TotalMemorySizeProperty("MemorySearchViewModel", "TotalMemorySize", 0);
 const IntModelProperty MemorySearchViewModel::ScrollOffsetProperty("MemorySearchViewModel", "ScrollOffset", 0);
 const IntModelProperty MemorySearchViewModel::ScrollMaximumProperty("MemorySearchViewModel", "ScrollMaximum", 0);
@@ -160,9 +160,9 @@ MemorySearchViewModel::MemorySearchViewModel()
     SetValue(CanBeginNewSearchProperty, false);
     SetValue(CanGoToPreviousPageProperty, false);
 
-    // explicitly set the MemSize to some non-selectable value so the first search will
+    // explicitly set the Memory::Size to some non-selectable value so the first search will
     // trigger a PropertyChanged event.
-    SetValue(ResultMemSizeProperty, ra::etoi(MemSize::Bit_0));
+    SetValue(ResultMemSizeProperty, ra::etoi(ra::data::Memory::Size::Bit_0));
 }
 
 void MemorySearchViewModel::InitializeNotifyTargets()
@@ -194,18 +194,18 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
 {
     RebuildPredefinedFilterRanges();
 
-    const auto nTotalBankSize = gsl::narrow_cast<ra::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().TotalMemorySize());
+    const auto nTotalBankSize = gsl::narrow_cast<ra::data::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().TotalMemorySize());
     SetValue(CanBeginNewSearchProperty, (nTotalBankSize > 0U));
     SetValue(TotalMemorySizeProperty, nTotalBankSize);
 }
 
 void MemorySearchViewModel::RebuildPredefinedFilterRanges()
 {
-    ra::ByteAddress nExtraRamStart = 0U;
-    ra::ByteAddress nExtraRamEnd = 0U;
-    ra::ByteAddress nSystemRamStart = 0U;
-    ra::ByteAddress nSystemRamEnd = 0U;
-    ra::ByteAddress nAllRamEnd = 0U;
+    ra::data::ByteAddress nExtraRamStart = 0U;
+    ra::data::ByteAddress nExtraRamEnd = 0U;
+    ra::data::ByteAddress nSystemRamStart = 0U;
+    ra::data::ByteAddress nSystemRamEnd = 0U;
+    ra::data::ByteAddress nAllRamEnd = 0U;
 
     std::vector<ra::data::context::ConsoleContext::MemoryRegion> vmRanges;
     auto nPreviousAddressType = ra::data::context::ConsoleContext::AddressType::Unused;
@@ -316,7 +316,7 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
     m_vPredefinedFilterRanges.EndUpdate();
 }
 
-void MemorySearchViewModel::DefinePredefinedFilterRange(gsl::index nIndex, int nId, const std::wstring& sLabel, ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, bool bIncludeRangeInLabel)
+void MemorySearchViewModel::DefinePredefinedFilterRange(gsl::index nIndex, int nId, const std::wstring& sLabel, ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, bool bIncludeRangeInLabel)
 {
     auto* pItem = m_vPredefinedFilterRanges.GetItemAt(nIndex);
     if (pItem == nullptr)
@@ -391,7 +391,7 @@ void MemorySearchViewModel::OnPredefinedFilterRangeChanged(const IntModelPropert
 
 void MemorySearchViewModel::OnFilterRangeChanged()
 {
-    ra::ByteAddress nStart, nEnd;
+    ra::data::ByteAddress nStart, nEnd;
     if (!ra::data::models::MemoryRegionsModel::ParseFilterRange(GetFilterRange(), nStart, nEnd))
         return;
 
@@ -488,7 +488,7 @@ void MemorySearchViewModel::ClearResults()
 
 void MemorySearchViewModel::BeginNewSearch()
 {
-    ra::ByteAddress nStart, nEnd;
+    ra::data::ByteAddress nStart, nEnd;
     if (!ra::data::models::MemoryRegionsModel::ParseFilterRange(GetFilterRange(), nStart, nEnd))
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Invalid address range");
@@ -501,7 +501,7 @@ void MemorySearchViewModel::BeginNewSearch()
     DispatchMemoryRead([this, nStart, nEnd]() { BeginNewSearch(nStart, nEnd); });
 }
 
-void MemorySearchViewModel::BeginNewSearch(ra::ByteAddress nStart, ra::ByteAddress nEnd)
+void MemorySearchViewModel::BeginNewSearch(ra::data::ByteAddress nStart, ra::data::ByteAddress nEnd)
 {
     auto nSearchType = GetSearchType();
     bool bIsAligned = false;
@@ -878,12 +878,12 @@ void MemorySearchViewModel::UpdateResults()
             auto sAddress = ra::ByteAddressToString(pResult.nAddress);
             switch (pResult.nSize)
             {
-                case MemSize::Nibble_Lower:
+                case ra::data::Memory::Size::Nibble_Lower:
                     sAddress.push_back('L');
                     pRow->nAddress <<= 1;
                     break;
 
-                case MemSize::Nibble_Upper:
+                case ra::data::Memory::Size::Nibble_Upper:
                     sAddress.push_back('U');
                     pRow->nAddress = (pRow->nAddress << 1) | 1;
                     break;
@@ -952,13 +952,13 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
         vmResult.GetAddress(), vmResult.GetCurrentValue());
 
     const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult)->pResults;
-    ra::ByteAddress nAddress = vmResult.nAddress;
-    MemSize nSize = pCompareResults.GetSize();
+    ra::data::ByteAddress nAddress = vmResult.nAddress;
+    auto nSize = pCompareResults.GetSize();
 
-    if (nSize == MemSize::Nibble_Lower)
+    if (nSize == ra::data::Memory::Size::Nibble_Lower)
     {
         if (nAddress & 1)
-            nSize = MemSize::Nibble_Upper;
+            nSize = ra::data::Memory::Size::Nibble_Upper;
         nAddress >>= 1;
     }
 
@@ -972,7 +972,7 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
     return sTooltip;
 }
 
-void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote)
+void MemorySearchViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote)
 {
     for (auto& pRow : m_vResults)
     {
@@ -984,7 +984,7 @@ void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
     }
 }
 
-void MemorySearchViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
+void MemorySearchViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     for (auto& pRow : m_vResults)
     {
@@ -1125,14 +1125,14 @@ void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool b
     // ignore IsSelectedProperty events - we'll update the lists directly
     m_vResults.RemoveNotifyTarget(*this);
 
-    if (pCurrentResults.GetSize() == MemSize::Nibble_Lower)
+    if (pCurrentResults.GetSize() == ra::data::Memory::Size::Nibble_Lower)
     {
         for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
         {
             if (pCurrentResults.GetMatchingAddress(nIndex, pResult))
             {
                 auto nAddress = pResult.nAddress << 1;
-                if (pResult.nSize == MemSize::Nibble_Upper)
+                if (pResult.nSize == ra::data::Memory::Size::Nibble_Upper)
                     nAddress |= 1;
 
                 if (bValue)
@@ -1175,12 +1175,12 @@ void MemorySearchViewModel::ExcludeSelected()
     ra::services::SearchResult pItem {};
 
     const auto nSize = pCurrentResults.pResults.GetSize();
-    if (nSize == MemSize::Nibble_Lower)
+    if (nSize == ra::data::Memory::Size::Nibble_Lower)
     {
         for (const auto nAddress : m_vSelectedAddresses)
         {
             pItem.nAddress = nAddress >> 1;
-            pItem.nSize = (nAddress & 1) ? MemSize::Nibble_Upper : MemSize::Nibble_Lower;
+            pItem.nSize = (nAddress & 1) ? ra::data::Memory::Size::Nibble_Upper : ra::data::Memory::Size::Nibble_Lower;
             pResult->pResults.ExcludeResult(pItem);
         }
     }
@@ -1226,7 +1226,7 @@ void MemorySearchViewModel::BookmarkSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
-    const MemSize nSize = m_vSearchResults.back()->pResults.GetSize();
+    const auto nSize = m_vSearchResults.back()->pResults.GetSize();
     auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     if (!vmBookmarks.IsVisible())
         vmBookmarks.Show();
@@ -1238,9 +1238,9 @@ void MemorySearchViewModel::BookmarkSelected()
     {
         switch (nSize)
         {
-            case MemSize::Nibble_Lower:
-            case MemSize::Nibble_Upper:
-                vmBookmarks.AddBookmark(nAddress >> 1, (nAddress & 1) ? MemSize::Nibble_Upper : MemSize::Nibble_Lower);
+            case ra::data::Memory::Size::Nibble_Lower:
+            case ra::data::Memory::Size::Nibble_Upper:
+                vmBookmarks.AddBookmark(nAddress >> 1, (nAddress & 1) ? ra::data::Memory::Size::Nibble_Upper : ra::data::Memory::Size::Nibble_Lower);
                 break;
 
             default:
@@ -1322,14 +1322,14 @@ void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::fu
 
     sFile.WriteLine("Address,Value,PreviousValue,InitialValue");
 
-    if (pCompareResults.GetSize() == MemSize::Nibble_Lower)
+    if (pCompareResults.GetSize() == ra::data::Memory::Size::Nibble_Lower)
     {
         for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < pResults.MatchingAddressCount(); ++nIndex)
         {
             if (!pResults.GetMatchingAddress(nIndex, pResult))
                 continue;
 
-            const auto nSize = (pResult.nAddress & 1) ? MemSize::Nibble_Upper : MemSize::Nibble_Lower;
+            const auto nSize = (pResult.nAddress & 1) ? ra::data::Memory::Size::Nibble_Upper : ra::data::Memory::Size::Nibble_Lower;
             const auto nAddress = pResult.nAddress >> 1;
 
             sFile.WriteLine(ra::StringPrintf(L"%s%s,%s,%s,%s",
@@ -1435,7 +1435,7 @@ void MemorySearchViewModel::ImportResults()
                 pResult2->sSummary = pResult->sSummary;
 
                 pResult2->pResults.Initialize(pResult->pResults,
-                    [pResults = &pResult->pResults](ra::ByteAddress nAddress, uint8_t* pBuffer, size_t nCount) noexcept {
+                    [pResults = &pResult->pResults](ra::data::ByteAddress nAddress, uint8_t* pBuffer, size_t nCount) noexcept {
                         pResults->GetBytes(nAddress, pBuffer, nCount);
                     },
                     ComparisonType::Equals, GetValueType(), GetFilterValue());
@@ -1471,7 +1471,7 @@ void MemorySearchViewModel::LoadResults(ra::services::TextReader& pTextReader,
     pTemp.Initialize(0, 0, GetSearchType());
     pResult.nSize = pTemp.GetSize();
 
-    const bool bIsFloat = ra::data::MemSizeIsFloat(pResult.nSize);
+    const bool bIsFloat = ra::data::Memory::SizeIsFloat(pResult.nSize);
 
     std::string sLine;
     while (pTextReader.GetLine(sLine))
@@ -1492,7 +1492,7 @@ void MemorySearchViewModel::LoadResults(ra::services::TextReader& pTextReader,
             const auto fValue = std::strtof(sValue.c_str(), &pEnd);
             if (pEnd && *pEnd != '\0')
                 continue;
-            pResult.nValue = ra::data::FloatToU32(fValue, pResult.nSize);
+            pResult.nValue = ra::data::Memory::FloatToU32(fValue, pResult.nSize);
         }
         else
         {

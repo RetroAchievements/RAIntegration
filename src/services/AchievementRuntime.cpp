@@ -1553,7 +1553,7 @@ void AchievementRuntime::Idle() const
         rc_client_idle(pClient);
 }
 
-void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress)
+void AchievementRuntime::InvalidateAddress(ra::data::ByteAddress nAddress)
 {
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
@@ -2708,9 +2708,9 @@ extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBy
         case 1:
             return pEmulatorContext.ReadMemoryByte(nAddress);
         case 2:
-            return pEmulatorContext.ReadMemory(nAddress, MemSize::SixteenBit);
+            return pEmulatorContext.ReadMemory(nAddress, ra::data::Memory::Size::SixteenBit);
         case 4:
-            return pEmulatorContext.ReadMemory(nAddress, MemSize::ThirtyTwoBit);
+            return pEmulatorContext.ReadMemory(nAddress, ra::data::Memory::Size::ThirtyTwoBit);
         default:
             return 0U;
     }

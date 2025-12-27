@@ -210,32 +210,32 @@ public:
     /// <summary>
     /// Determines if the specified address is valid.
     /// </summary>
-    bool IsValidAddress(ra::ByteAddress nAddress) const noexcept;
+    bool IsValidAddress(ra::data::ByteAddress nAddress) const noexcept;
 
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    uint32_t ReadMemory(ra::ByteAddress nAddress, MemSize nSize) const;
+    uint32_t ReadMemory(ra::data::ByteAddress nAddress, Memory::Size nSize) const;
 
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const;
+    uint8_t ReadMemoryByte(ra::data::ByteAddress nAddress) const;
 
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    uint32_t ReadMemory(ra::ByteAddress nAddress, _Out_writes_(nCount) uint8_t pBuffer[], size_t nCount) const;
+    uint32_t ReadMemory(ra::data::ByteAddress nAddress, _Out_writes_(nCount) uint8_t pBuffer[], size_t nCount) const;
 
     /// <summary>
     /// Writes memory to the emulator.
     /// </summary>
-    void WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const;
+    void WriteMemoryByte(ra::data::ByteAddress nAddress, uint8_t nValue) const;
 
     /// <summary>
     /// Writes memory to the emulator.
     /// </summary>
-    void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const;
+    void WriteMemory(ra::data::ByteAddress nAddress, Memory::Size nSize, uint32_t nValue) const;
 
     class DispatchesReadMemory
     {
@@ -246,12 +246,12 @@ public:
     /// <summary>
     /// Captures the current state of memory
     /// </summary>
-    void CaptureMemory(std::vector<ra::data::search::MemBlock>& vMemBlocks, ra::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const;
+    void CaptureMemory(std::vector<ra::data::search::MemBlock>& vMemBlocks, ra::data::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const;
 
     /// <summary>
     /// Converts an address to a displayable string.
     /// </summary>
-    std::string FormatAddress(ra::ByteAddress nAddress) const { return m_fFormatAddress(nAddress); }
+    std::string FormatAddress(ra::data::ByteAddress nAddress) const { return m_fFormatAddress(nAddress); }
 
     /// <summary>
     /// Gets whether or not memory has been modified.
@@ -284,7 +284,7 @@ public:
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
         virtual void OnTotalMemorySizeChanged() noexcept(false) {}
-        virtual void OnByteWritten(ra::ByteAddress, uint8_t) noexcept(false) {}
+        virtual void OnByteWritten(ra::data::ByteAddress, uint8_t) noexcept(false) {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Add(pTarget); }
@@ -293,7 +293,7 @@ public:
 private:
     mutable ra::data::NotifyTargetSet<NotifyTarget> m_vNotifyTargets;
 
-    void WriteMemory(ra::ByteAddress nAddress, const uint8_t* pBytes, size_t nByteCount) const;
+    void WriteMemory(ra::data::ByteAddress nAddress, const uint8_t* pBytes, size_t nByteCount) const;
 
 protected:
     void UpdateUserAgent();
@@ -317,7 +317,7 @@ protected:
     std::function<void(char*)> m_fGetGameTitle;
     std::function<void()> m_fRebuildMenu;
 
-    std::function<std::string(ra::ByteAddress)> m_fFormatAddress;
+    std::function<std::string(ra::data::ByteAddress)> m_fFormatAddress;
 
     struct MemoryBlock
     {
@@ -326,7 +326,7 @@ protected:
         MemoryWriteFunction* write;
         MemoryReadBlockFunction* readBlock;
     };
-    static uint32_t ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount, const MemoryBlock& pBlock);
+    static uint32_t ReadMemory(ra::data::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount, const MemoryBlock& pBlock);
 
     std::vector<MemoryBlock> m_vMemoryBlocks;
     size_t m_nTotalMemorySize = 0U;

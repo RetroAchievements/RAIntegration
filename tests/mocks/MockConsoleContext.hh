@@ -31,14 +31,14 @@ public:
 
     void ResetMemoryRegions() noexcept { m_vRegions.clear(); }
 
-    void AddMemoryRegion(ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, 
+    void AddMemoryRegion(ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, 
         AddressType nAddressType, const std::string& sDescription = "")
     { 
         AddMemoryRegion(nStartAddress, nEndAddress, nAddressType, nStartAddress, sDescription);
     }
 
-    void AddMemoryRegion(ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, 
-        AddressType nAddressType, ra::ByteAddress nRealAddress, const std::string& sDescription = "")
+    void AddMemoryRegion(ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, 
+        AddressType nAddressType, ra::data::ByteAddress nRealAddress, const std::string& sDescription = "")
     { 
         auto& pRegion = m_vRegions.emplace_back();
         pRegion.StartAddress = nStartAddress;

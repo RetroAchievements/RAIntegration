@@ -31,7 +31,7 @@ private:
             Assert::AreEqual(sExpected, sSerialized);
         }
 
-        void AssertRegion(ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, const std::wstring& sLabel)
+        void AssertRegion(ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, const std::wstring& sLabel)
         {
             for (const auto& pRegion : CustomRegions())
             {
@@ -115,7 +115,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0 }, nStartAddress);
         Assert::AreEqual({ 0xFFFF }, nEndAddress); // total memory size - 1
@@ -126,7 +126,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"0xbeef-0xfeed", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0xBEEF }, nStartAddress);
         Assert::AreEqual({ 0xFEED }, nEndAddress);
@@ -137,7 +137,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"$beef-$feed", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0xBEEF }, nStartAddress);
         Assert::AreEqual({ 0xFEED }, nEndAddress);
@@ -148,7 +148,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"1234-face", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0x1234 }, nStartAddress);
         Assert::AreEqual({ 0xFACE }, nEndAddress);
@@ -159,7 +159,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"0xbeef - 0xfeed", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0xBEEF }, nStartAddress);
         Assert::AreEqual({ 0xFEED }, nEndAddress);
@@ -170,7 +170,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"8765", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0x8765 }, nStartAddress);
         Assert::AreEqual({ 0x8765 }, nEndAddress);
@@ -181,7 +181,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsFalse(MemoryRegionsModel::ParseFilterRange(L"-8765", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0 }, nStartAddress);
         Assert::AreEqual({ 0 }, nEndAddress);
@@ -192,7 +192,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsFalse(MemoryRegionsModel::ParseFilterRange(L"8765-", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0x8765 }, nStartAddress);
         Assert::AreEqual({ 0 }, nEndAddress);
@@ -203,7 +203,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsFalse(MemoryRegionsModel::ParseFilterRange(L"banana", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0xBA }, nStartAddress);
         Assert::AreEqual({ 0 }, nEndAddress);
@@ -214,7 +214,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"0xF000-0x10000", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0xF000 }, nStartAddress);
         Assert::AreEqual({ 0xFFFF }, nEndAddress);
@@ -225,7 +225,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsFalse(MemoryRegionsModel::ParseFilterRange(L"0x10000-0x1FFFF", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0x10000 }, nStartAddress);
         Assert::AreEqual({ 0x1FFFF }, nEndAddress);
@@ -236,7 +236,7 @@ public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"0x9876-0x1234", nStartAddress, nEndAddress));
         Assert::AreEqual({ 0x1234 }, nStartAddress);
         Assert::AreEqual({ 0x9876 }, nEndAddress);

@@ -486,7 +486,7 @@ public:
         runtime.mockEmulatorContext.WriteMemoryByte(2, 7);
         Assert::AreEqual({7}, runtime.GetMemoryByte(2));
         Assert::AreEqual({7}, runtime.mockEmulatorContext.ReadMemoryByte(2));
-        Assert::AreEqual({0x0703}, runtime.mockEmulatorContext.ReadMemory(1, MemSize::SixteenBit));
+        Assert::AreEqual({0x0703}, runtime.mockEmulatorContext.ReadMemory(1, ra::data::Memory::Size::SixteenBit));
     }
 
     TEST_METHOD(TestPauseEvent)

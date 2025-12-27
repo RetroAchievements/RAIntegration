@@ -14,7 +14,7 @@ class BitCountSearchImpl : public SearchImpl
 {
 protected:
     // captured value (result.nValue) is actually the raw byte
-    MemSize GetMemSize() const noexcept override { return MemSize::BitCount; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::BitCount; }
 
     unsigned int BuildValue(const unsigned char* ptr) const noexcept override
     {
@@ -26,7 +26,7 @@ protected:
         _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const override
     {
         const unsigned int nPreviousValue = pResult.nValue;
-        pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, MemSize::EightBit);
+        pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, ra::data::Memory::Size::EightBit);
 
         if (sFormattedValue)
             *sFormattedValue = GetFormattedValue(pResults, pResult);

@@ -55,9 +55,9 @@ namespace search { class SearchImpl; }
 
 struct SearchResult
 {
-    ra::ByteAddress nAddress{};
+    ra::data::ByteAddress nAddress{};
     unsigned int nValue{};
-    MemSize nSize{};
+    ra::data::Memory::Size nSize{};
 };
 
 class SearchResults
@@ -69,7 +69,7 @@ public:
     /// <param name="nAddress">The address to start reading from.</param>
     /// <param name="nBytes">The number of bytes to read.</param>
     /// <param name="nType">Type of search to initialize.</param>
-    void Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchType nType);
+    void Initialize(ra::data::ByteAddress nAddress, size_t nBytes, SearchType nType);
 
     /// <summary>
     /// Initializes a result set by comparing current memory against another result set.
@@ -103,7 +103,7 @@ public:
     /// <param name="nFilterType">Type of filter to apply.</param>
     /// <param name="sFilterValue">Parameter for filter being applied.</param>
     /// <returns><c>true</c> if initialization was successful, <c>false</c> if the filter value was not supported</returns>
-    bool Initialize(_In_ const SearchResults& srFirst, _In_ std::function<void(ra::ByteAddress,uint8_t*,size_t)> pReadMemory,
+    bool Initialize(_In_ const SearchResults& srFirst, _In_ std::function<void(ra::data::ByteAddress,uint8_t*,size_t)> pReadMemory,
         _In_ ComparisonType nCompareType, _In_ SearchFilterType nFilterType, _In_ const std::wstring& sFilterValue);
 
     /// <summary>
@@ -136,7 +136,7 @@ public:
     /// <summary>
     /// Gets the raw bytes at the specified address.
     /// </summary>
-    bool GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept;
+    bool GetBytes(ra::data::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept;
 
     /// <summary>
     /// Gets a formatted value for the specified address.
@@ -144,7 +144,7 @@ public:
     /// <param name="nAddress">Address of the start of the value.</param>
     /// <param name="nSize">Size of the value.</param>
     /// <returns>Formatted value.</returns>
-    std::wstring GetFormattedValue(ra::ByteAddress nAddress, MemSize nSize) const;
+    std::wstring GetFormattedValue(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize) const;
 
     /// <summary>
     /// Updates the current value of the provided result.
@@ -172,7 +172,7 @@ public:
     /// <summary>
     /// Gets the size of the matching items.
     /// </summary>
-    MemSize GetSize() const noexcept;
+    ra::data::Memory::Size GetSize() const noexcept;
 
     /// <summary>
     /// Gets the type of filter that was applied to generate this search result.
@@ -200,7 +200,7 @@ public:
     /// <param name="nAddress">The n address.</param>
     /// <returns><c>true</c> if the specified address is in the matching address list; otherwise
     /// <c>false</c>.</returns>
-    bool ContainsAddress(ra::ByteAddress nAddress) const;
+    bool ContainsAddress(ra::data::ByteAddress nAddress) const;
 
     /// <summary>
     /// Removes an entry from the matching address list.

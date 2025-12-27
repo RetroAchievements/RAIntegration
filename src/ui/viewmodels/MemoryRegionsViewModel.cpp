@@ -37,7 +37,7 @@ void MemoryRegionsViewModel::OnViewModelStringValueChanged(gsl::index nIndex, co
         auto* pItem = m_vRegions.GetItemAt(nIndex);
         if (pItem)
         {
-            ra::ByteAddress nStartAddress = 0, nEndAddress = 0;
+            ra::data::ByteAddress nStartAddress = 0, nEndAddress = 0;
             if (!ra::data::models::MemoryRegionsModel::ParseFilterRange(args.tNewValue, nStartAddress, nEndAddress))
             {
                 pItem->SetInvalid(true);
@@ -221,7 +221,7 @@ void MemoryRegionsViewModel::SaveCustomRegions()
         if (!pRegion.IsCustom())
             continue;
 
-        ra::ByteAddress nStartAddress, nEndAddress;
+        ra::data::ByteAddress nStartAddress, nEndAddress;
         if (ra::data::models::MemoryRegionsModel::ParseFilterRange(pRegion.GetRange(), nStartAddress, nEndAddress))
             pMemoryRegions->AddCustomRegion(nStartAddress, nEndAddress, pRegion.GetLabel());
     }

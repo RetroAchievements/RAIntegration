@@ -11,7 +11,7 @@ namespace search {
 class MBF32SearchImpl : public FloatSearchImpl
 {
 public:
-    MemSize GetMemSize() const noexcept override { return MemSize::MBF32; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::MBF32; }
 
 protected:
     float BuildFloatValue(const uint8_t* ptr) const noexcept override
@@ -21,7 +21,7 @@ protected:
 
     uint32_t DeconstructFloatValue(float fValue) const noexcept override
     {
-        return ra::data::FloatToU32(fValue, MemSize::MBF32);
+        return ra::data::Memory::FloatToU32(fValue, ra::data::Memory::Size::MBF32);
     }
 };
 

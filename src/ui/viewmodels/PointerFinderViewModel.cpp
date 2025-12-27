@@ -90,7 +90,7 @@ void PointerFinderViewModel::StateViewModel::Capture()
 
     DispatchMemoryRead([this]() {
         const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        const auto nMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+        const auto nMemorySize = gsl::narrow<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
         m_pCapture.reset(new ra::services::SearchResults());
         m_pCapture->Initialize(0, nMemorySize, m_pOwner->GetSearchType());
@@ -150,7 +150,7 @@ void PointerFinderViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& 
     }
 }
 
-static std::wstring FormatValue(const ra::services::SearchResults& srResults, ra::ByteAddress nAddress)
+static std::wstring FormatValue(const ra::services::SearchResults& srResults, ra::data::ByteAddress nAddress)
 {
     auto sValue = srResults.GetFormattedValue(nAddress, srResults.GetSize());
     if (sValue.at(1) == 'x' && sValue.at(0) == '0')
@@ -191,7 +191,7 @@ void PointerFinderViewModel::Find()
 
             // compare the two memory states
             ra::services::SearchResults pResults;
-            auto pReadMemory = [srSecond = pStateJ.CapturedMemory()](ra::ByteAddress nAddress, uint8_t* pBuffer, size_t nBufferSize) noexcept {
+            auto pReadMemory = [srSecond = pStateJ.CapturedMemory()](ra::data::ByteAddress nAddress, uint8_t* pBuffer, size_t nBufferSize) noexcept {
                 srSecond->GetBytes(nAddress, pBuffer, nBufferSize);
             };
             if (nAddressI > nAddressJ)
@@ -288,13 +288,13 @@ void PointerFinderViewModel::BookmarkSelected()
     {
         if (pItem.IsSelected())
         {
-            MemSize nSize = MemSize::ThirtyTwoBit;
+            auto nSize = ra::data::Memory::Size::ThirtyTwoBit;
             switch (GetSearchType())
             {
                 case ra::services::SearchType::SixteenBit:
                 case ra::services::SearchType::SixteenBitAligned:
                 case ra::services::SearchType::SixteenBitBigEndian:
-                    nSize = MemSize::SixteenBit;
+                    nSize = ra::data::Memory::Size::SixteenBit;
                     break;
             }
 

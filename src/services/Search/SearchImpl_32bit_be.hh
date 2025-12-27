@@ -10,7 +10,7 @@ namespace search {
 
 class ThirtyTwoBitBigEndianSearchImpl : public ThirtyTwoBitSearchImpl
 {
-    MemSize GetMemSize() const noexcept override { return MemSize::ThirtyTwoBitBigEndian; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::ThirtyTwoBitBigEndian; }
 
     unsigned int BuildValue(const uint8_t* ptr) const noexcept override
     {
@@ -23,7 +23,7 @@ class ThirtyTwoBitBigEndianSearchImpl : public ThirtyTwoBitSearchImpl
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         SearchImpl::ApplyConstantFilter(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nConstantValue, vMatches);
@@ -31,7 +31,7 @@ protected:
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         SearchImpl::ApplyCompareFilter(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);

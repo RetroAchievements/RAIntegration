@@ -64,12 +64,12 @@ public:
         /// <summary>
         /// Gets the start address of the predefined filter range.
         /// </summary>
-        const ra::ByteAddress GetStartAddress() const { return gsl::narrow_cast<ra::ByteAddress>(GetValue(StartAddressProperty)); }
+        const ra::data::ByteAddress GetStartAddress() const { return gsl::narrow_cast<ra::data::ByteAddress>(GetValue(StartAddressProperty)); }
 
         /// <summary>
         /// Sets the start address of the predefined filter range.
         /// </summary>
-        void SetStartAddress(ra::ByteAddress nValue) { SetValue(StartAddressProperty, gsl::narrow_cast<int>(nValue)); }
+        void SetStartAddress(ra::data::ByteAddress nValue) { SetValue(StartAddressProperty, gsl::narrow_cast<int>(nValue)); }
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the end address of the predefined filter range.
@@ -79,12 +79,12 @@ public:
         /// <summary>
         /// Gets the end address of the predefined filter range.
         /// </summary>
-        const ra::ByteAddress GetEndAddress() const { return gsl::narrow_cast<ra::ByteAddress>(GetValue(EndAddressProperty)); }
+        const ra::data::ByteAddress GetEndAddress() const { return gsl::narrow_cast<ra::data::ByteAddress>(GetValue(EndAddressProperty)); }
 
         /// <summary>
         /// Sets the end address of the predefined filter range.
         /// </summary>
-        void SetEndAddress(ra::ByteAddress nValue) { SetValue(EndAddressProperty, gsl::narrow_cast<int>(nValue)); }
+        void SetEndAddress(ra::data::ByteAddress nValue) { SetValue(EndAddressProperty, gsl::narrow_cast<int>(nValue)); }
     };
 
     /// <summary>
@@ -342,7 +342,7 @@ public:
         /// </summary>
         void SetDescriptionColor(Color value) { SetValue(DescriptionColorProperty, ra::to_signed(value.ARGB)); }
 
-        ra::ByteAddress nAddress = 0;
+        ra::data::ByteAddress nAddress = 0;
         unsigned nCurrentValue = 0;
         bool bMatchesFilter = false;
         bool bHasBookmark = false;
@@ -374,7 +374,7 @@ public:
     /// <summary>
     /// Gets the memory size of the items in <see cref="Results"/>.
     /// </summary>
-    MemSize ResultMemSize() const { return ra::itoe<MemSize>(GetValue(ResultMemSizeProperty)); }
+    ra::data::Memory::Size ResultMemSize() const { return ra::itoe<ra::data::Memory::Size>(GetValue(ResultMemSizeProperty)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the number of results found.
@@ -505,16 +505,16 @@ protected:
     // GameContext::NotifyTarget
     void OnBeforeActiveGameChanged() override;
     void OnActiveGameChanged() override;
-    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote) override;
-    void OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) override;
+    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote) override;
+    void OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
     void SaveResults(ra::services::TextWriter& sFile, std::function<bool(int)> pProgressCallback) const;
 
 private:
     void RebuildPredefinedFilterRanges();
-    void DefinePredefinedFilterRange(gsl::index nIndex, int nId, const std::wstring& sLabel, ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, bool bIncludeRangeInLabel);
+    void DefinePredefinedFilterRange(gsl::index nIndex, int nId, const std::wstring& sLabel, ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, bool bIncludeRangeInLabel);
 
-    void BeginNewSearch(ra::ByteAddress nStart, ra::ByteAddress nEnd);
+    void BeginNewSearch(ra::data::ByteAddress nStart, ra::data::ByteAddress nEnd);
     void ApplyContinuousFilter();
     void UpdateResults();
     void DoApplyFilter();

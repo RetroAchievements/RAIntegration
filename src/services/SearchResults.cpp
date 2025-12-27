@@ -142,7 +142,7 @@ static size_t CalcSize(const std::vector<data::search::MemBlock>& vBlocks)
 }
 #endif
 
-void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchType nType)
+void SearchResults::Initialize(ra::data::ByteAddress nAddress, size_t nBytes, SearchType nType)
 {
     m_nType = nType;
     m_pImpl = GetSearchImpl(nType);
@@ -179,7 +179,7 @@ void SearchResults::Initialize(const std::vector<SearchResult>& vResults, Search
     m_pImpl = GetSearchImpl(nType);
 
     const auto bAligned = m_pImpl->ConvertToRealAddress(m_pImpl->ConvertFromRealAddress(7)) != 7;
-    const auto nSize = ra::data::MemSizeBytes(m_pImpl->GetMemSize());
+    const auto nSize = ra::data::Memory::SizeBytes(m_pImpl->GetMemSize());
     bool bNeedsReversed = false;
     switch (nType)
     {
@@ -203,7 +203,7 @@ void SearchResults::Initialize(const std::vector<SearchResult>& vResults, Search
     std::vector<unsigned char> vMemory;
     vMemory.resize(nMemorySize);
 
-    std::vector<ra::ByteAddress> vAddresses;
+    std::vector<ra::data::ByteAddress> vAddresses;
     vAddresses.reserve(vResults.size());
 
     for (const auto& pResult : vResults)
@@ -253,7 +253,7 @@ void SearchResults::Initialize(const std::vector<SearchResult>& vResults, Search
     RA_LOG_INFO("Allocated %zu bytes for initial search", CalcSize(m_vBlocks));
 }
 
-bool SearchResults::ContainsAddress(ra::ByteAddress nAddress) const
+bool SearchResults::ContainsAddress(ra::data::ByteAddress nAddress) const
 {
     if (m_pImpl)
         return m_pImpl->ContainsAddress(*this, nAddress);
@@ -277,7 +277,7 @@ void SearchResults::MergeSearchResults(const SearchResults& srMemory, const Sear
         // srAddresses collection.
         auto& pNewBlock = m_vBlocks.emplace_back(pSrcBlock);
         unsigned int nSize = pNewBlock.GetBytesSize();
-        ra::ByteAddress nAddress = m_pImpl->ConvertToRealAddress(pNewBlock.GetFirstAddress());
+        ra::data::ByteAddress nAddress = m_pImpl->ConvertToRealAddress(pNewBlock.GetFirstAddress());
         unsigned char* pWrite = pNewBlock.GetBytes();
 
         for (const auto& pMemBlock : srMemory.m_vBlocks)
@@ -305,7 +305,7 @@ void SearchResults::MergeSearchResults(const SearchResults& srMemory, const Sear
 }
 
 _Use_decl_annotations_
-bool SearchResults::Initialize(const SearchResults& srFirst, std::function<void(ra::ByteAddress,uint8_t*,size_t)> pReadMemory,
+bool SearchResults::Initialize(const SearchResults& srFirst, std::function<void(ra::data::ByteAddress,uint8_t*,size_t)> pReadMemory,
     ComparisonType nCompareType, SearchFilterType nFilterType, const std::wstring& sFilterValue)
 {
     m_nType = srFirst.m_nType;
@@ -329,7 +329,7 @@ bool SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     SearchFilterType nFilterType, const std::wstring& sFilterValue)
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    auto pReadMemory = [&pEmulatorContext](ra::ByteAddress nAddress, uint8_t* pBuffer, size_t nBufferSize) {
+    auto pReadMemory = [&pEmulatorContext](ra::data::ByteAddress nAddress, uint8_t* pBuffer, size_t nBufferSize) {
         pEmulatorContext.ReadMemory(nAddress, pBuffer, nBufferSize);
     };
 
@@ -390,7 +390,7 @@ bool SearchResults::GetMatchingAddress(const SearchResult& pSrcResult, _Out_ Sea
     return m_pImpl->GetValueAtVirtualAddress(*this, result);
 }
 
-bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept
+bool SearchResults::GetBytes(ra::data::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept
 {
     if (m_pImpl != nullptr)
     {
@@ -421,7 +421,7 @@ bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, s
     return false;
 }
 
-std::wstring SearchResults::GetFormattedValue(ra::ByteAddress nAddress, MemSize nSize) const
+std::wstring SearchResults::GetFormattedValue(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize) const
 {
     return m_pImpl ? m_pImpl->GetFormattedValue(*this, nAddress, nSize) : L"";
 }
@@ -446,9 +446,9 @@ bool SearchResults::MatchesFilter(const SearchResults& pPreviousResults, SearchR
     return true;
 }
 
-MemSize SearchResults::GetSize() const noexcept
+ra::data::Memory::Size SearchResults::GetSize() const noexcept
 {
-    return m_pImpl ? m_pImpl->GetMemSize() : MemSize::EightBit;
+    return m_pImpl ? m_pImpl->GetMemSize() : ra::data::Memory::Size::EightBit;
 }
 
 SearchType GetAlignedSearchType(SearchType searchType) noexcept

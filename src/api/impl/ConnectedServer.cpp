@@ -610,7 +610,7 @@ void ConnectedServer::ProcessCodeNotes(FetchCodeNotes::Response& response, const
 #pragma warning(pop)
 
 static void SetCodeNote(ApiResponseBase& response, const char* sApiName,
-    unsigned nGameId, ra::ByteAddress nAddress, const char* sNote)
+    unsigned nGameId, ra::data::ByteAddress nAddress, const char* sNote)
 {
     rc_api_update_code_note_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));

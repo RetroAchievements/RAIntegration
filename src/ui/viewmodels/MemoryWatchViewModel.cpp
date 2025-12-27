@@ -34,8 +34,8 @@ const StringModelProperty MemoryWatchViewModel::DescriptionProperty("MemoryWatch
 const BoolModelProperty MemoryWatchViewModel::IsCustomDescriptionProperty("MemoryWatchViewModel", "IsCustomDescription", false);
 const StringModelProperty MemoryWatchViewModel::RealNoteProperty("MemoryWatchViewModel", "Description", L"");
 const IntModelProperty MemoryWatchViewModel::AddressProperty("MemoryWatchViewModel", "Address", 0);
-const IntModelProperty MemoryWatchViewModel::SizeProperty("MemoryWatchViewModel", "Size", ra::etoi(MemSize::EightBit));
-const IntModelProperty MemoryWatchViewModel::FormatProperty("MemoryWatchViewModel", "Format", ra::etoi(MemFormat::Hex));
+const IntModelProperty MemoryWatchViewModel::SizeProperty("MemoryWatchViewModel", "Size", ra::etoi(ra::data::Memory::Size::EightBit));
+const IntModelProperty MemoryWatchViewModel::FormatProperty("MemoryWatchViewModel", "Format", ra::etoi(ra::data::Memory::Format::Hex));
 const StringModelProperty MemoryWatchViewModel::CurrentValueProperty("MemoryWatchViewModel", "CurrentValue", L"0");
 const StringModelProperty MemoryWatchViewModel::PreviousValueProperty("MemoryWatchViewModel", "PreviousValue", L"0");
 const IntModelProperty MemoryWatchViewModel::ChangesProperty("MemoryWatchViewModel", "Changes", 0);
@@ -43,7 +43,7 @@ const IntModelProperty MemoryWatchViewModel::RowColorProperty("MemoryWatchViewMo
 const BoolModelProperty MemoryWatchViewModel::ReadOnlyProperty("MemoryWatchViewModel", "IsReadOnly", false);
 const BoolModelProperty MemoryWatchViewModel::IsWritingMemoryProperty("MemoryWatchViewModel", "IsWritingMemory", false);
 
-void MemoryWatchViewModel::SetAddressWithoutUpdatingValue(ra::ByteAddress nNewAddress)
+void MemoryWatchViewModel::SetAddressWithoutUpdatingValue(ra::data::ByteAddress nNewAddress)
 {
     // set m_bInitialized to false while updating the address to prevent synchronizing the value
     const bool bInitialized = m_bInitialized;
@@ -151,11 +151,11 @@ static rc_condition_t* FindMeasuredCondition(rc_value_t* pValue) noexcept
 
 void MemoryWatchViewModel::OnSizeChanged(const IntModelProperty::ChangeArgs& args)
 {
-    m_nSize = ra::itoe<MemSize>(args.tNewValue);
+    m_nSize = ra::itoe<ra::data::Memory::Size>(args.tNewValue);
     switch (m_nSize)
     {
-        case MemSize::BitCount:
-        case MemSize::Text:
+        case ra::data::Memory::Size::BitCount:
+        case ra::data::Memory::Size::Text:
             SetReadOnly(true);
             break;
 
@@ -174,7 +174,7 @@ void MemoryWatchViewModel::OnSizeChanged(const IntModelProperty::ChangeArgs& arg
             std::string sOldSerialized;
             ra::services::AchievementLogicSerializer::AppendConditionType(sOldSerialized, TriggerConditionType::Measured);
             ra::services::AchievementLogicSerializer::AppendOperand(
-                sOldSerialized, ra::services::TriggerOperandType::Address, ra::itoe<MemSize>(args.tOldValue), 0U);
+                sOldSerialized, ra::services::TriggerOperandType::Address, ra::itoe<ra::data::Memory::Size>(args.tOldValue), 0U);
             auto nZeroIndex = sOldSerialized.find("00");
             if (nZeroIndex != std::string::npos)
             {
@@ -234,21 +234,21 @@ uint32_t MemoryWatchViewModel::ReadValue()
         if (IsIndirectAddress())
             UpdateCurrentAddressFromIndirectAddress();
 
-        if (m_nSize != MemSize::Text)
+        if (m_nSize != ra::data::Memory::Size::Text)
         {
             // if value is a float, convert it back to the raw bytes appropriate for the size
-            if (ra::data::MemSizeIsFloat(m_nSize))
-                return ra::data::FloatToU32(value.value.f32, m_nSize);
+            if (ra::data::Memory::SizeIsFloat(m_nSize))
+                return ra::data::Memory::FloatToU32(value.value.f32, m_nSize);
 
             return value.value.u32;
         }
 
-        // MemSize::Text requires special processing. now that m_nAddress has been
+        // Memory::Size::Text requires special processing. now that m_nAddress has been
         // updated, proceeed to logic below to do the special processing.
     }
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (m_nSize == MemSize::Text)
+    if (m_nSize == ra::data::Memory::Size::Text)
     {
         // only have 32 bits to store the value in. generate a hash for the string
         std::array<uint8_t, MaxTextBookmarkLength + 1> pBuffer;
@@ -287,19 +287,19 @@ bool MemoryWatchViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std
     const auto nAddress = m_nAddress;
     unsigned nValue = 0;
 
-    if (ra::data::MemSizeIsFloat(m_nSize))
+    if (ra::data::Memory::SizeIsFloat(m_nSize))
     {
         float fValue;
         if (!ra::ParseFloat(sValue, fValue, sError))
             return false;
 
-        nValue = ra::data::FloatToU32(fValue, m_nSize);
+        nValue = ra::data::Memory::FloatToU32(fValue, m_nSize);
     }
     else
     {
-        const auto nMaximumValue = ra::data::MemSizeMax(m_nSize);
+        const auto nMaximumValue = ra::data::Memory::SizeMax(m_nSize);
 
-        if (GetFormat() == MemFormat::Dec)
+        if (GetFormat() == ra::data::Memory::Format::Dec)
         {
             if (!ra::ParseUnsignedInt(sValue, nMaximumValue, nValue, sError))
                 return false;
@@ -379,14 +379,14 @@ void MemoryWatchViewModel::OnValueChanged()
 
 std::wstring MemoryWatchViewModel::BuildCurrentValue() const
 {
-    if (m_nSize == MemSize::Text)
+    if (m_nSize == ra::data::Memory::Size::Text)
     {
         ra::services::SearchResults pResults;
         pResults.Initialize(m_nAddress, MaxTextBookmarkLength, ra::services::SearchType::AsciiText);
-        return pResults.GetFormattedValue(m_nAddress, MemSize::Text);
+        return pResults.GetFormattedValue(m_nAddress, ra::data::Memory::Size::Text);
     }
 
-    return ra::data::MemSizeFormat(m_nValue, m_nSize, GetFormat());
+    return ra::data::Memory::FormatValue(m_nValue, m_nSize, GetFormat());
 }
 
 bool MemoryWatchViewModel::UpdateCurrentAddressFromIndirectAddress()
@@ -430,7 +430,7 @@ bool MemoryWatchViewModel::UpdateCurrentAddressFromIndirectAddress()
                     rc_evaluate_operand(&offset, &pModifiedMemref->modifier, nullptr);
                     rc_typed_value_add(&address, &offset);
                     rc_typed_value_convert(&address, RC_VALUE_TYPE_UNSIGNED);
-                    const auto nNewAddress = gsl::narrow_cast<ra::ByteAddress>(address.value.u32);
+                    const auto nNewAddress = gsl::narrow_cast<ra::data::ByteAddress>(address.value.u32);
 
                     if (m_nAddress != nNewAddress)
                     {
@@ -486,9 +486,9 @@ void MemoryWatchViewModel::SetIndirectAddress(const std::string& sSerialized)
 
     const auto* pCondition = FindMeasuredCondition(m_pValue);
     if (pCondition != nullptr)
-        SetSize(ra::data::models::TriggerValidation::MapRcheevosMemSize(rc_condition_get_real_operand1(pCondition)->size));
+        SetSize(ra::data::Memory::SizeFromRcheevosSize(rc_condition_get_real_operand1(pCondition)->size));
 
-    SetFormat(ra::MemFormat::Unknown);
+    SetFormat(ra::data::Memory::Format::Unknown);
 
     DispatchMemoryRead([this]() {
         // value must be updated first to populate memrefs
@@ -546,11 +546,11 @@ void MemoryWatchViewModel::UpdateRealNote()
         SetRealNote(pNote->GetNote());
 
         // if bookmarking an 8-byte double, automatically adjust the bookmark for the significant bytes
-        if (GetSize() == MemSize::Double32 && pNote->GetBytes() == 8)
+        if (GetSize() == ra::data::Memory::Size::Double32 && pNote->GetBytes() == 8)
             SetAddress(pNote->GetAddress() + 4);
     }
 
-    if (GetFormat() == MemFormat::Unknown)
+    if (GetFormat() == ra::data::Memory::Format::Unknown)
     {
         if (pNote)
         {
@@ -560,7 +560,7 @@ void MemoryWatchViewModel::UpdateRealNote()
         {
             const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
             const auto bPreferDecimal = pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal);
-            SetFormat(bPreferDecimal ? MemFormat::Dec : MemFormat::Hex);
+            SetFormat(bPreferDecimal ? ra::data::Memory::Format::Dec : ra::data::Memory::Format::Hex);
         }
     }
 }

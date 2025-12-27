@@ -48,12 +48,12 @@ public:
     /// <summary>
     /// Gets the current address.
     /// </summary>
-    ra::ByteAddress GetCurrentAddress() const { return GetValue(CurrentAddressProperty); }
+    ra::data::ByteAddress GetCurrentAddress() const { return GetValue(CurrentAddressProperty); }
 
     /// <summary>
     /// Sets the current address.
     /// </summary>
-    void SetCurrentAddress(const ra::ByteAddress nValue) { SetValue(CurrentAddressProperty, nValue); }
+    void SetCurrentAddress(const ra::data::ByteAddress nValue) { SetValue(CurrentAddressProperty, nValue); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the current address as a string.
@@ -249,13 +249,13 @@ protected:
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
-    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
+    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
 private:
-    void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
+    void OnCurrentAddressChanged(ra::data::ByteAddress nNewAddress);
     void OnSelectedNodeChanged(int nNode);
     void OnSelectedFieldChanged(int nNode);
     void OnFieldSizeChanged(gsl::index nIndex);
@@ -265,7 +265,7 @@ private:
     const ra::data::models::CodeNoteModel* FindNestedCodeNoteModel(const ra::data::models::CodeNoteModel& pRootNote, int nNewNode);
     void GetPointerChain(gsl::index nIndex, std::stack<const PointerNodeViewModel*>& sChain) const;
     void SyncField(StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote);
-    void UpdatePointerVisibility(ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel* pNote);
+    void UpdatePointerVisibility(ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel* pNote);
     const ra::data::models::CodeNoteModel* UpdatePointerChain(int nNewNode);
     void UpdatePointerChainRowColor(StructFieldViewModel& pPointer);
     void UpdatePointerChainValues();

@@ -23,81 +23,6 @@ std::wstring ToString<std::chrono::milliseconds>(const std::chrono::milliseconds
     return std::to_wstring(t.count()) + L"ms";
 }
 
-#ifdef RA_V141_XP
-// this has to be defined when compiling against v141_xp, but not when compiling against v142.
-// since it's impractical to detect the selected platform toolset, use a compilation flag
-
-template<>
-std::wstring ToString<__int64>(const __int64& t)
-{
-    RETURN_WIDE_STRING(t);
-}
-#endif
-
-template<>
-std::wstring ToString<MemSize>(const MemSize& t)
-{
-    switch (t)
-    {
-        case MemSize::Bit_0:
-            return L"Bit_0";
-        case MemSize::Bit_1:
-            return L"Bit_1";
-        case MemSize::Bit_2:
-            return L"Bit_2";
-        case MemSize::Bit_3:
-            return L"Bit_3";
-        case MemSize::Bit_4:
-            return L"Bit_4";
-        case MemSize::Bit_5:
-            return L"Bit_5";
-        case MemSize::Bit_6:
-            return L"Bit_6";
-        case MemSize::Bit_7:
-            return L"Bit_7";
-        case MemSize::Nibble_Lower:
-            return L"Nibble_Lower";
-        case MemSize::Nibble_Upper:
-            return L"Nibble_Upper";
-        case MemSize::EightBit:
-            return L"EightBit";
-        case MemSize::SixteenBit:
-            return L"SixteenBit";
-        case MemSize::TwentyFourBit:
-            return L"TwentyFourBit";
-        case MemSize::ThirtyTwoBit:
-            return L"ThirtyTwoBit";
-        case MemSize::BitCount:
-            return L"BitCount";
-        case MemSize::SixteenBitBigEndian:
-            return L"SixteenBitBigEndian";
-        case MemSize::TwentyFourBitBigEndian:
-            return L"TwentyFourBitBigEndian";
-        case MemSize::ThirtyTwoBitBigEndian:
-            return L"ThirtyTwoBitBigEndian";
-        case MemSize::Float:
-            return L"Float";
-        case MemSize::FloatBigEndian:
-            return L"FloatBigEndian";
-        case MemSize::Double32:
-            return L"Double32";
-        case MemSize::Double32BigEndian:
-            return L"Double32BigEndian";
-        case MemSize::MBF32:
-            return L"MBF32";
-        case MemSize::MBF32LE:
-            return L"MBF32LE";
-        case MemSize::Text:
-            return L"Text";
-        case MemSize::Unknown:
-            return L"Unknown";
-        case MemSize::Array:
-            return L"Array";
-        default:
-            return std::to_wstring(ra::etoi(t));
-    }
-}
-
 template<>
 std::wstring ToString<ComparisonType>(const ComparisonType& t)
 {
@@ -115,20 +40,6 @@ std::wstring ToString<ComparisonType>(const ComparisonType& t)
             return L"GreaterThanOrEqual";
         case ComparisonType::NotEqualTo:
             return L"NotEqualTo";
-        default:
-            return std::to_wstring(ra::etoi(t));
-    }
-}
-
-template<>
-std::wstring ToString<ra::MemFormat>(const ra::MemFormat& t)
-{
-    switch (t)
-    {
-        case ra::MemFormat::Hex:
-            return L"Hex";
-        case ra::MemFormat::Dec:
-            return L"Dec";
         default:
             return std::to_wstring(ra::etoi(t));
     }

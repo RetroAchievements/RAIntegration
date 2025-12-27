@@ -2,7 +2,7 @@
 #define SEARCH_MEMBLOCK_H
 #pragma once
 
-#include "data\Types.hh"
+#include "data\Memory.hh"
 
 namespace ra {
 namespace data {
@@ -52,23 +52,23 @@ public:
         return IsBytesAllocated() ? &m_pAllocatedMemory->pBytes[0] : &m_vBytes[0];
     }
 
-    void SetFirstAddress(ra::ByteAddress nAddress) noexcept { m_nFirstAddress = nAddress; }
-    ra::ByteAddress GetFirstAddress() const noexcept { return m_nFirstAddress; }
+    void SetFirstAddress(ra::data::ByteAddress nAddress) noexcept { m_nFirstAddress = nAddress; }
+    ra::data::ByteAddress GetFirstAddress() const noexcept { return m_nFirstAddress; }
     uint32_t GetBytesSize() const noexcept { return m_nBytesSize & 0x00FFFFFF; }
     bool IsBytesAllocated() const noexcept { return GetBytesSize() > sizeof(m_vBytes); }
     void SetMaxAddresses(uint32_t nMaxAddresses) noexcept { m_nMaxAddresses = nMaxAddresses; }
     uint32_t GetMaxAddresses() const noexcept { return m_nMaxAddresses; }
 
-    bool ContainsAddress(ra::ByteAddress nAddress) const noexcept;
+    bool ContainsAddress(ra::data::ByteAddress nAddress) const noexcept;
 
-    void SetMatchingAddresses(std::vector<ra::ByteAddress>& vAddresses, gsl::index nFirstIndex, gsl::index nLastIndex);
+    void SetMatchingAddresses(std::vector<ra::data::ByteAddress>& vAddresses, gsl::index nFirstIndex, gsl::index nLastIndex);
     void CopyMatchingAddresses(const MemBlock& pSource);
-    void ExcludeMatchingAddress(ra::ByteAddress nAddress);
-    bool ContainsMatchingAddress(ra::ByteAddress nAddress) const;
+    void ExcludeMatchingAddress(ra::data::ByteAddress nAddress);
+    bool ContainsMatchingAddress(ra::data::ByteAddress nAddress) const;
 
     void SetMatchingAddressCount(uint32_t nCount) noexcept { m_nMatchingAddresses = nCount; }
     uint32_t GetMatchingAddressCount() const noexcept { return m_nMatchingAddresses; }
-    ra::ByteAddress GetMatchingAddress(gsl::index nIndex) const noexcept;
+    ra::data::ByteAddress GetMatchingAddress(gsl::index nIndex) const noexcept;
     bool AreAllAddressesMatching() const noexcept { return m_nMatchingAddresses == m_nMaxAddresses; }
 
     const uint8_t* GetMatchingAddressPointer() const noexcept
@@ -80,7 +80,7 @@ public:
         return (nAddressesSize > sizeof(m_vAddresses)) ? m_pAddresses : &m_vAddresses[0];
     }
 
-    bool HasMatchingAddress(const uint8_t* pMatchingAddresses, ra::ByteAddress nAddress) const noexcept
+    bool HasMatchingAddress(const uint8_t* pMatchingAddresses, ra::data::ByteAddress nAddress) const noexcept
     {
         if (!pMatchingAddresses)
             return true;
@@ -100,7 +100,7 @@ private:
     uint8_t* AllocateMatchingAddresses() noexcept;
     void SetRepeat(uint32_t nCount, uint32_t nValue) noexcept;
 
-    ra::ByteAddress m_nFirstAddress; // 4 bytes
+    ra::data::ByteAddress m_nFirstAddress; // 4 bytes
     uint32_t m_nBytesSize;           // 4 bytes
 
     union                            // 8 bytes

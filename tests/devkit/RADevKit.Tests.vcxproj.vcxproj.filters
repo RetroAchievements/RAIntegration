@@ -83,5 +83,8 @@
     <ClInclude Include="services\mocks\MockLogger.hh">
       <Filter>services\mocks</Filter>
     </ClInclude>
+    <ClInclude Include="testutil\MemoryAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

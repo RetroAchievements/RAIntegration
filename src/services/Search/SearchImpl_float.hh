@@ -13,11 +13,11 @@ namespace search {
 class FloatSearchImpl : public ThirtyTwoBitSearchImpl
 {
 public:
-    MemSize GetMemSize() const noexcept override { return MemSize::Float; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::Float; }
 
     std::wstring GetFormattedValue(const SearchResults&, const SearchResult& pResult) const override
     {
-        return ra::data::MemSizeFormat(pResult.nValue, pResult.nSize, MemFormat::Dec);
+        return ra::data::Memory::FormatValue(pResult.nValue, pResult.nSize, ra::data::Memory::Format::Dec);
     }
 
     bool ValidateFilterValue(SearchResults& srNew) const noexcept override
@@ -94,13 +94,13 @@ protected:
 
     virtual uint32_t DeconstructFloatValue(float fValue) const noexcept
     {
-        return ra::data::FloatToU32(fValue, MemSize::Float);
+        return ra::data::Memory::FloatToU32(fValue, ra::data::Memory::Size::Float);
     }
 
     GSL_SUPPRESS_TYPE1
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         if (nComparison == ComparisonType::Equals || nComparison == ComparisonType::NotEqualTo)
         {
@@ -122,7 +122,7 @@ protected:
             const float fValue1 = BuildFloatValue(pScan);
             if (CompareValues(fValue1, fConstantValue, nComparison))
             {
-                const ra::ByteAddress nAddress = nBlockAddress +
+                const ra::data::ByteAddress nAddress = nBlockAddress +
                     ConvertFromRealAddress(gsl::narrow_cast<uint32_t>(pScan - pBytes));
                 if (pPreviousBlock.HasMatchingAddress(pMatchingAddresses, nAddress))
                     vMatches.push_back(nAddress);
@@ -133,7 +133,7 @@ protected:
     GSL_SUPPRESS_TYPE1
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         if (nComparison == ComparisonType::Equals || nComparison == ComparisonType::NotEqualTo)
         {
@@ -157,7 +157,7 @@ protected:
             const float fValue2 = BuildFloatValue(pBlockBytes) + fAdjustment;
             if (CompareValues(fValue1, fValue2, nComparison))
             {
-                const ra::ByteAddress nAddress = nBlockAddress +
+                const ra::data::ByteAddress nAddress = nBlockAddress +
                     ConvertFromRealAddress(gsl::narrow_cast<uint32_t>(pScan - pBytes));
                 if (pPreviousBlock.HasMatchingAddress(pMatchingAddresses, nAddress))
                     vMatches.push_back(nAddress);

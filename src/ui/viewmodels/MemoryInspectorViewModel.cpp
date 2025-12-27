@@ -79,7 +79,7 @@ void MemoryInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs
     else if (args.Property == CurrentAddressProperty && !m_bSyncingAddress)
     {
         m_bSyncingAddress = true;
-        const auto nAddress = static_cast<ra::ByteAddress>(args.tNewValue);
+        const auto nAddress = static_cast<ra::data::ByteAddress>(args.tNewValue);
         SetValue(CurrentAddressTextProperty, ra::Widen(ra::ByteAddressToString(nAddress)));
         m_bSyncingAddress = false;
 
@@ -94,7 +94,7 @@ void MemoryInspectorViewModel::OnViewModelIntValueChanged(const IntModelProperty
     if (args.Property == MemoryViewerViewModel::AddressProperty)
         SetValue(CurrentAddressProperty, args.tNewValue);
     else if (args.Property == MemoryViewerViewModel::SizeProperty)
-        SetValue(CurrentBitsVisibleProperty, ra::itoe<MemSize>(args.tNewValue) == MemSize::EightBit);
+        SetValue(CurrentBitsVisibleProperty, ra::itoe<ra::data::Memory::Size>(args.tNewValue) == ra::data::Memory::Size::EightBit);
 }
 
 void MemoryInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
@@ -199,7 +199,7 @@ void MemoryInspectorViewModel::UpdateNoteButtons()
     }
 }
 
-void MemoryInspectorViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
+void MemoryInspectorViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     const auto nCurrentAddress = GetCurrentAddress();
     if (nNewAddress == nCurrentAddress)
@@ -208,7 +208,7 @@ void MemoryInspectorViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::
         OnCodeNoteChanged(nCurrentAddress, L"");
 }
 
-void MemoryInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
+void MemoryInspectorViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     if (nAddress == GetCurrentAddress())
     {
@@ -254,7 +254,7 @@ void MemoryInspectorViewModel::SetCurrentAddressNoteInternal(const std::wstring&
     m_bSyncingCodeNote = false;
 }
 
-void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddress)
+void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nNewAddress)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
@@ -309,8 +309,8 @@ std::string MemoryInspectorViewModel::GetCurrentAddressMemRefChain() const
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     const auto* pNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress) : nullptr;
-    auto nSize = pNote ? pNote->GetMemSize() : MemSize::Unknown;
-    if (nSize >= MemSize::Unknown)
+    auto nSize = pNote ? pNote->GetMemSize() : ra::data::Memory::Size::Unknown;
+    if (nSize >= ra::data::Memory::Size::Unknown)
         nSize = Viewer().GetSize();
 
     if (m_bNoteIsIndirect && pNote) // pNote being not null implies pCodeNotes is not null
@@ -417,7 +417,7 @@ void MemoryInspectorViewModel::OpenNotesList()
 bool MemoryInspectorViewModel::NextNote()
 {
     const auto nCurrentAddress = GetCurrentAddress();
-    ra::ByteAddress nNewAddress = nCurrentAddress;
+    ra::data::ByteAddress nNewAddress = nCurrentAddress;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes != nullptr)
@@ -439,7 +439,7 @@ bool MemoryInspectorViewModel::NextNote()
 bool MemoryInspectorViewModel::PreviousNote()
 {
     const auto nCurrentAddress = GetCurrentAddress();
-    ra::ByteAddress nNewAddress = nCurrentAddress;
+    ra::data::ByteAddress nNewAddress = nCurrentAddress;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes != nullptr)

@@ -73,12 +73,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="data\context\ConsoleContext.cpp" />
     <ClCompile Include="data\context\GameAssets.cpp" />
     <ClCompile Include="api\ApiCall.cpp" />
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
     <ClCompile Include="api\impl\DisconnectedServer.cpp" />
     <ClCompile Include="api\impl\OfflineServer.cpp" />
-    <ClCompile Include="data\context\ConsoleContext.cpp" />
     <ClCompile Include="data\context\EmulatorContext.cpp" />
     <ClCompile Include="data\context\GameContext.cpp" />
     <ClCompile Include="data\context\SessionTracker.cpp" />

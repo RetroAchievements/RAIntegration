@@ -170,7 +170,7 @@ public:
     TEST_METHOD(TestPauseOnChange)
     {
         FrameEventQueueHarness eventQueue;
-        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager; // for MemSize->string mapping
+        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager; // for Memory::Size->string mapping
         bool bPaused = false;
         eventQueue.mockEmulatorContext.SetPauseFunction([&bPaused]() { bPaused = true; });
 
@@ -237,7 +237,7 @@ public:
     TEST_METHOD(TestComplexDialog)
     {
         FrameEventQueueHarness eventQueue;
-        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager; // for MemSize->string mapping
+        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager; // for Memory::Size->string mapping
         int nPaused = 0;
         eventQueue.mockEmulatorContext.SetPauseFunction([&nPaused]() { ++nPaused; });
 

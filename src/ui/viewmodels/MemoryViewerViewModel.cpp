@@ -16,7 +16,7 @@ namespace viewmodels {
 const IntModelProperty MemoryViewerViewModel::AddressProperty("MemoryViewerViewModel", "Address", 0);
 const IntModelProperty MemoryViewerViewModel::FirstAddressProperty("MemoryViewerViewModel", "FirstAddress", 0);
 const IntModelProperty MemoryViewerViewModel::NumVisibleLinesProperty("MemoryViewerViewModel", "NumVisibleLines", 8);
-const IntModelProperty MemoryViewerViewModel::SizeProperty("MemoryViewerViewModel", "Size", ra::etoi(MemSize::EightBit));
+const IntModelProperty MemoryViewerViewModel::SizeProperty("MemoryViewerViewModel", "Size", ra::etoi(ra::data::Memory::Size::EightBit));
 const IntModelProperty MemoryViewerViewModel::PendingAddressProperty("MemoryViewerViewModel", "PendingAddress", 0);
 
 constexpr uint8_t STALE_COLOR = 0x80;
@@ -126,7 +126,7 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.AddNotifyTarget(*this);
 
-    m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    m_nTotalMemorySize = gsl::narrow<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);
@@ -134,10 +134,10 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
     m_pBookmarkMonitor.reset(new MemoryBookmarkMonitor(*this));
 }
 
-void MemoryViewerViewModel::InitializeFixedViewer(ra::ByteAddress nAddress)
+void MemoryViewerViewModel::InitializeFixedViewer(ra::data::ByteAddress nAddress)
 {
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    m_nTotalMemorySize = gsl::narrow<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
     m_bReadOnly = true;
     m_bAddressFixed = true;
@@ -159,9 +159,9 @@ MemoryViewerViewModel::~MemoryViewerViewModel()
     // empty function definition required to generate destroy for forward-declared MemoryBookmarkMonitor
 }
 
-static constexpr int NibblesForSize(MemSize nSize)
+static constexpr int NibblesForSize(ra::data::Memory::Size nSize)
 {
-    return ra::data::MemSizeBytes(nSize) * 2;
+    return ra::data::Memory::SizeBytes(nSize) * 2;
 }
 
 int MemoryViewerViewModel::NibblesPerWord() const
@@ -174,8 +174,8 @@ int MemoryViewerViewModel::GetSelectedNibbleOffset() const
     const auto nSize = GetSize();
     switch (nSize)
     {
-        case MemSize::SixteenBit:
-        case MemSize::ThirtyTwoBit:
+        case ra::data::Memory::Size::SixteenBit:
+        case ra::data::Memory::Size::ThirtyTwoBit:
             return (NibblesForSize(nSize) - m_nSelectedNibble - 1);
 
         default:
@@ -183,7 +183,7 @@ int MemoryViewerViewModel::GetSelectedNibbleOffset() const
     }
 }
 
-static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
+static MemoryViewerViewModel::TextColor GetColor(ra::data::ByteAddress nAddress,
     const ra::ui::viewmodels::MemoryBookmarksViewModel& pBookmarksViewModel,
     const ra::data::context::GameContext& pGameContext, bool bCheckNotes = true)
 {
@@ -236,7 +236,7 @@ void MemoryViewerViewModel::UpdateColors()
     if (pCodeNotes != nullptr)
     {
         const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
-        pCodeNotes->EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pNote) {
+        pCodeNotes->EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pNote) {
             auto nBytes = pNote.GetBytes();
             if (nAddress + nBytes <= nFirstAddress) // not to viewing window yet
                 return true;
@@ -308,7 +308,7 @@ void MemoryViewerViewModel::UpdateInvalidRegions()
     memset(&m_pInvalid[nVisibleBytes], 1, MaxLines * 16 - nVisibleBytes);
 }
 
-void MemoryViewerViewModel::UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength)
+void MemoryViewerViewModel::UpdateHighlight(ra::data::ByteAddress nAddress, int nNewLength, int nOldLength)
 {
     if (nNewLength == nOldLength)
         return;
@@ -365,7 +365,7 @@ void MemoryViewerViewModel::UpdateSelectedNibble(int nNewNibble)
     }
 }
 
-void MemoryViewerViewModel::SetAddress(ra::ByteAddress nValue)
+void MemoryViewerViewModel::SetAddress(ra::data::ByteAddress nValue)
 {
     if (m_bAddressFixed)
         return;
@@ -373,7 +373,7 @@ void MemoryViewerViewModel::SetAddress(ra::ByteAddress nValue)
     if (m_nTotalMemorySize > 0)
     {
         if (nValue >= m_nTotalMemorySize)
-            nValue = (nValue >= UNSIGNED_NEGATIVE_THRESHOLD) ? 0 : gsl::narrow_cast<ra::ByteAddress>(m_nTotalMemorySize) - 1;
+            nValue = (nValue >= UNSIGNED_NEGATIVE_THRESHOLD) ? 0 : gsl::narrow_cast<ra::data::ByteAddress>(m_nTotalMemorySize) - 1;
 
         SetValue(AddressProperty, gsl::narrow_cast<int>(nValue));
     }
@@ -383,7 +383,7 @@ void MemoryViewerViewModel::SetAddress(ra::ByteAddress nValue)
     }
 }
 
-void MemoryViewerViewModel::SetFirstAddress(ra::ByteAddress nValue)
+void MemoryViewerViewModel::SetFirstAddress(ra::data::ByteAddress nValue)
 {
     if (nValue >= UNSIGNED_NEGATIVE_THRESHOLD)
     {
@@ -438,8 +438,8 @@ void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
     }
     else if (args.Property == SizeProperty)
     {
-        const int nOldBytes = NibblesForSize(ra::itoe<MemSize>(args.tOldValue)) / 2;
-        const int nNewBytes = NibblesForSize(ra::itoe<MemSize>(args.tNewValue)) / 2;
+        const int nOldBytes = NibblesForSize(ra::itoe<ra::data::Memory::Size>(args.tOldValue)) / 2;
+        const int nNewBytes = NibblesForSize(ra::itoe<ra::data::Memory::Size>(args.tNewValue)) / 2;
         UpdateHighlight(GetAddress(), nNewBytes, nOldBytes);
         ResetSurface();
 
@@ -458,7 +458,7 @@ void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
     ViewModelBase::OnValueChanged(args);
 }
 
-void MemoryViewerViewModel::ReadMemory(ra::ByteAddress nFirstAddress, int nNumVisibleLines)
+void MemoryViewerViewModel::ReadMemory(ra::data::ByteAddress nFirstAddress, int nNumVisibleLines)
 {
     m_nQueuedReadAddress = nFirstAddress;
     DispatchMemoryRead([this, nFirstAddress, nNumVisibleLines]() {
@@ -683,7 +683,7 @@ void MemoryViewerViewModel::RetreatCursorPage()
     }
 }
 
-uint8_t MemoryViewerViewModel::GetValueAtAddress(ra::ByteAddress nAddress) const
+uint8_t MemoryViewerViewModel::GetValueAtAddress(ra::data::ByteAddress nAddress) const
 {
     const auto nFirstAddress = GetFirstAddress();
     if (nAddress < nFirstAddress)
@@ -707,7 +707,7 @@ void MemoryViewerViewModel::IncreaseCurrentValue(uint32_t nModifier)
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         auto nMem = pEmulatorContext.ReadMemory(nAddress, nSize);
 
-        auto const nMaxValue = ra::data::MemSizeMax(nSize);
+        auto const nMaxValue = ra::data::Memory::SizeMax(nSize);
         if (nMem >= nMaxValue)
             return;
 
@@ -750,7 +750,7 @@ void MemoryViewerViewModel::OnActiveGameChanged()
     UpdateColors();
 }
 
-void MemoryViewerViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
+void MemoryViewerViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     const auto nFirstAddress = GetFirstAddress();
     const auto nVisibleLines = GetNumVisibleLines();
@@ -769,7 +769,7 @@ void MemoryViewerViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::Byt
         OnCodeNoteChanged(nNewAddress, sNote);
 }
 
-void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote)
+void MemoryViewerViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote)
 {
     const auto nFirstAddress = GetFirstAddress();
     if (nAddress < nFirstAddress)
@@ -834,7 +834,7 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const bool bTotalMemorySizeWasZero = (m_nTotalMemorySize == 0);
-    m_nTotalMemorySize = gsl::narrow_cast<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    m_nTotalMemorySize = gsl::narrow_cast<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
     if (m_nTotalMemorySize == 0)
     {
@@ -847,7 +847,7 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
         if (bTotalMemorySizeWasZero)
         {
             // size changing from 0, see if a memory address was requested
-            const auto nPendingAddress = gsl::narrow_cast<ra::ByteAddress>(GetValue(PendingAddressProperty));
+            const auto nPendingAddress = gsl::narrow_cast<ra::data::ByteAddress>(GetValue(PendingAddressProperty));
             if (nPendingAddress > 0)
             {
                 SetValue(PendingAddressProperty, PendingAddressProperty.GetDefaultValue());
@@ -898,7 +898,7 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
     ResetSurface();
 }
 
-void MemoryViewerViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t nValue)
+void MemoryViewerViewModel::OnByteWritten(ra::data::ByteAddress nAddress, uint8_t nValue)
 {
     auto nFirstAddress = GetFirstAddress();
     if (nAddress < nFirstAddress)
@@ -917,7 +917,7 @@ void MemoryViewerViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t nVal
 #pragma warning(push)
 #pragma warning(disable : 5045)
 
-void MemoryViewerViewModel::UpdateColor(ra::ByteAddress nAddress)
+void MemoryViewerViewModel::UpdateColor(ra::data::ByteAddress nAddress)
 {
     auto nFirstAddress = GetFirstAddress();
     if (nAddress < nFirstAddress)
@@ -961,7 +961,7 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
     const auto nWordSpacing = nNibblesPerWord + 1;
     const auto nBytesPerWord = nNibblesPerWord / 2;
     const auto nFirstAddress = GetFirstAddress();
-    ra::ByteAddress nNewAddress = nFirstAddress + (nRow - 1) * 16;
+    ra::data::ByteAddress nNewAddress = nFirstAddress + (nRow - 1) * 16;
     int nNewNibble = 0;
 
     int nColumn = nX / s_szChar.Width;
@@ -1031,7 +1031,7 @@ void MemoryViewerViewModel::OnResized(int nWidth, int nHeight)
 
 void MemoryViewerViewModel::DetermineIfASCIIShouldBeVisible()
 {
-    const bool bShowASCII = m_bWideEnoughForASCII && GetSize() == MemSize::EightBit;
+    const bool bShowASCII = m_bWideEnoughForASCII && GetSize() == ra::data::Memory::Size::EightBit;
     if (bShowASCII != m_bShowASCII)
     {
         m_bShowASCII = bShowASCII;
@@ -1307,7 +1307,7 @@ void MemoryViewerViewModel::RenderMemory()
     if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
         nVisibleLines = (m_nTotalMemorySize - nFirstAddress + 15) / 16;
 
-    const bool bBigEndian = (GetSize() == MemSize::ThirtyTwoBitBigEndian);
+    const bool bBigEndian = (GetSize() == ra::data::Memory::Size::ThirtyTwoBitBigEndian);
     const int nWordSpacing = NibblesPerWord() + 1;
     const int nBytesPerWord = nWordSpacing / 2;
     const int nWordsPerLine = 16 / nBytesPerWord;

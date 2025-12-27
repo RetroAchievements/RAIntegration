@@ -20,12 +20,12 @@ public:
         return nBytes / 8;
     }
 
-    ra::ByteAddress ConvertFromRealAddress(ra::ByteAddress nAddress) const noexcept override
+    ra::data::ByteAddress ConvertFromRealAddress(ra::data::ByteAddress nAddress) const noexcept override
     {
         return nAddress / 8;
     }
 
-    ra::ByteAddress ConvertToRealAddress(ra::ByteAddress nAddress) const noexcept override
+    ra::data::ByteAddress ConvertToRealAddress(ra::data::ByteAddress nAddress) const noexcept override
     {
         return nAddress * 8;
     }
@@ -33,7 +33,7 @@ public:
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         if (nComparison == ComparisonType::Equals || nComparison == ComparisonType::NotEqualTo)
         {
@@ -50,7 +50,7 @@ protected:
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         if (nComparison == ComparisonType::Equals || nComparison == ComparisonType::NotEqualTo)
         {

@@ -7,6 +7,7 @@
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
@@ -46,7 +47,7 @@ private:
             InitializeNotifyTargets();
         }
 
-        void AddItem(ra::ByteAddress nAddress, MemSize nSize = MemSize::EightBit, MemFormat nFormat = MemFormat::Hex)
+        void AddItem(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize = ra::data::Memory::Size::EightBit, ra::data::Memory::Format nFormat = ra::data::Memory::Format::Hex)
         {
             auto& pItem = Items().Add();
             pItem.BeginInitialization();
@@ -57,7 +58,7 @@ private:
             pItem.EndInitialization();
         }
 
-        void AddItem(const std::string& sIndirectAddress, MemFormat nFormat = MemFormat::Hex)
+        void AddItem(const std::string& sIndirectAddress, ra::data::Memory::Format nFormat = ra::data::Memory::Format::Hex)
         {
             auto& pItem = Items().Add();
             pItem.BeginInitialization();
@@ -76,45 +77,45 @@ public:
         Assert::AreEqual({0U}, watchList.Items().Count());
 
         Assert::AreEqual({ 17U }, watchList.Sizes().Count());
-        Assert::AreEqual((int)MemSize::EightBit, watchList.Sizes().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::EightBit, watchList.Sizes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L" 8-bit"), watchList.Sizes().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)MemSize::SixteenBit, watchList.Sizes().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::SixteenBit, watchList.Sizes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"16-bit"), watchList.Sizes().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)MemSize::TwentyFourBit, watchList.Sizes().GetItemAt(2)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::TwentyFourBit, watchList.Sizes().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"24-bit"), watchList.Sizes().GetItemAt(2)->GetLabel());
-        Assert::AreEqual((int)MemSize::ThirtyTwoBit, watchList.Sizes().GetItemAt(3)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::ThirtyTwoBit, watchList.Sizes().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"32-bit"), watchList.Sizes().GetItemAt(3)->GetLabel());
-        Assert::AreEqual((int)MemSize::SixteenBitBigEndian, watchList.Sizes().GetItemAt(4)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::SixteenBitBigEndian, watchList.Sizes().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L"16-bit BE"), watchList.Sizes().GetItemAt(4)->GetLabel());
-        Assert::AreEqual((int)MemSize::TwentyFourBitBigEndian, watchList.Sizes().GetItemAt(5)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::TwentyFourBitBigEndian, watchList.Sizes().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"24-bit BE"), watchList.Sizes().GetItemAt(5)->GetLabel());
-        Assert::AreEqual((int)MemSize::ThirtyTwoBitBigEndian, watchList.Sizes().GetItemAt(6)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::ThirtyTwoBitBigEndian, watchList.Sizes().GetItemAt(6)->GetId());
         Assert::AreEqual(std::wstring(L"32-bit BE"), watchList.Sizes().GetItemAt(6)->GetLabel());
-        Assert::AreEqual((int)MemSize::BitCount, watchList.Sizes().GetItemAt(7)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::BitCount, watchList.Sizes().GetItemAt(7)->GetId());
         Assert::AreEqual(std::wstring(L"BitCount"), watchList.Sizes().GetItemAt(7)->GetLabel());
-        Assert::AreEqual((int)MemSize::Nibble_Lower, watchList.Sizes().GetItemAt(8)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Nibble_Lower, watchList.Sizes().GetItemAt(8)->GetId());
         Assert::AreEqual(std::wstring(L"Lower4"), watchList.Sizes().GetItemAt(8)->GetLabel());
-        Assert::AreEqual((int)MemSize::Nibble_Upper, watchList.Sizes().GetItemAt(9)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Nibble_Upper, watchList.Sizes().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"Upper4"), watchList.Sizes().GetItemAt(9)->GetLabel());
-        Assert::AreEqual((int)MemSize::Float, watchList.Sizes().GetItemAt(10)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Float, watchList.Sizes().GetItemAt(10)->GetId());
         Assert::AreEqual(std::wstring(L"Float"), watchList.Sizes().GetItemAt(10)->GetLabel());
-        Assert::AreEqual((int)MemSize::FloatBigEndian, watchList.Sizes().GetItemAt(11)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::FloatBigEndian, watchList.Sizes().GetItemAt(11)->GetId());
         Assert::AreEqual(std::wstring(L"Float BE"), watchList.Sizes().GetItemAt(11)->GetLabel());
-        Assert::AreEqual((int)MemSize::Double32, watchList.Sizes().GetItemAt(12)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Double32, watchList.Sizes().GetItemAt(12)->GetId());
         Assert::AreEqual(std::wstring(L"Double32"), watchList.Sizes().GetItemAt(12)->GetLabel());
-        Assert::AreEqual((int)MemSize::Double32BigEndian, watchList.Sizes().GetItemAt(13)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Double32BigEndian, watchList.Sizes().GetItemAt(13)->GetId());
         Assert::AreEqual(std::wstring(L"Double32 BE"), watchList.Sizes().GetItemAt(13)->GetLabel());
-        Assert::AreEqual((int)MemSize::MBF32, watchList.Sizes().GetItemAt(14)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::MBF32, watchList.Sizes().GetItemAt(14)->GetId());
         Assert::AreEqual(std::wstring(L"MBF32"), watchList.Sizes().GetItemAt(14)->GetLabel());
-        Assert::AreEqual((int)MemSize::MBF32LE, watchList.Sizes().GetItemAt(15)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::MBF32LE, watchList.Sizes().GetItemAt(15)->GetId());
         Assert::AreEqual(std::wstring(L"MBF32 LE"), watchList.Sizes().GetItemAt(15)->GetLabel());
-        Assert::AreEqual((int)MemSize::Text, watchList.Sizes().GetItemAt(16)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Text, watchList.Sizes().GetItemAt(16)->GetId());
         Assert::AreEqual(std::wstring(L"ASCII"), watchList.Sizes().GetItemAt(16)->GetLabel());
 
         Assert::AreEqual({ 2U }, watchList.Formats().Count());
-        Assert::AreEqual((int)MemFormat::Hex, watchList.Formats().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Format::Hex, watchList.Formats().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Hex"), watchList.Formats().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)MemFormat::Dec, watchList.Formats().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Format::Dec, watchList.Formats().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Dec"), watchList.Formats().GetItemAt(1)->GetLabel());
     }
     
@@ -131,8 +132,8 @@ public:
         Assert::AreEqual(std::wstring(L"Note description"), pItem->GetRealNote());
         Assert::AreEqual(std::wstring(L"Note description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pItem->GetSize());
+        Assert::AreEqual(ra::data::Memory::Format::Hex, pItem->GetFormat());
         Assert::IsFalse(pItem->IsCustomDescription());
 
         watchList.mockGameContext.SetCodeNote(1234U, L"New description");
@@ -143,8 +144,8 @@ public:
         Assert::AreEqual(std::wstring(L"New description"), pItem->GetRealNote());
         Assert::AreEqual(std::wstring(L"New description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pItem->GetSize());
+        Assert::AreEqual(ra::data::Memory::Format::Hex, pItem->GetFormat());
         Assert::IsFalse(pItem->IsCustomDescription());
     }
 
@@ -162,8 +163,8 @@ public:
         Assert::AreEqual(std::wstring(L"Note description"), pItem->GetRealNote());
         Assert::AreEqual(std::wstring(L"My Description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pItem->GetSize());
+        Assert::AreEqual(ra::data::Memory::Format::Hex, pItem->GetFormat());
         Assert::IsTrue(pItem->IsCustomDescription());
 
         watchList.mockGameContext.SetCodeNote(1234U, L"New description");
@@ -174,8 +175,8 @@ public:
         Assert::AreEqual(std::wstring(L"New description"), pItem->GetRealNote());
         Assert::AreEqual(std::wstring(L"My Description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pItem->GetSize());
+        Assert::AreEqual(ra::data::Memory::Format::Hex, pItem->GetFormat());
         Assert::IsTrue(pItem->IsCustomDescription());
 
         watchList.mockGameContext.SetCodeNote(1234U, L"My Description");
@@ -186,8 +187,8 @@ public:
         Assert::AreEqual(std::wstring(L"My Description"), pItem->GetRealNote());
         Assert::AreEqual(std::wstring(L"My Description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pItem->GetSize());
+        Assert::AreEqual(ra::data::Memory::Format::Hex, pItem->GetFormat());
         Assert::IsFalse(pItem->IsCustomDescription());
 
         watchList.mockGameContext.SetCodeNote(1234U, L"New description");
@@ -198,8 +199,8 @@ public:
         Assert::AreEqual(std::wstring(L"New description"), pItem->GetRealNote());
         Assert::AreEqual(std::wstring(L"New description"), pItem->GetDescription());
         Assert::AreEqual(1234U, pItem->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pItem->GetSize());
-        Assert::AreEqual(MemFormat::Hex, pItem->GetFormat());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pItem->GetSize());
+        Assert::AreEqual(ra::data::Memory::Format::Hex, pItem->GetFormat());
         Assert::IsFalse(pItem->IsCustomDescription());
     }
 
@@ -255,12 +256,12 @@ public:
         watchList.mockEmulatorContext.MockMemory(memory);
 
         watchList.mockGameContext.NotifyActiveGameChanged();
-        watchList.AddItem(1, MemSize::ThirtyTwoBit);
-        watchList.AddItem(2, MemSize::TwentyFourBit);
-        watchList.AddItem(3, MemSize::SixteenBit);
-        watchList.AddItem(4, MemSize::EightBit);
-        watchList.AddItem(4, MemSize::SixteenBit);
-        watchList.AddItem(5, MemSize::EightBit);
+        watchList.AddItem(1, ra::data::Memory::Size::ThirtyTwoBit);
+        watchList.AddItem(2, ra::data::Memory::Size::TwentyFourBit);
+        watchList.AddItem(3, ra::data::Memory::Size::SixteenBit);
+        watchList.AddItem(4, ra::data::Memory::Size::EightBit);
+        watchList.AddItem(4, ra::data::Memory::Size::SixteenBit);
+        watchList.AddItem(5, ra::data::Memory::Size::EightBit);
 
         auto& pItem1 = *watchList.Items().GetItemAt(0);
         Assert::AreEqual(std::wstring(L"04030201"), pItem1.GetCurrentValue());
@@ -323,7 +324,7 @@ public:
     TEST_METHOD(TestUpdateCurrentValueOnSizeChange)
     {
         MemoryWatchListViewModelHarness watchList;
-        watchList.AddItem(4U, MemSize::SixteenBit);
+        watchList.AddItem(4U, ra::data::Memory::Size::SixteenBit);
         auto& pItem1 = *watchList.Items().GetItemAt(0);
 
         std::array<uint8_t, 64> memory = {};
@@ -343,12 +344,12 @@ public:
         Assert::AreEqual(std::wstring(L"0504"), pItem1.GetPreviousValue());
         Assert::AreEqual(1U, pItem1.GetChanges());
 
-        pItem1.SetSize(MemSize::EightBit);
+        pItem1.SetSize(ra::data::Memory::Size::EightBit);
         Assert::AreEqual(std::wstring(L"04"), pItem1.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0504"), pItem1.GetPreviousValue());
         Assert::AreEqual(1U, pItem1.GetChanges());
 
-        pItem1.SetSize(MemSize::ThirtyTwoBit);
+        pItem1.SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         Assert::AreEqual(std::wstring(L"07061704"), pItem1.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0504"), pItem1.GetPreviousValue());
         Assert::AreEqual(1U, pItem1.GetChanges());
@@ -361,7 +362,7 @@ public:
         std::array<uint8_t, 64> memory = {};
         watchList.mockEmulatorContext.MockMemory(memory);
 
-        watchList.AddItem(1U, MemSize::EightBit);
+        watchList.AddItem(1U, ra::data::Memory::Size::EightBit);
 
         Assert::AreEqual({ 1U }, watchList.Items().Count());
         auto& pItem = *watchList.Items().GetItemAt(0);
@@ -369,13 +370,13 @@ public:
 
         for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(watchList.Sizes().Count()); ++nIndex)
         {
-            const auto nSize = ra::itoe<MemSize>(watchList.Sizes().GetItemAt(nIndex)->GetId());
+            const auto nSize = ra::itoe<ra::data::Memory::Size>(watchList.Sizes().GetItemAt(nIndex)->GetId());
             pItem.SetSize(nSize);
 
             switch (nSize)
             {
-                case MemSize::BitCount:
-                case MemSize::Text:
+                case ra::data::Memory::Size::BitCount:
+                case ra::data::Memory::Size::Text:
                     Assert::IsTrue(pItem.IsReadOnly());
                     break;
 
@@ -393,14 +394,14 @@ public:
         std::array<uint8_t, 64> memory = {};
         watchList.mockEmulatorContext.MockMemory(memory);
 
-        watchList.AddItem(1U, MemSize::Float);
+        watchList.AddItem(1U, ra::data::Memory::Size::Float);
 
         Assert::AreEqual({ 1U }, watchList.Items().Count());
         const auto& pItem = *watchList.Items().GetItemAt(0);
         Assert::AreEqual(std::wstring(L""), pItem.GetRealNote());
         Assert::AreEqual(1U, pItem.GetAddress());
-        Assert::AreEqual(MemSize::Float, pItem.GetSize());
-        Assert::AreEqual(MemFormat::Hex, pItem.GetFormat());
+        Assert::AreEqual(ra::data::Memory::Size::Float, pItem.GetSize());
+        Assert::AreEqual(ra::data::Memory::Format::Hex, pItem.GetFormat());
         Assert::AreEqual(std::wstring(L"0.0"), pItem.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0.0"), pItem.GetPreviousValue());
         Assert::AreEqual(0U, pItem.GetChanges());
@@ -428,15 +429,15 @@ public:
         std::array<uint8_t, 64> memory = {};
         watchList.mockEmulatorContext.MockMemory(memory);
 
-        watchList.AddItem(4U, MemSize::Double32);
+        watchList.AddItem(4U, ra::data::Memory::Size::Double32);
 
         // without a code note, assume the user is pIteming the 4 significant bytes
         Assert::AreEqual({1U}, watchList.Items().Count());
         const auto& pItem = *watchList.Items().GetItemAt(0);
         Assert::AreEqual(std::wstring(L""), pItem.GetRealNote());
         Assert::AreEqual(4U, pItem.GetAddress());
-        Assert::AreEqual(MemSize::Double32, pItem.GetSize());
-        Assert::AreEqual(MemFormat::Hex, pItem.GetFormat()); // default to user preference
+        Assert::AreEqual(ra::data::Memory::Size::Double32, pItem.GetSize());
+        Assert::AreEqual(ra::data::Memory::Format::Hex, pItem.GetFormat()); // default to user preference
         Assert::AreEqual(std::wstring(L"0.0"), pItem.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0.0"), pItem.GetPreviousValue());
         Assert::AreEqual(0U, pItem.GetChanges());
@@ -450,13 +451,13 @@ public:
         // with a code note, align the pItem to the 4 significant bytes
         watchList.mockGameContext.SetCodeNote(8U, L"[double] Note description");
 
-        watchList.AddItem(8U, MemSize::Double32);
+        watchList.AddItem(8U, ra::data::Memory::Size::Double32);
         Assert::AreEqual({2U}, watchList.Items().Count());
         const auto& pItem2 = *watchList.Items().GetItemAt(1);
         Assert::AreEqual(std::wstring(L"[double] Note description"), pItem2.GetRealNote());
         Assert::AreEqual(12U, pItem2.GetAddress()); // adjusted to significant bytes
-        Assert::AreEqual(MemSize::Double32, pItem2.GetSize());
-        Assert::AreEqual(MemFormat::Hex, pItem2.GetFormat());
+        Assert::AreEqual(ra::data::Memory::Size::Double32, pItem2.GetSize());
+        Assert::AreEqual(ra::data::Memory::Format::Hex, pItem2.GetFormat());
         Assert::AreEqual(std::wstring(L"0.0"), pItem2.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0.0"), pItem2.GetPreviousValue());
         Assert::AreEqual(0U, pItem2.GetChanges());
@@ -468,13 +469,13 @@ public:
         Assert::AreEqual(1U, pItem2.GetChanges());
 
         // does not exactly match code note address, assume the user is pIteming the most significant bytes
-        watchList.AddItem(12U, MemSize::Double32);
+        watchList.AddItem(12U, ra::data::Memory::Size::Double32);
         Assert::AreEqual({3U}, watchList.Items().Count());
         const auto& pItem3 = *watchList.Items().GetItemAt(2);
         Assert::AreEqual(std::wstring(L""), pItem3.GetRealNote());
         Assert::AreEqual(12U, pItem3.GetAddress()); // adjusted to significant bytes
-        Assert::AreEqual(MemSize::Double32, pItem3.GetSize());
-        Assert::AreEqual(MemFormat::Hex, pItem3.GetFormat()); // default to preference
+        Assert::AreEqual(ra::data::Memory::Size::Double32, pItem3.GetSize());
+        Assert::AreEqual(ra::data::Memory::Format::Hex, pItem3.GetFormat()); // default to preference
         Assert::AreEqual(std::wstring(L"-2.0"), pItem3.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0.0"), pItem3.GetPreviousValue());
         Assert::AreEqual(0U, pItem3.GetChanges());
@@ -487,13 +488,13 @@ public:
         std::array<uint8_t, 64> memory = {};
         watchList.mockEmulatorContext.MockMemory(memory);
 
-        watchList.AddItem(1U, MemSize::Text);
+        watchList.AddItem(1U, ra::data::Memory::Size::Text);
 
         Assert::AreEqual({ 1U }, watchList.Items().Count());
         const auto& pItem = *watchList.Items().GetItemAt(0);
         Assert::AreEqual(std::wstring(L""), pItem.GetRealNote());
         Assert::AreEqual(1U, pItem.GetAddress());
-        Assert::AreEqual(MemSize::Text, pItem.GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::Text, pItem.GetSize());
         Assert::AreEqual(std::wstring(L""), pItem.GetCurrentValue());
         Assert::AreEqual(std::wstring(L""), pItem.GetPreviousValue());
         Assert::AreEqual(0U, pItem.GetChanges());
@@ -533,9 +534,9 @@ public:
         std::array<uint8_t, 64> memory = {};
         watchList.mockEmulatorContext.MockMemory(memory);
 
-        watchList.AddItem(1U, MemSize::EightBit);
-        watchList.AddItem(1U, MemSize::SixteenBit);
-        watchList.AddItem(1U, MemSize::Bit_3);
+        watchList.AddItem(1U, ra::data::Memory::Size::EightBit);
+        watchList.AddItem(1U, ra::data::Memory::Size::SixteenBit);
+        watchList.AddItem(1U, ra::data::Memory::Size::Bit_3);
 
         Assert::AreEqual({ 3U }, watchList.Items().Count());
         auto& pItem1 = *watchList.Items().GetItemAt(0);
@@ -581,9 +582,9 @@ public:
         std::array<uint8_t, 64> memory = {};
         watchList.mockEmulatorContext.MockMemory(memory);
 
-        watchList.AddItem(4U, MemSize::Float);
-        watchList.AddItem(8U, MemSize::MBF32);
-        watchList.AddItem(12U, MemSize::Double32);
+        watchList.AddItem(4U, ra::data::Memory::Size::Float);
+        watchList.AddItem(8U, ra::data::Memory::Size::MBF32);
+        watchList.AddItem(12U, ra::data::Memory::Size::Double32);
 
         Assert::AreEqual({ 3U }, watchList.Items().Count());
         auto& pItem1 = *watchList.Items().GetItemAt(0);
@@ -642,7 +643,7 @@ public:
 
         watchList.mockGameContext.SetGameId(3U);
 
-        watchList.AddItem(0x0010, MemSize::ThirtyTwoBit);
+        watchList.AddItem(0x0010, ra::data::Memory::Size::ThirtyTwoBit);
 
         Assert::AreEqual({1U}, watchList.Items().Count());
         auto& pItem = *watchList.Items().GetItemAt(0);
@@ -650,25 +651,25 @@ public:
         pItem.UpdateCurrentValue();
         Assert::AreEqual(std::wstring(L"42883efa"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::Float);
+        pItem.SetSize(ra::data::Memory::Size::Float);
         Assert::AreEqual(std::wstring(L"68.123001"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::ThirtyTwoBitBigEndian);
+        pItem.SetSize(ra::data::Memory::Size::ThirtyTwoBitBigEndian);
         Assert::AreEqual(std::wstring(L"fa3e8842"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::TwentyFourBitBigEndian);
+        pItem.SetSize(ra::data::Memory::Size::TwentyFourBitBigEndian);
         Assert::AreEqual(std::wstring(L"fa3e88"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::SixteenBitBigEndian);
+        pItem.SetSize(ra::data::Memory::Size::SixteenBitBigEndian);
         Assert::AreEqual(std::wstring(L"fa3e"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::EightBit);
+        pItem.SetSize(ra::data::Memory::Size::EightBit);
         Assert::AreEqual(std::wstring(L"fa"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::SixteenBit);
+        pItem.SetSize(ra::data::Memory::Size::SixteenBit);
         Assert::AreEqual(std::wstring(L"3efa"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::TwentyFourBit);
+        pItem.SetSize(ra::data::Memory::Size::TwentyFourBit);
         Assert::AreEqual(std::wstring(L"883efa"), pItem.GetCurrentValue());
     }
 
@@ -694,25 +695,25 @@ public:
         pItem.UpdateCurrentValue();
         Assert::AreEqual(std::wstring(L"42883efa"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::Float);
+        pItem.SetSize(ra::data::Memory::Size::Float);
         Assert::AreEqual(std::wstring(L"68.123001"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::ThirtyTwoBitBigEndian);
+        pItem.SetSize(ra::data::Memory::Size::ThirtyTwoBitBigEndian);
         Assert::AreEqual(std::wstring(L"fa3e8842"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::TwentyFourBitBigEndian);
+        pItem.SetSize(ra::data::Memory::Size::TwentyFourBitBigEndian);
         Assert::AreEqual(std::wstring(L"fa3e88"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::SixteenBitBigEndian);
+        pItem.SetSize(ra::data::Memory::Size::SixteenBitBigEndian);
         Assert::AreEqual(std::wstring(L"fa3e"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::EightBit);
+        pItem.SetSize(ra::data::Memory::Size::EightBit);
         Assert::AreEqual(std::wstring(L"fa"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::SixteenBit);
+        pItem.SetSize(ra::data::Memory::Size::SixteenBit);
         Assert::AreEqual(std::wstring(L"3efa"), pItem.GetCurrentValue());
 
-        pItem.SetSize(MemSize::TwentyFourBit);
+        pItem.SetSize(ra::data::Memory::Size::TwentyFourBit);
         Assert::AreEqual(std::wstring(L"883efa"), pItem.GetCurrentValue());
     }
 };

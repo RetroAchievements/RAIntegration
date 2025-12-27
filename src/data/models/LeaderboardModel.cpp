@@ -1,5 +1,7 @@
 #include "LeaderboardModel.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\GameContext.hh"
 
 #include "data\models\TriggerValidation.hh"
@@ -225,8 +227,7 @@ void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
 
 void LeaderboardModel::SyncState(AssetState nNewState)
 {
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    auto* pClient = pRuntime.GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
     rc_mutex_lock(&pClient->state.mutex);
 
@@ -290,8 +291,8 @@ void LeaderboardModel::SyncTracker()
 {
     if (m_pLeaderboard->tracker)
     {
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        auto* pGame = pRuntime.GetClient()->game;
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        auto* pGame = pClient->game;
 
         rc_client_release_leaderboard_tracker(pGame, m_pLeaderboard);
         rc_client_allocate_leaderboard_tracker(pGame, m_pLeaderboard);
@@ -342,7 +343,7 @@ void LeaderboardModel::SyncDefinition()
             return;
         }
 
-        auto* pClient = pRuntime.GetClient();
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         auto* pGame = pClient->game;
         Expects(pGame != nullptr);
 

@@ -2,6 +2,8 @@
 #define RA_SERVICES_ILOGGER_HH
 #pragma once
 
+#include <string>
+
 namespace ra {
 namespace services {
 

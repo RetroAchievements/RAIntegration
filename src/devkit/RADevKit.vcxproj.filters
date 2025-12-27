@@ -13,6 +13,15 @@
     <Filter Include="services">
       <UniqueIdentifier>{f4590fbd-6bec-47dc-a679-380442fca29e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="services\impl">
+      <UniqueIdentifier>{3d3980bc-2ea8-40e2-9315-c83a8731d8db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="context">
+      <UniqueIdentifier>{2fff96d3-c22b-4c6f-80c8-36ab942abcb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="context\impl">
+      <UniqueIdentifier>{d61072e4-3899-44b4-9645-4557defa94d4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="services\ServiceLocator.hh">
@@ -42,15 +51,69 @@
     <ClInclude Include="util\EnumOps.hh">
       <Filter>util</Filter>
     </ClInclude>
-    <ClInclude Include="services\IMessageDispatcher.hh" />
-    <ClInclude Include="data\AsyncObject.hh" />
-    <ClInclude Include="data\DataModelBase.hh" />
-    <ClInclude Include="data\DataModelCollection.hh" />
-    <ClInclude Include="data\ModelBase.hh" />
-    <ClInclude Include="data\ModelCollectionBase.hh" />
-    <ClInclude Include="data\ModelProperty.hh" />
-    <ClInclude Include="data\ModelPropertyContainer.hh" />
-    <ClInclude Include="data\NotifyTargetSet.hh" />
+    <ClInclude Include="data\AsyncObject.hh">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\DataModelBase.hh">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\DataModelCollection.hh">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\ModelBase.hh">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\ModelCollectionBase.hh">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\ModelProperty.hh">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\ModelPropertyContainer.hh">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\NotifyTargetSet.hh">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="services\Http.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IFileSystem.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IHttpRequester.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IMessageDispatcher.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IThreadPool.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\TextReader.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\TextWriter.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileTextReader.hh">
+      <Filter>services\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\FileTextWriter.hh">
+      <Filter>services\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\StringTextReader.hh">
+      <Filter>services\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\StringTextWriter.hh">
+      <Filter>services\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="context\IRcClient.hh">
+      <Filter>context</Filter>
+    </ClInclude>
+    <ClInclude Include="context\impl\RcClient.hh">
+      <Filter>context\impl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -59,11 +122,29 @@
     <ClCompile Include="util\Strings.cpp">
       <Filter>util</Filter>
     </ClCompile>
-    <ClCompile Include="data\DataModelBase.cpp" />
-    <ClCompile Include="data\DataModelCollection.cpp" />
-    <ClCompile Include="data\ModelBase.cpp" />
-    <ClCompile Include="data\ModelCollectionBase.cpp" />
-    <ClCompile Include="data\ModelProperty.cpp" />
-    <ClCompile Include="data\ModelPropertyContainer.cpp" />
+    <ClCompile Include="data\DataModelBase.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\DataModelCollection.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelBase.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelCollectionBase.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelProperty.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelPropertyContainer.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="services\Http.cpp">
+      <Filter>services</Filter>
+    </ClCompile>
+    <ClCompile Include="context\impl\RcClient.cpp">
+      <Filter>context\impl</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -60,12 +60,6 @@
     <ClCompile Include="services\SearchResults_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
-    <ClCompile Include="services\StringTextReader_Tests.cpp">
-      <Filter>Tests\Services</Filter>
-    </ClCompile>
-    <ClCompile Include="services\StringTextWriter_Tests.cpp">
-      <Filter>Tests\Services</Filter>
-    </ClCompile>
     <ClCompile Include="services\JsonFileConfiguration_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
@@ -150,12 +144,6 @@
     <ClInclude Include="RA_UnitTestHelpers.h">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClCompile Include="services\Http_Tests.cpp">
-      <Filter>Tests\Services</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\services\Http.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp">
       <Filter>Tests\UI</Filter>
     </ClCompile>
@@ -479,6 +467,12 @@
     </ClCompile>
     <ClCompile Include="ui\viewmodels\MemoryRegionsViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="devkit\context\mocks\MockRcClient.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\services\impl\OfflineRcClient.cpp">
+      <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

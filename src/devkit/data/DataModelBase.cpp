@@ -377,5 +377,5 @@ void DataModelBase::Transaction::Commit(const DataModelBase& pModel)
     }
 }
 
-} // namespace ui
+} // namespace data
 } // namespace ra

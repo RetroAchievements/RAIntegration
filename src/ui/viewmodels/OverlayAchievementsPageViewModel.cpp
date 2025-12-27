@@ -4,6 +4,8 @@
 
 #include "api\FetchAchievementInfo.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
 #include "data\context\UserContext.hh"
@@ -111,7 +113,7 @@ void OverlayAchievementsPageViewModel::Refresh()
     m_bHasDetail = true;
 
     // achievement list
-    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
     std::vector<rc_client_subset_info_t*> vDeactivatedSubsets;
     int nCategory = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE_AND_UNOFFICIAL;
@@ -368,7 +370,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     if (m_vAchievementDetails.find(vmItem.GetId()) != m_vAchievementDetails.end()) // already populated
         return;
 
-    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     const auto nAchievementID = vmItem.GetId();
     GSL_SUPPRESS_TYPE1 const auto* pAchievement =
         reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, nAchievementID));

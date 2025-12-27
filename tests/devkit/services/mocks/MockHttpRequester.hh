@@ -5,6 +5,9 @@
 #include "services\IHttpRequester.hh"
 #include "services\ServiceLocator.hh"
 
+#include "util\Strings.hh"
+#include "util\TypeCasts.hh"
+
 namespace ra {
 namespace services {
 namespace mocks {
@@ -12,9 +15,19 @@ namespace mocks {
 class MockHttpRequester : public IHttpRequester
 {
 public:
-    explicit MockHttpRequester(std::function<Http::Response(const Http::Request&)>&& fHandler)
-        : m_Override(this), m_fHandler(fHandler)
+    MockHttpRequester() noexcept : m_Override(this) 
     {
+    }
+
+    MockHttpRequester(std::function<Http::Response(const Http::Request&)>&& fHandler)
+        : MockHttpRequester()
+    {
+        m_fHandler = fHandler;
+    }
+
+    void SetHandler(const std::function<Http::Response(const Http::Request&)>&& fHandler)
+    {
+        m_fHandler = fHandler;
     }
 
     void SetUserAgent(const std::string& sUserAgent) override { m_sUserAgent = sUserAgent; }

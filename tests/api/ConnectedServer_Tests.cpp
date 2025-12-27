@@ -6,11 +6,12 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\api\ApiAsserts.hh"
-#include "tests\mocks\MockHttpRequester.hh"
+#include "tests\devkit\services\mocks\MockHttpRequester.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
+
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

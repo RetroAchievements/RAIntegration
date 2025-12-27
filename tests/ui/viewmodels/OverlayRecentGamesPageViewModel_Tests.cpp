@@ -2,16 +2,17 @@
 
 #include "ui\viewmodels\OverlayRecentGamesPageViewModel.hh"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockHttpRequester.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
-#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
@@ -29,6 +30,7 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::data::context::mocks::MockSessionTracker mockSessions;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
@@ -101,13 +103,6 @@ public:
         gamesPage.mockSessions.MockSession(3U, 1234567890U, std::chrono::seconds(5000));
         gamesPage.mockUserContext.Initialize("Username", "APITOKEN");
 
-        ra::services::mocks::MockHttpRequester mockHttp([](const ra::services::Http::Request&) {
-            return ra::services::Http::Response(ra::services::Http::StatusCode::OK,
-                                                "{\"Success\":true,\"Response\":["
-                                                    "{\"ID\":3,\"Title\":\"Game Name\",\"ImageIcon\":\"/Images/BADGE.png\"}"
-                                                "]}");
-        });
-
         gamesPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Recent Games"), gamesPage.GetTitle());
@@ -136,6 +131,13 @@ public:
         Assert::IsTrue(ra::StringStartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
         Assert::IsTrue(ra::StringEndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
         Assert::AreEqual(std::string(""), pItem1->Image.Name());
+
+        gamesPage.mockRcClient.MockResponse("r=gameinfolist&g=3",
+            "{\"Success\":true,\"Response\":["
+            "{\"ID\":3,\"Title\":\"Game Name\",\"ImageIcon\":\"/Images/BADGE.png\"}"
+            "]}"
+        );
+
 
         gamesPage.mockTheadPool.ExecuteNextTask(); // request is asynchronous
 

@@ -5,12 +5,13 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
-#include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
@@ -30,6 +31,7 @@ private:
     class MemoryWatchListViewModelHarness : public MemoryWatchListViewModel
     {
     public:
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockGameContext mockGameContext;

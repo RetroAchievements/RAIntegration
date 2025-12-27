@@ -1,15 +1,13 @@
-#include "CppUnitTest.h"
-
 #include "services\Http.hh"
+
 #include "services\IHttpRequester.hh"
 
-#include "tests\mocks\MockFileSystem.hh"
-#include "tests\mocks\MockHttpRequester.hh"
-#include "tests\mocks\MockThreadPool.hh"
+#include "services\mocks\MockFileSystem.hh"
+#include "services\mocks\MockHttpRequester.hh"
+#include "services\mocks\MockThreadPool.hh"
 
-#include "tests\services\ServicesAsserts.hh"
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+#include "testutil\CppUnitTest.hh"
+#include "testutil\HttpAsserts.hh"
 
 using ra::services::mocks::MockFileSystem;
 using ra::services::mocks::MockHttpRequester;

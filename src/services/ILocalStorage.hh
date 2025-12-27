@@ -2,8 +2,8 @@
 #define RA_SERVICES_ILOCALSTORAGE_HH
 #pragma once
 
-#include "TextReader.hh"
-#include "TextWriter.hh"
+#include "services\TextReader.hh"
+#include "services\TextWriter.hh"
 
 namespace ra {
 namespace services {

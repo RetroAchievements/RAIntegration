@@ -7,6 +7,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockGameContext.hh"
 
@@ -25,6 +26,7 @@ private:
     class LeaderboardModelHarness : public LeaderboardModel
     {
     public:
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::impl::StringTextWriter textWriter;
         ra::services::mocks::MockAchievementRuntime mockRuntime;

@@ -5,6 +5,8 @@
 #include "api\FetchGamesList.hh"
 #include "api\SubmitNewTitle.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\ConsoleContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\UserContext.hh"
@@ -167,7 +169,7 @@ std::string UnknownGameViewModel::EncodeID(unsigned nId, const std::wstring& sHa
 
 static void AddClientHash(const std::string& sHash, uint32_t nGameId, bool isUnknown)
 {
-    auto* pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     rc_client_add_game_hash(pClient, sHash.c_str(), nGameId);
     auto* game_hash = rc_client_find_game_hash(pClient, sHash.c_str());
     game_hash->is_unknown = isUnknown ? 1 : 0;

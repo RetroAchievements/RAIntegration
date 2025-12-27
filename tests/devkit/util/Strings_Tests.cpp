@@ -21,7 +21,7 @@ static std::wstring Trim(std::wstring&& str) noexcept
 namespace services {
 namespace tests {
 
-TEST_CLASS(RA_StringUtils_Tests)
+TEST_CLASS(Strings_Tests)
 {
 public:
     TEST_METHOD(TestNarrow)

@@ -2,11 +2,11 @@
 
 #include "ui\viewmodels\OverlayFriendsPageViewModel.hh"
 
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockThreadPool.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

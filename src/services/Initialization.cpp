@@ -2,6 +2,8 @@
 
 #include "api\impl\DisconnectedServer.hh"
 
+#include "context\impl\RcClient.hh"
+
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
@@ -155,6 +157,9 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
 
     auto pSessionTracker = std::make_unique<ra::data::context::SessionTracker>();
     ra::services::ServiceLocator::Provide<ra::data::context::SessionTracker>(std::move(pSessionTracker));
+
+    auto pRcClient = std::make_unique<ra::context::impl::RcClient>();
+    ra::services::ServiceLocator::Provide<ra::context::IRcClient>(std::move(pRcClient));
 
     auto pAchievementRuntime = std::make_unique<ra::services::AchievementRuntime>();
     ra::services::ServiceLocator::Provide<ra::services::AchievementRuntime>(std::move(pAchievementRuntime));

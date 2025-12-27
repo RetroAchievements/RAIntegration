@@ -120,9 +120,6 @@
     <ClCompile Include="services\impl\WindowsHttpRequester.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
-    <ClCompile Include="services\Http.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -423,6 +420,9 @@
     <ClCompile Include="data\models\MemoryRegionsModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\OfflineRcClient.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -467,32 +467,8 @@
     <ClInclude Include="services\SearchResults.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="services\IFileSystem.hh">
-      <Filter>Services</Filter>
-    </ClInclude>
     <ClInclude Include="services\impl\WindowsFileSystem.hh">
       <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\impl\StringTextReader.hh">
-      <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\impl\StringTextWriter.hh">
-      <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\impl\FileTextWriter.hh">
-      <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\impl\FileTextReader.hh">
-      <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\TextWriter.hh">
-      <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="services\TextReader.hh">
-      <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="services\IThreadPool.hh">
-      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\ThreadPool.hh">
       <Filter>Services\Impl</Filter>
@@ -554,14 +530,8 @@
     <ClInclude Include="services\impl\FileLocalStorage.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
-    <ClInclude Include="services\IHttpRequester.hh">
-      <Filter>Services</Filter>
-    </ClInclude>
     <ClInclude Include="services\impl\WindowsHttpRequester.hh">
       <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\Http.hh">
-      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh">
       <Filter>UI\ViewModels</Filter>
@@ -1066,6 +1036,9 @@
     </ClInclude>
     <ClInclude Include="data\models\MemoryRegionsModel.hh">
       <Filter>Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\OfflineRcClient.hh">
+      <Filter>Services\Impl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

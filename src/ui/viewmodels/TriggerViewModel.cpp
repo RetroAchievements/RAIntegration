@@ -4,6 +4,8 @@
 #include <rcheevos/src/rcheevos/rc_internal.h>
 #include <rcheevos/src/rc_client_internal.h>
 
+#include "context\IRcClient.hh"
+
 #include "util\Strings.hh"
 
 #include "data\models\TriggerValidation.hh"
@@ -129,8 +131,8 @@ rc_condset_t* TriggerViewModel::GroupViewModel::GetConditionSet(bool bIsValue) c
     rc_memrefs_t* pMemrefs = nullptr;
     if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
     {
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        auto* pGame = pRuntime.GetClient()->game;
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        auto* pGame = pClient->game;
         if (pGame != nullptr)
             pMemrefs = pGame->runtime.memrefs;
     }

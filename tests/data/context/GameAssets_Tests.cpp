@@ -7,6 +7,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
+#include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
@@ -28,6 +29,7 @@ public:
     class GameAssetsHarness : public GameAssets
     {
     public:
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockLocalStorage mockLocalStorage;

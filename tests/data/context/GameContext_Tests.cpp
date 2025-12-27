@@ -15,6 +15,8 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockConsoleContext.hh"
@@ -27,7 +29,6 @@
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
-#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
@@ -62,6 +63,7 @@ public:
         }
 
         ra::api::mocks::MockServer mockServer;
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockStorage;
@@ -156,7 +158,7 @@ public:
             mockConsoleContext.SetName(ra::Widen(rc_console_name(static_cast<int>(nConsoleID))));
 
             mockAchievementRuntime.MockUser("Username", "ApiToken");
-            mockAchievementRuntime.MockResponse(
+            mockRcClient.MockResponse(
                 "r=achievementsets&u=Username&t=ApiToken&m=" + sHash,
                 "{\"Success\":true,"
                   "\"GameId\":" + std::to_string(nGameID) + ","
@@ -172,7 +174,7 @@ public:
                     "\"Achievements\":[" + sAchievements + "],"
                     "\"Leaderboards\":[" + sLeaderboards + "]"
                 "}]}");
-            mockAchievementRuntime.MockResponse(
+            mockRcClient.MockResponse(
                 "r=startsession&u=Username&t=ApiToken&g=" + std::to_string(nGameID) +
                     "&h=1&m=" + sHash + "&l=" RCHEEVOS_VERSION_STRING,
                 sUnlocks.empty() ? "{\"Success\":true}" : "{\"Success\":true," + sUnlocks + "}");
@@ -899,8 +901,8 @@ public:
     TEST_METHOD(TestLoadGameMergeLocalAchievementsFromSubsets)
     {
         GameContextHarness game;
-        // MockLoadGameAPIs appends request handlers, so provide our override first so it's given priority
-        game.mockAchievementRuntime.MockResponse(
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
+        game.mockRcClient.MockResponse(
                 "r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321",
                 "{\"Success\":true,"
                  "\"GameId\":1,"
@@ -926,7 +928,6 @@ public:
                         "\"Created\":1234567890,\"Modified\":123459999}"
                     "],\"Leaderboards\":[]"
                  "}]}");
-        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
         game.mockStorage.MockStoredData(ra::services::StorageItemType::UserAchievements, L"1",
                                         "Version\n"
                                         "Game\n"
@@ -1300,7 +1301,7 @@ public:
         game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         bool bBeforeResponseCalled = false;
-        game.mockAchievementRuntime.OnBeforeResponse("r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321",
+        game.mockRcClient.OnBeforeResponse("r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321",
             [&game, &bBeforeResponseCalled]() {
                 bBeforeResponseCalled = true;
                 Assert::IsTrue(game.mockAchievementRuntime.IsPaused());
@@ -1318,7 +1319,7 @@ public:
         game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         bool bBeforeResponseCalled = false;
-        game.mockAchievementRuntime.OnBeforeResponse("r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321",
+        game.mockRcClient.OnBeforeResponse("r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321",
             [&game, &bBeforeResponseCalled]() {
                 bBeforeResponseCalled = true;
                 Assert::IsTrue(game.mockAchievementRuntime.IsPaused());

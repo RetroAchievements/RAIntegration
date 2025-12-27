@@ -6,6 +6,8 @@
 #include "RAInterface\RA_Emulators.h"
 #include "RA_Resource.h"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockClock.hh"
@@ -20,7 +22,6 @@
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockSurface.hh"
-#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 #include "tests\ui\UIAsserts.hh"
@@ -34,6 +35,7 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::api::mocks::MockServer;
+using ra::context::mocks::MockRcClient;
 using ra::data::context::mocks::MockEmulatorContext;
 using ra::data::context::mocks::MockGameContext;
 using ra::data::context::mocks::MockSessionTracker;
@@ -100,10 +102,11 @@ private:
     class AttemptLoginHarness
     {
     public:
+        MockRcClient mockRcClient;
         MockUserContext mockUserContext;
         MockSessionTracker mockSessionTracker;
         MockConfiguration mockConfiguration;
-        MockAchievementRuntime mockRcheevosClient;
+        MockAchievementRuntime mockAchievementRuntime;
         MockAudioSystem mockAudioSystem;
         MockServer mockServer;
         MockOverlayManager mockOverlayManager;
@@ -136,7 +139,7 @@ public:
         Assert::AreEqual(std::wstring(L""), harness.mockSessionTracker.GetUsername());
         Assert::IsTrue(bLoginDialogShown);
 
-        harness.mockRcheevosClient.AssertNoPendingRequests();
+        harness.mockRcClient.AssertNoPendingRequests();
     }
 
     TEST_METHOD(TestAttemptLoginSuccess)
@@ -148,7 +151,7 @@ public:
         harness.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
-        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
+        harness.mockRcClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -197,7 +200,7 @@ public:
         harness.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
-        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
+        harness.mockRcClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -243,7 +246,7 @@ public:
         AttemptLoginHarness harness;
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
-        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
+        harness.mockRcClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":0,\"SoftcoreScore\":0,"
             "\"Messages\":3,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -271,7 +274,7 @@ public:
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
-        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
+        harness.mockRcClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -302,7 +305,7 @@ public:
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
 
-        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
+        harness.mockRcClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -341,7 +344,7 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
+        harness.mockRcClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":false,\"Error\":\"Invalid user/password combination. Please try again.\"}");
 
         harness.mockConfiguration.SetUsername("User");

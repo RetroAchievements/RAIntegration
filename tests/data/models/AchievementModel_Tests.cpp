@@ -8,6 +8,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -32,6 +33,7 @@ private:
             GSL_SUPPRESS_F6 mockRuntime.MockGame();
         }
 
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::impl::StringTextWriter textWriter;
         ra::services::mocks::MockAchievementRuntime mockRuntime;

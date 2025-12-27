@@ -4,6 +4,8 @@
 
 #include "api\impl\OfflineServer.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
 #include "data\context\UserContext.hh"
@@ -72,12 +74,11 @@ void OverlayRecentGamesPageViewModel::Refresh()
             auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
             for (const auto nGameId : vPendingGames)
             {
-                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-                auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(pGameContext.ActiveGameId()));
+                auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
                 if (pData != nullptr)
                 {
                     // found patchdata. extract title and badge
-                    std::string sContents = "{\"Success\":true,\"PatchData\":";
+                    std::string sContents;
                     std::string sLine;
                     while (pData->GetLine(sLine))
                     {
@@ -86,11 +87,35 @@ void OverlayRecentGamesPageViewModel::Refresh()
 
                         sContents.append(sLine);
                     }
-                    sContents.push_back('}');
 
-                    rc_api_fetch_game_data_response_t response;
-                    if (rc_api_process_fetch_game_data_response(&response, sContents.c_str()) == RC_OK)
-                        UpdateGameEntry(nGameId, ra::Widen(response.title), response.image_name);
+                    rc_api_server_response_t server_response;
+                    memset(&server_response, 0, sizeof(server_response));
+
+                    if (ra::StringStartsWith(sContents, "{\"Success\""))
+                    {
+                        server_response.body = sContents.c_str();
+                        server_response.body_length = sContents.length();
+
+                        rc_api_fetch_game_sets_response_t response;
+                        if (rc_api_process_fetch_game_sets_server_response(&response, &server_response) == RC_OK)
+                            UpdateGameEntry(nGameId, ra::Widen(response.title), response.image_name);
+                        else
+                            bAnyMissing = true;
+                    }
+                    else
+                    {
+                        sContents.insert(0, "{\"Success\":true,\"PatchData\":");
+                        sContents.push_back('}');
+
+                        server_response.body = sContents.c_str();
+                        server_response.body_length = sContents.length();
+
+                        rc_api_fetch_game_data_response_t response;
+                        if (rc_api_process_fetch_game_data_server_response(&response, &server_response) == RC_OK)
+                            UpdateGameEntry(nGameId, ra::Widen(response.title), response.image_name);
+                        else
+                            bAnyMissing = true;
+                    }
                 }
                 else
                 {
@@ -109,23 +134,20 @@ void OverlayRecentGamesPageViewModel::Refresh()
                 if (rc_api_init_fetch_game_titles_request(&request, &api_params) != RC_OK)
                     return;
 
-                ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().AsyncServerCall(
-                    &request, [](const rc_api_server_response_t& server_response, void* pCallbackData) {
+                ra::services::ServiceLocator::Get<ra::context::IRcClient>().DispatchRequest(request,
+                    [this](const rc_api_server_response_t& server_response, void*) {
                         rc_api_fetch_game_titles_response_t response{};
 
                         if (rc_api_process_fetch_game_titles_server_response(&response, &server_response) == RC_OK &&
                             response.response.succeeded)
                         {
-                            auto* pThis = static_cast<OverlayRecentGamesPageViewModel*>(pCallbackData);
-                            Expects(pThis != nullptr);
-
                             for (uint32_t i = 0; i < response.num_entries; i++)
                             {
-                                pThis->UpdateGameEntry(response.entries[i].id, ra::Widen(response.entries[i].title),
-                                                       response.entries[i].image_name);
+                                UpdateGameEntry(response.entries[i].id, ra::Widen(response.entries[i].title),
+                                    response.entries[i].image_name);
                             }
                         }
-                    }, this);
+                    }, nullptr);
             }
         });
     }

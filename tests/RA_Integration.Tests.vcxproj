@@ -69,6 +69,9 @@
     <ProjectReference Include="..\src\rcheevos.vcxproj">
       <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
     </ProjectReference>
+    <ProjectReference Include="devkit\RADevKit.Tests.vcxproj.vcxproj">
+      <Project>{6131c3d1-165e-4f39-a44c-94f01eaa03c5}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\data\context\GameAssets.cpp" />
@@ -103,9 +106,9 @@
     <ClCompile Include="..\src\services\AchievementRuntimeExports.cpp" />
     <ClCompile Include="..\src\services\FrameEventQueue.cpp" />
     <ClCompile Include="..\src\services\GameIdentifier.cpp" />
-    <ClCompile Include="..\src\services\Http.cpp" />
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
+    <ClCompile Include="..\src\services\impl\OfflineRcClient.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
     <ClCompile Include="..\src\services\search\SearchImpl.cpp" />
     <ClCompile Include="..\src\ui\Theme.cpp" />
@@ -173,6 +176,7 @@
     <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp" />
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
     <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
+    <ClCompile Include="devkit\context\mocks\MockRcClient.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="mocks\MockAchievementRuntime.cpp" />
     <ClCompile Include="services\AchievementLogicSerializer_Tests.cpp" />
@@ -181,14 +185,11 @@
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
     <ClCompile Include="services\FrameEventQueue_Tests.cpp" />
     <ClCompile Include="services\GameIdentifier_Tests.cpp" />
-    <ClCompile Include="services\Http_Tests.cpp" />
     <ClCompile Include="ui\OverlayTheme_Tests.cpp" />
     <ClCompile Include="ui\ViewModelBase_Tests.cpp" />
     <ClCompile Include="services\FileLogger_Tests.cpp" />
     <ClCompile Include="services\JsonFileConfiguration_Tests.cpp" />
     <ClCompile Include="services\SearchResults_Tests.cpp" />
-    <ClCompile Include="services\StringTextReader_Tests.cpp" />
-    <ClCompile Include="services\StringTextWriter_Tests.cpp" />
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\AssetEditorViewModel_Tests.cpp" />

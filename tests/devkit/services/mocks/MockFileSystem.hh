@@ -7,6 +7,8 @@
 #include "services\impl\StringTextReader.hh"
 #include "services\impl\StringTextWriter.hh"
 
+#include <set>
+
 namespace ra {
 namespace services {
 namespace mocks {

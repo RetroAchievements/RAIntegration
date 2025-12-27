@@ -1,10 +1,12 @@
-#ifndef RA_UNITTEST_SERVICESHELPERS_H
-#define RA_UNITTEST_SERVICESHELPERS_H
+#ifndef RA_HTTP_ASSERTS_H
+#define RA_HTTP_ASSERTS_H
 #pragma once
 
-#include "util\TypeCasts.hh"
+#include "CppUnitTest.hh"
 
 #include "services\Http.hh"
+
+#include "util\TypeCasts.hh"
 
 namespace Microsoft {
 namespace VisualStudio {
@@ -26,4 +28,4 @@ std::wstring ToString<ra::services::Http::StatusCode>(const ra::services::Http::
 } // namespace VisualStudio
 } // namespace Microsoft
 
-#endif /* !RA_UNITTEST_SERVICESHELPERS_H */
+#endif /* !RA_HTTP_ASSERTS_H */

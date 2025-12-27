@@ -2,6 +2,8 @@
 #define RA_SERVICES_TEXTWRITER
 #pragma once
 
+#include <string>
+
 namespace ra {
 namespace services {
 
@@ -18,13 +20,13 @@ public:
     /// Writes text to the output.
     /// </summary>
     /// <param name="sText">The string to write.</param>
-    virtual void Write(_In_ const std::string& sText) = 0;
+    virtual void Write(const std::string& sText) = 0;
 
     /// <summary>
     /// Writes text to the output.
     /// </summary>
     /// <param name="sText">The string to write.</param>
-    virtual void Write(_In_ const std::wstring& sText) = 0;
+    virtual void Write(const std::wstring& sText) = 0;
 
     /// <summary>
     /// Writes a newline to the output.
@@ -36,7 +38,7 @@ public:
     /// Writes text and a newline to the output.
     /// </summary>
     /// <param name="sText">The string to write.</param>
-    void WriteLine(_In_ const std::string& sText)
+    void WriteLine(const std::string& sText)
     {
         Write(sText);
         WriteLine();
@@ -46,7 +48,7 @@ public:
     /// Writes text and a newline to the output.
     /// </summary>
     /// <param name="sText">The string to write.</param>
-    void WriteLine(_In_ const std::wstring& sText)
+    void WriteLine(const std::wstring& sText)
     {
         Write(sText);
         WriteLine();

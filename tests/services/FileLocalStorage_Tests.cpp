@@ -1,7 +1,7 @@
 #include "services\impl\FileLocalStorage.hh"
 
+#include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockClock.hh"
-#include "tests\mocks\MockFileSystem.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

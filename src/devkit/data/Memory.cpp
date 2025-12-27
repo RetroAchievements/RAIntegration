@@ -12,16 +12,16 @@ Memory::Size Memory::SizeFromRcheevosSize(uint8_t nSize) noexcept
 {
     switch (nSize)
     {
-        case RC_MEMSIZE_BIT_0: return Size::Bit_0;
-        case RC_MEMSIZE_BIT_1: return Size::Bit_1;
-        case RC_MEMSIZE_BIT_2: return Size::Bit_2;
-        case RC_MEMSIZE_BIT_3: return Size::Bit_3;
-        case RC_MEMSIZE_BIT_4: return Size::Bit_4;
-        case RC_MEMSIZE_BIT_5: return Size::Bit_5;
-        case RC_MEMSIZE_BIT_6: return Size::Bit_6;
-        case RC_MEMSIZE_BIT_7: return Size::Bit_7;
-        case RC_MEMSIZE_LOW: return Size::Nibble_Lower;
-        case RC_MEMSIZE_HIGH: return Size::Nibble_Upper;
+        case RC_MEMSIZE_BIT_0: return Size::Bit0;
+        case RC_MEMSIZE_BIT_1: return Size::Bit1;
+        case RC_MEMSIZE_BIT_2: return Size::Bit2;
+        case RC_MEMSIZE_BIT_3: return Size::Bit3;
+        case RC_MEMSIZE_BIT_4: return Size::Bit4;
+        case RC_MEMSIZE_BIT_5: return Size::Bit5;
+        case RC_MEMSIZE_BIT_6: return Size::Bit6;
+        case RC_MEMSIZE_BIT_7: return Size::Bit7;
+        case RC_MEMSIZE_LOW: return Size::NibbleLower;
+        case RC_MEMSIZE_HIGH: return Size::NibbleUpper;
         case RC_MEMSIZE_8_BITS: return Size::EightBit;
         case RC_MEMSIZE_16_BITS: return Size::SixteenBit;
         case RC_MEMSIZE_24_BITS: return Size::TwentyFourBit;
@@ -42,7 +42,7 @@ Memory::Size Memory::SizeFromRcheevosSize(uint8_t nSize) noexcept
     }
 }
 
-static std::wstring U32ToFloatString(unsigned nValue, char nFloatType)
+static std::wstring U32ToFloatString(uint32_t nValue, uint8_t nFloatType)
 {
     rc_typed_value_t value;
     value.type = RC_VALUE_TYPE_UNSIGNED;
@@ -67,7 +67,7 @@ static std::wstring U32ToFloatString(unsigned nValue, char nFloatType)
     return sValue;
 }
 
-std::wstring Memory::FormatValue(unsigned nValue, Memory::Size nSize, Memory::Format nFormat)
+std::wstring Memory::FormatValue(uint32_t nValue, Memory::Size nSize, Memory::Format nFormat)
 {
     switch (nSize)
     {
@@ -105,13 +105,13 @@ std::wstring Memory::FormatValue(unsigned nValue, Memory::Size nSize, Memory::Fo
     }
 }
 
-unsigned Memory::FloatToU32(float fValue, Memory::Size nFloatType) noexcept
+uint32_t Memory::FloatToU32(float fValue, Memory::Size nFloatType) noexcept
 {
-    // this leverages the fact that Windows uses IEE754 floats
+    // this leverages the fact that a "float" is encoded as little-endian IEE754
     union u
     {
         float fValue;
-        unsigned nValue;
+        uint32_t nValue;
     } uUnion;
 
     uUnion.fValue = fValue;
@@ -153,9 +153,9 @@ unsigned Memory::FloatToU32(float fValue, Memory::Size nFloatType) noexcept
     }
 }
 
-float Memory::U32ToFloat(unsigned nValue, Memory::Size nFloatType) noexcept
+float Memory::U32ToFloat(uint32_t nValue, Memory::Size nFloatType) noexcept
 {
-    // this leverages the fact that Windows uses IEE754 floats
+    // this leverages the fact that a "float" is encoded as little-endian IEE754
     union u
     {
         float fValue;

@@ -1502,7 +1502,7 @@ public:
 
         bookmarks.AddBookmark(1U, ra::data::Memory::Size::EightBit);
         bookmarks.AddBookmark(1U, ra::data::Memory::Size::SixteenBit);
-        bookmarks.AddBookmark(1U, ra::data::Memory::Size::Bit_3);
+        bookmarks.AddBookmark(1U, ra::data::Memory::Size::Bit3);
 
         Assert::AreEqual({ 3U }, bookmarks.Bookmarks().Items().Count());
         auto& bookmark1 = *bookmarks.GetBookmark(0);

@@ -93,9 +93,9 @@ public:
         Assert::AreEqual(std::wstring(L"32-bit BE"), watchList.Sizes().GetItemAt(6)->GetLabel());
         Assert::AreEqual((int)ra::data::Memory::Size::BitCount, watchList.Sizes().GetItemAt(7)->GetId());
         Assert::AreEqual(std::wstring(L"BitCount"), watchList.Sizes().GetItemAt(7)->GetLabel());
-        Assert::AreEqual((int)ra::data::Memory::Size::Nibble_Lower, watchList.Sizes().GetItemAt(8)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::NibbleLower, watchList.Sizes().GetItemAt(8)->GetId());
         Assert::AreEqual(std::wstring(L"Lower4"), watchList.Sizes().GetItemAt(8)->GetLabel());
-        Assert::AreEqual((int)ra::data::Memory::Size::Nibble_Upper, watchList.Sizes().GetItemAt(9)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::NibbleUpper, watchList.Sizes().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"Upper4"), watchList.Sizes().GetItemAt(9)->GetLabel());
         Assert::AreEqual((int)ra::data::Memory::Size::Float, watchList.Sizes().GetItemAt(10)->GetId());
         Assert::AreEqual(std::wstring(L"Float"), watchList.Sizes().GetItemAt(10)->GetLabel());
@@ -536,7 +536,7 @@ public:
 
         watchList.AddItem(1U, ra::data::Memory::Size::EightBit);
         watchList.AddItem(1U, ra::data::Memory::Size::SixteenBit);
-        watchList.AddItem(1U, ra::data::Memory::Size::Bit_3);
+        watchList.AddItem(1U, ra::data::Memory::Size::Bit3);
 
         Assert::AreEqual({ 3U }, watchList.Items().Count());
         auto& pItem1 = *watchList.Items().GetItemAt(0);

@@ -10,7 +10,7 @@ namespace search {
 
 class FourBitSearchImpl : public SearchImpl
 {
-    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::Nibble_Lower; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::NibbleLower; }
 
     unsigned int GetAddressCountForBytes(unsigned int nBytes) const noexcept override
     {
@@ -43,7 +43,7 @@ class FourBitSearchImpl : public SearchImpl
     bool ExcludeResult(SearchResults& srResults, const SearchResult& pResult) const override
     {
         auto nAddress = pResult.nAddress << 1;
-        if (pResult.nSize == ra::data::Memory::Size::Nibble_Upper)
+        if (pResult.nSize == ra::data::Memory::Size::NibbleUpper)
             nAddress |= 1;
 
         return ExcludeAddress(srResults, nAddress);
@@ -113,7 +113,7 @@ protected:
     bool GetValueFromMemBlock(const MemBlock& block, SearchResult& result) const noexcept override
     {
         if (result.nAddress & 1)
-            result.nSize = ra::data::Memory::Size::Nibble_Upper;
+            result.nSize = ra::data::Memory::Size::NibbleUpper;
 
         result.nAddress >>= 1;
 
@@ -123,7 +123,7 @@ protected:
 
         result.nValue = BuildValue(block.GetBytes() + nOffset);
 
-        if (result.nSize == ra::data::Memory::Size::Nibble_Lower)
+        if (result.nSize == ra::data::Memory::Size::NibbleLower)
             result.nValue &= 0x0F;
         else
             result.nValue = (result.nValue >> 4) & 0x0F;

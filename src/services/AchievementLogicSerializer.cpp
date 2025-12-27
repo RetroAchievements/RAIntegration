@@ -118,16 +118,16 @@ void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOper
     switch (nSize)
     {
         case ra::data::Memory::Size::BitCount:              sBuffer.push_back('K'); break;
-        case ra::data::Memory::Size::Bit_0:                 sBuffer.push_back('M'); break;
-        case ra::data::Memory::Size::Bit_1:                 sBuffer.push_back('N'); break;
-        case ra::data::Memory::Size::Bit_2:                 sBuffer.push_back('O'); break;
-        case ra::data::Memory::Size::Bit_3:                 sBuffer.push_back('P'); break;
-        case ra::data::Memory::Size::Bit_4:                 sBuffer.push_back('Q'); break;
-        case ra::data::Memory::Size::Bit_5:                 sBuffer.push_back('R'); break;
-        case ra::data::Memory::Size::Bit_6:                 sBuffer.push_back('S'); break;
-        case ra::data::Memory::Size::Bit_7:                 sBuffer.push_back('T'); break;
-        case ra::data::Memory::Size::Nibble_Lower:          sBuffer.push_back('L'); break;
-        case ra::data::Memory::Size::Nibble_Upper:          sBuffer.push_back('U'); break;
+        case ra::data::Memory::Size::Bit0:                 sBuffer.push_back('M'); break;
+        case ra::data::Memory::Size::Bit1:                 sBuffer.push_back('N'); break;
+        case ra::data::Memory::Size::Bit2:                 sBuffer.push_back('O'); break;
+        case ra::data::Memory::Size::Bit3:                 sBuffer.push_back('P'); break;
+        case ra::data::Memory::Size::Bit4:                 sBuffer.push_back('Q'); break;
+        case ra::data::Memory::Size::Bit5:                 sBuffer.push_back('R'); break;
+        case ra::data::Memory::Size::Bit6:                 sBuffer.push_back('S'); break;
+        case ra::data::Memory::Size::Bit7:                 sBuffer.push_back('T'); break;
+        case ra::data::Memory::Size::NibbleLower:          sBuffer.push_back('L'); break;
+        case ra::data::Memory::Size::NibbleUpper:          sBuffer.push_back('U'); break;
         case ra::data::Memory::Size::EightBit:              sBuffer.push_back('H'); break;
         case ra::data::Memory::Size::TwentyFourBit:         sBuffer.push_back('W'); break;
         case ra::data::Memory::Size::ThirtyTwoBit:          sBuffer.push_back('X'); break;

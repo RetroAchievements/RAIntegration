@@ -14,16 +14,16 @@ class Memory {
 public:
     enum class Size : uint8_t
     {
-        Bit_0,
-        Bit_1,
-        Bit_2,
-        Bit_3,
-        Bit_4,
-        Bit_5,
-        Bit_6,
-        Bit_7,
-        Nibble_Lower,
-        Nibble_Upper,
+        Bit0,
+        Bit1,
+        Bit2,
+        Bit3,
+        Bit4,
+        Bit5,
+        Bit6,
+        Bit7,
+        NibbleLower,
+        NibbleUpper,
         EightBit,
         SixteenBit,
         TwentyFourBit,
@@ -45,29 +45,32 @@ public:
         Array
     };
 
+    /// <summary>
+    /// Gets a string representation of the size (as displayed to the user).
+    /// </summary>
     static constexpr const wchar_t* SizeString(Size nSize)
     {
         switch (nSize)
         {
-            case Size::Bit_0:
+            case Size::Bit0:
                 return L"Bit0";
-            case Size::Bit_1:
+            case Size::Bit1:
                 return L"Bit1";
-            case Size::Bit_2:
+            case Size::Bit2:
                 return L"Bit2";
-            case Size::Bit_3:
+            case Size::Bit3:
                 return L"Bit3";
-            case Size::Bit_4:
+            case Size::Bit4:
                 return L"Bit4";
-            case Size::Bit_5:
+            case Size::Bit5:
                 return L"Bit5";
-            case Size::Bit_6:
+            case Size::Bit6:
                 return L"Bit6";
-            case Size::Bit_7:
+            case Size::Bit7:
                 return L"Bit7";
-            case Size::Nibble_Lower:
+            case Size::NibbleLower:
                 return L"Lower4";
-            case Size::Nibble_Upper:
+            case Size::NibbleUpper:
                 return L"Upper4";
             case Size::EightBit:
                 return L"8-bit";
@@ -107,6 +110,9 @@ public:
         }
     }
 
+    /// <summary>
+    /// Gets the number of bits needed to represent a value of the specified size.
+    /// </summary>
     static constexpr unsigned int SizeBits(Size nSize)
     {
         switch (nSize)
@@ -133,18 +139,18 @@ public:
                 return 24;
 
             case Size::BitCount: // value will be 0-8
-            case Size::Nibble_Lower:
-            case Size::Nibble_Upper:
+            case Size::NibbleLower:
+            case Size::NibbleUpper:
                 return 4;
 
-            case Size::Bit_0:
-            case Size::Bit_1:
-            case Size::Bit_2:
-            case Size::Bit_3:
-            case Size::Bit_4:
-            case Size::Bit_5:
-            case Size::Bit_6:
-            case Size::Bit_7:
+            case Size::Bit0:
+            case Size::Bit1:
+            case Size::Bit2:
+            case Size::Bit3:
+            case Size::Bit4:
+            case Size::Bit5:
+            case Size::Bit6:
+            case Size::Bit7:
                 return 1;
 
             default:
@@ -152,6 +158,9 @@ public:
         }
     }
 
+    /// <summary>
+    /// Gets the number of bytes needed to represent a value of the specified size.
+    /// </summary>
     static constexpr unsigned int SizeBytes(Size nSize)
     {
         switch (nSize)
@@ -180,6 +189,9 @@ public:
         }
     }
 
+    /// <summary>
+    /// Gets the maximum value that can be represented by the specified size.
+    /// </summary>
     static constexpr unsigned int SizeMax(Size nSize)
     {
         const auto nBits = SizeBits(nSize);
@@ -189,6 +201,9 @@ public:
         return (1 << nBits) - 1;
     }
 
+    /// <summary>
+    /// Gets whether or not a size supports floating point values.
+    /// </summary>
     static constexpr bool SizeIsFloat(Size nSize)
     {
         switch (nSize)
@@ -206,6 +221,9 @@ public:
         }
     }
 
+    /// <summary>
+    /// Gets whether or not a size is stored in memory in big-endian order.
+    /// </summary>
     static constexpr bool SizeIsBigEndian(Size nSize)
     {
         switch (nSize)
@@ -223,6 +241,9 @@ public:
         }
     }
 
+    /// <summary>
+    /// Converts an RC_MEMSIZE_ value to a Memory::Size value.
+    /// </summary>
     static Size SizeFromRcheevosSize(uint8_t nSize) noexcept;
 
     enum class Format : uint8_t
@@ -232,11 +253,24 @@ public:
         Unknown,
     };
 
-    static std::wstring FormatValue(unsigned nValue, Size nSize, Format nFormat);
+    /// <summary>
+    /// Converts a raw 32-bits of memory into a user-friendly string value.
+    /// </summary>
+    static std::wstring FormatValue(uint32_t nValue, Size nSize, Format nFormat);
 
-    static unsigned FloatToU32(float fValue, Size nFloatType) noexcept;
-    static float U32ToFloat(unsigned nValue, Size nFloatType) noexcept;
+    /// <summary>
+    /// Encodes a float into a raw 32-bit memory value.
+    /// </summary>
+    static uint32_t FloatToU32(float fValue, Size nFloatType) noexcept;
 
+    /// <summary>
+    /// Decodes a float from a raw 32-bit memory valu.
+    /// </summary>
+    static float U32ToFloat(uint32_t nValue, Size nFloatType) noexcept;
+
+    /// <summary>
+    /// Swaps the order of bytes in a 32-bit value (switches little-endian to big-endian).
+    /// </summary>
     static constexpr uint32_t ReverseBytes(uint32_t nValue) noexcept
     {
         return ((nValue & 0xFF000000) >> 24) |

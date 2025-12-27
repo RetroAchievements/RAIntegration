@@ -102,7 +102,7 @@ void MemoryInspectorDialog::SearchResultsGridBinding::UpdateColumnWidths()
 
     // address column
     nWidth = ra::ui::win32::bindings::GridAddressColumnBinding::CalculateWidth();
-    if (nSize == ra::data::Memory::Size::Nibble_Lower)
+    if (nSize == ra::data::Memory::Size::NibbleLower)
         nWidth += nCharWidth; // 0x1234L
     m_vColumns.at(0)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
 }

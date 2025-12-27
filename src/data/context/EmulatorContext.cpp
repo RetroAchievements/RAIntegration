@@ -857,25 +857,25 @@ uint32_t EmulatorContext::ReadMemory(ra::data::ByteAddress nAddress, Memory::Siz
 {
     switch (nSize)
     {
-        case Memory::Size::Bit_0:
+        case Memory::Size::Bit0:
             return (ReadMemoryByte(nAddress) & 0x01);
-        case Memory::Size::Bit_1:
+        case Memory::Size::Bit1:
             return (ReadMemoryByte(nAddress) & 0x02) ? 1 : 0;
-        case Memory::Size::Bit_2:
+        case Memory::Size::Bit2:
             return (ReadMemoryByte(nAddress) & 0x04) ? 1 : 0;
-        case Memory::Size::Bit_3:
+        case Memory::Size::Bit3:
             return (ReadMemoryByte(nAddress) & 0x08) ? 1 : 0;
-        case Memory::Size::Bit_4:
+        case Memory::Size::Bit4:
             return (ReadMemoryByte(nAddress) & 0x10) ? 1 : 0;
-        case Memory::Size::Bit_5:
+        case Memory::Size::Bit5:
             return (ReadMemoryByte(nAddress) & 0x20) ? 1 : 0;
-        case Memory::Size::Bit_6:
+        case Memory::Size::Bit6:
             return (ReadMemoryByte(nAddress) & 0x40) ? 1 : 0;
-        case Memory::Size::Bit_7:
+        case Memory::Size::Bit7:
             return (ReadMemoryByte(nAddress) & 0x80) ? 1 : 0;
-        case Memory::Size::Nibble_Lower:
+        case Memory::Size::NibbleLower:
             return (ReadMemoryByte(nAddress) & 0x0F);
-        case Memory::Size::Nibble_Upper:
+        case Memory::Size::NibbleUpper:
             return ((ReadMemoryByte(nAddress) >> 4) & 0x0F);
         case Memory::Size::EightBit:
             return ReadMemoryByte(nAddress);
@@ -1043,44 +1043,44 @@ void EmulatorContext::WriteMemory(ra::data::ByteAddress nAddress, Memory::Size n
             WriteMemory(nAddress, u.u8, 4);
             break;
 
-        case Memory::Size::Bit_0:
+        case Memory::Size::Bit0:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x01) | (nValue & 1);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case Memory::Size::Bit_1:
+        case Memory::Size::Bit1:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x02) | ((nValue & 1) << 1);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case Memory::Size::Bit_2:
+        case Memory::Size::Bit2:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x04) | ((nValue & 1) << 2);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case Memory::Size::Bit_3:
+        case Memory::Size::Bit3:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x08) | ((nValue & 1) << 3);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case Memory::Size::Bit_4:
+        case Memory::Size::Bit4:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x10) | ((nValue & 1) << 4);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case Memory::Size::Bit_5:
+        case Memory::Size::Bit5:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x20) | ((nValue & 1) << 5);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case Memory::Size::Bit_6:
+        case Memory::Size::Bit6:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x40) | ((nValue & 1) << 6);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case Memory::Size::Bit_7:
+        case Memory::Size::Bit7:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x80) | ((nValue & 1) << 7);
             WriteMemory(nAddress, u.u8, 1);
             break;
 
-        case Memory::Size::Nibble_Lower:
+        case Memory::Size::NibbleLower:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x0F) | (nValue & 0x0F);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case Memory::Size::Nibble_Upper:
+        case Memory::Size::NibbleUpper:
             u.u32 = (ReadMemoryByte(nAddress) & ~0xF0) | ((nValue & 0x0F) << 4);
             WriteMemory(nAddress, u.u8, 1);
             break;

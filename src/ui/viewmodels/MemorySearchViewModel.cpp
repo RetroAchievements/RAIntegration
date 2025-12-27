@@ -162,7 +162,7 @@ MemorySearchViewModel::MemorySearchViewModel()
 
     // explicitly set the Memory::Size to some non-selectable value so the first search will
     // trigger a PropertyChanged event.
-    SetValue(ResultMemSizeProperty, ra::etoi(ra::data::Memory::Size::Bit_0));
+    SetValue(ResultMemSizeProperty, ra::etoi(ra::data::Memory::Size::Bit0));
 }
 
 void MemorySearchViewModel::InitializeNotifyTargets()
@@ -878,12 +878,12 @@ void MemorySearchViewModel::UpdateResults()
             auto sAddress = ra::ByteAddressToString(pResult.nAddress);
             switch (pResult.nSize)
             {
-                case ra::data::Memory::Size::Nibble_Lower:
+                case ra::data::Memory::Size::NibbleLower:
                     sAddress.push_back('L');
                     pRow->nAddress <<= 1;
                     break;
 
-                case ra::data::Memory::Size::Nibble_Upper:
+                case ra::data::Memory::Size::NibbleUpper:
                     sAddress.push_back('U');
                     pRow->nAddress = (pRow->nAddress << 1) | 1;
                     break;
@@ -955,10 +955,10 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
     ra::data::ByteAddress nAddress = vmResult.nAddress;
     auto nSize = pCompareResults.GetSize();
 
-    if (nSize == ra::data::Memory::Size::Nibble_Lower)
+    if (nSize == ra::data::Memory::Size::NibbleLower)
     {
         if (nAddress & 1)
-            nSize = ra::data::Memory::Size::Nibble_Upper;
+            nSize = ra::data::Memory::Size::NibbleUpper;
         nAddress >>= 1;
     }
 
@@ -1125,14 +1125,14 @@ void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool b
     // ignore IsSelectedProperty events - we'll update the lists directly
     m_vResults.RemoveNotifyTarget(*this);
 
-    if (pCurrentResults.GetSize() == ra::data::Memory::Size::Nibble_Lower)
+    if (pCurrentResults.GetSize() == ra::data::Memory::Size::NibbleLower)
     {
         for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
         {
             if (pCurrentResults.GetMatchingAddress(nIndex, pResult))
             {
                 auto nAddress = pResult.nAddress << 1;
-                if (pResult.nSize == ra::data::Memory::Size::Nibble_Upper)
+                if (pResult.nSize == ra::data::Memory::Size::NibbleUpper)
                     nAddress |= 1;
 
                 if (bValue)
@@ -1175,12 +1175,12 @@ void MemorySearchViewModel::ExcludeSelected()
     ra::services::SearchResult pItem {};
 
     const auto nSize = pCurrentResults.pResults.GetSize();
-    if (nSize == ra::data::Memory::Size::Nibble_Lower)
+    if (nSize == ra::data::Memory::Size::NibbleLower)
     {
         for (const auto nAddress : m_vSelectedAddresses)
         {
             pItem.nAddress = nAddress >> 1;
-            pItem.nSize = (nAddress & 1) ? ra::data::Memory::Size::Nibble_Upper : ra::data::Memory::Size::Nibble_Lower;
+            pItem.nSize = (nAddress & 1) ? ra::data::Memory::Size::NibbleUpper : ra::data::Memory::Size::NibbleLower;
             pResult->pResults.ExcludeResult(pItem);
         }
     }
@@ -1238,9 +1238,9 @@ void MemorySearchViewModel::BookmarkSelected()
     {
         switch (nSize)
         {
-            case ra::data::Memory::Size::Nibble_Lower:
-            case ra::data::Memory::Size::Nibble_Upper:
-                vmBookmarks.AddBookmark(nAddress >> 1, (nAddress & 1) ? ra::data::Memory::Size::Nibble_Upper : ra::data::Memory::Size::Nibble_Lower);
+            case ra::data::Memory::Size::NibbleLower:
+            case ra::data::Memory::Size::NibbleUpper:
+                vmBookmarks.AddBookmark(nAddress >> 1, (nAddress & 1) ? ra::data::Memory::Size::NibbleUpper : ra::data::Memory::Size::NibbleLower);
                 break;
 
             default:
@@ -1322,14 +1322,14 @@ void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::fu
 
     sFile.WriteLine("Address,Value,PreviousValue,InitialValue");
 
-    if (pCompareResults.GetSize() == ra::data::Memory::Size::Nibble_Lower)
+    if (pCompareResults.GetSize() == ra::data::Memory::Size::NibbleLower)
     {
         for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < pResults.MatchingAddressCount(); ++nIndex)
         {
             if (!pResults.GetMatchingAddress(nIndex, pResult))
                 continue;
 
-            const auto nSize = (pResult.nAddress & 1) ? ra::data::Memory::Size::Nibble_Upper : ra::data::Memory::Size::Nibble_Lower;
+            const auto nSize = (pResult.nAddress & 1) ? ra::data::Memory::Size::NibbleUpper : ra::data::Memory::Size::NibbleLower;
             const auto nAddress = pResult.nAddress >> 1;
 
             sFile.WriteLine(ra::StringPrintf(L"%s%s,%s,%s,%s",

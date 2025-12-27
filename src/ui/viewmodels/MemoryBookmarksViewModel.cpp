@@ -248,16 +248,16 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                         // this enumerates the mapping for backwards compatibility.
                         switch (bookmark["Size"].GetInt())
                         {
-                            case 0: nSize = ra::data::Memory::Size::Bit_0; break;
-                            case 1: nSize = ra::data::Memory::Size::Bit_1; break;
-                            case 2: nSize = ra::data::Memory::Size::Bit_2; break;
-                            case 3: nSize = ra::data::Memory::Size::Bit_3; break;
-                            case 4: nSize = ra::data::Memory::Size::Bit_4; break;
-                            case 5: nSize = ra::data::Memory::Size::Bit_5; break;
-                            case 6: nSize = ra::data::Memory::Size::Bit_6; break;
-                            case 7: nSize = ra::data::Memory::Size::Bit_7; break;
-                            case 8: nSize = ra::data::Memory::Size::Nibble_Lower; break;
-                            case 9: nSize = ra::data::Memory::Size::Nibble_Upper; break;
+                            case 0: nSize = ra::data::Memory::Size::Bit0; break;
+                            case 1: nSize = ra::data::Memory::Size::Bit1; break;
+                            case 2: nSize = ra::data::Memory::Size::Bit2; break;
+                            case 3: nSize = ra::data::Memory::Size::Bit3; break;
+                            case 4: nSize = ra::data::Memory::Size::Bit4; break;
+                            case 5: nSize = ra::data::Memory::Size::Bit5; break;
+                            case 6: nSize = ra::data::Memory::Size::Bit6; break;
+                            case 7: nSize = ra::data::Memory::Size::Bit7; break;
+                            case 8: nSize = ra::data::Memory::Size::NibbleLower; break;
+                            case 9: nSize = ra::data::Memory::Size::NibbleUpper; break;
                             case 10: nSize = ra::data::Memory::Size::EightBit; break;
                             case 11: nSize = ra::data::Memory::Size::SixteenBit; break;
                             case 12: nSize = ra::data::Memory::Size::TwentyFourBit; break;

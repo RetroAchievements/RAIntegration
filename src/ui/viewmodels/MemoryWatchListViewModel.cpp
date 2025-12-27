@@ -39,8 +39,8 @@ MemoryWatchListViewModel::MemoryWatchListViewModel() noexcept
     m_vSizes.Add(ra::etoi(ra::data::Memory::Size::TwentyFourBitBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::TwentyFourBitBigEndian));
     m_vSizes.Add(ra::etoi(ra::data::Memory::Size::ThirtyTwoBitBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::ThirtyTwoBitBigEndian));
     m_vSizes.Add(ra::etoi(ra::data::Memory::Size::BitCount), ra::data::Memory::SizeString(ra::data::Memory::Size::BitCount));
-    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::Nibble_Lower), ra::data::Memory::SizeString(ra::data::Memory::Size::Nibble_Lower));
-    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::Nibble_Upper), ra::data::Memory::SizeString(ra::data::Memory::Size::Nibble_Upper));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::NibbleLower), ra::data::Memory::SizeString(ra::data::Memory::Size::NibbleLower));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::NibbleUpper), ra::data::Memory::SizeString(ra::data::Memory::Size::NibbleUpper));
     m_vSizes.Add(ra::etoi(ra::data::Memory::Size::Float), ra::data::Memory::SizeString(ra::data::Memory::Size::Float));
     m_vSizes.Add(ra::etoi(ra::data::Memory::Size::FloatBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::FloatBigEndian));
     m_vSizes.Add(ra::etoi(ra::data::Memory::Size::Double32), ra::data::Memory::SizeString(ra::data::Memory::Size::Double32));

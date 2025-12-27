@@ -302,32 +302,32 @@ public:
         SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, result.nSize);
         Assert::AreEqual(0x2U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Upper, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleUpper, result.nSize);
         Assert::AreEqual(0x1U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(2U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, result.nSize);
         Assert::AreEqual(0x4U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(3U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Upper, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleUpper, result.nSize);
         Assert::AreEqual(0x3U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(4U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, result.nSize);
         Assert::AreEqual(0xBU, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(5U, result));
         Assert::AreEqual(3U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Upper, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleUpper, result.nSize);
         Assert::AreEqual(0xAU, result.nValue);
     }
 
@@ -1339,17 +1339,17 @@ public:
         SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, result.nSize);
         Assert::AreEqual(4U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, result.nSize);
         Assert::AreEqual(5U, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(2U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Upper, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleUpper, result.nSize);
         Assert::AreEqual(5U, result.nValue);
     }
 
@@ -1370,7 +1370,7 @@ public:
         SearchResult result;
         Assert::IsTrue(filtered1.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Upper, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleUpper, result.nSize);
         Assert::AreEqual(1U, result.nValue);
 
         // Nibble_Upper no longer matches, but Nibble_Lower does. Neither should not be returned.
@@ -1387,7 +1387,7 @@ public:
 
         Assert::IsTrue(filtered3.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Upper, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleUpper, result.nSize);
         Assert::AreEqual(1U, result.nValue);
     }
 
@@ -1483,7 +1483,7 @@ public:
         Assert::AreEqual({ 6U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
-        SearchResult excludeResult{ 1U, 0U, ra::data::Memory::Size::Nibble_Lower };
+        SearchResult excludeResult{ 1U, 0U, ra::data::Memory::Size::NibbleLower };
         results1.ExcludeResult(excludeResult);
         Assert::AreEqual({ 6U }, results1.MatchingAddressCount());
 
@@ -1510,11 +1510,11 @@ public:
         SearchResult result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, result.nSize);
         Assert::AreEqual(0x5U, result.nValue);
 
         excludeResult.nAddress = 2;
-        excludeResult.nSize = ra::data::Memory::Size::Nibble_Upper;
+        excludeResult.nSize = ra::data::Memory::Size::NibbleUpper;
         results.ExcludeResult(excludeResult);
         Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -1525,7 +1525,7 @@ public:
 
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(2U, result.nAddress);
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, result.nSize);
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, result.nSize);
         Assert::AreEqual(0x5U, result.nValue);
     }
 
@@ -2495,16 +2495,16 @@ public:
         results1.Initialize(1U, 3U, ra::services::SearchType::FourBit);
         Assert::AreEqual({ 6U }, results1.MatchingAddressCount());
 
-        Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(0U, ra::data::Memory::Size::Nibble_Lower));
-        Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(0U, ra::data::Memory::Size::Nibble_Upper));
-        Assert::AreEqual(std::wstring(L"0x2"), results1.GetFormattedValue(1U, ra::data::Memory::Size::Nibble_Lower));
-        Assert::AreEqual(std::wstring(L"0x0"), results1.GetFormattedValue(1U, ra::data::Memory::Size::Nibble_Upper));
-        Assert::AreEqual(std::wstring(L"0x4"), results1.GetFormattedValue(2U, ra::data::Memory::Size::Nibble_Lower));
-        Assert::AreEqual(std::wstring(L"0x3"), results1.GetFormattedValue(2U, ra::data::Memory::Size::Nibble_Upper));
-        Assert::AreEqual(std::wstring(L"0xb"), results1.GetFormattedValue(3U, ra::data::Memory::Size::Nibble_Lower));
-        Assert::AreEqual(std::wstring(L"0xa"), results1.GetFormattedValue(3U, ra::data::Memory::Size::Nibble_Upper));
-        Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(4U, ra::data::Memory::Size::Nibble_Lower));
-        Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(4U, ra::data::Memory::Size::Nibble_Upper));
+        Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(0U, ra::data::Memory::Size::NibbleLower));
+        Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(0U, ra::data::Memory::Size::NibbleUpper));
+        Assert::AreEqual(std::wstring(L"0x2"), results1.GetFormattedValue(1U, ra::data::Memory::Size::NibbleLower));
+        Assert::AreEqual(std::wstring(L"0x0"), results1.GetFormattedValue(1U, ra::data::Memory::Size::NibbleUpper));
+        Assert::AreEqual(std::wstring(L"0x4"), results1.GetFormattedValue(2U, ra::data::Memory::Size::NibbleLower));
+        Assert::AreEqual(std::wstring(L"0x3"), results1.GetFormattedValue(2U, ra::data::Memory::Size::NibbleUpper));
+        Assert::AreEqual(std::wstring(L"0xb"), results1.GetFormattedValue(3U, ra::data::Memory::Size::NibbleLower));
+        Assert::AreEqual(std::wstring(L"0xa"), results1.GetFormattedValue(3U, ra::data::Memory::Size::NibbleUpper));
+        Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(4U, ra::data::Memory::Size::NibbleLower));
+        Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(4U, ra::data::Memory::Size::NibbleUpper));
     }
 
     TEST_METHOD(TestGetFormattedValueFloat)

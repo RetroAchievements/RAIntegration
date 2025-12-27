@@ -60,16 +60,16 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Inverted), L"Invert");
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Recall), L"Recall");
 
-    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit_0), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit_0));
-    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit_1), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit_1));
-    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit_2), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit_2));
-    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit_3), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit_3));
-    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit_4), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit_4));
-    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit_5), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit_5));
-    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit_6), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit_6));
-    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit_7), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit_7));
-    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Nibble_Lower), ra::data::Memory::SizeString(ra::data::Memory::Size::Nibble_Lower));
-    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Nibble_Upper), ra::data::Memory::SizeString(ra::data::Memory::Size::Nibble_Upper));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit0), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit0));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit1), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit1));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit2), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit2));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit3), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit3));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit4), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit4));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit5), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit5));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit6), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit6));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit7), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit7));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::NibbleLower), ra::data::Memory::SizeString(ra::data::Memory::Size::NibbleLower));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::NibbleUpper), ra::data::Memory::SizeString(ra::data::Memory::Size::NibbleUpper));
     m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::EightBit), ra::data::Memory::SizeString(ra::data::Memory::Size::EightBit));
     m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::SixteenBit), ra::data::Memory::SizeString(ra::data::Memory::Size::SixteenBit));
     m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::TwentyFourBit), ra::data::Memory::SizeString(ra::data::Memory::Size::TwentyFourBit));

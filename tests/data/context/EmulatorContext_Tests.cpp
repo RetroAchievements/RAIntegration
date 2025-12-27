@@ -1329,17 +1329,17 @@ public:
         emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
 
         // ReadMemory calls ReadMemoryByte for small sizes
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_0)));
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_1)));
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_2)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_3)));
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_4)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_5)));
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_6)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_7)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit0)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit1)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit2)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit3)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit4)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit5)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit6)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit7)));
         Assert::AreEqual(3, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::BitCount)));
-        Assert::AreEqual(8, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Nibble_Lower)));
-        Assert::AreEqual(10, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Nibble_Upper)));
+        Assert::AreEqual(8, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::NibbleLower)));
+        Assert::AreEqual(10, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::NibbleUpper)));
         Assert::AreEqual(0xA8, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::EightBit)));
         Assert::AreEqual(0xA8, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::SixteenBit)));
         Assert::AreEqual(0x2E37, static_cast<int>(emulator.ReadMemory(6U, Memory::Size::SixteenBit)));
@@ -1350,17 +1350,17 @@ public:
         Assert::AreEqual(0xA800372EU, emulator.ReadMemory(4U, Memory::Size::ThirtyTwoBitBigEndian));
 
         memory.at(4) ^= 0xFF; // toggle all bits and verify again
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_0)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_1)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_2)));
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_3)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_4)));
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_5)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_6)));
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_7)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit0)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit1)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit2)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit3)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit4)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit5)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit6)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit7)));
         Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::BitCount)));
-        Assert::AreEqual(7, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Nibble_Lower)));
-        Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Nibble_Upper)));
+        Assert::AreEqual(7, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::NibbleLower)));
+        Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::NibbleUpper)));
         Assert::AreEqual(0x57, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::EightBit)));
     }
 
@@ -1381,17 +1381,17 @@ public:
         emulator.AddMemoryBlockReader(0, &ReadMemoryBlock0);
 
         // ReadMemory calls ReadMemoryByte for small sizes - should call ReadMemory1 ($4 => $14)
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_0)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_1)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_2)));
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_3)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_4)));
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_5)));
-        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_6)));
-        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit_7)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit0)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit1)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit2)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit3)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit4)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit5)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit6)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Bit7)));
         Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::BitCount)));
-        Assert::AreEqual(7, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Nibble_Lower)));
-        Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::Nibble_Upper)));
+        Assert::AreEqual(7, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::NibbleLower)));
+        Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::NibbleUpper)));
         Assert::AreEqual(0x57, static_cast<int>(emulator.ReadMemory(4U, Memory::Size::EightBit)));
 
         // sizes larger than 8 bits should use the block reader ($4 => $4)
@@ -1557,7 +1557,7 @@ public:
 
         // write partial value
         nByte = 0xC4;
-        emulator.WriteMemory(6U, Memory::Size::Nibble_Lower, 0x04);
+        emulator.WriteMemory(6U, Memory::Size::NibbleLower, 0x04);
         Assert::AreEqual(6U, notify.nLastByteWrittenAddress);
         Assert::AreEqual(nByte, notify.nLastByteWritten);
     }
@@ -1623,54 +1623,54 @@ public:
         Assert::AreEqual((uint8_t)0x04, memory.at(8));
 
         memory.at(4) = 0xFF;
-        emulator.WriteMemory(4U, Memory::Size::Bit_0, 0x00);
+        emulator.WriteMemory(4U, Memory::Size::Bit0, 0x00);
         Assert::AreEqual((uint8_t)0xFE, memory.at(4));
-        emulator.WriteMemory(4U, Memory::Size::Bit_0, 0x01);
+        emulator.WriteMemory(4U, Memory::Size::Bit0, 0x01);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
 
-        emulator.WriteMemory(4U, Memory::Size::Bit_1, 0x00);
+        emulator.WriteMemory(4U, Memory::Size::Bit1, 0x00);
         Assert::AreEqual((uint8_t)0xFD, memory.at(4));
-        emulator.WriteMemory(4U, Memory::Size::Bit_1, 0x01);
+        emulator.WriteMemory(4U, Memory::Size::Bit1, 0x01);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
 
-        emulator.WriteMemory(4U, Memory::Size::Bit_2, 0x00);
+        emulator.WriteMemory(4U, Memory::Size::Bit2, 0x00);
         Assert::AreEqual((uint8_t)0xFB, memory.at(4));
-        emulator.WriteMemory(4U, Memory::Size::Bit_2, 0x01);
+        emulator.WriteMemory(4U, Memory::Size::Bit2, 0x01);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
 
-        emulator.WriteMemory(4U, Memory::Size::Bit_3, 0x00);
+        emulator.WriteMemory(4U, Memory::Size::Bit3, 0x00);
         Assert::AreEqual((uint8_t)0xF7, memory.at(4));
-        emulator.WriteMemory(4U, Memory::Size::Bit_3, 0x01);
+        emulator.WriteMemory(4U, Memory::Size::Bit3, 0x01);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
 
-        emulator.WriteMemory(4U, Memory::Size::Bit_4, 0x00);
+        emulator.WriteMemory(4U, Memory::Size::Bit4, 0x00);
         Assert::AreEqual((uint8_t)0xEF, memory.at(4));
-        emulator.WriteMemory(4U, Memory::Size::Bit_4, 0x01);
+        emulator.WriteMemory(4U, Memory::Size::Bit4, 0x01);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
 
-        emulator.WriteMemory(4U, Memory::Size::Bit_5, 0x00);
+        emulator.WriteMemory(4U, Memory::Size::Bit5, 0x00);
         Assert::AreEqual((uint8_t)0xDF, memory.at(4));
-        emulator.WriteMemory(4U, Memory::Size::Bit_5, 0x01);
+        emulator.WriteMemory(4U, Memory::Size::Bit5, 0x01);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
 
-        emulator.WriteMemory(4U, Memory::Size::Bit_6, 0x00);
+        emulator.WriteMemory(4U, Memory::Size::Bit6, 0x00);
         Assert::AreEqual((uint8_t)0xBF, memory.at(4));
-        emulator.WriteMemory(4U, Memory::Size::Bit_6, 0x01);
+        emulator.WriteMemory(4U, Memory::Size::Bit6, 0x01);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
 
-        emulator.WriteMemory(4U, Memory::Size::Bit_7, 0x00);
+        emulator.WriteMemory(4U, Memory::Size::Bit7, 0x00);
         Assert::AreEqual((uint8_t)0x7F, memory.at(4));
-        emulator.WriteMemory(4U, Memory::Size::Bit_7, 0x01);
+        emulator.WriteMemory(4U, Memory::Size::Bit7, 0x01);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
 
-        emulator.WriteMemory(4U, Memory::Size::Nibble_Lower, 0x00);
+        emulator.WriteMemory(4U, Memory::Size::NibbleLower, 0x00);
         Assert::AreEqual((uint8_t)0xF0, memory.at(4));
-        emulator.WriteMemory(4U, Memory::Size::Nibble_Lower, 0x0F);
+        emulator.WriteMemory(4U, Memory::Size::NibbleLower, 0x0F);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
 
-        emulator.WriteMemory(4U, Memory::Size::Nibble_Upper, 0x00);
+        emulator.WriteMemory(4U, Memory::Size::NibbleUpper, 0x00);
         Assert::AreEqual((uint8_t)0x0F, memory.at(4));
-        emulator.WriteMemory(4U, Memory::Size::Nibble_Upper, 0x0F);
+        emulator.WriteMemory(4U, Memory::Size::NibbleUpper, 0x0F);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
 
         emulator.WriteMemory(4U, Memory::Size::BitCount, 0x00);

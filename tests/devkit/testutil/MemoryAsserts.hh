@@ -24,25 +24,25 @@ std::wstring ToString<ra::data::Memory::Size>(const ra::data::Memory::Size& t)
 {
     switch (t)
     {
-        case ra::data::Memory::Size::Bit_0:
+        case ra::data::Memory::Size::Bit0:
             return L"Bit_0";
-        case ra::data::Memory::Size::Bit_1:
+        case ra::data::Memory::Size::Bit1:
             return L"Bit_1";
-        case ra::data::Memory::Size::Bit_2:
+        case ra::data::Memory::Size::Bit2:
             return L"Bit_2";
-        case ra::data::Memory::Size::Bit_3:
+        case ra::data::Memory::Size::Bit3:
             return L"Bit_3";
-        case ra::data::Memory::Size::Bit_4:
+        case ra::data::Memory::Size::Bit4:
             return L"Bit_4";
-        case ra::data::Memory::Size::Bit_5:
+        case ra::data::Memory::Size::Bit5:
             return L"Bit_5";
-        case ra::data::Memory::Size::Bit_6:
+        case ra::data::Memory::Size::Bit6:
             return L"Bit_6";
-        case ra::data::Memory::Size::Bit_7:
+        case ra::data::Memory::Size::Bit7:
             return L"Bit_7";
-        case ra::data::Memory::Size::Nibble_Lower:
+        case ra::data::Memory::Size::NibbleLower:
             return L"Nibble_Lower";
-        case ra::data::Memory::Size::Nibble_Upper:
+        case ra::data::Memory::Size::NibbleUpper:
             return L"Nibble_Upper";
         case ra::data::Memory::Size::EightBit:
             return L"EightBit";

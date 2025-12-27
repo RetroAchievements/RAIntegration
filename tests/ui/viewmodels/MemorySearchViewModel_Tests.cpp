@@ -153,7 +153,7 @@ public:
         MemorySearchViewModelHarness search;
 
         Assert::AreEqual({ 0U }, search.Results().Count());
-        Assert::AreEqual(ra::data::Memory::Size::Bit_0, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::Bit0, search.ResultMemSize());
         Assert::AreEqual({ 0U }, search.GetResultCount());
 
         Assert::AreEqual(std::wstring(L""), search.GetFilterRange());
@@ -284,7 +284,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 64U }, search.GetResultCount());
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"New 4-bit Search"), search.GetFilterSummary());
         Assert::IsTrue(search.CanFilter());
         Assert::IsFalse(search.CanGoToPreviousPage());
@@ -880,7 +880,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 3U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"3"), search.GetResultCountText());
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= Last +2"), search.GetFilterSummary());
 
         Assert::AreEqual({ 3U }, search.Results().Count());
@@ -904,7 +904,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 64U }, search.GetResultCount());
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, search.ResultMemSize());
 
         Assert::IsTrue(search.Results().Count() > 3);
         AssertRow(search, 0, 0U, L"0x0000L", L"0x0");
@@ -1184,7 +1184,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 18U }, search.GetResultCount());
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, search.ResultMemSize());
 
         Assert::IsFalse(search.HasSelection());
         Assert::AreEqual(0U, search.Results().GetItemAt(0)->nAddress); // 0L
@@ -1303,7 +1303,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 5U }, search.GetResultCount());
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, search.ResultMemSize());
 
         Assert::AreEqual({ 5U }, search.Results().Count());
         search.Results().GetItemAt(2)->SetSelected(true);
@@ -1316,8 +1316,8 @@ public:
         Assert::AreEqual({ 2U }, pBookmarks.Items().Count());
         Assert::AreEqual({ 30U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
         Assert::AreEqual({ 30U }, pBookmarks.Items().GetItemAt(1)->GetAddress());
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Lower, pBookmarks.Items().GetItemAt(0)->GetSize());
-        Assert::AreEqual(ra::data::Memory::Size::Nibble_Upper, pBookmarks.Items().GetItemAt(1)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleUpper, pBookmarks.Items().GetItemAt(1)->GetSize());
 
         Assert::IsTrue(search.Results().GetItemAt(2)->IsSelected());
         Assert::IsTrue(search.Results().GetItemAt(3)->IsSelected());

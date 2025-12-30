@@ -48,10 +48,10 @@ private:
         {
             const auto* pClause = Clauses().GetItemAt(nIndex);
             Assert::IsNotNull(pClause);
-            Assert::AreEqual(sIndices, pClause->GetIndices());
-            Assert::AreEqual(sReference, pClause->GetReference());
-            Assert::AreEqual(sOperation, pClause->GetOperation());
-            Assert::AreEqual(sTarget, pClause->GetTarget());
+            Assert::AreEqual(sIndices, pClause->GetIndices(), L"Indices differ");
+            Assert::AreEqual(sReference, pClause->GetReference(), L"Reference differs");
+            Assert::AreEqual(sOperation, pClause->GetOperation(), L"Operation differs");
+            Assert::AreEqual(sTarget, pClause->GetTarget(), L"Target differs");
         }
 
     private:
@@ -128,6 +128,46 @@ public:
         summary.AssertClause(1, L"2", L"Difficulty", L"increased", L"");
         summary.AssertClause(2, L"3", L"Difficulty", L"decreased", L"");
         summary.AssertClause(3, L"4", L"Difficulty", L"increased", L"");
+    }
+
+    TEST_METHOD(TestChangedTo)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xH1234=5_d0xH1234!=5");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"changed to", L"5");
+    }
+
+    TEST_METHOD(TestChangedFrom)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xH1234!=5_d0xH1234=5");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"changed from", L"5");
+    }
+
+    TEST_METHOD(TestIncreasedTo)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xH1234=5_d0xH1234<5");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"increased to", L"5");
+    }
+
+    TEST_METHOD(TestDecreasedTo)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xH1234=5_d0xH1234>5");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"decreased to", L"5");
     }
 };
 

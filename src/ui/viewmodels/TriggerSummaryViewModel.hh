@@ -45,11 +45,20 @@ public:
         void SetTarget(const std::wstring& sValue) { SetValue(TargetProperty, sValue); }
 
         std::wstring GetTooltip(const StringModelProperty& nProperty) const;
+
+        const rc_condition_t* pCondition = nullptr;
+        enum TriggerClauseType : int;
+        TriggerClauseType nType = ra::itoe<TriggerClauseType>(0);
     };
 
     const ViewModelCollection<TriggerClauseViewModel>& Clauses() const { return m_vClauses; }
 
 private:
+    bool MergeClauses(
+        TriggerSummaryViewModel::TriggerClauseViewModel& pClause1,
+        TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
+        gsl::index nIndex1, gsl::index nIndex2);
+
     ViewModelCollection<TriggerClauseViewModel> m_vClauses;
 };
 

@@ -20,6 +20,105 @@ const StringModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::Refer
 const StringModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::OperationProperty("TriggerClauseViewModel", "Operation", L"is");
 const StringModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::TargetProperty("TriggerClauseViewModel", "Target", L"0");
 
+enum TriggerSummaryViewModel::TriggerClauseViewModel::TriggerClauseType : int
+{
+    None = 0,
+    Is,
+    IsNot,
+    Comparison,
+    AlwaysTrue,
+    AlwaysFalse,
+    Changed,
+    HasntChanged,
+    ChangedTo,
+    ChangedFrom,
+};
+
+using TriggerClauseType = TriggerSummaryViewModel::TriggerClauseViewModel::TriggerClauseType;
+
+static bool IsSameMemoryReference(const rc_operand_t& pOperand1, const rc_operand_t& pOperand2)
+{
+    switch (pOperand1.type) {
+        case RC_OPERAND_CONST:
+            return (pOperand1.value.num == pOperand2.value.num);
+        case RC_OPERAND_FP:
+            return (pOperand1.value.dbl == pOperand2.value.dbl);
+        case RC_OPERAND_RECALL:
+            return (pOperand1.value.memref == pOperand2.value.memref);
+        default:
+            break;
+    }
+
+    if (pOperand1.size != pOperand2.size)
+        return false;
+
+    return (pOperand1.value.memref == pOperand2.value.memref);
+}
+
+bool TriggerSummaryViewModel::MergeClauses(
+    TriggerSummaryViewModel::TriggerClauseViewModel& pClause1,
+    TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
+    gsl::index nIndex1, gsl::index nIndex2)
+{
+    if (pClause1.nType == TriggerClauseType::Is)
+    {
+        if (pClause2.nType == TriggerClauseType::IsNot)
+        {
+            if (IsSameMemoryReference(pClause1.pCondition->operand2, pClause2.pCondition->operand2))
+            {
+                if (pClause1.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
+                {
+                    // a == x && da != x
+                    pClause1.SetOperation(L"changed to");
+                    pClause1.nType = TriggerClauseType::ChangedTo;
+                    m_vClauses.RemoveAt(nIndex2);
+                }
+                else
+                {
+                    // da == x && a != x
+                    pClause2.SetOperation(L"changed from");
+                    pClause2.nType = TriggerClauseType::ChangedFrom;
+                    m_vClauses.RemoveAt(nIndex1);
+                }
+                return true;
+            }
+
+            // a == x && a != y  ~>  a == x
+            m_vClauses.RemoveAt(nIndex2);
+            return true;
+        }
+        else if (pClause2.nType == TriggerClauseType::Comparison &&
+                 pClause1.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
+        {
+            if (IsSameMemoryReference(pClause1.pCondition->operand2, pClause2.pCondition->operand2))
+            {
+                if (pClause2.pCondition->oper == RC_OPERATOR_LT)
+                {
+                    // a == x && da < x
+                    pClause1.SetOperation(L"increased to");
+                    pClause1.nType = TriggerClauseType::ChangedTo;
+                    m_vClauses.RemoveAt(nIndex2);
+                    return true;
+                }
+                else if (pClause2.pCondition->oper == RC_OPERATOR_GT)
+                {
+                    // a == x && da > x
+                    pClause1.SetOperation(L"decreased to");
+                    pClause1.nType = TriggerClauseType::ChangedTo;
+                    m_vClauses.RemoveAt(nIndex2);
+                    return true;
+                }
+            }
+        }
+    }
+    else if (pClause2.nType == TriggerClauseType::Is)
+    {
+        return MergeClauses(pClause2, pClause1, nIndex2, nIndex1);
+    }
+
+    return false;
+}
+
 static constexpr bool IsValueCharacter(wchar_t c)
 {
     if (c >= '0' && c <= '9')
@@ -59,16 +158,39 @@ static std::wstring EnumValueFromText(std::wstring_view sEnumText)
     return std::wstring(sEnumDescription);
 }
 
-static std::wstring OperatorToString(uint8_t oper)
+static void HandleOperation(TriggerSummaryViewModel::TriggerClauseViewModel& pClause, uint8_t nOperation)
 {
-    switch (oper)
+    switch (nOperation)
     {
-        case RC_OPERATOR_EQ: return L"is";
-        case RC_OPERATOR_NE: return L"is not";
-        case RC_OPERATOR_GE: return L"is at least";
-        case RC_OPERATOR_GT: return L"is greater than";
-        case RC_OPERATOR_LE: return L"is at most";
-        case RC_OPERATOR_LT: return L"is less than";
+        case RC_OPERATOR_EQ:
+            pClause.SetOperation(L"is");
+            pClause.nType = TriggerClauseType::Is;
+            break;
+
+        case RC_OPERATOR_NE:
+            pClause.SetOperation(L"is not");
+            pClause.nType = TriggerClauseType::IsNot;
+            break;
+
+        case RC_OPERATOR_GE:
+            pClause.SetOperation(L"is at least");
+            pClause.nType = TriggerClauseType::Comparison;
+            break;
+
+        case RC_OPERATOR_GT:
+            pClause.SetOperation(L"is greater than");
+            pClause.nType = TriggerClauseType::Comparison;
+            break;
+
+        case RC_OPERATOR_LE:
+            pClause.SetOperation(L"is at most");
+            pClause.nType = TriggerClauseType::Comparison;
+            break;
+
+        case RC_OPERATOR_LT:
+            pClause.SetOperation(L"is less than");
+            pClause.nType = TriggerClauseType::Comparison;
+            break;
     }
 }
 
@@ -98,13 +220,17 @@ static void HandleCompareMemoryReferenceToSelf(TriggerSummaryViewModel::TriggerC
             case RC_OPERATOR_EQ:
             case RC_OPERATOR_GE:
             case RC_OPERATOR_LE:
-                pClause.SetOperation(L"unimportant"); // delta = delta  ~>  always true
+                // delta = delta  ~>  always true
+                pClause.SetOperation(L"unimportant");
+                pClause.nType = TriggerClauseType::AlwaysTrue;
                 break;
 
             case RC_OPERATOR_NE:
             case RC_OPERATOR_GT:
             case RC_OPERATOR_LT:
-                pClause.SetOperation(L"invalid"); // delta != delta  ~>  always false
+                // delta != delta  ~>  always false
+                pClause.SetOperation(L"invalid");
+                pClause.nType = TriggerClauseType::AlwaysFalse;
                 break;
         }
     }
@@ -114,6 +240,7 @@ static void HandleCompareMemoryReferenceToSelf(TriggerSummaryViewModel::TriggerC
         {
             case RC_OPERATOR_EQ:
                 pClause.SetOperation(L"hasn't changed");
+                pClause.nType = TriggerClauseType::HasntChanged;
                 break;
 
             case RC_OPERATOR_NE:
@@ -124,24 +251,28 @@ static void HandleCompareMemoryReferenceToSelf(TriggerSummaryViewModel::TriggerC
                 pClause.SetOperation(pCondition.operand1.memref_access_type == RC_OPERAND_ADDRESS
                     ? L"decreased"   // val < delta
                     : L"increased"); // delta < val
+                pClause.nType = TriggerClauseType::Changed;
                 break;
 
             case RC_OPERATOR_GT:
                 pClause.SetOperation(pCondition.operand1.memref_access_type == RC_OPERAND_ADDRESS
                     ? L"increased"   // val > delta
                     : L"decreased"); // delta > val
+                pClause.nType = TriggerClauseType::Changed;
                 break;
 
             case RC_OPERATOR_LE:
                 pClause.SetOperation(pCondition.operand1.memref_access_type == RC_OPERAND_ADDRESS
                     ? L"did not increase"   // val <= delta
                     : L"did not decrease"); // delta <= val
+                pClause.nType = TriggerClauseType::Changed;
                 break;
 
             case RC_OPERATOR_GE:
                 pClause.SetOperation(pCondition.operand1.memref_access_type == RC_OPERAND_ADDRESS
                     ? L"did not decrease"   // val >= delta
                     : L"did not increase"); // delta >= val
+                pClause.nType = TriggerClauseType::Changed;
                 break;
         }
     }
@@ -182,6 +313,8 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             pClause.SetIndices(std::to_wstring(nFirstIndex));
         }
 
+        pClause.pCondition = pCondition;
+
         const ra::data::models::CodeNoteModel* pNote = nullptr;
         if (pCodeNotes && rc_operand_is_memref(&pCondition->operand1))
             pNote = pCodeNotes->FindCodeNoteModel(pCondition->operand1.value.memref->address);
@@ -191,7 +324,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
         else
             pClause.SetReference(OperandToString(pCondition->operand1));
 
-        pClause.SetOperation(OperatorToString(pCondition->oper));
+        HandleOperation(pClause, pCondition->oper);
 
         if (rc_operand_is_memref(&pCondition->operand2))
         {
@@ -210,7 +343,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             if (nTarget == 1 && pCondition->oper == RC_OPERATOR_LT)
             {
                 nTarget = 0;
-                pClause.SetOperation(OperatorToString(RC_OPERATOR_EQ));
+                HandleOperation(pClause, RC_OPERATOR_EQ);
             }
 
             const auto pEnumText = pNote->GetEnumText(nTarget);
@@ -220,7 +353,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
 
                 // a > 0  ~>  a != 0
                 if (nTarget == 0 && pCondition->oper == RC_OPERATOR_GT)
-                    pClause.SetOperation(OperatorToString(RC_OPERATOR_NE));
+                    HandleOperation(pClause, RC_OPERATOR_NE);
             }
             else
             {
@@ -230,6 +363,19 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
         else
         {
             pClause.SetTarget(OperandToString(pCondition->operand2));
+        }
+
+        if (rc_operand_is_memref(&pCondition->operand1))
+        {
+            for (gsl::index nIndex = 0; nIndex < m_vClauses.Count() - 1; ++nIndex)
+            {
+                auto* pOtherClause = m_vClauses.GetItemAt(nIndex);
+                if (pOtherClause && IsSameMemoryReference(pCondition->operand1, pOtherClause->pCondition->operand1))
+                {
+                    if (MergeClauses(*pOtherClause, pClause, nIndex, m_vClauses.Count() - 1))
+                        break;
+                }
+            }
         }
     }
 }

@@ -1475,6 +1475,35 @@ std::wstring_view CodeNoteModel::GetEnumText(uint32_t nValue) const
     return {};
 }
 
+std::wstring CodeNoteModel::GetSummary() const
+{
+    if (m_pPointerData != nullptr)
+        return TrimSize(m_sNote.substr(0, m_pPointerData->HeaderLength), false);
+
+    std::wstring_view svNote(m_sNote);
+    auto nLineEnd = svNote.find_first_of(L"\n\r");
+    if (nLineEnd != std::string::npos)
+        svNote = svNote.substr(0, nLineEnd);
+
+    if (m_nEnumState != EnumState::None)
+    {
+        const auto svValues = GetValues(svNote);
+        if (!svValues.empty())
+        {
+            auto nIndex = svNote.find(svValues);
+
+            // ignore bracket and whitespace
+            --nIndex;
+            while (nIndex > 0 && isspace(svNote.at(nIndex - 1)))
+                --nIndex;
+
+            svNote = svNote.substr(0, nIndex);
+        }
+    }
+
+    return TrimSize(std::wstring(svNote), false);
+}
+
 } // namespace models
 } // namespace data
 } // namespace ra

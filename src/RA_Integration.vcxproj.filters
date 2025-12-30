@@ -423,6 +423,9 @@
     <ClCompile Include="data\context\ConsoleContext.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\TriggerSummaryViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -1039,6 +1042,9 @@
     </ClInclude>
     <ClInclude Include="data\context\ConsoleContext.hh">
       <Filter>Data\Context</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\TriggerSummaryViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

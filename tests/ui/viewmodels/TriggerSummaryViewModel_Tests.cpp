@@ -137,7 +137,7 @@ public:
         summary.InitializeFrom("0xH1234=5_d0xH1234!=5");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
-        summary.AssertClause(0, L"1", L"World", L"changed to", L"5");
+        summary.AssertClause(0, L"1-2", L"World", L"changed to", L"5");
     }
 
     TEST_METHOD(TestChangedFrom)
@@ -147,7 +147,27 @@ public:
         summary.InitializeFrom("0xH1234!=5_d0xH1234=5");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
-        summary.AssertClause(0, L"1", L"World", L"changed from", L"5");
+        summary.AssertClause(0, L"1-2", L"World", L"changed from", L"5");
+    }
+
+    TEST_METHOD(TestBitChangedTo)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xO1234=1_d0xO1234=0");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"World", L"changed to", L"1");
+    }
+
+    TEST_METHOD(TestBitChangedToDeltaFirst)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("d0xO1234=1_0xO1234=0");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"World", L"changed to", L"0");
     }
 
     TEST_METHOD(TestIncreasedTo)
@@ -157,7 +177,7 @@ public:
         summary.InitializeFrom("0xH1234=5_d0xH1234<5");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
-        summary.AssertClause(0, L"1", L"World", L"increased to", L"5");
+        summary.AssertClause(0, L"1-2", L"World", L"increased to", L"5");
     }
 
     TEST_METHOD(TestDecreasedTo)
@@ -167,7 +187,7 @@ public:
         summary.InitializeFrom("0xH1234=5_d0xH1234>5");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
-        summary.AssertClause(0, L"1", L"World", L"decreased to", L"5");
+        summary.AssertClause(0, L"1-2", L"World", L"decreased to", L"5");
     }
 };
 

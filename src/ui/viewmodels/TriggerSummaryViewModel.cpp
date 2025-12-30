@@ -55,6 +55,102 @@ static bool IsSameMemoryReference(const rc_operand_t& pOperand1, const rc_operan
     return (pOperand1.value.memref == pOperand2.value.memref);
 }
 
+static constexpr uint32_t ParseUInt32(std::wstring_view sValue)
+{
+    uint32_t nValue = 0;
+    for (auto c : sValue)
+    {
+        nValue *= 10;
+        nValue += (c - '0');
+    }
+
+    return nValue;
+}
+
+static void ParseRanges(std::vector<std::pair<uint32_t, uint32_t>>& vRanges, const std::wstring& sIndices)
+{
+    std::wstring_view sRemaining = sIndices;
+    size_t nIndex;
+    do
+    {
+        nIndex = sRemaining.find(',');
+        const auto sRange = sRemaining.substr(0, nIndex);
+
+        const auto nIndex2 = sRange.find('-');
+        if (nIndex2 == std::wstring::npos)
+        {
+            const uint32_t nValue = ParseUInt32(sRange);
+            vRanges.push_back({ nValue, nValue });
+        }
+        else
+        {
+            const uint32_t nStart = ParseUInt32(sRange.substr(0, nIndex2));
+            const uint32_t nEnd = ParseUInt32(sRange.substr(nIndex2 + 1));
+            vRanges.push_back({ nStart, nEnd });
+        }
+    } while (nIndex < sRemaining.length());
+}
+
+static void MergeIndices(TriggerSummaryViewModel::TriggerClauseViewModel& pClause1, TriggerSummaryViewModel::TriggerClauseViewModel& pClause2)
+{
+    std::vector<std::pair<uint32_t, uint32_t>> vRanges;
+    ParseRanges(vRanges, pClause1.GetIndices());
+    ParseRanges(vRanges, pClause2.GetIndices());
+
+    std::sort(vRanges.begin(), vRanges.end(), [](const std::pair<uint32_t, uint32_t>& a, const std::pair<uint32_t, uint32_t>& b) {
+        return a.first < b.first;
+    });
+
+    uint32_t nStart = 0xFFFFFFFF;
+    uint32_t nEnd = nStart;
+
+    std::wstring sNewIndices;
+    for (const auto& pRange : vRanges)
+    {
+        if (pRange.first == nEnd + 1)
+        {
+            nEnd = pRange.second;
+        }
+        else
+        {
+            if (nStart != 0xFFFFFFFF)
+            {
+                sNewIndices.append(std::to_wstring(nStart));
+                if (nStart != nEnd)
+                {
+                    sNewIndices.push_back(L'-');
+                    sNewIndices.append(std::to_wstring(nEnd));
+                }
+
+                sNewIndices.push_back(L',');
+            }
+
+            nStart = pRange.first;
+            nEnd = pRange.second;
+        }
+    }
+
+    sNewIndices.append(std::to_wstring(nStart));
+    if (nStart != nEnd)
+    {
+        sNewIndices.push_back(L'-');
+        sNewIndices.append(std::to_wstring(nEnd));
+    }
+
+    pClause1.SetIndices(sNewIndices);
+}
+
+bool TriggerSummaryViewModel::MergeClauses(TriggerSummaryViewModel::TriggerClauseViewModel& pClause,
+    TriggerSummaryViewModel::TriggerClauseViewModel& pDiscardClause,
+    gsl::index nDiscardIndex, TriggerClauseType nNewType, const std::wstring& sNewOperation)
+{
+    pClause.SetOperation(sNewOperation);
+    pClause.nType = nNewType;
+    MergeIndices(pClause, pDiscardClause);
+    m_vClauses.RemoveAt(nDiscardIndex);
+    return true;
+}
+
 bool TriggerSummaryViewModel::MergeClauses(
     TriggerSummaryViewModel::TriggerClauseViewModel& pClause1,
     TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
@@ -69,18 +165,15 @@ bool TriggerSummaryViewModel::MergeClauses(
                 if (pClause1.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
                 {
                     // a == x && da != x
-                    pClause1.SetOperation(L"changed to");
-                    pClause1.nType = TriggerClauseType::ChangedTo;
-                    m_vClauses.RemoveAt(nIndex2);
+                    return MergeClauses(pClause1, pClause2, nIndex2, TriggerClauseType::ChangedTo, L"changed to");
                 }
-                else
+                else if (pClause2.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
                 {
                     // da == x && a != x
-                    pClause2.SetOperation(L"changed from");
-                    pClause2.nType = TriggerClauseType::ChangedFrom;
-                    m_vClauses.RemoveAt(nIndex1);
+                    return MergeClauses(pClause2, pClause1, nIndex1, TriggerClauseType::ChangedFrom, L"changed from");
                 }
-                return true;
+
+                return false;
             }
 
             // a == x && a != y  ~>  a == x
@@ -95,19 +188,35 @@ bool TriggerSummaryViewModel::MergeClauses(
                 if (pClause2.pCondition->oper == RC_OPERATOR_LT)
                 {
                     // a == x && da < x
-                    pClause1.SetOperation(L"increased to");
-                    pClause1.nType = TriggerClauseType::ChangedTo;
-                    m_vClauses.RemoveAt(nIndex2);
-                    return true;
+                    return MergeClauses(pClause1, pClause2, nIndex2, TriggerClauseType::ChangedTo, L"increased to");
                 }
                 else if (pClause2.pCondition->oper == RC_OPERATOR_GT)
                 {
                     // a == x && da > x
-                    pClause1.SetOperation(L"decreased to");
-                    pClause1.nType = TriggerClauseType::ChangedTo;
-                    m_vClauses.RemoveAt(nIndex2);
-                    return true;
+                    return MergeClauses(pClause1, pClause2, nIndex2, TriggerClauseType::ChangedTo, L"decreased to");
                 }
+            }
+        }
+        else if (pClause2.nType == TriggerClauseType::Is &&
+                 pClause1.pCondition->operand1.size >= RC_MEMSIZE_BIT_0 &&
+                 pClause1.pCondition->operand1.size <= RC_MEMSIZE_BIT_7)
+        {
+            if (pClause1.pCondition->operand2.type == RC_OPERAND_CONST &&
+                pClause2.pCondition->operand2.type == RC_OPERAND_CONST &&
+                pClause1.pCondition->operand2.value.num != pClause2.pCondition->operand2.value.num)
+            {
+                if (pClause1.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
+                {
+                    // a == n && da == ~n
+                    return MergeClauses(pClause1, pClause2, nIndex2, TriggerClauseType::ChangedTo, L"changed to");
+                }
+                else if(pClause2.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
+                {
+                    // da == ~n && a == n
+                    return MergeClauses(pClause2, pClause1, nIndex1, TriggerClauseType::ChangedTo, L"changed to");
+                }
+
+                return false;
             }
         }
     }

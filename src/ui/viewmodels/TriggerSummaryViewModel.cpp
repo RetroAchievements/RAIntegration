@@ -87,6 +87,66 @@ static std::wstring OperandToString(const rc_operand_t& pOperand)
     }
 }
 
+static void HandleCompareMemoryReferenceToSelf(TriggerSummaryViewModel::TriggerClauseViewModel& pClause, const rc_condition_t& pCondition)
+{
+    pClause.SetTarget(L"");
+
+    if (pCondition.operand1.memref_access_type == pCondition.operand2.memref_access_type)
+    {
+        switch (pCondition.oper)
+        {
+            case RC_OPERATOR_EQ:
+            case RC_OPERATOR_GE:
+            case RC_OPERATOR_LE:
+                pClause.SetOperation(L"unimportant"); // delta = delta  ~>  always true
+                break;
+
+            case RC_OPERATOR_NE:
+            case RC_OPERATOR_GT:
+            case RC_OPERATOR_LT:
+                pClause.SetOperation(L"invalid"); // delta != delta  ~>  always false
+                break;
+        }
+    }
+    else
+    {
+        switch (pCondition.oper)
+        {
+            case RC_OPERATOR_EQ:
+                pClause.SetOperation(L"hasn't changed");
+                break;
+
+            case RC_OPERATOR_NE:
+                pClause.SetOperation(L"changed");
+                break;
+
+            case RC_OPERATOR_LT:
+                pClause.SetOperation(pCondition.operand1.memref_access_type == RC_OPERAND_ADDRESS
+                    ? L"decreased"   // val < delta
+                    : L"increased"); // delta < val
+                break;
+
+            case RC_OPERATOR_GT:
+                pClause.SetOperation(pCondition.operand1.memref_access_type == RC_OPERAND_ADDRESS
+                    ? L"increased"   // val > delta
+                    : L"decreased"); // delta > val
+                break;
+
+            case RC_OPERATOR_LE:
+                pClause.SetOperation(pCondition.operand1.memref_access_type == RC_OPERAND_ADDRESS
+                    ? L"did not increase"   // val <= delta
+                    : L"did not decrease"); // delta <= val
+                break;
+
+            case RC_OPERATOR_GE:
+                pClause.SetOperation(pCondition.operand1.memref_access_type == RC_OPERAND_ADDRESS
+                    ? L"did not decrease"   // val >= delta
+                    : L"did not increase"); // delta >= val
+                break;
+        }
+    }
+}
+
 void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
 {
     uint32_t nFirstIndex = 0;
@@ -97,7 +157,6 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
     const auto* pCondition = pCondSet.conditions;
     for (; pCondition; pCondition = pCondition->next)
     {
-        const ra::data::models::CodeNoteModel* pNote = nullptr;
         auto& pClause = m_vClauses.Add();
 
         nFirstIndex = nLastIndex + 1;
@@ -123,51 +182,55 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             pClause.SetIndices(std::to_wstring(nFirstIndex));
         }
 
+        const ra::data::models::CodeNoteModel* pNote = nullptr;
         if (pCodeNotes && rc_operand_is_memref(&pCondition->operand1))
-        {
             pNote = pCodeNotes->FindCodeNoteModel(pCondition->operand1.value.memref->address);
-            if (pNote)
+
+        if (pNote)
+            pClause.SetReference(pNote->GetSummary());
+        else
+            pClause.SetReference(OperandToString(pCondition->operand1));
+
+        pClause.SetOperation(OperatorToString(pCondition->oper));
+
+        if (rc_operand_is_memref(&pCondition->operand2))
+        {
+            if (pCondition->operand1.value.memref == pCondition->operand2.value.memref)
             {
-                pClause.SetReference(pNote->GetSummary());
-                pClause.SetOperation(OperatorToString(pCondition->oper));
-
-                if (rc_operand_is_memref(&pCondition->operand2))
-                {
-
-                }
-                else
-                {
-                    auto nTarget = pCondition->operand2.value.num;
-
-                    // a < 1  ~>  a == 0
-                    if (nTarget == 1 && pCondition->oper == RC_OPERATOR_LT)
-                    {
-                        nTarget = 0;
-                        pClause.SetOperation(OperatorToString(RC_OPERATOR_EQ));
-                    }
-
-                    const auto pEnumText = pNote->GetEnumText(nTarget);
-                    if (!pEnumText.empty())
-                    {
-                        pClause.SetTarget(EnumValueFromText(pEnumText));
-
-                        // a > 0  ~>  a != 0
-                        if (nTarget == 0 && pCondition->oper == RC_OPERATOR_GT)
-                            pClause.SetOperation(OperatorToString(RC_OPERATOR_NE));
-                    }
-                    else
-                    {
-                        pClause.SetTarget(std::to_wstring(nTarget));
-                    }
-                }
-
+                // comparing value to itself
+                HandleCompareMemoryReferenceToSelf(pClause, *pCondition);
                 continue;
             }
         }
+        else if (pNote)
+        {
+            auto nTarget = pCondition->operand2.value.num;
 
-        pClause.SetReference(OperandToString(pCondition->operand1));
-        pClause.SetOperation(OperatorToString(pCondition->oper));
-        pClause.SetTarget(OperandToString(pCondition->operand2));
+            // a < 1  ~>  a == 0
+            if (nTarget == 1 && pCondition->oper == RC_OPERATOR_LT)
+            {
+                nTarget = 0;
+                pClause.SetOperation(OperatorToString(RC_OPERATOR_EQ));
+            }
+
+            const auto pEnumText = pNote->GetEnumText(nTarget);
+            if (!pEnumText.empty())
+            {
+                pClause.SetTarget(EnumValueFromText(pEnumText));
+
+                // a > 0  ~>  a != 0
+                if (nTarget == 0 && pCondition->oper == RC_OPERATOR_GT)
+                    pClause.SetOperation(OperatorToString(RC_OPERATOR_NE));
+            }
+            else
+            {
+                pClause.SetTarget(std::to_wstring(nTarget));
+            }
+        }
+        else
+        {
+            pClause.SetTarget(OperandToString(pCondition->operand2));
+        }
     }
 }
 

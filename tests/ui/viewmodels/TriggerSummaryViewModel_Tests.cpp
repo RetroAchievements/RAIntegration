@@ -116,6 +116,19 @@ public:
         summary.AssertClause(0, L"1", L"Character", L"is", L"0");
         summary.AssertClause(1, L"2", L"Difficulty", L"is", L"Easy"); // <1 converted to ==0
     }
+
+    TEST_METHOD(TestMemoryReferenceDeltaSelf)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetCodeNote({ 0x2345U }, L"Difficulty\r\n0=Easy\r\n1=Normal\r\n2=Hard\r\n");
+        summary.InitializeFrom("0xH1234!=d0xH1234_0x 2345>d0x 2345_0x 2345<d0x 2345_d0x 2345<0x 2345");
+
+        Assert::AreEqual({ 4U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"0x1234", L"changed", L"");
+        summary.AssertClause(1, L"2", L"Difficulty", L"increased", L"");
+        summary.AssertClause(2, L"3", L"Difficulty", L"decreased", L"");
+        summary.AssertClause(3, L"4", L"Difficulty", L"increased", L"");
+    }
 };
 
 } // namespace tests

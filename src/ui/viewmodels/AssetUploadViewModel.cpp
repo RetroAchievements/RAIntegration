@@ -111,7 +111,7 @@ void AssetUploadViewModel::QueueRichPresence(ra::data::models::RichPresenceModel
 
 void AssetUploadViewModel::QueueCodeNotes(ra::data::models::CodeNotesModel& pNotes)
 {
-    pNotes.EnumerateModifiedCodeNotes([this, pNotes = &pNotes](ra::ByteAddress nAddress)
+    pNotes.EnumerateModifiedCodeNotes([this, pNotes = &pNotes](ra::data::ByteAddress nAddress)
     {
         QueueCodeNote(*pNotes, nAddress);
         return true;
@@ -123,7 +123,7 @@ static std::wstring ShortenNote(const std::wstring& sNote)
     return sNote.length() > 256 ? (sNote.substr(0, 253) + L"...") : sNote;
 }
 
-void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::ByteAddress nAddress)
+void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::data::ByteAddress nAddress)
 {
     const auto* pOriginalAuthor = pNotes.GetServerCodeNoteAuthor(nAddress);
     if (pOriginalAuthor != nullptr && !pOriginalAuthor->empty())
@@ -448,7 +448,7 @@ void AssetUploadViewModel::UploadRichPresence(ra::data::models::RichPresenceMode
     }
 }
 
-void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::ByteAddress nAddress)
+void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::data::ByteAddress nAddress)
 {
     std::string sErrorMessage;
     UploadState nState = UploadState::Failed;

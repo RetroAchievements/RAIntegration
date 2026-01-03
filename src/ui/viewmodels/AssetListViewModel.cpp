@@ -141,7 +141,7 @@ void AssetListViewModel::OnActiveGameChanged()
     ApplyFilter();
 }
 
-void AssetListViewModel::OnCodeNoteChanged(ra::ByteAddress, const std::wstring&)
+void AssetListViewModel::OnCodeNoteChanged(ra::data::ByteAddress, const std::wstring&)
 {
     RevalidateNoteAssetValidationWarnings();
 }

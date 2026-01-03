@@ -22,38 +22,38 @@ public:
 
     const std::string& GetAuthor() const noexcept { return m_sAuthor; }
     const std::wstring& GetNote() const noexcept { return m_sNote; }
-    const ra::ByteAddress GetAddress() const noexcept { return m_nAddress; }
+    const ra::data::ByteAddress GetAddress() const noexcept { return m_nAddress; }
     const unsigned int GetBytes() const noexcept { return m_nBytes; }
-    const MemSize GetMemSize() const noexcept { return m_nMemSize; }
-    const MemFormat GetDefaultMemFormat() const noexcept { return m_nMemFormat; }
+    const Memory::Size GetMemSize() const noexcept { return m_nMemSize; }
+    const Memory::Format GetDefaultMemFormat() const noexcept { return m_nMemFormat; }
     std::wstring_view GetEnumText(uint32_t nValue) const;
 
     void SetAuthor(const std::string& sAuthor) { m_sAuthor = sAuthor; }
-    void SetAddress(ra::ByteAddress nAddress) noexcept { m_nAddress = nAddress; }
-    void SetMemSize(MemSize nMemSize) noexcept { m_nMemSize = nMemSize; }
+    void SetAddress(ra::data::ByteAddress nAddress) noexcept { m_nAddress = nAddress; }
+    void SetMemSize(Memory::Size nMemSize) noexcept { m_nMemSize = nMemSize; }
     void SetNote(const std::wstring& sNote, bool bImpliedPointer = false);
 
     bool IsPointer() const noexcept { return m_pPointerData != nullptr; }
     std::wstring GetPointerDescription() const;
-    ra::ByteAddress GetPointerAddress() const noexcept;
+    ra::data::ByteAddress GetPointerAddress() const noexcept;
     bool HasRawPointerValue() const noexcept;
     uint32_t GetRawPointerValue() const noexcept;
     bool HasNestedPointers() const noexcept;
     const CodeNoteModel* GetPointerNoteAtOffset(int nOffset) const;
-    std::pair<ra::ByteAddress, const CodeNoteModel*> GetPointerNoteAtAddress(ra::ByteAddress nAddress) const;
+    std::pair<ra::data::ByteAddress, const CodeNoteModel*> GetPointerNoteAtAddress(ra::data::ByteAddress nAddress) const;
 
     virtual bool GetPointerChain(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pRootNote) const;
 
-    typedef std::function<void(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const CodeNoteModel&)> NoteMovedFunction;
-    void UpdateRawPointerValue(ra::ByteAddress nAddress, const ra::data::context::EmulatorContext& pEmulatorContext, NoteMovedFunction fNoteMovedCallback);
+    typedef std::function<void(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const CodeNoteModel&)> NoteMovedFunction;
+    void UpdateRawPointerValue(ra::data::ByteAddress nAddress, const ra::data::context::EmulatorContext& pEmulatorContext, NoteMovedFunction fNoteMovedCallback);
 
-    bool GetPreviousAddress(ra::ByteAddress nBeforeAddress, ra::ByteAddress& nPreviousAddress) const;
-    bool GetNextAddress(ra::ByteAddress nAfterAddress, ra::ByteAddress& nNextAddress) const;
+    bool GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra::data::ByteAddress& nPreviousAddress) const;
+    bool GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data::ByteAddress& nNextAddress) const;
 
     std::wstring GetPrimaryNote() const;
-    void EnumeratePointerNotes(ra::ByteAddress nPointerAddress,
-                               std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
-    void EnumeratePointerNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
+    void EnumeratePointerNotes(ra::data::ByteAddress nPointerAddress,
+                               std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
+    void EnumeratePointerNotes(std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
 
     class Parser
     {
@@ -95,10 +95,10 @@ public:
 private:
     std::string m_sAuthor;
     std::wstring m_sNote;
-    ra::ByteAddress m_nAddress = 0; // address of root nodes, offset to indirect nodes
+    ra::data::ByteAddress m_nAddress = 0; // address of root nodes, offset to indirect nodes
     unsigned int m_nBytes = 1;
-    MemSize m_nMemSize = MemSize::Unknown;
-    MemFormat m_nMemFormat = MemFormat::Dec;
+    Memory::Size m_nMemSize = Memory::Size::Unknown;
+    Memory::Format m_nMemFormat = Memory::Format::Dec;
 
     enum EnumState {
         None,
@@ -116,7 +116,7 @@ private:
 
     void ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex);
     void ExtractSize(const std::wstring& sNote, bool bIsPointer);
-    static MemSize GetImpliedPointerSize();
+    static Memory::Size GetImpliedPointerSize();
     void CheckForHexEnum(size_t nStartIndex);
 };
 

@@ -61,7 +61,7 @@ ConsoleContext::ConsoleContext(ConsoleID nId) noexcept
     }
 }
 
-const ConsoleContext::MemoryRegion* ConsoleContext::GetMemoryRegion(ra::ByteAddress nAddress) const
+const ConsoleContext::MemoryRegion* ConsoleContext::GetMemoryRegion(ra::data::ByteAddress nAddress) const
 {
     const auto& vRegions = MemoryRegions();
     gsl::index nStart = 0;
@@ -81,7 +81,7 @@ const ConsoleContext::MemoryRegion* ConsoleContext::GetMemoryRegion(ra::ByteAddr
     return nullptr;
 }
 
-ra::ByteAddress ConsoleContext::ByteAddressFromRealAddress(ra::ByteAddress nRealAddress) const noexcept
+ra::data::ByteAddress ConsoleContext::ByteAddressFromRealAddress(ra::data::ByteAddress nRealAddress) const noexcept
 {
     for (const auto& pRegion : m_vRegions)
     {
@@ -152,7 +152,7 @@ ra::ByteAddress ConsoleContext::ByteAddressFromRealAddress(ra::ByteAddress nReal
     return 0xFFFFFFFF;
 }
 
-ra::ByteAddress ConsoleContext::RealAddressFromByteAddress(ra::ByteAddress nByteAddress) const noexcept
+ra::data::ByteAddress ConsoleContext::RealAddressFromByteAddress(ra::data::ByteAddress nByteAddress) const noexcept
 {
     for (const auto& pRegion : m_vRegions)
     {
@@ -163,7 +163,7 @@ ra::ByteAddress ConsoleContext::RealAddressFromByteAddress(ra::ByteAddress nByte
     return 0xFFFFFFFF;
 }
 
-bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMask, uint32_t* nOffset) const
+bool ConsoleContext::GetRealAddressConversion(Memory::Size* nReadSize, uint32_t* nMask, uint32_t* nOffset) const
 {
     Expects(nReadSize != nullptr);
     Expects(nMask != nullptr);
@@ -175,26 +175,26 @@ bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMas
         case ConsoleID::DSi:
         case ConsoleID::N64:
         case ConsoleID::PlayStation:
-            *nReadSize = MemSize::TwentyFourBit;
+            *nReadSize = Memory::Size::TwentyFourBit;
             *nMask = 0xFFFFFFFF;
             *nOffset = 0;
             return true;
 
         case ConsoleID::GameCube:
-            *nReadSize = MemSize::ThirtyTwoBitBigEndian;
+            *nReadSize = Memory::Size::ThirtyTwoBitBigEndian;
             *nMask = 0x01FFFFFF;
             *nOffset = 0;
             return true;
 
         case ConsoleID::WII:
-            *nReadSize = MemSize::ThirtyTwoBitBigEndian;
+            *nReadSize = Memory::Size::ThirtyTwoBitBigEndian;
             *nMask = 0x1FFFFFFF;
             *nOffset = 0;
             return true;
 
         case ConsoleID::PlayStation2:
         case ConsoleID::PSP:
-            *nReadSize = MemSize::ThirtyTwoBit;
+            *nReadSize = Memory::Size::ThirtyTwoBit;
             *nMask = 0x01FFFFFF;
             *nOffset = 0;
             return true;
@@ -206,7 +206,7 @@ bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMas
             // However, most developers who have implemented sets just do a 24-bit
             // read _and_ use a +0x8000 offset when necessary. As these offsets are
             // encoded in the code notes, we shouldn't provide an explicit offset here.
-            *nReadSize = MemSize::TwentyFourBit;
+            *nReadSize = Memory::Size::TwentyFourBit;
             *nMask = 0x00FFFFFF;
             *nOffset = 0;
             return true;
@@ -218,22 +218,22 @@ bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMas
                 {
                     if (m_nMaxAddress > 0x00FFFFFF)
                     {
-                        *nReadSize = MemSize::ThirtyTwoBit;
+                        *nReadSize = Memory::Size::ThirtyTwoBit;
                         *nMask = 0xFFFFFFFF;
                     }
                     else if (m_nMaxAddress > 0x0000FFFF)
                     {
-                        *nReadSize = MemSize::TwentyFourBit;
+                        *nReadSize = Memory::Size::TwentyFourBit;
                         *nMask = 0x00FFFFFF;
                     }
                     else if (m_nMaxAddress > 0x000000FF)
                     {
-                        *nReadSize = MemSize::SixteenBit;
+                        *nReadSize = Memory::Size::SixteenBit;
                         *nMask = 0x0000FFFF;
                     }
                     else
                     {
-                        *nReadSize = MemSize::EightBit;
+                        *nReadSize = Memory::Size::EightBit;
                         *nMask = 0x000000FF;
                     }
 
@@ -242,7 +242,7 @@ bool ConsoleContext::GetRealAddressConversion(MemSize* nReadSize, uint32_t* nMas
                 }
             }
 
-            *nReadSize = MemSize::ThirtyTwoBit;
+            *nReadSize = Memory::Size::ThirtyTwoBit;
             *nMask = 0xFFFFFFFF;
             *nOffset = 0;
             return false;

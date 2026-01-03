@@ -112,7 +112,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::HandlePauseOnChange()
     SetRowColor(ra::ui::Color(0xFFFFC0C0));
 
     auto sMessage =
-        ra::StringPrintf(L"%s %s", ra::data::MemSizeString(GetSize()), ra::ByteAddressToString(GetAddress()));
+        ra::StringPrintf(L"%s %s", ra::data::Memory::SizeString(GetSize()), ra::ByteAddressToString(GetAddress()));
 
     const auto& pDescription = GetRealNote();
     if (!pDescription.empty())
@@ -224,22 +224,22 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     {
                         switch (bookmark["Size"].GetInt())
                         {
-                            case 15: vmBookmark->SetSize(MemSize::Text); break;
+                            case 15: vmBookmark->SetSize(ra::data::Memory::Size::Text); break;
                         }
                     }
                 }
                 else
                 {
-                    MemSize nSize = MemSize::EightBit;
+                    auto nSize = ra::data::Memory::Size::EightBit;
 
                     if (bookmark.HasMember("Type"))
                     {
                         // original bookmark format used Type for the three supported sizes.
                         switch (bookmark["Type"].GetInt())
                         {
-                            case 1: nSize = MemSize::EightBit; break;
-                            case 2: nSize = MemSize::SixteenBit; break;
-                            case 3: nSize = MemSize::ThirtyTwoBit; break;
+                            case 1: nSize = ra::data::Memory::Size::EightBit; break;
+                            case 2: nSize = ra::data::Memory::Size::SixteenBit; break;
+                            case 3: nSize = ra::data::Memory::Size::ThirtyTwoBit; break;
                         }
                     }
                     else
@@ -248,22 +248,22 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                         // this enumerates the mapping for backwards compatibility.
                         switch (bookmark["Size"].GetInt())
                         {
-                            case 0: nSize = MemSize::Bit_0; break;
-                            case 1: nSize = MemSize::Bit_1; break;
-                            case 2: nSize = MemSize::Bit_2; break;
-                            case 3: nSize = MemSize::Bit_3; break;
-                            case 4: nSize = MemSize::Bit_4; break;
-                            case 5: nSize = MemSize::Bit_5; break;
-                            case 6: nSize = MemSize::Bit_6; break;
-                            case 7: nSize = MemSize::Bit_7; break;
-                            case 8: nSize = MemSize::Nibble_Lower; break;
-                            case 9: nSize = MemSize::Nibble_Upper; break;
-                            case 10: nSize = MemSize::EightBit; break;
-                            case 11: nSize = MemSize::SixteenBit; break;
-                            case 12: nSize = MemSize::TwentyFourBit; break;
-                            case 13: nSize = MemSize::ThirtyTwoBit; break;
-                            case 14: nSize = MemSize::BitCount; break;
-                            case 15: nSize = MemSize::Text; break;
+                            case 0: nSize = ra::data::Memory::Size::Bit0; break;
+                            case 1: nSize = ra::data::Memory::Size::Bit1; break;
+                            case 2: nSize = ra::data::Memory::Size::Bit2; break;
+                            case 3: nSize = ra::data::Memory::Size::Bit3; break;
+                            case 4: nSize = ra::data::Memory::Size::Bit4; break;
+                            case 5: nSize = ra::data::Memory::Size::Bit5; break;
+                            case 6: nSize = ra::data::Memory::Size::Bit6; break;
+                            case 7: nSize = ra::data::Memory::Size::Bit7; break;
+                            case 8: nSize = ra::data::Memory::Size::NibbleLower; break;
+                            case 9: nSize = ra::data::Memory::Size::NibbleUpper; break;
+                            case 10: nSize = ra::data::Memory::Size::EightBit; break;
+                            case 11: nSize = ra::data::Memory::Size::SixteenBit; break;
+                            case 12: nSize = ra::data::Memory::Size::TwentyFourBit; break;
+                            case 13: nSize = ra::data::Memory::Size::ThirtyTwoBit; break;
+                            case 14: nSize = ra::data::Memory::Size::BitCount; break;
+                            case 15: nSize = ra::data::Memory::Size::Text; break;
                         }
                     }
 
@@ -272,9 +272,9 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                 }
 
                 if (bookmark.HasMember("Decimal") && bookmark["Decimal"].GetBool())
-                    vmBookmark->SetFormat(ra::MemFormat::Dec);
+                    vmBookmark->SetFormat(ra::data::Memory::Format::Dec);
                 else
-                    vmBookmark->SetFormat(ra::MemFormat::Hex);
+                    vmBookmark->SetFormat(ra::data::Memory::Format::Hex);
 
                 if (!vmBookmark->IsIndirectAddress()) // Indirect note already called UpdateRealNote
                     vmBookmark->UpdateRealNote();
@@ -316,7 +316,7 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
         const auto nSize = vmBookmark.GetSize();
         switch (nSize)
         {
-            case MemSize::Text:
+            case ra::data::Memory::Size::Text:
                 item.AddMember("Size", 15, allocator);
                 if (vmBookmark.IsIndirectAddress())
                     item.AddMember("MemAddr", vmBookmark.GetIndirectAddress(), allocator);
@@ -339,7 +339,7 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
                 break;
         }
 
-        if (vmBookmark.GetFormat() != MemFormat::Hex)
+        if (vmBookmark.GetFormat() != ra::data::Memory::Format::Hex)
             item.AddMember("Decimal", true, allocator);
 
         if (vmBookmark.IsCustomDescription())
@@ -358,7 +358,7 @@ void MemoryBookmarksViewModel::DoFrame()
     m_vmMemoryWatchList.DoFrame();
 }
 
-bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const noexcept
+bool MemoryBookmarksViewModel::HasBookmark(ra::data::ByteAddress nAddress) const noexcept
 {
     for (const auto& pBookmark : m_vmMemoryWatchList.Items())
     {
@@ -372,7 +372,7 @@ bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const noexc
     return false;
 }
 
-bool MemoryBookmarksViewModel::HasFrozenBookmark(ra::ByteAddress nAddress) const
+bool MemoryBookmarksViewModel::HasFrozenBookmark(ra::data::ByteAddress nAddress) const
 {
     for (const auto& vmBookmark : m_vmMemoryWatchList.Items())
     {
@@ -384,7 +384,7 @@ bool MemoryBookmarksViewModel::HasFrozenBookmark(ra::ByteAddress nAddress) const
     return false;
 }
 
-void MemoryBookmarksViewModel::AddBookmark(ra::ByteAddress nAddress, MemSize nSize)
+void MemoryBookmarksViewModel::AddBookmark(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize)
 {
     auto vmBookmark = std::make_unique<MemoryBookmarkViewModel>();
     vmBookmark->BeginInitialization();
@@ -413,7 +413,7 @@ void MemoryBookmarksViewModel::AddBookmark(const std::string& sSerialized)
 
 void MemoryBookmarksViewModel::InitializeBookmark(MemoryWatchViewModel& vmBookmark)
 {
-    vmBookmark.SetFormat(MemFormat::Unknown);
+    vmBookmark.SetFormat(ra::data::Memory::Format::Unknown);
 
     vmBookmark.UpdateRealNote();
 }
@@ -432,7 +432,7 @@ void MemoryBookmarksViewModel::InitializeBookmark(MemoryWatchViewModel& vmBookma
         if (rc_parse_memref(&memaddr, &size, &address) == RC_OK)
         {
             vmBookmark.SetAddress(address);
-            vmBookmark.SetSize(ra::data::models::TriggerValidation::MapRcheevosMemSize(size));
+            vmBookmark.SetSize(ra::data::Memory::SizeFromRcheevosSize(size));
         }
 
         return;

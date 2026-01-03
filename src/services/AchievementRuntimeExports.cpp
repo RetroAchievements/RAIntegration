@@ -70,7 +70,7 @@ public:
 private:
     typedef struct MemoryBlockWrapper
     {
-        ra::ByteAddress nOffset;
+        ra::data::ByteAddress nOffset;
         ra::data::context::EmulatorContext::MemoryReadFunction* fReadByte;
         ra::data::context::EmulatorContext::MemoryWriteFunction* fWriteByte;
         ra::data::context::EmulatorContext::MemoryReadBlockFunction* fReadBlock;

@@ -11,7 +11,7 @@ namespace search {
 class ThirtyTwoBitSearchImpl : public SearchImpl
 {
 public:
-    MemSize GetMemSize() const noexcept override { return MemSize::ThirtyTwoBit; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::ThirtyTwoBit; }
 
     unsigned int GetPadding() const noexcept override { return 3U; }
 
@@ -26,7 +26,7 @@ public:
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint32_t, true>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nConstantValue, vMatches);
@@ -34,7 +34,7 @@ protected:
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint32_t, false>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);

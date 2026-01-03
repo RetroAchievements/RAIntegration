@@ -38,8 +38,8 @@ public:
 
     static const BoolModelProperty HasSourceSizeProperty;
     static const IntModelProperty SourceSizeProperty;
-    MemSize GetSourceSize() const { return ra::itoe<MemSize>(GetValue(SourceSizeProperty)); }
-    void SetSourceSize(MemSize nValue) { SetValue(SourceSizeProperty, ra::etoi(nValue)); }
+    ra::data::Memory::Size GetSourceSize() const { return ra::itoe<ra::data::Memory::Size>(GetValue(SourceSizeProperty)); }
+    void SetSourceSize(ra::data::Memory::Size nValue) { SetValue(SourceSizeProperty, ra::etoi(nValue)); }
 
     static const BoolModelProperty HasSourceValueProperty;
     static const StringModelProperty SourceValueProperty;
@@ -58,8 +58,8 @@ public:
 
     static const BoolModelProperty HasTargetSizeProperty;
     static const IntModelProperty TargetSizeProperty;
-    MemSize GetTargetSize() const { return ra::itoe<MemSize>(GetValue(TargetSizeProperty)); }
-    void SetTargetSize(MemSize nValue) { SetValue(TargetSizeProperty, ra::etoi(nValue)); }
+    ra::data::Memory::Size GetTargetSize() const { return ra::itoe<ra::data::Memory::Size>(GetValue(TargetSizeProperty)); }
+    void SetTargetSize(ra::data::Memory::Size nValue) { SetValue(TargetSizeProperty, ra::etoi(nValue)); }
 
     static const BoolModelProperty HasTargetValueProperty;
     static const StringModelProperty TargetValueProperty;
@@ -85,7 +85,7 @@ public:
     static const BoolModelProperty IsIndirectProperty;
     bool IsIndirect() const { return GetValue(IsIndirectProperty); }
     void SetIndirect(bool bValue) { SetValue(IsIndirectProperty, bValue); }
-    ra::ByteAddress GetIndirectAddress(ra::ByteAddress nAddress, std::wstring& sPointerChain, const ra::data::models::CodeNoteModel** pLeafNote) const;
+    ra::data::ByteAddress GetIndirectAddress(ra::data::ByteAddress nAddress, std::wstring& sPointerChain, const ra::data::models::CodeNoteModel** pLeafNote) const;
 
     static const BoolModelProperty IsSelectedProperty;
     bool IsSelected() const { return GetValue(IsSelectedProperty); }
@@ -117,14 +117,14 @@ private:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
-    void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, const std::wstring& nValue) const;
+    void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size nSize, const std::wstring& nValue) const;
 
-    std::wstring GetPotentialEnumValueTooltip(unsigned int nValue, ra::ByteAddress nCompareAddress) const;
+    std::wstring GetPotentialEnumValueTooltip(unsigned int nValue, ra::data::ByteAddress nCompareAddress) const;
     static std::wstring GetValueTooltip(unsigned int nValue);
-    std::wstring GetAddressTooltip(ra::ByteAddress nAddress, const std::wstring& sPointerChain, const ra::data::models::CodeNoteModel* pNote) const;
+    std::wstring GetAddressTooltip(ra::data::ByteAddress nAddress, const std::wstring& sPointerChain, const ra::data::models::CodeNoteModel* pNote) const;
     std::wstring GetRecallTooltip(bool bOperand2) const;
-    ra::ByteAddress GetSourceAddress() const;
-    ra::ByteAddress GetTargetAddress() const;
+    ra::data::ByteAddress GetSourceAddress() const;
+    ra::data::ByteAddress GetTargetAddress() const;
     const rc_condition_t* GetFirstCondition() const;
     const rc_condition_t* GetCondition() const;
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,

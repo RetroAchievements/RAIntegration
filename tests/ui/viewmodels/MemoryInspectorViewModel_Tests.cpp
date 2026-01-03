@@ -10,6 +10,7 @@
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
@@ -79,13 +80,13 @@ private:
 
         bool CurrentBitsVisible() const { return GetValue(CurrentBitsVisibleProperty); }
 
-        const std::wstring* FindCodeNote(ra::ByteAddress nAddress) const
+        const std::wstring* FindCodeNote(ra::data::ByteAddress nAddress) const
         {
             const auto* pCodeNotes = mockGameContext.Assets().FindCodeNotes();
             return (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
         }
 
-        void PreparePublish(ra::ByteAddress nAddress, std::wstring sNote)
+        void PreparePublish(ra::data::ByteAddress nAddress, std::wstring sNote)
         {
             mockServer.HandleRequest<ra::api::UpdateCodeNote>([this]
                 (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
@@ -115,7 +116,7 @@ private:
             Assert::AreEqual(sNote, GetCurrentAddressNote());
         }
 
-        void PreparePublishFailure(ra::ByteAddress nAddress, std::wstring sNote)
+        void PreparePublishFailure(ra::data::ByteAddress nAddress, std::wstring sNote)
         {
             mockServer.HandleRequest<ra::api::UpdateCodeNote>(
                 [this](const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse) {
@@ -143,10 +144,10 @@ private:
             Assert::AreEqual(sNote, GetCurrentAddressNote());
         }
 
-        ra::ByteAddress GetPublishedAddress() const noexcept { return m_nPublishedAddress; }
+        ra::data::ByteAddress GetPublishedAddress() const noexcept { return m_nPublishedAddress; }
 
     private:
-        ra::ByteAddress m_nPublishedAddress = 0U;
+        ra::data::ByteAddress m_nPublishedAddress = 0U;
     };
 
 
@@ -323,7 +324,7 @@ public:
         inspector.Viewer().SetAddress({ 3U });
 
         inspector.mockWindowManager.MemoryBookmarks.InitializeNotifyTargets();
-        inspector.mockWindowManager.MemoryBookmarks.AddBookmark(3, MemSize::EightBit);
+        inspector.mockWindowManager.MemoryBookmarks.AddBookmark(3, ra::data::Memory::Size::EightBit);
         auto* pNote = inspector.mockWindowManager.MemoryBookmarks.Bookmarks().Items().GetItemAt<MemoryBookmarksViewModel::MemoryBookmarkViewModel>(0);
         Expects(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"03"), pNote->GetCurrentValue());
@@ -350,19 +351,19 @@ public:
     {
         MemoryInspectorViewModelHarness inspector;
         inspector.Viewer().SetAddress({ 3U });
-        Assert::AreEqual(MemSize::EightBit, inspector.Viewer().GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, inspector.Viewer().GetSize());
         Assert::IsTrue(inspector.CurrentBitsVisible());
 
-        inspector.Viewer().SetSize(MemSize::SixteenBit);
+        inspector.Viewer().SetSize(ra::data::Memory::Size::SixteenBit);
         Assert::IsFalse(inspector.CurrentBitsVisible());
 
-        inspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
+        inspector.Viewer().SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         Assert::IsFalse(inspector.CurrentBitsVisible());
 
-        inspector.Viewer().SetSize(MemSize::ThirtyTwoBitBigEndian);
+        inspector.Viewer().SetSize(ra::data::Memory::Size::ThirtyTwoBitBigEndian);
         Assert::IsFalse(inspector.CurrentBitsVisible());
 
-        inspector.Viewer().SetSize(MemSize::EightBit);
+        inspector.Viewer().SetSize(ra::data::Memory::Size::EightBit);
         Assert::IsTrue(inspector.CurrentBitsVisible());
     }
 
@@ -703,29 +704,29 @@ public:
         const auto& pBookmarks = inspector.mockWindowManager.MemoryBookmarks.Bookmarks();
         Assert::AreEqual({ 1U }, pBookmarks.Items().Count());
         Assert::AreEqual({ 2U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
 
-        inspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
+        inspector.Viewer().SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         inspector.SetCurrentAddress(5U);
         inspector.BookmarkCurrentAddress();
 
         Assert::AreEqual({ 2U }, pBookmarks.Items().Count());
         Assert::AreEqual({ 2U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
         Assert::AreEqual({ 5U }, pBookmarks.Items().GetItemAt(1)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.Items().GetItemAt(1)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pBookmarks.Items().GetItemAt(1)->GetSize());
 
-        inspector.Viewer().SetSize(MemSize::ThirtyTwoBitBigEndian);
+        inspector.Viewer().SetSize(ra::data::Memory::Size::ThirtyTwoBitBigEndian);
         inspector.SetCurrentAddress(12U);
         inspector.BookmarkCurrentAddress();
 
         Assert::AreEqual({ 3U }, pBookmarks.Items().Count());
         Assert::AreEqual({ 2U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, pBookmarks.Items().GetItemAt(0)->GetSize());
         Assert::AreEqual({ 5U }, pBookmarks.Items().GetItemAt(1)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.Items().GetItemAt(1)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pBookmarks.Items().GetItemAt(1)->GetSize());
         Assert::AreEqual({ 12U }, pBookmarks.Items().GetItemAt(2)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, pBookmarks.Items().GetItemAt(2)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBitBigEndian, pBookmarks.Items().GetItemAt(2)->GetSize());
     }
 
     TEST_METHOD(TestBookmarkCurrentAddressIndirect)
@@ -751,7 +752,7 @@ public:
         const auto& pBookmarks = inspector.mockWindowManager.MemoryBookmarks.Bookmarks();
         Assert::AreEqual({1U}, pBookmarks.Items().Count());
         Assert::AreEqual({16U}, pBookmarks.Items().GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pBookmarks.Items().GetItemAt(0)->GetSize());
         Assert::AreEqual(std::string("I:0xX0004_M:0xX0004"), pBookmarks.Items().GetItemAt(0)->GetIndirectAddress());
         Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), pBookmarks.Items().GetItemAt(0)->GetRealNote());
     }

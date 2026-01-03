@@ -11,7 +11,7 @@ namespace search {
 class TwentyFourBitSearchImpl : public SearchImpl
 {
 public:
-    MemSize GetMemSize() const noexcept override { return MemSize::TwentyFourBit; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::TwentyFourBit; }
 
     unsigned int GetPadding() const noexcept override { return 2U; }
 

@@ -309,9 +309,6 @@
     <ClCompile Include="services\FrameEventQueue.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="data\context\ConsoleContext.cpp">
-      <Filter>Data\Context</Filter>
-    </ClCompile>
     <ClCompile Include="data\context\EmulatorContext.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
@@ -422,6 +419,9 @@
     </ClCompile>
     <ClCompile Include="services\impl\OfflineRcClient.cpp">
       <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="data\context\ConsoleContext.cpp">
+      <Filter>Data\Context</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -842,9 +842,6 @@
     <ClInclude Include="services\FrameEventQueue.hh">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="data\context\ConsoleContext.hh">
-      <Filter>Data\Context</Filter>
-    </ClInclude>
     <ClInclude Include="data\context\EmulatorContext.hh">
       <Filter>Data\Context</Filter>
     </ClInclude>
@@ -1039,6 +1036,9 @@
     </ClInclude>
     <ClInclude Include="services\impl\OfflineRcClient.hh">
       <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="data\context\ConsoleContext.hh">
+      <Filter>Data\Context</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

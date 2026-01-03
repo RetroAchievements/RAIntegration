@@ -7,6 +7,7 @@
 #include "tests\ui\UIAsserts.hh"
 
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
@@ -134,7 +135,7 @@ private:
         const std::wstring& ContinuousFilterLabel() const { return GetValue(ContinuousFilterLabelProperty); }
     };
 
-    void AssertRow(MemorySearchViewModelHarness& search, gsl::index nRow, ra::ByteAddress nAddress,
+    void AssertRow(MemorySearchViewModelHarness& search, gsl::index nRow, ra::data::ByteAddress nAddress,
                    const wchar_t* sAddress, const wchar_t* sCurrentValue)
     {
         auto* pRow = search.Results().GetItemAt(nRow);
@@ -152,7 +153,7 @@ public:
         MemorySearchViewModelHarness search;
 
         Assert::AreEqual({ 0U }, search.Results().Count());
-        Assert::AreEqual(MemSize::Bit_0, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::Bit0, search.ResultMemSize());
         Assert::AreEqual({ 0U }, search.GetResultCount());
 
         Assert::AreEqual(std::wstring(L""), search.GetFilterRange());
@@ -244,7 +245,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 32U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"New 8-bit Search"), search.GetFilterSummary());
         Assert::IsTrue(search.CanFilter());
         Assert::IsFalse(search.CanGoToPreviousPage());
@@ -264,7 +265,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 31U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::SixteenBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::SixteenBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"New 16-bit Search"), search.GetFilterSummary());
         Assert::IsTrue(search.CanFilter());
         Assert::IsFalse(search.CanGoToPreviousPage());
@@ -283,7 +284,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 64U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::Nibble_Lower, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"New 4-bit Search"), search.GetFilterSummary());
         Assert::IsTrue(search.CanFilter());
         Assert::IsFalse(search.CanGoToPreviousPage());
@@ -304,7 +305,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= 12"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -325,7 +326,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= 0x0C"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -358,7 +359,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 32U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"32"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"New 8-bit Search"), search.GetFilterSummary());
         Assert::AreEqual({ 0U }, search.Results().Count());
     }
@@ -389,7 +390,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 32U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"32"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"New 8-bit Search"), search.GetFilterSummary());
         Assert::AreEqual({ 0U }, search.Results().Count());
     }
@@ -410,7 +411,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -422,7 +423,7 @@ public:
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -444,7 +445,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -456,7 +457,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -480,7 +481,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= Last +2"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -504,7 +505,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= Last -2"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -528,7 +529,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 2U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"2"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"> Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 2U }, search.Results().Count());
@@ -565,7 +566,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -577,7 +578,7 @@ public:
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -589,7 +590,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/2"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -602,7 +603,7 @@ public:
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -622,7 +623,7 @@ public:
         Assert::AreEqual({0}, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({32U}, search.GetResultCount());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({9U}, search.Results().Count());
@@ -681,7 +682,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 2U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::Text, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::Text, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= sea"), search.GetFilterSummary());
 
         Assert::AreEqual({ 2U }, search.Results().Count());
@@ -709,7 +710,7 @@ public:
         Assert::AreEqual(std::wstring(L"50/50"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -726,7 +727,7 @@ public:
         Assert::AreEqual(std::wstring(L"50/50"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -753,7 +754,7 @@ public:
         Assert::AreEqual(std::wstring(L"50/50"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -770,7 +771,7 @@ public:
         Assert::AreEqual(std::wstring(L"50/50"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -792,7 +793,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 32U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"32"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
 
         Assert::IsTrue(search.Results().Count() > 3);
         AssertRow(search, 0, 0U, L"0x0000", L"0x00");
@@ -816,7 +817,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 31U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::SixteenBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::SixteenBit, search.ResultMemSize());
 
         Assert::IsTrue(search.Results().Count() > 3);
         AssertRow(search, 0, 0U, L"0x0000", L"0x0100");
@@ -839,7 +840,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 32U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"32"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
 
         Assert::IsTrue(search.Results().Count() > 3);
         AssertRow(search, 0, 0U, L"0x0000", L"0x00");
@@ -852,7 +853,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 32U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"32"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
 
         Assert::IsTrue(search.Results().Count() > 3);
         AssertRow(search, 0, 0U, L"0x0000", L"0x00");
@@ -879,7 +880,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 3U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"3"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::Nibble_Lower, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"= Last +2"), search.GetFilterSummary());
 
         Assert::AreEqual({ 3U }, search.Results().Count());
@@ -903,7 +904,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 64U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::Nibble_Lower, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, search.ResultMemSize());
 
         Assert::IsTrue(search.Results().Count() > 3);
         AssertRow(search, 0, 0U, L"0x0000L", L"0x0");
@@ -930,7 +931,7 @@ public:
         Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
         AssertRow(search, 2, 2U, L"0x0002", L"0x02");
         Assert::IsTrue(search.CanFilter());
@@ -1001,7 +1002,7 @@ public:
         Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
         AssertRow(search, 2, 2U, L"0x0002", L"0x02");
         Assert::IsTrue(search.CanFilter());
@@ -1016,7 +1017,7 @@ public:
         Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
         AssertRow(search, 2, 2U, L"0x0002", L"0x02");
         Assert::IsTrue(search.CanFilter());
@@ -1043,7 +1044,7 @@ public:
         Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
         AssertRow(search, 2, 2U, L"0x0002", L"0x02");
         Assert::IsTrue(search.CanFilter());
@@ -1073,7 +1074,7 @@ public:
         Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
         AssertRow(search, 2, 2U, L"0x0002", L"0x02");
         Assert::IsTrue(search.CanFilter());
@@ -1146,7 +1147,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 5U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
 
         Assert::AreEqual({ 5U }, search.Results().Count());
         Assert::IsFalse(search.HasSelection());
@@ -1183,7 +1184,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 18U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::Nibble_Lower, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, search.ResultMemSize());
 
         Assert::IsFalse(search.HasSelection());
         Assert::AreEqual(0U, search.Results().GetItemAt(0)->nAddress); // 0L
@@ -1220,7 +1221,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 5U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
 
         search.SetComparisonType(ComparisonType::Equals);
         search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
@@ -1264,7 +1265,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 5U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
 
         Assert::AreEqual({ 5U }, search.Results().Count());
         Assert::IsFalse(search.HasSelection());
@@ -1302,7 +1303,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 5U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::Nibble_Lower, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, search.ResultMemSize());
 
         Assert::AreEqual({ 5U }, search.Results().Count());
         search.Results().GetItemAt(2)->SetSelected(true);
@@ -1315,8 +1316,8 @@ public:
         Assert::AreEqual({ 2U }, pBookmarks.Items().Count());
         Assert::AreEqual({ 30U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
         Assert::AreEqual({ 30U }, pBookmarks.Items().GetItemAt(1)->GetAddress());
-        Assert::AreEqual(MemSize::Nibble_Lower, pBookmarks.Items().GetItemAt(0)->GetSize());
-        Assert::AreEqual(MemSize::Nibble_Upper, pBookmarks.Items().GetItemAt(1)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleLower, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::NibbleUpper, pBookmarks.Items().GetItemAt(1)->GetSize());
 
         Assert::IsTrue(search.Results().GetItemAt(2)->IsSelected());
         Assert::IsTrue(search.Results().GetItemAt(3)->IsSelected());
@@ -1341,7 +1342,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
-        Assert::AreEqual(MemSize::Text, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::Text, search.ResultMemSize());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
         search.Results().GetItemAt(0)->SetSelected(true);
@@ -1352,7 +1353,7 @@ public:
         const auto& pBookmarks = search.mockWindowManager.MemoryBookmarks.Bookmarks();
         Assert::AreEqual({ 1U }, pBookmarks.Items().Count());
         Assert::AreEqual({ 8U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
-        Assert::AreEqual(MemSize::Text, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(ra::data::Memory::Size::Text, pBookmarks.Items().GetItemAt(0)->GetSize());
         Assert::IsTrue(search.Results().GetItemAt(0)->IsSelected());
     }
 
@@ -1610,7 +1611,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 6U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"6"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 6U }, search.Results().Count());
@@ -1632,7 +1633,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 5U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"5"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 5U }, search.Results().Count());
@@ -1653,7 +1654,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -1668,7 +1669,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 0U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"0"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 0U }, search.Results().Count());
@@ -1699,7 +1700,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 6U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"6"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 6U }, search.Results().Count());
@@ -1720,7 +1721,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 4U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"4"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 4U }, search.Results().Count());
@@ -1743,7 +1744,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
@@ -1760,7 +1761,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 0U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"0"), search.GetResultCountText());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"!= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 0U }, search.Results().Count());

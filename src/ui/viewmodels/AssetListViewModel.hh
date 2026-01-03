@@ -306,7 +306,7 @@ private:
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
-    void OnCodeNoteChanged(ra::ByteAddress, const std::wstring&) override;
+    void OnCodeNoteChanged(ra::data::ByteAddress, const std::wstring&) override;
 
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;

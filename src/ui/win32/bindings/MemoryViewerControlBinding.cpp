@@ -206,7 +206,7 @@ bool MemoryViewerControlBinding::HandleNavigation(UINT nChar)
             if (bControlHeld)
             {
                 const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-                const auto nTotalBytes = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+                const auto nTotalBytes = gsl::narrow<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
                 m_pViewModel.SetFirstAddress(nTotalBytes & ~0x0F);
                 m_pViewModel.SetAddress(nTotalBytes - 1);
@@ -215,11 +215,11 @@ bool MemoryViewerControlBinding::HandleNavigation(UINT nChar)
             {
                 switch (m_pViewModel.GetSize())
                 {
-                    case MemSize::ThirtyTwoBit:
+                    case ra::data::Memory::Size::ThirtyTwoBit:
                         m_pViewModel.SetAddress((m_pViewModel.GetAddress() & ~0x0F) | 0x0C);
                         break;
 
-                    case MemSize::SixteenBit:
+                    case ra::data::Memory::Size::SixteenBit:
                         m_pViewModel.SetAddress((m_pViewModel.GetAddress() & ~0x0F) | 0x0E);
                         break;
 

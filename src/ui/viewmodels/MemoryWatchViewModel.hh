@@ -74,12 +74,12 @@ public:
     /// <summary>
     /// Gets the watched address.
     /// </summary>
-    ByteAddress GetAddress() const noexcept { return m_nAddress; }
+    ra::data::ByteAddress GetAddress() const noexcept { return m_nAddress; }
 
     /// <summary>
     /// Sets the watched address.
     /// </summary>
-    void SetAddress(ByteAddress value) { SetValue(AddressProperty, value); }
+    void SetAddress(ra::data::ByteAddress value) { SetValue(AddressProperty, value); }
 
     /// <summary>
     /// Sets a serialized definition for an indirect watched address.
@@ -117,19 +117,19 @@ public:
     /// <summary>
     /// Gets the watched memory size.
     /// </summary>
-    MemSize GetSize() const noexcept { return m_nSize; }
+    ra::data::Memory::Size GetSize() const noexcept { return m_nSize; }
 
     /// <summary>
     /// Sets the watched memory size.
     /// </summary>
-    void SetSize(MemSize value) { SetValue(SizeProperty, ra::etoi(value)); }
+    void SetSize(ra::data::Memory::Size value) { SetValue(SizeProperty, ra::etoi(value)); }
 
     /// <summary>
     /// Gets the number of bytes being watched.
     /// </summary>
     uint32_t GetSizeBytes() const noexcept
     {
-        return (m_nSize == MemSize::Text) ? MaxTextBookmarkLength : ra::data::MemSizeBytes(m_nSize);
+        return (m_nSize == ra::data::Memory::Size::Text) ? MaxTextBookmarkLength : ra::data::Memory::SizeBytes(m_nSize);
     }
 
     /// <summary>
@@ -140,12 +140,12 @@ public:
     /// <summary>
     /// Gets the watched memory format.
     /// </summary>
-    MemFormat GetFormat() const { return ra::itoe<MemFormat>(GetValue(FormatProperty)); }
+    ra::data::Memory::Format GetFormat() const { return ra::itoe<ra::data::Memory::Format>(GetValue(FormatProperty)); }
 
     /// <summary>
     /// Sets the watched memory format.
     /// </summary>
-    void SetFormat(MemFormat value) { SetValue(FormatProperty, ra::etoi(value)); }
+    void SetFormat(ra::data::Memory::Format value) { SetValue(FormatProperty, ra::etoi(value)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the current value of the watched memory.
@@ -284,7 +284,7 @@ protected:
 
     uint32_t ReadValue();
 
-    void SetAddressWithoutUpdatingValue(ra::ByteAddress nNewAddress);
+    void SetAddressWithoutUpdatingValue(ra::data::ByteAddress nNewAddress);
 
     virtual bool IgnoreValueChange(uint32_t) noexcept(false) { return false; }
     virtual bool ChangeValue(uint32_t nNewValue);
@@ -294,9 +294,9 @@ private:
     static std::wstring ExtractDescriptionHeader(const std::wstring& sFullNote);
 
     // keep address/size/value fields directly accessible for speed - also keep in ValueProperty for binding
-    ra::ByteAddress m_nAddress = 0;
+    ra::data::ByteAddress m_nAddress = 0;
     uint32_t m_nValue = 0;
-    MemSize m_nSize = MemSize::EightBit;
+    ra::data::Memory::Size m_nSize = ra::data::Memory::Size::EightBit;
     bool m_bModified = false;
     bool m_bInitialized = false;
     bool m_bSyncingDescriptionHeader = false;

@@ -247,7 +247,7 @@ public:
             }
         }
         
-        ra::ByteAddress GetRawAddress() const noexcept { return m_nAddress; }
+        ra::data::ByteAddress GetRawAddress() const noexcept { return m_nAddress; }
         
         /// <summary>
         /// The <see cref="ModelProperty" /> for the whether the result is selected.
@@ -266,7 +266,7 @@ public:
 
     private:
         friend class PointerFinderViewModel;
-        ra::ByteAddress m_nAddress = 0;
+        ra::data::ByteAddress m_nAddress = 0;
         bool m_bMatched = false;
     };
 

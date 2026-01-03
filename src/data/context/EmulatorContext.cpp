@@ -34,7 +34,7 @@ namespace ra {
 namespace data {
 namespace context {
 
-static std::string FormatAddressLarge(ra::ByteAddress nAddress)
+static std::string FormatAddressLarge(ra::data::ByteAddress nAddress)
 {
     std::string sAddress;
     sAddress.resize(10);
@@ -42,7 +42,7 @@ static std::string FormatAddressLarge(ra::ByteAddress nAddress)
     return sAddress;
 }
 
-static std::string FormatAddressMedium(ra::ByteAddress nAddress)
+static std::string FormatAddressMedium(ra::data::ByteAddress nAddress)
 {
     if (nAddress & 0xFF000000)
         return FormatAddressLarge(nAddress);
@@ -53,7 +53,7 @@ static std::string FormatAddressMedium(ra::ByteAddress nAddress)
     return sAddress;
 }
 
-static std::string FormatAddressSmall(ra::ByteAddress nAddress)
+static std::string FormatAddressSmall(ra::data::ByteAddress nAddress)
 {
     if (nAddress & 0xFFFF0000)
         return FormatAddressMedium(nAddress);
@@ -692,7 +692,7 @@ bool EmulatorContext::HasInvalidRegions() const noexcept
     return false;
 }
 
-bool EmulatorContext::IsValidAddress(ra::ByteAddress nAddress) const noexcept
+bool EmulatorContext::IsValidAddress(ra::data::ByteAddress nAddress) const noexcept
 {
     for (const auto& pBlock : m_vMemoryBlocks)
     {
@@ -704,7 +704,7 @@ bool EmulatorContext::IsValidAddress(ra::ByteAddress nAddress) const noexcept
             break;
         }
 
-        nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
+        nAddress -= gsl::narrow_cast<ra::data::ByteAddress>(pBlock.size);
     }
 
     return false;
@@ -733,7 +733,7 @@ void EmulatorContext::AssertIsOnDoFrameThread() const
 #endif
 }
 
-uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
+uint8_t EmulatorContext::ReadMemoryByte(ra::data::ByteAddress nAddress) const
 {
     AssertIsOnDoFrameThread();
 
@@ -747,13 +747,13 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
             break;
         }
 
-        nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
+        nAddress -= gsl::narrow_cast<ra::data::ByteAddress>(pBlock.size);
     }
 
     return 0;
 }
 
-uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount,
+uint32_t EmulatorContext::ReadMemory(ra::data::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount,
                                    const EmulatorContext::MemoryBlock& pBlock)
 {
     Expects(pBuffer != nullptr);
@@ -818,7 +818,7 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[]
 }
 
 _Use_decl_annotations_
-uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
+uint32_t EmulatorContext::ReadMemory(ra::data::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
 {
     AssertIsOnDoFrameThread();
 
@@ -829,7 +829,7 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[]
     {
         if (nAddress >= pBlock.size)
         {
-            nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
+            nAddress -= gsl::narrow_cast<ra::data::ByteAddress>(pBlock.size);
             continue;
         }
 
@@ -853,76 +853,76 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[]
     return nBytesRead;
 }
 
-uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) const
+uint32_t EmulatorContext::ReadMemory(ra::data::ByteAddress nAddress, Memory::Size nSize) const
 {
     switch (nSize)
     {
-        case MemSize::Bit_0:
+        case Memory::Size::Bit0:
             return (ReadMemoryByte(nAddress) & 0x01);
-        case MemSize::Bit_1:
+        case Memory::Size::Bit1:
             return (ReadMemoryByte(nAddress) & 0x02) ? 1 : 0;
-        case MemSize::Bit_2:
+        case Memory::Size::Bit2:
             return (ReadMemoryByte(nAddress) & 0x04) ? 1 : 0;
-        case MemSize::Bit_3:
+        case Memory::Size::Bit3:
             return (ReadMemoryByte(nAddress) & 0x08) ? 1 : 0;
-        case MemSize::Bit_4:
+        case Memory::Size::Bit4:
             return (ReadMemoryByte(nAddress) & 0x10) ? 1 : 0;
-        case MemSize::Bit_5:
+        case Memory::Size::Bit5:
             return (ReadMemoryByte(nAddress) & 0x20) ? 1 : 0;
-        case MemSize::Bit_6:
+        case Memory::Size::Bit6:
             return (ReadMemoryByte(nAddress) & 0x40) ? 1 : 0;
-        case MemSize::Bit_7:
+        case Memory::Size::Bit7:
             return (ReadMemoryByte(nAddress) & 0x80) ? 1 : 0;
-        case MemSize::Nibble_Lower:
+        case Memory::Size::NibbleLower:
             return (ReadMemoryByte(nAddress) & 0x0F);
-        case MemSize::Nibble_Upper:
+        case Memory::Size::NibbleUpper:
             return ((ReadMemoryByte(nAddress) >> 4) & 0x0F);
-        case MemSize::EightBit:
+        case Memory::Size::EightBit:
             return ReadMemoryByte(nAddress);
         default:
-        case MemSize::SixteenBit:
+        case Memory::Size::SixteenBit:
         {
             uint8_t buffer[2];
             ReadMemory(nAddress, buffer, 2);
             return buffer[0] | (buffer[1] << 8);
         }
-        case MemSize::TwentyFourBit:
+        case Memory::Size::TwentyFourBit:
         {
             uint8_t buffer[3];
             ReadMemory(nAddress, buffer, 3);
             return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16);
         }
-        case MemSize::Float:
-        case MemSize::FloatBigEndian:
-        case MemSize::Double32:
-        case MemSize::Double32BigEndian:
-        case MemSize::MBF32:
-        case MemSize::MBF32LE:
-        case MemSize::ThirtyTwoBit:
+        case Memory::Size::Float:
+        case Memory::Size::FloatBigEndian:
+        case Memory::Size::Double32:
+        case Memory::Size::Double32BigEndian:
+        case Memory::Size::MBF32:
+        case Memory::Size::MBF32LE:
+        case Memory::Size::ThirtyTwoBit:
         {
             uint8_t buffer[4];
             ReadMemory(nAddress, buffer, 4);
             return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
         }
-        case MemSize::SixteenBitBigEndian:
+        case Memory::Size::SixteenBitBigEndian:
         {
             uint8_t buffer[2];
             ReadMemory(nAddress, buffer, 2);
             return buffer[1] | (buffer[0] << 8);
         }
-        case MemSize::TwentyFourBitBigEndian:
+        case Memory::Size::TwentyFourBitBigEndian:
         {
             uint8_t buffer[3];
             ReadMemory(nAddress, buffer, 3);
             return buffer[2] | (buffer[1] << 8) | (buffer[0] << 16);
         }
-        case MemSize::ThirtyTwoBitBigEndian:
+        case Memory::Size::ThirtyTwoBitBigEndian:
         {
             uint8_t buffer[4];
             ReadMemory(nAddress, buffer, 4);
             return buffer[3] | (buffer[2] << 8) | (buffer[1] << 16) | (buffer[0] << 24);
         }
-        case MemSize::BitCount:
+        case Memory::Size::BitCount:
         {
             const uint8_t nValue = ReadMemoryByte(nAddress);
             static const std::array<uint8_t, 16> nBitsSet = { 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4 };
@@ -931,7 +931,7 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
     }
 }
 
-void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, const uint8_t* pBytes, size_t nBytes) const
+void EmulatorContext::WriteMemory(ra::data::ByteAddress nAddress, const uint8_t* pBytes, size_t nBytes) const
 {
     Expects(pBytes != nullptr);
     size_t nBytesWritten = 0;
@@ -964,7 +964,7 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, const uint8_t* pByte
             }
         }
 
-        nBlockAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
+        nBlockAddress -= gsl::narrow_cast<ra::data::ByteAddress>(pBlock.size);
     }
 
     if (nBytesWritten > 0)
@@ -982,12 +982,12 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, const uint8_t* pByte
     }
 }
 
-void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const
+void EmulatorContext::WriteMemoryByte(ra::data::ByteAddress nAddress, uint8_t nValue) const
 {
     WriteMemory(nAddress, &nValue, 1);
 }
 
-void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const
+void EmulatorContext::WriteMemory(ra::data::ByteAddress nAddress, Memory::Size nSize, uint32_t nValue) const
 {
     union
     {
@@ -998,89 +998,89 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint3
 
     switch (nSize)
     {
-        case MemSize::EightBit:
+        case Memory::Size::EightBit:
             WriteMemory(nAddress, u.u8, 1);
             break;
 
-        case MemSize::SixteenBit:
+        case Memory::Size::SixteenBit:
             WriteMemory(nAddress, u.u8, 2);
             break;
 
-        case MemSize::TwentyFourBit:
+        case Memory::Size::TwentyFourBit:
             WriteMemory(nAddress, u.u8, 3);
             break;
 
-        case MemSize::ThirtyTwoBit:
+        case Memory::Size::ThirtyTwoBit:
             // already little endian
             WriteMemory(nAddress, u.u8, 4);
             break;
 
-        case MemSize::Float:
-        case MemSize::FloatBigEndian:
-        case MemSize::Double32:
-        case MemSize::Double32BigEndian:
-        case MemSize::MBF32:
-        case MemSize::MBF32LE:
+        case Memory::Size::Float:
+        case Memory::Size::FloatBigEndian:
+        case Memory::Size::Double32:
+        case Memory::Size::Double32BigEndian:
+        case Memory::Size::MBF32:
+        case Memory::Size::MBF32LE:
             // assume the value has already been encoded into a 32-bit little endian value
             WriteMemory(nAddress, u.u8, 4);
             break;
 
-        case MemSize::SixteenBitBigEndian:
+        case Memory::Size::SixteenBitBigEndian:
             u.u8[3] = u.u8[0];
             u.u8[2] = u.u8[1];
             WriteMemory(nAddress, &u.u8[2], 2);
             break;
 
-        case MemSize::TwentyFourBitBigEndian:
+        case Memory::Size::TwentyFourBitBigEndian:
             u.u8[3] = u.u8[0];
             u.u8[0] = u.u8[2];
             u.u8[2] = u.u8[3];
             WriteMemory(nAddress, u.u8, 3);
             break;
 
-        case MemSize::ThirtyTwoBitBigEndian:
-            u.u32 = ReverseBytes(nValue);
+        case Memory::Size::ThirtyTwoBitBigEndian:
+            u.u32 = ra::data::Memory::ReverseBytes(nValue);
             WriteMemory(nAddress, u.u8, 4);
             break;
 
-        case MemSize::Bit_0:
+        case Memory::Size::Bit0:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x01) | (nValue & 1);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case MemSize::Bit_1:
+        case Memory::Size::Bit1:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x02) | ((nValue & 1) << 1);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case MemSize::Bit_2:
+        case Memory::Size::Bit2:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x04) | ((nValue & 1) << 2);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case MemSize::Bit_3:
+        case Memory::Size::Bit3:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x08) | ((nValue & 1) << 3);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case MemSize::Bit_4:
+        case Memory::Size::Bit4:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x10) | ((nValue & 1) << 4);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case MemSize::Bit_5:
+        case Memory::Size::Bit5:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x20) | ((nValue & 1) << 5);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case MemSize::Bit_6:
+        case Memory::Size::Bit6:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x40) | ((nValue & 1) << 6);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case MemSize::Bit_7:
+        case Memory::Size::Bit7:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x80) | ((nValue & 1) << 7);
             WriteMemory(nAddress, u.u8, 1);
             break;
 
-        case MemSize::Nibble_Lower:
+        case Memory::Size::NibbleLower:
             u.u32 = (ReadMemoryByte(nAddress) & ~0x0F) | (nValue & 0x0F);
             WriteMemory(nAddress, u.u8, 1);
             break;
-        case MemSize::Nibble_Upper:
+        case Memory::Size::NibbleUpper:
             u.u32 = (ReadMemoryByte(nAddress) & ~0xF0) | ((nValue & 0x0F) << 4);
             WriteMemory(nAddress, u.u8, 1);
             break;
@@ -1126,21 +1126,21 @@ bool EmulatorContext::IsMemoryInsecure() const
 
 _CONSTANT_VAR MAX_BLOCK_SIZE = 256U * 1024; // 256K
 
-void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBlocks, ra::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const
+void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBlocks, ra::data::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const
 {
-    ra::ByteAddress nAdjustedAddress = nAddress;
+    ra::data::ByteAddress nAdjustedAddress = nAddress;
     for (const auto& pMemoryBlock : m_vMemoryBlocks)
     {
         if (nAdjustedAddress >= pMemoryBlock.size)
         {
-            nAdjustedAddress -= gsl::narrow_cast<ra::ByteAddress>(pMemoryBlock.size);
+            nAdjustedAddress -= gsl::narrow_cast<ra::data::ByteAddress>(pMemoryBlock.size);
             continue;
         }
 
         if (!pMemoryBlock.read && !pMemoryBlock.readBlock)
         {
             nCount -= gsl::narrow_cast<uint32_t>(pMemoryBlock.size);
-            nAddress += gsl::narrow_cast<ra::ByteAddress>(pMemoryBlock.size);
+            nAddress += gsl::narrow_cast<ra::data::ByteAddress>(pMemoryBlock.size);
             nAdjustedAddress = 0;
             continue;
         }

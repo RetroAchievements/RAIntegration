@@ -2,6 +2,7 @@
 #define RA_ACHIEVEMENT_LOGIC_SERIALIZER_HH
 #pragma once
 
+#include "data\Memory.hh"
 #include "data\Types.hh"
 
 #include "data\models\CodeNoteModel.hh"
@@ -74,8 +75,8 @@ public:
 
     static void AppendConditionType(std::string& sBuffer, TriggerConditionType nType);
 
-    static void AppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, uint32_t nValue);
-    static void AppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, float fValue);
+    static void AppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size nSize, uint32_t nValue);
+    static void AppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size nSize, float fValue);
 
     static void AppendOperator(std::string& sBuffer, TriggerOperatorType nType);
 

@@ -4,7 +4,7 @@
 
 #include "ApiCall.hh"
 
-#include "data\Types.hh"
+#include "data\Memory.hh"
 
 namespace ra {
 namespace api {
@@ -18,7 +18,7 @@ public:
     {
         struct CodeNote
         {
-            ra::ByteAddress Address{ 0U };
+            ra::data::ByteAddress Address{ 0U };
             std::wstring Note;
             std::string Author;
         };

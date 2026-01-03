@@ -14,7 +14,7 @@ namespace tests {
 TEST_CLASS(ConsoleContext_Tests)
 {
 private:
-    static void AssertRegion(const ConsoleContext& context, ra::ByteAddress nAddress,
+    static void AssertRegion(const ConsoleContext& context, ra::data::ByteAddress nAddress,
         const ConsoleContext::MemoryRegion* pExpectedRegion)
     {
         const auto* pFoundRegion = context.GetMemoryRegion(nAddress);

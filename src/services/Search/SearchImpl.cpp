@@ -8,7 +8,7 @@ namespace ra {
 namespace services {
 namespace search {
 
-bool SearchImpl::ContainsAddress(const SearchResults& srResults, ra::ByteAddress nAddress) const
+bool SearchImpl::ContainsAddress(const SearchResults& srResults, ra::data::ByteAddress nAddress) const
 {
     if (nAddress & (GetStride() - 1))
         return false;
@@ -59,7 +59,7 @@ bool SearchImpl::ValidateFilterValue(SearchResults& srNew) const
     return true;
 }
 
-void SearchImpl::ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious, std::function<void(ra::ByteAddress,uint8_t*,size_t)> pReadMemory) const
+void SearchImpl::ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious, std::function<void(ra::data::ByteAddress,uint8_t*,size_t)> pReadMemory) const
 {
     uint32_t nLargestBlock = 0U;
     for (auto& block : srPrevious.m_vBlocks)
@@ -69,7 +69,7 @@ void SearchImpl::ApplyFilter(SearchResults& srNew, const SearchResults& srPrevio
     }
 
     std::vector<uint8_t> vMemory(nLargestBlock);
-    std::vector<ra::ByteAddress> vMatches;
+    std::vector<ra::data::ByteAddress> vMatches;
 
     uint32_t nAdjustment = 0;
     switch (srNew.GetFilterType())
@@ -210,10 +210,10 @@ bool SearchImpl::GetValueAtVirtualAddress(const SearchResults& srResults, Search
 
 std::wstring SearchImpl::GetFormattedValue(const SearchResults&, const SearchResult& pResult) const
 {
-    return L"0x" + ra::data::MemSizeFormat(pResult.nValue, pResult.nSize, MemFormat::Hex);
+    return L"0x" + ra::data::Memory::FormatValue(pResult.nValue, pResult.nSize, ra::data::Memory::Format::Hex);
 }
 
-std::wstring SearchImpl::GetFormattedValue(const SearchResults& pResults, ra::ByteAddress nAddress, MemSize nSize) const
+std::wstring SearchImpl::GetFormattedValue(const SearchResults& pResults, ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize) const
 {
     SearchResult pResult{ ConvertFromRealAddress(nAddress), 0, nSize };
     if (GetValueAtVirtualAddress(pResults, pResult))
@@ -273,7 +273,7 @@ bool SearchImpl::MatchesFilter(const SearchResults& pResults, const SearchResult
 
 void SearchImpl::ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
     const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-    std::vector<ra::ByteAddress>& vMatches) const
+    std::vector<ra::data::ByteAddress>& vMatches) const
 {
     const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
     const auto nStride = GetStride();
@@ -284,7 +284,7 @@ void SearchImpl::ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pByte
         const uint32_t nValue1 = BuildValue(pScan);
         if (CompareValues(nValue1, nConstantValue, nComparison))
         {
-            const ra::ByteAddress nAddress = nBlockAddress +
+            const ra::data::ByteAddress nAddress = nBlockAddress +
                 ConvertFromRealAddress(gsl::narrow_cast<uint32_t>(pScan - pBytes));
             if (pPreviousBlock.HasMatchingAddress(pMatchingAddresses, nAddress))
                 vMatches.push_back(nAddress);
@@ -294,7 +294,7 @@ void SearchImpl::ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pByte
 
 void SearchImpl::ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
     const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-    std::vector<ra::ByteAddress>& vMatches) const
+    std::vector<ra::data::ByteAddress>& vMatches) const
 {
     const auto* pBlockBytes = pPreviousBlock.GetBytes();
     const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
@@ -307,7 +307,7 @@ void SearchImpl::ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytes
         const uint32_t nValue2 = BuildValue(pBlockBytes) + nAdjustment;
         if (CompareValues(nValue1, nValue2, nComparison))
         {
-            const ra::ByteAddress nAddress = nBlockAddress +
+            const ra::data::ByteAddress nAddress = nBlockAddress +
                 ConvertFromRealAddress(gsl::narrow_cast<uint32_t>(pScan - pBytes));
             if (pPreviousBlock.HasMatchingAddress(pMatchingAddresses, nAddress))
                 vMatches.push_back(nAddress);
@@ -333,8 +333,8 @@ uint32_t SearchImpl::BuildValue(const uint8_t* ptr) const noexcept
     return ptr ? ptr[0] : 0;
 }
 
-void SearchImpl::AddBlocks(SearchResults& srNew, std::vector<ra::ByteAddress>& vMatches,
-    std::vector<uint8_t>& vMemory, ra::ByteAddress nPreviousBlockFirstAddress, uint32_t nPadding) const
+void SearchImpl::AddBlocks(SearchResults& srNew, std::vector<ra::data::ByteAddress>& vMatches,
+    std::vector<uint8_t>& vMemory, ra::data::ByteAddress nPreviousBlockFirstAddress, uint32_t nPadding) const
 {
     const gsl::index nStopIndex = gsl::narrow_cast<gsl::index>(vMatches.size()) - 1;
     gsl::index nFirstIndex = 0;

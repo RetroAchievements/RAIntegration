@@ -33,7 +33,7 @@ public:
     virtual uint32_t GetStride() const noexcept { return 1U; }
 
     // Gets the size of values handled by this implementation
-    virtual MemSize GetMemSize() const noexcept { return MemSize::EightBit; }
+    virtual ra::data::Memory::Size GetMemSize() const noexcept { return ra::data::Memory::Size::EightBit; }
 
     // Gets the number of addresses that are represented by the specified number of bytes
     virtual uint32_t GetAddressCountForBytes(uint32_t nBytes) const noexcept
@@ -42,22 +42,22 @@ public:
     }
 
     // Gets the virtual address for a real address
-    virtual ra::ByteAddress ConvertFromRealAddress(ra::ByteAddress nAddress) const noexcept
+    virtual ra::data::ByteAddress ConvertFromRealAddress(ra::data::ByteAddress nAddress) const noexcept
     {
         return nAddress;
     }
 
     // Gets the real address for a virtual address
-    virtual ra::ByteAddress ConvertToRealAddress(ra::ByteAddress nAddress) const noexcept
+    virtual ra::data::ByteAddress ConvertToRealAddress(ra::data::ByteAddress nAddress) const noexcept
     {
         return nAddress;
     }
 
     // Determines if the specified real address exists in the collection of matched addresses.
-    virtual bool ContainsAddress(const SearchResults& srResults, ra::ByteAddress nAddress) const;
+    virtual bool ContainsAddress(const SearchResults& srResults, ra::data::ByteAddress nAddress) const;
 
-    void AddBlocks(SearchResults& srNew, std::vector<ra::ByteAddress>& vMatches, std::vector<uint8_t>& vMemory,
-                   ra::ByteAddress nPreviousBlockFirstAddress, uint32_t nPadding) const;
+    void AddBlocks(SearchResults& srNew, std::vector<ra::data::ByteAddress>& vMatches, std::vector<uint8_t>& vMemory,
+                   ra::data::ByteAddress nPreviousBlockFirstAddress, uint32_t nPadding) const;
 
     // Removes the result associated to the specified real address from the collection of matched addresses.
     virtual bool ExcludeResult(SearchResults& srResults, const SearchResult& pResult) const;
@@ -66,7 +66,7 @@ public:
 
     // populates a vector of addresses that match the specified filter when applied to a previous search result
     virtual void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious,
-                             std::function<void(ra::ByteAddress, uint8_t*, size_t)> pReadMemory) const;
+                             std::function<void(ra::data::ByteAddress, uint8_t*, size_t)> pReadMemory) const;
 
     // gets the nIndex'th search result
     bool GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex,
@@ -85,8 +85,8 @@ public:
     virtual std::wstring GetFormattedValue(const SearchResults&, const SearchResult& pResult) const;
 
     // gets the formatted value for the search result at the specified real address
-    virtual std::wstring GetFormattedValue(const SearchResults& pResults, ra::ByteAddress nAddress,
-                                           MemSize nSize) const;
+    virtual std::wstring GetFormattedValue(const SearchResults& pResults, ra::data::ByteAddress nAddress,
+                                           ra::data::Memory::Size nSize) const;
 
     // updates the provided result with the current value at the provided real address
     virtual bool UpdateValue(const SearchResults& pResults, SearchResult& pResult, _Out_ std::wstring* sFormattedValue,
@@ -108,12 +108,12 @@ protected:
     // generic implementation for less used search types
     virtual void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop, const MemBlock& pPreviousBlock,
                                      ComparisonType nComparison, unsigned nConstantValue,
-                                     std::vector<ra::ByteAddress>& vMatches) const;
+                                     std::vector<ra::data::ByteAddress>& vMatches) const;
 
     // generic implementation for less used search types
     virtual void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop, const MemBlock& pPreviousBlock,
                                     ComparisonType nComparison, unsigned nAdjustment,
-                                    std::vector<ra::ByteAddress>& vMatches) const;
+                                    std::vector<ra::data::ByteAddress>& vMatches) const;
 
     template<typename T>
     _NODISCARD static constexpr bool CompareValues(_In_ T nLeft, _In_ T nRight,
@@ -145,13 +145,13 @@ protected:
     template<typename TSize, bool TIsConstantFilter, int TStride, ComparisonType TComparison>
     void ApplyCompareFilterLittleEndian(const uint8_t* pBytes, const uint8_t* pBytesStop,
                                         const MemBlock& pPreviousBlock, unsigned nAdjustment,
-                                        std::vector<ra::ByteAddress>& vMatches) const
+                                        std::vector<ra::data::ByteAddress>& vMatches) const
     {
         const auto* pScan = pBytes;
         if (pScan == nullptr)
             return;
 
-        ra::ByteAddress nAddress = pPreviousBlock.GetFirstAddress();
+        ra::data::ByteAddress nAddress = pPreviousBlock.GetFirstAddress();
         constexpr int TBlockStride = TIsConstantFilter ? 0 : TStride;
         const auto* pBlockBytes = TIsConstantFilter ? pScan : pPreviousBlock.GetBytes();
         Expects(pBlockBytes != nullptr);
@@ -226,7 +226,7 @@ protected:
     template<typename TSize, bool TIsConstantFilter, int TStride = 1>
     void ApplyCompareFilterLittleEndian(const uint8_t* pBytes, const uint8_t* pBytesStop,
                                         const MemBlock& pPreviousBlock, ComparisonType nComparison,
-                                        unsigned nAdjustment, std::vector<ra::ByteAddress>& vMatches) const
+                                        unsigned nAdjustment, std::vector<ra::data::ByteAddress>& vMatches) const
     {
         switch (nComparison)
         {
@@ -257,7 +257,7 @@ protected:
     template<typename TSize, bool TIsConstantFilter, int TStride = 1>
     void ApplyCompareFilterLittleEndian(const uint8_t* pBytes, const uint8_t* pBytesStop,
                                         const MemBlock& pPreviousBlock, ComparisonType nComparison,
-                                        unsigned nAdjustment, std::vector<ra::ByteAddress>& vMatches) const
+                                        unsigned nAdjustment, std::vector<ra::data::ByteAddress>& vMatches) const
     {
         if (TIsConstantFilter)
             SearchImpl::ApplyConstantFilter(pBytes, pBytesStop, pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -276,7 +276,7 @@ protected:
         return !srResults.m_vBlocks.empty();
     }
 
-    static ra::ByteAddress GetFirstAddress(const SearchResults& srResults) noexcept
+    static ra::data::ByteAddress GetFirstAddress(const SearchResults& srResults) noexcept
     {
         return srResults.m_vBlocks.front().GetFirstAddress();
     }
@@ -287,7 +287,7 @@ protected:
     }
 
     // Removes the result associated to the specified virtual address from the collection of matched addresses.
-    static bool ExcludeAddress(SearchResults& srResults, ra::ByteAddress nAddress)
+    static bool ExcludeAddress(SearchResults& srResults, ra::data::ByteAddress nAddress)
     {
         const auto nIndex = GetIndexOfBlockForVirtualAddress(srResults, nAddress);
         if (nIndex < srResults.m_vBlocks.size())
@@ -311,7 +311,7 @@ protected:
 
     virtual uint32_t BuildValue(const uint8_t* ptr) const noexcept;
 
-    static MemBlock& AddBlock(SearchResults& srResults, ra::ByteAddress nAddress, uint32_t nSize,
+    static MemBlock& AddBlock(SearchResults& srResults, ra::data::ByteAddress nAddress, uint32_t nSize,
                               uint32_t nMaxAddresses)
     {
         return srResults.m_vBlocks.emplace_back(nAddress, nSize, nMaxAddresses);

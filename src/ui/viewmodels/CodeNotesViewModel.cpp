@@ -93,7 +93,7 @@ void CodeNotesViewModel::ResetFilter()
     auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes != nullptr)
     {
-        pCodeNotes->EnumerateCodeNotes([this, &nIndex, pCodeNotes](ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)
+        pCodeNotes->EnumerateCodeNotes([this, &nIndex, pCodeNotes](ra::data::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)
         {
             const auto bNoteModified = pCodeNotes->IsNoteModified(nAddress);
 
@@ -164,7 +164,7 @@ void CodeNotesViewModel::ApplyFilter()
     SetValue(ResultCountProperty, ra::StringPrintf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
 }
 
-void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
+void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (pGameContext.IsGameLoading())
@@ -305,7 +305,7 @@ void CodeNotesViewModel::BookmarkSelected() const
     {
         if (pNote.IsSelected())
         {
-            MemSize nSize = MemSize::Unknown;
+            auto nSize = ra::data::Memory::Size::Unknown;
 
             const auto* pCodeNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(pNote.nAddress, false) : nullptr;
             if (pCodeNote != nullptr)
@@ -314,25 +314,25 @@ void CodeNotesViewModel::BookmarkSelected() const
                 if (vmBookmarks.Bookmarks().Sizes().FindItemIndex(LookupItemViewModel::IdProperty, ra::etoi(nSize)) == -1)
                 {
                     // size not supported by viewer
-                    nSize = MemSize::Unknown;
+                    nSize = ra::data::Memory::Size::Unknown;
                 }
             }
 
-            if (nSize == MemSize::Unknown)
+            if (nSize == ra::data::Memory::Size::Unknown)
             {
                 switch (pNote.nBytes)
                 {
                     default:
                     case 1:
-                        nSize = MemSize::EightBit;
+                        nSize = ra::data::Memory::Size::EightBit;
                         break;
 
                     case 2:
-                        nSize = MemSize::SixteenBit;
+                        nSize = ra::data::Memory::Size::SixteenBit;
                         break;
 
                     case 4:
-                        nSize = MemSize::ThirtyTwoBit;
+                        nSize = ra::data::Memory::Size::ThirtyTwoBit;
                         break;
                 }
             }
@@ -350,7 +350,7 @@ void CodeNotesViewModel::BookmarkSelected() const
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Can only create 100 new bookmarks at a time.");
 }
 
-void CodeNotesViewModel::GetSelectedModifiedNoteAddresses(std::vector<ra::ByteAddress>& vAddresses)
+void CodeNotesViewModel::GetSelectedModifiedNoteAddresses(std::vector<ra::data::ByteAddress>& vAddresses)
 {
     for (const auto& pNote : m_vNotes)
     {
@@ -364,7 +364,7 @@ void CodeNotesViewModel::PublishSelected()
     if (!CanPublishCurrentAddressNote())
         return;
 
-    std::vector<ra::ByteAddress> vNotesToPublish;
+    std::vector<ra::data::ByteAddress> vNotesToPublish;
     GetSelectedModifiedNoteAddresses(vNotesToPublish);
 
     if (vNotesToPublish.size() == 0)
@@ -403,7 +403,7 @@ void CodeNotesViewModel::PublishSelected()
 
 void CodeNotesViewModel::RevertSelected()
 {
-    std::vector<ra::ByteAddress> vNotesToRevert;
+    std::vector<ra::data::ByteAddress> vNotesToRevert;
     GetSelectedModifiedNoteAddresses(vNotesToRevert);
 
     if (vNotesToRevert.size() == 0)

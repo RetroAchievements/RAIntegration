@@ -22,7 +22,7 @@ public:
     struct Request : ApiRequestBase
     {
         unsigned int GameId{ 0U };
-        ra::ByteAddress Address{ 0U };
+        ra::data::ByteAddress Address{ 0U };
         std::wstring Note;
 
         using Callback = std::function<void(const Response& response)>;

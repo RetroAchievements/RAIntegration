@@ -46,12 +46,12 @@ public:
     /// <summary>
     /// Gets the current address.
     /// </summary>
-    ra::ByteAddress GetCurrentAddress() const { return GetValue(CurrentAddressProperty); }
+    ra::data::ByteAddress GetCurrentAddress() const { return GetValue(CurrentAddressProperty); }
 
     /// <summary>
     /// Sets the current address.
     /// </summary>
-    void SetCurrentAddress(const ra::ByteAddress nValue) { SetValue(CurrentAddressProperty, nValue); }
+    void SetCurrentAddress(const ra::data::ByteAddress nValue) { SetValue(CurrentAddressProperty, nValue); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the current address as a string.
@@ -178,12 +178,12 @@ protected:
     void OnBeforeActiveGameChanged() override;
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
-    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
-    void OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) override;
+    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
+    void OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
 private:
     static const IntModelProperty CurrentAddressValueProperty;
-    void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
+    void OnCurrentAddressChanged(ra::data::ByteAddress nNewAddress);
 
     void SetCurrentAddressNoteInternal(const std::wstring& sValue);
     void UpdateNoteButtons();
@@ -195,7 +195,7 @@ private:
     bool m_bSyncingAddress = false;
     bool m_bSyncingCodeNote = false;
     bool m_bNoteIsIndirect = false;
-    ra::ByteAddress m_nUncommittedNoteAddress = 0xFFFFFFFF;
+    ra::data::ByteAddress m_nUncommittedNoteAddress = 0xFFFFFFFF;
     std::wstring m_sOriginalNoteValue;
 };
 

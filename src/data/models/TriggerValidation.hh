@@ -13,7 +13,6 @@ class TriggerValidation
 {
 public:
     static bool Validate(const std::string& sTrigger, std::wstring& sError, AssetType nType);
-    static MemSize MapRcheevosMemSize(char nSize) noexcept;
 };
 
 } // namespace models

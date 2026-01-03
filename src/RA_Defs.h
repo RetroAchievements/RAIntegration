@@ -34,6 +34,7 @@ using namespace std::string_literals;
 #endif	// RA_EXPORTS
 
 #include "data\Types.hh"
+#include "data\Memory.hh"
 
 #define RA_DIR_OVERLAY                  L"Overlay\\"
 #define RA_DIR_BASE                     L"RACache\\"
@@ -165,8 +166,8 @@ public:
 #endif
 
 namespace ra {
-_NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
-_NODISCARD ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress);
+_NODISCARD std::string ByteAddressToString(_In_ ra::data::ByteAddress nAddr);
+_NODISCARD ra::data::ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress);
 } // namespace ra
 
 #endif // !RA_DEFS_H

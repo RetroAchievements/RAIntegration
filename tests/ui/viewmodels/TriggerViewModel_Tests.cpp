@@ -178,53 +178,53 @@ public:
         Assert::AreEqual(std::wstring(L"Recall"), vmTrigger.OperandTypes().GetItemAt(7)->GetLabel());
 
         Assert::AreEqual({ 24U }, vmTrigger.OperandSizes().Count());
-        Assert::AreEqual((int)MemSize::Bit_0, vmTrigger.OperandSizes().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Bit0, vmTrigger.OperandSizes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Bit0"), vmTrigger.OperandSizes().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)MemSize::Bit_1, vmTrigger.OperandSizes().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Bit1, vmTrigger.OperandSizes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Bit1"), vmTrigger.OperandSizes().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)MemSize::Bit_2, vmTrigger.OperandSizes().GetItemAt(2)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Bit2, vmTrigger.OperandSizes().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"Bit2"), vmTrigger.OperandSizes().GetItemAt(2)->GetLabel());
-        Assert::AreEqual((int)MemSize::Bit_3, vmTrigger.OperandSizes().GetItemAt(3)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Bit3, vmTrigger.OperandSizes().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Bit3"), vmTrigger.OperandSizes().GetItemAt(3)->GetLabel());
-        Assert::AreEqual((int)MemSize::Bit_4, vmTrigger.OperandSizes().GetItemAt(4)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Bit4, vmTrigger.OperandSizes().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L"Bit4"), vmTrigger.OperandSizes().GetItemAt(4)->GetLabel());
-        Assert::AreEqual((int)MemSize::Bit_5, vmTrigger.OperandSizes().GetItemAt(5)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Bit5, vmTrigger.OperandSizes().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"Bit5"), vmTrigger.OperandSizes().GetItemAt(5)->GetLabel());
-        Assert::AreEqual((int)MemSize::Bit_6, vmTrigger.OperandSizes().GetItemAt(6)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Bit6, vmTrigger.OperandSizes().GetItemAt(6)->GetId());
         Assert::AreEqual(std::wstring(L"Bit6"), vmTrigger.OperandSizes().GetItemAt(6)->GetLabel());
-        Assert::AreEqual((int)MemSize::Bit_7, vmTrigger.OperandSizes().GetItemAt(7)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Bit7, vmTrigger.OperandSizes().GetItemAt(7)->GetId());
         Assert::AreEqual(std::wstring(L"Bit7"), vmTrigger.OperandSizes().GetItemAt(7)->GetLabel());
-        Assert::AreEqual((int)MemSize::Nibble_Lower, vmTrigger.OperandSizes().GetItemAt(8)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::NibbleLower, vmTrigger.OperandSizes().GetItemAt(8)->GetId());
         Assert::AreEqual(std::wstring(L"Lower4"), vmTrigger.OperandSizes().GetItemAt(8)->GetLabel());
-        Assert::AreEqual((int)MemSize::Nibble_Upper, vmTrigger.OperandSizes().GetItemAt(9)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::NibbleUpper, vmTrigger.OperandSizes().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"Upper4"), vmTrigger.OperandSizes().GetItemAt(9)->GetLabel());
-        Assert::AreEqual((int)MemSize::EightBit, vmTrigger.OperandSizes().GetItemAt(10)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::EightBit, vmTrigger.OperandSizes().GetItemAt(10)->GetId());
         Assert::AreEqual(std::wstring(L"8-bit"), vmTrigger.OperandSizes().GetItemAt(10)->GetLabel());
-        Assert::AreEqual((int)MemSize::SixteenBit, vmTrigger.OperandSizes().GetItemAt(11)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::SixteenBit, vmTrigger.OperandSizes().GetItemAt(11)->GetId());
         Assert::AreEqual(std::wstring(L"16-bit"), vmTrigger.OperandSizes().GetItemAt(11)->GetLabel());
-        Assert::AreEqual((int)MemSize::TwentyFourBit, vmTrigger.OperandSizes().GetItemAt(12)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::TwentyFourBit, vmTrigger.OperandSizes().GetItemAt(12)->GetId());
         Assert::AreEqual(std::wstring(L"24-bit"), vmTrigger.OperandSizes().GetItemAt(12)->GetLabel());
-        Assert::AreEqual((int)MemSize::ThirtyTwoBit, vmTrigger.OperandSizes().GetItemAt(13)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::ThirtyTwoBit, vmTrigger.OperandSizes().GetItemAt(13)->GetId());
         Assert::AreEqual(std::wstring(L"32-bit"), vmTrigger.OperandSizes().GetItemAt(13)->GetLabel());
-        Assert::AreEqual((int)MemSize::SixteenBitBigEndian, vmTrigger.OperandSizes().GetItemAt(14)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::SixteenBitBigEndian, vmTrigger.OperandSizes().GetItemAt(14)->GetId());
         Assert::AreEqual(std::wstring(L"16-bit BE"), vmTrigger.OperandSizes().GetItemAt(14)->GetLabel());
-        Assert::AreEqual((int)MemSize::TwentyFourBitBigEndian, vmTrigger.OperandSizes().GetItemAt(15)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::TwentyFourBitBigEndian, vmTrigger.OperandSizes().GetItemAt(15)->GetId());
         Assert::AreEqual(std::wstring(L"24-bit BE"), vmTrigger.OperandSizes().GetItemAt(15)->GetLabel());
-        Assert::AreEqual((int)MemSize::ThirtyTwoBitBigEndian, vmTrigger.OperandSizes().GetItemAt(16)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::ThirtyTwoBitBigEndian, vmTrigger.OperandSizes().GetItemAt(16)->GetId());
         Assert::AreEqual(std::wstring(L"32-bit BE"), vmTrigger.OperandSizes().GetItemAt(16)->GetLabel());
-        Assert::AreEqual((int)MemSize::BitCount, vmTrigger.OperandSizes().GetItemAt(17)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::BitCount, vmTrigger.OperandSizes().GetItemAt(17)->GetId());
         Assert::AreEqual(std::wstring(L"BitCount"), vmTrigger.OperandSizes().GetItemAt(17)->GetLabel());
-        Assert::AreEqual((int)MemSize::Float, vmTrigger.OperandSizes().GetItemAt(18)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Float, vmTrigger.OperandSizes().GetItemAt(18)->GetId());
         Assert::AreEqual(std::wstring(L"Float"), vmTrigger.OperandSizes().GetItemAt(18)->GetLabel());
-        Assert::AreEqual((int)MemSize::FloatBigEndian, vmTrigger.OperandSizes().GetItemAt(19)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::FloatBigEndian, vmTrigger.OperandSizes().GetItemAt(19)->GetId());
         Assert::AreEqual(std::wstring(L"Float BE"), vmTrigger.OperandSizes().GetItemAt(19)->GetLabel());
-        Assert::AreEqual((int)MemSize::Double32, vmTrigger.OperandSizes().GetItemAt(20)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Double32, vmTrigger.OperandSizes().GetItemAt(20)->GetId());
         Assert::AreEqual(std::wstring(L"Double32"), vmTrigger.OperandSizes().GetItemAt(20)->GetLabel());
-        Assert::AreEqual((int)MemSize::Double32BigEndian, vmTrigger.OperandSizes().GetItemAt(21)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::Double32BigEndian, vmTrigger.OperandSizes().GetItemAt(21)->GetId());
         Assert::AreEqual(std::wstring(L"Double32 BE"), vmTrigger.OperandSizes().GetItemAt(21)->GetLabel());
-        Assert::AreEqual((int)MemSize::MBF32, vmTrigger.OperandSizes().GetItemAt(22)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::MBF32, vmTrigger.OperandSizes().GetItemAt(22)->GetId());
         Assert::AreEqual(std::wstring(L"MBF32"), vmTrigger.OperandSizes().GetItemAt(22)->GetLabel());
-        Assert::AreEqual((int)MemSize::MBF32LE, vmTrigger.OperandSizes().GetItemAt(23)->GetId());
+        Assert::AreEqual((int)ra::data::Memory::Size::MBF32LE, vmTrigger.OperandSizes().GetItemAt(23)->GetId());
         Assert::AreEqual(std::wstring(L"MBF32 LE"), vmTrigger.OperandSizes().GetItemAt(23)->GetLabel());
 
         Assert::AreEqual({ 14U }, vmTrigger.OperatorTypes().Count());
@@ -966,7 +966,7 @@ public:
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::EightBit);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
@@ -989,7 +989,7 @@ public:
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::SixteenBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::SixteenBit);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
@@ -997,7 +997,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312"), vmTrigger.Serialize());
 
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(4);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         vmTrigger.NewCondition();
 
         Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
@@ -1015,7 +1015,7 @@ public:
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::EightBit);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
@@ -1040,7 +1040,7 @@ public:
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(4);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::EightBit);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
@@ -1066,7 +1066,7 @@ public:
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::ThirtyTwoBit);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
@@ -1096,7 +1096,7 @@ public:
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::EightBit);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
 
         vmTrigger.NewCondition();
@@ -1130,7 +1130,7 @@ public:
         vmTrigger.mockGameContext.DoFrame();
 
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::EightBit);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         Assert::AreEqual(
             std::wstring(L"[Indirect from 0x0004]\r\n[16-bit] note"),
@@ -1151,7 +1151,7 @@ public:
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::EightBit);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
         vmTrigger.NewCondition();
 
@@ -1162,7 +1162,7 @@ public:
 
         // second condition should be added normally (as a comparison)
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(4);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::SixteenBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::SixteenBit);
         vmTrigger.NewCondition();
 
         Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
@@ -1668,7 +1668,7 @@ public:
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
-        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(ra::data::Memory::Size::EightBit);
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().DoFrame(); // load viewer memory data
 
         vmTrigger.SetMeasuredTrackedAsPercent(true);

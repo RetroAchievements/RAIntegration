@@ -4567,7 +4567,7 @@ public:
                 return DialogResult::Yes;
             });
 
-        constexpr ra::ByteAddress nAddress = 0x02;
+        constexpr ra::data::ByteAddress nAddress = 0x02;
         vmAssetList.mockWindowManager.MemoryInspector.SetCurrentAddress(nAddress);
         vmAssetList.mockWindowManager.MemoryInspector.SetCurrentAddressNote(L"foo");
         Assert::IsTrue(vmAssetList.mockWindowManager.MemoryInspector.IsNoteUncommitted());

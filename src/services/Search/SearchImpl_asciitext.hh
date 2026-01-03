@@ -14,7 +14,7 @@ class AsciiTextSearchImpl : public SearchImpl
 {
 public:
     // indicate that search results can be very wide
-    MemSize GetMemSize() const noexcept override { return MemSize::Text; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::Text; }
 
     bool ValidateFilterValue(SearchResults& srNew) const noexcept override
     {
@@ -29,7 +29,7 @@ public:
     }
 
     // populates a vector of addresses that match the specified filter when applied to a previous search result
-    void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious,  std::function<void(ra::ByteAddress,uint8_t*,size_t)> pReadMemory) const override
+    void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious,  std::function<void(ra::data::ByteAddress,uint8_t*,size_t)> pReadMemory) const override
     {
         size_t nCompareLength = 16; // maximum length for generic search
         std::vector<unsigned char> vSearchText;
@@ -46,7 +46,7 @@ public:
         }
 
         std::vector<unsigned char> vMemory(nLargestBlock);
-        std::vector<ra::ByteAddress> vMatches;
+        std::vector<ra::data::ByteAddress> vMatches;
 
         for (auto& block : GetBlocks(srPrevious))
         {
@@ -151,7 +151,7 @@ public:
         return GetFormattedValue(pResults, pResult.nAddress, GetMemSize());
     }
 
-    std::wstring GetFormattedValue(const SearchResults& pResults, ra::ByteAddress nAddress, MemSize) const override
+    std::wstring GetFormattedValue(const SearchResults& pResults, ra::data::ByteAddress nAddress, ra::data::Memory::Size) const override
     {
         std::array<unsigned char, 16> pBuffer = {0};
         pResults.GetBytes(nAddress, &pBuffer.at(0), pBuffer.size());

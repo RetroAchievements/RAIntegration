@@ -31,26 +31,26 @@ const IntModelProperty MemoryWatchListViewModel::SingleSelectionIndexProperty("M
 
 MemoryWatchListViewModel::MemoryWatchListViewModel() noexcept
 {
-    m_vSizes.Add(ra::etoi(MemSize::EightBit), L" 8-bit"); // leading space for sort order
-    m_vSizes.Add(ra::etoi(MemSize::SixteenBit), ra::data::MemSizeString(MemSize::SixteenBit));
-    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBit), ra::data::MemSizeString(MemSize::TwentyFourBit));
-    m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), ra::data::MemSizeString(MemSize::ThirtyTwoBit));
-    m_vSizes.Add(ra::etoi(MemSize::SixteenBitBigEndian), ra::data::MemSizeString(MemSize::SixteenBitBigEndian));
-    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBitBigEndian), ra::data::MemSizeString(MemSize::TwentyFourBitBigEndian));
-    m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBitBigEndian), ra::data::MemSizeString(MemSize::ThirtyTwoBitBigEndian));
-    m_vSizes.Add(ra::etoi(MemSize::BitCount), ra::data::MemSizeString(MemSize::BitCount));
-    m_vSizes.Add(ra::etoi(MemSize::Nibble_Lower), ra::data::MemSizeString(MemSize::Nibble_Lower));
-    m_vSizes.Add(ra::etoi(MemSize::Nibble_Upper), ra::data::MemSizeString(MemSize::Nibble_Upper));
-    m_vSizes.Add(ra::etoi(MemSize::Float), ra::data::MemSizeString(MemSize::Float));
-    m_vSizes.Add(ra::etoi(MemSize::FloatBigEndian), ra::data::MemSizeString(MemSize::FloatBigEndian));
-    m_vSizes.Add(ra::etoi(MemSize::Double32), ra::data::MemSizeString(MemSize::Double32));
-    m_vSizes.Add(ra::etoi(MemSize::Double32BigEndian), ra::data::MemSizeString(MemSize::Double32BigEndian));
-    m_vSizes.Add(ra::etoi(MemSize::MBF32), ra::data::MemSizeString(MemSize::MBF32));
-    m_vSizes.Add(ra::etoi(MemSize::MBF32LE), ra::data::MemSizeString(MemSize::MBF32LE));
-    m_vSizes.Add(ra::etoi(MemSize::Text), ra::data::MemSizeString(MemSize::Text));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::EightBit), L" 8-bit"); // leading space for sort order
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::SixteenBit), ra::data::Memory::SizeString(ra::data::Memory::Size::SixteenBit));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::TwentyFourBit), ra::data::Memory::SizeString(ra::data::Memory::Size::TwentyFourBit));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::ThirtyTwoBit), ra::data::Memory::SizeString(ra::data::Memory::Size::ThirtyTwoBit));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::SixteenBitBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::SixteenBitBigEndian));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::TwentyFourBitBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::TwentyFourBitBigEndian));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::ThirtyTwoBitBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::ThirtyTwoBitBigEndian));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::BitCount), ra::data::Memory::SizeString(ra::data::Memory::Size::BitCount));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::NibbleLower), ra::data::Memory::SizeString(ra::data::Memory::Size::NibbleLower));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::NibbleUpper), ra::data::Memory::SizeString(ra::data::Memory::Size::NibbleUpper));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::Float), ra::data::Memory::SizeString(ra::data::Memory::Size::Float));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::FloatBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::FloatBigEndian));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::Double32), ra::data::Memory::SizeString(ra::data::Memory::Size::Double32));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::Double32BigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::Double32BigEndian));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::MBF32), ra::data::Memory::SizeString(ra::data::Memory::Size::MBF32));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::MBF32LE), ra::data::Memory::SizeString(ra::data::Memory::Size::MBF32LE));
+    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::Text), ra::data::Memory::SizeString(ra::data::Memory::Size::Text));
 
-    m_vFormats.Add(ra::etoi(MemFormat::Hex), L"Hex");
-    m_vFormats.Add(ra::etoi(MemFormat::Dec), L"Dec");
+    m_vFormats.Add(ra::etoi(ra::data::Memory::Format::Hex), L"Hex");
+    m_vFormats.Add(ra::etoi(ra::data::Memory::Format::Dec), L"Dec");
 
     m_vItems.AddNotifyTarget(*this);
 }
@@ -67,7 +67,7 @@ void MemoryWatchListViewModel::InitializeNotifyTargets(bool syncNotes)
     pEmulatorContext.AddNotifyTarget(*this);
 }
 
-void MemoryWatchListViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote)
+void MemoryWatchListViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     for (auto& pItem : m_vItems)
     {
@@ -82,7 +82,7 @@ void MemoryWatchListViewModel::OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::
     }
 }
 
-void MemoryWatchListViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
+void MemoryWatchListViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     for (auto& pItem : m_vItems)
     {
@@ -91,7 +91,7 @@ void MemoryWatchListViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const
     }
 }
 
-void MemoryWatchListViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t)
+void MemoryWatchListViewModel::OnByteWritten(ra::data::ByteAddress nAddress, uint8_t)
 {
     ra::data::context::EmulatorContext::DispatchesReadMemory::DispatchMemoryRead([this, nAddress]() {
         for (auto& pItem : m_vItems)

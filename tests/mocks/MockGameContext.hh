@@ -92,7 +92,7 @@ public:
 
         auto pCodeNotes = std::make_unique<MockCodeNotesModel>();
         pCodeNotes->Initialize(1U,
-            [this](ra::ByteAddress nAddress, const std::wstring& sNote) {
+            [this](ra::data::ByteAddress nAddress, const std::wstring& sNote) {
                 // a note with pointer notation is expected to keep track of where each
                 // pointed-at note exists. this normally occurs in DoFrame, but for
                 // the unit tests, force the update immediately after the note is updated
@@ -110,13 +110,13 @@ public:
 
                 OnCodeNoteChanged(nAddress, sNote);
             },
-            [this](ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) {
+            [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) {
                 OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
             });
         Assets().Append(std::move(pCodeNotes));
     }
 
-    bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
+    bool SetCodeNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
     {
         auto* pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
         if (pCodeNotes == nullptr)
@@ -130,7 +130,7 @@ public:
         return true;
     }
 
-    bool UpdateCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
+    bool UpdateCodeNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
     {
         auto* pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
         if (pCodeNotes == nullptr)

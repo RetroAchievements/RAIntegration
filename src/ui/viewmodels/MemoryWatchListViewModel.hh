@@ -84,11 +84,11 @@ public:
 
 protected:
     // ra::data::context::GameContext::NotifyTarget
-    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
-    void OnCodeNoteMoved(ra::ByteAddress nOldAddress, ra::ByteAddress nNewAddress, const std::wstring& sNote) override;
+    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
+    void OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
     // ra::data::context::EmulatorContext::NotifyTarget
-    void OnByteWritten(ra::ByteAddress, uint8_t) override;
+    void OnByteWritten(ra::data::ByteAddress, uint8_t) override;
 
     // ra::ui::ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;

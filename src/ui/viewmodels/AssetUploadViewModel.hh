@@ -23,7 +23,7 @@ public:
     void QueueLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard);
     void QueueRichPresence(ra::data::models::RichPresenceModel& pRichPresence);
     void QueueCodeNotes(ra::data::models::CodeNotesModel& pLeaderboard);
-    void QueueCodeNote(ra::data::models::CodeNotesModel& pCodeNotes, ra::ByteAddress nAddress);
+    void QueueCodeNote(ra::data::models::CodeNotesModel& pCodeNotes, ra::data::ByteAddress nAddress);
 
     bool HasFailures() const noexcept;
 
@@ -61,7 +61,7 @@ private:
     void UploadAchievement(ra::data::models::AchievementModel& pAchievement);
     void UploadLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard);
     void UploadRichPresence(ra::data::models::RichPresenceModel& pRichPresence);
-    void UploadCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::ByteAddress nAddress);
+    void UploadCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::data::ByteAddress nAddress);
 
     std::vector<UploadItem> m_vUploadQueue;
     std::mutex m_pMutex;

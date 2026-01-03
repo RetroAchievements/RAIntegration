@@ -11,7 +11,7 @@ namespace search {
 class Double32BESearchImpl : public FloatSearchImpl
 {
 public:
-    MemSize GetMemSize() const noexcept override { return MemSize::Double32BigEndian; }
+    ra::data::Memory::Size GetMemSize() const noexcept override { return ra::data::Memory::Size::Double32BigEndian; }
 
     // technically, doubles are 8-bytes long, so padding should be 7, but
     // unaligned searches only look at 4-bytes at a time, so the 3 returned
@@ -26,7 +26,7 @@ protected:
 
     uint32_t DeconstructFloatValue(float fValue) const noexcept override
     {
-        return ra::data::FloatToU32(fValue, MemSize::Double32BigEndian);
+        return ra::data::Memory::FloatToU32(fValue, ra::data::Memory::Size::Double32BigEndian);
     }
 };
 

@@ -114,6 +114,9 @@
     <ClInclude Include="context\impl\RcClient.hh">
       <Filter>context\impl</Filter>
     </ClInclude>
+    <ClInclude Include="data\Memory.hh">
+      <Filter>data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -145,6 +148,9 @@
     </ClCompile>
     <ClCompile Include="context\impl\RcClient.cpp">
       <Filter>context\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="data\Memory.cpp">
+      <Filter>data</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

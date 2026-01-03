@@ -60,30 +60,30 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Inverted), L"Invert");
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Recall), L"Recall");
 
-    m_vOperandSizes.Add(ra::etoi(MemSize::Bit_0), ra::data::MemSizeString(MemSize::Bit_0));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Bit_1), ra::data::MemSizeString(MemSize::Bit_1));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Bit_2), ra::data::MemSizeString(MemSize::Bit_2));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Bit_3), ra::data::MemSizeString(MemSize::Bit_3));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Bit_4), ra::data::MemSizeString(MemSize::Bit_4));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Bit_5), ra::data::MemSizeString(MemSize::Bit_5));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Bit_6), ra::data::MemSizeString(MemSize::Bit_6));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Bit_7), ra::data::MemSizeString(MemSize::Bit_7));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Nibble_Lower), ra::data::MemSizeString(MemSize::Nibble_Lower));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Nibble_Upper), ra::data::MemSizeString(MemSize::Nibble_Upper));
-    m_vOperandSizes.Add(ra::etoi(MemSize::EightBit), ra::data::MemSizeString(MemSize::EightBit));
-    m_vOperandSizes.Add(ra::etoi(MemSize::SixteenBit), ra::data::MemSizeString(MemSize::SixteenBit));
-    m_vOperandSizes.Add(ra::etoi(MemSize::TwentyFourBit), ra::data::MemSizeString(MemSize::TwentyFourBit));
-    m_vOperandSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), ra::data::MemSizeString(MemSize::ThirtyTwoBit));
-    m_vOperandSizes.Add(ra::etoi(MemSize::SixteenBitBigEndian), ra::data::MemSizeString(MemSize::SixteenBitBigEndian));
-    m_vOperandSizes.Add(ra::etoi(MemSize::TwentyFourBitBigEndian), ra::data::MemSizeString(MemSize::TwentyFourBitBigEndian));
-    m_vOperandSizes.Add(ra::etoi(MemSize::ThirtyTwoBitBigEndian), ra::data::MemSizeString(MemSize::ThirtyTwoBitBigEndian));
-    m_vOperandSizes.Add(ra::etoi(MemSize::BitCount), ra::data::MemSizeString(MemSize::BitCount));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Float), ra::data::MemSizeString(MemSize::Float));
-    m_vOperandSizes.Add(ra::etoi(MemSize::FloatBigEndian), ra::data::MemSizeString(MemSize::FloatBigEndian));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Double32), ra::data::MemSizeString(MemSize::Double32));
-    m_vOperandSizes.Add(ra::etoi(MemSize::Double32BigEndian), ra::data::MemSizeString(MemSize::Double32BigEndian));
-    m_vOperandSizes.Add(ra::etoi(MemSize::MBF32), ra::data::MemSizeString(MemSize::MBF32));
-    m_vOperandSizes.Add(ra::etoi(MemSize::MBF32LE), ra::data::MemSizeString(MemSize::MBF32LE));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit0), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit0));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit1), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit1));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit2), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit2));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit3), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit3));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit4), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit4));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit5), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit5));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit6), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit6));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit7), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit7));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::NibbleLower), ra::data::Memory::SizeString(ra::data::Memory::Size::NibbleLower));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::NibbleUpper), ra::data::Memory::SizeString(ra::data::Memory::Size::NibbleUpper));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::EightBit), ra::data::Memory::SizeString(ra::data::Memory::Size::EightBit));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::SixteenBit), ra::data::Memory::SizeString(ra::data::Memory::Size::SixteenBit));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::TwentyFourBit), ra::data::Memory::SizeString(ra::data::Memory::Size::TwentyFourBit));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::ThirtyTwoBit), ra::data::Memory::SizeString(ra::data::Memory::Size::ThirtyTwoBit));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::SixteenBitBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::SixteenBitBigEndian));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::TwentyFourBitBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::TwentyFourBitBigEndian));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::ThirtyTwoBitBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::ThirtyTwoBitBigEndian));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::BitCount), ra::data::Memory::SizeString(ra::data::Memory::Size::BitCount));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Float), ra::data::Memory::SizeString(ra::data::Memory::Size::Float));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::FloatBigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::FloatBigEndian));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Double32), ra::data::Memory::SizeString(ra::data::Memory::Size::Double32));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Double32BigEndian), ra::data::Memory::SizeString(ra::data::Memory::Size::Double32BigEndian));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::MBF32), ra::data::Memory::SizeString(ra::data::Memory::Size::MBF32));
+    m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::MBF32LE), ra::data::Memory::SizeString(ra::data::Memory::Size::MBF32LE));
 
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Equals), L"=");
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::LessThan), L"<");
@@ -632,7 +632,7 @@ void TriggerViewModel::NewCondition()
     }
     else
     {
-        MemSize nSize = MemSize::EightBit;
+        auto nSize = ra::data::Memory::Size::EightBit;
         const auto nIndex = sMemRef.find_last_of('_');
         auto nIndex2 = (nIndex == std::string::npos) ? 0 : nIndex + 1;
         uint8_t nMemRefSize = RC_MEMSIZE_8_BITS;
@@ -661,7 +661,7 @@ void TriggerViewModel::NewCondition()
         // extract the size
         const char* sMemRefPtr = &sMemRef.at(nIndex2);
         if (rc_parse_memref(&sMemRefPtr, &nMemRefSize, &nAddress) == RC_OK)
-            nSize = ra::data::models::TriggerValidation::MapRcheevosMemSize(nMemRefSize);
+            nSize = ra::data::Memory::SizeFromRcheevosSize(nMemRefSize);
 
         // assume the user wants to compare to the current value of the watched memory address
         ra::services::AchievementLogicSerializer::AppendOperator(sMemRef, ra::services::TriggerOperatorType::Equals);
@@ -671,10 +671,10 @@ void TriggerViewModel::NewCondition()
         rc_typed_value_t nTypedValue;
         nTypedValue.type = RC_VALUE_TYPE_UNSIGNED;
         nTypedValue.value.u32 = pMemoryInspector.Viewer().GetValueAtAddress(nAddress);
-        if (ra::data::MemSizeBytes(nSize) > 1)
+        if (ra::data::Memory::SizeBytes(nSize) > 1)
         {
             nTypedValue.value.u32 |= pMemoryInspector.Viewer().GetValueAtAddress(nAddress + 1) << 8;
-            if (ra::data::MemSizeBytes(nSize) > 2)
+            if (ra::data::Memory::SizeBytes(nSize) > 2)
             {
                 nTypedValue.value.u32 |= pMemoryInspector.Viewer().GetValueAtAddress(nAddress + 2) << 16;
                 nTypedValue.value.u32 |= pMemoryInspector.Viewer().GetValueAtAddress(nAddress + 3) << 24;

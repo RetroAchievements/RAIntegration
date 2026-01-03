@@ -18,12 +18,12 @@ public:
         return nBytes / 2;
     }
 
-    ra::ByteAddress ConvertFromRealAddress(ra::ByteAddress nAddress) const noexcept override
+    ra::data::ByteAddress ConvertFromRealAddress(ra::data::ByteAddress nAddress) const noexcept override
     {
         return nAddress / 2;
     }
 
-    ra::ByteAddress ConvertToRealAddress(ra::ByteAddress nAddress) const noexcept override
+    ra::data::ByteAddress ConvertToRealAddress(ra::data::ByteAddress nAddress) const noexcept override
     {
         return nAddress * 2;
     }
@@ -31,7 +31,7 @@ public:
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint16_t, true, 2>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nConstantValue, vMatches);
@@ -39,7 +39,7 @@ protected:
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const override
+        std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint16_t, false, 2>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);

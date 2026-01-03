@@ -2,7 +2,7 @@
 #define RA_LOG_HH
 #pragma once
 
-#include "services\ILogger.hh"
+#include "services/ILogger.hh"
 
 #ifdef RA_UTEST
 
@@ -10,8 +10,8 @@
 
 #else
 
-#include "services\ServiceLocator.hh"
-#include "util\Strings.hh"
+#include "services/ServiceLocator.hh"
+#include "util/Strings.hh"
 
 #define RA_LOG_LEVEL(lvl, ...) \
 { \

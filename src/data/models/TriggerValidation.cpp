@@ -1,13 +1,15 @@
 #include "TriggerValidation.hh"
 
-#include "util\Strings.hh"
-#include "RA_Defs.h"
-
-#include "data/context/ConsoleContext.hh"
-#include "data/context/GameContext.hh"
-#include "data/context/EmulatorContext.hh"
+#include "context/IConsoleContext.hh"
 
 #include "services/ServiceLocator.hh"
+
+#include "util/Strings.hh"
+
+#include "RA_Defs.h"
+
+#include "data/context/GameContext.hh"
+#include "data/context/EmulatorContext.hh"
 
 #include <rcheevos/src/rcheevos/rc_validate.h>
 #include <rcheevos/src/rcheevos/rc_internal.h>
@@ -225,9 +227,9 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     char sErrorBuffer[256] = "";
     int nResult = 1;
 
-    if (ra::services::ServiceLocator::Exists<ra::data::context::ConsoleContext>())
+    if (ra::services::ServiceLocator::Exists<ra::context::IConsoleContext>())
     {
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
         unsigned nMaxAddress = pConsoleContext.MaxAddress();
 
         if (nMaxAddress == 0)

@@ -1,9 +1,9 @@
 #include "Memory.hh"
 
-#include "util\Strings.hh"
+#include "util/Strings.hh"
 
 #include <rc_runtime_types.h>
-#include <rcheevos\src\rcheevos\rc_internal.h>
+#include <rcheevos/src/rcheevos/rc_internal.h>
 
 namespace ra {
 namespace data {

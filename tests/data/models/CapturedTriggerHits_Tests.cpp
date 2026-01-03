@@ -2,7 +2,7 @@
 
 #include "data\models\CapturedTriggerHits.hh"
 
-#include "tests\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

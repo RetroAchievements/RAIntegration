@@ -6,7 +6,6 @@
 #include "api\FetchCodeNotes.hh"
 #include "api\UpdateCodeNote.hh"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\UserContext.hh"
 

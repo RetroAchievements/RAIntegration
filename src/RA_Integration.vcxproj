@@ -73,7 +73,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="data\context\ConsoleContext.cpp" />
     <ClCompile Include="data\context\GameAssets.cpp" />
     <ClCompile Include="api\ApiCall.cpp" />
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
@@ -220,7 +219,6 @@
     <ClInclude Include="api\UpdateLeaderboard.hh" />
     <ClInclude Include="api\UpdateRichPresence.hh" />
     <ClInclude Include="api\UploadBadge.hh" />
-    <ClInclude Include="data\context\ConsoleContext.hh" />
     <ClInclude Include="data\context\EmulatorContext.hh" />
     <ClInclude Include="data\context\GameAssets.hh" />
     <ClInclude Include="data\context\GameContext.hh" />

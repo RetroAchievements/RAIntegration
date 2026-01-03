@@ -7,9 +7,9 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockServer.hh"
@@ -29,7 +29,7 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
@@ -643,7 +643,7 @@ public:
     TEST_METHOD(TestFindCodeNoteSizedPointerOverflow)
     {
         CodeNotesModelHarness notes;
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorContext.MockMemory(memory);
         memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
@@ -693,7 +693,7 @@ public:
             L"+8 | Count";
         notes.AddCodeNote(4U, "Author", sNote);
 
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         memory.at(4) = 8; // pointer = 8
         memory.at(8) = 20; // obj1 pointer = 20
@@ -874,7 +874,7 @@ public:
     TEST_METHOD(TestEnumerateCodeNotesWithIndirectOverflow)
     {
         CodeNotesModelHarness notes;
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorContext.MockMemory(memory);
         memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
@@ -1013,7 +1013,7 @@ public:
     {
         CodeNotesModelHarness notes;
         notes.MonitorCodeNoteChanges();
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
 
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 4; i < memory.size(); i++)
@@ -1061,7 +1061,7 @@ public:
     {
         CodeNotesModelHarness notes;
         notes.MonitorCodeNoteChanges();
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
 
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 4; i < memory.size(); i++)
@@ -1109,7 +1109,7 @@ public:
     {
         CodeNotesModelHarness notes;
         notes.MonitorCodeNoteChanges();
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
 
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 4; i < memory.size(); i++)
@@ -1187,7 +1187,7 @@ public:
     TEST_METHOD(TestFindCodeNoteStartPointerOverflow)
     {
         CodeNotesModelHarness notes;
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorContext.MockMemory(memory);
         memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
@@ -1253,7 +1253,7 @@ public:
     TEST_METHOD(TestGetIndirectSourceOverflow)
     {
         CodeNotesModelHarness notes;
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorContext.MockMemory(memory);
         memory.at(4) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
@@ -1439,7 +1439,7 @@ public:
     TEST_METHOD(TestGetNextNoteAddressOverflow)
     {
         CodeNotesModelHarness notes;
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorContext.MockMemory(memory);
         memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
@@ -1502,7 +1502,7 @@ public:
     TEST_METHOD(TestGetPreviousNoteAddressOverflow)
     {
         CodeNotesModelHarness notes;
-        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorContext.MockMemory(memory);
         memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)

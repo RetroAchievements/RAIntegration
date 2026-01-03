@@ -2,7 +2,7 @@
 #define RA_CONTEXT_IRCCLIENT_H
 #pragma once
 
-#include <rcheevos\include\rc_client.h>
+#include <rcheevos/include/rc_client.h>
 
 #include <functional>
 #include <memory>

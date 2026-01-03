@@ -3,10 +3,10 @@
 #include "ui\EditorTheme.hh"
 #include "ui\viewmodels\MemoryRegionsViewModel.hh"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\ui\UIAsserts.hh"
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -26,7 +26,7 @@ private:
     class MemoryRegionsViewModelHarness : public MemoryRegionsViewModel
     {
     public:
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
@@ -47,9 +47,9 @@ private:
 
         void MockRegions()
         {
-            mockConsoleContext.AddMemoryRegion(0x0000, 0x1FFF, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
-            mockConsoleContext.AddMemoryRegion(0x2000, 0x3FFF, ra::data::context::ConsoleContext::AddressType::VideoRAM, "Video RAM");
-            mockConsoleContext.AddMemoryRegion(0x4000, 0x7FFF, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM");
+            mockConsoleContext.AddMemoryRegion(0x0000, 0x1FFF, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
+            mockConsoleContext.AddMemoryRegion(0x2000, 0x3FFF, ra::data::MemoryRegion::Type::VideoRAM, L"Video RAM");
+            mockConsoleContext.AddMemoryRegion(0x4000, 0x7FFF, ra::data::MemoryRegion::Type::SaveRAM, L"Cartridge RAM");
             InitializeRegions();
         }
     };

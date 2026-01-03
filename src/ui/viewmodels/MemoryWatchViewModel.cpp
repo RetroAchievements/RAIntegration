@@ -4,10 +4,10 @@
 #include "RA_Json.h"
 #include "util\Strings.hh"
 
+#include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
 
 #include "data\Types.hh"
-#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\models\TriggerValidation.hh"
 
@@ -394,7 +394,7 @@ bool MemoryWatchViewModel::UpdateCurrentAddressFromIndirectAddress()
     if (!m_pValue)
         return true;
 
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
 
     m_bIndirectAddressValid = true;
     for (const auto* pCondition = m_pValue->conditions->conditions; pCondition; pCondition = pCondition->next)

@@ -4,11 +4,11 @@
 
 #include "services\ServiceLocator.hh"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClipboard.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
@@ -32,7 +32,7 @@ private:
     public:
         ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockRcClient mockRcClient;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;

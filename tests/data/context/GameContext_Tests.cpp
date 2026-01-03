@@ -15,11 +15,11 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockAudioSystem.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
@@ -72,7 +72,7 @@ public:
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulator;
         ra::data::context::mocks::MockSessionTracker mockSessionTracker;
         ra::data::context::mocks::MockUserContext mockUser;

@@ -1,11 +1,11 @@
 #include "gsl.hh"
 
-#include "services\ILogger.hh"
-#include "services\IMessageDispatcher.hh"
-#include "services\ServiceLocator.hh"
+#include "services/ILogger.hh"
+#include "services/IMessageDispatcher.hh"
+#include "services/ServiceLocator.hh"
 
-#include "util\Log.hh"
-#include "util\Strings.hh"
+#include "util/Log.hh"
+#include "util/Strings.hh"
 
 static inline constexpr const char* __gsl_filename(const char* const str)
 {

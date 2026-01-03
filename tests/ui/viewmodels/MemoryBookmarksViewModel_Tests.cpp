@@ -6,12 +6,12 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
@@ -62,7 +62,7 @@ private:
     public:
         ra::context::mocks::MockRcClient mockRcClient;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
@@ -1950,7 +1950,7 @@ public:
         std::array<unsigned char, 32> memory{};
         bookmarks.mockEmulatorContext.MockMemory(memory);
         bookmarks.mockConsoleContext.AddMemoryRegion(0U, 16,
-                                                     ra::data::context::ConsoleContext::AddressType::SystemRAM);
+                                                     ra::data::MemoryRegion::Type::SystemRAM);
 
         bookmarks.AddBookmark("I:0xX0004_M:0xH0008");
         auto* pBookmark = bookmarks.GetBookmark(0);
@@ -2010,7 +2010,7 @@ private:
         std::array<unsigned char, 32> memory{};
         bookmarks.mockEmulatorContext.MockMemory(memory);
         bookmarks.mockConsoleContext.AddMemoryRegion(0U, 16,
-            ra::data::context::ConsoleContext::AddressType::SystemRAM);
+            ra::data::MemoryRegion::Type::SystemRAM);
 
         memory.at(4) = 4;
         memory.at(8) = pMemory[0];

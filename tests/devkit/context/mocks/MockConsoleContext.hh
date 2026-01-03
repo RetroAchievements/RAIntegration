@@ -1,17 +1,16 @@
-#ifndef RA_DATA_MOCK_CONSOLECONTEXT_HH
-#define RA_DATA_MOCK_CONSOLECONTEXT_HH
+#ifndef RA_CONTEXT_MOCK_CONSOLECONTEXT_HH
+#define RA_CONTEXT_MOCK_CONSOLECONTEXT_HH
 #pragma once
 
-#include "data\context\ConsoleContext.hh"
+#include "context/impl/ConsoleContext.hh"
 
-#include "services\ServiceLocator.hh"
+#include "services/ServiceLocator.hh"
 
 namespace ra {
-namespace data {
 namespace context {
 namespace mocks {
 
-class MockConsoleContext : public ConsoleContext
+class MockConsoleContext : public impl::ConsoleContext
 {
 public:
     GSL_SUPPRESS_F6 MockConsoleContext() noexcept
@@ -32,29 +31,25 @@ public:
     void ResetMemoryRegions() noexcept { m_vRegions.clear(); }
 
     void AddMemoryRegion(ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, 
-        AddressType nAddressType, const std::string& sDescription = "")
+        ra::data::MemoryRegion::Type nAddressType, const std::wstring& sDescription = L"")
     { 
         AddMemoryRegion(nStartAddress, nEndAddress, nAddressType, nStartAddress, sDescription);
     }
 
     void AddMemoryRegion(ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, 
-        AddressType nAddressType, ra::data::ByteAddress nRealAddress, const std::string& sDescription = "")
+        ra::data::MemoryRegion::Type nAddressType, ra::data::ByteAddress nRealAddress, const std::wstring& sDescription = L"")
     { 
-        auto& pRegion = m_vRegions.emplace_back();
-        pRegion.StartAddress = nStartAddress;
-        pRegion.EndAddress = nEndAddress;
-        pRegion.RealAddress = nRealAddress;
-        pRegion.Type = nAddressType;
-        pRegion.Description = sDescription;
+        auto& pRegion = m_vRegions.emplace_back(nStartAddress, nEndAddress, sDescription);
+        pRegion.SetRealStartAddress(nRealAddress);
+        pRegion.SetType(nAddressType);
     }
 
 private:
-    ra::services::ServiceLocator::ServiceOverride<ra::data::context::ConsoleContext> m_Override;
+    ra::services::ServiceLocator::ServiceOverride<ra::context::IConsoleContext> m_Override;
 };
 
 } // namespace mocks
 } // namespace context
-} // namespace data
 } // namespace ra
 
-#endif // !RA_DATA_MOCK_CONSOLECONTEXT_HH
+#endif // !RA_CONTEXT_MOCK_CONSOLECONTEXT_HH

@@ -34,10 +34,10 @@ void MemoryRegionsModel::Serialize(ra::services::TextWriter& pWriter) const
             pWriter.Write("M0:");
         }
 
-        pWriter.Write(ra::ByteAddressToString(pIter.nStartAddress));
+        pWriter.Write(ra::ByteAddressToString(pIter.GetStartAddress()));
         pWriter.Write("-");
-        pWriter.Write(ra::ByteAddressToString(pIter.nEndAddress));
-        WriteQuoted(pWriter, pIter.sLabel);
+        pWriter.Write(ra::ByteAddressToString(pIter.GetEndAddress()));
+        WriteQuoted(pWriter, pIter.GetDescription());
     }
 }
 
@@ -61,12 +61,7 @@ bool MemoryRegionsModel::Deserialize(ra::Tokenizer& pTokenizer)
 
 void MemoryRegionsModel::AddCustomRegion(ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, const std::wstring& sLabel)
 {
-    MemoryRegion pRegion;
-    pRegion.sLabel = sLabel;
-    pRegion.nStartAddress = nStartAddress;
-    pRegion.nEndAddress = nEndAddress;
-
-    m_vRegions.push_back(pRegion);
+    m_vRegions.emplace_back(nStartAddress, nEndAddress, sLabel);
 
     // setting changes to Unpublished forces a write without attempting to consolidate modifications
     SetValue(ChangesProperty, ra::etoi(AssetChanges::Unpublished));

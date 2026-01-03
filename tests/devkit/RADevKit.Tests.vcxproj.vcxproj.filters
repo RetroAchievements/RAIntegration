@@ -31,6 +31,9 @@
     <ClCompile Include="context\impl\RcClient_Tests.cpp">
       <Filter>context\impl</Filter>
     </ClCompile>
+    <ClCompile Include="..\data\context\ConsoleContext_Tests.cpp">
+      <Filter>context\impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -85,6 +88,12 @@
     </ClInclude>
     <ClInclude Include="testutil\MemoryAsserts.hh">
       <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\MemoryRegionAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="context\mocks\MockConsoleContext.hh">
+      <Filter>context\mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

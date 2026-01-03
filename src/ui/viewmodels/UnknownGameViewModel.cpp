@@ -5,9 +5,9 @@
 #include "api\FetchGamesList.hh"
 #include "api\SubmitNewTitle.hh"
 
+#include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\UserContext.hh"
 
@@ -42,7 +42,7 @@ UnknownGameViewModel::UnknownGameViewModel() noexcept
 
 void UnknownGameViewModel::InitializeGameTitles()
 {
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     InitializeGameTitles(pConsoleContext.Id());
 }
 
@@ -130,7 +130,7 @@ unsigned int UnknownGameViewModel::GetPreviousAssociation(const std::wstring& sH
     std::string sLine;
     if (sMapping && sMapping->GetLine(sLine))
     {
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
         const unsigned nId = DecodeID(sLine, sHash, pConsoleContext.Id());
         if (nId > 0)
             return nId;
@@ -211,7 +211,7 @@ bool UnknownGameViewModel::Associate()
             return false;
     }
 
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     request.ConsoleId = pConsoleContext.Id();
     request.Hash = ra::Narrow(GetChecksum());
     request.Description = GetEstimatedGameName();
@@ -246,7 +246,7 @@ bool UnknownGameViewModel::BeginTest()
     if (vmMessageBox.ShowModal(*this) == DialogResult::No)
         return false;
 
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     auto sValue = EncodeID(nGameId, GetChecksum(), pConsoleContext.Id());
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto sMapping = pLocalStorage.WriteText(ra::services::StorageItemType::HashMapping, GetChecksum());

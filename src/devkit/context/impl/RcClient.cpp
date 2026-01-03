@@ -1,11 +1,11 @@
 #include "RcClient.hh"
 
-#include "services\IHttpRequester.hh"
-#include "services\ServiceLocator.hh"
+#include "services/IHttpRequester.hh"
+#include "services/ServiceLocator.hh"
 
-#include "util\Log.hh"
+#include "util/Log.hh"
 
-#include <rcheevos\src\rc_client_internal.h>
+#include <rcheevos/src/rc_client_internal.h>
 
 namespace ra {
 namespace context {

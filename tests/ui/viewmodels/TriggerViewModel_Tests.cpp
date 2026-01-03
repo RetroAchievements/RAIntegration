@@ -3,9 +3,9 @@
 #include "ui\viewmodels\TriggerViewModel.hh"
 
 #include "tests\ui\UIAsserts.hh"
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -26,7 +26,7 @@ private:
     class TriggerViewModelHarness : public TriggerViewModel
     {
     public:
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;

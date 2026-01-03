@@ -5,13 +5,13 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -75,7 +75,7 @@ public:
 
     ra::api::mocks::MockServer mockServer;
     ra::context::mocks::MockRcClient mockRcClient;
-    ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+    ra::context::mocks::MockConsoleContext mockConsoleContext;
     ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
     ra::data::context::mocks::MockGameContext mockGameContext;
     ra::data::context::mocks::MockSessionTracker mockSessionTracker;
@@ -171,7 +171,7 @@ public:
     TEST_METHOD(TestIdentifyGameUnhashable)
     {
         GameIdentifierHarness identifier;
-        ra::data::context::mocks::MockConsoleContext n64Context(N64, L"N64");
+        ra::context::mocks::MockConsoleContext n64Context(N64, L"N64");
 
         bool bDialogShown = false;
         identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)

@@ -77,7 +77,7 @@ public:
     /// <summary>
     /// Adds an item to the end of the collection.
     /// </summary>
-    GSL_SUPPRESS_C128 LookupItemViewModel& Add(int nId, const std::wstring& sLabel)
+    LookupItemViewModel& Add(int nId, const std::wstring& sLabel)
     {
         auto pItem = std::make_unique<LookupItemViewModel>(nId, sLabel);
         return dynamic_cast<LookupItemViewModel&>(ViewModelCollectionBase::AddItem(std::move(pItem)));
@@ -87,7 +87,7 @@ public:
     /// Adds an item to the end of the collection.
     /// </summary>
     template<class T, class... Args>
-    GSL_SUPPRESS_C128 T& Add(Args&&... args)
+    T& Add(Args&&... args)
     {
         static_assert(std::is_base_of<LookupItemViewModel, T>::value, "T not derived from base class LookupItemViewModel");
 

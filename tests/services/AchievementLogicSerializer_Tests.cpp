@@ -5,7 +5,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
-#include "tests\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -19,7 +19,7 @@ TEST_CLASS(AchievementLogicSerializer_Tests)
 public:
     TEST_METHOD(TestBuildMemRefChain)
     {
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
 
         ra::data::models::CodeNoteModel note;
@@ -48,7 +48,7 @@ public:
 
     TEST_METHOD(TestBuildMemRefChain24Bit)
     {
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockConsoleContext.SetId(ConsoleID::PlayStation); // 24-bit read
 
@@ -72,7 +72,7 @@ public:
 
     TEST_METHOD(TestBuildMemRefChain25Bit)
     {
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockConsoleContext.SetId(ConsoleID::PSP); // 25-bit read
 
@@ -96,7 +96,7 @@ public:
 
     TEST_METHOD(TestBuildMemRefChain25BitBE)
     {
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockConsoleContext.SetId(ConsoleID::GameCube); // 25-bit BE read
 
@@ -120,7 +120,7 @@ public:
 
     TEST_METHOD(TestBuildMemRefChain25BitOverflowOffset)
     {
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockConsoleContext.SetId(ConsoleID::GameCube); // 25-bit BE read
 
@@ -144,7 +144,7 @@ public:
 
     TEST_METHOD(TestBuildMemRefChainGBA)
     {
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockConsoleContext.SetId(ConsoleID::GBA); // 24-bit read with explicit offset in note
 
@@ -168,7 +168,7 @@ public:
 
     TEST_METHOD(TestBuildMemRefChainNegativeOffset)
     {
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         mockConsoleContext.SetId(ConsoleID::GameCube); // 29-bit BE read
 

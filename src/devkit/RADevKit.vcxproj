@@ -57,6 +57,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="context\impl\ConsoleContext.cpp" />
     <ClCompile Include="context\impl\RcClient.cpp" />
     <ClCompile Include="data\DataModelBase.cpp" />
     <ClCompile Include="data\DataModelCollection.cpp" />
@@ -68,12 +69,15 @@
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="util\GSL.cpp" />
     <ClCompile Include="util\Strings.cpp" />
+    <ClInclude Include="context\IConsoleContext.hh" />
+    <ClInclude Include="context\impl\ConsoleContext.hh" />
     <ClInclude Include="context\impl\RcClient.hh" />
     <ClInclude Include="context\IRcClient.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\DataModelBase.hh" />
     <ClInclude Include="data\DataModelCollection.hh" />
     <ClInclude Include="data\Memory.hh" />
+    <ClInclude Include="data\MemoryRegion.hh" />
     <ClInclude Include="data\ModelBase.hh" />
     <ClInclude Include="data\ModelCollectionBase.hh" />
     <ClInclude Include="data\ModelProperty.hh" />

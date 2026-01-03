@@ -4,9 +4,9 @@
 #include "util\Log.hh"
 #include "RA_Resource.h"
 
+#include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\GameContext.hh"
 
 #include "services\IConfiguration.hh"
@@ -81,7 +81,7 @@ private:
 public:
     static void ResetMemory()
     {
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
 
         auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
         pEmulatorContext.ClearMemoryBlocks();
@@ -90,9 +90,9 @@ public:
         uint32_t nBytes = 0;
         for (const auto& pRegion : pConsoleContext.MemoryRegions())
         {
-            const auto nSize = pRegion.EndAddress - pRegion.StartAddress + 1;
+            const auto nSize = pRegion.GetSize();
 
-            if (pRegion.Type == ra::data::context::ConsoleContext::AddressType::Unused)
+            if (pRegion.GetType() == ra::data::MemoryRegion::Type::Unused)
             {
                 if (nBytes > 0)
                 {
@@ -104,13 +104,13 @@ public:
 
                     nBytes = 0;
                     ++nIndex;
-                    s_memoryBlockWrappers.at(nIndex).nOffset = pRegion.StartAddress;
+                    s_memoryBlockWrappers.at(nIndex).nOffset = pRegion.GetStartAddress();
                 }
 
                 pEmulatorContext.AddMemoryBlock(nIndex++, nSize, nullptr, nullptr);
 
                 Expects(gsl::narrow_cast<size_t>(nIndex) < s_memoryBlockWrappers.size());
-                s_memoryBlockWrappers.at(nIndex).nOffset = pRegion.EndAddress + 1;
+                s_memoryBlockWrappers.at(nIndex).nOffset = pRegion.GetEndAddress() + 1;
             }
             else
             {
@@ -338,7 +338,7 @@ public:
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.SetGameHash(hash);
 
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
         pClient->game->public_.console_id = ra::etoi(pConsoleContext.Id());
     }
 

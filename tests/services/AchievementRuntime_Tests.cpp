@@ -2,6 +2,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\services\mocks\MockHttpRequester.hh"
@@ -9,7 +10,6 @@
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"

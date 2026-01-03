@@ -103,7 +103,7 @@ public:
     const Type GetType() const noexcept { return m_nType; }
 
     /// <summary>
-    /// Gets the type of the region.
+    /// Sets the type of the region.
     /// </summary>
     void SetType(Type nType) noexcept { m_nType = nType; }
 

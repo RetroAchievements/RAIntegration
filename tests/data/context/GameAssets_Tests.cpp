@@ -178,6 +178,19 @@ public:
         {
             return *(dynamic_cast<ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0)));
         }
+
+        void AddMemoryRegionsModel()
+        {
+            auto pMemoryRegions = std::make_unique<ra::data::models::MemoryRegionsModel>();
+            pMemoryRegions->CreateServerCheckpoint();
+            pMemoryRegions->CreateLocalCheckpoint();
+            Append(std::move(pMemoryRegions));
+        }
+
+        ra::data::models::MemoryRegionsModel& GetMemoryRegions()
+        {
+            return *(dynamic_cast<ra::data::models::MemoryRegionsModel*>(FindAsset(ra::data::models::AssetType::MemoryRegions, 0)));
+        }
     };
 
     TEST_METHOD(TestSaveLocalEmpty)
@@ -671,6 +684,64 @@ public:
         gameAssets.ReloadAllAssets();
 
         Assert::IsNull(gameAssets.FindAchievement(GameAssets::FirstLocalId));
+    }
+
+    TEST_METHOD(TestReloadIgnoresMemoryRegions)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.AddThreeAchievements();
+        gameAssets.AddMemoryRegionsModel();
+
+        auto& pMemoryRegions = gameAssets.GetMemoryRegions();
+        pMemoryRegions.AddCustomRegion(0x1000, 0x10FF, L"Custom");
+        Assert::AreEqual({ 1U }, pMemoryRegions.CustomRegions().size());
+
+        gameAssets.MockUserFileContents(
+            "1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n"
+            "3:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n"
+        );
+
+        gameAssets.ReloadAsset(AssetType::Achievement, 1);
+
+        // item 1 should have been updated from file
+        const auto* pAsset = gameAssets.FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
+        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        // memory regions should not have been modified
+        Assert::AreEqual({ 1U }, pMemoryRegions.CustomRegions().size());
+    }
+
+    TEST_METHOD(TestReloadAllPicksUpMemoryRegions)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.AddThreeAchievements();
+        gameAssets.AddMemoryRegionsModel();
+
+        const auto& pMemoryRegions = gameAssets.GetMemoryRegions();
+        Assert::AreEqual({ 0U }, pMemoryRegions.CustomRegions().size());
+
+        gameAssets.MockUserFileContents(
+            "1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n"
+            "3:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n"
+            "M0:0x1000-0x10FF:\"Custom\"\n"
+        );
+
+        gameAssets.ReloadAllAssets();
+
+        // item 1 should have been updated from file
+        const auto* pAsset = gameAssets.FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
+        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        // memory regions should have been modified
+        Assert::AreEqual({ 1U }, pMemoryRegions.CustomRegions().size());
     }
 
     TEST_METHOD(TestSaveLocalLeaderboard)

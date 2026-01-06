@@ -426,6 +426,9 @@
     <ClCompile Include="ui\viewmodels\TriggerSummaryViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\TriggerSummaryDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -1045,6 +1048,9 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\TriggerSummaryViewModel.hh">
       <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\TriggerSummaryDialog.hh">
+      <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

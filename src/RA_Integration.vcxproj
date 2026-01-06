@@ -196,6 +196,7 @@
     <ClCompile Include="ui\win32\PointerInspectorDialog.cpp" />
     <ClCompile Include="ui\win32\ProgressDialog.cpp" />
     <ClCompile Include="ui\win32\RichPresenceDialog.cpp" />
+    <ClCompile Include="ui\win32\TriggerSummaryDialog.cpp" />
     <ClCompile Include="ui\win32\UnknownGameDialog.cpp" />
     <ClCompile Include="ui\WindowViewModelBase.cpp" />
     <ClInclude Include="..\RAInterface\RA_Consoles.h" />
@@ -401,6 +402,7 @@
     <ClInclude Include="ui\win32\ProgressDialog.hh" />
     <ClInclude Include="ui\win32\RichPresenceDialog.hh" />
     <ClInclude Include="ui\win32\IDialogPresenter.hh" />
+    <ClInclude Include="ui\win32\TriggerSummaryDialog.hh" />
     <ClInclude Include="ui\win32\UnknownGameDialog.hh" />
     <ClInclude Include="ui\WindowViewModelBase.hh" />
     <ClInclude Include="windows_nodefines.h" />

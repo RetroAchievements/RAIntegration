@@ -122,6 +122,8 @@ public:
     void AddGroup();
     void RemoveGroup();
 
+    void Summarize();
+
     /// <summary>
     /// Gets the list of condition types.
     /// </summary>

@@ -2,7 +2,7 @@
 #define RA_UI_TRIGGERSUMMARYVIEWMODEL_H
 #pragma once
 
-#include "ui\ViewModelBase.hh"
+#include "ui\WindowViewModelBase.hh"
 #include "ui\ViewModelCollection.hh"
 #include "ui\Types.hh"
 
@@ -12,7 +12,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class TriggerSummaryViewModel : public ViewModelBase
+class TriggerSummaryViewModel : public WindowViewModelBase
 {
 public:
     GSL_SUPPRESS_F6 TriggerSummaryViewModel() noexcept = default;
@@ -51,6 +51,7 @@ public:
         TriggerClauseType nType = ra::itoe<TriggerClauseType>(0);
     };
 
+    ViewModelCollection<TriggerClauseViewModel>& Clauses() { return m_vClauses; }
     const ViewModelCollection<TriggerClauseViewModel>& Clauses() const { return m_vClauses; }
 
 private:

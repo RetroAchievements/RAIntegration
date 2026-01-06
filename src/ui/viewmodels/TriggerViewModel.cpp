@@ -957,6 +957,8 @@ void TriggerViewModel::Summarize()
         vmSummary.SetWindowTitle(pGroup->GetLabel() + L" Summary - " + pAssetEditor.GetAsset()->GetName());
 
     vmSummary.InitializeFrom(*pCondSet);
+    vmSummary.AddHeaders();
+
     vmSummary.ShowModal(pAssetEditor);
 }
 

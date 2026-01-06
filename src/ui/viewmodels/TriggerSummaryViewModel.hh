@@ -24,6 +24,7 @@ public:
     TriggerSummaryViewModel& operator=(TriggerSummaryViewModel&&) noexcept = delete;
 
     void InitializeFrom(const rc_condset_t& pCondSet);
+    void AddHeaders();
 
     class TriggerClauseViewModel : public ViewModelBase
     {
@@ -43,6 +44,14 @@ public:
         static const StringModelProperty TargetProperty;
         const std::wstring& GetTarget() const { return GetValue(TargetProperty); }
         void SetTarget(const std::wstring& sValue) { SetValue(TargetProperty, sValue); }
+
+        static const StringModelProperty TallyProperty;
+        const std::wstring& GetTally() const { return GetValue(TallyProperty); }
+        void SetTally(const std::wstring& sValue) { SetValue(TallyProperty, sValue); }
+
+        static const IntModelProperty ColorProperty;
+        Color GetColor() const { return Color(ra::to_unsigned(GetValue(ColorProperty))); }
+        void SetColor(Color value) { SetValue(ColorProperty, ra::to_signed(value.ARGB)); }
 
         std::wstring GetTooltip(const StringModelProperty& nProperty) const;
 

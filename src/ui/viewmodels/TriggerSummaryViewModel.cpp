@@ -7,6 +7,8 @@
 
 #include "services\ServiceLocator.hh"
 
+#include "ui\EditorTheme.hh"
+
 #include "util\Strings.hh"
 
 #include <rcheevos/src/rcheevos/rc_internal.h>
@@ -15,26 +17,44 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const StringModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::IndicesProperty("TriggerClauseViewModel", "Indices", L"1");
+const StringModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::IndicesProperty("TriggerClauseViewModel", "Indices", L"");
 const StringModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::ReferenceProperty("TriggerClauseViewModel", "Reference", L"0x0000");
 const StringModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::OperationProperty("TriggerClauseViewModel", "Operation", L"is");
-const StringModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::TargetProperty("TriggerClauseViewModel", "Target", L"0");
+const StringModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::TargetProperty("TriggerClauseViewModel", "Target", L"");
+const StringModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::TallyProperty("TriggerClauseViewModel", "Tally", L"");
+const IntModelProperty TriggerSummaryViewModel::TriggerClauseViewModel::ColorProperty("TriggerClauseViewModel", "Color", 0);
 
 enum TriggerSummaryViewModel::TriggerClauseViewModel::TriggerClauseType : int
 {
     None = 0,
-    Is,
-    IsNot,
-    Comparison,
-    AlwaysTrue,
-    AlwaysFalse,
-    Changed,
-    HasntChanged,
-    ChangedTo,
-    ChangedFrom,
+    Is,             // direct equality comparison (=)
+    IsNot,          // direct inequality comparison (!=)
+    Comparison,     // open-ended comparison (> >= < <=)
+    AlwaysTrue,     // logically impossible to ever be false
+    AlwaysFalse,    // logically impossible to ever be true
+    Changed,        // value differs from its delta
+    HasntChanged,   // value doesn't differ from its delta
+    ChangedTo,      // direct equality comparison (=) with a delta check
+    ChangedFrom,    // direct inequality comparison (!=) with a delta check
 };
 
 using TriggerClauseType = TriggerSummaryViewModel::TriggerClauseViewModel::TriggerClauseType;
+
+static constexpr bool IsChangeType(TriggerClauseType nType)
+{
+    switch (nType)
+    {
+        case TriggerClauseType::Changed:
+        case TriggerClauseType::ChangedTo:
+        case TriggerClauseType::ChangedFrom:
+            // these are all specific checks of a memory address and its delta.
+            // as such, they'll only be true on the frame they change.
+            return true;
+
+        default:
+            return false;
+    }
+}
 
 static bool IsSameMemoryReference(const rc_operand_t& pOperand1, const rc_operand_t& pOperand2)
 {
@@ -344,6 +364,23 @@ static std::wstring OperandToString(const rc_operand_t& pOperand)
     }
 }
 
+static void HandleTally(TriggerSummaryViewModel::TriggerClauseViewModel& pClause, const rc_condition_t& pCondition)
+{
+    if (pCondition.required_hits == 1)
+    {
+        // don't say "do something once" for a single captured hit starting condition
+        if (pCondition.type != RC_CONDITION_STANDARD)
+            pClause.SetTally(L"once");
+    }
+    else if (pCondition.required_hits > 1)
+    {
+        if (IsChangeType(pClause.nType))
+            pClause.SetTally(ra::StringPrintf(L"%u times", pCondition.required_hits));
+        else
+            pClause.SetTally(ra::StringPrintf(L"for %u frames", pCondition.required_hits));
+    }
+}
+
 static void HandleCompareMemoryReferenceToSelf(TriggerSummaryViewModel::TriggerClauseViewModel& pClause, const rc_condition_t& pCondition)
 {
     pClause.SetTarget(L"");
@@ -467,6 +504,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             {
                 // comparing value to itself
                 HandleCompareMemoryReferenceToSelf(pClause, *pCondition);
+                HandleTally(pClause, *pCondition);
                 continue;
             }
         }
@@ -500,6 +538,8 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             pClause.SetTarget(OperandToString(pCondition->operand2));
         }
 
+        HandleTally(pClause, *pCondition);
+
         if (rc_operand_is_memref(&pCondition->operand1))
         {
             for (gsl::index nIndex = 0; nIndex < m_vClauses.Count() - 1; ++nIndex)
@@ -513,6 +553,130 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             }
         }
     }
+}
+
+void TriggerSummaryViewModel::AddHeaders()
+{
+    enum class TriggerClauseBucket
+    {
+        None,
+        Trigger,
+        Ongoing,
+        Unless,
+        Start,
+        Restart,
+        Unimportant,
+        Conflicting,
+
+        Count,
+    };
+
+    std::vector<std::vector<TriggerClauseViewModel*>> vBuckets(ra::etoi(TriggerClauseBucket::Count));
+
+    for (gsl::index nIndex = 0; nIndex < m_vClauses.Count(); ++nIndex)
+    {
+        auto* pClause = m_vClauses.GetItemAt(nIndex);
+        if (!pClause)
+            continue;
+
+        auto nBucket = TriggerClauseBucket::Ongoing;
+
+        switch (pClause->nType)
+        {
+            default:
+                // anything that is only true for one frame should be classified as a trigger.
+                if (IsChangeType(pClause->nType))
+                    nBucket = TriggerClauseBucket::Trigger;
+                break;
+
+            case TriggerClauseType::AlwaysTrue:
+                nBucket = TriggerClauseBucket::Unimportant;
+                break;
+
+            case TriggerClauseType::AlwaysFalse:
+                nBucket = TriggerClauseBucket::Conflicting;
+                break;
+        }
+
+        switch (pClause->pCondition->type)
+        {
+            case RC_CONDITION_PAUSE_IF:
+                nBucket = TriggerClauseBucket::Unless;
+                break;
+
+            case RC_CONDITION_RESET_IF:
+                nBucket = TriggerClauseBucket::Restart;
+                break;
+
+            case RC_CONDITION_TRIGGER:
+                nBucket = TriggerClauseBucket::Trigger;
+                break;
+
+            default:
+                if (pClause->pCondition->required_hits > 0)
+                    nBucket = TriggerClauseBucket::Start;
+                break;
+        }
+
+        vBuckets.at(ra::etoi(nBucket)).push_back(pClause);
+    }
+
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+
+    gsl::index nInsertIndex = 0;
+    auto fBuildGroup = [this, &vBuckets, &nInsertIndex](TriggerClauseBucket nBucket, const std::wstring& sHeader, ra::ui::Color nColor)
+        {
+            const auto& vBucketItems = vBuckets.at(ra::etoi(nBucket));
+            if (vBucketItems.empty())
+                return;
+
+            auto& vmHeader = m_vClauses.Add();
+            vmHeader.SetReference(sHeader);
+            vmHeader.SetOperation(L"");
+            vmHeader.SetColor(nColor);
+            m_vClauses.MoveItem(m_vClauses.Count() - 1, nInsertIndex++);
+
+            for (const auto* pClause : vBucketItems)
+            {
+                for (gsl::index nIndex = nInsertIndex; nIndex < m_vClauses.Count(); ++nIndex)
+                {
+                    if (m_vClauses.GetItemAt(nIndex) == pClause)
+                    {
+                        if (nIndex != nInsertIndex)
+                            m_vClauses.MoveItem(nIndex, nInsertIndex);
+                        ++nInsertIndex;
+                        break;
+                    }
+                }
+            }
+        };
+
+    fBuildGroup(TriggerClauseBucket::Conflicting, L"--- CONFLICTING ---", pTheme.ColorTriggerPauseTrue());
+
+    if (!vBuckets.at(ra::etoi(TriggerClauseBucket::Trigger)).empty())
+    {
+        fBuildGroup(TriggerClauseBucket::Trigger, L"--- TRIGGER WHEN ---", pTheme.ColorTriggerBecomingTrue());
+        fBuildGroup(TriggerClauseBucket::Ongoing, L"--- WHILE ---", pTheme.ColorTriggerIsTrue());
+    }
+    else
+    {
+        // No trigger clauses. Promote the Ongoing clauses to trigger clauses
+        fBuildGroup(TriggerClauseBucket::Ongoing, L"--- TRIGGER WHEN ---", pTheme.ColorTriggerBecomingTrue());
+    }
+
+    const auto vUnlessItems = vBuckets.at(ra::etoi(TriggerClauseBucket::Unless));
+    if (!vUnlessItems.empty()) {
+        fBuildGroup(TriggerClauseBucket::Unless, vUnlessItems.size() > 1 ? L"--- UNLESS ANY ---" : L"--- UNLESS ---", pTheme.ColorTriggerPauseTrue());
+    }
+
+    fBuildGroup(TriggerClauseBucket::Start, L"--- STARTING WHEN ---", pTheme.ColorTriggerWasTrue());
+
+    const auto vRestartItems = vBuckets.at(ra::etoi(TriggerClauseBucket::Restart));
+    if (!vRestartItems.empty()) {
+        fBuildGroup(TriggerClauseBucket::Restart, vRestartItems.size() > 1 ? L"--- FAILING WHEN ANY ---" : L"--- FAILING WHEN ---", pTheme.ColorTriggerResetTrue());
+    }
+
+    fBuildGroup(TriggerClauseBucket::Unimportant, L"--- IMPOTENT ---", pTheme.ColorTriggerIsTrue());
 }
 
 } // namespace viewmodels

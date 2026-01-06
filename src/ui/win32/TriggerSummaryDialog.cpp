@@ -78,6 +78,13 @@ TriggerSummaryDialog::TriggerSummaryDialog(TriggerSummaryViewModel& vmTriggerSum
     pTargetColumn->BindTooltip(TriggerSummaryViewModel::TriggerClauseViewModel::TargetProperty);
     m_bindClauses.BindColumn(3, std::move(pTargetColumn));
 
+    auto pTallyColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        TriggerSummaryViewModel::TriggerClauseViewModel::TallyProperty);
+    pTallyColumn->SetHeader(L"Tally");
+    pTallyColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
+    m_bindClauses.BindColumn(4, std::move(pTallyColumn));
+
+    m_bindClauses.BindRowColor(TriggerSummaryViewModel::TriggerClauseViewModel::ColorProperty);
     m_bindClauses.BindItems(vmTriggerSummary.Clauses());
 
     using namespace ra::bitwise_ops;

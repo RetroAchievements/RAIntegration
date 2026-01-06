@@ -13,6 +13,8 @@
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
+#include "ui\EditorTheme.hh"
+
 #include <rcheevos\src\rcheevos\rc_internal.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -44,14 +46,21 @@ private:
         }
 
         void AssertClause(gsl::index nIndex, const std::wstring& sIndices,
-            const std::wstring& sReference, const std::wstring& sOperation, const std::wstring& sTarget)
+            const std::wstring& sReference, const std::wstring& sOperation,
+            const std::wstring& sTarget, const std::wstring& sTally = L"")
         {
             const auto* pClause = Clauses().GetItemAt(nIndex);
             Assert::IsNotNull(pClause);
-            Assert::AreEqual(sIndices, pClause->GetIndices(), L"Indices differ");
-            Assert::AreEqual(sReference, pClause->GetReference(), L"Reference differs");
-            Assert::AreEqual(sOperation, pClause->GetOperation(), L"Operation differs");
-            Assert::AreEqual(sTarget, pClause->GetTarget(), L"Target differs");
+            Assert::AreEqual(sIndices, pClause->GetIndices(), ra::StringPrintf(L"Indices on clause %u differ", nIndex).c_str());
+            Assert::AreEqual(sReference, pClause->GetReference(), ra::StringPrintf(L"reference on clause %u differ", nIndex).c_str());
+            Assert::AreEqual(sOperation, pClause->GetOperation(), ra::StringPrintf(L"Operation on clause %u differ", nIndex).c_str());
+            Assert::AreEqual(sTarget, pClause->GetTarget(), ra::StringPrintf(L"Target on clause %u differ", nIndex).c_str());
+            Assert::AreEqual(sTally, pClause->GetTally(), ra::StringPrintf(L"Tally on clause %u differ", nIndex).c_str());
+        }
+
+        void AssertHeader(gsl::index nIndex, const std::wstring& sHeader)
+        {
+            AssertClause(nIndex, L"", sHeader, L"", L"", L"");
         }
 
     private:
@@ -87,6 +96,26 @@ public:
         Assert::AreEqual({ 2U }, summary.Clauses().Count());
         summary.AssertClause(0, L"1", L"0x1234", L"was", L"5");
         summary.AssertClause(1, L"2", L"0x2345", L"was not", L"0");
+    }
+
+    TEST_METHOD(TestSimpleHitTarget)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("0xH1234=5.8._0xH2345>d0xH2345.4.");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"0x1234", L"is", L"5", L"for 8 frames");
+        summary.AssertClause(1, L"2", L"0x2345", L"increased", L"", L"4 times");
+    }
+
+    TEST_METHOD(TestSimpleOnce)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("0xH1234=5.1._R:0xH2345=6.1.");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"0x1234", L"is", L"5", L""); // don't report once for "start" conditions
+        summary.AssertClause(1, L"2", L"0x2345", L"is", L"6", L"once"); // do report once for non-"start" conditions
     }
 
     TEST_METHOD(TestSimpleNote)
@@ -208,6 +237,55 @@ public:
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
         summary.AssertClause(0, L"1-2", L"World", L"decreased to", L"5");
+    }
+
+    TEST_METHOD(TestAddHeadersSimple)
+    {
+        ra::ui::EditorTheme pTheme;
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> pThemeOverride(&pTheme);
+
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("0xH1234=5_0xH2345!=0");
+        summary.AddHeaders();
+
+        Assert::AreEqual({ 3U }, summary.Clauses().Count());
+        summary.AssertHeader(0, L"--- TRIGGER WHEN ---");
+        summary.AssertClause(1, L"1", L"0x1234", L"is", L"5");
+        summary.AssertClause(2, L"2", L"0x2345", L"is not", L"0");
+    }
+
+    TEST_METHOD(TestAddHeadersSimpleWithDelta)
+    {
+        ra::ui::EditorTheme pTheme;
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> pThemeOverride(&pTheme);
+
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("0xH1234=5_0xH2345>d0xH2345");
+        summary.AddHeaders();
+
+        Assert::AreEqual({ 4U }, summary.Clauses().Count());
+        summary.AssertHeader(0, L"--- TRIGGER WHEN ---");
+        summary.AssertClause(1, L"2", L"0x2345", L"increased", L"");
+        summary.AssertHeader(2, L"--- WHILE ---");
+        summary.AssertClause(3, L"1", L"0x1234", L"is", L"5");
+    }
+
+    TEST_METHOD(TestAddHeadersHitTargetWithReset)
+    {
+        ra::ui::EditorTheme pTheme;
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> pThemeOverride(&pTheme);
+
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("0xH1234=5_0xH2345=6.1._R:0x3456=8.3.");
+        summary.AddHeaders();
+
+        Assert::AreEqual({ 6U }, summary.Clauses().Count());
+        summary.AssertHeader(0, L"--- TRIGGER WHEN ---");
+        summary.AssertClause(1, L"1", L"0x1234", L"is", L"5");
+        summary.AssertHeader(2, L"--- STARTING WHEN ---");
+        summary.AssertClause(3, L"2", L"0x2345", L"is", L"6");
+        summary.AssertHeader(4, L"--- FAILING WHEN ---");
+        summary.AssertClause(5, L"3", L"0x3456", L"is", L"8", L"for 3 frames");
     }
 };
 

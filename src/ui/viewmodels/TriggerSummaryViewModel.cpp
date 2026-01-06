@@ -269,38 +269,62 @@ static std::wstring EnumValueFromText(std::wstring_view sEnumText)
 
 static void HandleOperation(TriggerSummaryViewModel::TriggerClauseViewModel& pClause, uint8_t nOperation)
 {
+    std::wstring sOperation;
+    if (rc_operand_is_memref(&pClause.pCondition->operand1))
+    {
+        switch (pClause.pCondition->operand1.type)
+        {
+            case RC_OPERAND_ADDRESS:
+                sOperation = L"is";
+                break;
+
+            case RC_OPERAND_PRIOR:
+                sOperation = L"was";
+                break;
+
+            case RC_OPERAND_DELTA:
+                sOperation = L"last frame was";
+                break;
+        }
+    }
+    else
+    {
+        sOperation = L"is";
+    }
+
     switch (nOperation)
     {
         case RC_OPERATOR_EQ:
-            pClause.SetOperation(L"is");
             pClause.nType = TriggerClauseType::Is;
             break;
 
         case RC_OPERATOR_NE:
-            pClause.SetOperation(L"is not");
+            sOperation += L" not";
             pClause.nType = TriggerClauseType::IsNot;
             break;
 
         case RC_OPERATOR_GE:
-            pClause.SetOperation(L"is at least");
+            sOperation += L" at least";
             pClause.nType = TriggerClauseType::Comparison;
             break;
 
         case RC_OPERATOR_GT:
-            pClause.SetOperation(L"is greater than");
+            sOperation += L" greater than";
             pClause.nType = TriggerClauseType::Comparison;
             break;
 
         case RC_OPERATOR_LE:
-            pClause.SetOperation(L"is at most");
+            sOperation += L" at most";
             pClause.nType = TriggerClauseType::Comparison;
             break;
 
         case RC_OPERATOR_LT:
-            pClause.SetOperation(L"is less than");
+            sOperation += L" less than";
             pClause.nType = TriggerClauseType::Comparison;
             break;
     }
+
+    pClause.SetOperation(sOperation);
 }
 
 static std::wstring OperandToString(const rc_operand_t& pOperand)
@@ -311,6 +335,8 @@ static std::wstring OperandToString(const rc_operand_t& pOperand)
             return std::to_wstring(pOperand.value.num);
 
         case RC_OPERAND_ADDRESS:
+        case RC_OPERAND_DELTA:
+        case RC_OPERAND_PRIOR:
             return ra::Widen(ra::ByteAddressToString(pOperand.value.memref->address));
 
         default:

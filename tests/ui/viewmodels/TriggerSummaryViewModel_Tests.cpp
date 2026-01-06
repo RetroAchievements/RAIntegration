@@ -69,6 +69,26 @@ public:
         summary.AssertClause(1, L"2", L"0x2345", L"is not", L"0");
     }
 
+    TEST_METHOD(TestSimpleDeltaOnly)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("d0xH1234=5_d0xH2345!=0");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"0x1234", L"last frame was", L"5");
+        summary.AssertClause(1, L"2", L"0x2345", L"last frame was not", L"0");
+    }
+
+    TEST_METHOD(TestSimplePriorOnly)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("p0xH1234=5_p0xH2345!=0");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"0x1234", L"was", L"5");
+        summary.AssertClause(1, L"2", L"0x2345", L"was not", L"0");
+    }
+
     TEST_METHOD(TestSimpleNote)
     {
         TriggerSummaryViewModelHarness summary;

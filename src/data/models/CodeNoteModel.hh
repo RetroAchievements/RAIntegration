@@ -52,6 +52,7 @@ public:
 
     std::wstring GetPrimaryNote() const;
     std::wstring GetSummary() const;
+
     void EnumeratePointerNotes(ra::data::ByteAddress nPointerAddress,
                                std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
     void EnumeratePointerNotes(std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;

@@ -219,6 +219,28 @@ public:
         summary.AssertClause(0, L"1-2", L"World", L"changed to", L"0");
     }
 
+    TEST_METHOD(TestBitChangedToFromExplicit)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xH1234=1_d0xH1234=0");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"changed to", L"1");
+        summary.AssertClause(1, L"2", L"World", L"changed from", L"0");
+    }
+
+    TEST_METHOD(TestBitChangedToFromExplicitDeltaFirst)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("d0xH1234=1_0xH1234=0");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"changed from", L"1");
+        summary.AssertClause(1, L"2", L"World", L"changed to", L"0");
+    }
+
     TEST_METHOD(TestIncreasedTo)
     {
         TriggerSummaryViewModelHarness summary;

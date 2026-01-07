@@ -171,6 +171,60 @@ bool TriggerSummaryViewModel::MergeClauses(TriggerSummaryViewModel::TriggerClaus
     return true;
 }
 
+bool TriggerSummaryViewModel::MergeChangedToFrom(
+    TriggerSummaryViewModel::TriggerClauseViewModel& pClause1,
+    TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
+    gsl::index nIndex1, gsl::index nIndex2)
+{
+    if (pClause1.pCondition->operand1.size >= RC_MEMSIZE_BIT_0 &&
+        pClause1.pCondition->operand1.size <= RC_MEMSIZE_BIT_7)
+    {
+        // differing bit values is just a toggle
+        if (pClause1.pCondition->operand2.type == RC_OPERAND_CONST &&
+            pClause2.pCondition->operand2.type == RC_OPERAND_CONST &&
+            pClause1.pCondition->operand2.value.num != pClause2.pCondition->operand2.value.num)
+        {
+            if (pClause1.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
+            {
+                // a == n && da == ~n
+                return MergeClauses(pClause1, pClause2, nIndex2, TriggerClauseType::ChangedTo, L"changed to");
+            }
+            else if (pClause2.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
+            {
+                // da == ~n && a == n
+                return MergeClauses(pClause2, pClause1, nIndex1, TriggerClauseType::ChangedTo, L"changed to");
+            }
+
+            return false;
+        }
+    }
+
+    // differing non-bit values have to report both the before and after expectations
+    if (pClause1.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
+    {
+        pClause1.nType = TriggerClauseType::ChangedTo;
+        pClause1.SetOperation(L"changed to");
+    }
+    else
+    {
+        pClause1.nType = TriggerClauseType::ChangedFrom;
+        pClause1.SetOperation(L"changed from");
+    }
+
+    if (pClause2.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
+    {
+        pClause2.nType = TriggerClauseType::ChangedTo;
+        pClause2.SetOperation(L"changed to");
+    }
+    else
+    {
+        pClause2.nType = TriggerClauseType::ChangedFrom;
+        pClause2.SetOperation(L"changed from");
+    }
+
+    return false;
+}
+
 bool TriggerSummaryViewModel::MergeClauses(
     TriggerSummaryViewModel::TriggerClauseViewModel& pClause1,
     TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
@@ -217,27 +271,9 @@ bool TriggerSummaryViewModel::MergeClauses(
                 }
             }
         }
-        else if (pClause2.nType == TriggerClauseType::Is &&
-                 pClause1.pCondition->operand1.size >= RC_MEMSIZE_BIT_0 &&
-                 pClause1.pCondition->operand1.size <= RC_MEMSIZE_BIT_7)
+        else if (pClause2.nType == TriggerClauseType::Is)
         {
-            if (pClause1.pCondition->operand2.type == RC_OPERAND_CONST &&
-                pClause2.pCondition->operand2.type == RC_OPERAND_CONST &&
-                pClause1.pCondition->operand2.value.num != pClause2.pCondition->operand2.value.num)
-            {
-                if (pClause1.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
-                {
-                    // a == n && da == ~n
-                    return MergeClauses(pClause1, pClause2, nIndex2, TriggerClauseType::ChangedTo, L"changed to");
-                }
-                else if(pClause2.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
-                {
-                    // da == ~n && a == n
-                    return MergeClauses(pClause2, pClause1, nIndex1, TriggerClauseType::ChangedTo, L"changed to");
-                }
-
-                return false;
-            }
+            return MergeChangedToFrom(pClause1, pClause2, nIndex1, nIndex2);
         }
     }
     else if (pClause2.nType == TriggerClauseType::Is)

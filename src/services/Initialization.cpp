@@ -3,6 +3,7 @@
 #include "api\impl\DisconnectedServer.hh"
 
 #include "context\impl\ConsoleContext.hh"
+#include "context\impl\EmulatorMemoryContext.hh"
 #include "context\impl\RcClient.hh"
 
 #include "data\context\EmulatorContext.hh"
@@ -23,6 +24,7 @@
 #include "services\impl\WindowsAudioSystem.hh"
 #include "services\impl\WindowsClipboard.hh"
 #include "services\impl\WindowsDebuggerFileLogger.hh"
+#include "services\impl\WindowsDebuggerDetector.hh"
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsHttpRequester.hh"
 
@@ -160,6 +162,12 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
 
     auto pRcClient = std::make_unique<ra::context::impl::RcClient>();
     ra::services::ServiceLocator::Provide<ra::context::IRcClient>(std::move(pRcClient));
+
+    auto pEmulatorMemoryContext = std::make_unique<ra::context::impl::EmulatorMemoryContext>();
+    ra::services::ServiceLocator::Provide<ra::context::IEmulatorMemoryContext>(std::move(pEmulatorMemoryContext));
+
+    auto pDebuggerDetector = std::make_unique<ra::services::impl::WindowsDebuggerDetector>();
+    ra::services::ServiceLocator::Provide<ra::services::IDebuggerDetector>(std::move(pDebuggerDetector));
 
     auto pAchievementRuntime = std::make_unique<ra::services::AchievementRuntime>();
     ra::services::ServiceLocator::Provide<ra::services::AchievementRuntime>(std::move(pAchievementRuntime));

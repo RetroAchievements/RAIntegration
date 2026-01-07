@@ -103,8 +103,8 @@ public:
                     auto* pNote = const_cast<ra::data::models::CodeNoteModel*>(pCodeNotes->FindCodeNoteModel(nAddress, false));
                     if (pNote && pNote->IsPointer())
                     {
-                        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-                        pNote->UpdateRawPointerValue(nAddress, pEmulatorContext, nullptr);
+                        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+                        pNote->UpdateRawPointerValue(nAddress, pMemoryContext, nullptr);
                     }
                 }
 

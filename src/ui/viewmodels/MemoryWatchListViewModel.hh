@@ -2,6 +2,8 @@
 #define RA_UI_MEMORYWATCHLISTVIEWMODEL_H
 #pragma once
 
+#include "context\IEmulatorMemoryContext.hh"
+
 #include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
@@ -18,7 +20,7 @@ namespace viewmodels {
 
 class MemoryWatchListViewModel : public ViewModelBase,
     protected ra::data::context::GameContext::NotifyTarget,
-    protected ra::data::context::EmulatorContext::NotifyTarget,   
+    protected ra::context::IEmulatorMemoryContext::NotifyTarget,
     protected ra::data::context::EmulatorContext::DispatchesReadMemory,
     protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {

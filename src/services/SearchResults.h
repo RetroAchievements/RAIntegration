@@ -2,11 +2,10 @@
 #define SEARCHRESULTS_H
 #pragma once
 
-#include "data\Types.hh"
+#include "data/CapturedMemoryBlock.hh"
+#include "data/Types.hh"
 
-#include "data\context\EmulatorContext.hh"
-
-#include "data\CapturedMemoryBlock.hh"
+#include "context/IEmulatorMemoryContext.hh"
 
 namespace ra {
 namespace services {
@@ -154,7 +153,7 @@ public:
     /// <param name="sFormattedValue">Pointer to a string to populate with a textual representation of the value. [optional]</param>
     /// <returns><c>true</c> if the value changed, <c>false</c> if not.</returns>
     bool UpdateValue(SearchResult& pResult, _Out_ std::wstring* sFormattedValue,
-        const ra::data::context::EmulatorContext& pEmulatorContext) const;
+        const ra::context::IEmulatorMemoryContext& pMemoryContext) const;
 
     /// <summary>
     /// Determines if a value compared to its previous value matches the filter.

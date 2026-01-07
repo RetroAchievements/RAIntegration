@@ -2,6 +2,8 @@
 #define RA_UI_TRIGGERVIEWMODEL_H
 #pragma once
 
+#include "data\context\EmulatorContext.hh"
+
 #include "data\models\CapturedTriggerHits.hh"
 
 #include "ui\ViewModelBase.hh"

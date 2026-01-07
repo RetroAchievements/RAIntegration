@@ -4,8 +4,9 @@
 #include "RA_Json.h"
 #include "util\Strings.hh"
 
+#include "context\IEmulatorMemoryContext.hh"
+
 #include "data\Types.hh"
-#include "data\context\EmulatorContext.hh"
 #include "data\models\TriggerValidation.hh"
 
 #include "services\AchievementLogicSerializer.hh"
@@ -84,8 +85,8 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangeValue(uint32_t nNe
     // value changed. if it's frozen, write the frozen value back into memory
     if (nBehavior == BookmarkBehavior::Frozen)
     {
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        pEmulatorContext.WriteMemory(GetAddress(), GetSize(), GetCurrentValueRaw());
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        pMemoryContext.WriteMemory(GetAddress(), GetSize(), GetCurrentValueRaw());
         return false;
     }
 

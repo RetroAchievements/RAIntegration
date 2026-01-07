@@ -2,7 +2,7 @@
 #define RA_UI_WIN32_DLG_CODENOTES_H
 #pragma once
 
-#include "data/context/EmulatorContext.hh"
+#include "context/IEmulatorMemoryContext.hh"
 
 #include "ui/viewmodels/CodeNotesViewModel.hh"
 
@@ -45,7 +45,7 @@ protected:
 
 private:
     class CodeNotesGridBinding : public ra::ui::win32::bindings::MultiLineGridBinding,
-        protected ra::data::context::EmulatorContext::NotifyTarget
+        protected ra::context::IEmulatorMemoryContext::NotifyTarget
     {
     public:
         explicit CodeNotesGridBinding(ViewModelBase& vmViewModel);

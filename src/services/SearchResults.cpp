@@ -3,7 +3,7 @@
 #include "RA_Defs.h"
 #include "util\Log.hh"
 
-#include "data\context\EmulatorContext.hh"
+#include "context\IEmulatorMemoryContext.hh"
 
 #include "services\ServiceLocator.hh"
 
@@ -147,8 +147,8 @@ void SearchResults::Initialize(ra::data::ByteAddress nAddress, size_t nBytes, Se
     m_nType = nType;
     m_pImpl = GetSearchImpl(nType);
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto nTotalMemorySize = pEmulatorContext.TotalMemorySize();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    const auto nTotalMemorySize = pMemoryContext.TotalMemorySize();
     if (nAddress > nTotalMemorySize)
         nAddress = 0;
     if (nBytes + nAddress > nTotalMemorySize)
@@ -158,7 +158,7 @@ void SearchResults::Initialize(ra::data::ByteAddress nAddress, size_t nBytes, Se
     if (nPadding >= nBytes)
         nBytes = 0;
 
-    pEmulatorContext.CaptureMemory(m_vBlocks, nAddress, gsl::narrow_cast<uint32_t>(nBytes), nPadding);
+    pMemoryContext.CaptureMemory(m_vBlocks, nAddress, gsl::narrow_cast<uint32_t>(nBytes), nPadding);
 
     for (auto& pBlock : m_vBlocks)
     {
@@ -327,9 +327,9 @@ _Use_decl_annotations_
 bool SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCompareType,
     SearchFilterType nFilterType, const std::wstring& sFilterValue)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    auto pReadMemory = [&pEmulatorContext](ra::data::ByteAddress nAddress, uint8_t* pBuffer, size_t nBufferSize) {
-        pEmulatorContext.ReadMemory(nAddress, pBuffer, nBufferSize);
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    auto pReadMemory = [&pMemoryContext](ra::data::ByteAddress nAddress, uint8_t* pBuffer, size_t nBufferSize) {
+        pMemoryContext.ReadMemory(nAddress, pBuffer, nBufferSize);
     };
 
     return Initialize(srSource, pReadMemory, nCompareType, nFilterType, sFilterValue);
@@ -426,10 +426,10 @@ std::wstring SearchResults::GetFormattedValue(ra::data::ByteAddress nAddress, ra
 }
 
 bool SearchResults::UpdateValue(SearchResult& pResult,
-    _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const
+    _Out_ std::wstring* sFormattedValue, const ra::context::IEmulatorMemoryContext& pMemoryContext) const
 {
     if (m_pImpl)
-        return m_pImpl->UpdateValue(*this, pResult, sFormattedValue, pEmulatorContext);
+        return m_pImpl->UpdateValue(*this, pResult, sFormattedValue, pMemoryContext);
 
     if (sFormattedValue)
         sFormattedValue->clear();

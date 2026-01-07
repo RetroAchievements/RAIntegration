@@ -6,6 +6,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -34,7 +35,7 @@ private:
     {
     public:
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 

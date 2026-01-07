@@ -414,6 +414,9 @@
     <ClCompile Include="services\impl\OfflineRcClient.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\WindowsDebuggerDetector.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -468,12 +471,6 @@
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\FileLogger.hh">
-      <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\IClock.hh">
-      <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="services\impl\Clock.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh">
@@ -1023,6 +1020,9 @@
       <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\OfflineRcClient.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsDebuggerDetector.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
   </ItemGroup>

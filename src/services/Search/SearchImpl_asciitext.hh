@@ -163,10 +163,10 @@ public:
     }
 
     bool UpdateValue(const SearchResults&, SearchResult& pResult,
-        _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const override
+        _Out_ std::wstring* sFormattedValue, const ra::context::IEmulatorMemoryContext& pMemoryContext) const override
     {
         std::array<unsigned char, 16> pBuffer;
-        pEmulatorContext.ReadMemory(pResult.nAddress, &pBuffer.at(0), pBuffer.size());
+        pMemoryContext.ReadMemory(pResult.nAddress, &pBuffer.at(0), pBuffer.size());
 
         std::wstring sText;
         GetASCIIText(sText, pBuffer.data(), pBuffer.size());

@@ -62,13 +62,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\data\context\ConsoleContext_Tests.cpp" />
+    <ClCompile Include="context\impl\EmulatorMemoryContext_Tests.cpp" />
     <ClCompile Include="context\impl\RcClient_Tests.cpp" />
+    <ClCompile Include="context\mocks\MockEmulatorMemoryContext.cpp" />
     <ClCompile Include="context\mocks\MockRcClient.cpp" />
     <ClCompile Include="data\DataModelBase_Tests.cpp" />
     <ClCompile Include="data\ModelPropertyContainer_Tests.cpp" />
     <ClCompile Include="data\ModelProperty_Tests.cpp" />
     <ClInclude Include="context\mocks\MockConsoleContext.hh" />
+    <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh" />
     <ClInclude Include="context\mocks\MockRcClient.hh" />
+    <ClInclude Include="services\mocks\MockClock.hh" />
     <ClInclude Include="services\mocks\MockFileSystem.hh" />
     <ClInclude Include="services\mocks\MockHttpRequester.hh" />
     <ClInclude Include="services\mocks\MockLogger.hh" />

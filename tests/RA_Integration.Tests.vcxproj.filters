@@ -465,6 +465,9 @@
     <ClCompile Include="..\src\services\impl\OfflineRcClient.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

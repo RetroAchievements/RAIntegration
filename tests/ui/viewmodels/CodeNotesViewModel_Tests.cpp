@@ -7,11 +7,11 @@
 #include "tests\ui\UIAsserts.hh"
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
@@ -33,7 +33,7 @@ private:
     public:
         ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
@@ -75,7 +75,7 @@ private:
             std::array<uint8_t, 100> memory = {};
             for (uint8_t i = 0; i < memory.size(); ++i)
                 memory.at(i) = i;
-            mockEmulatorContext.MockMemory(memory);
+            mockEmulatorMemoryContext.MockMemory(memory);
         }
 
         void PreparePublish()

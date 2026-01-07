@@ -110,6 +110,7 @@
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="services\impl\OfflineRcClient.cpp" />
     <ClCompile Include="services\impl\ThreadPool.cpp" />
+    <ClCompile Include="services\impl\WindowsDebuggerDetector.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
     <ClCompile Include="services\impl\WindowsHttpRequester.cpp" />
     <ClCompile Include="services\Initialization.cpp" />
@@ -253,7 +254,6 @@
     <ClInclude Include="services\GameIdentifier.hh" />
     <ClInclude Include="services\IAudioSystem.hh" />
     <ClInclude Include="services\IClipboard.hh" />
-    <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\ILocalStorage.hh" />
     <ClInclude Include="services\ILogger.hh" />
@@ -262,9 +262,9 @@
     <ClInclude Include="services\impl\JsonFileConfiguration.hh" />
     <ClInclude Include="services\impl\OfflineRcClient.hh" />
     <ClInclude Include="services\impl\ThreadPool.hh" />
-    <ClInclude Include="services\impl\Clock.hh" />
     <ClInclude Include="services\impl\WindowsAudioSystem.hh" />
     <ClInclude Include="services\impl\WindowsClipboard.hh" />
+    <ClInclude Include="services\impl\WindowsDebuggerDetector.hh" />
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh" />
     <ClInclude Include="services\impl\WindowsFileSystem.hh" />
     <ClInclude Include="services\impl\WindowsHttpRequester.hh" />

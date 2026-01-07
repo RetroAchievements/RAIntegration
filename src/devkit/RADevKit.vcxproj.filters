@@ -129,6 +129,24 @@
     <ClInclude Include="data\CapturedMemoryBlock.hh">
       <Filter>data</Filter>
     </ClInclude>
+    <ClInclude Include="context\impl\EmulatorMemoryContext.hh">
+      <Filter>context\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="context\IEmulatorMemoryContext.hh">
+      <Filter>context</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\Clock.hh">
+      <Filter>services\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IClock.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\IDebuggerDetector.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\tests\devkit\services\mocks\MockDebuggerDetector.hh">
+      <Filter>services\impl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -169,6 +187,9 @@
     </ClCompile>
     <ClCompile Include="data\CapturedMemoryBlock.cpp">
       <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="context\impl\EmulatorMemoryContext.cpp">
+      <Filter>context\impl</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

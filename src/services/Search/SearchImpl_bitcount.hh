@@ -23,10 +23,10 @@ protected:
     }
 
     bool UpdateValue(const SearchResults& pResults, SearchResult& pResult,
-        _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const override
+        _Out_ std::wstring* sFormattedValue, const ra::context::IEmulatorMemoryContext& pMemoryContext) const override
     {
         const unsigned int nPreviousValue = pResult.nValue;
-        pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, ra::data::Memory::Size::EightBit);
+        pResult.nValue = pMemoryContext.ReadMemory(pResult.nAddress, ra::data::Memory::Size::EightBit);
 
         if (sFormattedValue)
             *sFormattedValue = GetFormattedValue(pResults, pResult);

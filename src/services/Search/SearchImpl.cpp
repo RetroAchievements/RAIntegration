@@ -223,10 +223,10 @@ std::wstring SearchImpl::GetFormattedValue(const SearchResults& pResults, ra::da
 }
 
 bool SearchImpl::UpdateValue(const SearchResults& pResults, SearchResult& pResult,
-    _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const
+    _Out_ std::wstring* sFormattedValue, const ra::context::IEmulatorMemoryContext& pMemoryContext) const
 {
     const uint32_t nPreviousValue = pResult.nValue;
-    pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, pResult.nSize);
+    pResult.nValue = pMemoryContext.ReadMemory(pResult.nAddress, pResult.nSize);
 
     if (sFormattedValue)
         *sFormattedValue = GetFormattedValue(pResults, pResult);

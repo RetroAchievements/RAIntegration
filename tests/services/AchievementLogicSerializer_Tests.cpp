@@ -6,7 +6,7 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -20,7 +20,7 @@ public:
     TEST_METHOD(TestBuildMemRefChain)
     {
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
 
         ra::data::models::CodeNoteModel note;
         const std::wstring sNote =
@@ -35,7 +35,7 @@ public:
             L"+0x448 | [32-bit BE] Not-nested number";
         note.SetNote(sNote);
         note.SetAddress(0x1234);
-        note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
+        note.UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = note.GetPointerNoteAtOffset(0x438);
         Assert::IsNotNull(note2);
@@ -49,7 +49,7 @@ public:
     TEST_METHOD(TestBuildMemRefChain24Bit)
     {
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         mockConsoleContext.SetId(ConsoleID::PlayStation); // 24-bit read
 
         ra::data::models::CodeNoteModel note;
@@ -59,7 +59,7 @@ public:
             L"++0x24C | [16-bit] State";
         note.SetNote(sNote);
         note.SetAddress(0x1234);
-        note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
+        note.UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = note.GetPointerNoteAtOffset(0x428);
         Assert::IsNotNull(note2);
@@ -73,7 +73,7 @@ public:
     TEST_METHOD(TestBuildMemRefChain25Bit)
     {
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         mockConsoleContext.SetId(ConsoleID::PSP); // 25-bit read
 
         ra::data::models::CodeNoteModel note;
@@ -83,7 +83,7 @@ public:
             L"++0x24C | [16-bit] State";
         note.SetNote(sNote);
         note.SetAddress(0x1234);
-        note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
+        note.UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = note.GetPointerNoteAtOffset(0x428);
         Assert::IsNotNull(note2);
@@ -97,7 +97,7 @@ public:
     TEST_METHOD(TestBuildMemRefChain25BitBE)
     {
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         mockConsoleContext.SetId(ConsoleID::GameCube); // 25-bit BE read
 
         ra::data::models::CodeNoteModel note;
@@ -107,7 +107,7 @@ public:
             L"++0x24C | [16-bit BE] State";
         note.SetNote(sNote);
         note.SetAddress(0x1234);
-        note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
+        note.UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = note.GetPointerNoteAtOffset(0x428);
         Assert::IsNotNull(note2);
@@ -121,7 +121,7 @@ public:
     TEST_METHOD(TestBuildMemRefChain25BitOverflowOffset)
     {
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         mockConsoleContext.SetId(ConsoleID::GameCube); // 25-bit BE read
 
         ra::data::models::CodeNoteModel note;
@@ -131,7 +131,7 @@ public:
             L"++0x8000024C | [16-bit BE] State";
         note.SetNote(sNote);
         note.SetAddress(0x1234);
-        note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
+        note.UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = note.GetPointerNoteAtOffset(0x80000428);
         Assert::IsNotNull(note2);
@@ -145,7 +145,7 @@ public:
     TEST_METHOD(TestBuildMemRefChainGBA)
     {
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         mockConsoleContext.SetId(ConsoleID::GBA); // 24-bit read with explicit offset in note
 
         ra::data::models::CodeNoteModel note;
@@ -155,7 +155,7 @@ public:
             L"++0x824C | [16-bit] State";
         note.SetNote(sNote);
         note.SetAddress(0x1234);
-        note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
+        note.UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = note.GetPointerNoteAtOffset(0x8428);
         Assert::IsNotNull(note2);
@@ -169,7 +169,7 @@ public:
     TEST_METHOD(TestBuildMemRefChainNegativeOffset)
     {
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         mockConsoleContext.SetId(ConsoleID::GameCube); // 29-bit BE read
 
         ra::data::models::CodeNoteModel note;
@@ -179,7 +179,7 @@ public:
             L"++0x824C | [16-bit] State";
         note.SetNote(sNote);
         note.SetAddress(0x1234);
-        note.UpdateRawPointerValue(0x1234, mockEmulatorContext, nullptr);
+        note.UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = note.GetPointerNoteAtOffset(0xFFFFFFF8);
         Assert::IsNotNull(note2);

@@ -3,8 +3,8 @@
 #include "data\models\TriggerValidation.hh"
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -156,10 +156,10 @@ public:
         // instead, max valid address is determined by how much memory the emulator/core exposes
         ra::context::mocks::MockConsoleContext mockConsoleContext(Arcade, L"Arcade");
         Assert::AreEqual(0U, mockConsoleContext.MaxAddress());
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         unsigned char pMemory[256];
-        mockEmulatorContext.MockMemory(pMemory, sizeof(pMemory));
-        Assert::AreEqual({ 256U }, mockEmulatorContext.TotalMemorySize());
+        mockEmulatorMemoryContext.MockMemory(pMemory, sizeof(pMemory));
+        Assert::AreEqual({ 256U }, mockEmulatorMemoryContext.TotalMemorySize());
 
         AssertValidation("0xH12>0xH34", L"");
         AssertValidation("0xH123>0xH34", L"Condition 1: Address 0123 out of range (max 00FF)");

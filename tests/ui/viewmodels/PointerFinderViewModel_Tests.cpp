@@ -7,9 +7,9 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockWindowManager.hh"
@@ -27,7 +27,7 @@ private:
     class PointerFinderViewModelHarness : public PointerFinderViewModel
     {
     public:
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
@@ -102,7 +102,7 @@ public:
         PointerFinderViewModelHarness vmPointerFinder;
         vmPointerFinder.mockGameContext.SetGameId(1U);
         std::array<unsigned char, 256> pMemory{};
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         bool bDialogSeen = false;
         vmPointerFinder.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](MessageBoxViewModel& vmMessageBox) {
@@ -155,7 +155,7 @@ public:
     {
         PointerFinderViewModelHarness vmPointerFinder;
         vmPointerFinder.mockGameContext.SetGameId(1U);
-        vmPointerFinder.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        vmPointerFinder.mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         for (auto& pState : vmPointerFinder.States())
         {
@@ -215,7 +215,7 @@ public:
         PointerFinderViewModelHarness vmPointerFinder;
         vmPointerFinder.mockGameContext.SetGameId(1U);
         std::array<unsigned char, 256> pMemory{};
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         bool bDialogSeen = false;
         vmPointerFinder.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](MessageBoxViewModel& vmMessageBox) {
@@ -240,7 +240,7 @@ public:
         PointerFinderViewModelHarness vmPointerFinder;
         vmPointerFinder.mockGameContext.SetGameId(1U);
         std::array<unsigned char, 256> pMemory{};
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         bool bDialogSeen = false;
         vmPointerFinder.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](MessageBoxViewModel& vmMessageBox) {
@@ -272,7 +272,7 @@ public:
         pMemory.at(0x08) = 0x1c;
         pMemory.at(0x1c) = 0x55;
         pMemory.at(0x1d) = 0x46;
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x1c");
         vmPointerFinder.States().at(0).ToggleCapture();
@@ -301,7 +301,7 @@ public:
         pMemory.at(0x08) = 0x1c;
         pMemory.at(0x1c) = 0x55;
         pMemory.at(0x1d) = 0x46;
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
@@ -330,7 +330,7 @@ public:
         pMemory.at(0x08) = 0x1c;
         pMemory.at(0x1c) = 0x55;
         pMemory.at(0x1d) = 0x46;
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x18");
         vmPointerFinder.States().at(0).ToggleCapture();
@@ -361,7 +361,7 @@ public:
         pMemory.at(0x1d) = 0x46;
         pMemory.at(0x70) = 0x1c;
         pMemory.at(0x9c) = 0x20;
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
@@ -395,7 +395,7 @@ public:
         pMemory.at(0x70) = 0x1c;
         pMemory.at(0x9c) = 0x20;
         pMemory.at(0xa4) = 0x20;
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
@@ -432,7 +432,7 @@ public:
 
         std::array<unsigned char, 256> pMemory{};
         pMemory.at(0x08) = 0x1c;
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x18");
         vmPointerFinder.States().at(0).ToggleCapture();
@@ -468,7 +468,7 @@ public:
         pMemory.at(0x08) = 0x1c;
         pMemory.at(0x70) = 0x1c;
         pMemory.at(0x9c) = 0x20;
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
@@ -509,7 +509,7 @@ public:
         pMemory.at(0x08) = 0x1c;
         pMemory.at(0x70) = 0x1c;
         pMemory.at(0x9c) = 0x20;
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
@@ -562,7 +562,7 @@ public:
         pMemory.at(0x08) = 0x1c;
         pMemory.at(0x70) = 0x1c;
         pMemory.at(0x9c) = 0x20;
-        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+        vmPointerFinder.mockEmulatorMemoryContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();

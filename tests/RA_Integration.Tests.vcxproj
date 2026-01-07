@@ -173,6 +173,7 @@
     <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp" />
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
     <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
+    <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp" />
     <ClCompile Include="devkit\context\mocks\MockRcClient.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="mocks\MockAchievementRuntime.cpp" />

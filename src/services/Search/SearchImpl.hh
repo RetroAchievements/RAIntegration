@@ -90,7 +90,7 @@ public:
 
     // updates the provided result with the current value at the provided real address
     virtual bool UpdateValue(const SearchResults& pResults, SearchResult& pResult, _Out_ std::wstring* sFormattedValue,
-                             const ra::data::context::EmulatorContext& pEmulatorContext) const;
+                             const ra::context::IEmulatorMemoryContext& pMemoryContext) const;
 
     /// <summary>
     /// Determines if the provided search result would appear in pResults if it were freshly populated from

@@ -11,12 +11,13 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClipboard.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -65,6 +66,7 @@ private:
         AssetEditorViewModelHarness(AssetEditorViewModelHarness&&) noexcept = delete;
         AssetEditorViewModelHarness& operator=(AssetEditorViewModelHarness&&) noexcept = delete;
 
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;

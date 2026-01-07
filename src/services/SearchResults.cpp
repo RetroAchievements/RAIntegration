@@ -115,14 +115,14 @@ static search::SearchImpl* GetSearchImpl(SearchType nType) noexcept
 }
 
 #ifndef RA_UTEST
-static size_t CalcSize(const std::vector<data::search::MemBlock>& vBlocks)
+static size_t CalcSize(const std::vector<ra::data::CapturedMemoryBlock>& vBlocks)
 {
     std::set<const uint8_t*> vAllocatedMemoryBlocks;
 
-    size_t nTotalSize = vBlocks.size() * sizeof(data::search::MemBlock);
+    size_t nTotalSize = vBlocks.size() * sizeof(ra::data::CapturedMemoryBlock);
     for (const auto& pBlock : vBlocks)
     {
-        if (pBlock.IsBytesAllocated())
+        if (pBlock.GetBytesSize() > 8) // IsBytesAllocated
         {
             const auto* pBytes = pBlock.GetBytes();
             if (vAllocatedMemoryBlocks.find(pBytes) == vAllocatedMemoryBlocks.end())
@@ -165,8 +165,7 @@ void SearchResults::Initialize(ra::data::ByteAddress nAddress, size_t nBytes, Se
         pBlock.SetFirstAddress(m_pImpl->ConvertFromRealAddress(pBlock.GetFirstAddress()));
 
         const auto nAdjustedAddressCount = m_pImpl->GetAddressCountForBytes(pBlock.GetBytesSize());
-        pBlock.SetMaxAddresses(nAdjustedAddressCount);
-        pBlock.SetMatchingAddressCount(nAdjustedAddressCount);
+        pBlock.SetAddressCount(nAdjustedAddressCount);
     }
 
     RA_LOG_INFO("Allocated %zu bytes for initial search", CalcSize(m_vBlocks));

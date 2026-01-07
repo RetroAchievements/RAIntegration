@@ -10,7 +10,7 @@
 // if defined, specialized templated code will be used for little endian searches
 #undef DISABLE_TEMPLATED_SEARCH
 
-using ra::data::search::MemBlock;
+using ra::data::CapturedMemoryBlock;
 
 namespace ra {
 namespace services {
@@ -106,12 +106,12 @@ public:
 
 protected:
     // generic implementation for less used search types
-    virtual void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop, const MemBlock& pPreviousBlock,
+    virtual void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop, const CapturedMemoryBlock& pPreviousBlock,
                                      ComparisonType nComparison, unsigned nConstantValue,
                                      std::vector<ra::data::ByteAddress>& vMatches) const;
 
     // generic implementation for less used search types
-    virtual void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop, const MemBlock& pPreviousBlock,
+    virtual void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop, const CapturedMemoryBlock& pPreviousBlock,
                                     ComparisonType nComparison, unsigned nAdjustment,
                                     std::vector<ra::data::ByteAddress>& vMatches) const;
 
@@ -144,7 +144,7 @@ protected:
 #pragma warning(disable : 5045)
     template<typename TSize, bool TIsConstantFilter, int TStride, ComparisonType TComparison>
     void ApplyCompareFilterLittleEndian(const uint8_t* pBytes, const uint8_t* pBytesStop,
-                                        const MemBlock& pPreviousBlock, unsigned nAdjustment,
+                                        const CapturedMemoryBlock& pPreviousBlock, unsigned nAdjustment,
                                         std::vector<ra::data::ByteAddress>& vMatches) const
     {
         const auto* pScan = pBytes;
@@ -225,7 +225,7 @@ protected:
     /// against</param> <param name="vMatches">[out] The list of matching addresses</param>
     template<typename TSize, bool TIsConstantFilter, int TStride = 1>
     void ApplyCompareFilterLittleEndian(const uint8_t* pBytes, const uint8_t* pBytesStop,
-                                        const MemBlock& pPreviousBlock, ComparisonType nComparison,
+                                        const CapturedMemoryBlock& pPreviousBlock, ComparisonType nComparison,
                                         unsigned nAdjustment, std::vector<ra::data::ByteAddress>& vMatches) const
     {
         switch (nComparison)
@@ -256,7 +256,7 @@ protected:
 #else // #ifndef DISABLE_TEMPLATED_SEARCH
     template<typename TSize, bool TIsConstantFilter, int TStride = 1>
     void ApplyCompareFilterLittleEndian(const uint8_t* pBytes, const uint8_t* pBytesStop,
-                                        const MemBlock& pPreviousBlock, ComparisonType nComparison,
+                                        const CapturedMemoryBlock& pPreviousBlock, ComparisonType nComparison,
                                         unsigned nAdjustment, std::vector<ra::data::ByteAddress>& vMatches) const
     {
         if (TIsConstantFilter)
@@ -281,7 +281,7 @@ protected:
         return srResults.m_vBlocks.front().GetFirstAddress();
     }
 
-    static const std::vector<MemBlock>& GetBlocks(const SearchResults& srResults) noexcept
+    static const std::vector<CapturedMemoryBlock>& GetBlocks(const SearchResults& srResults) noexcept
     {
         return srResults.m_vBlocks;
     }
@@ -304,14 +304,14 @@ protected:
     /// <returns><c>true</c> if the memory was available in the block, <c>false</c> if not.</returns>
     /// <remarks>Sets result.nValue to the value from the captured memory, and changes result.nAddress to a real
     /// address</remarks>
-    virtual bool GetValueFromMemBlock(const MemBlock& block, SearchResult& result) const noexcept;
+    virtual bool GetValueFromCapturedMemoryBlock(const CapturedMemoryBlock& block, SearchResult& result) const noexcept;
 
     // Gets the index of the block in srResults containing the provided virtual address.
     static size_t GetIndexOfBlockForVirtualAddress(const SearchResults& srResults, uint32_t nAddress);
 
     virtual uint32_t BuildValue(const uint8_t* ptr) const noexcept;
 
-    static MemBlock& AddBlock(SearchResults& srResults, ra::data::ByteAddress nAddress, uint32_t nSize,
+    static CapturedMemoryBlock& AddBlock(SearchResults& srResults, ra::data::ByteAddress nAddress, uint32_t nSize,
                               uint32_t nMaxAddresses)
     {
         return srResults.m_vBlocks.emplace_back(nAddress, nSize, nMaxAddresses);

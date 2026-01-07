@@ -48,7 +48,7 @@ protected:
     }
 
 private:
-    bool GetValueFromMemBlock(const MemBlock& block, SearchResult& result) const noexcept override
+    bool GetValueFromCapturedMemoryBlock(const CapturedMemoryBlock& block, SearchResult& result) const noexcept override
     {
         if (result.nAddress < block.GetFirstAddress())
             return false;

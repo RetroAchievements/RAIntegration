@@ -93,7 +93,6 @@
     <ClCompile Include="..\src\data\models\MemoryRegionsModel.cpp" />
     <ClCompile Include="..\src\data\models\RichPresenceModel.cpp" />
     <ClCompile Include="..\src\data\models\TriggerValidation.cpp" />
-    <ClCompile Include="..\src\data\search\MemBlock.cpp" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

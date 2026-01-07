@@ -1886,7 +1886,7 @@ public:
         emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
         emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
 
-        std::vector<ra::data::search::MemBlock> vBlocks;
+        std::vector<ra::data::CapturedMemoryBlock> vBlocks;
         emulator.CaptureMemory(vBlocks, 0, 30, 0);
         Assert::AreEqual({ 2 }, vBlocks.size());
 
@@ -1909,7 +1909,7 @@ public:
         emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
         emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
 
-        std::vector<ra::data::search::MemBlock> vBlocks;
+        std::vector<ra::data::CapturedMemoryBlock> vBlocks;
         emulator.CaptureMemory(vBlocks, 8, 20, 0);
         Assert::AreEqual({ 2 }, vBlocks.size());
 
@@ -1932,7 +1932,7 @@ public:
         emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
         emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
 
-        std::vector<ra::data::search::MemBlock> vBlocks;
+        std::vector<ra::data::CapturedMemoryBlock> vBlocks;
         emulator.CaptureMemory(vBlocks, 20, 10, 0);
         Assert::AreEqual({ 1 }, vBlocks.size());
 
@@ -1951,7 +1951,7 @@ public:
         emulator.AddMemoryBlock(1, 10, nullptr, nullptr);
         emulator.AddMemoryBlock(2, 10, &ReadMemory2, &WriteMemory2);
 
-        std::vector<ra::data::search::MemBlock> vBlocks;
+        std::vector<ra::data::CapturedMemoryBlock> vBlocks;
         emulator.CaptureMemory(vBlocks, 0, 30, 0);
         Assert::AreEqual({ 2 }, vBlocks.size());
 
@@ -1975,7 +1975,7 @@ public:
         emulator.AddMemoryBlock(1, 10, nullptr, nullptr);
         emulator.AddMemoryBlock(2, 10, &ReadMemory2, &WriteMemory2);
 
-        std::vector<ra::data::search::MemBlock> vBlocks;
+        std::vector<ra::data::CapturedMemoryBlock> vBlocks;
         emulator.CaptureMemory(vBlocks, 20, 10, 0);
         Assert::AreEqual({ 1 }, vBlocks.size());
 

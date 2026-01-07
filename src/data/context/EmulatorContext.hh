@@ -9,7 +9,7 @@
 #include <string>
 
 #include "data\NotifyTargetSet.hh"
-#include "data\search\MemBlock.hh"
+#include "data\CapturedMemoryBlock.hh"
 
 namespace ra {
 namespace data {
@@ -246,7 +246,7 @@ public:
     /// <summary>
     /// Captures the current state of memory
     /// </summary>
-    void CaptureMemory(std::vector<ra::data::search::MemBlock>& vMemBlocks, ra::data::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const;
+    void CaptureMemory(std::vector<ra::data::CapturedMemoryBlock>& vMemBlocks, ra::data::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const;
 
     /// <summary>
     /// Converts an address to a displayable string.

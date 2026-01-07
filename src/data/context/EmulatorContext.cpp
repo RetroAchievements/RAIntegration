@@ -1126,7 +1126,7 @@ bool EmulatorContext::IsMemoryInsecure() const
 
 _CONSTANT_VAR MAX_BLOCK_SIZE = 256U * 1024; // 256K
 
-void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBlocks, ra::data::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const
+void EmulatorContext::CaptureMemory(std::vector<ra::data::CapturedMemoryBlock>& vBlocks, ra::data::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const
 {
     ra::data::ByteAddress nAdjustedAddress = nAddress;
     for (const auto& pMemoryBlock : m_vMemoryBlocks)
@@ -1151,7 +1151,7 @@ void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBl
 
         while (nToRead > 0)
         {
-            ra::data::search::MemBlock* pBlock = nullptr;
+            ra::data::CapturedMemoryBlock* pBlock = nullptr;
 
             const uint32_t nBlockSize = std::min(nToRead, MAX_BLOCK_SIZE);
             const bool bIsLastBlock = (nCount == 0 && nBlockSize == nToRead);

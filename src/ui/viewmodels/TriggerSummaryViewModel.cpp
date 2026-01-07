@@ -528,9 +528,14 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             pNote = pCodeNotes->FindCodeNoteModel(pCondition->operand1.value.memref->address);
 
         if (pNote)
+        {
+            // TODO: handle subnotes (bit3=x)
             pClause.SetReference(pNote->GetSummary());
+        }
         else
+        {
             pClause.SetReference(OperandToString(pCondition->operand1));
+        }
 
         HandleOperation(pClause, pCondition->oper);
 

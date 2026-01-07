@@ -1492,10 +1492,13 @@ std::wstring CodeNoteModel::GetSummary() const
         {
             auto nIndex = svNote.find(svValues);
 
-            // ignore bracket and whitespace
-            --nIndex;
-            while (nIndex > 0 && isspace(svNote.at(nIndex - 1)))
+            if (nIndex > 0)
+            {
+                // ignore bracket and whitespace between summary and enum values
                 --nIndex;
+                while (nIndex > 0 && isspace(svNote.at(nIndex - 1)))
+                    --nIndex;
+            }
 
             svNote = svNote.substr(0, nIndex);
         }

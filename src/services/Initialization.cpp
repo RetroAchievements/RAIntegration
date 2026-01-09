@@ -243,9 +243,9 @@ void Initialization::Shutdown()
     // explicitly deregister it to prevent exceptions when closing down the application.
     ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(nullptr);
 
-    // GridBinding subclass destructors may try to use the EmulatorContext if they think it still exists.
+    // GridBinding subclass destructors may try to use the EmulatorMemoryContext if they think it still exists.
     // explicitly deregister it to prevent exceptions when closing down the application.
-    ra::services::ServiceLocator::Provide<ra::data::context::EmulatorContext>(nullptr);
+    ra::services::ServiceLocator::Provide<ra::context::IEmulatorMemoryContext>(nullptr);
 
     // clear out the IThreadPool and IConfiguration services to indicate things have been de-initialized
     ra::services::ServiceLocator::Provide<ra::services::IThreadPool>(nullptr);

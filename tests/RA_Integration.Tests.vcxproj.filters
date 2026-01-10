@@ -297,9 +297,6 @@
     <ClCompile Include="..\src\data\context\UserContext.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\data\context\ConsoleContext.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\data\context\EmulatorContext.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -398,9 +395,6 @@
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\EmulatorViewModel.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\context\ConsoleContext_Tests.cpp">
-      <Filter>Tests\Data\Context</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\PointerFinderViewModel.cpp">
       <Filter>Code</Filter>

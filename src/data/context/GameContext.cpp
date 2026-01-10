@@ -7,9 +7,9 @@
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
+#include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\SessionTracker.hh"
 #include "data\context\UserContext.hh"
@@ -44,7 +44,7 @@ namespace context {
 
 static bool ValidateConsole(int nServerConsoleId)
 {
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     if (ra::etoi(pConsoleContext.Id()) != nServerConsoleId)
     {
         switch (nServerConsoleId)

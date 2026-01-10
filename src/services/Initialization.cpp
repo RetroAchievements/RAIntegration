@@ -2,9 +2,9 @@
 
 #include "api\impl\DisconnectedServer.hh"
 
+#include "context\impl\ConsoleContext.hh"
 #include "context\impl\RcClient.hh"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
@@ -123,10 +123,10 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
     ra::services::ServiceLocator::Provide<ra::data::context::EmulatorContext>(std::move(pEmulatorContext));
 
     // if EmulatorContext->Initialize doesn't specify the ConsoleContext, initialize a default ConsoleContext
-    if (!ra::services::ServiceLocator::Exists<ra::data::context::ConsoleContext>())
+    if (!ra::services::ServiceLocator::Exists<ra::context::IConsoleContext>())
     {
-        auto pConsoleContext = std::make_unique<ra::data::context::ConsoleContext>(ConsoleID::UnknownConsoleID);
-        ra::services::ServiceLocator::Provide<ra::data::context::ConsoleContext>(std::move(pConsoleContext));
+        auto pConsoleContext = std::make_unique<ra::context::impl::ConsoleContext>(ConsoleID::UnknownConsoleID);
+        ra::services::ServiceLocator::Provide<ra::context::IConsoleContext>(std::move(pConsoleContext));
     }
 
     auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(

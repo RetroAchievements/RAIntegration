@@ -8,9 +8,10 @@
 #include "api\IServer.hh"
 #include "api\impl\OfflineServer.hh"
 
+#include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
+#include "context\impl\ConsoleContext.hh"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
@@ -411,9 +412,9 @@ API const char* CCONV _RA_UserName()
 
 API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
 {
-    auto pContext = std::make_unique<ra::data::context::ConsoleContext>(ra::itoe<ConsoleID>(nConsoleId));
+    auto pContext = std::make_unique<ra::context::impl::ConsoleContext>(ra::itoe<ConsoleID>(nConsoleId));
     RA_LOG_INFO("Console set to %u (%s)", pContext->Id(), pContext->Name());
-    ra::services::ServiceLocator::Provide<ra::data::context::ConsoleContext>(std::move(pContext));
+    ra::services::ServiceLocator::Provide<ra::context::IConsoleContext>(std::move(pContext));
 
     if (IsExternalRcheevosClient())
         ResetEmulatorMemoryRegionsForRcheevosClient();

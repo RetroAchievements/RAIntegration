@@ -7,9 +7,9 @@
 #include "ui\viewmodels\TriggerViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -959,7 +959,7 @@ public:
     TEST_METHOD(TestTooltipIndirectAddressCodeNoteOverflow)
     {
         IndirectAddressTriggerViewModelHarness vmTrigger;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         vmTrigger.Parse("I:0xX0000_0xH80000002=6");
         vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
         vmTrigger.mockGameContext.SetCodeNote({0U}, L"[32-bit pointer]\n+0x80000002=This is a note.");
@@ -987,7 +987,7 @@ public:
     TEST_METHOD(TestTooltipIndirectAddressCodeNoteMasked)
     {
         IndirectAddressTriggerViewModelHarness vmTrigger;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext(ConsoleID::PSP, L"PSP");
+        ra::context::mocks::MockConsoleContext mockConsoleContext(ConsoleID::PSP, L"PSP");
         vmTrigger.Parse("I:0xX0000&33554431_0xH0002=6"); // 33554431 = 0x01FFFFFF
         vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
         vmTrigger.mockGameContext.SetCodeNote({0U}, L"[32-bit pointer]\n+2=This is a note.");
@@ -1015,7 +1015,7 @@ public:
     TEST_METHOD(TestTooltipDoubleIndirectAddress)
     {
         IndirectAddressTriggerViewModelHarness vmTrigger;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         vmTrigger.mockGameContext.InitializeCodeNotes();
         vmTrigger.Parse("I:0xH0001_I:0xH0002_0xH0003=4");
         vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
@@ -1048,7 +1048,7 @@ public:
     TEST_METHOD(TestTooltipDoubleIndirectAddressExternal)
     {
         IndirectAddressTriggerViewModelHarness vmTrigger;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         vmTrigger.Parse("I:0xH0001_I:0xH0002_0xH0003=4");
         vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
 
@@ -1095,7 +1095,7 @@ public:
     TEST_METHOD(TestTooltipDoubleIndirectAddressValue)
     {
         IndirectAddressTriggerViewModelHarness vmTrigger;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         vmTrigger.SetIsValue(true);
         vmTrigger.Parse("I:0xH0001_I:0xH0002_M:0xH0003=4");
         vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);

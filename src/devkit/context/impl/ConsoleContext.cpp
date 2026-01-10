@@ -1,13 +1,12 @@
 #include "ConsoleContext.hh"
 
-#include "util\Log.hh"
-#include "util\Strings.hh"
+#include "util/Strings.hh"
 
 #include <rc_consoles.h>
 
 namespace ra {
-namespace data {
 namespace context {
+namespace impl {
 
 ConsoleContext::ConsoleContext(ConsoleID nId) noexcept
 {
@@ -22,37 +21,34 @@ ConsoleContext::ConsoleContext(ConsoleID nId) noexcept
         {
             const auto& pRegion = pRegions->region[i];
 
-            auto& pMemoryRegion = m_vRegions.emplace_back();
-            pMemoryRegion.StartAddress = pRegion.start_address;
-            pMemoryRegion.EndAddress = pRegion.end_address;
-            pMemoryRegion.RealAddress = pRegion.real_address;
-            pMemoryRegion.Description = pRegion.description;
+            auto& pMemoryRegion = m_vRegions.emplace_back(pRegion.start_address, pRegion.end_address, ra::Widen(pRegion.description));
+            pMemoryRegion.SetRealStartAddress(pRegion.real_address);
 
             switch (pRegion.type)
             {
                 case RC_MEMORY_TYPE_HARDWARE_CONTROLLER:
-                    pMemoryRegion.Type = AddressType::HardwareController;
+                    pMemoryRegion.SetType(ra::data::MemoryRegion::Type::HardwareController);
                     break;
                 case RC_MEMORY_TYPE_READONLY:
-                    pMemoryRegion.Type = AddressType::ReadOnlyMemory;
+                    pMemoryRegion.SetType(ra::data::MemoryRegion::Type::ReadOnlyMemory);
                     break;
                 case RC_MEMORY_TYPE_SAVE_RAM:
-                    pMemoryRegion.Type = AddressType::SaveRAM;
+                    pMemoryRegion.SetType(ra::data::MemoryRegion::Type::SaveRAM);
                     break;
                 case RC_MEMORY_TYPE_SYSTEM_RAM:
-                    pMemoryRegion.Type = AddressType::SystemRAM;
+                    pMemoryRegion.SetType(ra::data::MemoryRegion::Type::SystemRAM);
                     break;
                 case RC_MEMORY_TYPE_UNUSED:
-                    pMemoryRegion.Type = AddressType::Unused;
+                    pMemoryRegion.SetType(ra::data::MemoryRegion::Type::Unused);
                     break;
                 case RC_MEMORY_TYPE_VIDEO_RAM:
-                    pMemoryRegion.Type = AddressType::VideoRAM;
+                    pMemoryRegion.SetType(ra::data::MemoryRegion::Type::VideoRAM);
                     break;
                 case RC_MEMORY_TYPE_VIRTUAL_RAM:
-                    pMemoryRegion.Type = AddressType::VirtualRAM;
+                    pMemoryRegion.SetType(ra::data::MemoryRegion::Type::VirtualRAM);
                     break;
                 default:
-                    pMemoryRegion.Type = AddressType::Unknown;
+                    pMemoryRegion.SetType(ra::data::MemoryRegion::Type::Unknown);
                     break;
             }
 
@@ -61,7 +57,7 @@ ConsoleContext::ConsoleContext(ConsoleID nId) noexcept
     }
 }
 
-const ConsoleContext::MemoryRegion* ConsoleContext::GetMemoryRegion(ra::data::ByteAddress nAddress) const
+const ra::data::MemoryRegion* ConsoleContext::GetMemoryRegion(ra::data::ByteAddress nAddress) const
 {
     const auto& vRegions = MemoryRegions();
     gsl::index nStart = 0;
@@ -70,9 +66,9 @@ const ConsoleContext::MemoryRegion* ConsoleContext::GetMemoryRegion(ra::data::By
     {
         const gsl::index nMid = (nStart + nEnd) / 2;
         const auto& pRegion = vRegions.at(nMid);
-        if (pRegion.StartAddress > nAddress)
+        if (pRegion.GetStartAddress() > nAddress)
             nEnd = nMid - 1;
-        else if (pRegion.EndAddress < nAddress)
+        else if (pRegion.GetEndAddress() < nAddress)
             nStart = nMid + 1;
         else
             return &pRegion;
@@ -85,16 +81,12 @@ ra::data::ByteAddress ConsoleContext::ByteAddressFromRealAddress(ra::data::ByteA
 {
     for (const auto& pRegion : m_vRegions)
     {
-        if (pRegion.RealAddress < nRealAddress)
+        if (pRegion.ContainsRealAddress(nRealAddress))
         {
-            const auto nRegionSize = pRegion.EndAddress - pRegion.StartAddress;
-            if (nRealAddress < pRegion.RealAddress + nRegionSize)
-            {
-                if (pRegion.Type == ConsoleContext::AddressType::Unused)
-                    break;
+            if (pRegion.GetType() == ra::data::MemoryRegion::Type::Unused)
+                break;
 
-                return (nRealAddress - pRegion.RealAddress) + pRegion.StartAddress;
-            }
+            return (nRealAddress - pRegion.GetRealStartAddress()) + pRegion.GetStartAddress();
         }
     }
 
@@ -156,14 +148,14 @@ ra::data::ByteAddress ConsoleContext::RealAddressFromByteAddress(ra::data::ByteA
 {
     for (const auto& pRegion : m_vRegions)
     {
-        if (pRegion.EndAddress >= nByteAddress && pRegion.StartAddress <= nByteAddress)
-            return nByteAddress + pRegion.RealAddress;
+        if (pRegion.ContainsAddress(nByteAddress))
+            return pRegion.GetRealStartAddress() + nByteAddress;
     }
 
     return 0xFFFFFFFF;
 }
 
-bool ConsoleContext::GetRealAddressConversion(Memory::Size* nReadSize, uint32_t* nMask, uint32_t* nOffset) const
+bool ConsoleContext::GetRealAddressConversion(ra::data::Memory::Size* nReadSize, uint32_t* nMask, uint32_t* nOffset) const
 {
     Expects(nReadSize != nullptr);
     Expects(nMask != nullptr);
@@ -175,26 +167,26 @@ bool ConsoleContext::GetRealAddressConversion(Memory::Size* nReadSize, uint32_t*
         case ConsoleID::DSi:
         case ConsoleID::N64:
         case ConsoleID::PlayStation:
-            *nReadSize = Memory::Size::TwentyFourBit;
+            *nReadSize = ra::data::Memory::Size::TwentyFourBit;
             *nMask = 0xFFFFFFFF;
             *nOffset = 0;
             return true;
 
         case ConsoleID::GameCube:
-            *nReadSize = Memory::Size::ThirtyTwoBitBigEndian;
+            *nReadSize = ra::data::Memory::Size::ThirtyTwoBitBigEndian;
             *nMask = 0x01FFFFFF;
             *nOffset = 0;
             return true;
 
         case ConsoleID::WII:
-            *nReadSize = Memory::Size::ThirtyTwoBitBigEndian;
+            *nReadSize = ra::data::Memory::Size::ThirtyTwoBitBigEndian;
             *nMask = 0x1FFFFFFF;
             *nOffset = 0;
             return true;
 
         case ConsoleID::PlayStation2:
         case ConsoleID::PSP:
-            *nReadSize = Memory::Size::ThirtyTwoBit;
+            *nReadSize = ra::data::Memory::Size::ThirtyTwoBit;
             *nMask = 0x01FFFFFF;
             *nOffset = 0;
             return true;
@@ -206,7 +198,7 @@ bool ConsoleContext::GetRealAddressConversion(Memory::Size* nReadSize, uint32_t*
             // However, most developers who have implemented sets just do a 24-bit
             // read _and_ use a +0x8000 offset when necessary. As these offsets are
             // encoded in the code notes, we shouldn't provide an explicit offset here.
-            *nReadSize = Memory::Size::TwentyFourBit;
+            *nReadSize = ra::data::Memory::Size::TwentyFourBit;
             *nMask = 0x00FFFFFF;
             *nOffset = 0;
             return true;
@@ -214,41 +206,41 @@ bool ConsoleContext::GetRealAddressConversion(Memory::Size* nReadSize, uint32_t*
         default:
             for (const auto& pRegion : m_vRegions)
             {
-                if (pRegion.Type == AddressType::SystemRAM)
+                if (pRegion.GetType() == ra::data::MemoryRegion::Type::SystemRAM)
                 {
                     if (m_nMaxAddress > 0x00FFFFFF)
                     {
-                        *nReadSize = Memory::Size::ThirtyTwoBit;
+                        *nReadSize = ra::data::Memory::Size::ThirtyTwoBit;
                         *nMask = 0xFFFFFFFF;
                     }
                     else if (m_nMaxAddress > 0x0000FFFF)
                     {
-                        *nReadSize = Memory::Size::TwentyFourBit;
+                        *nReadSize = ra::data::Memory::Size::TwentyFourBit;
                         *nMask = 0x00FFFFFF;
                     }
                     else if (m_nMaxAddress > 0x000000FF)
                     {
-                        *nReadSize = Memory::Size::SixteenBit;
+                        *nReadSize = ra::data::Memory::Size::SixteenBit;
                         *nMask = 0x0000FFFF;
                     }
                     else
                     {
-                        *nReadSize = Memory::Size::EightBit;
+                        *nReadSize = ra::data::Memory::Size::EightBit;
                         *nMask = 0x000000FF;
                     }
 
-                    *nOffset = (pRegion.RealAddress - pRegion.StartAddress) & *nMask;
+                    *nOffset = (pRegion.GetRealStartAddress() - pRegion.GetStartAddress()) & *nMask;
                     return true;
                 }
             }
 
-            *nReadSize = Memory::Size::ThirtyTwoBit;
+            *nReadSize = ra::data::Memory::Size::ThirtyTwoBit;
             *nMask = 0xFFFFFFFF;
             *nOffset = 0;
             return false;
     }
 }
 
+} // namespace impl
 } // namespace context
-} // namespace data
 } // namespace ra

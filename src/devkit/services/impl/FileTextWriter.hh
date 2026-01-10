@@ -2,9 +2,11 @@
 #define RA_SERVICES_FILETEXTWRITER
 #pragma once
 
-#include "services\TextWriter.hh"
+#include "services/TextWriter.hh"
 
-#include "util\Strings.hh"
+#include "util/Strings.hh"
+
+#include <fstream>
 
 namespace ra {
 namespace services {

@@ -8,11 +8,11 @@
 #include "tests\ui\UIAsserts.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -34,7 +34,7 @@ private:
     class PointerInspectorViewModelHarness : public PointerInspectorViewModel
     {
     public:
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
@@ -956,7 +956,7 @@ public:
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
         std::array<uint8_t, 64> memory = {};
-        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::MemoryRegion::Type::SystemRAM);
         inspector.mockEmulatorContext.MockMemory(memory);
 
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
@@ -1041,7 +1041,7 @@ public:
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
         std::array<uint8_t, 64> memory = {};
-        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::MemoryRegion::Type::SystemRAM);
         inspector.mockEmulatorContext.MockMemory(memory);
 
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
@@ -1078,7 +1078,7 @@ public:
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
         std::array<uint8_t, 64> memory = {};
-        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::MemoryRegion::Type::SystemRAM);
         inspector.mockEmulatorContext.MockMemory(memory);
 
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
@@ -1112,7 +1112,7 @@ public:
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
         std::array<uint8_t, 64> memory = {};
-        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::MemoryRegion::Type::SystemRAM);
         inspector.mockEmulatorContext.MockMemory(memory);
 
         inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },

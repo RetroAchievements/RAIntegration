@@ -117,6 +117,15 @@
     <ClInclude Include="data\Memory.hh">
       <Filter>data</Filter>
     </ClInclude>
+    <ClInclude Include="context\IConsoleContext.hh">
+      <Filter>context</Filter>
+    </ClInclude>
+    <ClInclude Include="context\impl\ConsoleContext.hh">
+      <Filter>context\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="data\MemoryRegion.hh">
+      <Filter>data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -151,6 +160,9 @@
     </ClCompile>
     <ClCompile Include="data\Memory.cpp">
       <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="context\impl\ConsoleContext.cpp">
+      <Filter>context\impl</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -2,10 +2,10 @@
 #define RA_SERVICE_LOCATOR_HH
 #pragma once
 
-#include "services\ILogger.hh"
+#include "services/ILogger.hh"
 
 #ifndef NDEBUG
-#include "util\Strings.hh"
+#include "util/Strings.hh"
 #endif
 
 #include <stdexcept>
@@ -62,10 +62,8 @@ public:
     template <class TClass>
     static void Provide(std::unique_ptr<TClass> pInstance) noexcept
     {
-#ifdef RA_UTEST
         if (!Service<TClass>::s_bDestroy)
             Service<TClass>::s_pInstance.release();
-#endif
 
         Service<TClass>::s_pInstance = std::move(pInstance);
     }

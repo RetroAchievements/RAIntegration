@@ -35,9 +35,9 @@ private:
         {
             for (const auto& pRegion : CustomRegions())
             {
-                if (pRegion.nStartAddress == nStartAddress && pRegion.nEndAddress == nEndAddress)
+                if (pRegion.GetStartAddress() == nStartAddress && pRegion.GetEndAddress() == nEndAddress)
                 {
-                    Assert::AreEqual(sLabel, pRegion.sLabel);
+                    Assert::AreEqual(sLabel, pRegion.GetDescription());
                     return;
                 }
             }

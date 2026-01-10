@@ -2,7 +2,7 @@
 
 #include "RA_Defs.h"
 
-#include "data\context\ConsoleContext.hh"
+#include "context\IConsoleContext.hh"
 
 #include "services\AchievementLogicSerializer.hh"
 #include "services\IClipboard.hh"
@@ -805,7 +805,7 @@ void PointerInspectorViewModel::UpdatePointerChainValues()
 
     ra::data::ByteAddress nAddress = 0;
 
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
 
     m_vPointerChain.BeginUpdate();
 
@@ -839,7 +839,7 @@ void PointerInspectorViewModel::UpdatePointerChainRowColor(PointerInspectorViewM
         return;
     }
 
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     bool bValid = false;
 
     auto nMemSize = ra::data::Memory::Size::Unknown;
@@ -1101,7 +1101,7 @@ void PointerInspectorViewModel::NewField()
         // TODO: ConsoleContext should return an architecture size
         auto nReadSize = ra::data::Memory::Size::ThirtyTwoBit;
         uint32_t nMask = 0, nOffset = 0;
-        auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
         pConsoleContext.GetRealAddressConversion(&nReadSize, &nMask, &nOffset);
 
         switch (nReadSize)

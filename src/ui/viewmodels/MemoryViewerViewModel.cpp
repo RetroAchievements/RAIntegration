@@ -2,7 +2,8 @@
 
 #include "RA_Defs.h"
 
-#include "data\context\ConsoleContext.hh"
+#include "context\IConsoleContext.hh"
+
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
@@ -863,15 +864,15 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
         }
         else
         {
-            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
             const auto* pCurrentRegion = pConsoleContext.GetMemoryRegion(nAddress);
-            if (!pCurrentRegion || pCurrentRegion->Type == ra::data::context::ConsoleContext::AddressType::Unused)
+            if (!pCurrentRegion || pCurrentRegion->GetType() == ra::data::MemoryRegion::Type::Unused)
             {
                 for (const auto& pRegion : pConsoleContext.MemoryRegions())
                 {
-                    if (pRegion.Type != ra::data::context::ConsoleContext::AddressType::Unused)
+                    if (pRegion.GetType() != ra::data::MemoryRegion::Type::Unused)
                     {
-                        SetValue(AddressProperty, gsl::narrow_cast<int>(pRegion.StartAddress));
+                        SetValue(AddressProperty, gsl::narrow_cast<int>(pRegion.GetStartAddress()));
                         break;
                     }
                 }

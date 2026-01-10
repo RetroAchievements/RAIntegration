@@ -2,7 +2,7 @@
 
 #include "data\models\TriggerValidation.hh"
 
-#include "tests\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -131,7 +131,7 @@ public:
     TEST_METHOD(TestAddressRange)
     {
         // basic checks for each side
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext(NES, L"NES");
+        ra::context::mocks::MockConsoleContext mockConsoleContext(NES, L"NES");
         Assert::AreEqual(0xFFFFU, mockConsoleContext.MaxAddress());
         AssertValidation("0xH0234>0xH0235", L"");
         AssertValidation("0xH1234>0xH1235", L"Condition 1: Mirror RAM may not be exposed by emulator (address 1234)");
@@ -154,7 +154,7 @@ public:
     {
         // arcade doesn't provide a max address as each game can have a different amount of memory
         // instead, max valid address is determined by how much memory the emulator/core exposes
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext(Arcade, L"Arcade");
+        ra::context::mocks::MockConsoleContext mockConsoleContext(Arcade, L"Arcade");
         Assert::AreEqual(0U, mockConsoleContext.MaxAddress());
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         unsigned char pMemory[256];

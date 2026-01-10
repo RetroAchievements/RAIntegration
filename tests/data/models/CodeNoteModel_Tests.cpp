@@ -7,9 +7,9 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockServer.hh"
@@ -28,7 +28,7 @@ private:
     class CodeNoteModelHarness : public CodeNoteModel
     {
     public:
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
     };
 
@@ -638,7 +638,7 @@ public:
     TEST_METHOD(TestPointerOverflow)
     {
         CodeNoteModelHarness note;
-        note.mockConsoleContext.AddMemoryRegion(0, 0x7F, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80000000);
+        note.mockConsoleContext.AddMemoryRegion(0, 0x7F, ra::data::MemoryRegion::Type::SystemRAM, 0x80000000);
         std::array<unsigned char, 256> memory{};
         memory.at(0x04) = 0x10; // pointer@0x04 = 0x80000010
         memory.at(0x07) = 0x80;
@@ -668,7 +668,7 @@ public:
     TEST_METHOD(TestPointerNegative)
     {
         CodeNoteModelHarness note;
-        note.mockConsoleContext.AddMemoryRegion(0, 0x7F, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80000000);
+        note.mockConsoleContext.AddMemoryRegion(0, 0x7F, ra::data::MemoryRegion::Type::SystemRAM, 0x80000000);
         std::array<unsigned char, 256> memory{};
         memory.at(0x04) = 0x10; // pointer@0x04 = 0x80000010
         memory.at(0x07) = 0x80;

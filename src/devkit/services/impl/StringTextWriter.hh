@@ -2,9 +2,9 @@
 #define RA_SERVICES_STRINGTEXTWRITER
 #pragma once
 
-#include "services\TextWriter.hh"
+#include "services/TextWriter.hh"
 
-#include "util\Strings.hh"
+#include "util/Strings.hh"
 
 namespace ra {
 namespace services {

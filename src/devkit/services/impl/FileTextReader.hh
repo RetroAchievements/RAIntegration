@@ -2,9 +2,11 @@
 #define RA_SERVICES_FILETEXTREADER
 #pragma once
 
-#include "services\TextReader.hh"
+#include "services/TextReader.hh"
 
-#include "util\Strings.hh"
+#include "util/Strings.hh"
+
+#include <fstream>
 
 namespace ra {
 namespace services {

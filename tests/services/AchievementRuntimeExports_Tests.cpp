@@ -4,9 +4,9 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -472,7 +472,7 @@ public:
     TEST_METHOD(TestReadWriteMemory)
     {
         AchievementRuntimeExportsHarness runtime;
-        ra::data::context::mocks::MockConsoleContext mockConsole(NES, L"NES");
+        ra::context::mocks::MockConsoleContext mockConsole(NES, L"NES");
         runtime.InitializeMemoryFunctions();
 
         Assert::AreEqual({0}, runtime.GetMemoryByte(1));
@@ -542,7 +542,7 @@ public:
     {
         AchievementRuntimeExportsHarness runtime;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
 
         rc_client_external_t pClient;
         memset(&pClient, 0, sizeof(pClient));
@@ -564,7 +564,7 @@ public:
     {
         AchievementRuntimeExportsHarness runtime;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
 
         rc_client_external_t pClient;
         memset(&pClient, 0, sizeof(pClient));

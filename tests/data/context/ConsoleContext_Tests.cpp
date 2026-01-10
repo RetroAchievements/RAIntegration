@@ -1,21 +1,22 @@
-#include "CppUnitTest.h"
+#include "context/impl/ConsoleContext.hh"
 
-#include "data\context\ConsoleContext.hh"
+#include "testutil/CppUnitTest.hh"
+#include "testutil/MemoryRegionAsserts.hh"
 
-#include "tests\data\DataAsserts.hh"
+#include "util/Strings.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
-namespace data {
 namespace context {
+namespace impl {
 namespace tests {
 
 TEST_CLASS(ConsoleContext_Tests)
 {
 private:
     static void AssertRegion(const ConsoleContext& context, ra::data::ByteAddress nAddress,
-        const ConsoleContext::MemoryRegion* pExpectedRegion)
+        const ra::data::MemoryRegion* pExpectedRegion)
     {
         const auto* pFoundRegion = context.GetMemoryRegion(nAddress);
         if (pFoundRegion != pExpectedRegion)
@@ -40,11 +41,11 @@ public:
 
         const auto& vRegions = context.MemoryRegions();
         Assert::AreEqual({1}, vRegions.size());
-        Assert::AreEqual(0x00U, vRegions.at(0).StartAddress);
-        Assert::AreEqual(0x7FU, vRegions.at(0).EndAddress);
-        Assert::AreEqual(0x80U, vRegions.at(0).RealAddress);
-        Assert::AreEqual((int)ConsoleContext::AddressType::SystemRAM, (int)vRegions.at(0).Type);
-        Assert::AreEqual(std::string("System RAM"), vRegions.at(0).Description);
+        Assert::AreEqual(0x00U, vRegions.at(0).GetStartAddress());
+        Assert::AreEqual(0x7FU, vRegions.at(0).GetEndAddress());
+        Assert::AreEqual(0x80U, vRegions.at(0).GetRealStartAddress());
+        Assert::AreEqual(ra::data::MemoryRegion::Type::SystemRAM, vRegions.at(0).GetType());
+        Assert::AreEqual(std::wstring(L"System RAM"), vRegions.at(0).GetDescription());
 
         AssertRegion(context, 0x00U, &vRegions.at(0));
         AssertRegion(context, 0x7FU, &vRegions.at(0));
@@ -64,21 +65,21 @@ public:
 
         const auto& vRegions = context.MemoryRegions();
         Assert::AreEqual({3}, vRegions.size());
-        Assert::AreEqual(0x00000000U, vRegions.at(0).StartAddress);
-        Assert::AreEqual(0x00007FFFU, vRegions.at(0).EndAddress);
-        Assert::AreEqual(0x03000000U, vRegions.at(0).RealAddress);
-        Assert::AreEqual((int)ConsoleContext::AddressType::SystemRAM, (int)vRegions.at(0).Type);
-        Assert::AreEqual(std::string("System RAM"), vRegions.at(0).Description);
-        Assert::AreEqual(0x00008000U, vRegions.at(1).StartAddress);
-        Assert::AreEqual(0x00047FFFU, vRegions.at(1).EndAddress);
-        Assert::AreEqual(0x02000000U, vRegions.at(1).RealAddress);
-        Assert::AreEqual((int)ConsoleContext::AddressType::SystemRAM, (int)vRegions.at(1).Type);
-        Assert::AreEqual(std::string("System RAM"), vRegions.at(1).Description);
-        Assert::AreEqual(0x00048000U, vRegions.at(2).StartAddress);
-        Assert::AreEqual(0x00057FFFU, vRegions.at(2).EndAddress);
-        Assert::AreEqual(0x0E000000U, vRegions.at(2).RealAddress);
-        Assert::AreEqual((int)ConsoleContext::AddressType::SaveRAM, (int)vRegions.at(2).Type);
-        Assert::AreEqual(std::string("Save RAM"), vRegions.at(2).Description);
+        Assert::AreEqual(0x00000000U, vRegions.at(0).GetStartAddress());
+        Assert::AreEqual(0x00007FFFU, vRegions.at(0).GetEndAddress());
+        Assert::AreEqual(0x03000000U, vRegions.at(0).GetRealStartAddress());
+        Assert::AreEqual(ra::data::MemoryRegion::Type::SystemRAM, vRegions.at(0).GetType());
+        Assert::AreEqual(std::wstring(L"System RAM"), vRegions.at(0).GetDescription());
+        Assert::AreEqual(0x00008000U, vRegions.at(1).GetStartAddress());
+        Assert::AreEqual(0x00047FFFU, vRegions.at(1).GetEndAddress());
+        Assert::AreEqual(0x02000000U, vRegions.at(1).GetRealStartAddress());
+        Assert::AreEqual(ra::data::MemoryRegion::Type::SystemRAM, vRegions.at(1).GetType());
+        Assert::AreEqual(std::wstring(L"System RAM"), vRegions.at(1).GetDescription());
+        Assert::AreEqual(0x00048000U, vRegions.at(2).GetStartAddress());
+        Assert::AreEqual(0x00057FFFU, vRegions.at(2).GetEndAddress());
+        Assert::AreEqual(0x0E000000U, vRegions.at(2).GetRealStartAddress());
+        Assert::AreEqual(ra::data::MemoryRegion::Type::SaveRAM, vRegions.at(2).GetType());
+        Assert::AreEqual(std::wstring(L"Save RAM"), vRegions.at(2).GetDescription());
 
         AssertRegion(context, 0x00000000U, &vRegions.at(0));
         AssertRegion(context, 0x00007FFFU, &vRegions.at(0));
@@ -101,16 +102,16 @@ public:
 
         const auto& vRegions = context.MemoryRegions();
         Assert::AreEqual({2}, vRegions.size());
-        Assert::AreEqual(0x00000000U, vRegions.at(0).StartAddress);
-        Assert::AreEqual(0x007FFFFFU, vRegions.at(0).EndAddress);
-        Assert::AreEqual(0x08000000U, vRegions.at(0).RealAddress);
-        Assert::AreEqual((int)ConsoleContext::AddressType::SystemRAM, (int)vRegions.at(0).Type);
-        Assert::AreEqual(std::string("Kernel RAM"), vRegions.at(0).Description);
-        Assert::AreEqual(0x00800000U, vRegions.at(1).StartAddress);
-        Assert::AreEqual(0x01FFFFFFU, vRegions.at(1).EndAddress);
-        Assert::AreEqual(0x08800000U, vRegions.at(1).RealAddress);
-        Assert::AreEqual((int)ConsoleContext::AddressType::SystemRAM, (int)vRegions.at(1).Type);
-        Assert::AreEqual(std::string("System RAM"), vRegions.at(1).Description);
+        Assert::AreEqual(0x00000000U, vRegions.at(0).GetStartAddress());
+        Assert::AreEqual(0x007FFFFFU, vRegions.at(0).GetEndAddress());
+        Assert::AreEqual(0x08000000U, vRegions.at(0).GetRealStartAddress());
+        Assert::AreEqual(ra::data::MemoryRegion::Type::SystemRAM, vRegions.at(0).GetType());
+        Assert::AreEqual(std::wstring(L"Kernel RAM"), vRegions.at(0).GetDescription());
+        Assert::AreEqual(0x00800000U, vRegions.at(1).GetStartAddress());
+        Assert::AreEqual(0x01FFFFFFU, vRegions.at(1).GetEndAddress());
+        Assert::AreEqual(0x08800000U, vRegions.at(1).GetRealStartAddress());
+        Assert::AreEqual(ra::data::MemoryRegion::Type::SystemRAM, vRegions.at(1).GetType());
+        Assert::AreEqual(std::wstring(L"System RAM"), vRegions.at(1).GetDescription());
 
         AssertRegion(context, 0x00000000U, &vRegions.at(0));
         AssertRegion(context, 0x007FFFFFU, &vRegions.at(0));

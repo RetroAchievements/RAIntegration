@@ -144,9 +144,6 @@
     <ClInclude Include="services\IDebuggerDetector.hh">
       <Filter>services</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\tests\devkit\services\mocks\MockDebuggerDetector.hh">
-      <Filter>services\impl</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">

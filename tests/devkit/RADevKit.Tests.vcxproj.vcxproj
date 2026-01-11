@@ -61,7 +61,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\data\context\ConsoleContext_Tests.cpp" />
+    <ClCompile Include="context\impl\ConsoleContext_Tests.cpp" />
     <ClCompile Include="context\impl\EmulatorMemoryContext_Tests.cpp" />
     <ClCompile Include="context\impl\RcClient_Tests.cpp" />
     <ClCompile Include="context\mocks\MockEmulatorMemoryContext.cpp" />

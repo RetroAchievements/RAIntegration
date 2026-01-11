@@ -71,7 +71,6 @@
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="util\GSL.cpp" />
     <ClCompile Include="util\Strings.cpp" />
-    <ClInclude Include="..\..\tests\devkit\services\mocks\MockDebuggerDetector.hh" />
     <ClInclude Include="context\IConsoleContext.hh" />
     <ClInclude Include="context\IEmulatorMemoryContext.hh" />
     <ClInclude Include="context\impl\ConsoleContext.hh" />

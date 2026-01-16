@@ -9,12 +9,12 @@
 #include "context\IRcClient.hh"
 
 #include "data\context\GameContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\AchievementRuntimeExports.hh"
 #include "services\IClipboard.hh"
 #include "services\ILocalStorage.hh"
+#include "services\ILoginService.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
@@ -50,7 +50,7 @@ void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
 {
     m_vGameTitles.Add(0U, L"<New Title>");
 
-    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
+    if (!ra::services::ServiceLocator::Get<ra::services::ILoginService>().IsLoggedIn())
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"Could not retrieve list of existing games",
                                                                   L"User is not logged in");

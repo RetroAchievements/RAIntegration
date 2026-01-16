@@ -15,6 +15,7 @@
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -42,6 +43,7 @@ private:
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
         ra::services::mocks::MockHttpRequester mockHttpRequester;
+        ra::services::mocks::MockLoginService mockLoginService;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -201,7 +203,7 @@ public:
         EmulatorContextHarness emulator;
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57");
-        emulator.mockUserContext.Initialize("User", "Token");
+        emulator.mockLoginService.Login("User", "Token");
         emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
         {
             response.ErrorMessage = "Could not communicate with server.";
@@ -217,7 +219,7 @@ public:
 
         Assert::IsFalse(emulator.ValidateClientVersion());
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
-        Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsTrue(emulator.mockLoginService.IsLoggedIn());
     }
 
     TEST_METHOD(TestValidateClientVersionApiErrorHardcore)
@@ -250,7 +252,7 @@ public:
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        emulator.mockUserContext.DisableLogin();
+        emulator.mockLoginService.DisableLogin();
         emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
         {
             response.ErrorMessage = "Could not communicate with server.";
@@ -274,7 +276,7 @@ public:
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        emulator.mockUserContext.Initialize("User", "Token");
+        emulator.mockLoginService.Login("User", "Token");
         emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
         {
             response.ErrorMessage = "Could not communicate with server.";
@@ -290,7 +292,7 @@ public:
 
         Assert::IsFalse(emulator.ValidateClientVersion());
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
-        Assert::IsFalse(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(emulator.mockLoginService.IsLoggedIn());
     }
 
     TEST_METHOD(TestValidateClientVersionOlderNonHardcoreIgnore)
@@ -456,7 +458,7 @@ public:
     {
         EmulatorContextHarness emulator;
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
-        emulator.mockUserContext.SetUsername("User");
+        emulator.mockLoginService.Login("User", "Token");
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.MockVersions("0.56.0.0", "0.58.0.0", "0.57.0.0");
@@ -473,7 +475,7 @@ public:
         Assert::AreEqual(std::string(), emulator.mockDesktop.LastOpenedUrl());
         // successful downgrade to softcore
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
-        Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsTrue(emulator.mockLoginService.IsLoggedIn());
 
         // attempt to enable hardcore and abort
         emulator.mockDesktop.ResetExpectedWindows();
@@ -489,7 +491,7 @@ public:
         Assert::AreEqual(std::string(), emulator.mockDesktop.LastOpenedUrl());
         // no change
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
-        Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsTrue(emulator.mockLoginService.IsLoggedIn());
 
         // attempt to enable hardcore and agree
         emulator.mockDesktop.ResetExpectedWindows();
@@ -505,7 +507,7 @@ public:
         Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
         // switch to hardcore didn't actually happen, and user is logged out
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
-        Assert::IsFalse(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(emulator.mockLoginService.IsLoggedIn());
     }
 
     TEST_METHOD(TestValidateClientVersionCurrentAboveMinimum)
@@ -908,7 +910,7 @@ public:
         EmulatorContextHarness emulator;
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
-        emulator.mockUserContext.Initialize("User", "Token");
+        emulator.mockLoginService.Login("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
@@ -921,7 +923,7 @@ public:
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
-        Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsTrue(emulator.mockLoginService.IsLoggedIn());
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
@@ -933,7 +935,7 @@ public:
         Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
 
         // user should be logged out if hardcore was enabled on an older version
-        Assert::IsFalse(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(emulator.mockLoginService.IsLoggedIn());
         Assert::IsFalse(bWasReset);
     }
 
@@ -942,7 +944,7 @@ public:
         EmulatorContextHarness emulator;
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
-        emulator.mockUserContext.Initialize("User", "Token");
+        emulator.mockLoginService.Login("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
@@ -955,7 +957,7 @@ public:
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::Cancel;
         });
-        Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsTrue(emulator.mockLoginService.IsLoggedIn());
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
@@ -965,7 +967,7 @@ public:
         Assert::IsFalse(rc_client_get_hardcore_enabled(emulator.mockAchievementRuntime.GetClient()) != 0);
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::AreEqual(std::string(""), emulator.mockDesktop.LastOpenedUrl());
-        Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsTrue(emulator.mockLoginService.IsLoggedIn());
         Assert::IsFalse(bWasReset);
     }
 
@@ -1026,7 +1028,7 @@ public:
         EmulatorContextHarness emulator;
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
-        emulator.mockUserContext.Initialize("User", "Token");
+        emulator.mockLoginService.Login("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
@@ -1039,7 +1041,7 @@ public:
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
-        Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsTrue(emulator.mockLoginService.IsLoggedIn());
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
@@ -1051,7 +1053,7 @@ public:
         Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
 
         // user should be logged out if hardcore was enabled on an older version
-        Assert::IsFalse(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(emulator.mockLoginService.IsLoggedIn());
         Assert::IsFalse(bWasReset);
     }
 
@@ -1134,7 +1136,7 @@ public:
         emulator.mockUserContext.Initialize("User", "UserDisplay", "Token");
         Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - UserDisplay"), emulator.GetAppTitle(""));
 
-        emulator.mockUserContext.Logout();
+        emulator.mockLoginService.Logout();
         Assert::AreEqual(std::wstring(L"RASnes9X - 0.57"), emulator.GetAppTitle(""));
     }
 

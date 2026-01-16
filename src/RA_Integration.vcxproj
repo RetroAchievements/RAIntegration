@@ -109,6 +109,7 @@
     <ClCompile Include="services\GameIdentifier.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
+    <ClCompile Include="services\impl\LoginService.cpp" />
     <ClCompile Include="services\impl\OfflineRcClient.cpp" />
     <ClCompile Include="services\impl\ThreadPool.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
@@ -258,10 +259,11 @@
     <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\ILocalStorage.hh" />
-    <ClInclude Include="services\ILogger.hh" />
+    <ClInclude Include="services\ILoginService.hh" />
     <ClInclude Include="services\impl\FileLocalStorage.hh" />
     <ClInclude Include="services\impl\FileLogger.hh" />
     <ClInclude Include="services\impl\JsonFileConfiguration.hh" />
+    <ClInclude Include="services\impl\LoginService.hh" />
     <ClInclude Include="services\impl\OfflineRcClient.hh" />
     <ClInclude Include="services\impl\ThreadPool.hh" />
     <ClInclude Include="services\impl\Clock.hh" />

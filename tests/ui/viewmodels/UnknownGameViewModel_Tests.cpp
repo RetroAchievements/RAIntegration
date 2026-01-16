@@ -12,8 +12,8 @@
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockUserContext.hh"
 
 #include "tests\ui\UIAsserts.hh"
 
@@ -34,15 +34,15 @@ private:
         ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockLoginService mockLoginService;
         ra::ui::mocks::MockDesktop mockDesktop;
 
         UnknownGameViewModelHarness() noexcept
         {
-            GSL_SUPPRESS_F6 mockUserContext.Initialize("User", "ApiToken");
+            GSL_SUPPRESS_F6 mockLoginService.Login("User", "ApiToken");
         }
 
         void MockGameTitles()

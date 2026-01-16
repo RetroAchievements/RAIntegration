@@ -4,14 +4,10 @@
 
 #include "tests\ui\UIAsserts.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
-#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
-#include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockSessionTracker.hh"
+#include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockUserContext.hh"
-#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -30,13 +26,9 @@ private:
 
         ra::context::mocks::MockRcClient mockRcClient;
         ra::services::mocks::MockConfiguration mockConfiguration;
-        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
+        ra::services::mocks::MockLoginService mockLoginService;
         ra::ui::mocks::MockDesktop mockDesktop;
-        ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockUserContext mockUserContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        ra::data::context::mocks::MockSessionTracker mockSessionTracker;
-        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
     };
 
 public:
@@ -87,136 +79,54 @@ public:
     TEST_METHOD(TestLoginSuccessful)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockRcClient.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
-            "{\"Success\":true,\"User\":\"User\","
-            "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
-            "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
-
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Successfully logged in as User"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Successfully logged in as User_"), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
-            return DialogResult::OK;
-        });
-        bool bWasMenuRebuilt = false;
-        vmLogin.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt] { bWasMenuRebuilt = true; });
-
-        vmLogin.SetUsername(L"user");
-        vmLogin.SetPassword(L"Pa$$w0rd");
-        Assert::IsTrue(vmLogin.Login());
-        Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
-
-        // expect case of username to be corrected by API response
-        Assert::AreEqual(std::string("User"), vmLogin.mockConfiguration.GetUsername());
-
-        // API token should not be set unless "remember me" is checked
-        Assert::AreEqual(std::string(""), vmLogin.mockConfiguration.GetApiToken());
-
-        // values should also be updated in UserContext, including API token and score
-        Assert::AreEqual(std::string("User"), vmLogin.mockUserContext.GetUsername());
-        Assert::AreEqual(std::string("ApiToken"), vmLogin.mockUserContext.GetApiToken());
-        Assert::AreEqual(12345U, vmLogin.mockUserContext.GetScore());
-
-        // session tracker should know user name
-        Assert::AreEqual(std::wstring(L"User"), vmLogin.mockSessionTracker.GetUsername());
-
-        // emulator should have been notified to rebuild the RetroAchievements menu
-        Assert::IsTrue(bWasMenuRebuilt);
-
-        // app title should not be updated as _RA_UpdateAppTitle was not previously called
-        Assert::AreEqual(std::wstring(L"Window"), vmLogin.mockWindowManager.Emulator.GetWindowTitle());
-    }
-
-    TEST_METHOD(TestLoginSuccessfulAppTitle)
-    {
-        LoginViewModelHarness vmLogin;
-        vmLogin.mockRcClient.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
-            "{\"Success\":true,\"User\":\"User\","
-            "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
-            "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
-
-        vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Successfully logged in as User"), vmMessageBox.GetMessage());
-            Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
-            return DialogResult::OK;
-        });
-        bool bWasMenuRebuilt = false;
-        vmLogin.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt] { bWasMenuRebuilt = true; });
-        vmLogin.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
-        vmLogin.mockWindowManager.Emulator.SetAppTitleMessage("Test");
-
-        vmLogin.SetUsername(L"user");
-        vmLogin.SetPassword(L"Pa$$w0rd");
-        Assert::IsTrue(vmLogin.Login());
-        Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
-
-        // expect case of username to be corrected by API response
-        Assert::AreEqual(std::string("User"), vmLogin.mockConfiguration.GetUsername());
-
-        // API token should not be set unless "remember me" is checked
-        Assert::AreEqual(std::string(""), vmLogin.mockConfiguration.GetApiToken());
-
-        // values should also be updated in UserContext, including API token and score
-        Assert::AreEqual(std::string("User"), vmLogin.mockUserContext.GetUsername());
-        Assert::AreEqual(std::string("ApiToken"), vmLogin.mockUserContext.GetApiToken());
-        Assert::AreEqual(12345U, vmLogin.mockUserContext.GetScore());
-
-        // session tracker should know user name
-        Assert::AreEqual(std::wstring(L"User"), vmLogin.mockSessionTracker.GetUsername());
-
-        // emulator should have been notified to rebuild the RetroAchievements menu
-        Assert::IsTrue(bWasMenuRebuilt);
-
-        // app title should be updated as _RA_UpdateAppTitle was previously called
-        Assert::AreEqual(std::wstring(L"RATests - 0.1 - Test - User []"), vmLogin.mockWindowManager.Emulator.GetWindowTitle());
-    }
-
-    TEST_METHOD(TestLoginInvalidPassword)
-    {
-        LoginViewModelHarness vmLogin;
-        vmLogin.mockRcClient.MockResponse("r=login2&u=User&p=Pa%24%24w0rd",
-            "{\"Success\":false,\"Error\":\"Invalid User/Password combination. Please try again\"}");
-
-        vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Failed to login"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Invalid User/Password combination. Please try again"), vmMessageBox.GetMessage());
-            Assert::AreEqual(MessageBoxViewModel::Icon::Error, vmMessageBox.GetIcon());
             return DialogResult::OK;
         });
 
         vmLogin.SetUsername(L"User");
         vmLogin.SetPassword(L"Pa$$w0rd");
-        Assert::IsFalse(vmLogin.Login());
+        Assert::IsTrue(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
+
+        // API token should not be set unless "remember me" is checked
+        Assert::AreEqual(std::string("User_"), vmLogin.mockConfiguration.GetUsername());
+        Assert::AreEqual(std::string(""), vmLogin.mockConfiguration.GetApiToken());
     }
 
     TEST_METHOD(TestLoginSuccessfulRememberPassword)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockRcClient.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
-            "{\"Success\":true,\"User\":\"User\","
-            "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
-            "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
-
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Successfully logged in as User"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Successfully logged in as User_"), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
             return DialogResult::OK;
         });
 
-        vmLogin.SetUsername(L"user");
+        vmLogin.SetUsername(L"User");
         vmLogin.SetPassword(L"Pa$$w0rd");
         vmLogin.SetPasswordRemembered(true);
         Assert::IsTrue(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
 
-        Assert::AreEqual(std::string("User"), vmLogin.mockConfiguration.GetUsername());
-        Assert::AreEqual(std::string("ApiToken"), vmLogin.mockConfiguration.GetApiToken());
-        Assert::AreEqual(std::string("User"), vmLogin.mockUserContext.GetUsername());
-        Assert::AreEqual(std::string("ApiToken"), vmLogin.mockUserContext.GetApiToken());
+        Assert::AreEqual(std::string("User_"), vmLogin.mockConfiguration.GetUsername());
+        Assert::AreEqual(std::string("APITOKEN"), vmLogin.mockConfiguration.GetApiToken());
+    }
+
+    TEST_METHOD(TestLoginFailure)
+    {
+        LoginViewModelHarness vmLogin;
+        vmLogin.mockLoginService.MockLoginFailure(true);
+
+        vmLogin.SetUsername(L"User");
+        vmLogin.SetPassword(L"Pa$$w0rd");
+        Assert::IsFalse(vmLogin.Login());
+
+        Assert::AreEqual(std::string(""), vmLogin.mockConfiguration.GetUsername());
+        Assert::AreEqual(std::string(""), vmLogin.mockConfiguration.GetApiToken());
     }
 };
 

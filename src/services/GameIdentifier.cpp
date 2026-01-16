@@ -11,12 +11,12 @@
 
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
-#include "data\context\UserContext.hh"
 #include "data\context\SessionTracker.hh"
 
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
+#include "services\ILoginService.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -74,7 +74,7 @@ static unsigned int FindCompatibilityMatch(const std::string& sHash)
 
 unsigned int GameIdentifier::IdentifyHash(const std::string& sHash)
 {
-    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
+    if (!ra::services::ServiceLocator::Get<ra::services::ILoginService>().IsLoggedIn())
     {
         if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().
                 IsFeatureEnabled(ra::services::Feature::Offline))
@@ -181,7 +181,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
 {
     if (nGameId != 0)
     {
-        if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
+        if (!ra::services::ServiceLocator::Get<ra::services::ILoginService>().IsLoggedIn())
         {
             if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().
                     IsFeatureEnabled(ra::services::Feature::Offline))

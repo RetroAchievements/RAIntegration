@@ -20,7 +20,7 @@ public:
     {
     }
 
-    bool IsLoggedIn() const override { return m_bIsLoggedIn; }
+    bool IsLoggedIn() const noexcept override { return m_bIsLoggedIn; }
 
     void SetLoggedIn(bool bIsLoggedIn) noexcept { m_bIsLoggedIn = bIsLoggedIn; }
 

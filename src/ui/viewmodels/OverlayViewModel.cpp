@@ -3,9 +3,9 @@
 #include "util\Strings.hh"
 
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
 
 #include "data\context\EmulatorContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
@@ -159,7 +159,7 @@ void OverlayViewModel::CreateRenderImage()
     const auto nDetailFont =
         m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayDetail(), ra::ui::FontStyles::Normal);
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     const auto sUserName = ra::Widen(pUserContext.GetDisplayName());
     const auto szUsername = m_pSurface->MeasureText(nFont, sUserName);
 

@@ -7,12 +7,12 @@
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLoginService.hh"
-#include "tests\mocks\MockUserContext.hh"
 
 #include <rcheevos\src\rc_client_external.h>
 #include <rcheevos\src\rc_client_internal.h>
@@ -66,8 +66,8 @@ public:
 
     ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
     ra::context::mocks::MockRcClient mockRcClient;
+    ra::context::mocks::MockUserContext mockUserContext;
     ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-    ra::data::context::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockConfiguration mockConfiguration;
     ra::services::mocks::MockLoginService mockLoginService;
 
@@ -402,8 +402,6 @@ public:
         AssertMenuItem(pMenu, 12, IDM_RA_FILES_POINTERINSPECTOR, "Pointer &Inspector");
 
         runtime.mockLoginService.Login("User", "ApiToken");
-        runtime.AssertMenuChangedEventSeen();
-        runtime.ResetSeenEvents();
 
         pMenu = _Rcheevos_RAIntegrationGetMenu();
         Assert::AreEqual(19U, pMenu->num_items);

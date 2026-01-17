@@ -2,9 +2,10 @@
 
 #include "RA_Defs.h"
 
+#include "context\UserContext.hh"
+
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"

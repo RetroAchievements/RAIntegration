@@ -4,12 +4,12 @@
 #include "util\Strings.hh"
 
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
 
 #include "api\impl\DisconnectedServer.hh"
 
 #include "data\context\EmulatorContext.hh"
 #include "data\context\SessionTracker.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\AchievementRuntimeExports.hh"
@@ -25,7 +25,7 @@ namespace impl {
 
 bool LoginService::IsLoggedIn() const
 {
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     return !pUserContext.GetApiToken().empty();
 }
 
@@ -58,7 +58,7 @@ bool LoginService::Login(const std::string& sUsername, const std::string& sPassw
 
 void LoginService::Logout()
 {
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::context::UserContext>();
 
     if (pUserContext.GetApiToken().empty())
         return;

@@ -7,6 +7,7 @@
 #include "RA_Resource.h"
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -23,7 +24,6 @@
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockSurface.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 #include "tests\ui\UIAsserts.hh"
 
@@ -37,10 +37,10 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::api::mocks::MockServer;
 using ra::context::mocks::MockRcClient;
+using ra::context::mocks::MockUserContext;
 using ra::data::context::mocks::MockEmulatorContext;
 using ra::data::context::mocks::MockGameContext;
 using ra::data::context::mocks::MockSessionTracker;
-using ra::data::context::mocks::MockUserContext;
 using ra::services::mocks::MockAchievementRuntime;
 using ra::services::mocks::MockAudioSystem;
 using ra::services::mocks::MockClock;
@@ -572,7 +572,7 @@ private:
     {
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
 
         mockUserContext.Initialize("User", "TOKEN");

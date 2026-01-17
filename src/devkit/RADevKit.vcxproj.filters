@@ -144,6 +144,9 @@
     <ClInclude Include="services\IDebuggerDetector.hh">
       <Filter>services</Filter>
     </ClInclude>
+    <ClInclude Include="context\UserContext.hh">
+      <Filter>context</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">

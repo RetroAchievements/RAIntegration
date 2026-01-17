@@ -9,10 +9,10 @@
 
 #include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
 
 #include "data\context\EmulatorContext.hh"
 #include "data\context\SessionTracker.hh"
-#include "data\context\UserContext.hh"
 
 #include "data\models\AchievementModel.hh"
 #include "data\models\CodeNotesModel.hh"

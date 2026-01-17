@@ -318,9 +318,6 @@
     <ClCompile Include="data\context\UserContext.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\AssetModelBase.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="data\models\AchievementModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
@@ -380,9 +377,6 @@
     </ClCompile>
     <ClCompile Include="services\AchievementRuntimeExports.cpp">
       <Filter>Services</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\CodeNoteModel.cpp">
-      <Filter>Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\PointerInspectorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
@@ -842,9 +836,6 @@
     <ClInclude Include="data\context\UserContext.hh">
       <Filter>Data\Context</Filter>
     </ClInclude>
-    <ClInclude Include="data\models\AssetModelBase.hh">
-      <Filter>Data\Models</Filter>
-    </ClInclude>
     <ClInclude Include="data\models\AchievementModel.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
@@ -910,9 +901,6 @@
     </ClInclude>
     <ClInclude Include="services\AchievementRuntimeExports.hh">
       <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="data\models\CodeNoteModel.hh">
-      <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\PointerInspectorViewModel.hh">
       <Filter>UI\ViewModels</Filter>

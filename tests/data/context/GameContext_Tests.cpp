@@ -20,6 +20,7 @@
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockEmulatorContext.hh"

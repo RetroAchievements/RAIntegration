@@ -11,6 +11,7 @@
 #include "tests\ui\UIAsserts.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"

@@ -2,7 +2,7 @@
 #define RA_DATA_LOCAL_BADGES_MODEL_H
 #pragma once
 
-#include "AssetModelBase.hh"
+#include "data/models/AssetModelBase.hh"
 
 namespace ra {
 namespace data {

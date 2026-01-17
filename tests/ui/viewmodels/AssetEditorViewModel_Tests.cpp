@@ -15,6 +15,7 @@
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClipboard.hh"

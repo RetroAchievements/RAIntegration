@@ -8,6 +8,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"

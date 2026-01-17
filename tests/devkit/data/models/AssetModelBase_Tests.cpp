@@ -1,12 +1,9 @@
-#include "CppUnitTest.h"
+#include "data/models/AssetModelBase.hh"
 
-#include "data\models\AssetModelBase.hh"
+#include "services/impl/StringTextWriter.hh"
 
-#include "services\impl\StringTextWriter.hh"
-
-#include "tests\data\DataAsserts.hh"
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+#include "testutil/AssetAsserts.hh"
+#include "testutil/CppUnitTest.hh"
 
 namespace ra {
 namespace data {

@@ -2,7 +2,7 @@
 #define RA_DATA_MEMORY_REGIONS_MODEL_H
 #pragma once
 
-#include "AssetModelBase.hh"
+#include "data/models/AssetModelBase.hh"
 
 #include "data/MemoryRegion.hh"
 

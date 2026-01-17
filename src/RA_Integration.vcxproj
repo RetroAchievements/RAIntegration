@@ -92,7 +92,6 @@
     <ClCompile Include="data\models\MemoryRegionsModel.cpp" />
     <ClCompile Include="data\models\RichPresenceModel.cpp" />
     <ClCompile Include="data\models\TriggerValidation.cpp" />
-    <ClCompile Include="data\search\MemBlock.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -112,6 +111,7 @@
     <ClCompile Include="services\impl\LoginService.cpp" />
     <ClCompile Include="services\impl\OfflineRcClient.cpp" />
     <ClCompile Include="services\impl\ThreadPool.cpp" />
+    <ClCompile Include="services\impl\WindowsDebuggerDetector.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
     <ClCompile Include="services\impl\WindowsHttpRequester.cpp" />
     <ClCompile Include="services\Initialization.cpp" />
@@ -235,7 +235,6 @@
     <ClInclude Include="data\models\MemoryRegionsModel.hh" />
     <ClInclude Include="data\models\RichPresenceModel.hh" />
     <ClInclude Include="data\models\TriggerValidation.hh" />
-    <ClInclude Include="data\search\MemBlock.hh" />
     <ClInclude Include="data\Types.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />
@@ -256,7 +255,6 @@
     <ClInclude Include="services\GameIdentifier.hh" />
     <ClInclude Include="services\IAudioSystem.hh" />
     <ClInclude Include="services\IClipboard.hh" />
-    <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\ILocalStorage.hh" />
     <ClInclude Include="services\ILoginService.hh" />
@@ -266,9 +264,9 @@
     <ClInclude Include="services\impl\LoginService.hh" />
     <ClInclude Include="services\impl\OfflineRcClient.hh" />
     <ClInclude Include="services\impl\ThreadPool.hh" />
-    <ClInclude Include="services\impl\Clock.hh" />
     <ClInclude Include="services\impl\WindowsAudioSystem.hh" />
     <ClInclude Include="services\impl\WindowsClipboard.hh" />
+    <ClInclude Include="services\impl\WindowsDebuggerDetector.hh" />
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh" />
     <ClInclude Include="services\impl\WindowsFileSystem.hh" />
     <ClInclude Include="services\impl\WindowsHttpRequester.hh" />

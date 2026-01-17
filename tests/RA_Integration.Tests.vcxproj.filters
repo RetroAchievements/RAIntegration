@@ -438,9 +438,6 @@
     <ClCompile Include="..\src\services\search\SearchImpl.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\data\search\MemBlock.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\MemoryWatchViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -474,6 +471,10 @@
     <ClCompile Include="services\LoginService_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
+    <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+>>>>>>> master
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

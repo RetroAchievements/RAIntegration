@@ -31,7 +31,13 @@
     <ClCompile Include="context\impl\RcClient_Tests.cpp">
       <Filter>context\impl</Filter>
     </ClCompile>
-    <ClCompile Include="..\data\context\ConsoleContext_Tests.cpp">
+    <ClCompile Include="context\impl\EmulatorMemoryContext_Tests.cpp">
+      <Filter>context\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="context\mocks\MockEmulatorMemoryContext.cpp">
+      <Filter>context\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="context\impl\ConsoleContext_Tests.cpp">
       <Filter>context\impl</Filter>
     </ClCompile>
   </ItemGroup>
@@ -93,6 +99,12 @@
       <Filter>testutil</Filter>
     </ClInclude>
     <ClInclude Include="context\mocks\MockConsoleContext.hh">
+      <Filter>context\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockClock.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh">
       <Filter>context\mocks</Filter>
     </ClInclude>
   </ItemGroup>

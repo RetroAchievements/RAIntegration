@@ -124,10 +124,10 @@ MemoryViewerViewModel::MemoryViewerViewModel()
 
 void MemoryViewerViewModel::InitializeNotifyTargets()
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.AddNotifyTarget(*this);
+    auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
+    pMemoryContext.AddNotifyTarget(*this);
 
-    m_nTotalMemorySize = gsl::narrow<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    m_nTotalMemorySize = gsl::narrow<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize());
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);
@@ -137,8 +137,8 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
 
 void MemoryViewerViewModel::InitializeFixedViewer(ra::data::ByteAddress nAddress)
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    m_nTotalMemorySize = gsl::narrow<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    m_nTotalMemorySize = gsl::narrow<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize());
 
     m_bReadOnly = true;
     m_bAddressFixed = true;
@@ -295,11 +295,11 @@ void MemoryViewerViewModel::UpdateInvalidRegions()
     const auto nFirstAddress = GetFirstAddress();
     const auto nVisibleBytes = std::min(m_nTotalMemorySize - nFirstAddress, nVisibleLines * 16);
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (pEmulatorContext.HasInvalidRegions())
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    if (pMemoryContext.HasInvalidRegions())
     {
         for (unsigned i = 0; i < nVisibleBytes; ++i)
-            m_pInvalid[i] = pEmulatorContext.IsValidAddress(nFirstAddress + i) ? 0 : 1;
+            m_pInvalid[i] = pMemoryContext.IsValidAddress(nFirstAddress + i) ? 0 : 1;
     }
     else
     {
@@ -468,8 +468,8 @@ void MemoryViewerViewModel::ReadMemory(ra::data::ByteAddress nFirstAddress, int 
             return;
         }
 
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(nNumVisibleLines) * 16);
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        pMemoryContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(nNumVisibleLines) * 16);
 
         UpdateInvalidRegions();
         UpdateColors();
@@ -705,8 +705,8 @@ void MemoryViewerViewModel::IncreaseCurrentValue(uint32_t nModifier)
     DispatchMemoryRead([this, nModifier]() {
         const auto nAddress = GetAddress();
         const auto nSize = GetSize();
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        auto nMem = pEmulatorContext.ReadMemory(nAddress, nSize);
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        auto nMem = pMemoryContext.ReadMemory(nAddress, nSize);
 
         auto const nMaxValue = ra::data::Memory::SizeMax(nSize);
         if (nMem >= nMaxValue)
@@ -717,7 +717,7 @@ void MemoryViewerViewModel::IncreaseCurrentValue(uint32_t nModifier)
         else
             nMem += nModifier;
 
-        pEmulatorContext.WriteMemory(nAddress, nSize, nMem);
+        pMemoryContext.WriteMemory(nAddress, nSize, nMem);
     });
 }
 
@@ -729,8 +729,8 @@ void MemoryViewerViewModel::DecreaseCurrentValue(uint32_t nModifier)
     DispatchMemoryRead([this, nModifier]() {
         const auto nAddress = GetAddress();
         const auto nSize = GetSize();
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        auto nMem = pEmulatorContext.ReadMemory(nAddress, nSize);
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        auto nMem = pMemoryContext.ReadMemory(nAddress, nSize);
 
         if (nMem == 0)
             return;
@@ -740,7 +740,7 @@ void MemoryViewerViewModel::DecreaseCurrentValue(uint32_t nModifier)
         else
             nMem -= nModifier;
 
-        pEmulatorContext.WriteMemory(nAddress, nSize, nMem);
+        pMemoryContext.WriteMemory(nAddress, nSize, nMem);
     });
 }
 
@@ -833,9 +833,9 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, co
 
 void MemoryViewerViewModel::OnTotalMemorySizeChanged()
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     const bool bTotalMemorySizeWasZero = (m_nTotalMemorySize == 0);
-    m_nTotalMemorySize = gsl::narrow_cast<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    m_nTotalMemorySize = gsl::narrow_cast<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize());
 
     if (m_nTotalMemorySize == 0)
     {
@@ -1115,8 +1115,8 @@ bool MemoryViewerViewModel::OnChar(char c)
     m_nNeedsRedraw |= REDRAW_MEMORY;
 
     // push the updated value to the emulator
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.WriteMemoryByte(nAddress, nByte);
+    auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
+    pMemoryContext.WriteMemoryByte(nAddress, nByte);
 
     // advance the cursor to the next nibble
     AdvanceCursor();
@@ -1147,8 +1147,8 @@ void MemoryViewerViewModel::DoFrame()
     const auto nVisibleLines = GetNumVisibleLines();
     Expects(nVisibleLines < MaxLines);
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    pEmulatorContext.ReadMemory(nAddress, pMemory, gsl::narrow_cast<size_t>(nVisibleLines) * 16);
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    pMemoryContext.ReadMemory(nAddress, pMemory, gsl::narrow_cast<size_t>(nVisibleLines) * 16);
 
     constexpr int nStride = 8;
     for (int nIndex = 0; nIndex < nVisibleLines * 16; nIndex += nStride)

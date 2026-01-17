@@ -3,6 +3,7 @@
 #include "RA_Defs.h"
 
 #include "context\IConsoleContext.hh"
+#include "context\IEmulatorMemoryContext.hh"
 
 #include "services\AchievementLogicSerializer.hh"
 #include "services\IClipboard.hh"
@@ -163,16 +164,16 @@ void PointerInspectorViewModel::OnEndGameLoad()
     m_vPointers.BeginUpdate();
     m_vPointers.Clear();
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes != nullptr)
     {
         pCodeNotes->EnumerateCodeNotes(
-            [this, &pEmulatorContext](ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pNote) {
+            [this, &pMemoryContext](ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pNote) {
                 if (pNote.IsPointer())
                 {
                     m_vPointers.Add(nAddress,
-                                    ra::StringPrintf(L"%s | %s", pEmulatorContext.FormatAddress(nAddress),
+                                    ra::StringPrintf(L"%s | %s", pMemoryContext.FormatAddress(nAddress),
                                                      ra::data::models::CodeNoteModel::TrimSize(
                                                          pNote.GetPointerDescription(), false)));
                 }
@@ -238,10 +239,10 @@ void PointerInspectorViewModel::UpdatePointerVisibility(ra::data::ByteAddress nA
     if (bIsPointerNote)
     {
         // valid pointer note not found, insert it
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
         m_vPointers.BeginUpdate();
         m_vPointers.Add(nAddress,
-                        ra::StringPrintf(L"%s | %s", pEmulatorContext.FormatAddress(nAddress),
+                        ra::StringPrintf(L"%s | %s", pMemoryContext.FormatAddress(nAddress),
                              ra::data::models::CodeNoteModel::TrimSize(pNote->GetPointerDescription(), false)));
         m_vPointers.MoveItem(nCount, nIndex);
         m_vPointers.EndUpdate();
@@ -850,8 +851,8 @@ void PointerInspectorViewModel::UpdatePointerChainRowColor(PointerInspectorViewM
         if (nMemSize == ra::data::Memory::Size::TwentyFourBit)
             nMemSize = ra::data::Memory::Size::ThirtyTwoBit;
 
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        const auto nRawPointer = pEmulatorContext.ReadMemory(pPointer.GetAddress(), nMemSize);
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        const auto nRawPointer = pMemoryContext.ReadMemory(pPointer.GetAddress(), nMemSize);
         bValid = (pConsoleContext.ByteAddressFromRealAddress(nRawPointer) != 0xFFFFFFFF);
     }
     else

@@ -54,8 +54,8 @@ void MemoryInspectorViewModel::DoFrame()
     m_pViewer.DoFrame();
 
     const auto nAddress = GetCurrentAddress();
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto nValue = pEmulatorContext.ReadMemoryByte(nAddress);
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    const auto nValue = pMemoryContext.ReadMemoryByte(nAddress);
     SetValue(CurrentAddressValueProperty, nValue);
 }
 
@@ -465,8 +465,8 @@ void MemoryInspectorViewModel::ToggleBit(int nBit)
     nValue ^= (1 << nBit);
 
     // push the updated value to the emulator
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    pEmulatorContext.WriteMemoryByte(nAddress, gsl::narrow_cast<uint8_t>(nValue));
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    pMemoryContext.WriteMemoryByte(nAddress, gsl::narrow_cast<uint8_t>(nValue));
 
     // update the local value, which will cause the bits string to get updated
     SetValue(CurrentAddressValueProperty, nValue);

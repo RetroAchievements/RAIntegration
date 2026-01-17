@@ -510,7 +510,7 @@ void CodeNotesModel::DoFrame()
     if (!m_bHasPointers)
         return;
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
 
     for (auto& pCodeNote : m_vCodeNotes)
     {
@@ -518,11 +518,11 @@ void CodeNotesModel::DoFrame()
         {
             if (!m_fCodeNoteMoved)
             {
-                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext, nullptr);
+                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pMemoryContext, nullptr);
             }
             else if (pCodeNote->HasRawPointerValue())
             {
-                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext,
+                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pMemoryContext,
                     [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
                         m_fCodeNoteMoved(nOldAddress, nNewAddress, pOffsetNote.GetNote());
                     });
@@ -530,7 +530,7 @@ void CodeNotesModel::DoFrame()
             else
             {
                 // pointer hasn't been read before, provide dummy previous address
-                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pEmulatorContext,
+                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pMemoryContext,
                     [this](ra::data::ByteAddress, ra::data::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
                         m_fCodeNoteMoved(0xFFFFFFFF, nNewAddress, pOffsetNote.GetNote());
                     });

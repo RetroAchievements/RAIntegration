@@ -315,17 +315,6 @@ namespace data {
 namespace context {
 namespace mocks {
 
-void MockEmulatorContext::SetRuntimeMemorySize(size_t nBytes)
-{
-    if (ra::services::ServiceLocator::Exists<ra::context::IRcClient>())
-    {
-        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-        auto* pGame = pClient->game;
-        if (pGame && pGame->max_valid_address == 0U)
-            pGame->max_valid_address = gsl::narrow_cast<uint32_t>(nBytes);
-    }
-}
-
 void MockGameContext::InitializeFromAchievementRuntime()
 {
     auto* pMockRuntime = dynamic_cast<ra::services::mocks::MockAchievementRuntime*>(

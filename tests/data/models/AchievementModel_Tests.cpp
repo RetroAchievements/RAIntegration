@@ -9,8 +9,8 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockGameContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

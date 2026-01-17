@@ -5,6 +5,7 @@
 #include "TriggerViewModel.hh"
 
 #include "data\Types.hh"
+#include "data\context\EmulatorContext.hh"
 #include "data\models\AchievementModel.hh"
 #include "data\models\AssetModelBase.hh"
 

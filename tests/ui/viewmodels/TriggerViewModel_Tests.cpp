@@ -4,11 +4,11 @@
 
 #include "tests\ui\UIAsserts.hh"
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
@@ -27,7 +27,7 @@ private:
     {
     public:
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockClipboard mockClipboard;
@@ -40,7 +40,7 @@ private:
         {
             // make sure to hook up the memory inspector first or we won't be able to set an address
             mockWindowManager.MemoryInspector.Viewer().InitializeNotifyTargets();
-            mockEmulatorContext.MockMemory(pMemory, nMemorySize);
+            mockEmulatorMemoryContext.MockMemory(pMemory, nMemorySize);
         }
 
         const std::set<unsigned int>& GetSelectedItems() const noexcept

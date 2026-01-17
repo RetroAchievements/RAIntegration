@@ -52,9 +52,6 @@
     <Filter Include="Services\Search">
       <UniqueIdentifier>{e978c08c-fedb-4ead-af63-0420b26291bb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Data\Search">
-      <UniqueIdentifier>{94064815-198f-4ee6-bdea-3a44f8b79d2d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_md5factory.cpp">
@@ -399,9 +396,6 @@
     <ClCompile Include="services\search\SearchImpl.cpp">
       <Filter>Services\Search</Filter>
     </ClCompile>
-    <ClCompile Include="data\search\MemBlock.cpp">
-      <Filter>Data\Search</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\MemoryWatchViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -421,6 +415,9 @@
       <Filter>Services\Impl</Filter>
     </ClCompile>
     <ClCompile Include="services\impl\LoginService.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\impl\WindowsDebuggerDetector.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
   </ItemGroup>
@@ -474,12 +471,6 @@
       <Filter>Services\Impl</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\FileLogger.hh">
-      <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\IClock.hh">
-      <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="services\impl\Clock.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh">
@@ -1010,9 +1001,6 @@
     <ClInclude Include="services\Search\SearchImpl_double32_be_aligned.hh">
       <Filter>Services\Search</Filter>
     </ClInclude>
-    <ClInclude Include="data\search\MemBlock.hh">
-      <Filter>Data\Search</Filter>
-    </ClInclude>
     <ClInclude Include="ui\viewmodels\MemoryWatchViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
@@ -1039,6 +1027,9 @@
     </ClInclude>
     <ClInclude Include="services\ILoginService.hh">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsDebuggerDetector.hh">
+      <Filter>Services\Impl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -30,7 +30,7 @@ public:
 
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
-        const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
+        const CapturedMemoryBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
         std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint32_t, true, 4>(pBytes, pBytesStop,
@@ -38,7 +38,7 @@ protected:
     }
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
-        const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
+        const CapturedMemoryBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
         std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint32_t, false, 4>(pBytes, pBytesStop,
@@ -46,7 +46,7 @@ protected:
     }
 
 
-    bool GetValueFromMemBlock(const MemBlock& block, SearchResult& result) const noexcept override
+    bool GetValueFromCapturedMemoryBlock(const CapturedMemoryBlock& block, SearchResult& result) const noexcept override
     {
         const unsigned int nOffset = (result.nAddress - block.GetFirstAddress()) * 4;
         if (nOffset + 3 >= block.GetBytesSize())

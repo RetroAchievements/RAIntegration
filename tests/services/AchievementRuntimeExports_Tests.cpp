@@ -5,6 +5,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -63,6 +64,7 @@ public:
     AchievementRuntimeExportsHarness(AchievementRuntimeExportsHarness&&) noexcept = delete;
     AchievementRuntimeExportsHarness& operator=(AchievementRuntimeExportsHarness&&) noexcept = delete;
 
+    ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
     ra::context::mocks::MockRcClient mockRcClient;
     ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
     ra::data::context::mocks::MockUserContext mockUserContext;
@@ -478,17 +480,17 @@ public:
         runtime.InitializeMemoryFunctions();
 
         Assert::AreEqual({0}, runtime.GetMemoryByte(1));
-        Assert::AreEqual({0}, runtime.mockEmulatorContext.ReadMemoryByte(1));
+        Assert::AreEqual({0}, runtime.mockEmulatorMemoryContext.ReadMemoryByte(1));
 
-        runtime.mockEmulatorContext.WriteMemoryByte(1, 3);
+        runtime.mockEmulatorMemoryContext.WriteMemoryByte(1, 3);
 
         Assert::AreEqual({3}, runtime.GetMemoryByte(1));
-        Assert::AreEqual({3}, runtime.mockEmulatorContext.ReadMemoryByte(1));
+        Assert::AreEqual({3}, runtime.mockEmulatorMemoryContext.ReadMemoryByte(1));
 
-        runtime.mockEmulatorContext.WriteMemoryByte(2, 7);
+        runtime.mockEmulatorMemoryContext.WriteMemoryByte(2, 7);
         Assert::AreEqual({7}, runtime.GetMemoryByte(2));
-        Assert::AreEqual({7}, runtime.mockEmulatorContext.ReadMemoryByte(2));
-        Assert::AreEqual({0x0703}, runtime.mockEmulatorContext.ReadMemory(1, ra::data::Memory::Size::SixteenBit));
+        Assert::AreEqual({7}, runtime.mockEmulatorMemoryContext.ReadMemoryByte(2));
+        Assert::AreEqual({0x0703}, runtime.mockEmulatorMemoryContext.ReadMemory(1, ra::data::Memory::Size::SixteenBit));
     }
 
     TEST_METHOD(TestPauseEvent)

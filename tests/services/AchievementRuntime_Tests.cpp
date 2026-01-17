@@ -3,12 +3,13 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\services\mocks\MockHttpRequester.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAudioSystem.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -59,6 +60,7 @@ public:
         rc_client_set_userdata(GetClient(), this);
     }
 
+    ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
     ra::context::mocks::MockRcClient mockRcClient;
     ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
     ra::data::context::mocks::MockGameContext mockGameContext;
@@ -690,7 +692,7 @@ public:
         std::array<unsigned char, 1> memory{ 0x00 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         runtime.MockAchievement(6U, "0xH0000=1");
 
         // expect no events for untriggered achievement
@@ -714,7 +716,7 @@ public:
         std::array<unsigned char, 1> memory{ 0x00 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         runtime.MockAchievement(6U, "0xH0000=1");
 
         runtime.SetPaused(true);
@@ -763,7 +765,7 @@ public:
         std::array<unsigned char, 1> memory{0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pAchievement = runtime.MockAchievement(6U, "0xH0000=1");
 
         // expect no events for untriggered achievement
@@ -813,7 +815,7 @@ public:
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         runtime.MockAchievement(4U, "M:0xH0002=100");
 
         // value did not change, expect no event from initialization
@@ -850,7 +852,7 @@ public:
         std::array<unsigned char, 1> memory{ 0x00 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* sTrigger = "0xH0000=1";
 
         // achievement not active, should not raise events
@@ -1114,7 +1116,7 @@ public:
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U, "STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02");
 
         // expect no events for inactive leaderboard
@@ -1201,7 +1203,7 @@ public:
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         Assert::IsFalse(runtime.HasRichPresence());
 
         const char* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0xH01) @Num(d0xH01)\n";
@@ -1239,7 +1241,7 @@ public:
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         Assert::IsFalse(runtime.HasRichPresence());
 
         runtime.ActivateRichPresence("Display:\nHello, World\n");
@@ -1260,7 +1262,7 @@ public:
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
 
         const char* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0H01) @Num(d0xH01)\n";
         runtime.ActivateRichPresence(pRichPresence);
@@ -1274,7 +1276,7 @@ public:
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pAchievement = runtime.MockAchievement(6U, "0xH0000=1");
         auto* vmAchievement = runtime.WrapAchievement(pAchievement);
 
@@ -1317,7 +1319,7 @@ public:
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pAchievement = runtime.MockAchievement(4U, "1=1.3._R:0xH0000=1");
         auto* vmAchievement = runtime.WrapAchievement(pAchievement);
 
@@ -1363,7 +1365,7 @@ public:
         std::array<unsigned char, 2> memory{ 0x00, 0x00 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=0_0xH0000=9_R:0xH0001=1::SUB:0xH0000=1::CAN:0xH0000=2::VAL:0xH0000");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1409,7 +1411,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=0_0xH0000=9_R:0xH0001=1::CAN:0xH0000=2::VAL:0xH0000");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1455,7 +1457,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=0_0xH0000=9_R:0xH0001=1::VAL:0xH0000");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1501,7 +1503,7 @@ public:
         std::array<unsigned char, 3> memory{0x00, 0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=0::SUB:0xH0000=2::CAN:0xH0000=3::VAL:R:0xH0001=1_M:0xH0002=0");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1551,7 +1553,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1593,7 +1595,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1640,7 +1642,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U, "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
 
@@ -1686,7 +1688,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pAch6 = runtime.MockAchievement(6U, "0xH0004=1");
         runtime.SyncToRuntime();
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
@@ -2013,7 +2015,7 @@ public:
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockEmulatorContext.SetMemoryModified();
+        runtime.mockEmulatorMemoryContext.SetMemoryModified();
         runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
@@ -2048,7 +2050,7 @@ public:
         runtime.GetClient()->state.hardcore = 1;
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockEmulatorContext.MockMemoryInsecure(true);
+        runtime.mockEmulatorMemoryContext.MockMemoryInsecure(true);
         runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
@@ -2085,7 +2087,7 @@ public:
         runtime.GetClient()->state.hardcore = 0;
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockEmulatorContext.MockMemoryInsecure(true);
+        runtime.mockEmulatorMemoryContext.MockMemoryInsecure(true);
         runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
@@ -2839,7 +2841,7 @@ public:
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
         pLbd4->public_.tracker_value = "1:23.45";
         runtime.WrapLeaderboard(pLbd4);
-        runtime.mockEmulatorContext.MockMemoryModified(true);
+        runtime.mockEmulatorMemoryContext.MockMemoryModified(true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
         runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
@@ -2900,7 +2902,7 @@ public:
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
         pLbd4->public_.tracker_value = "1:23.45";
         runtime.WrapLeaderboard(pLbd4);
-        runtime.mockEmulatorContext.MockMemoryInsecure(true);
+        runtime.mockEmulatorMemoryContext.MockMemoryInsecure(true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
         runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);

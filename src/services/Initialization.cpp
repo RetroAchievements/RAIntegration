@@ -3,6 +3,7 @@
 #include "api\impl\DisconnectedServer.hh"
 
 #include "context\impl\ConsoleContext.hh"
+#include "context\impl\EmulatorMemoryContext.hh"
 #include "context\impl\RcClient.hh"
 
 #include "data\context\EmulatorContext.hh"
@@ -24,6 +25,7 @@
 #include "services\impl\WindowsAudioSystem.hh"
 #include "services\impl\WindowsClipboard.hh"
 #include "services\impl\WindowsDebuggerFileLogger.hh"
+#include "services\impl\WindowsDebuggerDetector.hh"
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsHttpRequester.hh"
 
@@ -165,6 +167,12 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
     auto pLoginService = std::make_unique<ra::services::impl::LoginService>();
     ra::services::ServiceLocator::Provide<ra::services::ILoginService>(std::move(pLoginService));
 
+    auto pEmulatorMemoryContext = std::make_unique<ra::context::impl::EmulatorMemoryContext>();
+    ra::services::ServiceLocator::Provide<ra::context::IEmulatorMemoryContext>(std::move(pEmulatorMemoryContext));
+
+    auto pDebuggerDetector = std::make_unique<ra::services::impl::WindowsDebuggerDetector>();
+    ra::services::ServiceLocator::Provide<ra::services::IDebuggerDetector>(std::move(pDebuggerDetector));
+
     auto pAchievementRuntime = std::make_unique<ra::services::AchievementRuntime>();
     ra::services::ServiceLocator::Provide<ra::services::AchievementRuntime>(std::move(pAchievementRuntime));
 
@@ -239,9 +247,9 @@ void Initialization::Shutdown()
     // explicitly deregister it to prevent exceptions when closing down the application.
     ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(nullptr);
 
-    // GridBinding subclass destructors may try to use the EmulatorContext if they think it still exists.
+    // GridBinding subclass destructors may try to use the EmulatorMemoryContext if they think it still exists.
     // explicitly deregister it to prevent exceptions when closing down the application.
-    ra::services::ServiceLocator::Provide<ra::data::context::EmulatorContext>(nullptr);
+    ra::services::ServiceLocator::Provide<ra::context::IEmulatorMemoryContext>(nullptr);
 
     // clear out the IThreadPool and IConfiguration services to indicate things have been de-initialized
     ra::services::ServiceLocator::Provide<ra::services::IThreadPool>(nullptr);

@@ -14,11 +14,12 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -160,6 +161,7 @@ private:
     class AssetListViewModelHarness : public AssetListViewModel
     {
     public:
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;
@@ -5489,17 +5491,17 @@ public:
         AssetListViewModelHarness vmAssetList;
         Assert::IsTrue(vmAssetList.IsProcessingActive());
         Assert::IsFalse(vmAssetList.mockRuntime.IsPaused());
-        Assert::IsFalse(vmAssetList.mockEmulatorContext.WasMemoryModified());
+        Assert::IsFalse(vmAssetList.mockEmulatorMemoryContext.WasMemoryModified());
 
         vmAssetList.SetProcessingActive(false);
         Assert::IsFalse(vmAssetList.IsProcessingActive());
         Assert::IsTrue(vmAssetList.mockRuntime.IsPaused());
-        Assert::IsTrue(vmAssetList.mockEmulatorContext.WasMemoryModified());
+        Assert::IsTrue(vmAssetList.mockEmulatorMemoryContext.WasMemoryModified());
 
         vmAssetList.SetProcessingActive(true);
         Assert::IsTrue(vmAssetList.IsProcessingActive());
         Assert::IsFalse(vmAssetList.mockRuntime.IsPaused());
-        Assert::IsTrue(vmAssetList.mockEmulatorContext.WasMemoryModified());
+        Assert::IsTrue(vmAssetList.mockEmulatorMemoryContext.WasMemoryModified());
     }
 
     TEST_METHOD(TestOpenEditorNonHardcore)

@@ -8,6 +8,7 @@
 #include "api\ResolveHash.hh"
 
 #include "context\IConsoleContext.hh"
+#include "context\IEmulatorMemoryContext.hh"
 
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
@@ -218,7 +219,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
         pGameContext.SetGameHash((m_nPendingGameId == 0) ? m_sPendingHash : "");
     }
 
-    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().ResetMemoryModified();
+    ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>().ResetMemoryModified();
 }
 
 void GameIdentifier::IdentifyAndActivateGame(const BYTE* pROM, size_t nROMSize)

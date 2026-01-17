@@ -27,6 +27,7 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -55,6 +56,7 @@ private:
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockLoginService mockLoginService;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
@@ -162,7 +164,7 @@ public:
     TEST_METHOD(TestBuildMenuLoggedIn)
     {
         IntegrationMenuViewModelHarness menu;
-        menu.mockUserContext.Initialize("User", "TOKEN");
+        menu.mockLoginService.Login("User", "TOKEN");
 
         menu.BuildMenu();
 
@@ -278,31 +280,31 @@ public:
     TEST_METHOD(TestLogout)
     {
         IntegrationMenuViewModelHarness menu;
-        menu.mockUserContext.Initialize("User", "TOKEN");
-        Assert::IsTrue(menu.mockUserContext.IsLoggedIn());
+        menu.mockLoginService.Login("User", "TOKEN");
+        Assert::IsTrue(menu.mockLoginService.IsLoggedIn());
 
         menu.ActivateMenuItem(IDM_RA_FILES_LOGOUT);
 
-        Assert::IsFalse(menu.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(menu.mockLoginService.IsLoggedIn());
     }
 
     TEST_METHOD(TestOpenUserPage)
     {
         IntegrationMenuViewModelHarness menu;
         menu.mockConfiguration.SetHostName("host");
-        menu.mockUserContext.Initialize("User", "TOKEN");
-        Assert::IsTrue(menu.mockUserContext.IsLoggedIn());
+        menu.mockLoginService.Login("User", "TOKEN");
+        Assert::IsTrue(menu.mockLoginService.IsLoggedIn());
 
         menu.ActivateMenuItem(IDM_RA_OPENUSERPAGE);
 
-        Assert::AreEqual(std::string("http://host/user/User"), menu.mockDesktop.LastOpenedUrl());
+        Assert::AreEqual(std::string("http://host/user/User_"), menu.mockDesktop.LastOpenedUrl());
     }
 
     TEST_METHOD(TestOpenUserPageNotLoggedIn)
     {
         IntegrationMenuViewModelHarness menu;
         menu.mockConfiguration.SetHostName("host");
-        Assert::IsFalse(menu.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(menu.mockLoginService.IsLoggedIn());
 
         menu.ActivateMenuItem(IDM_RA_OPENUSERPAGE);
 

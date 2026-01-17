@@ -35,14 +35,6 @@ public:
     }
 #pragma warning(pop)
 
-    void Logout() noexcept override
-    {
-        m_sUsername.clear();
-        m_sDisplayName.clear();
-        m_sApiToken.clear();
-        m_nScore = 0U;
-    }
-
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::context::UserContext> m_Override;
 };

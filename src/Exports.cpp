@@ -26,9 +26,11 @@
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
+#include "services\ILoginService.hh"
 #include "services\Initialization.hh"
 #include "services\PerformanceCounter.hh"
 #include "services\ServiceLocator.hh"
+#include "services\impl\LoginService.hh"
 #include "services\impl\OfflineRcClient.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
@@ -123,7 +125,7 @@ static void InitializeOfflineMode()
     pClient->user.token = rc_buffer_strcpy(&pClient->state.buffer, pConfiguration.GetApiToken().c_str());
     pClient->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
 
-    pUserContext.DisableLogin();
+    ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>().DisableLogin();
 }
 
 static bool g_bPulseScheduled = false;
@@ -186,7 +188,7 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
         {
             if (!ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().ValidateClientVersion())
-                ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().Logout();
+                ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>().Logout();
         });
     }
 
@@ -315,8 +317,6 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
 {
     if (nResult == RC_OK)
     {
-        ra::ui::viewmodels::LoginViewModel::PostLoginInitialization();
-
         // play the login sound
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\login.wav");
 
@@ -362,8 +362,8 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
 
 API void CCONV _RA_AttemptLogin(int bBlocking)
 {
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    if (pUserContext.IsLoginDisabled())
+    auto& pLoginContext = ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>();
+    if (pLoginContext.IsLoginDisabled())
         return;
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -620,7 +620,7 @@ static bool CanRestoreState()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
-    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
+    if (!ra::services::ServiceLocator::Get<ra::services::ILoginService>().IsLoggedIn())
     {
         if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
             return false;

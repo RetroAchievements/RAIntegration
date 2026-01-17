@@ -67,8 +67,6 @@ public:
     /// </returns>
     bool Login() const;
 
-    static void PostLoginInitialization();
-
 protected:
     LoginViewModel(const std::wstring&& sUsername); // alternate costructor for unit tests
 };

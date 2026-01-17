@@ -414,6 +414,9 @@
     <ClCompile Include="services\impl\OfflineRcClient.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="services\impl\LoginService.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
     <ClCompile Include="services\impl\WindowsDebuggerDetector.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
@@ -466,9 +469,6 @@
     </ClInclude>
     <ClInclude Include="services\impl\ThreadPool.hh">
       <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\ILogger.hh">
-      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\FileLogger.hh">
       <Filter>Services\Impl</Filter>
@@ -1021,6 +1021,12 @@
     </ClInclude>
     <ClInclude Include="services\impl\OfflineRcClient.hh">
       <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\LoginService.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ILoginService.hh">
+      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\WindowsDebuggerDetector.hh">
       <Filter>Services\Impl</Filter>

@@ -17,6 +17,7 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
@@ -84,6 +85,7 @@ public:
     ra::data::context::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
     ra::services::mocks::MockConfiguration mockConfiguration;
+    ra::services::mocks::MockLoginService mockLoginService;
     ra::ui::mocks::MockDesktop mockDesktop;
     ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
     ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
@@ -103,7 +105,7 @@ public:
     TEST_METHOD(TestIdentifyGameKnown)
     {
         GameIdentifierHarness identifier;
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
         identifier.MockResolveHashResponse(23U);
 
         Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
@@ -113,7 +115,7 @@ public:
     TEST_METHOD(TestIdentifyGameNull)
     {
         GameIdentifierHarness identifier;
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
         identifier.MockResolveHashResponse(23U);
 
         Assert::AreEqual(0U, identifier.IdentifyGame(nullptr, ROM.size()));
@@ -128,7 +130,7 @@ public:
         GameIdentifierHarness identifier;
         identifier.MockResolveHashResponse(0U);
         identifier.mockEmulatorContext.MockGameTitle("TestGame");
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         bool bDialogShown = false;
         identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
@@ -151,7 +153,7 @@ public:
         GameIdentifierHarness identifier;
         identifier.MockResolveHashResponse(0U);
         identifier.mockEmulatorContext.MockGameTitle("TestGame");
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         bool bDialogShown = false;
         identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
@@ -191,7 +193,7 @@ public:
     TEST_METHOD(TestIdentifyGameNotLoggedIn)
     {
         GameIdentifierHarness identifier;
-        identifier.mockUserContext.Logout();
+        identifier.mockLoginService.Logout();
 
         bool bDialogShown = false;
         identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -209,7 +211,7 @@ public:
     TEST_METHOD(TestIdentifyGameNoConsole)
     {
         GameIdentifierHarness identifier;
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
         identifier.mockConsoleContext.SetId(ConsoleID::UnknownConsoleID);
 
         bool bDialogShown = false;
@@ -232,7 +234,7 @@ public:
         identifier.MockResolveHashResponse(23U);
         identifier.mockGameContext.SetGameId(23U);
         identifier.mockGameContext.SetGameHash("HASH");
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
         Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, identifier.mockGameContext.GetMode());
@@ -247,7 +249,7 @@ public:
         identifier.MockCompatibilityTest(23U);
         identifier.mockGameContext.SetGameId(23U);
         identifier.mockGameContext.SetGameHash("HASH");
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
         Assert::AreEqual(ra::data::context::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
@@ -257,7 +259,7 @@ public:
     TEST_METHOD(TestIdentifyGameCached)
     {
         GameIdentifierHarness identifier;
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
         identifier.MockResolveHashResponse(23U);
 
         Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
@@ -287,7 +289,7 @@ public:
     {
         GameIdentifierHarness identifier;
         identifier.mockEmulatorContext.MockGameTitle("TestGame");
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
             [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response)
@@ -337,7 +339,7 @@ public:
     {
         GameIdentifierHarness identifier;
         identifier.mockEmulatorContext.MockGameTitle("TestGame");
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
             [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response) {
@@ -440,7 +442,7 @@ public:
         GameIdentifierHarness identifier;
         identifier.MockCompatibilityTest(23U);
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
         identifier.ActivateGame(23U);
@@ -469,7 +471,7 @@ public:
         GameIdentifierHarness identifier;
         identifier.MockResolveHashResponse(23U);
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         identifier.IdentifyAndActivateGame(&ROM.at(0), ROM.size());
 
@@ -499,7 +501,7 @@ public:
         identifier.MockResolveHashResponse(0U);
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         identifier.mockEmulatorContext.MockGameTitle("TestGame");
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         bool bDialogShown = false;
         identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
@@ -527,7 +529,7 @@ public:
         identifier.MockResolveHashResponse(0U);
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         identifier.mockEmulatorContext.MockGameTitle("TestGame");
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         bool bDialogShown = false;
         identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
@@ -558,7 +560,7 @@ public:
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         identifier.mockGameContext.SetGameId(23U);
         identifier.mockGameContext.SetGameHash("HASH");
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         identifier.IdentifyAndActivateGame(&ROM.at(0), ROM.size());
 
@@ -583,7 +585,7 @@ public:
     TEST_METHOD(TestSaveKnownHashesNew)
     {
         GameIdentifierHarness identifier;
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
 
         identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
             [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response)
@@ -604,7 +606,7 @@ public:
     TEST_METHOD(TestSaveKnownHashesUnchanged)
     {
         GameIdentifierHarness identifier;
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
         const auto sFileContents = ra::StringPrintf("%s=%u\ninvalid=0\n", ROM_HASH, 32U);
         identifier.mockLocalStorage.MockStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
                             
@@ -627,7 +629,7 @@ public:
     TEST_METHOD(TestSaveKnownHashesIDChanged)
     {
         GameIdentifierHarness identifier;
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
         const auto sFileContents = ra::StringPrintf("%s=%u\ninvalid=0\n", ROM_HASH, 32U);
         identifier.mockLocalStorage.MockStoredData(
             ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
@@ -653,7 +655,7 @@ public:
     {
         GameIdentifierHarness identifier;
         const std::string sAlternateHash = "abcdef01234567899876543210fedcba";
-        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockLoginService.Login("User", "ApiToken");
         const auto sFileContents = ra::StringPrintf("%s=%u\ninvalid=0\n", sAlternateHash, 32U);
         identifier.mockLocalStorage.MockStoredData(
             ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
@@ -678,7 +680,7 @@ public:
     TEST_METHOD(TestIdentifyGameOfflineUnknown)
     {
         GameIdentifierHarness identifier;
-        identifier.mockUserContext.Logout();
+        identifier.mockLoginService.Logout();
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
 
         bool bDialogShown = false;
@@ -698,7 +700,7 @@ public:
     TEST_METHOD(TestIdentifyGameOffline)
     {
         GameIdentifierHarness identifier;
-        identifier.mockUserContext.Logout();
+        identifier.mockLoginService.Logout();
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
 
         const auto sFileContents = ra::StringPrintf("%s=%u\n", ROM_HASH, 32U);

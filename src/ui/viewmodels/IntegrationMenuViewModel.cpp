@@ -9,6 +9,7 @@
 #include "data/context/UserContext.hh"
 
 #include "services/IConfiguration.hh"
+#include "services/ILoginService.hh"
 #include "services/ServiceLocator.hh"
 
 #include "ui/IDesktop.hh"
@@ -28,12 +29,12 @@ namespace viewmodels {
 
 void IntegrationMenuViewModel::BuildMenu(LookupItemViewModelCollection& vmMenu)
 {
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    if (pUserContext.IsLoggedIn())
+    const auto& pLoginContext = ra::services::ServiceLocator::Get<ra::services::ILoginService>();
+    if (pLoginContext.IsLoggedIn())
         BuildMenuLoggedIn(vmMenu);
     else if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Offline))
         BuildMenuOffline(vmMenu);
-    else if (!pUserContext.IsLoginDisabled())
+    else if (!pLoginContext.IsLoginDisabled())
         BuildMenuLoggedOut(vmMenu);
     else
         BuildMenuOffline(vmMenu);
@@ -189,17 +190,18 @@ void IntegrationMenuViewModel::Login()
 
 void IntegrationMenuViewModel::Logout()
 {
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    pUserContext.Logout();
+    auto& pLoginContext = ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>();
+    pLoginContext.Logout();
 }
 
 void IntegrationMenuViewModel::OpenUserPage()
 {
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    if (pUserContext.IsLoggedIn())
+    const auto& pLoginContext = ra::services::ServiceLocator::Get<ra::services::ILoginService>();
+    if (pLoginContext.IsLoggedIn())
     {
+        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        const auto sUrl = ra::StringPrintf("%s/user/%s", pConfiguration.GetHostUrl(), pUserContext.GetUsername());
+        const auto sUrl = ra::StringPrintf("%s/user/%s", pConfiguration.GetHostUrl(), pUserContext.GetDisplayName());
 
         const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
         pDesktop.OpenUrl(sUrl);

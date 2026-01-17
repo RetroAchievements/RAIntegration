@@ -11,6 +11,8 @@
 
 #include "RA_md5factory.h"
 
+#include "api\impl\ConnectedServer.hh"
+
 #include "context\IConsoleContext.hh"
 #include "context\IEmulatorMemoryContext.hh"
 #include "context\IRcClient.hh"
@@ -28,9 +30,11 @@
 #include "services\IFileSystem.hh"
 #include "services\IHttpRequester.hh"
 #include "services\ILocalStorage.hh"
+#include "services\ILoginService.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
+#include "services\impl\LoginService.hh"
 
 #include "ui\viewmodels\IntegrationMenuViewModel.hh"
 #include "ui\viewmodels\LoginViewModel.hh"
@@ -1053,18 +1057,31 @@ void AchievementRuntime::LoginCallback(int nResult, const char* sErrorMessage, r
         else
         {
             // initialize the user context
-            auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-            if (pUserContext.IsLoginDisabled())
+            if (ra::services::ServiceLocator::Get<ra::services::ILoginService>().IsLoginDisabled())
             {
                 nResult = RC_INVALID_STATE;
                 sErrorMessage = "Login has been disabled.";
             }
             else
             {
+                auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
                 pUserContext.Initialize(user->username, user->display_name, user->token);
                 pUserContext.SetScore(user->score);
 
-                ra::ui::viewmodels::LoginViewModel::PostLoginInitialization();
+                // load the session information
+                auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
+                pSessionTracker.Initialize(pUserContext.GetUsername());
+
+                // notify the client to update the RetroAchievements menu
+                ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
+
+                // update the client title-bar to include the user name
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
+
+                // update the global IServer instance to the connected API
+                const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                auto serverApi = std::make_unique<ra::api::impl::ConnectedServer>(pConfiguration.GetHostUrl());
+                ra::services::ServiceLocator::Provide<ra::api::IServer>(std::move(serverApi));
             }
         }
     }

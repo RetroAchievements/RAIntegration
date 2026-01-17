@@ -465,9 +465,16 @@
     <ClCompile Include="..\src\services\impl\OfflineRcClient.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\services\impl\LoginService.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="services\LoginService_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
     <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+>>>>>>> master
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -574,6 +581,9 @@
     </ClInclude>
     <ClInclude Include="..\src\ui\viewmodels\MemoryWatchListViewModel.hh">
       <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockLoginService.hh">
+      <Filter>Mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

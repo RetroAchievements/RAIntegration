@@ -9,13 +9,13 @@
 #include "tests\RA_UnitTestHelpers.h"
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -38,7 +38,7 @@ private:
         ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;

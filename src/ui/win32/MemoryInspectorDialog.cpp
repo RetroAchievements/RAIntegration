@@ -481,9 +481,9 @@ INT_PTR CALLBACK MemoryInspectorDialog::DialogProc(HWND hDlg, UINT uMsg, WPARAM 
             if (wParam != 1)
                 break;
 
-            // ignore if memory not avaialble
-            const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-            if (pEmulatorContext.TotalMemorySize() == 0)
+            // ignore if memory not available
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+            if (pMemoryContext.TotalMemorySize() == 0)
                 break;
 
             // ignore if not 8-bit mode

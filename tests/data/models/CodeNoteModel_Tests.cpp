@@ -8,10 +8,10 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockUserContext.hh"
 
@@ -29,7 +29,7 @@ private:
     {
     public:
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
     };
 
     void TestCodeNoteSize(const std::wstring& sNote, unsigned int nExpectedBytes, Memory::Size nExpectedSize)
@@ -644,14 +644,14 @@ public:
         memory.at(0x07) = 0x80;
         memory.at(0x14) = 0x20; // pointer@0x14 = 0x80000020
         memory.at(0x17) = 0x80;
-        note.mockEmulatorContext.MockMemory(memory);
+        note.mockEmulatorMemoryContext.MockMemory(memory);
         const std::wstring sNote =
             L"[32-bit pointer] root\r\n"
             L"+0x80000004 = [32-bit pointer] nested\r\n"
             L"++0x80000006 = data (8-bit)";
         note.SetAddress(0x04);
         note.SetNote(sNote);
-        note.UpdateRawPointerValue(0x04, note.mockEmulatorContext, nullptr);
+        note.UpdateRawPointerValue(0x04, note.mockEmulatorMemoryContext, nullptr);
 
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
 
@@ -674,14 +674,14 @@ public:
         memory.at(0x07) = 0x80;
         memory.at(0x08) = 0x20; // pointer@0x08 = 0x80000020
         memory.at(0x0B) = 0x80;
-        note.mockEmulatorContext.MockMemory(memory);
+        note.mockEmulatorMemoryContext.MockMemory(memory);
         const std::wstring sNote =
             L"[32-bit pointer] root\r\n"
             L"+0xFFFFFFF8 = [32-bit pointer] nested\r\n"
             L"++0x80000006 = data (8-bit)";
         note.SetAddress(0x04);
         note.SetNote(sNote);
-        note.UpdateRawPointerValue(0x04, note.mockEmulatorContext, nullptr);
+        note.UpdateRawPointerValue(0x04, note.mockEmulatorMemoryContext, nullptr);
 
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
 
@@ -710,13 +710,13 @@ public:
         note.SetNote(sNote);
 
         std::array<unsigned char, 32> memory{};
-        note.mockEmulatorContext.MockMemory(memory);
+        note.mockEmulatorMemoryContext.MockMemory(memory);
 
         memory.at(4) = 8; // pointer = 8
         memory.at(8) = 20; // obj1 pointer = 20
         memory.at(12) = 28; // obj2 pointer = 28
 
-        note.UpdateRawPointerValue(4U, note.mockEmulatorContext, nullptr);
+        note.UpdateRawPointerValue(4U, note.mockEmulatorMemoryContext, nullptr);
         Assert::AreEqual(8U, note.GetPointerAddress());
 
         const auto* pObj1Note = note.GetPointerNoteAtOffset(0);

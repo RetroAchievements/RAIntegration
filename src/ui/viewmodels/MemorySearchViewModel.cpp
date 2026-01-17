@@ -168,8 +168,8 @@ MemorySearchViewModel::MemorySearchViewModel()
 
 void MemorySearchViewModel::InitializeNotifyTargets()
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.AddNotifyTarget(*this);
+    auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
+    pMemoryContext.AddNotifyTarget(*this);
     OnTotalMemorySizeChanged();
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -195,7 +195,8 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
 {
     RebuildPredefinedFilterRanges();
 
-    const auto nTotalBankSize = gsl::narrow_cast<ra::data::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().TotalMemorySize());
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    const auto nTotalBankSize = gsl::narrow_cast<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize());
     SetValue(CanBeginNewSearchProperty, (nTotalBankSize > 0U));
     SetValue(TotalMemorySizeProperty, nTotalBankSize);
 }
@@ -427,7 +428,7 @@ void MemorySearchViewModel::DoFrame()
         return;
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
 
     {
         std::lock_guard lock(m_oMutex);
@@ -445,7 +446,7 @@ void MemorySearchViewModel::DoFrame()
             pCurrentResults.pResults.GetMatchingAddress(nIndex++, pResult);
 
             const auto nPreviousValue = pResult.nValue;
-            UpdateResult(pRow, pCurrentResults.pResults, pResult, false, pEmulatorContext);
+            UpdateResult(pRow, pCurrentResults.pResults, pResult, false, pMemoryContext);
 
             // when updating an existing result, check to see if it's been modified and update the tracker
             if (!pRow.bHasBeenModified && pResult.nValue != nPreviousValue)
@@ -852,7 +853,7 @@ void MemorySearchViewModel::UpdateResults()
 
         const auto& vmBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
         const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
 
         m_vResults.RemoveNotifyTarget(*this);
@@ -889,7 +890,7 @@ void MemorySearchViewModel::UpdateResults()
 
             pRow->SetAddress(ra::Widen(sAddress));
 
-            UpdateResult(*pRow, pCurrentResults.pResults, pResult, true, pEmulatorContext);
+            UpdateResult(*pRow, pCurrentResults.pResults, pResult, true, pMemoryContext);
 
             const auto pCodeNote = (pCodeNotes != nullptr) ?
                 pCodeNotes->FindCodeNote(pResult.nAddress, pResult.nSize) : std::wstring(L"");
@@ -913,12 +914,12 @@ void MemorySearchViewModel::UpdateResults()
 
 void MemorySearchViewModel::UpdateResult(SearchResultViewModel& vmResult,
     const ra::services::SearchResults& pResults, ra::services::SearchResult& pResult,
-    bool bForceFilterCheck, const ra::data::context::EmulatorContext& pEmulatorContext)
+    bool bForceFilterCheck, const ra::context::IEmulatorMemoryContext& pMemoryContext)
 {
     std::wstring sFormattedValue;
     pResult.nValue = vmResult.nCurrentValue;
 
-    if (pResults.UpdateValue(pResult, &sFormattedValue, pEmulatorContext) || bForceFilterCheck)
+    if (pResults.UpdateValue(pResult, &sFormattedValue, pMemoryContext) || bForceFilterCheck)
     {
         if (pResults.GetFilterType() == ra::services::SearchFilterType::InitialValue)
             vmResult.bMatchesFilter = pResults.MatchesFilter(m_vSearchResults.front()->pResults, pResult);

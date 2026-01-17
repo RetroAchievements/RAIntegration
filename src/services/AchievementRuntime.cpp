@@ -12,6 +12,7 @@
 #include "RA_md5factory.h"
 
 #include "context\IConsoleContext.hh"
+#include "context\IEmulatorMemoryContext.hh"
 #include "context\IRcClient.hh"
 
 #include "data\context\EmulatorContext.hh"
@@ -61,11 +62,11 @@ static int CanSubmit()
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
         return 0;
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (pEmulatorContext.WasMemoryModified())
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    if (pMemoryContext.WasMemoryModified())
         return 0;
 
-    if (_RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
+    if (_RA_HardcoreModeIsActive() && pMemoryContext.IsMemoryInsecure())
         return 0;
 
     return 1;
@@ -235,8 +236,8 @@ AchievementRuntime::~AchievementRuntime()
 
 uint32_t AchievementRuntime::ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes, rc_client_t*)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    return pEmulatorContext.ReadMemory(nAddress, pBuffer, nBytes);
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    return pMemoryContext.ReadMemory(nAddress, pBuffer, nBytes);
 }
 
 typedef struct QueueMemoryReadData
@@ -1639,8 +1640,8 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
         bSubmit = false;
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (bSubmit && pEmulatorContext.WasMemoryModified())
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    if (bSubmit && pMemoryContext.WasMemoryModified())
     {
         vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
         vmPopup->SetErrorDetail(L"Error: RAM tampered with");
@@ -1650,7 +1651,7 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
         bSubmit = false;
     }
 
-    if (bSubmit && _RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
+    if (bSubmit && _RA_HardcoreModeIsActive() && pMemoryContext.IsMemoryInsecure())
     {
         vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
         vmPopup->SetErrorDetail(L"Error: RAM insecure");
@@ -1969,8 +1970,8 @@ static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLead
         bSubmit = false;
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (bSubmit && pEmulatorContext.WasMemoryModified())
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    if (bSubmit && pMemoryContext.WasMemoryModified())
     {
         vmPopup->SetErrorDetail(L"Error: RAM tampered with");
         bSubmit = false;
@@ -1983,7 +1984,7 @@ static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLead
             vmPopup->SetErrorDetail(L"Submission requires Hardcore mode");
             bSubmit = false;
         }
-        else if (pEmulatorContext.IsMemoryInsecure())
+        else if (pMemoryContext.IsMemoryInsecure())
         {
             vmPopup->SetErrorDetail(L"Error: RAM insecure");
             bSubmit = false;
@@ -2702,15 +2703,15 @@ int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) 
 
 extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, _UNUSED void* pData)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     switch (nBytes)
     {
         case 1:
-            return pEmulatorContext.ReadMemoryByte(nAddress);
+            return pMemoryContext.ReadMemoryByte(nAddress);
         case 2:
-            return pEmulatorContext.ReadMemory(nAddress, ra::data::Memory::Size::SixteenBit);
+            return pMemoryContext.ReadMemory(nAddress, ra::data::Memory::Size::SixteenBit);
         case 4:
-            return pEmulatorContext.ReadMemory(nAddress, ra::data::Memory::Size::ThirtyTwoBit);
+            return pMemoryContext.ReadMemory(nAddress, ra::data::Memory::Size::ThirtyTwoBit);
         default:
             return 0U;
     }

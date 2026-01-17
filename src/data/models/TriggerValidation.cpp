@@ -235,8 +235,8 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
         if (nMaxAddress == 0)
         {
             // if console definition doesn't specify the max address, see how much was exposed by the emulator
-            const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-            nMaxAddress = gsl::narrow_cast<unsigned>(pEmulatorContext.TotalMemorySize()) - 1;
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+            nMaxAddress = gsl::narrow_cast<unsigned>(pMemoryContext.TotalMemorySize()) - 1;
 
             nResult = rc_validate_trigger(&trigger->trigger, sErrorBuffer, sizeof(sErrorBuffer), nMaxAddress);
         }

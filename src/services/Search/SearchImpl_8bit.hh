@@ -12,7 +12,7 @@ class EightBitSearchImpl : public SearchImpl
 {
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
-        const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
+        const CapturedMemoryBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
         std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint8_t, true>(pBytes, pBytesStop,
@@ -20,7 +20,7 @@ protected:
     }
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
-        const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
+        const CapturedMemoryBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
         std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint8_t, false>(pBytes, pBytesStop,

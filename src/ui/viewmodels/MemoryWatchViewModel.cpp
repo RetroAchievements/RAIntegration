@@ -247,12 +247,12 @@ uint32_t MemoryWatchViewModel::ReadValue()
         // updated, proceeed to logic below to do the special processing.
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     if (m_nSize == ra::data::Memory::Size::Text)
     {
         // only have 32 bits to store the value in. generate a hash for the string
         std::array<uint8_t, MaxTextBookmarkLength + 1> pBuffer;
-        pEmulatorContext.ReadMemory(m_nAddress, &pBuffer.at(0), pBuffer.size() - 1);
+        pMemoryContext.ReadMemory(m_nAddress, &pBuffer.at(0), pBuffer.size() - 1);
         pBuffer.at(pBuffer.size() - 1) = '\0';
 
         const char* pText;
@@ -262,7 +262,7 @@ uint32_t MemoryWatchViewModel::ReadValue()
         return ra::StringHash(sText);
     }
 
-    return pEmulatorContext.ReadMemory(m_nAddress, m_nSize);
+    return pMemoryContext.ReadMemory(m_nAddress, m_nSize);
 }
 
 void MemoryWatchViewModel::EndInitialization()
@@ -283,7 +283,7 @@ void MemoryWatchViewModel::EndInitialization()
 
 bool MemoryWatchViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std::wstring& sError)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     const auto nAddress = m_nAddress;
     unsigned nValue = 0;
 
@@ -317,7 +317,7 @@ bool MemoryWatchViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std
     // use the IsWritingMemoryProperty to disable the event handler in the list
     // while we write the memory so it doesn't try to sync the value back here
     SetValue(IsWritingMemoryProperty, true);
-    pEmulatorContext.WriteMemory(nAddress, m_nSize, nValue);
+    pMemoryContext.WriteMemory(nAddress, m_nSize, nValue);
     SetValue(IsWritingMemoryProperty, false);
 
     // update the fields dependent on m_nValue

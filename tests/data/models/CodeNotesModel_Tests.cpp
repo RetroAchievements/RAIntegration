@@ -8,10 +8,10 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockUserContext.hh"
 
@@ -30,7 +30,7 @@ private:
     public:
         ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -425,7 +425,7 @@ public:
             L"+04 - Bomb Timer";
         notes.AddCodeNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x04;
         notes.DoFrame();
 
@@ -446,7 +446,7 @@ public:
             L"---FRAGGER_HEAD = Fragger Helmet";
         notes.AddCodeNote(12, "Author", sNote);
         std::array<unsigned char, 64> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x04;
         notes.DoFrame();
 
@@ -467,7 +467,7 @@ public:
             L"+0x8033 = [16-bit] Total race time";
         notes.AddCodeNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x04;
         notes.DoFrame();
 
@@ -491,7 +491,7 @@ public:
             L"+0x1B5CE = Lap";
         notes.AddCodeNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x04;
         notes.DoFrame();
 
@@ -516,7 +516,7 @@ public:
             L"+22 = Skill Points (8-bit)";
         notes.AddCodeNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x04;
         notes.DoFrame();
 
@@ -541,7 +541,7 @@ public:
             L"-- +2 | Flag";
         notes.AddCodeNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x10;
         memory.at(0x10+4) = 0x20;
         memory.at(0x10+8) = 0x28;
@@ -566,7 +566,7 @@ public:
             L"+5E = Left Leg Health {16-bit}";
         notes.AddCodeNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 4;
         notes.DoFrame();
 
@@ -588,7 +588,7 @@ public:
             L"+0x1B5CE = Lap";
         notes.AddCodeNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 4;
         notes.DoFrame();
 
@@ -612,7 +612,7 @@ public:
             L"+10 = Very Large (8 bytes)";
         notes.AddCodeNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x10;
         notes.DoFrame();
 
@@ -645,7 +645,7 @@ public:
         CodeNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
 
         const std::wstring sPointerNote =
@@ -698,7 +698,7 @@ public:
         memory.at(4) = 8; // pointer = 8
         memory.at(8) = 20; // obj1 pointer = 20
         memory.at(12) = 28; // obj2 pointer = 28
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
 
         notes.DoFrame();
 
@@ -816,7 +816,7 @@ public:
     {
         CodeNotesModelHarness notes;
         std::array<unsigned char, 128> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(120) = 0x02; // start with initial value for pointer
 
         const std::wstring sPointerNote =
@@ -876,7 +876,7 @@ public:
         CodeNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
 
         const std::wstring sPointerNote =
@@ -945,7 +945,7 @@ public:
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 0; i < memory.size(); i++)
             memory.at(i) = i;
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(0) = 16; // start with initial value for pointer
 
         const std::wstring sNote =
@@ -1018,7 +1018,7 @@ public:
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 4; i < memory.size(); i++)
             memory.at(i) = i;
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(0) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
 
         const std::wstring sNote =
@@ -1066,7 +1066,7 @@ public:
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 4; i < memory.size(); i++)
             memory.at(i) = i;
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(3) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
 
         const std::wstring sNote =
@@ -1114,7 +1114,7 @@ public:
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 4; i < memory.size(); i++)
             memory.at(i) = i;
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(0) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
 
         const std::wstring sNote =
@@ -1161,7 +1161,7 @@ public:
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 0; i < memory.size(); i++)
             memory.at(i) = i;
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(0) = 16; // start with initial value for pointer
 
         const std::wstring sNote =
@@ -1189,7 +1189,7 @@ public:
         CodeNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
 
         const std::wstring sPointerNote =
@@ -1223,7 +1223,7 @@ public:
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 0; i < memory.size(); i++)
             memory.at(i) = i;
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(0) = 16; // start with initial value for pointer
 
         const std::wstring sNote =
@@ -1255,7 +1255,7 @@ public:
         CodeNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(4) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
 
         const std::wstring sNote =
@@ -1441,7 +1441,7 @@ public:
         CodeNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
 
         const std::wstring sPointerNote =
@@ -1504,7 +1504,7 @@ public:
         CodeNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
-        notes.mockEmulatorContext.MockMemory(memory);
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
 
         const std::wstring sPointerNote =

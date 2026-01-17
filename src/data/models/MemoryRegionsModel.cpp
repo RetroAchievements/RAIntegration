@@ -2,7 +2,7 @@
 
 #include "RA_Defs.h"
 
-#include "data/context/EmulatorContext.hh"
+#include "context/IEmulatorMemoryContext.hh"
 
 #include "services/ServiceLocator.hh"
 
@@ -129,8 +129,8 @@ static bool ParseAddress(const wchar_t** pointer, ra::data::ByteAddress& address
 
 bool MemoryRegionsModel::ParseFilterRange(const std::wstring& sRange, _Out_ ra::data::ByteAddress& nStart, _Out_ ra::data::ByteAddress& nEnd)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto nMax = gsl::narrow_cast<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize()) - 1;
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    const auto nMax = gsl::narrow_cast<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize()) - 1;
 
     if (sRange.empty())
     {

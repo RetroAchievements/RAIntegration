@@ -8,9 +8,9 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
@@ -760,14 +760,14 @@ private:
     class IndirectAddressTriggerViewModelHarness : public TriggerViewModel
     {
     public:
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
 
         void Parse(const std::string& sInput)
         {
-            mockEmulatorContext.MockMemory(m_pMemory);
+            mockEmulatorMemoryContext.MockMemory(m_pMemory);
 
             ra::data::models::CapturedTriggerHits pCapturedHits;
             InitializeFrom(sInput, pCapturedHits);
@@ -1475,9 +1475,9 @@ public:
         //    ...                                             ...
 
         // Parse registers the default memory. Replace it with specific values
-        vmTrigger.mockEmulatorContext.MockMemoryValue(0x001234, 0xa05bb680);
-        vmTrigger.mockEmulatorContext.MockMemoryValue(0x002222, 0x00c0d6ac);
-        vmTrigger.mockEmulatorContext.MockMemoryValue(0xb65ba8, 0xc02e3980);
+        vmTrigger.mockEmulatorMemoryContext.MockMemoryValue(0x001234, 0xa05bb680);
+        vmTrigger.mockEmulatorMemoryContext.MockMemoryValue(0x002222, 0x00c0d6ac);
+        vmTrigger.mockEmulatorMemoryContext.MockMemoryValue(0xb65ba8, 0xc02e3980);
 
         auto* pTrigger = vmTrigger.GetTriggerFromString();
         auto* pMemrefs = rc_trigger_get_memrefs(pTrigger);

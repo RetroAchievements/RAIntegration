@@ -1,7 +1,7 @@
 #include "services\SearchResults.h"
 
 #include "tests\RA_UnitTestHelpers.h"
-#include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -28,8 +28,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryEightBit)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -62,8 +62,8 @@ public:
     TEST_METHOD(TestInitializeFromMemorySixteenBit)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, ra::services::SearchType::SixteenBit);
@@ -90,8 +90,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryThirtyTwoBit)
     {
         std::array<unsigned char, 6> memory{0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 4U, ra::services::SearchType::ThirtyTwoBit);
@@ -112,8 +112,8 @@ public:
     TEST_METHOD(TestInitializeFromMemorySixteenBitAligned)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, 4U, ra::services::SearchType::SixteenBitAligned);
@@ -141,8 +141,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryThirtyTwoBitAligned)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD, 0x44, 0x20 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, 8U, ra::services::SearchType::ThirtyTwoBitAligned);
@@ -173,8 +173,8 @@ public:
     TEST_METHOD(TestInitializeFromMemorySixteenBitBigEndian)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, ra::services::SearchType::SixteenBitBigEndian);
@@ -201,8 +201,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryThirtyTwoBitBigEndian)
     {
         std::array<unsigned char, 6> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 4U, ra::services::SearchType::ThirtyTwoBitBigEndian);
@@ -223,8 +223,8 @@ public:
     TEST_METHOD(TestInitializeFromMemorySixteenBitBigEndianAligned)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, 4U, ra::services::SearchType::SixteenBitBigEndianAligned);
@@ -252,8 +252,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryThirtyTwoBitBigEndianAligned)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD, 0x44, 0x20 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, 8U, ra::services::SearchType::ThirtyTwoBitBigEndianAligned);
@@ -284,8 +284,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryNibble)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, ra::services::SearchType::FourBit);
@@ -334,8 +334,8 @@ public:
     TEST_METHOD(TestInitializeFromMemorySixteenBitBounded)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 8U, ra::services::SearchType::SixteenBit);
@@ -368,8 +368,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsConstant)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -395,8 +395,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsInvalidConstant)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -414,8 +414,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsConstantGap)
     {
         std::array<unsigned char, 6> memory{ 0x00, 0x12, 0x00, 0x00, 0x56, 0x00 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 6U, ra::services::SearchType::EightBit);
@@ -458,8 +458,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitNotEqualsConstant)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -490,8 +490,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitNotEqualsConstantGap)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -522,8 +522,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitGreaterThanConstant)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -549,8 +549,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitGreaterThanOrEqualConstant)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -581,8 +581,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitLessThanConstant)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -608,8 +608,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitLessThanOrEqualConstant)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -640,8 +640,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsConstantModified)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -670,8 +670,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsPrevious)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 5U, ra::services::SearchType::EightBit);
@@ -727,8 +727,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitNotEqualsPrevious)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -766,10 +766,10 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitNotEqualsPreviousLargeData)
     {
         std::array<unsigned char, 1024> memory{};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
         for (unsigned int i = 0; i < memory.size(); ++i)
             GSL_SUPPRESS_BOUNDS4 memory[i] = (i % 256);
-        mockEmulatorContext.MockMemory(memory);
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 1024U, ra::services::SearchType::EightBit);
@@ -821,8 +821,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsPreviousPlusTwo)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -855,8 +855,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsPreviousMinusTwo)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -889,8 +889,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsEightBitGreaterThanPreviousPlusTwo)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -918,8 +918,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsSixteenBitNotEqualPrevious)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 4U, ra::services::SearchType::SixteenBit);
@@ -950,8 +950,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsThirtyTwoBitNotEqualPrevious)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 5U, ra::services::SearchType::ThirtyTwoBit);
@@ -975,8 +975,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsSixteenBitAlignedNotEqualPrevious)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 4U, ra::services::SearchType::SixteenBitAligned);
@@ -1019,8 +1019,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsThirtyTwoBitAlignedNotEqualPrevious)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD, 0x44, 0x20 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 8U, ra::services::SearchType::ThirtyTwoBitAligned);
@@ -1066,8 +1066,8 @@ public:
         auto memory = std::move(std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE));
         for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
             GSL_SUPPRESS_BOUNDS4 memory[i] = (i % 256);
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory.get(), BIG_BLOCK_SIZE);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory.get(), BIG_BLOCK_SIZE);
 
         SearchResults results;
         results.Initialize(0U, BIG_BLOCK_SIZE, ra::services::SearchType::ThirtyTwoBitAligned);
@@ -1113,8 +1113,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsThirtyTwoBitAlignedOffset)
     {
         std::array<unsigned char, 12> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD, 0x44, 0x20, 0x11, 0x22, 0x33, 0x44 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(4U, 12U, ra::services::SearchType::ThirtyTwoBitAligned);
@@ -1147,8 +1147,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsSixteenBitBigEndianNotEqualPrevious)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 4U, ra::services::SearchType::SixteenBitBigEndian);
@@ -1179,8 +1179,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsThirtyTwoBitBigEndianNotEqualPrevious)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 5U, ra::services::SearchType::ThirtyTwoBitBigEndian);
@@ -1204,8 +1204,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsThirtyTwoBitBigEndianLessThanPrevious)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 5U, ra::services::SearchType::ThirtyTwoBitBigEndian);
@@ -1229,8 +1229,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsSixteenBitBigEndianAlignedNotEqualPrevious)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 4U, ra::services::SearchType::SixteenBitBigEndianAligned);
@@ -1273,8 +1273,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsThirtyTwoBitBigEndianAlignedNotEqualPrevious)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0xCD, 0x44, 0x20 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 8U, ra::services::SearchType::ThirtyTwoBitBigEndianAligned);
@@ -1317,8 +1317,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsFourBitNotEqualsPrevious)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::FourBit);
@@ -1356,8 +1356,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsFourBitEqualsSameByte)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, ra::services::SearchType::FourBit);
@@ -1394,8 +1394,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsWithAddressLimits)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x04, 0x16, 0x08};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 5U, ra::services::SearchType::EightBit);
@@ -1433,8 +1433,8 @@ public:
     TEST_METHOD(TestExcludeAddressEightBit)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -1475,8 +1475,8 @@ public:
     TEST_METHOD(TestExcludeAddressFourBit)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::FourBit);
@@ -1532,8 +1532,8 @@ public:
     TEST_METHOD(TestExcludeAddressSixteenBitAligned)
     {
         std::array<unsigned char, 6> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0x88 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 5U, ra::services::SearchType::SixteenBitAligned);
@@ -1576,8 +1576,8 @@ public:
         auto memory = std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE);
         for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
             GSL_SUPPRESS_BOUNDS4 memory[i] = (i % 256);
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory.get(), BIG_BLOCK_SIZE);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory.get(), BIG_BLOCK_SIZE);
 
         SearchResults results;
         results.Initialize(0U, BIG_BLOCK_SIZE, ra::services::SearchType::EightBit);
@@ -1613,8 +1613,8 @@ public:
         auto memory = std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE);
         for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
             GSL_SUPPRESS_BOUNDS4 memory[i] = (i % 256);
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory.get(), BIG_BLOCK_SIZE);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory.get(), BIG_BLOCK_SIZE);
 
         SearchResults results;
         results.Initialize(0U, BIG_BLOCK_SIZE, ra::services::SearchType::SixteenBit);
@@ -1648,8 +1648,8 @@ public:
     TEST_METHOD(TestInitializeFromMemorySixteenBitZeroBytes)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, 0U, ra::services::SearchType::SixteenBit);
@@ -1664,8 +1664,8 @@ public:
             'l', 'l', 's', ' ', 'b', 'y', ' ', 't', 'h', 'e', ' ', 's', 'e', 'a', 's', 'h',
             'o', 'r', 'e', '.'
         };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::AsciiText);
@@ -1694,8 +1694,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryFloat)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::Float);
@@ -1726,8 +1726,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryFloatAligned)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::FloatAligned);
@@ -1758,8 +1758,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryFloatBE)
     {
         std::array<unsigned char, 8> memory{ 0xC0, 0x00, 0x00, 0x00, 0x41, 0x46, 0x00, 0x00 }; // -2.0, 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::FloatBigEndian);
@@ -1790,8 +1790,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryFloatBEAligned)
     {
         std::array<unsigned char, 8> memory{ 0xC0, 0x00, 0x00, 0x00, 0x41, 0x46, 0x00, 0x00 }; // -2.0, 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::FloatBigEndianAligned);
@@ -1823,8 +1823,8 @@ public:
     {
         std::array<unsigned char, 16> memory{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC0,  // -2.0
                                              0x00, 0x00, 0x00, 0x00, 0x00, 0xC0, 0x28, 0x40}; // 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::Double32);
@@ -1858,8 +1858,8 @@ public:
     {
         std::array<unsigned char, 16> memory{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC0,  // -2.0
                                              0x00, 0x00, 0x00, 0x00, 0x00, 0xC0, 0x28, 0x40}; // 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::Double32Aligned);
@@ -1893,8 +1893,8 @@ public:
     {
         std::array<unsigned char, 16> memory{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // -2.0
                                              0x40, 0x28, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00}; // 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::Double32BigEndian);
@@ -1928,8 +1928,8 @@ public:
     {
         std::array<unsigned char, 16> memory{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // -2.0
                                              0x40, 0x28, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00}; // 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::Double32BigEndianAligned);
@@ -1962,8 +1962,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryMBF32)
     {
         std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32);
@@ -1994,8 +1994,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryMBF32LE)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x46, 0x87, 0x00, 0x00, 0x80, 0x80 }; // 99.0, -0.5
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32LE);
@@ -2030,8 +2030,8 @@ public:
             'l', 'l', 's', ' ', 'b', 'y', ' ', 't', 'h', 'e', ' ', 's', 'e', 'a', 's', 'h',
             'o', 'r', 'e', '.'
         };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, memory.size(), ra::services::SearchType::AsciiText);
@@ -2078,8 +2078,8 @@ public:
             'l', 'l', 's', ' ', 'b', 'y', ' ', 't', 'h', 'e', ' ', 's', 'e', 'a', 's', 'h',
             'o', 'r', 'e', '.'
         };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, memory.size(), ra::services::SearchType::AsciiText);
@@ -2102,8 +2102,8 @@ public:
             'l', 'l', 's', ' ', 'b', 'y', ' ', 't', 'h', 'e', ' ', 's', 'e', 'a', 's', 'h',
             'o', 'r', 'e', '.'
         };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, memory.size(), ra::services::SearchType::AsciiText);
@@ -2173,8 +2173,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsFloatEqualsConstant)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::Float);
@@ -2195,8 +2195,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsFloatGreaterThanLast)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::Float);
@@ -2220,8 +2220,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsFloatAlignedGreaterThanLast)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::FloatAligned);
@@ -2245,8 +2245,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsFloatBEGreaterThanLast)
     {
         std::array<unsigned char, 8> memory{ 0xC0, 0x00, 0x00, 0x00, 0x41, 0x46, 0x00, 0x00 }; // -2.0, 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::FloatBigEndian);
@@ -2271,8 +2271,8 @@ public:
     {
         std::array<unsigned char, 16> memory{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC0,  // -2.0
                                              0x00, 0x00, 0x00, 0x00, 0x00, 0xC0, 0x28, 0x40}; // 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::Double32Aligned);
@@ -2297,8 +2297,8 @@ public:
     {
         std::array<unsigned char, 16> memory{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // -2.0
                                              0x40, 0x28, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00}; // 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::Double32BigEndianAligned);
@@ -2322,8 +2322,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsMBF32EqualsConstant)
     {
         std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32);
@@ -2344,8 +2344,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsMBF32GreaterThanLast)
     {
         std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32);
@@ -2368,8 +2368,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsMBF32LEEqualsConstant)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x46, 0x87, 0x00, 0x00, 0x80, 0x80 }; // 99.0, -0.5
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32LE);
@@ -2390,8 +2390,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsMBF32LEGreaterThanLast)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x46, 0x87, 0x00, 0x00, 0x80, 0x80 }; // 99.0, -0.5
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32LE);
@@ -2414,8 +2414,8 @@ public:
     TEST_METHOD(TestCopyConstructor)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -2456,8 +2456,8 @@ public:
     TEST_METHOD(TestGetFormattedValueEightBit)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x02, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -2472,8 +2472,8 @@ public:
     TEST_METHOD(TestGetFormattedValueSixteenBit)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x02, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::SixteenBit);
@@ -2488,8 +2488,8 @@ public:
     TEST_METHOD(TestGetFormattedValueFourBit)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x02, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(1U, 3U, ra::services::SearchType::FourBit);
@@ -2510,8 +2510,8 @@ public:
     TEST_METHOD(TestGetFormattedValueFloat)
     {
         std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 8U, ra::services::SearchType::Float);
@@ -2526,8 +2526,8 @@ public:
     TEST_METHOD(TestGetFormattedValueMBF32)
     {
         std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 8U, ra::services::SearchType::MBF32);
@@ -2542,8 +2542,8 @@ public:
     TEST_METHOD(TestMatchesFilterEightBitGreaterThanLast)
     {
         std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1, results2;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -2571,8 +2571,8 @@ public:
     TEST_METHOD(TestMatchesFilterEightBitGreaterThanLastPlus)
     {
         std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1, results2;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -2600,8 +2600,8 @@ public:
     TEST_METHOD(TestMatchesFilterEightBitGreaterThanLastMinus)
     {
         std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1, results2;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -2629,8 +2629,8 @@ public:
     TEST_METHOD(TestMatchesFilterEightBitGreaterThanConstant)
     {
         std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1, results2;
         results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
@@ -2649,8 +2649,8 @@ public:
 
     TEST_METHOD(TestInitializeFromMemoryAsciiEmpty)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        Assert::AreEqual({0U}, mockEmulatorContext.TotalMemorySize());
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        Assert::AreEqual({0U}, mockMemoryContext.TotalMemorySize());
 
         SearchResults results;
         results.Initialize(0U, 16, ra::services::SearchType::AsciiText);
@@ -2663,8 +2663,8 @@ public:
     TEST_METHOD(TestInitializeFromMemoryBitCount)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results;
         results.Initialize(1U, 3U, ra::services::SearchType::BitCount);
@@ -2697,8 +2697,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsBitCountEqualsPrevious)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 5U, ra::services::SearchType::BitCount);
@@ -2743,8 +2743,8 @@ public:
     TEST_METHOD(TestInitializeFromResultsBitCountEqualsPreviousPlusOne)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 5U, ra::services::SearchType::BitCount);
@@ -2773,8 +2773,8 @@ public:
     TEST_METHOD(TestGetFormattedValueBitCount)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         SearchResults results1;
         results1.Initialize(0U, 8U, ra::services::SearchType::BitCount);
@@ -2791,15 +2791,15 @@ public:
         std::wstring sFormattedValue;
         SearchResult pResult;
         results1.GetMatchingAddress(3, pResult);
-        Assert::IsTrue(results1.UpdateValue(pResult, &sFormattedValue, mockEmulatorContext));
+        Assert::IsTrue(results1.UpdateValue(pResult, &sFormattedValue, mockMemoryContext));
         Assert::AreEqual(std::wstring(L"5 (00111011)"), sFormattedValue);
     }
     
     TEST_METHOD(TestInitializeFromListEightBit)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         std::vector<SearchResult> vResults;
         vResults.push_back({2, 0x07, ra::data::Memory::Size::Unknown});
@@ -2831,8 +2831,8 @@ public:
     TEST_METHOD(TestInitializeFromListThirtyTwoBit)
     {
         std::array<unsigned char, 16> memory{};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         std::vector<SearchResult> vResults;
         vResults.push_back({2, 0x12345678, ra::data::Memory::Size::Unknown});
@@ -2870,8 +2870,8 @@ public:
     TEST_METHOD(TestInitializeFromListThirtyTwoBitAligned)
     {
         std::array<unsigned char, 16> memory{};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         std::vector<SearchResult> vResults;
         vResults.push_back({2, 0x12345678, ra::data::Memory::Size::Unknown}); // not aligned - should be ignored
@@ -2904,8 +2904,8 @@ public:
     TEST_METHOD(TestInitializeFromListThirtyTwoBitBigEndian)
     {
         std::array<unsigned char, 16> memory{};
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockMemory(memory);
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
 
         std::vector<SearchResult> vResults;
         vResults.push_back({2, 0x12345678, ra::data::Memory::Size::Unknown});

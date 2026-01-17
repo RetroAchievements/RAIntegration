@@ -23,10 +23,10 @@ protected:
     }
 
     bool UpdateValue(const SearchResults& pResults, SearchResult& pResult,
-        _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const override
+        _Out_ std::wstring* sFormattedValue, const ra::context::IEmulatorMemoryContext& pMemoryContext) const override
     {
         const unsigned int nPreviousValue = pResult.nValue;
-        pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, ra::data::Memory::Size::EightBit);
+        pResult.nValue = pMemoryContext.ReadMemory(pResult.nAddress, ra::data::Memory::Size::EightBit);
 
         if (sFormattedValue)
             *sFormattedValue = GetFormattedValue(pResults, pResult);
@@ -48,7 +48,7 @@ protected:
     }
 
 private:
-    bool GetValueFromMemBlock(const MemBlock& block, SearchResult& result) const noexcept override
+    bool GetValueFromCapturedMemoryBlock(const CapturedMemoryBlock& block, SearchResult& result) const noexcept override
     {
         if (result.nAddress < block.GetFirstAddress())
             return false;

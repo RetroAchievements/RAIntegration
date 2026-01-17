@@ -4,7 +4,7 @@
 
 #include "data/Types.hh"
 
-#include "data/context/EmulatorContext.hh"
+#include "context/IEmulatorMemoryContext.hh"
 
 namespace ra {
 namespace data {
@@ -45,7 +45,7 @@ public:
     virtual bool GetPointerChain(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pRootNote) const;
 
     typedef std::function<void(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const CodeNoteModel&)> NoteMovedFunction;
-    void UpdateRawPointerValue(ra::data::ByteAddress nAddress, const ra::data::context::EmulatorContext& pEmulatorContext, NoteMovedFunction fNoteMovedCallback);
+    void UpdateRawPointerValue(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext, NoteMovedFunction fNoteMovedCallback);
 
     bool GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra::data::ByteAddress& nPreviousAddress) const;
     bool GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data::ByteAddress& nNextAddress) const;

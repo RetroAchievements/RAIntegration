@@ -7,7 +7,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
-#include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -112,8 +112,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeEmpty)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"", nStartAddress, nEndAddress));
@@ -123,8 +123,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeHexPrefix)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"0xbeef-0xfeed", nStartAddress, nEndAddress));
@@ -134,8 +134,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeDollarPrefix)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"$beef-$feed", nStartAddress, nEndAddress));
@@ -145,8 +145,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeNoPrefix)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"1234-face", nStartAddress, nEndAddress));
@@ -156,8 +156,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeWhitespace)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"0xbeef - 0xfeed", nStartAddress, nEndAddress));
@@ -167,8 +167,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeNoHyphen)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"8765", nStartAddress, nEndAddress));
@@ -178,8 +178,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeNoStart)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsFalse(MemoryRegionsModel::ParseFilterRange(L"-8765", nStartAddress, nEndAddress));
@@ -189,8 +189,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeNoEnd)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsFalse(MemoryRegionsModel::ParseFilterRange(L"8765-", nStartAddress, nEndAddress));
@@ -200,8 +200,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeNotHex)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsFalse(MemoryRegionsModel::ParseFilterRange(L"banana", nStartAddress, nEndAddress));
@@ -211,8 +211,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeEndOutOfRange)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"0xF000-0x10000", nStartAddress, nEndAddress));
@@ -222,8 +222,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeStartOutOfRange)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsFalse(MemoryRegionsModel::ParseFilterRange(L"0x10000-0x1FFFF", nStartAddress, nEndAddress));
@@ -233,8 +233,8 @@ public:
 
     TEST_METHOD(TestParseFilterRangeStartAfterEnd)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000);
 
         ra::data::ByteAddress nStartAddress, nEndAddress;
         Assert::IsTrue(MemoryRegionsModel::ParseFilterRange(L"0x9876-0x1234", nStartAddress, nEndAddress));

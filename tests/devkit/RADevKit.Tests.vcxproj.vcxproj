@@ -77,7 +77,10 @@
     <ClInclude Include="services\mocks\MockHttpRequester.hh" />
     <ClInclude Include="services\mocks\MockLogger.hh" />
     <ClInclude Include="services\mocks\MockThreadPool.hh" />
+    <ClInclude Include="testutil\AssetAsserts.hh" />
     <ClInclude Include="testutil\CppUnitTest.hh" />
+    <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
+    <ClCompile Include="data\models\CodeNoteModel_Tests.cpp" />
     <ClCompile Include="data\NotifyTargetSet_Tests.cpp" />
     <ClCompile Include="services\Http_Tests.cpp" />
     <ClCompile Include="services\StringTextReader_Tests.cpp" />

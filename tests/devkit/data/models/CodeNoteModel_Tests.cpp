@@ -1,19 +1,11 @@
-#include "CppUnitTest.h"
+#include "data/models/CodeNoteModel.hh"
 
-#include "data\models\CodeNotesModel.hh"
+#include "services/impl/StringTextWriter.hh"
 
-#include "services\impl\StringTextWriter.hh"
+#include "tests/devkit/context/mocks/MockConsoleContext.hh"
+#include "tests/devkit/context/mocks/MockEmulatorMemoryContext.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
-#include "tests\data\DataAsserts.hh"
-
-#include "tests\devkit\context\mocks\MockConsoleContext.hh"
-#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
-#include "tests\devkit\services\mocks\MockThreadPool.hh"
-#include "tests\devkit\testutil\MemoryAsserts.hh"
-#include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockUserContext.hh"
+#include "testutil/MemoryAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

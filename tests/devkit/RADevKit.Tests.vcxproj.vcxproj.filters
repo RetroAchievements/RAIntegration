@@ -40,6 +40,12 @@
     <ClCompile Include="context\impl\ConsoleContext_Tests.cpp">
       <Filter>context\impl</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\AssetModelBase_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\CodeNoteModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -68,6 +74,9 @@
     </Filter>
     <Filter Include="context\impl">
       <UniqueIdentifier>{ecc72096-a8e6-4c8e-bd30-2cf087d72df8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data\models">
+      <UniqueIdentifier>{75ed968b-89af-4bce-93ae-29b9393bfdf8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +115,9 @@
     </ClInclude>
     <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh">
       <Filter>context\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\AssetAsserts.hh">
+      <Filter>testutil</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

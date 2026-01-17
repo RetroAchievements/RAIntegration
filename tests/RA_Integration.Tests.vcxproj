@@ -84,9 +84,7 @@
     <ClCompile Include="..\src\data\context\SessionTracker.cpp" />
     <ClCompile Include="..\src\data\context\UserContext.cpp" />
     <ClCompile Include="..\src\data\models\AchievementModel.cpp" />
-    <ClCompile Include="..\src\data\models\AssetModelBase.cpp" />
     <ClCompile Include="..\src\data\models\CapturedTriggerHits.cpp" />
-    <ClCompile Include="..\src\data\models\CodeNoteModel.cpp" />
     <ClCompile Include="..\src\data\models\CodeNotesModel.cpp" />
     <ClCompile Include="..\src\data\models\LeaderboardModel.cpp" />
     <ClCompile Include="..\src\data\models\LocalBadgesModel.cpp" />
@@ -152,7 +150,6 @@
     <ClCompile Include="..\src\ui\viewmodels\TriggerViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
-    <ClInclude Include="..\src\data\models\CodeNoteModel.hh" />
     <ClInclude Include="..\src\data\models\LeaderboardModel.hh" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClCompile Include="..\src\ui\ViewModelBase.cpp" />
@@ -165,9 +162,7 @@
     <ClCompile Include="data\context\GameContext_Tests.cpp" />
     <ClCompile Include="data\context\SessionTracker_Tests.cpp" />
     <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
-    <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
     <ClCompile Include="data\models\CapturedTriggerHits_Tests.cpp" />
-    <ClCompile Include="data\models\CodeNoteModel_Tests.cpp" />
     <ClCompile Include="data\models\CodeNotesModel_Tests.cpp" />
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />

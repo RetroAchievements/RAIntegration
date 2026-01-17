@@ -474,7 +474,6 @@
     <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp">
       <Filter>Code</Filter>
     </ClCompile>
->>>>>>> master
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

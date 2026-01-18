@@ -315,9 +315,6 @@
     <ClCompile Include="data\context\SessionTracker.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
-    <ClCompile Include="data\context\UserContext.cpp">
-      <Filter>Data\Context</Filter>
-    </ClCompile>
     <ClCompile Include="data\models\AssetModelBase.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
@@ -837,9 +834,6 @@
       <Filter>Data\Context</Filter>
     </ClInclude>
     <ClInclude Include="data\context\SessionTracker.hh">
-      <Filter>Data\Context</Filter>
-    </ClInclude>
-    <ClInclude Include="data\context\UserContext.hh">
       <Filter>Data\Context</Filter>
     </ClInclude>
     <ClInclude Include="data\models\AssetModelBase.hh">

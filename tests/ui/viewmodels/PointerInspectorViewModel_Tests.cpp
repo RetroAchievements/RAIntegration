@@ -10,6 +10,7 @@
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockClipboard.hh"
@@ -17,7 +18,6 @@
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
@@ -36,8 +36,8 @@ private:
     public:
         ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockClipboard mockClipboard;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
 

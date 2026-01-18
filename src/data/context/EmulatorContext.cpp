@@ -9,9 +9,9 @@
 #include "api\LatestClient.hh"
 
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
 
 #include "data\context\GameContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\AchievementRuntimeExports.hh"
@@ -564,7 +564,7 @@ std::wstring EmulatorContext::GetAppTitle(const std::string& sMessage) const
         builder.Append(sMessage);
     }
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     const auto& sDisplayName = pUserContext.GetDisplayName();
     if (!sDisplayName.empty())
     {

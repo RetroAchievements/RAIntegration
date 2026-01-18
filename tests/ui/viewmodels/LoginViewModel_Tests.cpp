@@ -4,10 +4,10 @@
 
 #include "tests\ui\UIAsserts.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockLoginService.hh"
-#include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -25,10 +25,10 @@ private:
         GSL_SUPPRESS_F6 LoginViewModelHarness() : LoginViewModel(L"User") {}
 
         ra::context::mocks::MockRcClient mockRcClient;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLoginService mockLoginService;
         ra::ui::mocks::MockDesktop mockDesktop;
-        ra::data::context::mocks::MockUserContext mockUserContext;
     };
 
 public:

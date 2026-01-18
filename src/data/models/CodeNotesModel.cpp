@@ -6,8 +6,9 @@
 #include "api\FetchCodeNotes.hh"
 #include "api\UpdateCodeNote.hh"
 
+#include "context\UserContext.hh"
+
 #include "data\context\EmulatorContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
@@ -358,7 +359,7 @@ void CodeNotesModel::SetCodeNote(ra::data::ByteAddress nAddress, const std::wstr
     }
     else
     {
-        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
         AddCodeNote(nAddress, pUserContext.GetDisplayName(), sNote);
     }
 }
@@ -562,7 +563,7 @@ void CodeNotesModel::SetServerCodeNote(ra::data::ByteAddress nAddress, const std
     }
 
     // update the current value
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     AddCodeNote(nAddress, pUserContext.GetDisplayName(), sNote);
 }
 

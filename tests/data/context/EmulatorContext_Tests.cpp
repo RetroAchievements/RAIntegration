@@ -7,6 +7,7 @@
 
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\services\mocks\MockHttpRequester.hh"
@@ -19,7 +20,6 @@
 #include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -38,8 +38,8 @@ private:
         ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;

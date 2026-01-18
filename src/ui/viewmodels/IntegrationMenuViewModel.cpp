@@ -3,10 +3,10 @@
 #include "util\Log.hh"
 #include "RA_Resource.h"
 
-#include "context\IConsoleContext.hh"
+#include "context/IConsoleContext.hh"
+#include "context/UserContext.hh"
 
 #include "data/context/GameContext.hh"
-#include "data/context/UserContext.hh"
 
 #include "services/IConfiguration.hh"
 #include "services/ILoginService.hh"
@@ -199,7 +199,7 @@ void IntegrationMenuViewModel::OpenUserPage()
     const auto& pLoginContext = ra::services::ServiceLocator::Get<ra::services::ILoginService>();
     if (pLoginContext.IsLoggedIn())
     {
-        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
         const auto sUrl = ra::StringPrintf("%s/user/%s", pConfiguration.GetHostUrl(), pUserContext.GetDisplayName());
 

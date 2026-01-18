@@ -5,10 +5,10 @@
 #include "api\FetchAchievementInfo.hh"
 
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
 
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
@@ -407,7 +407,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         vmAchievement.SetWonBy(ra::StringPrintf(L"Won by %u of %u (%1.0f%%)", response.EarnedBy, response.NumPlayers,
             (static_cast<double>(response.EarnedBy) * 100) / response.NumPlayers));
 
-        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
+        const auto& sUsername = ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName();
         for (const auto& pWinner : response.Entries)
         {
             auto& vmWinner = vmAchievement.RecentWinners.Add();

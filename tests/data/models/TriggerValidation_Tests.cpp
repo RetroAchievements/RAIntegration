@@ -4,8 +4,8 @@
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -194,7 +194,7 @@ public:
 
     TEST_METHOD(TestCodeNoteSizeComparisons)
     {
-        ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         mockGameContext.SetCodeNote(0x0008, L"[8-bit] Byte address");
         mockGameContext.SetCodeNote(0x0010, L"[16-bit] Word address");

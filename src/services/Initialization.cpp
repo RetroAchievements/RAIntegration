@@ -2,6 +2,7 @@
 
 #include "api\impl\DisconnectedServer.hh"
 
+#include "context\UserContext.hh"
 #include "context\impl\ConsoleContext.hh"
 #include "context\impl\EmulatorMemoryContext.hh"
 #include "context\impl\RcClient.hh"
@@ -9,7 +10,6 @@
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\FrameEventQueue.hh"
@@ -152,8 +152,8 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
     ra::services::ServiceLocator::Provide<ra::services::PerformanceCounter>(std::move(pPerformanceCounter));
 #endif
 
-    auto pUserContext = std::make_unique<ra::data::context::UserContext>();
-    ra::services::ServiceLocator::Provide<ra::data::context::UserContext>(std::move(pUserContext));
+    auto pUserContext = std::make_unique<ra::context::UserContext>();
+    ra::services::ServiceLocator::Provide<ra::context::UserContext>(std::move(pUserContext));
 
     auto pGameContext = std::make_unique<ra::data::context::GameContext>();
     ra::services::ServiceLocator::Provide<ra::data::context::GameContext>(std::move(pGameContext));

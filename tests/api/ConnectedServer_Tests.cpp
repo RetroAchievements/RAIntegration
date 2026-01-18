@@ -6,18 +6,18 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\api\ApiAsserts.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockHttpRequester.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockUserContext.hh"
 
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::api::impl::ConnectedServer;
 using ra::api::mocks::MockServer;
-using ra::data::context::mocks::MockUserContext;
+using ra::context::mocks::MockUserContext;
 using ra::services::mocks::MockHttpRequester;
 using ra::services::mocks::MockLocalStorage;
 using ra::services::mocks::MockThreadPool;

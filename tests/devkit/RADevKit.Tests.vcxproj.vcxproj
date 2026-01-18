@@ -72,6 +72,7 @@
     <ClInclude Include="context\mocks\MockConsoleContext.hh" />
     <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh" />
     <ClInclude Include="context\mocks\MockRcClient.hh" />
+    <ClInclude Include="context\mocks\MockUserContext.hh" />
     <ClInclude Include="services\mocks\MockClock.hh" />
     <ClInclude Include="services\mocks\MockFileSystem.hh" />
     <ClInclude Include="services\mocks\MockHttpRequester.hh" />

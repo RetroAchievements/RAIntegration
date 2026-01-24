@@ -1,11 +1,11 @@
 #include "data/models/CodeNoteModel.hh"
 
-#include "services/impl/StringTextWriter.hh"
-
 #include "tests/devkit/context/mocks/MockConsoleContext.hh"
 #include "tests/devkit/context/mocks/MockEmulatorMemoryContext.hh"
 
 #include "testutil/MemoryAsserts.hh"
+
+#include "util/Strings.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

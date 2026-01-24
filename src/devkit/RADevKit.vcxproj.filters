@@ -147,6 +147,9 @@
     <ClInclude Include="services\IDebuggerDetector.hh">
       <Filter>services</Filter>
     </ClInclude>
+    <ClInclude Include="context\UserContext.hh">
+      <Filter>context</Filter>
+    </ClInclude>
     <ClInclude Include="data\models\AssetModelBase.hh">
       <Filter>data\models</Filter>
     </ClInclude>

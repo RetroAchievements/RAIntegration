@@ -5,10 +5,10 @@
 #include "api\impl\OfflineServer.hh"
 
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
 
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"

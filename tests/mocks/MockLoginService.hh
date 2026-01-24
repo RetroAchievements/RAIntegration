@@ -4,7 +4,7 @@
 
 #include "services\ILoginService.hh"
 
-#include "data\context\UserContext.hh"
+#include "context\UserContext.hh"
 
 #include "services\ServiceLocator.hh"
 
@@ -31,8 +31,8 @@ public:
         if (m_bFailLogin)
             return false;
 
-        if (ra::services::ServiceLocator::Exists<ra::data::context::UserContext>())
-            ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().Initialize(sUsername, sUsername + "_", "APITOKEN");
+        if (ra::services::ServiceLocator::Exists<ra::context::UserContext>())
+            ra::services::ServiceLocator::GetMutable<ra::context::UserContext>().Initialize(sUsername, sUsername + "_", "APITOKEN");
 
         m_bIsLoggedIn = true;
         return true;
@@ -40,8 +40,8 @@ public:
 
     void Logout() override
     {
-        if (ra::services::ServiceLocator::Exists<ra::data::context::UserContext>())
-            ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().Initialize("", "", "");
+        if (ra::services::ServiceLocator::Exists<ra::context::UserContext>())
+            ra::services::ServiceLocator::GetMutable<ra::context::UserContext>().Initialize("", "", "");
 
         m_bIsLoggedIn = false;
     }

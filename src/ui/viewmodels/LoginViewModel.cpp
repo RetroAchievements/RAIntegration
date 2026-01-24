@@ -2,10 +2,12 @@
 
 #include "Exports.hh"
 #include "RAInterface\RA_Interface.h"
+
+#include "context\UserContext.hh"
+
 #include "util\Strings.hh"
 
 #include "data\context\EmulatorContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ILoginService.hh"
@@ -50,7 +52,7 @@ bool LoginViewModel::Login() const
     if (!pLoginService.Login(ra::Narrow(GetUsername()), ra::Narrow(GetPassword())))
         return false;
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     const bool bRememberLogin = IsPasswordRemembered();
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
     pConfiguration.SetUsername(pUserContext.GetDisplayName());

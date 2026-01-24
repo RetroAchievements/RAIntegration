@@ -116,6 +116,9 @@
     <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh">
       <Filter>context\mocks</Filter>
     </ClInclude>
+    <ClInclude Include="context\mocks\MockUserContext.hh">
+      <Filter>context\mocks</Filter>
+    </ClInclude>
     <ClInclude Include="testutil\AssetAsserts.hh">
       <Filter>testutil</Filter>
     </ClInclude>

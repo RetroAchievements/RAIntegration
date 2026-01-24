@@ -5,9 +5,9 @@
 #include "api\FetchLeaderboardInfo.hh"
 
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
 
 #include "data\context\GameContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 
@@ -231,7 +231,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
 
     ra::api::FetchLeaderboardInfo::Request request;
     request.LeaderboardId = nLeaderboardId;
-    request.AroundUser = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
+    request.AroundUser = ra::services::ServiceLocator::Get<ra::context::UserContext>().GetUsername();
     request.NumEntries = 11;
     request.CallAsync([this, nId = nLeaderboardId, nFormat = pLeaderboard->format](const ra::api::FetchLeaderboardInfo::Response& response)
     {
@@ -240,7 +240,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
             return;
 
         char sBuffer[64] = "";
-        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
+        const auto& sUsername = ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName();
         auto& vmLeaderboard = pIter->second;
         for (const auto& pEntry : response.Entries)
         {

@@ -6,7 +6,7 @@
 
 #include "RA_md5factory.h"
 
-#include "data\context\UserContext.hh"
+#include "context\UserContext.hh"
 
 #include "services\Http.hh"
 #include "services\IFileSystem.hh"
@@ -367,7 +367,7 @@ static bool DoUpload(const std::string& sHost, const char* _RESTRICT sApiName, c
     std::string sExt = ra::Narrow(pFileSystem.GetExtension(sFilePath));
     ra::StringMakeLowercase(sExt);
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     RA_LOG_INFO("%s Request: file=%s (%zu bytes)", sApiName, sFilePath, nFileSize);
 
     const char* sBoundary = "---------------------------41184676334";
@@ -439,7 +439,7 @@ FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFrie
     rc_api_fetch_followed_users_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     api_params.username = pUserContext.GetUsername().c_str();
     api_params.api_token = pUserContext.GetApiToken().c_str();
 
@@ -615,7 +615,7 @@ static void SetCodeNote(ApiResponseBase& response, const char* sApiName,
     rc_api_update_code_note_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     api_params.username = pUserContext.GetUsername().c_str();
     api_params.api_token = pUserContext.GetApiToken().c_str();
 
@@ -676,7 +676,7 @@ UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchie
     rc_api_update_achievement_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     api_params.username = pUserContext.GetUsername().c_str();
     api_params.api_token = pUserContext.GetApiToken().c_str();
 
@@ -733,7 +733,7 @@ FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const Fetch
     rc_api_fetch_achievement_info_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     api_params.username = pUserContext.GetUsername().c_str();
     api_params.api_token = pUserContext.GetApiToken().c_str();
 
@@ -794,7 +794,7 @@ UpdateLeaderboard::Response ConnectedServer::UpdateLeaderboard(const UpdateLeade
     rc_api_update_leaderboard_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     api_params.username = pUserContext.GetUsername().c_str();
     api_params.api_token = pUserContext.GetApiToken().c_str();
 
@@ -912,7 +912,7 @@ UpdateRichPresence::Response ConnectedServer::UpdateRichPresence(const UpdateRic
     rc_api_update_rich_presence_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     api_params.username = pUserContext.GetUsername().c_str();
     api_params.api_token = pUserContext.GetApiToken().c_str();
 
@@ -1029,7 +1029,7 @@ SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::R
     rc_api_add_game_hash_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     api_params.username = pUserContext.GetUsername().c_str();
     api_params.api_token = pUserContext.GetApiToken().c_str();
 

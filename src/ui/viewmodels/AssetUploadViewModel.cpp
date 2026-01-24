@@ -7,8 +7,9 @@
 #include "api\UpdateRichPresence.hh"
 #include "api\UploadBadge.hh"
 
+#include "context\UserContext.hh"
+
 #include "data\context\GameContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -128,7 +129,7 @@ void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNote
     const auto* pOriginalAuthor = pNotes.GetServerCodeNoteAuthor(nAddress);
     if (pOriginalAuthor != nullptr && !pOriginalAuthor->empty())
     {
-        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
         if (pUserContext.GetDisplayName() != *pOriginalAuthor)
         {
             // author changed - confirm overwrite

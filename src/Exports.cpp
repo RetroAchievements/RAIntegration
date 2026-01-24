@@ -10,13 +10,13 @@
 
 #include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
 #include "context\impl\ConsoleContext.hh"
 #include "context\impl\EmulatorMemoryContext.hh"
 
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\AchievementRuntimeExports.hh"
@@ -105,7 +105,7 @@ static void InitializeOfflineMode()
     ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<ra::api::impl::OfflineServer>());
     ra::services::ServiceLocator::Provide<ra::context::IRcClient>(std::make_unique<ra::services::impl::OfflineRcClient>());
 
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::context::UserContext>();
     const auto& sUsername = pConfiguration.GetUsername();
     if (sUsername.empty())
     {
@@ -118,6 +118,8 @@ static void InitializeOfflineMode()
         auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
         pSessionTracker.Initialize(sUsername);
     }
+
+    RaiseClientExternalMenuChanged();
 
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     pClient->user.username = rc_buffer_strcpy(&pClient->state.buffer, pUserContext.GetUsername().c_str());
@@ -407,7 +409,7 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
 
 API const char* CCONV _RA_UserName()
 {
-    auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     return pUserContext.GetDisplayName().c_str();
 }
 

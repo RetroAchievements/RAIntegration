@@ -79,6 +79,7 @@
     <ClInclude Include="context\impl\EmulatorMemoryContext.hh" />
     <ClInclude Include="context\impl\RcClient.hh" />
     <ClInclude Include="context\IRcClient.hh" />
+    <ClInclude Include="context\UserContext.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\CapturedMemoryBlock.hh" />
     <ClInclude Include="data\DataModelBase.hh" />

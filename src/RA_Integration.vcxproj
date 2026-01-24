@@ -81,7 +81,6 @@
     <ClCompile Include="data\context\EmulatorContext.cpp" />
     <ClCompile Include="data\context\GameContext.cpp" />
     <ClCompile Include="data\context\SessionTracker.cpp" />
-    <ClCompile Include="data\context\UserContext.cpp" />
     <ClCompile Include="data\models\AchievementModel.cpp" />
     <ClCompile Include="data\models\CapturedTriggerHits.cpp" />
     <ClCompile Include="data\models\CodeNotesModel.cpp" />
@@ -222,7 +221,6 @@
     <ClInclude Include="data\context\GameAssets.hh" />
     <ClInclude Include="data\context\GameContext.hh" />
     <ClInclude Include="data\context\SessionTracker.hh" />
-    <ClInclude Include="data\context\UserContext.hh" />
     <ClInclude Include="data\models\AchievementModel.hh" />
     <ClInclude Include="data\models\CapturedTriggerHits.hh" />
     <ClInclude Include="data\models\CodeNotesModel.hh" />

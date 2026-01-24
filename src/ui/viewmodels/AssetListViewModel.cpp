@@ -1,9 +1,9 @@
 #include "AssetListViewModel.hh"
 
 #include "context\IEmulatorMemoryContext.hh"
+#include "context\UserContext.hh"
 
 #include "data\context\GameContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
@@ -514,7 +514,7 @@ bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& p
             break;
 
         case SpecialFilter::Authored:
-            if (pAsset.GetAuthor() != ra::Widen(ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName()))
+            if (pAsset.GetAuthor() != ra::Widen(ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName()))
                 return false;
             break;
     }
@@ -1783,7 +1783,7 @@ void AssetListViewModel::CreateNew()
 
     if (bUpdateAsset)
     {
-        const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+        const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::context::UserContext>();
         pNewAsset->SetAuthor(ra::Widen(pUserContext.GetDisplayName()));
         pNewAsset->SetCategory(ra::data::models::AssetCategory::Local);
         pNewAsset->UpdateServerCheckpoint();
@@ -1865,7 +1865,7 @@ void AssetListViewModel::CloneSelected()
     }
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     const auto pAuthor = ra::Widen(pUserContext.GetDisplayName());
 
     FilteredAssets().BeginUpdate();

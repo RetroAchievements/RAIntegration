@@ -9,10 +9,10 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 
 #include <rcheevos\src\rcheevos\rc_internal.h>
@@ -30,8 +30,8 @@ private:
     class TriggerConditionViewModelHarness : public TriggerConditionViewModel
     {
     public:
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
 
         void Parse(const std::string& sInput)
@@ -762,7 +762,7 @@ private:
     public:
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
 
         void Parse(const std::string& sInput)

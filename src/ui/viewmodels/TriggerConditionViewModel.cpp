@@ -881,7 +881,7 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
 
     if (nIndex != std::string::npos && sNote.find('\n', nIndex) != std::string::npos)
     {
-        std::wstring_view svNote(sNote);
+        const std::wstring_view svNote(sNote);
         return ra::StringPrintf(L"%s\r\n%s...", sAddress, svNote.substr(0, nIndex));
     }
 

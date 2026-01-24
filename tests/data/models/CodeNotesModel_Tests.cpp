@@ -10,6 +10,7 @@
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockServer.hh"

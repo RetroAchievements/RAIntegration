@@ -1,19 +1,11 @@
-#include "CppUnitTest.h"
+#include "data/models/CodeNoteModel.hh"
 
-#include "data\models\CodeNotesModel.hh"
+#include "services/impl/StringTextWriter.hh"
 
-#include "services\impl\StringTextWriter.hh"
+#include "tests/devkit/context/mocks/MockConsoleContext.hh"
+#include "tests/devkit/context/mocks/MockEmulatorMemoryContext.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
-#include "tests\data\DataAsserts.hh"
-
-#include "tests\devkit\context\mocks\MockConsoleContext.hh"
-#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
-#include "tests\devkit\services\mocks\MockThreadPool.hh"
-#include "tests\devkit\testutil\MemoryAsserts.hh"
-#include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockUserContext.hh"
+#include "testutil/MemoryAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -49,7 +41,7 @@ private:
         Assert::AreEqual(nExpectedFormat, note.GetDefaultMemFormat(), sNote.c_str());
     }
 
-    const CodeNoteModel* AssertIndirectNote(const CodeNoteModel& note, unsigned int nOffset,
+    const CodeNoteModel& AssertIndirectNote(const CodeNoteModel& note, unsigned int nOffset,
         const std::wstring& sExpectedNote, Memory::Size nExpectedSize, unsigned int nExpectedBytes)
     {
         const auto* offsetNote = note.GetPointerNoteAtOffset(nOffset);
@@ -61,7 +53,7 @@ private:
         Assert::AreEqual(nExpectedBytes, offsetNote->GetBytes(), sMessage.c_str());
         Assert::AreEqual(sExpectedNote, offsetNote->GetNote(), sMessage.c_str());
 
-        return offsetNote;
+        return *offsetNote;
     }
 
 public:
@@ -445,13 +437,13 @@ public:
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
-        const auto* offsetNote = AssertIndirectNote(note, 0x428,
+        const auto& offsetNote = AssertIndirectNote(note, 0x428,
             L"Pointer - Award - Tee Hee Two (32bit)\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
+        AssertIndirectNote(offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
 
-        offsetNote = AssertIndirectNote(note, 0x438,
+        const auto& offsetNote2 = AssertIndirectNote(note, 0x438,
             L"Pointer - Award - Pretty Woman (32bit)\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
+        AssertIndirectNote(offsetNote2, 0x24C, L"Flag", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestUnannotatedPointerChain)
@@ -468,15 +460,15 @@ public:
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
-        const auto* offsetNote = AssertIndirectNote(
+        const auto& offsetNote = AssertIndirectNote(
             note, 0x428, L"Award - Tee Hee Two\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
-        Assert::AreEqual(std::wstring(L"Award - Tee Hee Two"), offsetNote->GetPointerDescription());
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
+        Assert::AreEqual(std::wstring(L"Award - Tee Hee Two"), offsetNote.GetPointerDescription());
+        AssertIndirectNote(offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
 
-        offsetNote = AssertIndirectNote(note, 0x438, L"Award - Pretty Woman\r\n+0x24C | Flag",
-                                        Memory::Size::ThirtyTwoBit, 4);
-        Assert::AreEqual(std::wstring(L"Award - Pretty Woman"), offsetNote->GetPointerDescription());
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
+        const auto& offsetNote2 = AssertIndirectNote(note, 0x438, L"Award - Pretty Woman\r\n+0x24C | Flag",
+                                                     Memory::Size::ThirtyTwoBit, 4);
+        Assert::AreEqual(std::wstring(L"Award - Pretty Woman"), offsetNote2.GetPointerDescription());
+        AssertIndirectNote(offsetNote2, 0x24C, L"Flag", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestNestedPointerAlternateFormat)
@@ -493,13 +485,13 @@ public:
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
-        const auto* offsetNote = AssertIndirectNote(note, 0x428,
+        const auto& offsetNote = AssertIndirectNote(note, 0x428,
             L"(32-bit pointer) Award - Tee Hee Two\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
+        AssertIndirectNote(offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
 
-        offsetNote = AssertIndirectNote(note, 0x438,
+        const auto& offsetNote2 = AssertIndirectNote(note, 0x438,
             L"(32-bit pointer) Award - Pretty Woman\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
+        AssertIndirectNote(offsetNote2, 0x24C, L"Flag", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestNestedPointerBracketNotSeparator)
@@ -516,13 +508,13 @@ public:
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
-        const auto* offsetNote = AssertIndirectNote(note, 0x428,
+        const auto& offsetNote = AssertIndirectNote(note, 0x428,
             L"[32bit] Pointer - Award - Tee Hee Two\r\n+0x24C [8bit] Flag", Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"[8bit] Flag", Memory::Size::EightBit, 1);
+        AssertIndirectNote(offsetNote, 0x24C, L"[8bit] Flag", Memory::Size::EightBit, 1);
 
-        offsetNote = AssertIndirectNote(note, 0x438,
+        const auto& offsetNote2 = AssertIndirectNote(note, 0x438,
             L"[32bit] Pointer - Award - Pretty Woman\r\n+0x24C [8bit] Flag", Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"[8bit] Flag", Memory::Size::EightBit, 1);
+        AssertIndirectNote(offsetNote2, 0x24C, L"[8bit] Flag", Memory::Size::EightBit, 1);
     }
 
     TEST_METHOD(TestNestedPointerMultiLine)
@@ -543,13 +535,13 @@ public:
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
-        const auto* offsetNote = AssertIndirectNote(note, 0x428, L"Obj1 pointer\r\n+0x24C | [16-bit] State\r\n-- Increments",
+        const auto& offsetNote = AssertIndirectNote(note, 0x428, L"Obj1 pointer\r\n+0x24C | [16-bit] State\r\n-- Increments",
                                                     Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"[16-bit] State\r\n-- Increments", Memory::Size::SixteenBit, 2);
+        AssertIndirectNote(offsetNote, 0x24C, L"[16-bit] State\r\n-- Increments", Memory::Size::SixteenBit, 2);
 
-        offsetNote = AssertIndirectNote(note, 0x438, L"Obj2 pointer\r\n+0x08 | Flag\r\n-- b0=quest1 complete\r\n-- b1=quest2 complete",
-                                        Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x08, L"Flag\r\n-- b0=quest1 complete\r\n-- b1=quest2 complete", Memory::Size::Unknown, 1);
+        const auto& offsetNote2 = AssertIndirectNote(note, 0x438, L"Obj2 pointer\r\n+0x08 | Flag\r\n-- b0=quest1 complete\r\n-- b1=quest2 complete",
+                                                     Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(offsetNote2, 0x08, L"Flag\r\n-- b0=quest1 complete\r\n-- b1=quest2 complete", Memory::Size::Unknown, 1);
 
         AssertIndirectNote(note, 0x448, L"[32-bit BE] Not-nested number", Memory::Size::ThirtyTwoBitBigEndian, 4);
     }
@@ -571,19 +563,19 @@ public:
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
         // expect individual nodes to be merged together
-        const auto* sharedNote = AssertIndirectNote(note, 0x308,
+        const auto& sharedNote = AssertIndirectNote(note, 0x308,
             L"+0x428 | (32-bit pointer) Award - Tee Hee Two\r\n"
             L"++0x24C | Flag\r\n"
             L"+0x438 | (32-bit pointer) Award - Pretty Woman\r\n"
             L"++0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
 
-        const auto* offsetNote = AssertIndirectNote(*sharedNote, 0x428,
+        const auto& offsetNote = AssertIndirectNote(sharedNote, 0x428,
             L"(32-bit pointer) Award - Tee Hee Two\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
+        AssertIndirectNote(offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
 
-        offsetNote = AssertIndirectNote(*sharedNote, 0x438,
+        const auto& offsetNote2 = AssertIndirectNote(sharedNote, 0x438,
             L"(32-bit pointer) Award - Pretty Woman\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
+        AssertIndirectNote(offsetNote2, 0x24C, L"Flag", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestImpliedPointerChain)
@@ -601,14 +593,14 @@ public:
         Assert::AreEqual(Memory::Size::TwentyFourBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
 
-        const auto* nestedNote = AssertIndirectNote(note, 0x8318,
+        const auto& nestedNote = AssertIndirectNote(note, 0x8318,
             L"+0x8014\r\n++0x8004 = First [32-bits]\r\n++0x8008 = Second [32-bits]", Memory::Size::ThirtyTwoBit, 4);
-        Assert::AreEqual(std::wstring(L""), nestedNote->GetPointerDescription());
-        const auto* nestedNote2 = AssertIndirectNote(*nestedNote, 0x8014,
+        Assert::AreEqual(std::wstring(L""), nestedNote.GetPointerDescription());
+        const auto& nestedNote2 = AssertIndirectNote(nestedNote, 0x8014,
             L"+0x8004 = First [32-bits]\r\n+0x8008 = Second [32-bits]", Memory::Size::ThirtyTwoBit, 4);
-        Assert::AreEqual(std::wstring(L""), nestedNote2->GetPointerDescription());
-        AssertIndirectNote(*nestedNote2, 0x8004, L"First [32-bits]", Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*nestedNote2, 0x8008, L"Second [32-bits]", Memory::Size::ThirtyTwoBit, 4);
+        Assert::AreEqual(std::wstring(L""), nestedNote2.GetPointerDescription());
+        AssertIndirectNote(nestedNote2, 0x8004, L"First [32-bits]", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(nestedNote2, 0x8008, L"Second [32-bits]", Memory::Size::ThirtyTwoBit, 4);
     }
 
     TEST_METHOD(TestArrayPointer)
@@ -626,13 +618,13 @@ public:
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
         Assert::AreEqual(std::wstring(L"Pointer [32bit] (80 bytes)"), note.GetPointerDescription());
 
-        const auto* offsetNote = AssertIndirectNote(
-            note, 0x428, L"Pointer - Award - Tee Hee Two (32bit)\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
+        const auto& offsetNote = AssertIndirectNote(note, 0x428,
+            L"Pointer - Award - Tee Hee Two (32bit)\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
 
-        offsetNote = AssertIndirectNote(note, 0x438, L"Pointer - Award - Pretty Woman (32bit)\r\n+0x24C | Flag",
-                                        Memory::Size::ThirtyTwoBit, 4);
-        AssertIndirectNote(*offsetNote, 0x24C, L"Flag", Memory::Size::Unknown, 1);
+        const auto& offsetNote2 = AssertIndirectNote(note, 0x438,
+            L"Pointer - Award - Pretty Woman (32bit)\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
+        AssertIndirectNote(offsetNote2, 0x24C, L"Flag", Memory::Size::Unknown, 1);
     }
 
     TEST_METHOD(TestPointerOverflow)
@@ -868,6 +860,7 @@ public:
 
         const auto* pSubNote = note.GetPointerNoteAtOffset(0x02);
         Assert::IsNotNull(pSubNote);
+        Ensures(pSubNote != nullptr);
         Assert::AreEqual(std::wstring_view(), pSubNote->GetEnumText(0));
         Assert::AreEqual(std::wstring_view(L"1=Red"), pSubNote->GetEnumText(1));
         Assert::AreEqual(std::wstring_view(L"2=Green"), pSubNote->GetEnumText(2));

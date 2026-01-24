@@ -22,6 +22,9 @@
     <Filter Include="context\impl">
       <UniqueIdentifier>{d61072e4-3899-44b4-9645-4557defa94d4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="data\models">
+      <UniqueIdentifier>{0257fa92-4751-42dc-8c9b-2ea7110ed5b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="services\ServiceLocator.hh">
@@ -147,6 +150,12 @@
     <ClInclude Include="context\UserContext.hh">
       <Filter>context</Filter>
     </ClInclude>
+    <ClInclude Include="data\models\AssetModelBase.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\CodeNoteModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -190,6 +199,12 @@
     </ClCompile>
     <ClCompile Include="context\impl\EmulatorMemoryContext.cpp">
       <Filter>context\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\CodeNoteModel.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\AssetModelBase.cpp">
+      <Filter>data\models</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

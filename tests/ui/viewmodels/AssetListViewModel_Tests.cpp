@@ -20,6 +20,7 @@
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -31,6 +32,7 @@
 #include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockSurface.hh"
 #include "tests\mocks\MockWindowManager.hh"
+
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

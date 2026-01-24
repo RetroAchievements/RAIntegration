@@ -1,12 +1,12 @@
-#ifndef RA_DATA_ASSET_MODEL_BASE_H
-#define RA_DATA_ASSET_MODEL_BASE_H
+#ifndef RA_DATA_MODELS_ASSETMODELBASE_H
+#define RA_DATA_MODELS_ASSETMODELBASE_H
 #pragma once
 
-#include "services\TextWriter.hh"
+#include "data/DataModelBase.hh"
 
-#include "data\DataModelBase.hh"
+#include "services/TextWriter.hh"
 
-#include "util\Strings.hh"
+#include "util/Strings.hh"
 
 namespace ra {
 namespace data {
@@ -386,4 +386,4 @@ private:
 } // namespace data
 } // namespace ra
 
-#endif RA_DATA_ASSET_MODEL_BASE_H
+#endif RA_DATA_MODELS_ASSETMODELBASE_H

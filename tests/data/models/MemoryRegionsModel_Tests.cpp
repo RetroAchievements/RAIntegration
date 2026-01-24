@@ -8,6 +8,7 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

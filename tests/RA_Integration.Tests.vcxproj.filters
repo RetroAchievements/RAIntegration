@@ -315,13 +315,7 @@
     <ClCompile Include="..\src\data\models\AchievementModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\data\models\AssetModelBase.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="data\models\AchievementModel_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\AssetModelBase_Tests.cpp">
       <Filter>Tests\Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp">
@@ -413,12 +407,6 @@
     </ClCompile>
     <ClCompile Include="services\AchievementRuntimeExports_Tests.cpp">
       <Filter>Tests\Services</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\models\CodeNoteModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\CodeNoteModel_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\PointerInspectorViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
@@ -561,9 +549,6 @@
       <Filter>Code</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ui\viewmodels\PointerFinderViewModel.hh">
-      <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\data\models\CodeNoteModel.hh">
       <Filter>Code</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockGameIdentifier.hh">

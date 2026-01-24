@@ -69,7 +69,7 @@
     <ProjectReference Include="..\src\rcheevos.vcxproj">
       <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
     </ProjectReference>
-    <ProjectReference Include="devkit\RADevKit.Tests.vcxproj.vcxproj">
+    <ProjectReference Include="devkit\RADevKit.Tests.vcxproj">
       <Project>{6131c3d1-165e-4f39-a44c-94f01eaa03c5}</Project>
     </ProjectReference>
   </ItemGroup>

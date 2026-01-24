@@ -5,6 +5,8 @@
 
 #include "testutil/MemoryAsserts.hh"
 
+#include "util/Strings.hh"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {

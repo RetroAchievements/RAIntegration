@@ -722,6 +722,26 @@ public:
         Assert::AreEqual(std::wstring(L"0x000c (0x0008+4)\r\n[8 bytes] This is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
+    TEST_METHOD(TestTooltipAddressBitNote)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetCodeNote({ 8U }, L"b1=Left\r\nb2=Right\r\nb3=Upper\r\n");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        condition.Parse("0xO0008=1");
+
+        Assert::AreEqual(std::wstring(L"0x0008\r\nb2=Right"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipAddressBitNoteWithHeader)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetCodeNote({ 8U }, L"Chests in first dungeon\r\nb1=Left\r\nb2=Right\r\nb3=Upper\r\n");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        condition.Parse("0xO0008=1");
+
+        Assert::AreEqual(std::wstring(L"0x0008\r\nChests in first dungeon\r\nb2=Right"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
     TEST_METHOD(TestTooltipValueDecimal)
     {
         TriggerConditionViewModelHarness condition;

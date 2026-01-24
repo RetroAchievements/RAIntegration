@@ -450,10 +450,10 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
             std::wstring sPointerChain;
             const auto nOffset = GetSourceAddress();
             const auto nIndirectAddress = GetIndirectAddress(nOffset, sPointerChain, &pNote);
-            return GetAddressTooltip(nIndirectAddress, sPointerChain, pNote);
+            return GetAddressTooltip(nIndirectAddress, GetSourceSize(), sPointerChain, pNote);
         }
 
-        return GetAddressTooltip(GetSourceAddress(), L"", nullptr);
+        return GetAddressTooltip(GetSourceAddress(), GetSourceSize(), L"", nullptr);
     }
 
     if (nProperty == TargetValueProperty && GetValue(HasTargetValueProperty))
@@ -479,10 +479,10 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
             std::wstring sPointerChain;
             const auto nOffset = GetTargetAddress();
             const auto nIndirectAddress = GetIndirectAddress(nOffset, sPointerChain, &pNote);
-            return GetAddressTooltip(nIndirectAddress, sPointerChain, pNote);
+            return GetAddressTooltip(nIndirectAddress, GetTargetSize(), sPointerChain, pNote);
         }
 
-        return GetAddressTooltip(GetTargetAddress(), L"", nullptr);
+        return GetAddressTooltip(GetTargetAddress(), GetTargetSize(), L"", nullptr);
     }
 
     return L"";
@@ -820,7 +820,7 @@ ra::data::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::data::By
     return nAddress;
 }
 
-std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress nAddress,
+std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize,
     const std::wstring& sPointerChain, const ra::data::models::CodeNoteModel* pNote) const
 {
     std::wstring sAddress;
@@ -855,6 +855,16 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
     if (pNote->IsPointer() && GetType() == TriggerConditionType::AddAddress)
         return ra::StringPrintf(L"%s\r\n%s", sAddress, pNote->GetPointerDescription());
 
+    const auto svSubNote = pNote->GetSubNote(nSize);
+    if (!svSubNote.empty())
+    {
+        const auto sSummary = pNote->GetSummary();
+        if (sSummary.empty())
+            return ra::StringPrintf(L"%s\r\n%s", sAddress, svSubNote);
+
+        return ra::StringPrintf(L"%s\r\n%s\r\n%s", sAddress, sSummary, svSubNote);
+    }
+
     // limit the tooltip to the first 20 lines of the code note
     const auto& sNote = pNote->GetNote();
     size_t nLines = 0;
@@ -871,8 +881,8 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
 
     if (nIndex != std::string::npos && sNote.find('\n', nIndex) != std::string::npos)
     {
-        std::wstring sSubString(sNote, 0, nIndex);
-        return ra::StringPrintf(L"%s\r\n%s...", sAddress, sSubString);
+        std::wstring_view svNote(sNote);
+        return ra::StringPrintf(L"%s\r\n%s...", sAddress, svNote.substr(0, nIndex));
     }
 
     return ra::StringPrintf(L"%s\r\n%s", sAddress, sNote);

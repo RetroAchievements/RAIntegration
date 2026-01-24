@@ -1202,6 +1202,14 @@ std::wstring CodeNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPointe
         ++nEndIndex;
     }
 
+    if (nStartIndex > 0 && nEndIndex < sNote.length() - 1)
+    {
+        if (isspace(sNote.at(nStartIndex)))
+            ++nStartIndex;
+        else if (isspace(sNote.at(nEndIndex - 1)))
+            --nEndIndex;
+    }
+
     std::wstring sNoteCopy = sNote;
     sNoteCopy.erase(nStartIndex, nEndIndex - nStartIndex + 1);
 
@@ -1264,6 +1272,107 @@ static uint32_t Convert(std::wstring_view svValue, bool isHex) noexcept
     return nValue;
 }
 
+static size_t MatchBitPrefix(std::wstring_view svRange)
+{
+    if (svRange.size() < 2)
+        return std::wstring::npos;
+
+    if (svRange.at(0) != 'b' && svRange.at(0) != 'B')
+        return std::wstring::npos;
+
+    if (isdigit(svRange.at(1)))
+        return 1;
+
+    if (svRange.size() < 4)
+        return std::wstring::npos;
+
+    if (svRange.at(1) != 'i' && svRange.at(1) != 'I')
+        return std::wstring::npos;
+
+    if (svRange.at(2) != 't' && svRange.at(2) != 'T')
+        return std::wstring::npos;
+
+    if (isdigit(svRange.at(3)))
+        return 3;
+
+    if (svRange.size() < 5 || (svRange.at(3) != 's' && svRange.at(3) != 'S'))
+        return std::wstring::npos;
+
+    if (isdigit(svRange.at(4)))
+        return 4;
+
+    return std::wstring::npos;
+}
+
+static bool ParseBitRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHigh)
+{
+    size_t nIndex = MatchBitPrefix(svRange);
+    if (nIndex == std::wstring::npos)
+    {
+        if (svRange.substr(0, 4) == L"low4")
+        {
+            nLow = 4;
+            nHigh = 7;
+            return true;
+        }
+        if (svRange.substr(0, 5) == L"high4")
+        {
+            nLow = 4;
+            nHigh = 7;
+            return true;
+        }
+        return false;
+    }
+
+    size_t nStart = nIndex;
+    while (nIndex < svRange.size() && isdigit(svRange.at(nIndex)))
+        ++nIndex;
+
+    const auto svLow = svRange.substr(nStart, nIndex - nStart);
+    std::wstring_view svHigh;
+
+    while (nIndex < svRange.size() && isspace(svRange.at(nIndex)))
+        ++nIndex;
+
+    if (nIndex < svRange.size())
+    {
+        if (svRange.at(nIndex) != '-')
+        {
+            if (svRange.substr(nIndex) == L"set")
+            {
+                nLow = nHigh = Convert(svLow, false);
+                return true;
+            }
+
+            return false;
+        }
+
+        ++nIndex;
+        while (nIndex < svRange.size() && isspace(svRange.at(nIndex)))
+            ++nIndex;
+
+        if (nIndex < svRange.size() && !isdigit(svRange.at(nIndex)))
+        {
+            nStart = nIndex;
+            nIndex = MatchBitPrefix(svRange.substr(nIndex));
+            if (nIndex == std::wstring::npos)
+                return false;
+            nIndex += nStart;
+        }
+
+        nStart = nIndex;
+        while (nIndex < svRange.size() && isdigit(svRange.at(nIndex)))
+            ++nIndex;
+
+        svHigh = svRange.substr(nStart, nIndex - nStart);
+    }
+
+    nLow = Convert(svLow, false);
+    nHigh = svHigh.empty() ? nLow : Convert(svHigh, false);
+
+    return true;
+}
+
 static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHigh, bool isHex)
 {
     if (svRange.size() > 2 && svRange.at(0) == L'0' && svRange.at(1) == L'x')
@@ -1289,6 +1398,9 @@ static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHig
         if (svRange.at(nIndex++) != '-')
             return false;
 
+        while (nIndex < svRange.size() && isspace(svRange.at(nIndex)))
+            ++nIndex;
+
         const auto nStart = nIndex;
         while (nIndex < svRange.size() && IsHexDigit(svRange.at(nIndex)))
             ++nIndex;
@@ -1305,46 +1417,41 @@ static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHig
     return true;
 }
 
-static bool MatchEnumText(const std::wstring_view svValue, uint32_t nValue, bool isHex)
+static size_t FindValueSplit(const std::wstring_view svLine)
 {
-    const auto nSplit = svValue.find_first_of(L"=:");
+    auto nSplit = svLine.find_first_of(L"=:");
     if (nSplit == std::wstring::npos)
-        return false;
+        nSplit = svLine.find(L"->");
 
-    const auto svLeft = svValue.substr(0, nSplit);
-
-    uint32_t nLow, nHigh;
-    if (ParseRange(svLeft, nLow, nHigh, isHex))
-    {
-        if (nValue >= nLow && nValue <= nHigh)
-            return true;
-    }
-    else if (svValue.at(nSplit) == L'=')
-    {
-        auto svRight = svValue.substr(nSplit + 1);
-        while (!svRight.empty() && isspace(svRight.at(0)))
-            svRight.remove_prefix(1);
-
-        if (ParseRange(svRight, nLow, nHigh, isHex))
-        {
-            if (nValue >= nLow && nValue <= nHigh)
-                return true;
-        }
-    }
-
-    return false;
+    return nSplit;
 }
 
 static std::wstring_view GetValues(const std::wstring_view svLine)
 {
-    const auto nSplit = svLine.find_first_of(L"=:");
+    const auto nSplit = FindValueSplit(svLine);
     if (nSplit == std::wstring::npos)
         return {};
 
     size_t nRightBracket = svLine.size() + 1;
     const auto nLeftBracket = svLine.find_last_of(L"([{", nSplit);
     if (nLeftBracket == std::wstring::npos)
-        return svLine;
+    {
+        uint32_t nLow, nHigh;
+        if (ParseBitRange(svLine, nLow, nHigh) || ParseRange(svLine, nLow, nHigh, true))
+            return svLine;
+
+        auto nIndex = nSplit;
+        while (nIndex > 0 && (isalnum(svLine.at(nIndex - 1)) || isspace(svLine.at(nIndex - 1))))
+            --nIndex;
+
+        if (nIndex == 0 || nIndex == nSplit)
+            return svLine;
+
+        while (isspace(svLine.at(nIndex)))
+            ++nIndex;
+
+        return svLine.substr(nIndex);
+    }
 
     switch (svLine.at(nLeftBracket))
     {
@@ -1384,12 +1491,17 @@ CodeNoteModel::EnumState CodeNoteModel::DetermineEnumState(const std::wstring_vi
                     const auto nComma = svValues.find_first_of(L",;", nFront);
                     const auto svValue = (nComma == std::wstring::npos) ? svValues.substr(nFront) : svValues.substr(nFront, nComma - nFront);
 
-                    const auto nSplit = svValue.find_first_of(L"=:");
+                    const auto nSplit = FindValueSplit(svValue);
                     if (nSplit != std::wstring::npos)
                     {
                         uint32_t nLow, nHigh;
                         const auto svLeft = svValue.substr(0, nSplit);
-                        if (ParseRange(svLeft, nLow, nHigh, true))
+                        if (ParseBitRange(svLeft, nLow, nHigh))
+                        {
+                            if (nState == EnumState::None)
+                                nState = EnumState::Bits;
+                        }
+                        else if (ParseRange(svLeft, nLow, nHigh, true))
                         {
                             if (svLeft.find_first_of(L"ABCDEFabcdefHhx") != std::wstring::npos)
                                 return EnumState::Hex;
@@ -1415,27 +1527,10 @@ CodeNoteModel::EnumState CodeNoteModel::DetermineEnumState(const std::wstring_vi
     }
 
     return nState;
-
 }
 
-std::wstring_view CodeNoteModel::GetEnumText(uint32_t nValue) const
+static std::wstring_view MatchSubNote(std::wstring_view svNote, std::function<bool(std::wstring_view)> fMatch)
 {
-    if (m_nEnumState == EnumState::None)
-        return {};
-
-    std::wstring_view svNote(m_sNote);
-
-    if (m_pPointerData != nullptr)
-        svNote = svNote.substr(0, m_pPointerData->HeaderLength);
-
-    if (m_nEnumState == EnumState::Unknown)
-    {
-        m_nEnumState = DetermineEnumState(svNote);
-        if (m_nEnumState == EnumState::None)
-            return {};
-    }
-
-    const bool isHex = (m_nEnumState == EnumState::Hex);
     size_t nStart = 0;
     while (nStart < svNote.size())
     {
@@ -1452,7 +1547,7 @@ std::wstring_view CodeNoteModel::GetEnumText(uint32_t nValue) const
                     const auto nComma = svValues.find_first_of(L",;", nFront);
                     const auto svValue = (nComma == std::wstring::npos) ? svValues.substr(nFront) : svValues.substr(nFront, nComma - nFront);
 
-                    if (MatchEnumText(svValue, nValue, isHex))
+                    if (fMatch(svValue))
                         return svValue;
 
                     if (nComma == std::wstring::npos)
@@ -1472,6 +1567,161 @@ std::wstring_view CodeNoteModel::GetEnumText(uint32_t nValue) const
     }
 
     return {};
+}
+
+static bool MatchEnumText(const std::wstring_view svValue, uint32_t nValue, bool isHex)
+{
+    const auto nSplit = FindValueSplit(svValue);
+    if (nSplit == std::wstring::npos)
+        return false;
+
+    const auto svLeft = svValue.substr(0, nSplit);
+
+    uint32_t nLow, nHigh;
+    if (ParseRange(svLeft, nLow, nHigh, isHex))
+    {
+        if (nValue >= nLow && nValue <= nHigh)
+            return true;
+    }
+    else if (svValue.at(nSplit) == L'=')
+    {
+        auto svRight = svValue.substr(nSplit + 1);
+        while (!svRight.empty() && isspace(svRight.at(0)))
+            svRight.remove_prefix(1);
+
+        if (ParseRange(svRight, nLow, nHigh, isHex))
+        {
+            if (nValue >= nLow && nValue <= nHigh)
+                return true;
+        }
+    }
+
+    return false;
+}
+
+std::wstring_view CodeNoteModel::GetEnumText(uint32_t nValue) const
+{
+    if (m_nEnumState == EnumState::None)
+        return {};
+
+    std::wstring_view svNote(m_sNote);
+
+    if (m_pPointerData != nullptr)
+        svNote = svNote.substr(0, m_pPointerData->HeaderLength);
+
+    if (m_nEnumState == EnumState::Unknown)
+    {
+        m_nEnumState = DetermineEnumState(svNote);
+        if (m_nEnumState == EnumState::None)
+            return {};
+    }
+
+    const bool isHex = (m_nEnumState == EnumState::Hex || m_nEnumState == EnumState::Bits);
+    return MatchSubNote(svNote, [nValue, isHex](std::wstring_view svValue) {
+        return MatchEnumText(svValue, nValue, isHex);
+    });
+}
+
+static bool MatchBitsText(const std::wstring_view svValue, ra::data::Memory::Size nBits)
+{
+    const auto nSplit = FindValueSplit(svValue);
+    if (nSplit == std::wstring::npos)
+        return false;
+
+    const auto svLeft = svValue.substr(0, nSplit);
+
+    uint32_t nLow, nHigh;
+    if (ParseBitRange(svLeft, nLow, nHigh))
+    {
+        switch (nBits)
+        {
+            case ra::data::Memory::Size::Bit0: return nLow == 0;
+            case ra::data::Memory::Size::Bit1: return nLow <= 1 && nHigh >= 1;
+            case ra::data::Memory::Size::Bit2: return nLow <= 2 && nHigh >= 2;
+            case ra::data::Memory::Size::Bit3: return nLow <= 3 && nHigh >= 3;
+            case ra::data::Memory::Size::Bit4: return nLow <= 4 && nHigh >= 4;
+            case ra::data::Memory::Size::Bit5: return nLow <= 5 && nHigh >= 5;
+            case ra::data::Memory::Size::Bit6: return nLow <= 6 && nHigh >= 6;
+            case ra::data::Memory::Size::Bit7: return nLow <= 7 && nHigh >= 7;
+            case ra::data::Memory::Size::NibbleLower: return nLow == 0 && nHigh >= 3;
+            case ra::data::Memory::Size::NibbleUpper: return nLow <= 4 && nHigh >= 7;
+        }
+    }
+
+    return false;
+}
+
+std::wstring_view CodeNoteModel::GetSubNote(ra::data::Memory::Size nBits) const
+{
+    if (ra::data::Memory::SizeBits(nBits) >= 8 || nBits == ra::data::Memory::Size::BitCount)
+        return {};
+
+    if (m_nEnumState != EnumState::Bits && m_nEnumState != EnumState::Unknown)
+        return {};
+
+    std::wstring_view svNote(m_sNote);
+
+    if (m_pPointerData != nullptr)
+        svNote = svNote.substr(0, m_pPointerData->HeaderLength);
+
+    if (m_nEnumState == EnumState::Unknown)
+    {
+        m_nEnumState = DetermineEnumState(svNote);
+        if (m_nEnumState != EnumState::Bits)
+            return {};
+    }
+
+    return MatchSubNote(svNote, [nBits](std::wstring_view svValue) {
+        return MatchBitsText(svValue, nBits);
+    });
+}
+
+std::wstring CodeNoteModel::GetSummary() const
+{
+    if (m_pPointerData != nullptr)
+    {
+        std::wstring_view svHeader(m_sNote.data(), m_pPointerData->HeaderLength);
+        const auto nHeaderLineEnd = svHeader.find_first_of(L"\n\r");
+        if (nHeaderLineEnd != std::string::npos)
+            svHeader = svHeader.substr(0, nHeaderLineEnd);
+        return TrimSize(std::wstring(svHeader), false);
+    }
+
+    std::wstring_view svNote(m_sNote);
+    const auto nLineEnd = svNote.find_first_of(L"\n\r");
+    if (nLineEnd != std::string::npos)
+        svNote = svNote.substr(0, nLineEnd);
+
+    if (m_nEnumState == EnumState::Unknown)
+        m_nEnumState = DetermineEnumState(m_sNote);
+
+    if (m_nEnumState != EnumState::None)
+    {
+        const auto svValues = GetValues(svNote);
+        if (!svValues.empty())
+        {
+            auto nIndex = svNote.find(svValues);
+
+            if (nIndex > 0)
+            {
+                // ignore bracket and whitespace between summary and enum values
+                --nIndex;
+                while (nIndex > 0 && isspace(svNote.at(nIndex - 1)))
+                    --nIndex;
+
+                if (nIndex > 0 && !isalnum(svNote.at(nIndex - 1)))
+                {
+                    --nIndex;
+                    while (nIndex > 0 && isspace(svNote.at(nIndex - 1)))
+                        --nIndex;
+                }
+            }
+
+            svNote = svNote.substr(0, nIndex);
+        }
+    }
+
+    return TrimSize(std::wstring(svNote), false);
 }
 
 } // namespace models

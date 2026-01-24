@@ -95,6 +95,18 @@ _NODISCARD inline const std::string ToAString(_In_ const std::wstring& value)
 }
 
 template<>
+_NODISCARD inline const std::string ToAString(_In_ const std::string_view& value)
+{
+    return std::string(value);
+}
+
+template<>
+_NODISCARD inline const std::string ToAString(_In_ const std::wstring_view& value)
+{
+    return ra::Narrow(std::wstring(value));
+}
+
+template<>
 _NODISCARD inline const std::string ToAString(_In_ const wchar_t* const& value)
 {
     return ra::Narrow(value);
@@ -165,6 +177,18 @@ _NODISCARD inline const std::wstring ToWString(_In_ const std::string& value)
 }
 
 template<>
+_NODISCARD inline const std::wstring ToWString(_In_ const std::wstring_view& value)
+{
+    return std::wstring(value);
+}
+
+template<>
+_NODISCARD inline const std::wstring ToWString(_In_ const std::string_view& value)
+{
+    return ra::Widen(std::string(value));
+}
+
+template<>
 _NODISCARD inline const std::wstring ToWString(_In_ const wchar_t* const& value)
 {
     return std::wstring(value);
@@ -222,6 +246,18 @@ public:
     void Append(const std::wstring& arg)
     {
         m_vPending.emplace_back(arg.c_str(), arg.length());
+    }
+
+    template<>
+    void Append(const std::string_view& arg)
+    {
+        m_vPending.emplace_back(arg.data(), arg.length());
+    }
+
+    template<>
+    void Append(const std::wstring_view& arg)
+    {
+        m_vPending.emplace_back(arg.data(), arg.length());
     }
 
     void Append(std::string&& arg)

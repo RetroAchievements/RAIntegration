@@ -1417,7 +1417,7 @@ static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHig
     return true;
 }
 
-static size_t FindValueSplit(const std::wstring_view svLine)
+static constexpr size_t FindValueSplit(const std::wstring_view svLine) noexcept
 {
     auto nSplit = svLine.find_first_of(L"=:");
     if (nSplit == std::wstring::npos)

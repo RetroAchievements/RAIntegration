@@ -278,6 +278,49 @@ public:
             ((nValue & 0x0000FF00) << 8) |
             ((nValue & 0x000000FF) << 24);
     }
+
+    /// <summary>
+    /// Attempts to parse a string into a <see cref="ByteAddress" />.
+    /// </summary>
+    /// <param name="sAddress">The string to parse.</param>
+    /// <param name="nAddress">[out] The resulting address.</param>
+    /// <returns><c>true</c> if the string was parsed successfully, <c>false</c> if not.</returns>
+    /// <remarks>Expects a string of hex characters with an optional '$' or '0x' prefix.</remarks>
+    static bool TryParseAddress(const std::string_view sAddress, ByteAddress& nAddress) noexcept;
+
+    /// <summary>
+    /// Attempts to parse a string into a <see cref="ByteAddress" />.
+    /// </summary>
+    /// <param name="sAddress">The string to parse.</param>
+    /// <param name="nAddress">[out] The resulting address.</param>
+    /// <returns><c>true</c> if the string was parsed successfully, <c>false</c> if not.</returns>
+    /// <remarks>Expects a string of hex characters with an optional '$' or '0x' prefix.</remarks>
+    static bool TryParseAddress(const std::wstring_view sAddress, ByteAddress& nAddress) noexcept;
+
+    /// <summary>
+    /// Attempts to parse a string into a <see cref="ByteAddress" />.
+    /// </summary>
+    /// <param name="sAddress">The string to parse.</param>
+    /// <returns>The parsed value, <c>0</c> if parsing failed.</returns>
+    /// <remarks>Expects a string of hex characters with an optional '$' or '0x' prefix.</remarks>
+    static ByteAddress ParseAddress(const std::string_view sAddress) noexcept;
+
+    /// <summary>
+    /// Attempts to parse a string into a <see cref="ByteAddress" />.
+    /// </summary>
+    /// <param name="sAddress">The string to parse.</param>
+    /// <returns>The parsed value, <c>0</c> if parsing failed.</returns>
+    /// <remarks>Expects a string of hex characters with an optional '$' or '0x' prefix.</remarks>
+    static ByteAddress ParseAddress(const std::wstring_view sAddress) noexcept;
+
+    /// <summary>
+    /// Attempts to parse a string into two <see cref="ByteAddress" />es.
+    /// </summary>
+    /// <param name="sRange">The string to parse.</param>
+    /// <param name="nStartAddress">[out] The first address in the range.</param>
+    /// <param name="nEndAddress">[out] The last address in the range.</param>
+    /// <returns><c>true</c> if the provided string could be parsed, <c>false</c> if not.</returns>
+    static bool TryParseAddressRange(const std::wstring& sRange, ByteAddress& nStartAddress, ByteAddress& nEndAddress) noexcept;
 };
 
 } // namespace data

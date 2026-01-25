@@ -67,6 +67,7 @@
     <ClCompile Include="context\mocks\MockEmulatorMemoryContext.cpp" />
     <ClCompile Include="context\mocks\MockRcClient.cpp" />
     <ClCompile Include="data\DataModelBase_Tests.cpp" />
+    <ClCompile Include="data\Memory_Tests.cpp" />
     <ClCompile Include="data\ModelPropertyContainer_Tests.cpp" />
     <ClCompile Include="data\ModelProperty_Tests.cpp" />
     <ClInclude Include="context\mocks\MockConsoleContext.hh" />
@@ -82,6 +83,7 @@
     <ClInclude Include="testutil\CppUnitTest.hh" />
     <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
     <ClCompile Include="data\models\CodeNoteModel_Tests.cpp" />
+    <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp" />
     <ClCompile Include="data\NotifyTargetSet_Tests.cpp" />
     <ClCompile Include="services\Http_Tests.cpp" />
     <ClCompile Include="services\StringTextReader_Tests.cpp" />

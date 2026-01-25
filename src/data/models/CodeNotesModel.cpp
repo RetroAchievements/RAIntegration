@@ -84,7 +84,7 @@ void CodeNotesModel::Refresh(unsigned int nGameId,
             m_bRefreshing = false;
         }
 
-        for (const auto pNote : mPendingCodeNotes)
+        for (const auto& pNote : mPendingCodeNotes)
             SetCodeNote(pNote.first, pNote.second);
 
         for (const auto& pNote : m_vCodeNotes)
@@ -587,6 +587,7 @@ const std::string* CodeNotesModel::GetServerCodeNoteAuthor(ra::data::ByteAddress
 
 void CodeNotesModel::Serialize(ra::services::TextWriter& pWriter) const
 {
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     bool first = true;
 
     for (const auto& pIter : m_mOriginalCodeNotes)
@@ -603,7 +604,7 @@ void CodeNotesModel::Serialize(ra::services::TextWriter& pWriter) const
             pWriter.Write("N0:");
         }
 
-        pWriter.Write(ra::ByteAddressToString(pIter.first));
+        pWriter.Write(pMemoryContext.FormatAddress(pIter.first));
 
         const auto pIter2 = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), pIter.first, CompareNoteAddresses);
         if (pIter2 != m_vCodeNotes.end() && (*pIter2)->GetAddress() == pIter.first)

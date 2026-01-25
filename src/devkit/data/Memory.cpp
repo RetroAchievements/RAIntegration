@@ -44,7 +44,7 @@ Memory::Size Memory::SizeFromRcheevosSize(uint8_t nSize) noexcept
 
 static std::wstring U32ToFloatString(uint32_t nValue, uint8_t nFloatType)
 {
-    rc_typed_value_t value;
+    rc_typed_value_t value{};
     value.type = RC_VALUE_TYPE_UNSIGNED;
     value.value.u32 = nValue;
     rc_transform_memref_value(&value, nFloatType);
@@ -112,7 +112,7 @@ uint32_t Memory::FloatToU32(float fValue, Memory::Size nFloatType) noexcept
     {
         float fValue;
         uint32_t nValue;
-    } uUnion;
+    } uUnion{};
 
     uUnion.fValue = fValue;
 

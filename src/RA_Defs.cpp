@@ -9,18 +9,6 @@
 #include <rcheevos/src/rcheevos/rc_internal.h>
 
 namespace ra {
-
-_Use_decl_annotations_
-std::string ByteAddressToString(ra::data::ByteAddress nAddr)
-{
-#ifndef RA_UTEST
-    const auto& pEmulatorMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-    return pEmulatorMemoryContext.FormatAddress(nAddr);
-#else
-    return ra::StringPrintf("0x%04x", nAddr);
-#endif
-}
-
 namespace data {
 
 const char* ValueFormatToString(ValueFormat nFormat) noexcept

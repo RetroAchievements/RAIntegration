@@ -1635,7 +1635,7 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
     if (vmAchievement->IsModified() ||                                                    // actual modifications
         (bSubmit && vmAchievement->GetChanges() != ra::data::models::AssetChanges::None)) // unpublished changes
     {
-        auto sHeader = vmPopup->GetTitle();
+        std::wstring sHeader = vmPopup->GetTitle();
         sHeader.insert(0, L"Modified ");
         if (vmAchievement->GetCategory() != ra::data::models::AssetCategory::Local)
             sHeader.append(L" LOCALLY");
@@ -1650,7 +1650,7 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
 
     if (bSubmit && pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
     {
-        auto sHeader = vmPopup->GetTitle();
+        std::wstring sHeader = vmPopup->GetTitle();
         sHeader.insert(0, L"Test ");
         vmPopup->SetTitle(sHeader);
 

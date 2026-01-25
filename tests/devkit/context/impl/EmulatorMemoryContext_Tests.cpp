@@ -587,64 +587,64 @@ public:
         EmulatorMemoryContextHarness emulator;
         emulator.AddMemoryBlock(0, 0x80, nullptr, nullptr);
 
-        Assert::AreEqual(std::string("0x0000"), emulator.FormatAddress(0x00000000U));
-        Assert::AreEqual(std::string("0x00ff"), emulator.FormatAddress(0x000000FFU));
-        Assert::AreEqual(std::string("0x0100"), emulator.FormatAddress(0x00000100U));
-        Assert::AreEqual(std::string("0xffff"), emulator.FormatAddress(0x0000FFFFU));
-        Assert::AreEqual(std::string("0x010000"), emulator.FormatAddress(0x00010000U));
-        Assert::AreEqual(std::string("0xffffff"), emulator.FormatAddress(0x00FFFFFFU));
-        Assert::AreEqual(std::string("0x01000000"), emulator.FormatAddress(0x01000000U));
-        Assert::AreEqual(std::string("0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x0000"), emulator.FormatAddress(0x00000000U));
+        Assert::AreEqual(std::wstring(L"0x00ff"), emulator.FormatAddress(0x000000FFU));
+        Assert::AreEqual(std::wstring(L"0x0100"), emulator.FormatAddress(0x00000100U));
+        Assert::AreEqual(std::wstring(L"0xffff"), emulator.FormatAddress(0x0000FFFFU));
+        Assert::AreEqual(std::wstring(L"0x010000"), emulator.FormatAddress(0x00010000U));
+        Assert::AreEqual(std::wstring(L"0xffffff"), emulator.FormatAddress(0x00FFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x01000000"), emulator.FormatAddress(0x01000000U));
+        Assert::AreEqual(std::wstring(L"0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
 
         emulator.AddMemoryBlock(1, 0x80, nullptr, nullptr); // total size = 0x100
-        Assert::AreEqual(std::string("0x0000"), emulator.FormatAddress(0x00000000U));
-        Assert::AreEqual(std::string("0x00ff"), emulator.FormatAddress(0x000000FFU));
-        Assert::AreEqual(std::string("0x0100"), emulator.FormatAddress(0x00000100U));
-        Assert::AreEqual(std::string("0xffff"), emulator.FormatAddress(0x0000FFFFU));
-        Assert::AreEqual(std::string("0x010000"), emulator.FormatAddress(0x00010000U));
-        Assert::AreEqual(std::string("0xffffff"), emulator.FormatAddress(0x00FFFFFFU));
-        Assert::AreEqual(std::string("0x01000000"), emulator.FormatAddress(0x01000000U));
-        Assert::AreEqual(std::string("0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x0000"), emulator.FormatAddress(0x00000000U));
+        Assert::AreEqual(std::wstring(L"0x00ff"), emulator.FormatAddress(0x000000FFU));
+        Assert::AreEqual(std::wstring(L"0x0100"), emulator.FormatAddress(0x00000100U));
+        Assert::AreEqual(std::wstring(L"0xffff"), emulator.FormatAddress(0x0000FFFFU));
+        Assert::AreEqual(std::wstring(L"0x010000"), emulator.FormatAddress(0x00010000U));
+        Assert::AreEqual(std::wstring(L"0xffffff"), emulator.FormatAddress(0x00FFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x01000000"), emulator.FormatAddress(0x01000000U));
+        Assert::AreEqual(std::wstring(L"0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
 
         emulator.AddMemoryBlock(2, 0xFF00, nullptr, nullptr); // total size = 0x10000
-        Assert::AreEqual(std::string("0x0000"), emulator.FormatAddress(0x00000000U));
-        Assert::AreEqual(std::string("0x00ff"), emulator.FormatAddress(0x000000FFU));
-        Assert::AreEqual(std::string("0x0100"), emulator.FormatAddress(0x00000100U));
-        Assert::AreEqual(std::string("0xffff"), emulator.FormatAddress(0x0000FFFFU));
-        Assert::AreEqual(std::string("0x010000"), emulator.FormatAddress(0x00010000U));
-        Assert::AreEqual(std::string("0xffffff"), emulator.FormatAddress(0x00FFFFFFU));
-        Assert::AreEqual(std::string("0x01000000"), emulator.FormatAddress(0x01000000U));
-        Assert::AreEqual(std::string("0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x0000"), emulator.FormatAddress(0x00000000U));
+        Assert::AreEqual(std::wstring(L"0x00ff"), emulator.FormatAddress(0x000000FFU));
+        Assert::AreEqual(std::wstring(L"0x0100"), emulator.FormatAddress(0x00000100U));
+        Assert::AreEqual(std::wstring(L"0xffff"), emulator.FormatAddress(0x0000FFFFU));
+        Assert::AreEqual(std::wstring(L"0x010000"), emulator.FormatAddress(0x00010000U));
+        Assert::AreEqual(std::wstring(L"0xffffff"), emulator.FormatAddress(0x00FFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x01000000"), emulator.FormatAddress(0x01000000U));
+        Assert::AreEqual(std::wstring(L"0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
 
         emulator.AddMemoryBlock(3, 1, nullptr, nullptr); // total size = 0x10001
-        Assert::AreEqual(std::string("0x000000"), emulator.FormatAddress(0x00000000U));
-        Assert::AreEqual(std::string("0x0000ff"), emulator.FormatAddress(0x000000FFU));
-        Assert::AreEqual(std::string("0x000100"), emulator.FormatAddress(0x00000100U));
-        Assert::AreEqual(std::string("0x00ffff"), emulator.FormatAddress(0x0000FFFFU));
-        Assert::AreEqual(std::string("0x010000"), emulator.FormatAddress(0x00010000U));
-        Assert::AreEqual(std::string("0xffffff"), emulator.FormatAddress(0x00FFFFFFU));
-        Assert::AreEqual(std::string("0x01000000"), emulator.FormatAddress(0x01000000U));
-        Assert::AreEqual(std::string("0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x000000"), emulator.FormatAddress(0x00000000U));
+        Assert::AreEqual(std::wstring(L"0x0000ff"), emulator.FormatAddress(0x000000FFU));
+        Assert::AreEqual(std::wstring(L"0x000100"), emulator.FormatAddress(0x00000100U));
+        Assert::AreEqual(std::wstring(L"0x00ffff"), emulator.FormatAddress(0x0000FFFFU));
+        Assert::AreEqual(std::wstring(L"0x010000"), emulator.FormatAddress(0x00010000U));
+        Assert::AreEqual(std::wstring(L"0xffffff"), emulator.FormatAddress(0x00FFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x01000000"), emulator.FormatAddress(0x01000000U));
+        Assert::AreEqual(std::wstring(L"0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
 
         emulator.AddMemoryBlock(4, 0xFEFFFF, nullptr, nullptr); // total size = 0x1000000
-        Assert::AreEqual(std::string("0x000000"), emulator.FormatAddress(0x00000000U));
-        Assert::AreEqual(std::string("0x0000ff"), emulator.FormatAddress(0x000000FFU));
-        Assert::AreEqual(std::string("0x000100"), emulator.FormatAddress(0x00000100U));
-        Assert::AreEqual(std::string("0x00ffff"), emulator.FormatAddress(0x0000FFFFU));
-        Assert::AreEqual(std::string("0x010000"), emulator.FormatAddress(0x00010000U));
-        Assert::AreEqual(std::string("0xffffff"), emulator.FormatAddress(0x00FFFFFFU));
-        Assert::AreEqual(std::string("0x01000000"), emulator.FormatAddress(0x01000000U));
-        Assert::AreEqual(std::string("0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x000000"), emulator.FormatAddress(0x00000000U));
+        Assert::AreEqual(std::wstring(L"0x0000ff"), emulator.FormatAddress(0x000000FFU));
+        Assert::AreEqual(std::wstring(L"0x000100"), emulator.FormatAddress(0x00000100U));
+        Assert::AreEqual(std::wstring(L"0x00ffff"), emulator.FormatAddress(0x0000FFFFU));
+        Assert::AreEqual(std::wstring(L"0x010000"), emulator.FormatAddress(0x00010000U));
+        Assert::AreEqual(std::wstring(L"0xffffff"), emulator.FormatAddress(0x00FFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x01000000"), emulator.FormatAddress(0x01000000U));
+        Assert::AreEqual(std::wstring(L"0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
 
         emulator.AddMemoryBlock(5, 1, nullptr, nullptr); // total size = 0x1000001
-        Assert::AreEqual(std::string("0x00000000"), emulator.FormatAddress(0x00000000U));
-        Assert::AreEqual(std::string("0x000000ff"), emulator.FormatAddress(0x000000FFU));
-        Assert::AreEqual(std::string("0x00000100"), emulator.FormatAddress(0x00000100U));
-        Assert::AreEqual(std::string("0x0000ffff"), emulator.FormatAddress(0x0000FFFFU));
-        Assert::AreEqual(std::string("0x00010000"), emulator.FormatAddress(0x00010000U));
-        Assert::AreEqual(std::string("0x00ffffff"), emulator.FormatAddress(0x00FFFFFFU));
-        Assert::AreEqual(std::string("0x01000000"), emulator.FormatAddress(0x01000000U));
-        Assert::AreEqual(std::string("0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x00000000"), emulator.FormatAddress(0x00000000U));
+        Assert::AreEqual(std::wstring(L"0x000000ff"), emulator.FormatAddress(0x000000FFU));
+        Assert::AreEqual(std::wstring(L"0x00000100"), emulator.FormatAddress(0x00000100U));
+        Assert::AreEqual(std::wstring(L"0x0000ffff"), emulator.FormatAddress(0x0000FFFFU));
+        Assert::AreEqual(std::wstring(L"0x00010000"), emulator.FormatAddress(0x00010000U));
+        Assert::AreEqual(std::wstring(L"0x00ffffff"), emulator.FormatAddress(0x00FFFFFFU));
+        Assert::AreEqual(std::wstring(L"0x01000000"), emulator.FormatAddress(0x01000000U));
+        Assert::AreEqual(std::wstring(L"0xffffffff"), emulator.FormatAddress(0xFFFFFFFFU));
     }
 
     TEST_METHOD(TestCaptureMemory)

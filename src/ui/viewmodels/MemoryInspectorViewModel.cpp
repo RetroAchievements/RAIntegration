@@ -81,7 +81,8 @@ void MemoryInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs
     {
         m_bSyncingAddress = true;
         const auto nAddress = static_cast<ra::data::ByteAddress>(args.tNewValue);
-        SetValue(CurrentAddressTextProperty, ra::Widen(ra::ByteAddressToString(nAddress)));
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        SetValue(CurrentAddressTextProperty, pMemoryContext.FormatAddress(nAddress));
         m_bSyncingAddress = false;
 
         OnCurrentAddressChanged(nAddress);
@@ -284,9 +285,14 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nNe
     {
         const auto nIndirectSource = m_bNoteIsIndirect ? pCodeNotes->GetIndirectSource(nNewAddress) : 0xFFFFFFFF;
         if (nIndirectSource != 0xFFFFFFFF)
-            SetCurrentAddressNoteInternal(ra::StringPrintf(L"[Indirect from %s]\r\n%s", ra::ByteAddressToString(nIndirectSource), *pNote));
+        {
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+            SetCurrentAddressNoteInternal(ra::StringPrintf(L"[Indirect from %s]\r\n%s", pMemoryContext.FormatAddress(nIndirectSource), *pNote));
+        }
         else
+        {
             SetCurrentAddressNoteInternal(*pNote);
+        }
     }
     else
     {
@@ -394,7 +400,8 @@ void MemoryInspectorViewModel::RevertCurrentAddressNote()
     if (pOriginalNote != nullptr)
     {
         ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
-        vmPrompt.SetHeader(ra::StringPrintf(L"Revert note for address %s?", ra::ByteAddressToString(nAddress)));
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        vmPrompt.SetHeader(ra::StringPrintf(L"Revert note for address %s?", pMemoryContext.FormatAddress(nAddress)));
         vmPrompt.SetMessage(L"This will discard all local work and revert the note to the last state retrieved from the server.");
         vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmPrompt.ShowModal() == DialogResult::No)

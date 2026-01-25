@@ -21,26 +21,6 @@ std::string ByteAddressToString(ra::data::ByteAddress nAddr)
 #endif
 }
 
-_Use_decl_annotations_
-ra::data::ByteAddress ByteAddressFromString(const std::string& sByteAddress)
-{
-    ra::data::ByteAddress address{};
-
-    if (!ra::StringStartsWith(sByteAddress, "-")) // negative addresses not supported
-    {
-        char* pEnd;
-        address = std::strtoul(sByteAddress.c_str(), &pEnd, 16);
-        Ensures(pEnd != nullptr);
-        if (*pEnd)
-        {
-            // hex parse failed
-            address = {};
-        }
-    }
-
-    return address;
-}
-
 namespace data {
 
 const char* ValueFormatToString(ValueFormat nFormat) noexcept

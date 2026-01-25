@@ -102,7 +102,7 @@ void MemoryInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeA
 {
     if (args.Property == CurrentAddressTextProperty && !m_bSyncingAddress)
     {
-        const auto nAddress = ra::ByteAddressFromString(ra::Narrow(args.tNewValue));
+        const auto nAddress = ra::data::Memory::ParseAddress(args.tNewValue);
 
         // ignore change event for current address so text field is not modified
         m_bSyncingAddress = true;

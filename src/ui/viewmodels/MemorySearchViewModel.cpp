@@ -1482,7 +1482,7 @@ void MemorySearchViewModel::LoadResults(ra::services::TextReader& pTextReader,
         if (index2 == std::string::npos)
             continue;
 
-        pResult.nAddress = ra::ByteAddressFromString(sLine.substr(0, index));
+        pResult.nAddress = ra::data::Memory::ParseAddress(sLine.substr(0, index));
 
         const auto sValue = sLine.substr(index + 1, index2 - index - 1);
         if (bIsFloat)

@@ -2477,7 +2477,7 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
             pMemRef.value.size = ComparisonSizeFromPrefix(cPrefix);
 
             const auto sAddr = tokenizer.ReadTo(':');
-            pMemRef.address = ra::ByteAddressFromString(sAddr);
+            pMemRef.address = ra::data::Memory::ParseAddress(sAddr);
 
             unsigned delta = 0;
             while (tokenizer.PeekChar() != '#' && !tokenizer.EndOfString())

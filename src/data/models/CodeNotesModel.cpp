@@ -617,7 +617,7 @@ bool CodeNotesModel::Deserialize(ra::Tokenizer& pTokenizer)
 {
     const auto sAddress = pTokenizer.ReadTo(':');
     pTokenizer.Consume(':');
-    const auto nAddress = ra::ByteAddressFromString(sAddress);
+    const auto nAddress = ra::data::Memory::ParseAddress(sAddress);
 
     std::wstring sNote;
     if (!ReadQuoted(pTokenizer, sNote))

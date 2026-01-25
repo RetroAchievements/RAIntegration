@@ -168,8 +168,6 @@ public:
 namespace ra {
 // [deprecated] use IEmulatorMemoryContext::FormatAddress()
 _NODISCARD std::string ByteAddressToString(_In_ ra::data::ByteAddress nAddr);
-// [deprecated] use Memory::ParseAddress()
-_NODISCARD ra::data::ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress);
 } // namespace ra
 
 #endif // !RA_DEFS_H

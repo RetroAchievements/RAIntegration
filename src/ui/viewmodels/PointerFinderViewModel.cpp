@@ -41,7 +41,7 @@ void PointerFinderViewModel::StateViewModel::OnValueChanged(const StringModelPro
 {
     if (args.Property == AddressProperty)
     {
-        const auto nAddress = ra::ByteAddressFromString(ra::Narrow(GetAddress()));
+        const auto nAddress = ra::data::Memory::ParseAddress(GetAddress());
         m_pViewer.InitializeFixedViewer(nAddress);
     }
 
@@ -66,7 +66,7 @@ void PointerFinderViewModel::StateViewModel::Capture()
     }
 
     const auto& sAddress = GetAddress();
-    const auto nAddress = ra::ByteAddressFromString(ra::Narrow(sAddress));
+    const auto nAddress = ra::data::Memory::ParseAddress(sAddress);
     if (nAddress == 0)
     {
         bool bValid = sAddress.size() > 0;

@@ -85,7 +85,7 @@ public:
     /// <summary>
     /// Converts an address to a displayable string.
     /// </summary>
-    std::string FormatAddress(ra::data::ByteAddress nAddress) const override { return m_fFormatAddress(nAddress); }
+    std::wstring FormatAddress(ra::data::ByteAddress nAddress) const override { return m_fFormatAddress(nAddress); }
 
     /// <summary>
     /// Gets whether or not memory has been modified.
@@ -114,7 +114,7 @@ protected:
     void OnTotalMemorySizeChanged();
     void AssertIsOnDoFrameThread() const noexcept(false);
 
-    std::function<std::string(ra::data::ByteAddress)> m_fFormatAddress;
+    std::function<std::wstring(ra::data::ByteAddress)> m_fFormatAddress;
 
     struct MemoryBlock
     {

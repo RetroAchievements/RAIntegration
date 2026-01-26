@@ -87,7 +87,6 @@
     <ClCompile Include="..\src\data\models\CodeNotesModel.cpp" />
     <ClCompile Include="..\src\data\models\LeaderboardModel.cpp" />
     <ClCompile Include="..\src\data\models\LocalBadgesModel.cpp" />
-    <ClCompile Include="..\src\data\models\MemoryRegionsModel.cpp" />
     <ClCompile Include="..\src\data\models\RichPresenceModel.cpp" />
     <ClCompile Include="..\src\data\models\TriggerValidation.cpp" />
     <ClCompile Include="..\src\pch.cpp">
@@ -165,7 +164,6 @@
     <ClCompile Include="data\models\CodeNotesModel_Tests.cpp" />
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
-    <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp" />
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
     <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
     <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp" />

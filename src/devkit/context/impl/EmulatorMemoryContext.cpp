@@ -11,33 +11,33 @@ namespace ra {
 namespace context {
 namespace impl {
 
-static std::string FormatAddressLarge(ra::data::ByteAddress nAddress)
+static std::wstring FormatAddressLarge(ra::data::ByteAddress nAddress)
 {
-    std::string sAddress;
+    std::wstring sAddress;
     sAddress.resize(10);
-    sprintf_s(sAddress.data(), 11, "0x%08x", nAddress);
+    swprintf_s(sAddress.data(), 11, L"0x%08x", nAddress);
     return sAddress;
 }
 
-static std::string FormatAddressMedium(ra::data::ByteAddress nAddress)
+static std::wstring FormatAddressMedium(ra::data::ByteAddress nAddress)
 {
     if (nAddress & 0xFF000000)
         return FormatAddressLarge(nAddress);
 
-    std::string sAddress;
+    std::wstring sAddress;
     sAddress.resize(8);
-    sprintf_s(sAddress.data(), 9, "0x%06x", nAddress);
+    swprintf_s(sAddress.data(), 9, L"0x%06x", nAddress);
     return sAddress;
 }
 
-static std::string FormatAddressSmall(ra::data::ByteAddress nAddress)
+static std::wstring FormatAddressSmall(ra::data::ByteAddress nAddress)
 {
     if (nAddress & 0xFFFF0000)
         return FormatAddressMedium(nAddress);
 
-    std::string sAddress;
+    std::wstring sAddress;
     sAddress.resize(6);
-    sprintf_s(sAddress.data(), 7, "0x%04x", nAddress);
+    swprintf_s(sAddress.data(), 7, L"0x%04x", nAddress);
     return sAddress;
 }
 
@@ -414,7 +414,7 @@ void EmulatorMemoryContext::WriteMemory(ra::data::ByteAddress nAddress, ra::data
     {
         uint32_t u32;
         uint8_t u8[4];
-    } u;
+    } u{};
     u.u32 = nValue;
 
     switch (nSize)

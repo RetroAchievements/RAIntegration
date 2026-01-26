@@ -617,6 +617,7 @@ public:
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
         Assert::AreEqual(std::wstring(L"Pointer [32bit] (80 bytes)"), note.GetPointerDescription());
+        Assert::AreEqual(std::wstring(L"Pointer (80 bytes)"), note.GetSummary());
 
         const auto& offsetNote = AssertIndirectNote(note, 0x428,
             L"Pointer - Award - Tee Hee Two (32bit)\r\n+0x24C | Flag", Memory::Size::ThirtyTwoBit, 4);
@@ -676,6 +677,7 @@ public:
         note.UpdateRawPointerValue(0x04, note.mockEmulatorMemoryContext, nullptr);
 
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
+        Assert::AreEqual(std::wstring(L"root"), note.GetSummary());
 
         note.EnumeratePointerNotes([](ra::data::ByteAddress nAddress, const CodeNoteModel& nOffsetNote)
             {
@@ -700,6 +702,7 @@ public:
             L"+8 | Count";
         note.SetAddress(4U);
         note.SetNote(sNote);
+        Assert::AreEqual(std::wstring(L"Pointer"), note.GetSummary());
 
         std::array<unsigned char, 32> memory{};
         note.mockEmulatorMemoryContext.MockMemory(memory);
@@ -733,6 +736,7 @@ public:
             L"3=Blue\r\n";
         note.SetNote(sNote);
 
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
         Assert::AreEqual(std::wstring_view(L"0=None"), note.GetEnumText(0));
         Assert::AreEqual(std::wstring_view(L"1=Red"), note.GetEnumText(1));
         Assert::AreEqual(std::wstring_view(L"2=Green"), note.GetEnumText(2));
@@ -746,6 +750,7 @@ public:
         const std::wstring sNote = L"Color (0=None, 1=Red, 2=Green, 3=Blue)";
         note.SetNote(sNote);
 
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
         Assert::AreEqual(std::wstring_view(L"0=None"), note.GetEnumText(0));
         Assert::AreEqual(std::wstring_view(L"1=Red"), note.GetEnumText(1));
         Assert::AreEqual(std::wstring_view(L"2=Green"), note.GetEnumText(2));
@@ -759,6 +764,7 @@ public:
         const std::wstring sNote = L"Color [0: None, 1: Red, 2: Green, 3: Blue]";
         note.SetNote(sNote);
 
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
         Assert::AreEqual(std::wstring_view(L"0: None"), note.GetEnumText(0));
         Assert::AreEqual(std::wstring_view(L"1: Red"), note.GetEnumText(1));
         Assert::AreEqual(std::wstring_view(L"2: Green"), note.GetEnumText(2));
@@ -777,6 +783,7 @@ public:
             L"0xA3=Blue\r\n";
         note.SetNote(sNote);
 
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
         Assert::AreEqual(std::wstring_view(L"0x00=None"), note.GetEnumText(0x00));
         Assert::AreEqual(std::wstring_view(L"0x10=Red"), note.GetEnumText(0x10));
         Assert::AreEqual(std::wstring_view(L"0x4C=Green"), note.GetEnumText(0x4C));
@@ -795,6 +802,7 @@ public:
             L"ha3=Blue\r\n";
         note.SetNote(sNote);
 
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
         Assert::AreEqual(std::wstring_view(L"h00=None"), note.GetEnumText(0x00));
         Assert::AreEqual(std::wstring_view(L"h10=Red"), note.GetEnumText(0x10));
         Assert::AreEqual(std::wstring_view(L"h4c=Green"), note.GetEnumText(0x4C));
@@ -813,6 +821,7 @@ public:
             L"A3=Blue\r\n";
         note.SetNote(sNote);
 
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
         Assert::AreEqual(std::wstring_view(L"00=None"), note.GetEnumText(0x00));
         Assert::AreEqual(std::wstring_view(L"10=Red"), note.GetEnumText(0x10));
         Assert::AreEqual(std::wstring_view(L"4C=Green"), note.GetEnumText(0x4C));
@@ -831,6 +840,7 @@ public:
             L"15-18=Blue\r\n";
         note.SetNote(sNote);
 
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
         Assert::AreEqual(std::wstring_view(L"0-3=None"), note.GetEnumText(0));
         Assert::AreEqual(std::wstring_view(L"4-7=Red"), note.GetEnumText(4));
         Assert::AreEqual(std::wstring_view(L"4-7=Red"), note.GetEnumText(5));
@@ -855,6 +865,7 @@ public:
             L"3=Blue\r\n";
         note.SetNote(sNote);
 
+        Assert::AreEqual(std::wstring(L"Data"), note.GetSummary());
         Assert::AreEqual(std::wstring_view(L"0=NULL"), note.GetEnumText(0));
         Assert::AreEqual(std::wstring_view(), note.GetEnumText(2));
 
@@ -865,6 +876,90 @@ public:
         Assert::AreEqual(std::wstring_view(L"1=Red"), pSubNote->GetEnumText(1));
         Assert::AreEqual(std::wstring_view(L"2=Green"), pSubNote->GetEnumText(2));
         Assert::AreEqual(std::wstring_view(), pSubNote->GetEnumText(3));
+    }
+
+    TEST_METHOD(TestGetSubNote)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"Item flags\r\n"
+            L"b0: found\r\n"
+            L"bit1 = collected\r\n"
+            L"B2-3=color\r\n"
+            L"b4 - b7 -> count\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring(L"Item flags"), note.GetSummary());
+        Assert::AreEqual(std::wstring_view(L"b0: found"), note.GetSubNote(ra::data::Memory::Size::Bit0));
+        Assert::AreEqual(std::wstring_view(L"bit1 = collected"), note.GetSubNote(ra::data::Memory::Size::Bit1));
+        Assert::AreEqual(std::wstring_view(L"B2-3=color"), note.GetSubNote(ra::data::Memory::Size::Bit2));
+        Assert::AreEqual(std::wstring_view(L"B2-3=color"), note.GetSubNote(ra::data::Memory::Size::Bit3));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit4));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit5));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit6));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit7));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::NibbleUpper));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::NibbleLower));
+    }
+
+    TEST_METHOD(TestGetSubNoteInlineSubClause)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote = L"Item flags [b0: found, bit1 = collected, B2-3=color, b4 - b7 -> count]\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring(L"Item flags"), note.GetSummary());
+        Assert::AreEqual(std::wstring_view(L"b0: found"), note.GetSubNote(ra::data::Memory::Size::Bit0));
+        Assert::AreEqual(std::wstring_view(L"bit1 = collected"), note.GetSubNote(ra::data::Memory::Size::Bit1));
+        Assert::AreEqual(std::wstring_view(L"B2-3=color"), note.GetSubNote(ra::data::Memory::Size::Bit2));
+        Assert::AreEqual(std::wstring_view(L"B2-3=color"), note.GetSubNote(ra::data::Memory::Size::Bit3));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit4));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit5));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit6));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit7));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::NibbleUpper));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::NibbleLower));
+    }
+
+    TEST_METHOD(TestGetSubNoteTrailingClause)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote = L"Item flags - b0: found, bit1 = collected, B2-3=color, b4 - b7 -> count\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring(L"Item flags"), note.GetSummary());
+        Assert::AreEqual(std::wstring_view(L"b0: found"), note.GetSubNote(ra::data::Memory::Size::Bit0));
+        Assert::AreEqual(std::wstring_view(L"bit1 = collected"), note.GetSubNote(ra::data::Memory::Size::Bit1));
+        Assert::AreEqual(std::wstring_view(L"B2-3=color"), note.GetSubNote(ra::data::Memory::Size::Bit2));
+        Assert::AreEqual(std::wstring_view(L"B2-3=color"), note.GetSubNote(ra::data::Memory::Size::Bit3));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit4));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit5));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit6));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::Bit7));
+        Assert::AreEqual(std::wstring_view(L"b4 - b7 -> count"), note.GetSubNote(ra::data::Memory::Size::NibbleUpper));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::NibbleLower));
+    }
+
+    TEST_METHOD(TestGetSubNoteWithSetSuffix)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"US/EU discriminator\r\n"
+            L"bit4 set: US\r\n"
+            L"bit5 set: EU\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring(L"US/EU discriminator"), note.GetSummary());
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit0));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit1));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit2));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit3));
+        Assert::AreEqual(std::wstring_view(L"bit4 set: US"), note.GetSubNote(ra::data::Memory::Size::Bit4));
+        Assert::AreEqual(std::wstring_view(L"bit5 set: EU"), note.GetSubNote(ra::data::Memory::Size::Bit5));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit6));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit7));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::NibbleUpper));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::NibbleLower));
     }
 };
 

@@ -62,7 +62,7 @@ private:
             SetIsVisible(true);
             Assert::AreEqual(DialogResult::None, GetDialogResult());
 
-            Assert::AreEqual(ra::StringPrintf(L"Uploading %d items...", TaskCount()), GetMessage());
+            Assert::AreEqual(ra::util::String::Printf(L"Uploading %d items...", TaskCount()), GetMessage());
             Assert::AreEqual(0, GetProgress());
 
             // "run" the background thread - all pending tasks will be processed in one worker because the threads are virtual
@@ -190,7 +190,7 @@ private:
 
                 Assert::AreEqual(std::wstring(L"Publish succeeded."), vmMessageBox.GetHeader());
 
-                const auto sMessage = ra::StringPrintf(L"%d items successfully uploaded.", nItems);
+                const auto sMessage = ra::util::String::Printf(L"%d items successfully uploaded.", nItems);
                 Assert::AreEqual(sMessage, vmMessageBox.GetMessage());
 
                 return DialogResult::OK;
@@ -204,7 +204,7 @@ private:
         void AssertFailed(int nSuccessfulItems, int nFailedItems, const std::wstring& sFailedDetail)
         {
             bool bDialogSeen = false;
-            const auto sMessage = ra::StringPrintf(L"%d items successfully uploaded.\n\n%d items failed:\n%s", nSuccessfulItems, nFailedItems, sFailedDetail);
+            const auto sMessage = ra::util::String::Printf(L"%d items successfully uploaded.\n\n%d items failed:\n%s", nSuccessfulItems, nFailedItems, sFailedDetail);
 
             mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen, &sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
             {
@@ -224,9 +224,9 @@ private:
         void AssertAbort(int nSuccessfulItems, int nFailedItems, const std::wstring& sFailedDetail)
         {
             bool bDialogSeen = false;
-            auto sMessage = ra::StringPrintf(L"%d items successfully uploaded.", nSuccessfulItems);
+            auto sMessage = ra::util::String::Printf(L"%d items successfully uploaded.", nSuccessfulItems);
             if (nFailedItems)
-                sMessage += ra::StringPrintf(L"\n\n%d items failed:\n%s", nFailedItems, sFailedDetail);
+                sMessage += ra::util::String::Printf(L"\n\n%d items failed:\n%s", nFailedItems, sFailedDetail);
 
             mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen, &sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
             {

@@ -673,7 +673,7 @@ public:
                 {
                     if (pMenuItem->label)
                     {
-                        if (ra::Narrow(pItem.GetLabel()) != pMenuItem->label)
+                        if (ra::util::String::Narrow(pItem.GetLabel()) != pMenuItem->label)
                         {
                             bChanged = true;
                             break;
@@ -713,7 +713,7 @@ public:
             }
             else
             {
-                pMenuItem->label = rc_buffer_strcpy(&s_pIntegrationMenuBuffer, ra::Narrow(pItem.GetLabel()).c_str());
+                pMenuItem->label = rc_buffer_strcpy(&s_pIntegrationMenuBuffer, ra::util::String::Narrow(pItem.GetLabel()).c_str());
                 pMenuItem->id = nId;
                 pMenuItem->checked = pItem.IsSelected();
             }

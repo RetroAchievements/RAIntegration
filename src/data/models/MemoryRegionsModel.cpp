@@ -41,7 +41,7 @@ void MemoryRegionsModel::Serialize(ra::services::TextWriter& pWriter) const
     }
 }
 
-bool MemoryRegionsModel::Deserialize(ra::Tokenizer& pTokenizer)
+bool MemoryRegionsModel::Deserialize(ra::util::Tokenizer& pTokenizer)
 {
     const auto sStartAddress = pTokenizer.ReadTo('-');
     pTokenizer.Consume('-');

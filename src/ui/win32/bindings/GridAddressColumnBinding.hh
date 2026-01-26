@@ -23,7 +23,7 @@ public:
     std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
     {
         const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
-        return ra::Widen(ra::ByteAddressToString(nValue));
+        return ra::util::String::Widen(ra::ByteAddressToString(nValue));
     }
 
     bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override

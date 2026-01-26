@@ -103,9 +103,9 @@ public:
 
         const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
         if (pItem->IsIndirectAddress())
-            return ra::StringPrintf(L"(%s)", ra::ByteAddressToString(nValue).substr(2));
+            return ra::util::String::Printf(L"(%s)", ra::ByteAddressToString(nValue).substr(2));
 
-        return ra::Widen(ra::ByteAddressToString(nValue));
+        return ra::util::String::Widen(ra::ByteAddressToString(nValue));
     }
 };
 

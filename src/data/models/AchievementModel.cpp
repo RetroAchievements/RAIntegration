@@ -107,7 +107,7 @@ void AchievementModel::OnValueChanged(const StringModelProperty::ChangeArgs& arg
     }
     else if (args.Property == BadgeProperty)
     {
-        if (ra::StringStartsWith(args.tOldValue, L"local\\"))
+        if (ra::util::String::StartsWith(args.tOldValue, L"local\\"))
         {
             auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
             auto* pLocalBadges = dynamic_cast<LocalBadgesModel*>(pGameContext.Assets().FindAsset(ra::data::models::AssetType::LocalBadges, 0));
@@ -118,7 +118,7 @@ void AchievementModel::OnValueChanged(const StringModelProperty::ChangeArgs& arg
             }
         }
 
-        if (ra::StringStartsWith(args.tNewValue, L"local\\"))
+        if (ra::util::String::StartsWith(args.tNewValue, L"local\\"))
         {
             auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
             auto* pLocalBadges = dynamic_cast<LocalBadgesModel*>(pGameContext.Assets().FindAsset(ra::data::models::AssetType::LocalBadges, 0));
@@ -174,7 +174,7 @@ bool AchievementModel::ValidateAsset(std::wstring& sError)
     const auto& sTrigger = GetAssetDefinition(m_pTrigger);
     if (sTrigger.length() > MaxSerializedLength)
     {
-        sError = ra::StringPrintf(L"Serialized length exceeds limit: %d/%d", sTrigger.length(), MaxSerializedLength);
+        sError = ra::util::String::Printf(L"Serialized length exceeds limit: %d/%d", sTrigger.length(), MaxSerializedLength);
         return false;
     }
 
@@ -319,20 +319,20 @@ void AchievementModel::SyncID()
 
 void AchievementModel::SyncTitle()
 {
-    m_sTitleBuffer = ra::Narrow(GetName());
+    m_sTitleBuffer = ra::util::String::Narrow(GetName());
     m_pAchievement->public_.title = m_sTitleBuffer.c_str();
 }
 
 void AchievementModel::SyncDescription()
 {
-    m_sDescriptionBuffer = ra::Narrow(GetDescription());
+    m_sDescriptionBuffer = ra::util::String::Narrow(GetDescription());
     m_pAchievement->public_.description = m_sDescriptionBuffer.c_str();
 }
 
 void AchievementModel::SyncBadge()
 {
     const auto& sBadge = GetBadge();
-    if (ra::StringStartsWith(sBadge, L"local\\"))
+    if (ra::util::String::StartsWith(sBadge, L"local\\"))
     {
         // cannot fit "local/md5.png" into 8 byte buffer. also, client may not understand.
         // encode a value that we can intercept in rc_client_achievement_get_image_url.
@@ -342,7 +342,7 @@ void AchievementModel::SyncBadge()
     else
     {
         snprintf(m_pAchievement->public_.badge_name, sizeof(m_pAchievement->public_.badge_name), "%s",
-                 ra::Narrow(sBadge).c_str());
+                 ra::util::String::Narrow(sBadge).c_str());
     }
 }
 
@@ -492,13 +492,13 @@ void AchievementModel::Attach(struct rc_client_achievement_info_t& pAchievement,
     AssetCategory nCategory, const std::string& sTrigger)
 {
     SetID(pAchievement.public_.id);
-    SetName(ra::Widen(pAchievement.public_.title));
-    SetDescription(ra::Widen(pAchievement.public_.description));
+    SetName(ra::util::String::Widen(pAchievement.public_.title));
+    SetDescription(ra::util::String::Widen(pAchievement.public_.description));
     SetCategory(nCategory);
     SetPoints(pAchievement.public_.points);
     if (pAchievement.author)
-        SetAuthor(ra::Widen(pAchievement.author));
-    SetBadge(ra::Widen(pAchievement.public_.badge_name));
+        SetAuthor(ra::util::String::Widen(pAchievement.author));
+    SetBadge(ra::util::String::Widen(pAchievement.public_.badge_name));
     SetCreationTime(pAchievement.created_time);
     SetUpdatedTime(pAchievement.updated_time);
     SetTrigger(sTrigger);
@@ -601,7 +601,7 @@ void AchievementModel::Serialize(ra::services::TextWriter& pWriter) const
     WritePossiblyQuoted(pWriter, GetLocalValue(BadgeProperty));
 }
 
-bool AchievementModel::Deserialize(ra::Tokenizer& pTokenizer)
+bool AchievementModel::Deserialize(ra::util::Tokenizer& pTokenizer)
 {
     // field 2: trigger
     std::string sTrigger;
@@ -688,12 +688,12 @@ bool AchievementModel::Deserialize(ra::Tokenizer& pTokenizer)
         sBadge.insert(0, 5 - sBadge.length(), '0');
 
     // line is valid
-    SetName(ra::Widen(sTitle));
-    SetDescription(ra::Widen(sDescription));
+    SetName(ra::util::String::Widen(sTitle));
+    SetDescription(ra::util::String::Widen(sDescription));
     if (GetID() >= ra::data::context::GameAssets::FirstLocalId || GetAuthor().empty())
-        SetAuthor(ra::Widen(sAuthor));
+        SetAuthor(ra::util::String::Widen(sAuthor));
     SetPoints(nPoints);
-    SetBadge(ra::Widen(sBadge));
+    SetBadge(ra::util::String::Widen(sBadge));
     SetTrigger(sTrigger);
 
     if (sType.empty())

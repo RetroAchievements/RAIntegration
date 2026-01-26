@@ -23,7 +23,7 @@ void AssertContains(const std::string& sHaystack, const std::string& sNeedle)
 {
     if (sHaystack.find(sNeedle) == std::string::npos)
     {
-        const auto sError = ra::StringPrintf(L"\"%s\" not found in \"%s\"", ra::Widen(sNeedle), ra::Widen(sHaystack));
+        const auto sError = ra::util::String::Printf(L"\"%s\" not found in \"%s\"", sNeedle, sHaystack);
         Assert::Fail(sError.c_str());
     }
 }
@@ -32,7 +32,7 @@ void AssertDoesNotContain(const std::string& sHaystack, const std::string& sNeed
 {
     if (sHaystack.find(sNeedle) != std::string::npos)
     {
-        const auto sError = ra::StringPrintf(L"\"%s\" found in \"%s\"", ra::Widen(sNeedle), ra::Widen(sHaystack));
+        const auto sError = ra::util::String::Printf(L"\"%s\" found in \"%s\"", sNeedle, sHaystack);
         Assert::Fail(sError.c_str());
     }
 }

@@ -156,6 +156,12 @@
     <ClInclude Include="data\models\CodeNoteModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
+    <ClInclude Include="util\StringBuilder.hh">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="util\Tokenizer.hh">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -205,6 +211,12 @@
     </ClCompile>
     <ClCompile Include="data\models\AssetModelBase.cpp">
       <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="util\StringBuilder.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="util\Tokenizer.cpp">
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

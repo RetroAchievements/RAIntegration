@@ -109,14 +109,14 @@ void AssetEditorViewModel::SelectBadgeFile()
     const auto pFile = pFileSystemService.OpenTextFile(pFileName);
     if (!pFile)
     {
-        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(L"Could not read %s", pFileName));
+        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::util::String::Printf(L"Could not read %s", pFileName));
         return;
     }
     byte pHeader[16]{};
     pFile->GetBytes(pHeader, sizeof(pHeader));
 
-    auto sExtension = ra::Narrow(pFileSystemService.GetExtension(pFileName));
-    ra::StringMakeLowercase(sExtension);
+    auto sExtension = ra::util::String::Narrow(pFileSystemService.GetExtension(pFileName));
+    ra::util::String::MakeLowercase(sExtension);
     bool bValid = false;
     if (sExtension == "png")
         bValid = (memcmp(&pHeader[1], "PNG", 3) == 0);
@@ -127,7 +127,7 @@ void AssetEditorViewModel::SelectBadgeFile()
 
     if (!bValid)
     {
-        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(L"File does not appear to be a valid %s image.", sExtension));
+        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::util::String::Printf(L"File does not appear to be a valid %s image.", sExtension));
         return;
     }
 
@@ -135,11 +135,11 @@ void AssetEditorViewModel::SelectBadgeFile()
     const auto sBadgeName = pImageRepository.StoreImage(ImageType::Badge, pFileName);
     if (sBadgeName.empty())
     {
-        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(L"Error processing %s", pFileName));
+        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::util::String::Printf(L"Error processing %s", pFileName));
         return;
     }
 
-    SetBadge(ra::Widen(sBadgeName));
+    SetBadge(ra::util::String::Widen(sBadgeName));
 }
 
 void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, bool bForce)
@@ -732,7 +732,7 @@ void AssetEditorViewModel::OnTriggerChanged(bool bIsLoading)
 
     if (nSize < 0)
     {
-        SetValue(AssetValidationErrorProperty, ra::Widen(rc_error_str(nSize)));
+        SetValue(AssetValidationErrorProperty, ra::util::String::Widen(rc_error_str(nSize)));
 
         // if the achievement is active, we have to disable it
         if (m_pAsset->IsActive())
@@ -1043,7 +1043,7 @@ void AssetEditorViewModel::UpdateMeasuredValue()
                 }
 
                 const auto nValue = (pTrigger->measured_value == RC_MEASURED_UNKNOWN) ? 0 : pTrigger->measured_value;
-                SetValue(MeasuredValueProperty, ra::StringPrintf(L"%d/%d", nValue, pTrigger->measured_target));
+                SetValue(MeasuredValueProperty, ra::util::String::Printf(L"%d/%d", nValue, pTrigger->measured_target));
             }
             else
             {
@@ -1058,7 +1058,7 @@ void AssetEditorViewModel::UpdateMeasuredValue()
 
                         char buffer[16];
                         rc_format_value(buffer, sizeof(buffer), nValue, ra::etoi(GetValueFormat()));
-                        SetValue(FormattedValueProperty, ra::Widen(buffer));
+                        SetValue(FormattedValueProperty, ra::util::String::Widen(buffer));
                     }
                 }
             }

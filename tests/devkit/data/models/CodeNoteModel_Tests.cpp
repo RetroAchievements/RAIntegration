@@ -45,10 +45,10 @@ private:
         const std::wstring& sExpectedNote, Memory::Size nExpectedSize, unsigned int nExpectedBytes)
     {
         const auto* offsetNote = note.GetPointerNoteAtOffset(nOffset);
-        Assert::IsNotNull(offsetNote, ra::StringPrintf(L"No note found at offset 0x%04x", nOffset).c_str());
+        Assert::IsNotNull(offsetNote, ra::util::String::Printf(L"No note found at offset 0x%04x", nOffset).c_str());
         Ensures(offsetNote != nullptr);
 
-        const auto sMessage = ra::StringPrintf(L"Offset 0x%04x", nOffset);
+        const auto sMessage = ra::util::String::Printf(L"Offset 0x%04x", nOffset);
         Assert::AreEqual(nExpectedSize, offsetNote->GetMemSize(), sMessage.c_str());
         Assert::AreEqual(nExpectedBytes, offsetNote->GetBytes(), sMessage.c_str());
         Assert::AreEqual(sExpectedNote, offsetNote->GetNote(), sMessage.c_str());

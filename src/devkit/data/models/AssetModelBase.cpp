@@ -135,7 +135,7 @@ void AssetModelBase::WriteNumber(ra::services::TextWriter& pWriter, const uint32
     pWriter.Write(std::to_string(nValue));
 }
 
-bool AssetModelBase::ReadNumber(ra::Tokenizer& pTokenizer, uint32_t& nValue)
+bool AssetModelBase::ReadNumber(ra::util::Tokenizer& pTokenizer, uint32_t& nValue)
 {
     if (pTokenizer.EndOfString())
         return false;
@@ -144,7 +144,7 @@ bool AssetModelBase::ReadNumber(ra::Tokenizer& pTokenizer, uint32_t& nValue)
     return pTokenizer.Consume(':') || pTokenizer.EndOfString();
 }
 
-bool AssetModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
+bool AssetModelBase::ReadQuoted(ra::util::Tokenizer& pTokenizer, std::string& sText)
 {
     if (pTokenizer.EndOfString())
         return false;
@@ -153,16 +153,16 @@ bool AssetModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
     return pTokenizer.Consume(':') || pTokenizer.EndOfString();
 }
 
-bool AssetModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText)
+bool AssetModelBase::ReadQuoted(ra::util::Tokenizer& pTokenizer, std::wstring& sText)
 {
     if (pTokenizer.EndOfString())
         return false;
 
-    sText = ra::Widen(pTokenizer.ReadQuotedString());
+    sText = ra::util::String::Widen(pTokenizer.ReadQuotedString());
     return pTokenizer.Consume(':') || pTokenizer.EndOfString();
 }
 
-bool AssetModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
+bool AssetModelBase::ReadPossiblyQuoted(ra::util::Tokenizer& pTokenizer, std::string& sText)
 {
     if (pTokenizer.EndOfString())
         return false;
@@ -175,7 +175,7 @@ bool AssetModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& 
     return true;
 }
 
-bool AssetModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText)
+bool AssetModelBase::ReadPossiblyQuoted(ra::util::Tokenizer& pTokenizer, std::wstring& sText)
 {
     if (pTokenizer.EndOfString())
         return false;
@@ -183,7 +183,7 @@ bool AssetModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring&
     if (pTokenizer.PeekChar() == '"')
         return ReadQuoted(pTokenizer, sText);
 
-    sText = ra::Widen(pTokenizer.ReadTo(':'));
+    sText = ra::util::String::Widen(pTokenizer.ReadTo(':'));
     pTokenizer.Consume(':');
     return true;
 }
@@ -251,7 +251,7 @@ void AssetModelBase::RestoreServerCheckpoint()
     EndUpdate();
 }
 
-void AssetModelBase::ResetLocalCheckpoint(ra::Tokenizer& pTokenizer)
+void AssetModelBase::ResetLocalCheckpoint(ra::util::Tokenizer& pTokenizer)
 {
     // this function is a conglomeration of RestoreServerCheckpoint and UpdateLocalCheckpoint that calls
     // Deserialize to populate the local checkpoint instead of making local changes and commiting them.
@@ -267,7 +267,7 @@ void AssetModelBase::ResetLocalCheckpoint(ra::Tokenizer& pTokenizer)
     EndUpdate();             // re-enable notifications
 }
 
-void AssetModelBase::DeserializeLocalCheckpoint(ra::Tokenizer& pTokenizer)
+void AssetModelBase::DeserializeLocalCheckpoint(ra::util::Tokenizer& pTokenizer)
 {
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext == nullptr);
@@ -399,7 +399,7 @@ void AssetModelBase::UpdateAssetDefinitionVersion(const AssetDefinition& pAsset,
 {
     // DJB2 hash the definition
     const auto& sDefinition = GetAssetDefinition(pAsset, nState);
-    int nHash = ra::StringHash(sDefinition);
+    int nHash = ra::util::String::Hash(sDefinition);
 
     // inject the state into the two lowermost bits - we want the state in the checkpoints so it gets restored
     // when reverted. we can reconstruct the other properties from the state (see RevertTransaction).

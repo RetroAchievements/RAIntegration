@@ -160,14 +160,14 @@ void OverlayViewModel::CreateRenderImage()
         m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayDetail(), ra::ui::FontStyles::Normal);
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
-    const auto sUserName = ra::Widen(pUserContext.GetDisplayName());
+    const auto sUserName = ra::util::String::Widen(pUserContext.GetDisplayName());
     const auto szUsername = m_pSurface->MeasureText(nFont, sUserName);
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
     const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     const auto* pUser = rc_client_get_user_info(pClient);
-    const auto sPoints = ra::StringPrintf(L"%u Points", !pUser ? 0 : bHardcore ? pUser->score : pUser->score_softcore);
+    const auto sPoints = ra::util::String::Printf(L"%u Points", !pUser ? 0 : bHardcore ? pUser->score : pUser->score_softcore);
     const auto szPoints = m_pSurface->MeasureText(nSubFont, sPoints);
 
     const auto sHardcore = bHardcore ? std::wstring(L"HARDCORE") : std::wstring(L"SOFTCORE");
@@ -223,10 +223,10 @@ void OverlayViewModel::CreateRenderImage()
 
     // navigation controls
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto sPrev = ra::StringPrintf(L"\u2BC7: %s", pCurrentPage.GetPrevButtonText());
-    const auto sNext = ra::StringPrintf(L"\u2BC8: %s", pCurrentPage.GetNextButtonText());
-    const auto sSelect = ra::StringPrintf(L"%s: %s", pEmulatorContext.GetAcceptButtonText(), pCurrentPage.GetAcceptButtonText());
-    const auto sCancel = ra::StringPrintf(L"%s: %s", pEmulatorContext.GetCancelButtonText(), pCurrentPage.GetCancelButtonText());
+    const auto sPrev = ra::util::String::Printf(L"\u2BC7: %s", pCurrentPage.GetPrevButtonText());
+    const auto sNext = ra::util::String::Printf(L"\u2BC8: %s", pCurrentPage.GetNextButtonText());
+    const auto sSelect = ra::util::String::Printf(L"%s: %s", pEmulatorContext.GetAcceptButtonText(), pCurrentPage.GetAcceptButtonText());
+    const auto sCancel = ra::util::String::Printf(L"%s: %s", pEmulatorContext.GetCancelButtonText(), pCurrentPage.GetCancelButtonText());
 
     const bool bHasPrev = sPrev.length() > 3;
     const auto szPrev = bHasPrev ? m_pSurface->MeasureText(nDetailFont, sPrev) : ra::ui::Size();

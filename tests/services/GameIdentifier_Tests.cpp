@@ -599,7 +599,7 @@ public:
         identifier.SaveKnownHashes();
 
         Assert::IsTrue(identifier.mockLocalStorage.HasStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY));
-        Assert::AreEqual(ra::StringPrintf("%s=%u\n", ROM_HASH, 32U),
+        Assert::AreEqual(ra::util::String::Printf("%s=%u\n", ROM_HASH, 32U),
             identifier.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY));
     }
 
@@ -607,7 +607,7 @@ public:
     {
         GameIdentifierHarness identifier;
         identifier.mockLoginService.Login("User", "ApiToken");
-        const auto sFileContents = ra::StringPrintf("%s=%u\ninvalid=0\n", ROM_HASH, 32U);
+        const auto sFileContents = ra::util::String::Printf("%s=%u\ninvalid=0\n", ROM_HASH, 32U);
         identifier.mockLocalStorage.MockStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
                             
         identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
@@ -630,7 +630,7 @@ public:
     {
         GameIdentifierHarness identifier;
         identifier.mockLoginService.Login("User", "ApiToken");
-        const auto sFileContents = ra::StringPrintf("%s=%u\ninvalid=0\n", ROM_HASH, 32U);
+        const auto sFileContents = ra::util::String::Printf("%s=%u\ninvalid=0\n", ROM_HASH, 32U);
         identifier.mockLocalStorage.MockStoredData(
             ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
 
@@ -647,7 +647,7 @@ public:
 
         // invalid entry will be discarded
         Assert::AreEqual(
-            ra::StringPrintf("%s=%u\n", ROM_HASH, 35U),
+            ra::util::String::Printf("%s=%u\n", ROM_HASH, 35U),
             identifier.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY));
     }
 
@@ -656,7 +656,7 @@ public:
         GameIdentifierHarness identifier;
         const std::string sAlternateHash = "abcdef01234567899876543210fedcba";
         identifier.mockLoginService.Login("User", "ApiToken");
-        const auto sFileContents = ra::StringPrintf("%s=%u\ninvalid=0\n", sAlternateHash, 32U);
+        const auto sFileContents = ra::util::String::Printf("%s=%u\ninvalid=0\n", sAlternateHash, 32U);
         identifier.mockLocalStorage.MockStoredData(
             ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
 
@@ -673,7 +673,7 @@ public:
 
         // invalid entry will be discarded
         Assert::AreEqual(
-            ra::StringPrintf("%s=%u\n%s=%u\n", ROM_HASH, 35U, sAlternateHash, 32U),
+            ra::util::String::Printf("%s=%u\n%s=%u\n", ROM_HASH, 35U, sAlternateHash, 32U),
             identifier.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY));
     }
 
@@ -703,7 +703,7 @@ public:
         identifier.mockLoginService.Logout();
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
 
-        const auto sFileContents = ra::StringPrintf("%s=%u\n", ROM_HASH, 32U);
+        const auto sFileContents = ra::util::String::Printf("%s=%u\n", ROM_HASH, 32U);
         identifier.mockLocalStorage.MockStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
 
         Assert::AreEqual(32U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));

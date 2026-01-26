@@ -126,14 +126,18 @@ protected:
         if (args.Property == *m_pItemTextProperty)
         {
             const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
-            InvokeOnUIThread([this, pLabel = NativeStr(pLabel), nIndex]() {
+#ifdef UNICODE
+            InvokeOnUIThread([this, pLabelCopy = pLabel /* make a copy */, nIndex]() {
+#else
+            InvokeOnUIThread([this, pLabelCopy = ra::util::String::Narrow(pLabel), nIndex]() {
+#endif
                 ComboBox_DeleteString(m_hWnd, nIndex);
-                ComboBox_InsertString(m_hWnd, nIndex, NativeStr(pLabel).c_str());
+                ComboBox_InsertString(m_hWnd, nIndex, pLabelCopy.c_str());
 
                 if (m_nSelectedIndex == nIndex)
                 {
                     ComboBox_SetCurSel(m_hWnd, nIndex);
-                    ComboBox_SetText(m_hWnd, NativeStr(pLabel).c_str());
+                    ComboBox_SetText(m_hWnd, pLabelCopy.c_str());
                 }
             });
         }
@@ -142,8 +146,12 @@ protected:
     void OnViewModelAdded(gsl::index nIndex) override
     {
         const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
-        InvokeOnUIThread([this, nIndex, pLabel = NativeStr(pLabel)]() {
-            ComboBox_InsertString(m_hWnd, nIndex, NativeStr(pLabel).c_str());
+#ifdef UNICODE
+        InvokeOnUIThread([this, pLabelCopy = pLabel /* make a copy */, nIndex]() {
+#else
+        InvokeOnUIThread([this, pLabelCopy = ra::util::String::Narrow(pLabel), nIndex]() {
+#endif
+            ComboBox_InsertString(m_hWnd, nIndex, pLabelCopy.c_str());
         });
     }
 
@@ -168,7 +176,11 @@ protected:
         {
             const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
 
-            ComboBox_AddString(m_hWnd, NativeStr(pLabel).c_str());
+#ifdef UNICODE
+            ComboBox_AddString(m_hWnd, pLabel.c_str());
+#else
+            ComboBox_AddString(m_hWnd, ra::util::String::Narrow(pLabel).c_str());
+#endif
         }
 
         SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);

@@ -66,7 +66,7 @@ static unsigned int FindCompatibilityMatch(const std::string& sHash)
     if (pGameContext.GetMode() != ra::data::context::GameContext::Mode::CompatibilityTest)
         return 0;
 
-    const auto nGameId = ra::ui::viewmodels::UnknownGameViewModel::GetPreviousAssociation(ra::Widen(sHash));
+    const auto nGameId = ra::ui::viewmodels::UnknownGameViewModel::GetPreviousAssociation(ra::util::String::Widen(sHash));
     if (nGameId != pGameContext.GameId())
         return 0;
 
@@ -131,8 +131,8 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sHash)
                 ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
                 vmUnknownGame.InitializeGameTitles();
                 vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::context::IConsoleContext>().Name());
-                vmUnknownGame.SetChecksum(ra::Widen(sHash));
-                vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
+                vmUnknownGame.SetChecksum(ra::util::String::Widen(sHash));
+                vmUnknownGame.SetEstimatedGameName(ra::util::String::Widen(sEstimatedGameTitle));
                 vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
 
                 if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
@@ -151,11 +151,11 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sHash)
         }
         else
         {
-            std::wstring sErrorMessage = ra::Widen(response.ErrorMessage);
+            std::wstring sErrorMessage = ra::util::String::Widen(response.ErrorMessage);
             if (sErrorMessage.empty())
             {
                 auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                sErrorMessage = ra::StringPrintf(L"Error from %s", pConfiguration.GetHostName());
+                sErrorMessage = ra::util::String::Printf(L"Error from %s", pConfiguration.GetHostName());
             }
 
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not identify game.", sErrorMessage);
@@ -230,7 +230,7 @@ void GameIdentifier::IdentifyAndActivateGame(const BYTE* pROM, size_t nROMSize)
     if (nGameId == 0 && pROM && nROMSize)
     {
         // game did not resolve, but still want to display "Playing GAMENAME" in Rich Presence
-        auto sEstimatedGameTitle = ra::Widen(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetGameTitle());
+        auto sEstimatedGameTitle = ra::util::String::Widen(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetGameTitle());
         if (sEstimatedGameTitle.empty())
             sEstimatedGameTitle = L"Unknown";
 
@@ -248,13 +248,13 @@ void GameIdentifier::LoadKnownHashes(std::map<std::string, unsigned>& mHashes)
         std::string sLine;
         while (pFile->GetLine(sLine))
         {
-            ra::Tokenizer pTokenizer(sLine);
+            ra::util::Tokenizer pTokenizer(sLine);
             auto sHash = pTokenizer.ReadTo('=');
             if (sHash.length() == 32)
             {
                 pTokenizer.Advance(); // '='
                 auto nID = pTokenizer.ReadNumber();
-                mHashes[sHash] = nID;
+                mHashes[std::string(sHash)] = nID;
             }
         }
     }
@@ -274,7 +274,7 @@ void GameIdentifier::SaveKnownHashes(std::map<std::string, unsigned>& mHashes)
         std::string sLine;
         for (const auto& pPair : mHashes)
         {
-            sLine = ra::StringPrintf("%s=%u", pPair.first, pPair.second);
+            sLine = ra::util::String::Printf("%s=%u", pPair.first, pPair.second);
             pFile->WriteLine(sLine);
         }
     }

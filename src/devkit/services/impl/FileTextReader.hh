@@ -25,7 +25,7 @@ public:
         if (!std::getline(m_iStream, sLine))
             return false;
 
-        ra::TrimLineEnding(sLine);
+        ra::util::String::TrimLineEnding(sLine);
         return true;
     }
 
@@ -36,7 +36,7 @@ public:
         if (!std::getline(m_iStream, sNarrowLine))
             return false;
 
-        sLine = ra::Widen(ra::TrimLineEnding(sNarrowLine));
+        sLine = ra::util::String::Widen(ra::util::String::TrimLineEnding(sNarrowLine));
         return true;
     }
 

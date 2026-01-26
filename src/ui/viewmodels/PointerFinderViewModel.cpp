@@ -41,7 +41,7 @@ void PointerFinderViewModel::StateViewModel::OnValueChanged(const StringModelPro
 {
     if (args.Property == AddressProperty)
     {
-        const auto nAddress = ra::ByteAddressFromString(ra::Narrow(GetAddress()));
+        const auto nAddress = ra::ByteAddressFromString(ra::util::String::Narrow(GetAddress()));
         m_pViewer.InitializeFixedViewer(nAddress);
     }
 
@@ -66,7 +66,7 @@ void PointerFinderViewModel::StateViewModel::Capture()
     }
 
     const auto& sAddress = GetAddress();
-    const auto nAddress = ra::ByteAddressFromString(ra::Narrow(sAddress));
+    const auto nAddress = ra::ByteAddressFromString(ra::util::String::Narrow(sAddress));
     if (nAddress == 0)
     {
         bool bValid = sAddress.size() > 0;
@@ -231,9 +231,9 @@ void PointerFinderViewModel::Find()
 
                         pPointer = &m_vResults.Add();
                         pPointer->m_nAddress = pResult.nAddress;
-                        pPointer->SetPointerAddress(ra::Widen(ra::ByteAddressToString(pResult.nAddress)));
+                        pPointer->SetPointerAddress(ra::util::String::Widen(ra::ByteAddressToString(pResult.nAddress)));
                         const auto nOffset = (nAddressJ - pResult.nValue);
-                        pPointer->SetOffset(ra::StringPrintf(L"+0x%02X", nOffset));
+                        pPointer->SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
 
                         pPointer->SetPointerValue(i, FormatValue(*pStateI.CapturedMemory(), pResult.nAddress));
                     }
@@ -319,7 +319,7 @@ void PointerFinderViewModel::ExportResults() const
     vmFileDialog.SetDefaultExtension(L"csv");
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-Pointers.csv", pGameContext.GameId()));
+    vmFileDialog.SetFileName(ra::util::String::Printf(L"%u-Pointers.csv", pGameContext.GameId()));
 
     if (vmFileDialog.ShowSaveFileDialog() != ra::ui::DialogResult::OK)
         return;
@@ -329,7 +329,7 @@ void PointerFinderViewModel::ExportResults() const
     if (pTextWriter == nullptr)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-            ra::StringPrintf(L"Could not create %s", vmFileDialog.GetFileName()));
+            ra::util::String::Printf(L"Could not create %s", vmFileDialog.GetFileName()));
         return;
     }
 

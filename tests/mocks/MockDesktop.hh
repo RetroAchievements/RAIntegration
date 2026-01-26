@@ -91,9 +91,6 @@ public:
 
     std::string GetOSVersionString() const override { return "UnitTests"; }
 
-    bool IsDebuggerPresent() const noexcept override { return m_bDebuggerPresent; }
-    void SetDebuggerPresent(bool bValue) noexcept { m_bDebuggerPresent = bValue; }
-
     bool IsOnUIThread() const noexcept override { return true; }
     void InvokeOnUIThread(std::function<void()> fAction) const override { fAction(); }
 

@@ -273,10 +273,10 @@ private:
     std::string GetMemRefChain(bool bMeasured) const;
 
     void UpdateSourceCodeNote();
-    void BuildNote(ra::StringBuilder& builder,
+    void BuildNote(ra::util::StringBuilder& builder,
                    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
                    gsl::index nDepth, const ra::data::models::CodeNoteModel& pNote);
-    void BuildNoteForCurrentNode(ra::StringBuilder& builder,
+    void BuildNoteForCurrentNode(ra::util::StringBuilder& builder,
                                  std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
                                  gsl::index nDepth);
 

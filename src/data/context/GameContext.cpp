@@ -89,7 +89,7 @@ static bool ValidateConsole(int nServerConsoleId)
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
             L"Identified game does not match expected console.",
-            ra::StringPrintf(
+            ra::util::String::Printf(
                 L"The game being loaded is associated to the %s console, but the emulator has initialized "
                 "the %s console. This is not allowed as the memory maps may not be compatible between "
                 "consoles.",
@@ -192,7 +192,7 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
         m_nGameId = 0;
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to load game data",
-                                                                    ra::Widen(sErrorMessage));
+                                                                    ra::util::String::Widen(sErrorMessage));
     }
     else
     {
@@ -220,14 +220,14 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
 
             // show "game loaded" popup
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-            std::wstring sDescription = ra::StringPrintf(L"%u achievements, %u points",
+            std::wstring sDescription = ra::util::String::Printf(L"%u achievements, %u points",
                                                             pSummary.num_core_achievements, pSummary.points_core);
             if (pSummary.num_unsupported_achievements)
-                sDescription += ra::StringPrintf(L" (%u unsupported)", pSummary.num_unsupported_achievements);
+                sDescription += ra::util::String::Printf(L" (%u unsupported)", pSummary.num_unsupported_achievements);
 
             ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                ra::StringPrintf(L"Loaded %s", pGame->title), sDescription,
-                ra::StringPrintf(L"You have earned %u achievements", pSummary.num_unlocked_achievements),
+                ra::util::String::Printf(L"Loaded %s", pGame->title), sDescription,
+                ra::util::String::Printf(L"You have earned %u achievements", pSummary.num_unlocked_achievements),
                 ra::ui::ImageType::Icon, pGame->badge_name);
         }
     }
@@ -395,7 +395,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     const auto* pGame = rc_client_get_game_info(pClient);
     m_nGameId = GetRealGameId(pGame->id);
-    m_sGameTitle = ra::Widen(pGame->title);
+    m_sGameTitle = ra::util::String::Widen(pGame->title);
     m_sGameHash = pGame->hash ? pGame->hash : "";
 
 #ifndef RA_UTEST
@@ -522,7 +522,7 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
             // core subset should always be first
             m_vSubsets.insert(m_vSubsets.begin(),
                               Subset(pSet->id, GetRealGameId(pSet->game_id),
-                                     ra::Widen(pSet->title), SubsetType::Core));
+                                     ra::util::String::Widen(pSet->title), SubsetType::Core));
         }
         else
         {
@@ -540,7 +540,7 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
                     break;
             }
             m_vSubsets.emplace_back(pSet->id, GetRealGameId(pSet->game_id),
-                                    ra::Widen(pSet->title), nType);
+                                    ra::util::String::Widen(pSet->title), nType);
         }
     }
 
@@ -551,7 +551,7 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
     }
     else if (m_nActiveGameId != m_nGameId)
     {
-        m_vSubsets.front().SetTitle(ra::StringPrintf(L"%s (%s)",
+        m_vSubsets.front().SetTitle(ra::util::String::Printf(L"%s (%s)",
             m_vSubsets.front().Title(), game_data_response->title));
     }
 }

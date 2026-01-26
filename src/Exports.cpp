@@ -24,6 +24,7 @@
 #include "services\GameIdentifier.hh"
 #include "services\Http.hh"
 #include "services\IAudioSystem.hh"
+#include "services\IDebuggerDetector.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILoginService.hh"
@@ -196,8 +197,8 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
 
     if (_RA_HardcoreModeIsActive())
     {
-        const auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
-        if (pDesktop.IsDebuggerPresent())
+        const auto& pDebuggerDetector = ra::services::ServiceLocator::GetMutable<ra::services::IDebuggerDetector>();
+        if (pDebuggerDetector.IsDebuggerPresent())
         {
             if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Disable Hardcore mode?",
                 L"A debugger or similar tool has been detected. If you do not disable hardcore mode, RetroAchievements functionality will be disabled.",
@@ -332,19 +333,19 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
         // show the welcome message
         std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(
             new ra::ui::viewmodels::PopupMessageViewModel);
-        vmMessage->SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
+        vmMessage->SetTitle(ra::util::String::Printf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
                                              pUser->display_name));
 
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
         const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
         if (bHardcore)
-            vmMessage->SetDescription(ra::StringPrintf(L"%u points", pUser->score));
+            vmMessage->SetDescription(ra::util::String::Printf(L"%u points", pUser->score));
         else
-            vmMessage->SetDescription(ra::StringPrintf(L"%u points (softcore)", pUser->score_softcore));
+            vmMessage->SetDescription(ra::util::String::Printf(L"%u points (softcore)", pUser->score_softcore));
 
         vmMessage->SetDetail((pUser->num_unread_messages == 1)
             ? L"You have 1 new message"
-            : ra::StringPrintf(L"You have %u new messages", pUser->num_unread_messages));
+            : ra::util::String::Printf(L"You have %u new messages", pUser->num_unread_messages));
 
         vmMessage->SetImage(ra::ui::ImageType::UserPic, pUser->username);
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmMessage);
@@ -352,7 +353,7 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
     else
     {
         if (sErrorMessage && *sErrorMessage)
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", ra::Widen(sErrorMessage));
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", ra::util::String::Widen(sErrorMessage));
         else
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", L"Please login again.");
 

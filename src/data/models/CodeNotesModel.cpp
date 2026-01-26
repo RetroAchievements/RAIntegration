@@ -56,7 +56,7 @@ void CodeNotesModel::Refresh(unsigned int nGameId,
         if (response.Failed())
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download code notes",
-                ra::Widen(response.ErrorMessage));
+                ra::util::String::Widen(response.ErrorMessage));
         }
         else
         {
@@ -204,7 +204,7 @@ std::wstring CodeNotesModel::BuildCodeNoteSized(ra::data::ByteAddress nAddress,
     else if (nCheckBytes == 1)
     {
         // searching on bytes, indicate the offset into the note
-        sNote.append(ra::StringPrintf(L" [%d/%d]", nAddress - nNoteAddress + 1, nNoteSize));
+        sNote.append(ra::util::String::Printf(L" [%d/%d]", nAddress - nNoteAddress + 1, nNoteSize));
     }
     else
     {
@@ -613,7 +613,7 @@ void CodeNotesModel::Serialize(ra::services::TextWriter& pWriter) const
     }
 }
 
-bool CodeNotesModel::Deserialize(ra::Tokenizer& pTokenizer)
+bool CodeNotesModel::Deserialize(ra::util::Tokenizer& pTokenizer)
 {
     const auto sAddress = pTokenizer.ReadTo(':');
     pTokenizer.Consume(':');
@@ -623,7 +623,7 @@ bool CodeNotesModel::Deserialize(ra::Tokenizer& pTokenizer)
     if (!ReadQuoted(pTokenizer, sNote))
         return false;
 
-    ra::NormalizeLineEndings(sNote);
+    ra::util::String::NormalizeLineEndings(sNote);
     SetCodeNote(nAddress, sNote);
     return true;
 }

@@ -38,7 +38,7 @@ public:
     void Deactivate() override;
 
     void Serialize(ra::services::TextWriter& pWriter) const noexcept override;
-    bool Deserialize(ra::Tokenizer& pTokenizer) noexcept override;
+    bool Deserialize(ra::util::Tokenizer& pTokenizer) noexcept override;
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;

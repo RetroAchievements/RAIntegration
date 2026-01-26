@@ -36,7 +36,7 @@ public:
                 return;
         }
 
-        Assert::Fail(ra::StringPrintf(L"Did not find log line containing: %s", sMessage).c_str());
+        Assert::Fail(ra::util::String::Printf(L"Did not find log line containing: %s", sMessage).c_str());
     }
 
 private:

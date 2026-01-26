@@ -129,7 +129,7 @@ bool LeaderboardModel::ValidateAsset(std::wstring& sError)
         sSubmitTrigger.length() + sValueDefinition.length() + 16; // "STA:SUB:CAN:VAL:"
     if (nSerializedSize > MaxSerializedLength)
     {
-        sError = ra::StringPrintf(L"Serialized length exceeds limit: %d/%d", nSerializedSize, MaxSerializedLength);
+        sError = ra::util::String::Printf(L"Serialized length exceeds limit: %d/%d", nSerializedSize, MaxSerializedLength);
         return false;
     }
 
@@ -269,13 +269,13 @@ void LeaderboardModel::SyncState(AssetState nNewState)
 
 void LeaderboardModel::SyncTitle()
 {
-    m_sTitleBuffer = ra::Narrow(GetName());
+    m_sTitleBuffer = ra::util::String::Narrow(GetName());
     m_pLeaderboard->public_.title = m_sTitleBuffer.c_str();
 }
 
 void LeaderboardModel::SyncDescription()
 {
-    m_sDescriptionBuffer = ra::Narrow(GetDescription());
+    m_sDescriptionBuffer = ra::util::String::Narrow(GetDescription());
     m_pLeaderboard->public_.description = m_sDescriptionBuffer.c_str();
 }
 
@@ -444,8 +444,8 @@ void LeaderboardModel::Attach(struct rc_client_leaderboard_info_t& pLeaderboard,
                               AssetCategory nCategory, const std::string& sDefinition)
 {
     SetID(pLeaderboard.public_.id);
-    SetName(ra::Widen(pLeaderboard.public_.title));
-    SetDescription(ra::Widen(pLeaderboard.public_.description));
+    SetName(ra::util::String::Widen(pLeaderboard.public_.title));
+    SetDescription(ra::util::String::Widen(pLeaderboard.public_.description));
     SetCategory(nCategory);
     SetValueFormat(ra::itoe<ValueFormat>(pLeaderboard.format));
     SetLowerIsBetter(pLeaderboard.public_.lower_is_better);
@@ -491,7 +491,7 @@ void LeaderboardModel::Serialize(ra::services::TextWriter& pWriter) const
     WriteNumber(pWriter, IsLowerBetter() ? 1 : 0);
 }
 
-bool LeaderboardModel::Deserialize(ra::Tokenizer& pTokenizer)
+bool LeaderboardModel::Deserialize(ra::util::Tokenizer& pTokenizer)
 {
     // field 2: start trigger
     std::string sStartTrigger = pTokenizer.ReadQuotedString();
@@ -534,8 +534,8 @@ bool LeaderboardModel::Deserialize(ra::Tokenizer& pTokenizer)
         return false;
 
     // line is valid
-    SetName(ra::Widen(sTitle));
-    SetDescription(ra::Widen(sDescription));
+    SetName(ra::util::String::Widen(sTitle));
+    SetDescription(ra::util::String::Widen(sDescription));
     SetStartTrigger(sStartTrigger);
     SetSubmitTrigger(sSubmitTrigger);
     SetCancelTrigger(sCancelTrigger);

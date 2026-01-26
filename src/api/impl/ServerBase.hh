@@ -104,7 +104,7 @@ protected:
 
         TResponse response;
         response.Result = ApiResult::Unsupported;
-        response.ErrorMessage = ra::StringPrintf("%s is not supported by %s.", apiName, Name());
+        response.ErrorMessage = ra::util::String::Printf("%s is not supported by %s.", apiName, Name());
         return response;
     }
 };

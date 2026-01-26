@@ -11,7 +11,7 @@ namespace impl {
 ConsoleContext::ConsoleContext(ConsoleID nId) noexcept
 {
     m_nId = nId;
-    m_sName = ra::Widen(rc_console_name(ra::etoi(nId)));
+    m_sName = ra::util::String::Widen(rc_console_name(ra::etoi(nId)));
     m_nMaxAddress = 0;
 
     const auto* pRegions = rc_console_memory_regions(ra::etoi(nId));
@@ -21,7 +21,7 @@ ConsoleContext::ConsoleContext(ConsoleID nId) noexcept
         {
             const auto& pRegion = pRegions->region[i];
 
-            auto& pMemoryRegion = m_vRegions.emplace_back(pRegion.start_address, pRegion.end_address, ra::Widen(pRegion.description));
+            auto& pMemoryRegion = m_vRegions.emplace_back(pRegion.start_address, pRegion.end_address, ra::util::String::Widen(pRegion.description));
             pMemoryRegion.SetRealStartAddress(pRegion.real_address);
 
             switch (pRegion.type)

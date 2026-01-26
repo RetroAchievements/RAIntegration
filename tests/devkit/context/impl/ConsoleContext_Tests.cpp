@@ -22,11 +22,11 @@ private:
         if (pFoundRegion != pExpectedRegion)
         {
             if (pExpectedRegion == nullptr)
-                Assert::Fail(ra::StringPrintf(L"Found region for address %08x", nAddress).c_str());
+                Assert::Fail(ra::util::String::Printf(L"Found region for address %08x", nAddress).c_str());
             else if (pFoundRegion == nullptr)
-                Assert::Fail(ra::StringPrintf(L"Did not find region for address %08x", nAddress).c_str());
+                Assert::Fail(ra::util::String::Printf(L"Did not find region for address %08x", nAddress).c_str());
             else
-                Assert::Fail(ra::StringPrintf(L"Found wrong region for address %08x", nAddress).c_str());
+                Assert::Fail(ra::util::String::Printf(L"Found wrong region for address %08x", nAddress).c_str());
         }
     }
 

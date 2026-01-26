@@ -100,7 +100,7 @@ void RcClient::DispatchRequest(const rc_api_request_t& pRequest,
             if (c == '=')
             {
                 const auto param = sParams.back();
-                redacted = (param == 't') || (param == 'p' && ra::StringStartsWith(sApi, "login"));
+                redacted = (param == 't') || (param == 'p' && ra::util::String::StartsWith(sApi, "login"));
 
                 if (redacted)
                 {

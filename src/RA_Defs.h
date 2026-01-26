@@ -20,7 +20,7 @@
 
 #include <map>
 #include <array> // algorithm, iterator, tuple
-#include <sstream> // string
+#include <string_view>
 #include <queue> // deque, vector, algorithm
 
 //	Version Information is integrated into tags
@@ -161,13 +161,20 @@ public:
 //};
 //using namespace RA;
 
+namespace ra {
+bool ParseUnsignedInt(const std::wstring& sValue, unsigned int nMaximumValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
+bool ParseHex(const std::wstring& sValue, unsigned int nMaximumValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
+bool ParseNumeric(const std::wstring& sValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
+bool ParseFloat(const std::wstring& sValue, _Out_ float& fValue, _Out_ std::wstring& sError);
+}
+
 #ifndef UNUSED
 #define UNUSED( x ) ( x );
 #endif
 
 namespace ra {
 _NODISCARD std::string ByteAddressToString(_In_ ra::data::ByteAddress nAddr);
-_NODISCARD ra::data::ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress);
+_NODISCARD ra::data::ByteAddress ByteAddressFromString(_In_ const std::string_view sByteAddress);
 } // namespace ra
 
 #endif // !RA_DEFS_H

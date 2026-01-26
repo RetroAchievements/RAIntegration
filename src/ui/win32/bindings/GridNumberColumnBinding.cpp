@@ -2,7 +2,7 @@
 
 #include "GridBinding.hh"
 
-#include "util\Strings.hh"
+#include "RA_Defs.h"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 

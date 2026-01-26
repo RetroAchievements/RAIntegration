@@ -126,7 +126,7 @@ static std::wstring FormatTypedValue(rc_typed_value_t& pValue, TriggerOperandTyp
             if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
                 return std::to_wstring(pValue.value.u32);
 
-            return ra::StringPrintf(L"0x%02x", pValue.value.u32);
+            return ra::util::String::Printf(L"0x%02x", pValue.value.u32);
         }
 
         case TriggerOperandType::Float:
@@ -145,7 +145,7 @@ static std::wstring FormatTypedValue(rc_typed_value_t& pValue, TriggerOperandTyp
 
         default:
             rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
-            return ra::Widen(ra::ByteAddressToString(pValue.value.u32));
+            return ra::util::String::Widen(ra::ByteAddressToString(pValue.value.u32));
     }
 }
 
@@ -553,10 +553,10 @@ static void BuildOperandTooltip(std::wstring& sTooltip, const rc_operand_t& pOpe
             sTooltip += FormatTypedValue(pValue, ra::services::TriggerOperandType::Float);
             break;
         case RC_VALUE_TYPE_SIGNED:
-            sTooltip += ra::StringPrintf(L"%d", pValue.value.i32);
+            sTooltip += ra::util::String::Printf(L"%d", pValue.value.i32);
             break;
         default:
-            sTooltip += ra::StringPrintf(L"0x%08x", pValue.value.u32);
+            sTooltip += ra::util::String::Printf(L"0x%08x", pValue.value.u32);
             break;
     }
 }
@@ -605,7 +605,7 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
     {
         *pParentNote = nullptr;
 
-        sPointerChain += ra::StringPrintf(L"{recall:0x%02x}", pValue.value.u32);
+        sPointerChain += ra::util::String::Printf(L"{recall:0x%02x}", pValue.value.u32);
         return pValue.value.u32;
     }
 
@@ -615,7 +615,7 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
         if (*pParentNote)
             *pParentNote = (*pParentNote)->GetPointerNoteAtOffset(pValue.value.u32);
 
-        sPointerChain += ra::StringPrintf(L"0x%02x", pValue.value.u32);
+        sPointerChain += ra::util::String::Printf(L"0x%02x", pValue.value.u32);
         return pValue.value.u32;
     }
 
@@ -630,7 +630,7 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
         *pParentNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
 
         sPointerChain.push_back('$');
-        sPointerChain += ra::Widen(ra::ByteAddressToString(nAddress));
+        sPointerChain += ra::util::String::Widen(ra::ByteAddressToString(nAddress));
         return pValue.value.u32;
     }
 
@@ -658,7 +658,7 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
             // if the parent note is not a pointer, assume it's an index
             Expects(pModifiedMemref->modifier.type == RC_OPERAND_CONST);
             const auto nAddress = pModifier.value.u32;
-            std::wstring sPrefix = ra::StringPrintf(L"%s[", ra::ByteAddressToString(nAddress));
+            std::wstring sPrefix = ra::util::String::Printf(L"%s[", ra::ByteAddressToString(nAddress));
             sPointerChain.insert(0, sPrefix);
             sPointerChain.push_back(']');
 
@@ -689,12 +689,12 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
 
         if (pModifiedMemref->modifier.type == RC_OPERAND_RECALL)
         {
-            sPointerChain += ra::StringPrintf(L"{recall:0x%02x}", pModifier.value.u32);
+            sPointerChain += ra::util::String::Printf(L"{recall:0x%02x}", pModifier.value.u32);
         }
         else if (rc_operand_is_memref(&pModifiedMemref->modifier))
         {
             sPointerChain.push_back('$');
-            sPointerChain += ra::Widen(ra::ByteAddressToString(pModifiedMemref->modifier.value.memref->address));
+            sPointerChain += ra::util::String::Widen(ra::ByteAddressToString(pModifiedMemref->modifier.value.memref->address));
         }
         else
         {
@@ -704,12 +704,12 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
             {
                 case RC_OPERATOR_AND:
                 case RC_OPERATOR_XOR: // use hex for bitwise combines
-                    sPointerChain += ra::StringPrintf(L"0x%02x", nModifier);
+                    sPointerChain += ra::util::String::Printf(L"0x%02x", nModifier);
                     break;
 
                 default:
                     if (nModifier >= 0x1000 && (nModifier & 0xFF) == 0) // large multiple of 256, use hex
-                        sPointerChain += ra::StringPrintf(L"0x%04x", nModifier);
+                        sPointerChain += ra::util::String::Printf(L"0x%04x", nModifier);
                     else // otherwise use decimal
                         sPointerChain += std::to_wstring(nModifier);
                     break;
@@ -825,9 +825,9 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
 {
     std::wstring sAddress;
     if (sPointerChain.empty())
-        sAddress = ra::Widen(ra::ByteAddressToString(nAddress));
+        sAddress = ra::util::String::Widen(ra::ByteAddressToString(nAddress));
     else
-        sAddress = ra::StringPrintf(L"%s (indirect %s)", ra::ByteAddressToString(nAddress), sPointerChain);
+        sAddress = ra::util::String::Printf(L"%s (indirect %s)", ra::ByteAddressToString(nAddress), sPointerChain);
 
     if (!pNote)
     {
@@ -844,25 +844,25 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
                     pNote = pCodeNotes->FindCodeNoteModel(nNoteStart);
 
                     if (sPointerChain.empty())
-                        sAddress = ra::StringPrintf(L"%s (%s+%u)", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nNoteStart), nAddress - nNoteStart);
+                        sAddress = ra::util::String::Printf(L"%s (%s+%u)", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nNoteStart), nAddress - nNoteStart);
                 }
             }
         }
         if (!pNote)
-            return ra::StringPrintf(L"%s\r\n[No code note]", sAddress);
+            return ra::util::String::Printf(L"%s\r\n[No code note]", sAddress);
     }
 
     if (pNote->IsPointer() && GetType() == TriggerConditionType::AddAddress)
-        return ra::StringPrintf(L"%s\r\n%s", sAddress, pNote->GetPointerDescription());
+        return ra::util::String::Printf(L"%s\r\n%s", sAddress, pNote->GetPointerDescription());
 
     const auto svSubNote = pNote->GetSubNote(nSize);
     if (!svSubNote.empty())
     {
         const auto sSummary = pNote->GetSummary();
         if (sSummary.empty())
-            return ra::StringPrintf(L"%s\r\n%s", sAddress, svSubNote);
+            return ra::util::String::Printf(L"%s\r\n%s", sAddress, svSubNote);
 
-        return ra::StringPrintf(L"%s\r\n%s\r\n%s", sAddress, sSummary, svSubNote);
+        return ra::util::String::Printf(L"%s\r\n%s\r\n%s", sAddress, sSummary, svSubNote);
     }
 
     // limit the tooltip to the first 20 lines of the code note
@@ -882,10 +882,10 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
     if (nIndex != std::string::npos && sNote.find('\n', nIndex) != std::string::npos)
     {
         const std::wstring_view svNote(sNote);
-        return ra::StringPrintf(L"%s\r\n%s...", sAddress, svNote.substr(0, nIndex));
+        return ra::util::String::Printf(L"%s\r\n%s...", sAddress, svNote.substr(0, nIndex));
     }
 
-    return ra::StringPrintf(L"%s\r\n%s", sAddress, sNote);
+    return ra::util::String::Printf(L"%s\r\n%s", sAddress, sNote);
 }
 
 static void BuildRecallTooltip(std::wstring& sTooltip,
@@ -910,7 +910,7 @@ static void BuildRecallTooltip(std::wstring& sTooltip,
     }
     else if (pOperand.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
     {
-        sTooltip += ra::StringPrintf(L"\r\n%u: ", gsl::narrow_cast<uint32_t>(nConditionIndex + 1));
+        sTooltip += ra::util::String::Printf(L"\r\n%u: ", gsl::narrow_cast<uint32_t>(nConditionIndex + 1));
 
         GSL_SUPPRESS_TYPE1 const rc_modified_memref_t* combining_memref =
             reinterpret_cast<rc_modified_memref_t*>(pOperand.value.memref);
@@ -925,7 +925,7 @@ static void BuildRecallTooltip(std::wstring& sTooltip,
 
             rc_typed_value_combine(&pValue, &pModifier, RC_OPERATOR_ADD);
             sTooltip.push_back('$');
-            sTooltip.append(ra::Widen(ra::ByteAddressToString(pValue.value.u32)));
+            sTooltip.append(ra::util::String::Widen(ra::ByteAddressToString(pValue.value.u32)));
         }
         else
         {

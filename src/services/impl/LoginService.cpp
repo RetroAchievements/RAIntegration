@@ -49,7 +49,7 @@ bool LoginService::Login(const std::string& sUsername, const std::string& sPassw
     if (pSynchronizer.GetResult() != RC_OK)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to login",
-            ra::Widen(pSynchronizer.GetErrorMessage()));
+            ra::util::String::Widen(pSynchronizer.GetErrorMessage()));
         return false;
     }
 

@@ -56,8 +56,8 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
                 {
                     auto& vmAchievement = m_vAchievements.Add();
                     vmAchievement.SetId(pAchievement->GetID());
-                    vmAchievement.SetLabel(ra::Widen(pAchievement->GetName()));
-                    vmAchievement.SetDescription(ra::Widen(pAchievement->GetDescription()));
+                    vmAchievement.SetLabel(pAchievement->GetName());
+                    vmAchievement.SetDescription(pAchievement->GetDescription());
                     vmAchievement.SetAchieved(!pAchievement->IsActive());
                 }
             }
@@ -96,7 +96,7 @@ bool BrokenAchievementsViewModel::Submit()
     const auto* pAchievement = pGameContext.Assets().FindAchievement(nAchievementId);
     if (pAchievement)
     {
-        const auto& sRichPresence = ra::Narrow(pAchievement->GetUnlockRichPresence());
+        const auto& sRichPresence = ra::util::String::Narrow(pAchievement->GetUnlockRichPresence());
         if (!sRichPresence.empty())
         {
             sExtra.append("\"triggerRichPresence\":\"");
@@ -113,14 +113,14 @@ bool BrokenAchievementsViewModel::Submit()
     }
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    std::string sUrl = ra::StringPrintf("%s/achievement/%u/report-issue", pConfiguration.GetHostUrl(), nAchievementId);
+    std::string sUrl = ra::util::String::Printf("%s/achievement/%u/report-issue", pConfiguration.GetHostUrl(), nAchievementId);
 
     if (sExtra.length() > 2)
     {
         sExtra.push_back('}');
 
         sUrl.append("?extra=");
-        sUrl.append(ra::Base64(sExtra));
+        sUrl.append(ra::util::String::EncodeBase64(sExtra));
     }
 
     ra::services::ServiceLocator::Get<ra::ui::IDesktop>().OpenUrl(sUrl);

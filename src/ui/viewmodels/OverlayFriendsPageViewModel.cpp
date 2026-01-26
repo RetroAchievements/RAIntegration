@@ -26,7 +26,7 @@ void OverlayFriendsPageViewModel::Refresh()
         {
             if (response.Failed())
             {
-                SetSubTitle(ra::Widen(response.ErrorMessage));
+                SetSubTitle(ra::util::String::Widen(response.ErrorMessage));
                 return;
             }
 
@@ -34,7 +34,7 @@ void OverlayFriendsPageViewModel::Refresh()
 
             for (const auto& pFriend : response.Friends)
             {
-                auto sFriendName = ra::Widen(pFriend.User);
+                auto sFriendName = ra::util::String::Widen(pFriend.User);
                 sFriendName.push_back(' ');
 
                 if (!pImageRepository.IsImageAvailable(ra::ui::ImageType::UserPic, pFriend.User))
@@ -44,7 +44,7 @@ void OverlayFriendsPageViewModel::Refresh()
                 for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vItems.Count()); ++nIndex)
                 {
                     const auto& pItemLabel = m_vItems.GetItemValue(nIndex, ItemViewModel::LabelProperty);
-                    if (ra::StringStartsWith(pItemLabel, sFriendName))
+                    if (ra::util::String::StartsWith(pItemLabel, sFriendName))
                     {
                         pvmFriend = m_vItems.GetItemAt(nIndex);
                         break;
@@ -59,7 +59,7 @@ void OverlayFriendsPageViewModel::Refresh()
                     pvmFriend->Image.ChangeReference(ra::ui::ImageType::UserPic, pFriend.User);
                 }
 
-                pvmFriend->SetLabel(ra::StringPrintf(L"%s (%u)", pFriend.User, pFriend.Score));
+                pvmFriend->SetLabel(ra::util::String::Printf(L"%s (%u)", pFriend.User, pFriend.Score));
                 pvmFriend->SetDetail(pFriend.LastActivity);
             }
 

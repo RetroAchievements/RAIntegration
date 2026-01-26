@@ -7,6 +7,7 @@
 #include "services/TextWriter.hh"
 
 #include "util/Strings.hh"
+#include "util/Tokenizer.hh"
 
 namespace ra {
 namespace data {
@@ -274,9 +275,9 @@ public:
     bool HasUnpublishedChanges() const noexcept;
 
     virtual void Serialize(ra::services::TextWriter& pWriter) const = 0;
-    virtual bool Deserialize(ra::Tokenizer& pTokenizer) = 0;
+    virtual bool Deserialize(ra::util::Tokenizer& pTokenizer) = 0;
 
-    void DeserializeLocalCheckpoint(ra::Tokenizer& pTokenizer);
+    void DeserializeLocalCheckpoint(ra::util::Tokenizer& pTokenizer);
 
     /// <summary>
     /// Captures the current state of the asset as a reflection of the state on the server.
@@ -311,7 +312,7 @@ public:
     /// <summary>
     /// Discards any changes made since the server checkpoint and repopulates the local checkpoint using Deserialize.
     /// </summary>
-    void ResetLocalCheckpoint(ra::Tokenizer& pTokenizer);
+    void ResetLocalCheckpoint(ra::util::Tokenizer& pTokenizer);
 
     /// <summary>
     /// Gets a human-readable string for the AssetType enum values.
@@ -356,11 +357,11 @@ protected:
     static void WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::string& sText);
     static void WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText);
 
-    static bool ReadNumber(ra::Tokenizer& pTokenizer, uint32_t& nValue);
-    static bool ReadQuoted(ra::Tokenizer& pTokenizer, std::string& sText);
-    static bool ReadQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText);
-    static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& sText);
-    static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText);
+    static bool ReadNumber(ra::util::Tokenizer& pTokenizer, uint32_t& nValue);
+    static bool ReadQuoted(ra::util::Tokenizer& pTokenizer, std::string& sText);
+    static bool ReadQuoted(ra::util::Tokenizer& pTokenizer, std::wstring& sText);
+    static bool ReadPossiblyQuoted(ra::util::Tokenizer& pTokenizer, std::string& sText);
+    static bool ReadPossiblyQuoted(ra::util::Tokenizer& pTokenizer, std::wstring& sText);
 
     bool IsUpdating() const override;
 

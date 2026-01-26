@@ -1,5 +1,7 @@
 #include "UnknownGameViewModel.hh"
 
+#include "RA_Defs.h"
+
 #include "util\Strings.hh"
 
 #include "api\FetchGamesList.hh"
@@ -72,7 +74,7 @@ void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
         if (response.Failed())
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"Could not retrieve list of existing games",
-                                                                      ra::Widen(response.ErrorMessage));
+                                                                      ra::util::String::Widen(response.ErrorMessage));
         }
         else
         {
@@ -99,7 +101,7 @@ void UnknownGameViewModel::InitializeTestCompatibilityMode()
     m_vGameTitles.Add(pGameContext.GameId(), pGameContext.GameTitle());
     m_vGameTitles.Freeze();
     SetSelectedGameId(pGameContext.GameId());
-    SetChecksum(ra::Widen(pGameContext.GameHash()));
+    SetChecksum(ra::util::String::Widen(pGameContext.GameHash()));
 
     SetValue(IsSelectedGameEnabledProperty, false);
 }
@@ -155,7 +157,7 @@ unsigned UnknownGameViewModel::DecodeID(const std::string& sLine, const std::wst
     std::wstring sError;
     unsigned nEncodedId;
 
-    if (ra::ParseHex(ra::Widen(sLine), 0xFFFFFFFF, nEncodedId, sError))
+    if (ra::ParseHex(ra::util::String::Widen(sLine), 0xFFFFFFFF, nEncodedId, sError))
         return nEncodedId ^ GenerateMask(sHash, nConsoleId);
 
     return 0;
@@ -164,7 +166,7 @@ unsigned UnknownGameViewModel::DecodeID(const std::string& sLine, const std::wst
 std::string UnknownGameViewModel::EncodeID(unsigned nId, const std::wstring& sHash, ConsoleID nConsoleId)
 {
     const auto nEncodedId = nId ^ GenerateMask(sHash, nConsoleId);
-    return ra::StringPrintf("%08x", nEncodedId);
+    return ra::util::String::Printf("%08x", nEncodedId);
 }
 
 static void AddClientHash(const std::string& sHash, uint32_t nGameId, bool isUnknown)
@@ -183,7 +185,7 @@ bool UnknownGameViewModel::Associate()
     if (nGameId == 0)
     {
         request.GameName = GetNewGameName();
-        ra::Trim(request.GameName);
+        ra::util::String::Trim(request.GameName);
 
         if (request.GameName.length() < 3)
         {
@@ -192,7 +194,7 @@ bool UnknownGameViewModel::Associate()
         }
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to create a new entry for '%s'?", request.GameName));
+        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to create a new entry for '%s'?", request.GameName));
         vmMessageBox.SetMessage(L"If you were unable to find an existing title, please check to make sure that it's not listed under \"~unlicensed~\", \"~hack~\", \"~prototype~\", or had a leading article removed.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) == DialogResult::No)
@@ -204,7 +206,7 @@ bool UnknownGameViewModel::Associate()
         request.GameName = m_vGameTitles.GetLabelForId(nGameId);
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to add a new hash to '%s'?", request.GameName));
+        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to add a new hash to '%s'?", request.GameName));
         vmMessageBox.SetMessage(L"You should not do this unless you are certain that the new title is compatible. You can use 'Test' mode to check compatibility.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) == DialogResult::No)
@@ -213,7 +215,7 @@ bool UnknownGameViewModel::Associate()
 
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     request.ConsoleId = pConsoleContext.Id();
-    request.Hash = ra::Narrow(GetChecksum());
+    request.Hash = ra::util::String::Narrow(GetChecksum());
     request.Description = GetEstimatedGameName();
 
     auto response = request.Call();
@@ -226,7 +228,7 @@ bool UnknownGameViewModel::Associate()
     }
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"Could not add new title",
-                                                              ra::Widen(response.ErrorMessage));
+                                                              ra::util::String::Widen(response.ErrorMessage));
     return false;
 }
 
@@ -240,7 +242,7 @@ bool UnknownGameViewModel::BeginTest()
     }
 
     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-    vmMessageBox.SetHeader(ra::StringPrintf(L"Play '%s' in compatability test mode?", m_vGameTitles.GetLabelForId(nGameId)));
+    vmMessageBox.SetHeader(ra::util::String::Printf(L"Play '%s' in compatability test mode?", m_vGameTitles.GetLabelForId(nGameId)));
     vmMessageBox.SetMessage(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them.");
     vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
     if (vmMessageBox.ShowModal(*this) == DialogResult::No)
@@ -253,7 +255,7 @@ bool UnknownGameViewModel::BeginTest()
     sMapping->WriteLine(sValue);
 
     SetTestMode(true);
-    AddClientHash(ra::Narrow(GetChecksum()), nGameId, 1);
+    AddClientHash(ra::util::String::Narrow(GetChecksum()), nGameId, 1);
 
     return true;
 }

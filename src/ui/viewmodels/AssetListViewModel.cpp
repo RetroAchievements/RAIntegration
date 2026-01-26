@@ -514,7 +514,7 @@ bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& p
             break;
 
         case SpecialFilter::Authored:
-            if (pAsset.GetAuthor() != ra::Widen(ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName()))
+            if (pAsset.GetAuthor() != ra::util::String::Widen(ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName()))
                 return false;
             break;
     }
@@ -618,7 +618,7 @@ void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
         const auto& pLocalStorage = dynamic_cast<const ra::services::impl::FileLocalStorage&>(ra::services::ServiceLocator::Get<ra::services::ILocalStorage>());
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         const auto sFilePath = pLocalStorage.GetPath(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.ActiveGameId()));
-        auto sUrl = ra::StringPrintf("file://%s", sFilePath);
+        auto sUrl = ra::util::String::Printf("file://%s", sFilePath);
         std::replace(sUrl.begin(), sUrl.end(), '\\', '/');
         ra::services::ServiceLocator::Get<ra::ui::IDesktop>().OpenUrl(sUrl);
         return;
@@ -992,7 +992,7 @@ bool AssetListViewModel::SelectionContainsInvalidAsset(const std::vector<ra::dat
 
         if (bInvalidAssetInSelection)
         {
-            sErrorMessage = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+            sErrorMessage = ra::util::String::Printf(L"The following errors must be corrected:\n* %s",
                                              pWindowManager.AssetEditor.GetAssetValidationError());
 
             return true;
@@ -1148,7 +1148,7 @@ void AssetListViewModel::SaveSelected()
             return;
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetMessage(ra::StringPrintf(L"Are you sure you want to publish %d items?", vSelectedAssets.size()));
+        vmMessageBox.SetMessage(ra::util::String::Printf(L"Are you sure you want to publish %d items?", vSelectedAssets.size()));
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
             return;
@@ -1172,7 +1172,7 @@ void AssetListViewModel::SaveSelected()
             return;
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to promote %d items to core?", vSelectedAssets.size()));
+        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to promote %d items to core?", vSelectedAssets.size()));
         vmMessageBox.SetMessage(L"Items in core are officially available for players to earn.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
@@ -1217,7 +1217,7 @@ void AssetListViewModel::SaveSelected()
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
-        vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to demote %d items to unofficial?", vSelectedAssets.size()));
+        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to demote %d items to unofficial?", vSelectedAssets.size()));
         vmMessageBox.SetMessage(L"Items in unofficial can no longer be earned by players.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
@@ -1264,7 +1264,7 @@ static std::wstring ValidateTriggerLogic(const std::string& sTrigger)
 {
     const auto nSize = rc_trigger_size(sTrigger.c_str());
     if (nSize < 0)
-        return ra::StringPrintf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
+        return ra::util::String::Printf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
 
 #ifdef VALIDATE_PRERELEASE_FUNCTIONALITY
     std::string sBuffer;
@@ -1295,7 +1295,7 @@ static std::wstring ValidateValueLogic(const std::string& sValue)
 {
     const auto nSize = rc_value_size(sValue.c_str());
     if (nSize < 0)
-        return ra::StringPrintf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
+        return ra::util::String::Printf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
 
 #ifdef VALIDATE_PRERELEASE_FUNCTIONALITY
     std::string sBuffer;
@@ -1323,26 +1323,26 @@ void AssetListViewModel::ValidateAchievementForCore(std::wstring& sError, const 
 {
     const std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
 }
 
 void AssetListViewModel::ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pLeaderboard) const
 {
     std::wstring sTriggerError = ValidateTriggerLogic(pLeaderboard.GetStartTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
 
     sTriggerError = ValidateTriggerLogic(pLeaderboard.GetSubmitTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
 
     sTriggerError = ValidateTriggerLogic(pLeaderboard.GetCancelTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
 
     const std::wstring sValueError = ValidateValueLogic(pLeaderboard.GetValueDefinition());
     if (!sValueError.empty())
-        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
 }
 
 bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly)
@@ -1362,13 +1362,13 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
             if (pLeaderboard != nullptr)
             {
                 if (pLeaderboard->GetStartTrigger().empty())
-                    sError.append(ra::StringPrintf(L"\n* %s: No Start condition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Start condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetCancelTrigger().empty())
-                    sError.append(ra::StringPrintf(L"\n* %s: No Cancel condition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Cancel condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetSubmitTrigger().empty())
-                    sError.append(ra::StringPrintf(L"\n* %s: No Submit condition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Submit condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetValueDefinition().empty())
-                    sError.append(ra::StringPrintf(L"\n* %s: No Value definition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Value definition", pLeaderboard->GetName()));
 
                 ValidateLeaderboardForCore(sError, *pLeaderboard);
             }
@@ -1784,7 +1784,7 @@ void AssetListViewModel::CreateNew()
     if (bUpdateAsset)
     {
         const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::context::UserContext>();
-        pNewAsset->SetAuthor(ra::Widen(pUserContext.GetDisplayName()));
+        pNewAsset->SetAuthor(ra::util::String::Widen(pUserContext.GetDisplayName()));
         pNewAsset->SetCategory(ra::data::models::AssetCategory::Local);
         pNewAsset->UpdateServerCheckpoint();
         pNewAsset->SetNew();
@@ -1866,7 +1866,7 @@ void AssetListViewModel::CloneSelected()
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
-    const auto pAuthor = ra::Widen(pUserContext.GetDisplayName());
+    const auto pAuthor = ra::util::String::Widen(pUserContext.GetDisplayName());
 
     FilteredAssets().BeginUpdate();
 

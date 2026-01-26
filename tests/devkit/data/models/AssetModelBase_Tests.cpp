@@ -44,7 +44,7 @@ private:
             WritePossiblyQuoted(pWriter, Utf8String);
         }
 
-        bool Deserialize(ra::Tokenizer& pTokenizer) override
+        bool Deserialize(ra::util::Tokenizer& pTokenizer) override
         {
             std::wstring sName;
             if (!ReadQuoted(pTokenizer, sName))
@@ -101,7 +101,7 @@ private:
         void SetDefinition(const std::string& sValue) { SetAssetDefinition(m_pDefinition, sValue); }
 
         void Serialize(ra::services::TextWriter&) const noexcept override {}
-        bool Deserialize(ra::Tokenizer&) noexcept override { return false; }
+        bool Deserialize(ra::util::Tokenizer&) noexcept override { return false; }
 
     protected:
         static const IntModelProperty DefinitionProperty;
@@ -211,7 +211,7 @@ public:
         AssetModelHarness asset;
 
         std::string sSerialized = ":\"Name\":String:99:\"UTF-8-Quoted\":UTF-8";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Advance(); // skip leading colon
         Assert::IsTrue(asset.Deserialize(pTokenizer));
 
@@ -227,7 +227,7 @@ public:
         AssetModelHarness asset;
 
         std::string sSerialized = ":\"Mission: Impossible\":\"Mission: Impossible\":0:\"Mission: Impossible\":\"Mission: Impossible\"";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Advance(); // skip leading colon
         Assert::IsTrue(asset.Deserialize(pTokenizer));
 
@@ -243,7 +243,7 @@ public:
         AssetModelHarness asset;
 
         std::string sSerialized = ":\"A \\\"Test\\\" B\":\"A \\\"Test\\\" B\":0:\"A \\\"Test\\\" B\":\"A \\\"Test\\\" B\"";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Advance(); // skip leading colon
         Assert::IsTrue(asset.Deserialize(pTokenizer));
 
@@ -259,7 +259,7 @@ public:
         AssetModelHarness asset;
 
         std::string sSerialized = ":\"A\\\\B\":\"A\\\\B\":0:\"A\\\\B\":\"A\\\\B\"";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Advance(); // skip leading colon
         Assert::IsTrue(asset.Deserialize(pTokenizer));
 
@@ -275,7 +275,7 @@ public:
         AssetModelHarness asset;
 
         std::string sSerialized = ":\"A\":B:C:\"D\":E";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Advance(); // skip leading colon
         Assert::IsFalse(asset.Deserialize(pTokenizer));
 
@@ -291,7 +291,7 @@ public:
         AssetModelHarness asset;
 
         std::string sSerialized = ":\"A\":B:5:\"D\"";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Advance(); // skip leading colon
         Assert::IsFalse(asset.Deserialize(pTokenizer));
 
@@ -307,7 +307,7 @@ public:
         AssetModelHarness asset;
 
         std::string sSerialized = ":A:B:5:D:E";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Advance(); // skip leading colon
         Assert::IsFalse(asset.Deserialize(pTokenizer));
 
@@ -323,7 +323,7 @@ public:
         AssetModelHarness asset;
 
         std::string sSerialized = ":\"A\":\"B\"C:5:\"D\":E";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Advance(); // skip leading colon
         Assert::IsFalse(asset.Deserialize(pTokenizer));
 
@@ -466,7 +466,7 @@ public:
         asset.SetName(L"MemoryName");
 
         std::string sSerialized = ":\"Name\":String:99:\"UTF-8-Quoted\":UTF-8";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Advance(); // skip leading colon
         asset.ResetLocalCheckpoint(pTokenizer);
 

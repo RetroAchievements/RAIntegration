@@ -111,19 +111,19 @@ private:
 
             const std::wstring sTitle =
                 (pAchievement->public_.points == 1)
-                    ? ra::StringPrintf(L"%s (1 point)", pAchievement->public_.title)
-                    : ra::StringPrintf(L"%s (%u points)", pAchievement->public_.title, pAchievement->public_.points);
+                    ? ra::util::String::Printf(L"%s (1 point)", pAchievement->public_.title)
+                    : ra::util::String::Printf(L"%s (%u points)", pAchievement->public_.title, pAchievement->public_.points);
             Assert::AreEqual(sTitle, pItem->GetLabel());
-            Assert::AreEqual(ra::Widen(pAchievement->public_.description), pItem->GetDetail());
+            Assert::AreEqual(ra::util::String::Widen(pAchievement->public_.description), pItem->GetDetail());
 
             if (bLocked)
             {
-                Assert::IsTrue(pItem->IsDisabled(), ra::StringPrintf(L"Item %d not disabled", nIndex).c_str());
-                Assert::AreEqual(ra::StringPrintf("%s_lock", pAchievement->public_.badge_name), pItem->Image.Name());
+                Assert::IsTrue(pItem->IsDisabled(), ra::util::String::Printf(L"Item %d not disabled", nIndex).c_str());
+                Assert::AreEqual(ra::util::String::Printf("%s_lock", pAchievement->public_.badge_name), pItem->Image.Name());
             }
             else
             {
-                Assert::IsFalse(pItem->IsDisabled(), ra::StringPrintf(L"Item %d disabled", nIndex).c_str());
+                Assert::IsFalse(pItem->IsDisabled(), ra::util::String::Printf(L"Item %d disabled", nIndex).c_str());
                 Assert::AreEqual(std::string(pAchievement->public_.badge_name), pItem->Image.Name());
             }
         }
@@ -565,11 +565,11 @@ public:
         Expects(pItem != nullptr);
         Assert::IsFalse(pItem->IsHeader());
         Assert::AreEqual(pAch3->public_.id, static_cast<uint32_t>(pItem->GetId()));
-        const std::wstring sTitle = ra::StringPrintf(L"%s (%u points)", pAch3->public_.title, pAch3->public_.points);
+        const std::wstring sTitle = ra::util::String::Printf(L"%s (%u points)", pAch3->public_.title, pAch3->public_.points);
         Assert::AreEqual(sTitle, pItem->GetLabel());
-        Assert::AreEqual(ra::Widen(pAch3->public_.description), pItem->GetDetail());
-        Assert::IsFalse(pItem->IsDisabled(), ra::StringPrintf(L"Item %d disabled", 7).c_str());
-        Assert::AreEqual(ra::Narrow(vmAch3.GetBadge()), pItem->Image.Name());
+        Assert::AreEqual(ra::util::String::Widen(pAch3->public_.description), pItem->GetDetail());
+        Assert::IsFalse(pItem->IsDisabled(), ra::util::String::Printf(L"Item %d disabled", 7).c_str());
+        Assert::AreEqual(ra::util::String::Narrow(vmAch3.GetBadge()), pItem->Image.Name());
 
         Assert::IsNull(achievementsPage.GetItem(8));
     }

@@ -177,7 +177,7 @@ private:
 
 #ifndef NDEBUG
             // expanded definition of assert macro so we can use the constructed error message
-            _wassert(ra::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), to_unsigned(__LINE__));
+            _wassert(ra::util::String::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), to_unsigned(__LINE__));
 #endif
 
             throw std::runtime_error(sMessage);

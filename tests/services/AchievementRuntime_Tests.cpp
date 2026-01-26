@@ -155,9 +155,9 @@ public:
         }
 
         if (nRecordId != 0)
-            Assert::Fail(ra::StringPrintf(L"Event %u not found for record %u.", nType, nRecordId).c_str());
+            Assert::Fail(ra::util::String::Printf(L"Event %u not found for record %u.", nType, nRecordId).c_str());
         else
-            Assert::Fail(ra::StringPrintf(L"Event %u not found.", nType).c_str());
+            Assert::Fail(ra::util::String::Printf(L"Event %u not found.", nType).c_str());
     }
 
     void RaiseEvent(const rc_client_event_t& event)
@@ -194,7 +194,7 @@ public:
     rc_client_achievement_info_t* MockSubsetAchievement(uint32_t nId, const std::string& sTrigger, rc_client_subset_info_t* pSubset)
     {
         auto* game = GetClient()->game;
-        auto* ach = AddAchievement(game, pSubset, nId, ra::StringPrintf("Ach%u", nId).c_str());
+        auto* ach = AddAchievement(game, pSubset, nId, ra::util::String::Printf("Ach%u", nId).c_str());
 
         const auto nSize = rc_trigger_size(sTrigger.c_str());
         void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
@@ -253,7 +253,7 @@ public:
     rc_client_leaderboard_info_t* MockLeaderboard(uint32_t nId, const std::string& sDefinition)
     {
         rc_client_game_info_t* game = GetClient()->game;
-        auto* lboard = AddLeaderboard(game, GetCoreSubset(game), nId, ra::StringPrintf("Leaderboard%u", nId).c_str());
+        auto* lboard = AddLeaderboard(game, GetCoreSubset(game), nId, ra::util::String::Printf("Leaderboard%u", nId).c_str());
 
         const auto nSize = rc_lboard_size(sDefinition.c_str());
         void* lboard_buffer = rc_buffer_alloc(&game->buffer, nSize);
@@ -266,7 +266,7 @@ public:
     rc_client_leaderboard_info_t* MockLocalLeaderboard(uint32_t nId, const std::string& sDefinition)
     {
         rc_client_game_info_t* game = GetClient()->game;
-        auto* lboard = AddLeaderboard(game, GetLocalSubset(game), nId, ra::StringPrintf("Leaderboard%u", nId).c_str());
+        auto* lboard = AddLeaderboard(game, GetLocalSubset(game), nId, ra::util::String::Printf("Leaderboard%u", nId).c_str());
 
         const auto nSize = rc_lboard_size(sDefinition.c_str());
         void* lboard_buffer = rc_buffer_alloc(&game->buffer, nSize);
@@ -456,11 +456,11 @@ private:
         }
         else
         {
-            const std::string sGeneratedTitle = ra::StringPrintf("Achievement %u", nId);
+            const std::string sGeneratedTitle = ra::util::String::Printf("Achievement %u", nId);
             achievement->public_.title = rc_buffer_strcpy(&game->buffer, sGeneratedTitle.c_str());
         }
 
-        const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
+        const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
         achievement->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
         achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
@@ -498,11 +498,11 @@ private:
         }
         else
         {
-            const std::string sGeneratedTitle = ra::StringPrintf("Leaderboard %u", nId);
+            const std::string sGeneratedTitle = ra::util::String::Printf("Leaderboard %u", nId);
             leaderboard->public_.title = rc_buffer_strcpy(&game->buffer, sGeneratedTitle.c_str());
         }
 
-        const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
+        const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
         leaderboard->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
         leaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;

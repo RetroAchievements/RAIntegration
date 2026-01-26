@@ -60,7 +60,7 @@ void AssetUploadViewModel::QueueAchievement(ra::data::models::AchievementModel& 
     pItem.pAsset = &pAchievement;
 
     const auto& sBadge = pAchievement.GetBadge();
-    if (ra::StringStartsWith(sBadge, L"local\\"))
+    if (ra::util::String::StartsWith(sBadge, L"local\\"))
     {
         pItem.nState = UploadState::WaitingForImage;
 
@@ -146,28 +146,28 @@ void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNote
             if (!pNote->empty())
             {
                 vmPrompt.SetHeader(
-                    ra::StringPrintf(L"Overwrite note for address %s?", ra::ByteAddressToString(nAddress)));
+                    ra::util::String::Printf(L"Overwrite note for address %s?", ra::ByteAddressToString(nAddress)));
 
                 if (pOriginalNote->length() > 256 || pNote->length() > 256)
                 {
                     const auto sNewNoteShort = ShortenNote(*pNote);
                     const auto sOldNoteShort = ShortenNote(*pOriginalNote);
                     vmPrompt.SetMessage(
-                        ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
+                        ra::util::String::Printf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
                                          *pOriginalAuthor, sOldNoteShort, sNewNoteShort));
                 }
                 else
                 {
                     vmPrompt.SetMessage(
-                        ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
+                        ra::util::String::Printf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
                                          *pOriginalAuthor, *pOriginalNote, *pNote));
                 }
             }
             else
             {
                 const auto pNoteShort = ShortenNote(*pOriginalNote);
-                vmPrompt.SetHeader(ra::StringPrintf(L"Delete note for address %s?", ra::ByteAddressToString(nAddress)));
-                vmPrompt.SetMessage(ra::StringPrintf(L"Are you sure you want to delete %s's note:\n\n%s", *pOriginalAuthor, pNoteShort));
+                vmPrompt.SetHeader(ra::util::String::Printf(L"Delete note for address %s?", ra::ByteAddressToString(nAddress)));
+                vmPrompt.SetMessage(ra::util::String::Printf(L"Are you sure you want to delete %s's note:\n\n%s", *pOriginalAuthor, pNoteShort));
             }
 
             vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
@@ -189,13 +189,13 @@ void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNote
 
 void AssetUploadViewModel::OnBegin()
 {
-    SetMessage(ra::StringPrintf(L"Uploading %d items...", TaskCount()));
+    SetMessage(ra::util::String::Printf(L"Uploading %d items...", TaskCount()));
 }
 
 void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
 {
     const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
-    const std::wstring sFilename = pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(sBadge));
+    const std::wstring sFilename = pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::util::String::Narrow(sBadge));
 
     ra::api::UploadBadge::Request request;
     request.ImageFilePath = sFilename;
@@ -228,7 +228,7 @@ void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
                     if (response.Succeeded())
                     {
                         RA_LOG_INFO("Changed badge on achievement %u to %s", pQueuedAchievement->GetID(), response.BadgeId);
-                        pQueuedAchievement->SetBadge(ra::Widen(response.BadgeId));
+                        pQueuedAchievement->SetBadge(ra::util::String::Widen(response.BadgeId));
                         vAffectedAchievements.push_back(pQueuedAchievement);
                     }
                     else
@@ -261,7 +261,7 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
     request.Description = pAchievement.GetDescription();
     request.Trigger = pAchievement.GetTrigger();
     request.Points = pAchievement.GetPoints();
-    request.Badge = ra::Narrow(pAchievement.GetBadge());
+    request.Badge = ra::util::String::Narrow(pAchievement.GetBadge());
 
     switch (pAchievement.GetAchievementType())
     {
@@ -548,15 +548,15 @@ void AssetUploadViewModel::ShowResults() const
         }
     }
 
-    auto sMessage = ra::StringPrintf(L"%d items successfully uploaded.", nSuccessful);
+    auto sMessage = ra::util::String::Printf(L"%d items successfully uploaded.", nSuccessful);
     if (nFailed)
     {
-        sMessage.append(ra::StringPrintf(L"\n\n%d items failed:", nFailed));
+        sMessage.append(ra::util::String::Printf(L"\n\n%d items failed:", nFailed));
 
         for (const auto& pItem : m_vUploadQueue)
         {
             if (pItem.nState == UploadState::Failed)
-                sMessage.append(ra::StringPrintf(L"\n* %s: %s", pItem.pAsset->GetName(), pItem.sErrorMessage));
+                sMessage.append(ra::util::String::Printf(L"\n* %s: %s", pItem.pAsset->GetName(), pItem.sErrorMessage));
         }
     }
 

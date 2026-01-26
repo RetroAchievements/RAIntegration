@@ -69,6 +69,7 @@
     <ClCompile Include="data\DataModelBase_Tests.cpp" />
     <ClCompile Include="data\ModelPropertyContainer_Tests.cpp" />
     <ClCompile Include="data\ModelProperty_Tests.cpp" />
+    <ClCompile Include="util\Tokenizer_Tests.cpp" />
     <ClInclude Include="context\mocks\MockConsoleContext.hh" />
     <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh" />
     <ClInclude Include="context\mocks\MockRcClient.hh" />
@@ -86,6 +87,7 @@
     <ClCompile Include="services\Http_Tests.cpp" />
     <ClCompile Include="services\StringTextReader_Tests.cpp" />
     <ClCompile Include="services\StringTextWriter_Tests.cpp" />
+    <ClCompile Include="util\StringBuilder_Tests.cpp" />
     <ClCompile Include="util\Strings_Tests.cpp" />
     <ClInclude Include="testutil\HttpAsserts.hh" />
     <ClInclude Include="testutil\MemoryAsserts.hh" />

@@ -52,7 +52,7 @@ public:
         HandleRequest<TApi>([](const typename TApi::Request&, typename TApi::Response&) -> bool
         {
             Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
-                ra::StringPrintf(L"%s should not have been invoked", TApi::Name()).c_str());
+                ra::util::String::Printf(L"%s should not have been invoked", TApi::Name()).c_str());
         });
     }
 
@@ -152,7 +152,7 @@ protected:
         }
 
         response.Result = ApiResult::Unsupported;
-        response.ErrorMessage = ra::StringPrintf("%s is not supported by %s", sApiName, Name());
+        response.ErrorMessage = ra::util::String::Printf("%s is not supported by %s", sApiName, Name());
 
         return response;
     }

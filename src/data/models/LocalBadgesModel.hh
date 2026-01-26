@@ -27,7 +27,7 @@ public:
 	bool NeedsSerialized() const noexcept { return false; }
 
 	void Serialize(ra::services::TextWriter&) const noexcept override {}
-	bool Deserialize(ra::Tokenizer&) noexcept override { return true; }
+	bool Deserialize(ra::util::Tokenizer&) noexcept override { return true; }
 
 	int GetReferenceCount(const std::wstring& sBadgeName, bool bCommitted) const;
 	void DeleteUncommittedBadges();

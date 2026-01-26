@@ -25,7 +25,7 @@ void FrameEventQueue::DoFrame()
     {
         sPauseMessage.append(L"The following triggers have triggered:");
         for (const auto& pTriggerName : m_vTriggeredTriggers)
-            sPauseMessage.append(ra::StringPrintf(L"\n* %s", pTriggerName));
+            sPauseMessage.append(ra::util::String::Printf(L"\n* %s", pTriggerName));
 
         m_vTriggeredTriggers.clear();
     }
@@ -37,7 +37,7 @@ void FrameEventQueue::DoFrame()
 
         sPauseMessage.append(L"The following triggers have been reset:");
         for (const auto& pTriggerName : m_vResetTriggers)
-            sPauseMessage.append(ra::StringPrintf(L"\n* %s", pTriggerName));
+            sPauseMessage.append(ra::util::String::Printf(L"\n* %s", pTriggerName));
 
         m_vResetTriggers.clear();
     }
@@ -49,7 +49,7 @@ void FrameEventQueue::DoFrame()
 
         sPauseMessage.append(L"The following bookmarks have changed:");
         for (const auto& pChange : m_vMemChanges)
-            sPauseMessage.append(ra::StringPrintf(L"\n* %s", pChange));
+            sPauseMessage.append(ra::util::String::Printf(L"\n* %s", pChange));
 
         m_vMemChanges.clear();
     }

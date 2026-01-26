@@ -52,13 +52,13 @@ static std::wstring U32ToFloatString(uint32_t nValue, uint8_t nFloatType)
     if (value.value.f32 < 0.000001)
     {
         if (value.value.f32 > 0.0)
-            return ra::StringPrintf(L"%e", value.value.f32);
+            return ra::util::String::Printf(L"%e", value.value.f32);
 
         if (value.value.f32 < 0.0 && value.value.f32 > -0.000001)
-            return ra::StringPrintf(L"%e", value.value.f32);
+            return ra::util::String::Printf(L"%e", value.value.f32);
     }
 
-    std::wstring sValue = ra::StringPrintf(L"%f", value.value.f32);
+    std::wstring sValue = ra::util::String::Printf(L"%f", value.value.f32);
     while (sValue.back() == L'0')
         sValue.pop_back();
     if (sValue.back() == L'.')
@@ -96,11 +96,11 @@ std::wstring Memory::FormatValue(uint32_t nValue, Memory::Size nSize, Memory::Fo
             const auto nBits = SizeBits(nSize);
             switch (nBits / 8)
             {
-                default: return ra::StringPrintf(L"%x", nValue);
-                case 1: return ra::StringPrintf(L"%02x", nValue);
-                case 2: return ra::StringPrintf(L"%04x", nValue);
-                case 3: return ra::StringPrintf(L"%06x", nValue);
-                case 4: return ra::StringPrintf(L"%08x", nValue);
+                default: return ra::util::String::Printf(L"%x", nValue);
+                case 1: return ra::util::String::Printf(L"%02x", nValue);
+                case 2: return ra::util::String::Printf(L"%04x", nValue);
+                case 3: return ra::util::String::Printf(L"%06x", nValue);
+                case 4: return ra::util::String::Printf(L"%08x", nValue);
             }
     }
 }

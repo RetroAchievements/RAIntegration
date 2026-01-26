@@ -1410,7 +1410,7 @@ void MemoryViewerViewModel::RenderAddresses()
     for (int i = 0; i < nVisibleLines; ++i)
     {
         const auto nColor = (nCursorAddress == nFirstAddress) ? pEditorTheme.ColorHeaderSelected() : pEditorTheme.ColorHeader();
-        const auto sAddress = ra::StringPrintf(sFormat, nFirstAddress);
+        const auto sAddress = ra::util::String::Printf(sFormat, nFirstAddress);
         nFirstAddress += 16;
 
         m_pSurface->WriteText(0, nY, s_nFont, nColor, sAddress);

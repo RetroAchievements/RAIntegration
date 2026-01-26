@@ -99,9 +99,9 @@ void CodeNotesViewModel::ResetFilter()
 
             std::wstring sAddress;
             if (nBytes <= 4)
-                sAddress = ra::Widen(ra::ByteAddressToString(nAddress));
+                sAddress = ra::util::String::Widen(ra::ByteAddressToString(nAddress));
             else
-                sAddress = ra::StringPrintf(L"%s\n- %s", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nAddress + nBytes - 1));
+                sAddress = ra::util::String::Printf(L"%s\n- %s", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nAddress + nBytes - 1));
 
             auto* vmNote = m_vNotes.GetItemAt(nIndex);
             if (vmNote)
@@ -132,7 +132,7 @@ void CodeNotesViewModel::ResetFilter()
     m_vNotes.EndUpdate();
 
     m_nUnfilteredNotesCount = m_vNotes.Count();
-    SetValue(ResultCountProperty, ra::StringPrintf(L"%u/%u", m_nUnfilteredNotesCount, m_nUnfilteredNotesCount));
+    SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_nUnfilteredNotesCount, m_nUnfilteredNotesCount));
 }
 
 void CodeNotesViewModel::ApplyFilter()
@@ -144,7 +144,7 @@ void CodeNotesViewModel::ApplyFilter()
         return;
 
     std::wstring sFilterLower = sFilter;
-    ra::StringMakeLowercase(sFilterLower);
+    ra::util::String::MakeLowercase(sFilterLower);
 
     m_vNotes.BeginUpdate();
 
@@ -155,13 +155,13 @@ void CodeNotesViewModel::ApplyFilter()
 
         if (bOnlyUnpublished && !pNote->IsModified())
             m_vNotes.RemoveAt(i);
-        else if (!sFilterLower.empty() && !ra::StringContainsCaseInsensitive(pNote->GetNote(), sFilterLower, true))
+        else if (!sFilterLower.empty() && !ra::util::String::ContainsCaseInsensitive(pNote->GetNote(), sFilterLower))
             m_vNotes.RemoveAt(i);
     }
 
     m_vNotes.EndUpdate();
 
-    SetValue(ResultCountProperty, ra::StringPrintf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
+    SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
 }
 
 void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
@@ -186,7 +186,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
             if (sFilter.empty())
                 bMatchesFilter = true;
             else if (sNewNote.length() > sFilter.length())
-                bMatchesFilter = ra::StringContainsCaseInsensitive(sNewNote, sFilter);
+                bMatchesFilter = ra::util::String::ContainsCaseInsensitive(sNewNote, sFilter);
         }
     }
 
@@ -221,15 +221,15 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
                 pNote->nBytes = pCodeNotes->GetCodeNoteBytes(nAddress);
                 std::wstring sAddress;
                 if (pNote->nBytes <= 4)
-                    sAddress = ra::Widen(ra::ByteAddressToString(nAddress));
+                    sAddress = ra::util::String::Widen(ra::ByteAddressToString(nAddress));
                 else
-                    sAddress = ra::StringPrintf(L"%s\n- %s",
+                    sAddress = ra::util::String::Printf(L"%s\n- %s",
                         ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nAddress + pNote->nBytes - 1));
 
                 pNote->SetLabel(sAddress);
             }
 
-            SetValue(ResultCountProperty, ra::StringPrintf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
+            SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
             return;
         }
         else if (pNote->nAddress > nAddress)
@@ -242,7 +242,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
     if (bMatchesFilter)
     {
         m_vNotes.BeginUpdate();
-        auto& pNote = m_vNotes.Add(ra::Widen(ra::ByteAddressToString(nAddress)), sNewNote);
+        auto& pNote = m_vNotes.Add(ra::util::String::Widen(ra::ByteAddressToString(nAddress)), sNewNote);
         pNote.SetModified(bNoteModified);
         pNote.nAddress = nAddress;
         pNote.nBytes = 1; // this will be updated when the filter is reset
@@ -250,7 +250,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
         m_vNotes.EndUpdate();
     }
 
-    SetValue(ResultCountProperty, ra::StringPrintf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
+    SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
 }
 
 void CodeNotesViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)
@@ -378,7 +378,7 @@ void CodeNotesViewModel::PublishSelected()
     if (vNotesToPublish.size() > 1)
     {
         ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
-        vmPrompt.SetHeader(ra::StringPrintf(L"Publish %zu notes?", vNotesToPublish.size()));
+        vmPrompt.SetHeader(ra::util::String::Printf(L"Publish %zu notes?", vNotesToPublish.size()));
         vmPrompt.SetMessage(L"The selected modified notes will be uploaded to the server.");
         vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmPrompt.ShowModal() == DialogResult::No)
@@ -416,9 +416,9 @@ void CodeNotesViewModel::RevertSelected()
 
     ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
     if (vNotesToRevert.size() == 1)
-        vmPrompt.SetHeader(ra::StringPrintf(L"Revert note for address %s?", ra::ByteAddressToString(vNotesToRevert.at(0))));
+        vmPrompt.SetHeader(ra::util::String::Printf(L"Revert note for address %s?", ra::ByteAddressToString(vNotesToRevert.at(0))));
     else
-        vmPrompt.SetHeader(ra::StringPrintf(L"Revert %zu notes?", vNotesToRevert.size()));
+        vmPrompt.SetHeader(ra::util::String::Printf(L"Revert %zu notes?", vNotesToRevert.size()));
 
     vmPrompt.SetMessage(L"This will discard all local work and revert the notes to the last state retrieved from the server.");
     vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);

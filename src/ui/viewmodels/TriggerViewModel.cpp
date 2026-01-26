@@ -4,6 +4,8 @@
 #include <rcheevos/src/rcheevos/rc_internal.h>
 #include <rcheevos/src/rc_client_internal.h>
 
+#include "RA_Defs.h"
+
 #include "context\IRcClient.hh"
 
 #include "util\Strings.hh"
@@ -256,7 +258,7 @@ void TriggerViewModel::SerializeAppend(std::string& sBuffer) const
 void TriggerViewModel::CopyToClipboard()
 {
     const auto sSerialized = Serialize();
-    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sSerialized));
+    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::util::String::Widen(sSerialized));
 }
 
 void TriggerViewModel::CopySelectedConditionsToClipboard()
@@ -302,7 +304,7 @@ void TriggerViewModel::CopySelectedConditionsToClipboard()
         sSerialized.pop_back();
     }
 
-    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sSerialized));
+    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::util::String::Widen(sSerialized));
 }
 
 void TriggerViewModel::DeselectAllConditions()
@@ -327,7 +329,7 @@ void TriggerViewModel::PasteFromClipboard()
         return;
     }
 
-    const auto nResult = AppendMemRefChain(ra::Narrow(sClipboardText));
+    const auto nResult = AppendMemRefChain(ra::util::String::Narrow(sClipboardText));
     if (nResult != RC_OK)
     {
         if (nResult == RC_MULTIPLE_GROUPS)
@@ -338,7 +340,7 @@ void TriggerViewModel::PasteFromClipboard()
         else
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                L"Paste failed.", ra::StringPrintf(L"Clipboard did not contain valid %s conditions.", IsValue() ? "value" : "trigger"));
+                L"Paste failed.", ra::util::String::Printf(L"Clipboard did not contain valid %s conditions.", IsValue() ? "value" : "trigger"));
         }
     }
 }
@@ -402,7 +404,7 @@ void TriggerViewModel::RemoveSelectedConditions()
         return;
 
     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-    vmMessageBox.SetMessage(ra::StringPrintf(L"Are you sure that you want to delete %d %s?",
+    vmMessageBox.SetMessage(ra::util::String::Printf(L"Are you sure that you want to delete %d %s?",
         nSelected, (nSelected == 1) ? "condition" : "conditions"));
     vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
     vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
@@ -703,7 +705,7 @@ void TriggerViewModel::AddAltGroup(int nId, rc_condset_t* pConditionSet)
     auto& vmAltGroup = m_vGroups.Add();
     vmAltGroup.SetTriggerViewModel(this);
     vmAltGroup.SetId(nId);
-    vmAltGroup.SetLabel(ra::StringPrintf(L"%s%d", (nId < 1000) ? "Alt " : "A", nId));
+    vmAltGroup.SetLabel(ra::util::String::Printf(L"%s%d", (nId < 1000) ? "Alt " : "A", nId));
     vmAltGroup.m_pConditionSet = pConditionSet;
 }
 
@@ -1454,7 +1456,7 @@ void TriggerViewModel::RemoveGroup()
     if (m_vConditions.Count() > 0)
     {
         ra::ui::viewmodels::MessageBoxViewModel vmWarning;
-        vmWarning.SetHeader(ra::StringPrintf(L"Are you sure that you want to delete %s?", pGroup->GetLabel()));
+        vmWarning.SetHeader(ra::util::String::Printf(L"Are you sure that you want to delete %s?", pGroup->GetLabel()));
         vmWarning.SetMessage(L"The group is not empty, and this operation cannot be reverted.");
         vmWarning.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
         vmWarning.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
@@ -1475,7 +1477,7 @@ void TriggerViewModel::RemoveGroup()
     else
     {
         for (gsl::index nScan = gsl::narrow_cast<gsl::index>(nIndex); nScan < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++nScan)
-            m_vGroups.GetItemAt(nScan)->SetLabel(ra::StringPrintf(L"Alt %d", nScan));
+            m_vGroups.GetItemAt(nScan)->SetLabel(ra::util::String::Printf(L"Alt %d", nScan));
     }
 
     SetSelectedGroupIndex(nIndex);
@@ -1568,7 +1570,7 @@ bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,
                 nConditionHits = vmCondition->GetCurrentHits();
                 if (nConditionHits != 0)
                 {
-                    sTooltip.append(ra::StringPrintf(L"+%u (condition %d)\n", nConditionHits, vmCondition->GetIndex()));
+                    sTooltip.append(ra::util::String::Printf(L"+%u (condition %d)\n", nConditionHits, vmCondition->GetIndex()));
                     nHits += nConditionHits;
                 }
                 break;
@@ -1578,7 +1580,7 @@ bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,
                 nConditionHits = vmCondition->GetCurrentHits();
                 if (nConditionHits != 0)
                 {
-                    sTooltip.append(ra::StringPrintf(L"-%u (condition %d)\n", nConditionHits, vmCondition->GetIndex()));
+                    sTooltip.append(ra::util::String::Printf(L"-%u (condition %d)\n", nConditionHits, vmCondition->GetIndex()));
                     nHits -= nConditionHits;
                 }
                 break;
@@ -1600,11 +1602,11 @@ bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,
                         nConditionHits = vmCondition->GetCurrentHits();
                         if (nConditionHits != 0)
                         {
-                            sTooltip.append(ra::StringPrintf(L"+%u (condition %d)\n", nConditionHits, vmCondition->GetIndex()));
+                            sTooltip.append(ra::util::String::Printf(L"+%u (condition %d)\n", nConditionHits, vmCondition->GetIndex()));
                             nHits += nConditionHits;
                         }
 
-                        sTooltip.append(ra::StringPrintf(L"%d/%u total", ra::to_signed(nHits), vmCondition->GetRequiredHits()));
+                        sTooltip.append(ra::util::String::Printf(L"%d/%u total", ra::to_signed(nHits), vmCondition->GetRequiredHits()));
                     }
 
                     return true;

@@ -158,7 +158,7 @@ public:
             ConsoleID nConsoleID = ConsoleID::MegaDrive)
         {
             mockConsoleContext.SetId(nConsoleID);
-            mockConsoleContext.SetName(ra::Widen(rc_console_name(static_cast<int>(nConsoleID))));
+            mockConsoleContext.SetName(ra::util::String::Widen(rc_console_name(static_cast<int>(nConsoleID))));
 
             mockAchievementRuntime.MockUser("Username", "ApiToken");
             mockRcClient.MockResponse(

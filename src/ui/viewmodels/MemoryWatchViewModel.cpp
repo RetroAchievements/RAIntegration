@@ -259,7 +259,7 @@ uint32_t MemoryWatchViewModel::ReadValue()
         GSL_SUPPRESS_TYPE1 pText = reinterpret_cast<char*>(&pBuffer.at(0));
         std::string sText(pText);
 
-        return ra::StringHash(sText);
+        return ra::util::String::Hash(sText);
     }
 
     return pMemoryContext.ReadMemory(m_nAddress, m_nSize);

@@ -113,11 +113,11 @@ static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
     }
     else
     {
-        const std::string sGeneratedTitle = ra::StringPrintf("Achievement %u", nId);
+        const std::string sGeneratedTitle = ra::util::String::Printf("Achievement %u", nId);
         achievement->public_.title = rc_buffer_strcpy(&game->buffer, sGeneratedTitle.c_str());
     }
 
-    const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
+    const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
     achievement->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
     achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
@@ -255,11 +255,11 @@ static rc_client_leaderboard_info_t* AddLeaderboard(const rc_client_t* client, r
     }
     else
     {
-        const std::string sGeneratedTitle = ra::StringPrintf("Leaderboard %u", nId);
+        const std::string sGeneratedTitle = ra::util::String::Printf("Leaderboard %u", nId);
         leaderboard->public_.title = rc_buffer_strcpy(&game->buffer, sGeneratedTitle.c_str());
     }
 
-    const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
+    const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
     leaderboard->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
     leaderboard->public_.state = static_cast<uint8_t>(rc_client_get_hardcore_enabled(client) ?

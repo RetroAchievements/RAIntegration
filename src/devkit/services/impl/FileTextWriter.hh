@@ -30,7 +30,7 @@ public:
     {
         if (m_oStream.is_open())
         {
-            std::string sNarrowText = ra::Narrow(sText);
+            std::string sNarrowText = ra::util::String::Narrow(sText);
             m_oStream.write(sNarrowText.c_str(), ra::to_signed(sNarrowText.length()));
         }
     }

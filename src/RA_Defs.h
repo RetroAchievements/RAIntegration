@@ -97,7 +97,7 @@ public:
         nAlignType{ newAlignType },
         bResize{ isResize }
     {
-        RARect rect;
+        RARect rect{};
         auto check = ::GetWindowRect(hwnd, &rect);
         assert(check != 0);
 
@@ -122,7 +122,7 @@ public:
         }
     }
 
-    void Resize(_In_ int width, _In_ int height) noexcept
+    void Resize(_In_ int width, _In_ int height) const noexcept
     {
         int xPos = 0, yPos = 0;
 
@@ -164,10 +164,5 @@ public:
 #ifndef UNUSED
 #define UNUSED( x ) ( x );
 #endif
-
-namespace ra {
-_NODISCARD std::string ByteAddressToString(_In_ ra::data::ByteAddress nAddr);
-_NODISCARD ra::data::ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress);
-} // namespace ra
 
 #endif // !RA_DEFS_H

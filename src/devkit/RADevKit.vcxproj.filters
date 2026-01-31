@@ -156,6 +156,9 @@
     <ClInclude Include="data\models\CodeNoteModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
+    <ClInclude Include="data\models\MemoryRegionsModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -204,6 +207,9 @@
       <Filter>data\models</Filter>
     </ClCompile>
     <ClCompile Include="data\models\AssetModelBase.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\MemoryRegionsModel.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
   </ItemGroup>

@@ -196,6 +196,7 @@ public:
     {
         ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         mockGameContext.SetCodeNote(0x0008, L"[8-bit] Byte address");
         mockGameContext.SetCodeNote(0x0010, L"[16-bit] Word address");
         mockGameContext.SetCodeNote(0x0018, L"[24-bit] TByte address");

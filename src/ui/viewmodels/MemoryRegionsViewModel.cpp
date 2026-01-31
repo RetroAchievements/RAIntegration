@@ -110,12 +110,14 @@ void MemoryRegionsViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& 
 
 void MemoryRegionsViewModel::AddNewRegion()
 {
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+
     auto pItem = std::make_unique<MemoryRegionViewModel>();
     pItem->SetId(gsl::narrow_cast<int>(m_vRegions.Count()));
     pItem->SetLabel(L"New Custom Region");
     pItem->SetRange(ra::StringPrintf(L"%s-%s",
-        ra::ByteAddressToString(0),
-        ra::ByteAddressToString(0)));
+        pMemoryContext.FormatAddress(0),
+        pMemoryContext.FormatAddress(0)));
     pItem->SetCustom(true);
 
     m_vRegions.Append(std::move(pItem));
@@ -148,6 +150,8 @@ void MemoryRegionsViewModel::RemoveRegion()
 
 void MemoryRegionsViewModel::InitializeRegions()
 {
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+
     for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::context::IConsoleContext>().MemoryRegions())
     {
         switch (pRegion.GetType())
@@ -164,8 +168,8 @@ void MemoryRegionsViewModel::InitializeRegions()
         pItem->SetId(gsl::narrow_cast<int>(m_vRegions.Count()));
         pItem->SetLabel(ra::Widen(pRegion.GetDescription()));
         pItem->SetRange(ra::StringPrintf(L"%s-%s",
-            ra::ByteAddressToString(pRegion.GetStartAddress()),
-            ra::ByteAddressToString(pRegion.GetEndAddress())));
+            pMemoryContext.FormatAddress(pRegion.GetStartAddress()),
+            pMemoryContext.FormatAddress(pRegion.GetEndAddress())));
 
         m_vRegions.Append(std::move(pItem));
     }
@@ -179,8 +183,8 @@ void MemoryRegionsViewModel::InitializeRegions()
             pItem->SetId(gsl::narrow_cast<int>(m_vRegions.Count()));
             pItem->SetLabel(pRegion.GetDescription());
             pItem->SetRange(ra::StringPrintf(L"%s-%s",
-                ra::ByteAddressToString(pRegion.GetStartAddress()),
-                ra::ByteAddressToString(pRegion.GetEndAddress())));
+                pMemoryContext.FormatAddress(pRegion.GetStartAddress()),
+                pMemoryContext.FormatAddress(pRegion.GetEndAddress())));
             pItem->SetCustom(true);
 
             m_vRegions.Append(std::move(pItem));

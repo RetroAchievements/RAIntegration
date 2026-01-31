@@ -73,12 +73,20 @@ public:
     /// </summary>
     std::wstring GetPrimaryNote() const;
 
+    /// <summary>
+    /// Gets the non-enum/subnote portion of the note.
+    /// </summary>
+    std::wstring GetSummary() const;
+
+    /// <summary>
+    /// Gets the sub-note text associated with the specified bit(s).
+    /// </summary>
+    std::wstring_view GetSubNote(ra::data::Memory::Size nBits) const;
 
     /// <summary>
     /// Gets the sub-note text associated with the specified enum value.
     /// </summary>
     std::wstring_view GetEnumText(uint32_t nValue) const;
-
 
     /// <summary>
     /// Gets whether or not the note contains information about data the note is pointing at.
@@ -217,6 +225,7 @@ private:
         None,
         Hex,
         Dec,
+        Bits,
         Unknown,
     };
     mutable EnumState m_nEnumState = EnumState::Unknown;

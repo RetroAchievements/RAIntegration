@@ -61,7 +61,7 @@ CodeNotesDialog::CodeNotesGridBinding::CodeNotesGridBinding(ViewModelBase& vmVie
 
 CodeNotesDialog::CodeNotesGridBinding::~CodeNotesGridBinding()
 {
-    if (ra::services::ServiceLocator::Exists<ra::data::context::EmulatorContext>())
+    if (ra::services::ServiceLocator::Exists<ra::context::IEmulatorMemoryContext>())
     {
         auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
         pMemoryContext.RemoveNotifyTarget(*this);

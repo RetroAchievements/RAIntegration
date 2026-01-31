@@ -52,6 +52,12 @@
     <ClCompile Include="util\Tokenizer_Tests.cpp">
       <Filter>util</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\Memory_Tests.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

@@ -95,13 +95,14 @@ void CodeNotesViewModel::ResetFilter()
     {
         pCodeNotes->EnumerateCodeNotes([this, &nIndex, pCodeNotes](ra::data::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)
         {
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
             const auto bNoteModified = pCodeNotes->IsNoteModified(nAddress);
 
             std::wstring sAddress;
             if (nBytes <= 4)
-                sAddress = ra::util::String::Widen(ra::ByteAddressToString(nAddress));
+                sAddress = pMemoryContext.FormatAddress(nAddress);
             else
-                sAddress = ra::util::String::Printf(L"%s\n- %s", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nAddress + nBytes - 1));
+                sAddress = ra::util::String::Printf(L"%s\n- %s", pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nAddress + nBytes - 1));
 
             auto* vmNote = m_vNotes.GetItemAt(nIndex);
             if (vmNote)
@@ -190,6 +191,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
         }
     }
 
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     gsl::index nIndex = 0;
     for (; nIndex < ra::to_signed(m_vNotes.Count()); ++nIndex)
     {
@@ -221,10 +223,10 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
                 pNote->nBytes = pCodeNotes->GetCodeNoteBytes(nAddress);
                 std::wstring sAddress;
                 if (pNote->nBytes <= 4)
-                    sAddress = ra::util::String::Widen(ra::ByteAddressToString(nAddress));
+                    sAddress = pMemoryContext.FormatAddress(nAddress);
                 else
                     sAddress = ra::util::String::Printf(L"%s\n- %s",
-                        ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nAddress + pNote->nBytes - 1));
+                        pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nAddress + pNote->nBytes - 1));
 
                 pNote->SetLabel(sAddress);
             }
@@ -242,7 +244,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
     if (bMatchesFilter)
     {
         m_vNotes.BeginUpdate();
-        auto& pNote = m_vNotes.Add(ra::util::String::Widen(ra::ByteAddressToString(nAddress)), sNewNote);
+        auto& pNote = m_vNotes.Add(pMemoryContext.FormatAddress(nAddress), sNewNote);
         pNote.SetModified(bNoteModified);
         pNote.nAddress = nAddress;
         pNote.nBytes = 1; // this will be updated when the filter is reset
@@ -416,9 +418,14 @@ void CodeNotesViewModel::RevertSelected()
 
     ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
     if (vNotesToRevert.size() == 1)
-        vmPrompt.SetHeader(ra::util::String::Printf(L"Revert note for address %s?", ra::ByteAddressToString(vNotesToRevert.at(0))));
+    {
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        vmPrompt.SetHeader(ra::util::String::Printf(L"Revert note for address %s?", pMemoryContext.FormatAddress(vNotesToRevert.at(0))));
+    }
     else
+    {
         vmPrompt.SetHeader(ra::util::String::Printf(L"Revert %zu notes?", vNotesToRevert.size()));
+    }
 
     vmPrompt.SetMessage(L"This will discard all local work and revert the notes to the last state retrieved from the server.");
     vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);

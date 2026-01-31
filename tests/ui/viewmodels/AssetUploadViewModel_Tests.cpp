@@ -9,6 +9,7 @@
 
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
@@ -46,6 +47,7 @@ private:
         static constexpr unsigned GameId = 22U;
 
         ra::api::mocks::MockServer mockServer;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockThreadPool mockThreadPool;

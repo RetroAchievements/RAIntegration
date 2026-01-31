@@ -11,36 +11,6 @@
 namespace ra {
 
 _Use_decl_annotations_
-std::string ByteAddressToString(ra::data::ByteAddress nAddr)
-{
-#ifndef RA_UTEST
-    const auto& pEmulatorMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-    return pEmulatorMemoryContext.FormatAddress(nAddr);
-#else
-    return ra::util::String::Printf("0x%04x", nAddr);
-#endif
-}
-
-ra::data::ByteAddress ByteAddressFromString(_In_ const std::string_view sByteAddress)
-{
-    ra::data::ByteAddress address{};
-
-    if (!ra::util::String::StartsWith(sByteAddress, "-")) // negative addresses not supported
-    {
-        char* pEnd;
-        address = std::strtoul(sByteAddress.data(), &pEnd, 16);
-        Ensures(pEnd != nullptr);
-        if (gsl::narrow_cast<size_t>(pEnd - sByteAddress.data()) < sByteAddress.length())
-        {
-            // hex parse failed
-            address = {};
-        }
-    }
-
-    return address;
-}
-
-_Use_decl_annotations_
 bool ParseUnsignedInt(const std::wstring& sValue, unsigned int nMaximumValue, unsigned int& nValue, std::wstring& sError)
 {
     nValue = 0U;

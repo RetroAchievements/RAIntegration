@@ -102,10 +102,11 @@ public:
             return ra::ui::win32::bindings::GridAddressColumnBinding::GetText(vmItems, nIndex);
 
         const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
         if (pItem->IsIndirectAddress())
-            return ra::util::String::Printf(L"(%s)", ra::ByteAddressToString(nValue).substr(2));
+            return ra::util::String::Printf(L"(%s)", pMemoryContext.FormatAddress(nValue).substr(2));
 
-        return ra::util::String::Widen(ra::ByteAddressToString(nValue));
+        return pMemoryContext.FormatAddress(nValue);
     }
 };
 

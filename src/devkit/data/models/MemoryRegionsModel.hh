@@ -1,5 +1,5 @@
-#ifndef RA_DATA_MEMORY_REGIONS_MODEL_H
-#define RA_DATA_MEMORY_REGIONS_MODEL_H
+#ifndef RA_DATA_MODELS_MEMORYREGIONSMODEL_H
+#define RA_DATA_MODELS_MEMORYREGIONSMODEL_H
 #pragma once
 
 #include "data/models/AssetModelBase.hh"
@@ -25,14 +25,23 @@ public:
 	void Serialize(ra::services::TextWriter&) const override;
     bool Deserialize(ra::util::Tokenizer&) override;
 
+    /// <summary>
+    /// Gets the custom regions.
+    /// </summary>
     const std::vector<MemoryRegion>& CustomRegions() const noexcept { return m_vRegions; }
 
+    /// <summary>
+    /// Clears the custom regions collection.
+    /// </summary>
     void ResetCustomRegions();
+
+    /// <summary>
+    /// Adds a custom region
+    /// </summary>
     void AddCustomRegion(ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, const std::wstring& sLabel);
 
-    static bool ParseFilterRange(const std::wstring& sRange, _Out_ ra::data::ByteAddress& nStart, _Out_ ra::data::ByteAddress& nEnd);
-
-protected:
+    
+    static bool ParseFilterRange(const std::wstring& sRange, ra::data::ByteAddress& nStart, ra::data::ByteAddress& nEnd);
 
 private:
     std::vector<MemoryRegion> m_vRegions;
@@ -42,4 +51,4 @@ private:
 } // namespace data
 } // namespace ra
 
-#endif RA_DATA_MEMORY_REGIONS_MODEL_H
+#endif RA_DATA_MODELS_MEMORYREGIONSMODEL_H

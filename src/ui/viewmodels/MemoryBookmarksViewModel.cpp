@@ -112,8 +112,9 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::HandlePauseOnChange()
 {
     SetRowColor(ra::ui::Color(0xFFFFC0C0));
 
-    auto sMessage =
-        ra::util::String::Printf(L"%s %s", ra::data::Memory::SizeString(GetSize()), ra::ByteAddressToString(GetAddress()));
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    auto sMessage = ra::util::String::Printf(L"%s %s",
+        ra::data::Memory::SizeString(GetSize()), pMemoryContext.FormatAddress(GetAddress()));
 
     const auto& pDescription = GetRealNote();
     if (!pDescription.empty())

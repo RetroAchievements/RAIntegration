@@ -70,6 +70,7 @@
     <ClCompile Include="data\ModelPropertyContainer.cpp" />
     <ClCompile Include="data\models\AssetModelBase.cpp" />
     <ClCompile Include="data\models\CodeNoteModel.cpp" />
+    <ClCompile Include="data\models\MemoryRegionsModel.cpp" />
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="util\GSL.cpp" />
     <ClCompile Include="util\StringBuilder.cpp" />
@@ -94,6 +95,7 @@
     <ClInclude Include="data\ModelPropertyContainer.hh" />
     <ClInclude Include="data\models\AssetModelBase.hh" />
     <ClInclude Include="data\models\CodeNoteModel.hh" />
+    <ClInclude Include="data\models\MemoryRegionsModel.hh" />
     <ClInclude Include="data\NotifyTargetSet.hh" />
     <ClInclude Include="services\Http.hh" />
     <ClInclude Include="services\IClock.hh" />

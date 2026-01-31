@@ -44,7 +44,7 @@ Memory::Size Memory::SizeFromRcheevosSize(uint8_t nSize) noexcept
 
 static std::wstring U32ToFloatString(uint32_t nValue, uint8_t nFloatType)
 {
-    rc_typed_value_t value;
+    rc_typed_value_t value{};
     value.type = RC_VALUE_TYPE_UNSIGNED;
     value.value.u32 = nValue;
     rc_transform_memref_value(&value, nFloatType);
@@ -112,7 +112,7 @@ uint32_t Memory::FloatToU32(float fValue, Memory::Size nFloatType) noexcept
     {
         float fValue;
         uint32_t nValue;
-    } uUnion;
+    } uUnion{};
 
     uUnion.fValue = fValue;
 
@@ -207,6 +207,132 @@ float Memory::U32ToFloat(uint32_t nValue, Memory::Size nFloatType) noexcept
     }
 
     return uUnion.fValue;
+}
+
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename... Ts>
+static uint32_t TryParseAddressInternal(const CharT* sAddress, ra::data::ByteAddress& nAddress) noexcept
+{
+    const CharT* ptr = sAddress;
+    if (ptr == nullptr)
+        return 0;
+
+    if (*ptr == '$')
+        ++ptr;
+    else if (ptr[0] == '0' && ptr[1] == 'x')
+        ptr += 2;
+
+    const CharT* start = ptr;
+    nAddress = 0;
+    while (CharT c = *ptr)
+    {
+        if (c >= '0' && c <= '9')
+        {
+            nAddress <<= 4;
+            nAddress += (c - '0');
+        }
+        else if (c >= 'a' && c <= 'f')
+        {
+            nAddress <<= 4;
+            nAddress += (c - 'a' + 10);
+        }
+        else if (c >= 'A' && c <= 'F')
+        {
+            nAddress <<= 4;
+            nAddress += (c - 'A' + 10);
+        }
+        else
+        {
+            break;
+        }
+
+        ++ptr;
+    }
+
+    if (ptr == start)
+        return 0;
+
+    return gsl::narrow_cast<uint32_t>(ptr - sAddress);
+}
+
+bool Memory::TryParseAddress(const std::string_view sAddress, ra::data::ByteAddress& nAddress) noexcept
+{
+    const uint32_t nUsed = TryParseAddressInternal(sAddress.data(), nAddress);
+    return (nUsed == sAddress.length());
+}
+
+bool Memory::TryParseAddress(const std::wstring_view sAddress, ra::data::ByteAddress& nAddress) noexcept
+{
+    const uint32_t nUsed = TryParseAddressInternal(sAddress.data(), nAddress);
+    return (nUsed == sAddress.length());
+}
+
+ra::data::ByteAddress Memory::ParseAddress(const std::string_view sAddress) noexcept
+{
+    ra::data::ByteAddress nAddress;
+    return TryParseAddress(sAddress, nAddress) ? nAddress : 0;
+}
+
+ra::data::ByteAddress Memory::ParseAddress(const std::wstring_view sAddress) noexcept
+{
+    ra::data::ByteAddress nAddress;
+    return TryParseAddress(sAddress, nAddress) ? nAddress : 0;
+}
+
+bool Memory::TryParseAddressRange(const std::wstring& sRange, ra::data::ByteAddress& nStart, ra::data::ByteAddress& nEnd) noexcept
+{
+    const wchar_t* ptr = sRange.data();
+    if (!ptr || *ptr == '\0')
+    {
+        // no range specified, search all
+        nStart = 0;
+        nEnd = 0xFFFFFFFF;
+        return true;
+    }
+
+    auto nAddressLength = TryParseAddressInternal(ptr, nStart);
+    if (nAddressLength == 0)
+    {
+        nStart = 0;
+        nEnd = 0;
+        return false;
+    }
+
+    ptr += nAddressLength;
+    while (iswspace(*ptr))
+        ++ptr;
+
+    if (*ptr == '\0')
+    {
+        // range is a single address
+        nEnd = nStart;
+        return true;
+    }
+
+    if (*ptr != '-')
+    {
+        nEnd = 0;
+        return false;
+    }
+
+    ++ptr;
+    while (iswspace(*ptr))
+        ++ptr;
+
+    nAddressLength = TryParseAddressInternal(ptr, nEnd);
+    if (nAddressLength == 0)
+    {
+        nEnd = 0;
+        return false;
+    }
+
+    ptr += nAddressLength;
+    if (*ptr != '\0')
+        return false;
+
+    if (nEnd < nStart)
+        std::swap(nStart, nEnd);
+
+    return true;
 }
 
 } // namespace data

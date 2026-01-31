@@ -69,7 +69,7 @@ public:
     /// <summary>
     /// Converts an address to a displayable string.
     /// </summary>
-    virtual std::string FormatAddress(ra::data::ByteAddress nAddress) const = 0;
+    virtual std::wstring FormatAddress(ra::data::ByteAddress nAddress) const = 0;
 
     /// <summary>
     /// Gets whether or not memory has been modified.

@@ -41,7 +41,7 @@ void PointerFinderViewModel::StateViewModel::OnValueChanged(const StringModelPro
 {
     if (args.Property == AddressProperty)
     {
-        const auto nAddress = ra::ByteAddressFromString(ra::util::String::Narrow(GetAddress()));
+        const auto nAddress = ra::data::Memory::ParseAddress(GetAddress());
         m_pViewer.InitializeFixedViewer(nAddress);
     }
 
@@ -66,7 +66,7 @@ void PointerFinderViewModel::StateViewModel::Capture()
     }
 
     const auto& sAddress = GetAddress();
-    const auto nAddress = ra::ByteAddressFromString(ra::util::String::Narrow(sAddress));
+    const auto nAddress = ra::data::Memory::ParseAddress(sAddress);
     if (nAddress == 0)
     {
         bool bValid = sAddress.size() > 0;
@@ -169,6 +169,7 @@ void PointerFinderViewModel::Find()
     m_vResults.BeginUpdate();
     m_vResults.Clear();
 
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     for (size_t i = 0; i < m_vStates.size(); i++)
     {
         const auto& pStateI = m_vStates.at(i);
@@ -231,7 +232,7 @@ void PointerFinderViewModel::Find()
 
                         pPointer = &m_vResults.Add();
                         pPointer->m_nAddress = pResult.nAddress;
-                        pPointer->SetPointerAddress(ra::util::String::Widen(ra::ByteAddressToString(pResult.nAddress)));
+                        pPointer->SetPointerAddress(pMemoryContext.FormatAddress(pResult.nAddress));
                         const auto nOffset = (nAddressJ - pResult.nValue);
                         pPointer->SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
 

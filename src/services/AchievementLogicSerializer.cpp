@@ -190,7 +190,8 @@ void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOper
             break;
     }
 
-    sBuffer.append(ra::ByteAddressToString(nValue), 2);
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    sBuffer.append(ra::util::String::Narrow(pMemoryContext.FormatAddress(nValue)), 2);
 }
 
 void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size, float fValue)

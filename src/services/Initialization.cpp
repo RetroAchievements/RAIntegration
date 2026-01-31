@@ -255,6 +255,9 @@ void Initialization::Shutdown()
     ra::services::ServiceLocator::Provide<ra::services::IThreadPool>(nullptr);
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(nullptr);
 
+    // prevent exception attempting to log during shutdown
+    ra::services::ServiceLocator::Provide<ra::services::IClock>(nullptr);
+
     s_bIsInitialized = false;
 }
 

@@ -399,9 +399,6 @@
     <ClCompile Include="ui\win32\MemoryRegionsDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\MemoryRegionsModel.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="services\impl\OfflineRcClient.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
@@ -997,9 +994,6 @@
     </ClInclude>
     <ClInclude Include="ui\win32\MemoryRegionsDialog.hh">
       <Filter>UI\Win32</Filter>
-    </ClInclude>
-    <ClInclude Include="data\models\MemoryRegionsModel.hh">
-      <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\OfflineRcClient.hh">
       <Filter>Services\Impl</Filter>

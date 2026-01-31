@@ -162,6 +162,9 @@
     <ClInclude Include="util\Tokenizer.hh">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="data\models\MemoryRegionsModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -217,6 +220,9 @@
     </ClCompile>
     <ClCompile Include="util\Tokenizer.cpp">
       <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\MemoryRegionsModel.cpp">
+      <Filter>data\models</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

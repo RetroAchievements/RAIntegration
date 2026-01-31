@@ -1,5 +1,6 @@
 #include "AssetEditorDialog.hh"
 
+#include "RA_Defs.h"
 #include "RA_Resource.h"
 
 #include "api\FetchBadgeIds.hh"

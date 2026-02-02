@@ -127,9 +127,9 @@ protected:
         {
             const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
 #ifdef UNICODE
-            InvokeOnUIThread([this, pLabelCopy = pLabel /* make a copy */, nIndex]() {
+            InvokeOnUIThread([this, pLabelCopy = pLabel /* make a copy */, nIndex]() noexcept {
 #else
-            InvokeOnUIThread([this, pLabelCopy = ra::util::String::Narrow(pLabel), nIndex]() {
+            InvokeOnUIThread([this, pLabelCopy = ra::util::String::Narrow(pLabel), nIndex]() noexcept {
 #endif
                 ComboBox_DeleteString(m_hWnd, nIndex);
                 ComboBox_InsertString(m_hWnd, nIndex, pLabelCopy.c_str());
@@ -147,9 +147,9 @@ protected:
     {
         const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
 #ifdef UNICODE
-        InvokeOnUIThread([this, pLabelCopy = pLabel /* make a copy */, nIndex]() {
+        InvokeOnUIThread([this, pLabelCopy = pLabel /* make a copy */, nIndex]() noexcept {
 #else
-        InvokeOnUIThread([this, pLabelCopy = ra::util::String::Narrow(pLabel), nIndex]() {
+        InvokeOnUIThread([this, pLabelCopy = ra::util::String::Narrow(pLabel), nIndex]() noexcept {
 #endif
             ComboBox_InsertString(m_hWnd, nIndex, pLabelCopy.c_str());
         });

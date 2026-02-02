@@ -249,7 +249,7 @@ void GameIdentifier::LoadKnownHashes(std::map<std::string, unsigned>& mHashes)
         while (pFile->GetLine(sLine))
         {
             ra::util::Tokenizer pTokenizer(sLine);
-            auto sHash = pTokenizer.ReadTo('=');
+            const auto sHash = pTokenizer.ReadTo('=');
             if (sHash.length() == 32)
             {
                 pTokenizer.Advance(); // '='

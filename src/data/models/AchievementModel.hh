@@ -4,9 +4,8 @@
 
 #include "data/models/AssetModelBase.hh"
 
-#include "CapturedTriggerHits.hh"
-
 struct rc_client_achievement_info_t;
+struct rc_trigger_t;
 
 namespace ra {
 namespace data {
@@ -124,11 +123,6 @@ public:
     void SetTrigger(const std::string& sTrigger) { SetAssetDefinition(m_pTrigger, sTrigger); }
 
     /// <summary>
-    /// Gets when the achievement was unlocked.
-    /// </summary>
-    std::chrono::system_clock::time_point GetUnlockTime() const noexcept { return m_tUnlock; }
-
-    /// <summary>
     /// The <see cref="ModelProperty" /> for the rich presence at the time of the unlock.
     /// </summary>
     static const StringModelProperty UnlockRichPresenceProperty;
@@ -158,24 +152,44 @@ public:
     void Serialize(ra::services::TextWriter& pWriter) const override;
     bool Deserialize(ra::util::Tokenizer& pTokenizer) override;
 
-    // Attaches an rc_client_achievement_info_t and populates the model from it.
-    void Attach(struct rc_client_achievement_info_t& pAchievement,
-        AssetCategory nCategory, const std::string& sTrigger);
-    // Replaces the attached rc_client_achievement_info_t. Does not update model or source.
-    void ReplaceAttached(struct rc_client_achievement_info_t& pAchievement);
-    // Attaches an rc_client_achievement_info_t and populates it from the model.
-    void AttachAndInitialize(struct rc_client_achievement_info_t& pAchievement);
-    // Gets the attached rc_client_achievement_info_t.
-    const struct rc_client_achievement_info_t* GetAttached() const noexcept { return m_pAchievement; }
+    /// <summary>
+    /// Associates a published achievement to the model.
+    /// </summary>
+    /// <param name="pAchievement">Reference to the published achievement</param>
+    /// <param name="sTrigger">The published achievement definition</param>
+    void InitializeFromPublishedAchievement(const struct rc_client_achievement_info_t& pAchievement, const std::string& sTrigger);
 
-    const CapturedTriggerHits& GetCapturedHits() const noexcept { return m_pCapturedTriggerHits; }
-    void ResetCapturedHits() noexcept { m_pCapturedTriggerHits.Reset(); }
+    /// <summary>
+    /// Associates a local achievement info to the model. Any changes made to the model will be updated in this runtime model
+    /// </summary>
+    void SetLocalAchievementInfo(struct rc_client_achievement_info_t& pAchievement);
 
+    /// <summary>
+    /// Updates all properties on the local achievement info from the current state of the model.
+    /// </summary>
+    void SyncToLocalAchievementInfo();
+
+    /// <summary>
+    /// Gets the attached rc_client_achievement_info_t.
+    /// </summary>
+    const struct rc_client_achievement_info_t* GetRuntimeAchievementInfo() const noexcept { return m_pAchievementInfo; }
+
+    /// <summary>
+    /// Gets the attached rc_trigger_t.
+    /// </summary>
+    const struct rc_trigger_t* GetRuntimeTrigger() const;
+
+    /// <summary>
+    /// Gets the list of acceptable point values.
+    /// </summary>
     static const std::array<int, 10>& ValidPoints() noexcept
     {
         return s_vValidPoints;
     }
 
+    /// <summary>
+    /// Gets the maximum size of the serialized trigger definition.
+    /// </summary>
     static constexpr size_t MaxSerializedLength = 65535;
 
 protected:
@@ -190,25 +204,32 @@ private:
     static const std::array<int, 10> s_vValidPoints;
 
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
-    void SyncID();
-    void SyncTitle();
-    void SyncDescription();
-    void SyncBadge();
-    void SyncPoints();
-    void SyncAchievementType();
-    void SyncCategory();
-    void SyncState();
-    void SyncTrigger();
 
+    void SyncIDToRuntime() const;
+    void SyncTitleToRuntime();
+    void SyncDescriptionToRuntime();
+    void SyncBadgeToRuntime() const;
+    void SyncPointsToRuntime() const;
+    void SyncAchievementTypeToRuntime() const;
+    void SyncCategoryToRuntime() const;
+    void SyncStateToRuntime() const;
+    void SyncTriggerToRuntime();
+
+    void SyncStateFromRuntime(uint8_t nState);
+
+    void ParseTrigger() const;
     AssetDefinition m_pTrigger;
-    std::chrono::system_clock::time_point m_tUnlock;
 
-    struct rc_client_achievement_info_t* m_pAchievement = nullptr;
+    // the current achievement information
+    struct rc_client_achievement_info_t* m_pAchievementInfo = nullptr;
+
+    // the original achievement information received from the server
+    const struct rc_client_achievement_info_t* m_pPublishedAchievementInfo = nullptr;
+
+    // temporary buffers for local changes
     std::string m_sTitleBuffer;
     std::string m_sDescriptionBuffer;
-
-    CapturedTriggerHits m_pCapturedTriggerHits;
-    bool m_bCaptureTrigger = false;
+    mutable std::unique_ptr<uint8_t[]> m_pTriggerBuffer;
 };
 
 } // namespace models

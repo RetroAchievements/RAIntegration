@@ -67,8 +67,6 @@ public:
     rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const;
     const rc_client_leaderboard_info_t* GetPublishedLeaderboardInfo(ra::LeaderboardID nId) const;
 
-    void ReleaseLeaderboardTracker(ra::LeaderboardID nId);
-
     /// <summary>
     /// Specifies the rich presence to process each frame.
     /// </summary>

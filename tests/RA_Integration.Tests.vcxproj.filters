@@ -345,9 +345,6 @@
     <ClCompile Include="..\src\data\models\LocalBadgesModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\data\models\CapturedTriggerHits.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\ChallengeIndicatorViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -395,9 +392,6 @@
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\ProgressTrackerViewModel.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\CapturedTriggerHits_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="mocks\MockAchievementRuntime.cpp">
       <Filter>Mocks</Filter>

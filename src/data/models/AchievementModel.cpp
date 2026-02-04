@@ -9,7 +9,6 @@
 #include "data\models\LocalBadgesModel.hh"
 #include "data\models\TriggerValidation.hh"
 
-#include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
 
@@ -63,23 +62,23 @@ void AchievementModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
         }
         else if (args.Property == TriggerProperty)
         {
-            if (m_pAchievement)
-                SyncTrigger();
+            if (m_pAchievementInfo)
+                SyncTriggerToRuntime();
         }
         else if (args.Property == PointsProperty)
         {
-            if (m_pAchievement)
-                SyncPoints();
+            if (m_pAchievementInfo)
+                SyncPointsToRuntime();
         }
         else if (args.Property == AchievementTypeProperty)
         {
-            if (m_pAchievement)
-                SyncAchievementType();
+            if (m_pAchievementInfo)
+                SyncAchievementTypeToRuntime();
         }
         else if (args.Property == IDProperty)
         {
-            if (m_pAchievement)
-                SyncID();
+            if (m_pAchievementInfo)
+                SyncIDToRuntime();
         }
     }
 
@@ -97,13 +96,13 @@ void AchievementModel::OnValueChanged(const StringModelProperty::ChangeArgs& arg
 
     if (args.Property == DescriptionProperty)
     {
-        if (m_pAchievement)
-            SyncDescription();
+        if (m_pAchievementInfo)
+            SyncDescriptionToRuntime();
     }
     else if (args.Property == NameProperty)
     {
-        if (m_pAchievement)
-            SyncTitle();
+        if (m_pAchievementInfo)
+            SyncTitleToRuntime();
     }
     else if (args.Property == BadgeProperty)
     {
@@ -129,8 +128,8 @@ void AchievementModel::OnValueChanged(const StringModelProperty::ChangeArgs& arg
             }
         }
 
-        if (m_pAchievement)
-            SyncBadge();
+        if (m_pAchievementInfo)
+            SyncBadgeToRuntime();
     }
 }
 
@@ -183,42 +182,54 @@ bool AchievementModel::ValidateAsset(std::wstring& sError)
 
 void AchievementModel::DoFrame()
 {
-    if (!m_pAchievement)
-        return;
+    if (m_pAchievementInfo && m_pAchievementInfo->trigger)
+        SyncStateFromRuntime(m_pAchievementInfo->trigger->state);
+}
 
-    const auto* pTrigger = m_pAchievement->trigger;
-    if (pTrigger != nullptr)
+void AchievementModel::SyncStateFromRuntime(uint8_t nState)
+{
+    switch (nState)
     {
-        switch (pTrigger->state)
-        {
-            case RC_TRIGGER_STATE_ACTIVE:
-                SetState(AssetState::Active);
-                break;
-            case RC_TRIGGER_STATE_INACTIVE:
-                SetState(AssetState::Inactive);
-                break;
-            case RC_TRIGGER_STATE_PAUSED:
-                SetState(AssetState::Paused);
-                break;
-            case RC_TRIGGER_STATE_TRIGGERED:
-                SetState(AssetState::Triggered);
-                break;
-            case RC_TRIGGER_STATE_WAITING:
-                SetState(AssetState::Waiting);
-                break;
-            case RC_TRIGGER_STATE_DISABLED:
-                SetState(AssetState::Disabled);
-                break;
-            case RC_TRIGGER_STATE_PRIMED:
-                SetState(AssetState::Primed);
-                break;
-        }
+        case RC_TRIGGER_STATE_ACTIVE:
+            SetState(AssetState::Active);
+            break;
+        case RC_TRIGGER_STATE_INACTIVE:
+            SetState(AssetState::Inactive);
+            break;
+        case RC_TRIGGER_STATE_PAUSED:
+            SetState(AssetState::Paused);
+            break;
+        case RC_TRIGGER_STATE_TRIGGERED:
+            SetState(AssetState::Triggered);
+            break;
+        case RC_TRIGGER_STATE_WAITING:
+            SetState(AssetState::Waiting);
+            break;
+        case RC_TRIGGER_STATE_DISABLED:
+            SetState(AssetState::Disabled);
+            break;
+        case RC_TRIGGER_STATE_PRIMED:
+            SetState(AssetState::Primed);
+            break;
+    }
+}
+
+static void HideChallengeIndicator(struct rc_client_achievement_info_t* pAchievement)
+{
+    auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    if (client->game && client->callbacks.event_handler)
+    {
+        rc_client_event_t pEvent;
+        memset(&pEvent, 0, sizeof(pEvent));
+        pEvent.achievement = &pAchievement->public_;
+        pEvent.type = RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE;
+        client->callbacks.event_handler(&pEvent, client);
     }
 }
 
 void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewState)
 {
-    if (!m_pAchievement)
+    if (!m_pAchievementInfo)
         return;
 
     const bool bWasActive = IsActive(nOldState);
@@ -226,29 +237,28 @@ void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
 
     if (!bIsActive && bWasActive)
     {
-        if (m_pAchievement->trigger)
+        if (m_pAchievementInfo->trigger)
         {
-            m_pCapturedTriggerHits.Capture(m_pAchievement->trigger, GetTrigger());
-
-            if (m_pAchievement->trigger->state == RC_TRIGGER_STATE_PRIMED)
+            if (m_pAchievementInfo->trigger->state == RC_TRIGGER_STATE_PRIMED)
             {
-                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-                pRuntime.RaiseClientEvent(*m_pAchievement, RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE);
+                // the runtime thinks the achievement is primed, so there's most likely a challenge
+                // indicator visible. raise the event to force it to be hidden
+                HideChallengeIndicator(m_pAchievementInfo);
             }
         }
     }
     else if (bIsActive && !bWasActive)
     {
-        if (m_pAchievement->trigger)
-            rc_reset_trigger(m_pAchievement->trigger);
+        if (m_pAchievementInfo->trigger)
+            rc_reset_trigger(m_pAchievementInfo->trigger);
         else
-            SyncTrigger();
+            SyncTriggerToRuntime();
     }
 
-    SyncState();
+    SyncStateToRuntime();
 }
 
-void AchievementModel::SyncState()
+void AchievementModel::SyncStateToRuntime() const
 {
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
@@ -257,244 +267,238 @@ void AchievementModel::SyncState()
     switch (GetState())
     {
         case ra::data::models::AssetState::Triggered: {
-            m_pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
-            if (m_pAchievement->trigger)
-                m_pAchievement->trigger->state = RC_TRIGGER_STATE_TRIGGERED;
-
-            if (m_bCaptureTrigger)
-            {
-                const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-                m_tUnlock = pClock.Now();
-
-                const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-                if (pRuntime.HasRichPresence())
-                    SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
-            }
+            m_pAchievementInfo->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+            if (m_pAchievementInfo->trigger)
+                m_pAchievementInfo->trigger->state = RC_TRIGGER_STATE_TRIGGERED;
             break;
         }
 
         case ra::data::models::AssetState::Disabled:
-            m_pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
-            m_pAchievement->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
-            if (m_pAchievement->trigger)
-                m_pAchievement->trigger->state = RC_TRIGGER_STATE_DISABLED;
+            m_pAchievementInfo->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
+            m_pAchievementInfo->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
+            if (m_pAchievementInfo->trigger)
+                m_pAchievementInfo->trigger->state = RC_TRIGGER_STATE_DISABLED;
             break;
 
         case ra::data::models::AssetState::Inactive:
-            m_pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
-            if (m_pAchievement->trigger)
-                m_pAchievement->trigger->state = RC_TRIGGER_STATE_INACTIVE;
+            m_pAchievementInfo->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
+            if (m_pAchievementInfo->trigger)
+                m_pAchievementInfo->trigger->state = RC_TRIGGER_STATE_INACTIVE;
             break;
 
         case ra::data::models::AssetState::Waiting:
-            m_pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
-            if (m_pAchievement->trigger)
-                m_pAchievement->trigger->state = RC_TRIGGER_STATE_WAITING;
+            m_pAchievementInfo->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+            if (m_pAchievementInfo->trigger)
+                m_pAchievementInfo->trigger->state = RC_TRIGGER_STATE_WAITING;
             break;
 
         case ra::data::models::AssetState::Active:
-            m_pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
-            if (m_pAchievement->trigger)
-                m_pAchievement->trigger->state = RC_TRIGGER_STATE_ACTIVE;
+            m_pAchievementInfo->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+            if (m_pAchievementInfo->trigger)
+                m_pAchievementInfo->trigger->state = RC_TRIGGER_STATE_ACTIVE;
             break;
 
         case ra::data::models::AssetState::Primed:
-            m_pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
-            if (m_pAchievement->trigger)
-                m_pAchievement->trigger->state = RC_TRIGGER_STATE_PRIMED;
+            m_pAchievementInfo->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+            if (m_pAchievementInfo->trigger)
+                m_pAchievementInfo->trigger->state = RC_TRIGGER_STATE_PRIMED;
             break;
 
         default:
-            m_pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+            m_pAchievementInfo->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
             break;
     }
 
     rc_mutex_unlock(&pClient->state.mutex);
 }
 
-void AchievementModel::SyncID()
+void AchievementModel::SyncIDToRuntime() const
 {
-    m_pAchievement->public_.id = GetID();
+    m_pAchievementInfo->public_.id = GetID();
 }
 
-void AchievementModel::SyncTitle()
+void AchievementModel::SyncTitleToRuntime()
 {
     m_sTitleBuffer = ra::util::String::Narrow(GetName());
-    m_pAchievement->public_.title = m_sTitleBuffer.c_str();
+    m_pAchievementInfo->public_.title = m_sTitleBuffer.c_str();
 }
 
-void AchievementModel::SyncDescription()
+void AchievementModel::SyncDescriptionToRuntime()
 {
     m_sDescriptionBuffer = ra::util::String::Narrow(GetDescription());
-    m_pAchievement->public_.description = m_sDescriptionBuffer.c_str();
+    m_pAchievementInfo->public_.description = m_sDescriptionBuffer.c_str();
 }
 
-void AchievementModel::SyncBadge()
+void AchievementModel::SyncBadgeToRuntime() const
 {
     const auto& sBadge = GetBadge();
     if (ra::util::String::StartsWith(sBadge, L"local\\"))
     {
         // cannot fit "local/md5.png" into 8 byte buffer. also, client may not understand.
         // encode a value that we can intercept in rc_client_achievement_get_image_url.
-        snprintf(m_pAchievement->public_.badge_name, sizeof(m_pAchievement->public_.badge_name), "L%06x",
-                 m_pAchievement->public_.id);
+        snprintf(m_pAchievementInfo->public_.badge_name, sizeof(m_pAchievementInfo->public_.badge_name), "L%06x",
+                 m_pAchievementInfo->public_.id);
     }
     else
     {
-        snprintf(m_pAchievement->public_.badge_name, sizeof(m_pAchievement->public_.badge_name), "%s",
+        snprintf(m_pAchievementInfo->public_.badge_name, sizeof(m_pAchievementInfo->public_.badge_name), "%s",
                  ra::util::String::Narrow(sBadge).c_str());
     }
 }
 
-void AchievementModel::SyncPoints()
+void AchievementModel::SyncPointsToRuntime() const
 {
-    m_pAchievement->public_.points = GetPoints();
+    m_pAchievementInfo->public_.points = GetPoints();
 }
 
-void AchievementModel::SyncAchievementType()
+void AchievementModel::SyncAchievementTypeToRuntime() const
 {
     switch (GetAchievementType())
     {
         case ra::data::models::AchievementType::None:
-            m_pAchievement->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_STANDARD;
+            m_pAchievementInfo->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_STANDARD;
             break;
         case ra::data::models::AchievementType::Missable:
-            m_pAchievement->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_MISSABLE;
+            m_pAchievementInfo->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_MISSABLE;
             break;
         case ra::data::models::AchievementType::Progression:
-            m_pAchievement->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_PROGRESSION;
+            m_pAchievementInfo->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_PROGRESSION;
             break;
         case ra::data::models::AchievementType::Win:
-            m_pAchievement->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_WIN;
+            m_pAchievementInfo->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_WIN;
             break;
         default:
-            m_pAchievement->public_.type = gsl::narrow_cast<uint8_t>(GetValue(AchievementTypeProperty));
+            m_pAchievementInfo->public_.type = gsl::narrow_cast<uint8_t>(GetValue(AchievementTypeProperty));
             break;
     }
 }
 
-void AchievementModel::SyncCategory()
+void AchievementModel::SyncCategoryToRuntime() const
 {
     switch (GetCategory())
     {
         case ra::data::models::AssetCategory::Core:
         case ra::data::models::AssetCategory::Local:
-            m_pAchievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+            m_pAchievementInfo->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
             break;
 
         default:
-            m_pAchievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+            m_pAchievementInfo->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
             break;
     }
 }
 
-void AchievementModel::SyncTrigger()
+void AchievementModel::SyncTriggerToRuntime()
 {
+    Expects(m_pAchievementInfo != nullptr);
+
     if (!IsActive())
     {
-        if (m_pAchievement->trigger)
-        {
-            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-            if (pRuntime.DetachMemory(m_pAchievement->trigger))
-                free(m_pAchievement->trigger);
+        // if the achievement isn't active, we don't have to parse it or load it into the runtime.
+        m_pAchievementInfo->trigger = nullptr;
+        m_pTriggerBuffer.reset();
 
-            m_pAchievement->trigger = nullptr;
-        }
-
-        memset(m_pAchievement->md5, 0, sizeof(m_pAchievement->md5));
+        memset(m_pAchievementInfo->md5, 0, sizeof(m_pAchievementInfo->md5));
         return;
     }
 
+    ParseTrigger();
+}
+
+void AchievementModel::ParseTrigger() const
+{
     const auto& sTrigger = GetTrigger();
     uint8_t md5[16];
     rc_runtime_checksum(sTrigger.c_str(), md5);
-    if (memcmp(m_pAchievement->md5, md5, sizeof(md5)) != 0)
+
+    if (memcmp(m_pAchievementInfo->md5, md5, sizeof(md5)) == 0)
     {
-        memcpy(m_pAchievement->md5, md5, sizeof(md5));
+        // trigger is already up-to-date. do nothing.
+        return;
+    }
 
-        const auto* pOldTrigger = m_pAchievement->trigger;
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        if (m_pAchievement->trigger && pRuntime.DetachMemory(m_pAchievement->trigger))
+    memcpy(m_pAchievementInfo->md5, md5, sizeof(md5));
+
+    if (m_pPublishedAchievementInfo && memcmp(m_pPublishedAchievementInfo->md5, md5, sizeof(md5)) == 0)
+    {
+        // trigger changed back to published state. just reference that.
+        if (m_pPublishedAchievementInfo->trigger != nullptr)
+            rc_reset_trigger(m_pPublishedAchievementInfo->trigger);
+
+        m_pAchievementInfo->trigger = m_pPublishedAchievementInfo->trigger;
+        m_pTriggerBuffer.reset();
+        return;
+    }
+
+    // attempt to parse the trigger
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    auto* pGame = pClient->game;
+    Expects(pGame != nullptr);
+
+    rc_mutex_lock(&pClient->state.mutex);
+
+    rc_preparse_state_t preparse;
+    rc_init_preparse_state(&preparse);
+    preparse.parse.existing_memrefs = pGame->runtime.memrefs;
+
+    rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+    const char* sMemaddr = sTrigger.c_str();
+    rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
+    rc_preparse_alloc_memrefs(nullptr, &preparse);
+
+    const auto nSize = preparse.parse.offset;
+    if (nSize > 0)
+    {
+        auto trigger_buffer = std::make_unique<uint8_t[]>(nSize);
+        if (trigger_buffer)
         {
-            free(m_pAchievement->trigger);
-            m_pAchievement->trigger = nullptr;
-        }
+            // populate the item, using the communal memrefs pool
+            rc_reset_parse_state(&preparse.parse, trigger_buffer.get());
+            trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+            rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
+            Expects(preparse.parse.memrefs == &trigger->memrefs);
 
-        const auto* pPublishedAchievementInfo = pRuntime.GetPublishedAchievementInfo(m_pAchievement->public_.id);
-        if (pPublishedAchievementInfo && memcmp(pPublishedAchievementInfo->md5, md5, sizeof(md5)) == 0)
-        {
-            Expects(pPublishedAchievementInfo->trigger != nullptr);
-            m_pAchievement->trigger = pPublishedAchievementInfo->trigger;
-            rc_reset_trigger(m_pAchievement->trigger);
-            return;
-        }
+            preparse.parse.existing_memrefs = pGame->runtime.memrefs;
 
-        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-        auto* pGame = pClient->game;
-        Expects(pGame != nullptr);
+            sMemaddr = sTrigger.c_str();
+            rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
+            trigger->trigger.has_memrefs = 1;
 
-        rc_mutex_lock(&pClient->state.mutex);
+            const auto* pOldTrigger = m_pAchievementInfo->trigger;
+            m_pAchievementInfo->trigger = &trigger->trigger;
 
-        rc_preparse_state_t preparse;
-        rc_init_preparse_state(&preparse);
-        preparse.parse.existing_memrefs = pGame->runtime.memrefs;
-
-        rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
-        const char* sMemaddr = sTrigger.c_str();
-        rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
-        rc_preparse_alloc_memrefs(nullptr, &preparse);
-
-        const auto nSize = preparse.parse.offset;
-        if (nSize > 0)
-        {
-            void* trigger_buffer = malloc(nSize);
-            if (trigger_buffer)
+            // update the runtime memory reference too
+            auto* pRuntimeTrigger = pGame->runtime.triggers;
+            const auto* pRuntimeTriggerStop = pRuntimeTrigger + pGame->runtime.trigger_count;
+            for (; pRuntimeTrigger < pRuntimeTriggerStop; ++pRuntimeTrigger)
             {
-                // populate the item, using the communal memrefs pool
-                rc_reset_parse_state(&preparse.parse, trigger_buffer);
-                trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
-                rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
-                Expects(preparse.parse.memrefs == &trigger->memrefs);
-
-                preparse.parse.existing_memrefs = pGame->runtime.memrefs;
-
-                sMemaddr = sTrigger.c_str();
-                m_pAchievement->trigger = &trigger->trigger;
-                rc_parse_trigger_internal(m_pAchievement->trigger, &sMemaddr, &preparse.parse);
-                trigger->trigger.has_memrefs = 1;
-
-                pRuntime.AttachMemory(m_pAchievement->trigger);
-
-                // update the runtime memory reference too
-                auto* pRuntimeTrigger = pGame->runtime.triggers;
-                const auto* pRuntimeTriggerStop = pRuntimeTrigger + pGame->runtime.trigger_count;
-                for (; pRuntimeTrigger < pRuntimeTriggerStop; ++pRuntimeTrigger)
+                if (pRuntimeTrigger->trigger == pOldTrigger &&
+                    pRuntimeTrigger->id == m_pAchievementInfo->public_.id)
                 {
-                    if (pRuntimeTrigger->trigger == pOldTrigger &&
-                        pRuntimeTrigger->id == m_pAchievement->public_.id)
-                    {
-                        pRuntimeTrigger->trigger = m_pAchievement->trigger;
-                        pRuntimeTrigger->serialized_size = 0;
-                        memcpy(pRuntimeTrigger->md5, md5, sizeof(md5));
-                        break;
-                    }
+                    pRuntimeTrigger->trigger = m_pAchievementInfo->trigger;
+                    pRuntimeTrigger->serialized_size = 0;
+                    memcpy(pRuntimeTrigger->md5, md5, sizeof(md5));
+                    break;
                 }
             }
+
+            m_pTriggerBuffer = std::move(trigger_buffer);
+
+            SyncStateToRuntime();
         }
-
-        rc_mutex_unlock(&pClient->state.mutex);
-
-        rc_destroy_preparse_state(&preparse);
     }
+
+    rc_mutex_unlock(&pClient->state.mutex);
+
+    rc_destroy_preparse_state(&preparse);
 }
 
-void AchievementModel::Attach(struct rc_client_achievement_info_t& pAchievement,
-    AssetCategory nCategory, const std::string& sTrigger)
+void AchievementModel::InitializeFromPublishedAchievement(
+    const struct rc_client_achievement_info_t& pAchievement, const std::string& sTrigger)
 {
     SetID(pAchievement.public_.id);
     SetName(ra::util::String::Widen(pAchievement.public_.title));
     SetDescription(ra::util::String::Widen(pAchievement.public_.description));
-    SetCategory(nCategory);
     SetPoints(pAchievement.public_.points);
     if (pAchievement.author)
         SetAuthor(ra::util::String::Widen(pAchievement.author));
@@ -502,6 +506,21 @@ void AchievementModel::Attach(struct rc_client_achievement_info_t& pAchievement,
     SetCreationTime(pAchievement.created_time);
     SetUpdatedTime(pAchievement.updated_time);
     SetTrigger(sTrigger);
+
+    switch (pAchievement.public_.category)
+    {
+        case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
+            SetCategory(AssetCategory::Core);
+            break;
+
+        case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:
+            SetCategory(AssetCategory::Unofficial);
+            break;
+
+        default:
+            SetCategory(AssetCategory::None);
+            break;
+    }
 
     switch (pAchievement.public_.type)
     {
@@ -526,47 +545,48 @@ void AchievementModel::Attach(struct rc_client_achievement_info_t& pAchievement,
     CreateServerCheckpoint();
     CreateLocalCheckpoint();
 
-    m_pAchievement = &pAchievement;
+    m_pPublishedAchievementInfo = &pAchievement;
 
     if (pAchievement.trigger)
-    {
-        m_bCaptureTrigger = false;
-        DoFrame(); // sync state from trigger
-        m_bCaptureTrigger = true;
-    }
+        SyncStateFromRuntime(pAchievement.trigger->state);
     else
-    {
         SetState(AssetState::Inactive);
+}
+
+const struct rc_trigger_t* AchievementModel::GetRuntimeTrigger() const
+{
+    if (m_pAchievementInfo != nullptr)
+    {
+        if (!m_pAchievementInfo->trigger)
+            ParseTrigger();
+
+        return m_pAchievementInfo->trigger;
     }
+
+    return nullptr;
 }
 
-void AchievementModel::ReplaceAttached(struct rc_client_achievement_info_t& pAchievement)
+void AchievementModel::SetLocalAchievementInfo(struct rc_client_achievement_info_t& pAchievement)
 {
-    m_pAchievement = &pAchievement;
+    m_pAchievementInfo = &pAchievement;
 
-    // make sure the trigger state matches the model state
-    m_bCaptureTrigger = false;
-    SyncState();
-    m_bCaptureTrigger = true;
+    // make sure the runtime state matches the model state
+    SyncStateToRuntime();
 }
 
-void AchievementModel::AttachAndInitialize(struct rc_client_achievement_info_t& pAchievement)
+void AchievementModel::SyncToLocalAchievementInfo()
 {
-    m_pAchievement = &pAchievement;
+    Expects(m_pAchievementInfo != nullptr);
 
-    SyncID();
-    SyncTitle();
-    SyncDescription();
-    SyncBadge();
-    SyncPoints();
-    SyncCategory();
-    SyncTrigger();
-
-    m_bCaptureTrigger = false;
-    SyncState();
-    m_bCaptureTrigger = true;
-
-    SyncAchievementType();
+    SyncIDToRuntime();
+    SyncTitleToRuntime();
+    SyncDescriptionToRuntime();
+    SyncBadgeToRuntime();
+    SyncPointsToRuntime();
+    SyncCategoryToRuntime();
+    SyncTriggerToRuntime();
+    SyncStateToRuntime();
+    SyncAchievementTypeToRuntime();
 }
 
 void AchievementModel::Serialize(ra::services::TextWriter& pWriter) const

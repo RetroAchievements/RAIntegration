@@ -437,7 +437,8 @@ private:
             vmAchievement->SetSubsetID(mockGameContext.ActiveGameId());
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->CreateLocalCheckpoint();
-            vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
+            vmAchievement->SetLocalAchievementInfo(*vmAchievement->m_pInfo);
+            vmAchievement->SyncToLocalAchievementInfo();
             vmAchievement->EndUpdate();
             mockGameContext.Assets().Append(std::move(vmAchievement));
 
@@ -459,7 +460,8 @@ private:
             vmAchievement->SetSubsetID(mockGameContext.ActiveGameId());
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->CreateLocalCheckpoint();
-            vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
+            vmAchievement->SetLocalAchievementInfo(*vmAchievement->m_pInfo);
+            vmAchievement->SyncToLocalAchievementInfo();
             vmAchievement->EndUpdate();
             mockGameContext.Assets().Append(std::move(vmAchievement));
 
@@ -482,7 +484,8 @@ private:
             vmAchievement->SetSubsetID(mockGameContext.ActiveGameId());
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->SetNew();
-            vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
+            vmAchievement->SetLocalAchievementInfo(*vmAchievement->m_pInfo);
+            vmAchievement->SyncToLocalAchievementInfo();
             vmAchievement->EndUpdate();
             mockGameContext.Assets().Append(std::move(vmAchievement));
 
@@ -3368,13 +3371,11 @@ public:
         GSL_SUPPRESS_TYPE1
         auto* pAch1 = reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, 111000001U));
         Expects(pAch1 != nullptr);
-        Assert::IsNull(pAch1->trigger); // trigger not set until activated
         Assert::AreEqual({0}, pAch1->public_.points);
 
         GSL_SUPPRESS_TYPE1
         auto* pAch2 = reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, 111000002U));
         Expects(pAch2 != nullptr);
-        Assert::IsNull(pAch2->trigger);
         Assert::AreEqual({0}, pAch2->public_.points);
     }
 

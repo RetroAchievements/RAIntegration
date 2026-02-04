@@ -790,8 +790,7 @@ private:
         {
             mockEmulatorMemoryContext.MockMemory(m_pMemory);
 
-            ra::data::models::CapturedTriggerHits pCapturedHits;
-            InitializeFrom(sInput, pCapturedHits);
+            InitializeFrom(sInput);
 
             DoFrame();
         }

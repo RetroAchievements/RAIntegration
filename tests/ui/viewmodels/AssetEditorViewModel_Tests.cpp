@@ -15,6 +15,7 @@
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -788,6 +789,7 @@ public:
     TEST_METHOD(TestActivateNewLeaderboard)
     {
         AssetEditorViewModelHarness editor;
+        ra::services::mocks::MockThreadPool mockThreadPool;
 
         editor.mockRuntime.MockLocalLeaderboard(111000001U, "Leaderboard");
         editor.mockGameContext.InitializeFromAchievementRuntime();
@@ -811,8 +813,10 @@ public:
         editor.SetState(AssetState::Waiting);
         Assert::IsTrue(bDialogSeen);
 
-        // rely on leaderboard to deactivate itself
-        leaderboard->DoFrame();
+        // to work around a binding issue, changing the state back is done asynchronously.
+        // advance time to ensure the state gets changed back.
+        mockThreadPool.AdvanceTime(std::chrono::milliseconds(200));
+
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
 
         // set additional properties so leaderboard is valid and attempt to activate again
@@ -2410,8 +2414,9 @@ public:
         const auto nDefaultColor = ra::to_unsigned(TriggerConditionViewModel::RowColorProperty.GetDefaultValue());
 
         AchievementModel achievement;
-        achievement.SetTrigger("0=1S0=1S1=1");
-        editor.mockRuntime.ActivateAchievement(achievement.GetID(), achievement.GetTrigger()); // must be in runtime to apply colors
+        auto* info = editor.mockRuntime.ActivateAchievement(1, "0=1S0=1S1=1"); // must be in runtime to apply colors
+        achievement.InitializeFromPublishedAchievement(*info, "0=1S0=1S1=1");
+        achievement.SetLocalAchievementInfo(*info);
         editor.LoadAsset(&achievement);
 
         auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(achievement.GetID());

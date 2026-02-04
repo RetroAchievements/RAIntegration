@@ -4,8 +4,6 @@
 
 #include "data/models/AssetModelBase.hh"
 
-#include "CapturedTriggerHits.hh"
-
 #include "data\Types.hh"
 
 namespace ra {

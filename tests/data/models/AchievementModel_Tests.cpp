@@ -233,7 +233,7 @@ public:
 
         achievement.mockRuntime.MockGame();
         auto* achievement_info = achievement.mockRuntime.MockAchievementWithTrigger(achievement.GetID());
-        achievement.ReplaceAttached(*achievement_info);
+        achievement.SetLocalAchievementInfo(*achievement_info);
 
         g_bEventSeen = false;
         achievement.mockRuntime.GetClient()->callbacks.event_handler =
@@ -266,7 +266,7 @@ public:
 
         achievement.mockRuntime.MockGame();
         auto* achievement_info = achievement.mockRuntime.MockAchievementWithTrigger(achievement.GetID());
-        achievement.ReplaceAttached(*achievement_info);
+        achievement.SetLocalAchievementInfo(*achievement_info);
 
         g_bEventSeen = false;
         achievement.mockRuntime.GetClient()->callbacks.event_handler = [](const rc_client_event_t* pEvent,

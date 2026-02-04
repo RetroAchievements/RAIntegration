@@ -62,12 +62,13 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
         else if (args.Property == StartTriggerProperty || args.Property == SubmitTriggerProperty ||
             args.Property == CancelTriggerProperty || args.Property == ValueDefinitionProperty)
         {
-            SyncDefinition();
+            if (m_pLeaderboardInfo)
+                SyncDefinitionToRuntime();
         }
         else if (args.Property == ValueFormatProperty)
         {
-            if (m_pLeaderboard)
-                SyncValueFormat();
+            if (m_pLeaderboardInfo)
+                SyncValueFormatToRuntime();
         }
     }
 
@@ -85,13 +86,13 @@ void LeaderboardModel::OnValueChanged(const StringModelProperty::ChangeArgs& arg
 
     if (args.Property == DescriptionProperty)
     {
-        if (m_pLeaderboard)
-            SyncDescription();
+        if (m_pLeaderboardInfo)
+            SyncDescriptionToRuntime();
     }
     else if (args.Property == NameProperty)
     {
-        if (m_pLeaderboard)
-            SyncTitle();
+        if (m_pLeaderboardInfo)
+            SyncTitleToRuntime();
     }
 }
 
@@ -156,42 +157,60 @@ bool LeaderboardModel::ValidateAsset(std::wstring& sError)
 
 void LeaderboardModel::DoFrame()
 {
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    const auto* pLeaderboard = pRuntime.GetLeaderboardDefinition(GetID());
-    if (pLeaderboard == nullptr)
+    if (m_pLeaderboardInfo && m_pLeaderboardInfo->lboard)
+        SyncStateFromRuntime(m_pLeaderboardInfo->lboard->state);
+}
+
+void LeaderboardModel::SyncStateFromRuntime(uint8_t nState)
+{
+    switch (nState)
     {
-        if (IsActive())
+        case RC_LBOARD_STATE_WAITING:
+        case RC_LBOARD_STATE_CANCELED:
+        case RC_LBOARD_STATE_TRIGGERED:
+            /* all of these states are waiting for the leaderboard to start */
+            SetState(AssetState::Waiting);
+            break;
+        case RC_LBOARD_STATE_ACTIVE:
+            SetState(AssetState::Active);
+            break;
+        case RC_LBOARD_STATE_STARTED:
+            SetState(AssetState::Primed);
+            break;
+        case RC_LBOARD_STATE_INACTIVE:
             SetState(AssetState::Inactive);
+            break;
+        case RC_LBOARD_STATE_DISABLED:
+            SetState(AssetState::Disabled);
+            break;
     }
-    else
+}
+
+static void ReleaseLeaderboardTracker(struct rc_client_leaderboard_info_t* pLeaderboardInfo)
+{
+    rc_client_leaderboard_tracker_info_t* tracker = pLeaderboardInfo->tracker;
+    if (tracker)
     {
-        switch (pLeaderboard->state)
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        rc_client_release_leaderboard_tracker(pClient->game, pLeaderboardInfo);
+
+        if (tracker->pending_events & RC_CLIENT_LEADERBOARD_TRACKER_PENDING_EVENT_HIDE)
         {
-            case RC_LBOARD_STATE_WAITING:
-            case RC_LBOARD_STATE_CANCELED:
-            case RC_LBOARD_STATE_TRIGGERED:
-                /* all of these states are waiting for the leaderboard to start */
-                SetState(AssetState::Waiting);
-                break;
-            case RC_LBOARD_STATE_ACTIVE:
-                SetState(AssetState::Active);
-                break;
-            case RC_LBOARD_STATE_STARTED:
-                SetState(AssetState::Primed);
-                break;
-            case RC_LBOARD_STATE_INACTIVE:
-                SetState(AssetState::Inactive);
-                break;
-            case RC_LBOARD_STATE_DISABLED:
-                SetState(AssetState::Disabled);
-                break;
+            // no other references. hide it immediately.
+            rc_client_event_t pEvent;
+            memset(&pEvent, 0, sizeof(pEvent));
+            pEvent.leaderboard_tracker = &tracker->public_;
+            pEvent.type = RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE;
+            pClient->callbacks.event_handler(&pEvent, pClient);
+
+            tracker->pending_events = RC_CLIENT_LEADERBOARD_TRACKER_PENDING_EVENT_NONE;
         }
     }
 }
 
 void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewState)
 {
-    if (!m_pLeaderboard)
+    if (!m_pLeaderboardInfo)
         return;
 
     const bool bWasActive = IsActive(nOldState);
@@ -199,33 +218,29 @@ void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
 
     if (!bIsActive && bWasActive)
     {
-        const auto* pLeaderboard = m_pLeaderboard->lboard;
+        const auto* pLeaderboard = m_pLeaderboardInfo->lboard;
         if (pLeaderboard != nullptr)
         {
-            m_pCapturedStartTriggerHits.Capture(&pLeaderboard->start, GetStartTrigger());
-            m_pCapturedSubmitTriggerHits.Capture(&pLeaderboard->submit, GetSubmitTrigger());
-            m_pCapturedCancelTriggerHits.Capture(&pLeaderboard->cancel, GetCancelTrigger());
-            m_pCapturedValueDefinitionHits.Capture(&pLeaderboard->value, GetValueDefinition());
-
             if (pLeaderboard->state == RC_LBOARD_STATE_STARTED)
             {
-                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-                pRuntime.ReleaseLeaderboardTracker(m_pLeaderboard->public_.id);
+                // if the runtime thinks the leaderboard has started, there's most likely a tracker
+                // visible. release the reference, which will hide it if no other references exist.
+                ReleaseLeaderboardTracker(m_pLeaderboardInfo);
             }
         }
     }
     else if (bIsActive && !bWasActive)
     {
-        if (m_pLeaderboard->lboard)
-            rc_reset_lboard(m_pLeaderboard->lboard);
+        if (m_pLeaderboardInfo->lboard)
+            rc_reset_lboard(m_pLeaderboardInfo->lboard);
         else
-            SyncDefinition();
+            SyncDefinitionToRuntime();
     }
 
-    SyncState(nNewState);
+    SyncStateToRuntime(nNewState);
 }
 
-void LeaderboardModel::SyncState(AssetState nNewState)
+void LeaderboardModel::SyncStateToRuntime(AssetState nNewState) const
 {
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
@@ -234,181 +249,181 @@ void LeaderboardModel::SyncState(AssetState nNewState)
     switch (nNewState)
     {
         case ra::data::models::AssetState::Disabled:
-            m_pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_DISABLED;
-            if (m_pLeaderboard->lboard)
-                m_pLeaderboard->lboard->state = RC_LBOARD_STATE_DISABLED;
+            m_pLeaderboardInfo->public_.state = RC_CLIENT_LEADERBOARD_STATE_DISABLED;
+            if (m_pLeaderboardInfo->lboard)
+                m_pLeaderboardInfo->lboard->state = RC_LBOARD_STATE_DISABLED;
             break;
 
         case ra::data::models::AssetState::Inactive:
-            m_pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_INACTIVE;
-            if (m_pLeaderboard->lboard)
-                m_pLeaderboard->lboard->state = RC_LBOARD_STATE_INACTIVE;
+            m_pLeaderboardInfo->public_.state = RC_CLIENT_LEADERBOARD_STATE_INACTIVE;
+            if (m_pLeaderboardInfo->lboard)
+                m_pLeaderboardInfo->lboard->state = RC_LBOARD_STATE_INACTIVE;
             break;
 
         case ra::data::models::AssetState::Primed:
-            m_pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_TRACKING;
-            if (m_pLeaderboard->lboard)
-                m_pLeaderboard->lboard->state = RC_LBOARD_STATE_STARTED;
+            m_pLeaderboardInfo->public_.state = RC_CLIENT_LEADERBOARD_STATE_TRACKING;
+            if (m_pLeaderboardInfo->lboard)
+                m_pLeaderboardInfo->lboard->state = RC_LBOARD_STATE_STARTED;
             break;
 
         case ra::data::models::AssetState::Waiting:
-            m_pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
-            if (m_pLeaderboard->lboard)
-                m_pLeaderboard->lboard->state = RC_LBOARD_STATE_WAITING;
+            m_pLeaderboardInfo->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
+            if (m_pLeaderboardInfo->lboard)
+                m_pLeaderboardInfo->lboard->state = RC_LBOARD_STATE_WAITING;
             break;
 
         default:
-            m_pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
-            if (m_pLeaderboard->lboard)
-                m_pLeaderboard->lboard->state = RC_LBOARD_STATE_ACTIVE;
+            m_pLeaderboardInfo->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
+            if (m_pLeaderboardInfo->lboard)
+                m_pLeaderboardInfo->lboard->state = RC_LBOARD_STATE_ACTIVE;
             break;
     }
 
     rc_mutex_unlock(&pClient->state.mutex);
 }
 
-void LeaderboardModel::SyncTitle()
+void LeaderboardModel::SyncTitleToRuntime()
 {
     m_sTitleBuffer = ra::util::String::Narrow(GetName());
-    m_pLeaderboard->public_.title = m_sTitleBuffer.c_str();
+    m_pLeaderboardInfo->public_.title = m_sTitleBuffer.c_str();
 }
 
-void LeaderboardModel::SyncDescription()
+void LeaderboardModel::SyncDescriptionToRuntime()
 {
     m_sDescriptionBuffer = ra::util::String::Narrow(GetDescription());
-    m_pLeaderboard->public_.description = m_sDescriptionBuffer.c_str();
+    m_pLeaderboardInfo->public_.description = m_sDescriptionBuffer.c_str();
 }
 
-void LeaderboardModel::SyncValueFormat()
+void LeaderboardModel::SyncValueFormatToRuntime() const
 {
-    m_pLeaderboard->format = ra::etoi(GetValueFormat());
-    m_pLeaderboard->public_.format = rc_client_map_leaderboard_format(m_pLeaderboard->format);
+    m_pLeaderboardInfo->format = ra::etoi(GetValueFormat());
+    m_pLeaderboardInfo->public_.format = rc_client_map_leaderboard_format(m_pLeaderboardInfo->format);
 
-    SyncTracker();
+    SyncTrackerToRuntime();
 }
 
-void LeaderboardModel::SyncTracker()
+void LeaderboardModel::SyncTrackerToRuntime() const
 {
-    if (m_pLeaderboard->tracker)
+    if (m_pLeaderboardInfo->tracker)
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         auto* pGame = pClient->game;
 
-        rc_client_release_leaderboard_tracker(pGame, m_pLeaderboard);
-        rc_client_allocate_leaderboard_tracker(pGame, m_pLeaderboard);
+        rc_client_release_leaderboard_tracker(pGame, m_pLeaderboardInfo);
+        rc_client_allocate_leaderboard_tracker(pGame, m_pLeaderboardInfo);
     }
 }
 
-void LeaderboardModel::SyncDefinition()
+void LeaderboardModel::SyncDefinitionToRuntime()
 {
-    if (!m_pLeaderboard)
-        return;
+    Expects(m_pLeaderboardInfo != nullptr);
 
     if (!IsActive())
     {
-        if (m_pLeaderboard->lboard)
-        {
-            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-            if (pRuntime.DetachMemory(m_pLeaderboard->lboard))
-                free(m_pLeaderboard->lboard);
+        // if the leaderboard isn't active, we don't have to parse it or load it into the runtime.
+        m_pLeaderboardInfo->lboard = nullptr;
+        m_pLeaderboardBuffer.reset();
 
-            m_pLeaderboard->lboard = nullptr;
-        }
-
-        memset(m_pLeaderboard->md5, 0, sizeof(m_pLeaderboard->md5));
+        memset(m_pLeaderboardInfo->md5, 0, sizeof(m_pLeaderboardInfo->md5));
         return;
     }
 
+    ParseDefinition();
+}
+
+void LeaderboardModel::ParseDefinition() const
+{
     const auto& sMemAddr = GetDefinition();
     uint8_t md5[16];
     rc_runtime_checksum(sMemAddr.c_str(), md5);
-    if (memcmp(m_pLeaderboard->md5, md5, sizeof(md5)) != 0)
+
+    if (memcmp(m_pLeaderboardInfo->md5, md5, sizeof(md5)) == 0)
     {
-        memcpy(m_pLeaderboard->md5, md5, sizeof(md5));
-
-        const auto* pOldLboard = m_pLeaderboard->lboard;
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        if (m_pLeaderboard->lboard && pRuntime.DetachMemory(m_pLeaderboard->lboard))
-        {
-            free(m_pLeaderboard->lboard);
-            m_pLeaderboard->lboard = nullptr;
-        }
-
-        const auto* pPublishedLeaderboardInfo = pRuntime.GetPublishedLeaderboardInfo(m_pLeaderboard->public_.id);
-        if (pPublishedLeaderboardInfo && memcmp(pPublishedLeaderboardInfo->md5, md5, sizeof(md5)) == 0)
-        {
-            Expects(pPublishedLeaderboardInfo->lboard != nullptr);
-            m_pLeaderboard->lboard = pPublishedLeaderboardInfo->lboard;
-            rc_reset_lboard(m_pLeaderboard->lboard);
-            return;
-        }
-
-        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-        auto* pGame = pClient->game;
-        Expects(pGame != nullptr);
-
-        rc_mutex_lock(&pClient->state.mutex);
-
-        rc_preparse_state_t preparse;
-        rc_init_preparse_state(&preparse);
-        preparse.parse.existing_memrefs = pGame->runtime.memrefs;
-
-        rc_lboard_with_memrefs_t* lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
-        rc_parse_lboard_internal(&lboard->lboard, sMemAddr.c_str(), &preparse.parse);
-        rc_preparse_alloc_memrefs(nullptr, &preparse);
-
-        const auto nSize = preparse.parse.offset;
-        if (nSize > 0)
-        {
-            void* lboard_buffer = malloc(nSize);
-            if (lboard_buffer)
-            {
-                // populate the item, using the communal memrefs pool
-                rc_reset_parse_state(&preparse.parse, lboard_buffer);
-                lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
-                rc_preparse_alloc_memrefs(&lboard->memrefs, &preparse);
-
-                preparse.parse.existing_memrefs = pGame->runtime.memrefs;
-                preparse.parse.memrefs = &lboard->memrefs;
-
-                m_pLeaderboard->lboard = &lboard->lboard;
-                rc_parse_lboard_internal(m_pLeaderboard->lboard, sMemAddr.c_str(), &preparse.parse);
-                lboard->lboard.has_memrefs = 1;
-
-                pRuntime.AttachMemory(m_pLeaderboard->lboard);
-
-                // update the runtime memory reference too
-                auto* pRuntimeLboard = pGame->runtime.lboards;
-                const auto* pRuntimeLboardStop = pRuntimeLboard + pGame->runtime.lboard_count;
-                for (; pRuntimeLboard < pRuntimeLboardStop; ++pRuntimeLboard)
-                {
-                    if (pRuntimeLboard->lboard == pOldLboard &&
-                        pRuntimeLboard->id == m_pLeaderboard->public_.id)
-                    {
-                        pRuntimeLboard->lboard = m_pLeaderboard->lboard;
-                        pRuntimeLboard->serialized_size = 0;
-                        memcpy(pRuntimeLboard->md5, md5, sizeof(md5));
-                        break;
-                    }
-                }
-
-                // sync state to new leaderboard
-                SyncState(GetState());
-
-                // sync tracker to new leaderboard in case value changed
-                SyncTracker();
-            }
-        }
-        else
-        {
-            // parse error - discard old tracker
-            pRuntime.ReleaseLeaderboardTracker(m_pLeaderboard->public_.id);
-        }
-
-        rc_mutex_unlock(&pClient->state.mutex);
-
-        rc_destroy_preparse_state(&preparse);
+        // leaderboard is already up-to-date. do nothing.
+        return;
     }
+
+    memcpy(m_pLeaderboardInfo->md5, md5, sizeof(md5));
+
+    if (m_pPublishedLeaderboardInfo && memcmp(m_pPublishedLeaderboardInfo->md5, md5, sizeof(md5)) == 0)
+    {
+        // leaderboard changed back to published state. just reference that.
+        if (m_pPublishedLeaderboardInfo->lboard != nullptr)
+            rc_reset_lboard(m_pLeaderboardInfo->lboard);
+
+        m_pLeaderboardInfo->lboard = m_pPublishedLeaderboardInfo->lboard;
+        m_pLeaderboardBuffer.reset();
+        return;
+    }
+
+    // attempt to parse the leaderboard
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    auto* pGame = pClient->game;
+    Expects(pGame != nullptr);
+
+    rc_mutex_lock(&pClient->state.mutex);
+
+    rc_preparse_state_t preparse;
+    rc_init_preparse_state(&preparse);
+    preparse.parse.existing_memrefs = pGame->runtime.memrefs;
+
+    rc_lboard_with_memrefs_t* lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
+    rc_parse_lboard_internal(&lboard->lboard, sMemAddr.c_str(), &preparse.parse);
+    rc_preparse_alloc_memrefs(nullptr, &preparse);
+
+    const auto nSize = preparse.parse.offset;
+    if (nSize > 0)
+    {
+        auto lboard_buffer = std::make_unique<uint8_t[]>(nSize);
+        if (lboard_buffer)
+        {
+            // populate the item, using the communal memrefs pool
+            rc_reset_parse_state(&preparse.parse, lboard_buffer.get());
+            lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
+            rc_preparse_alloc_memrefs(&lboard->memrefs, &preparse);
+
+            preparse.parse.existing_memrefs = pGame->runtime.memrefs;
+            preparse.parse.memrefs = &lboard->memrefs;
+
+            rc_parse_lboard_internal(&lboard->lboard, sMemAddr.c_str(), &preparse.parse);
+            lboard->lboard.has_memrefs = 1;
+
+            const auto* pOldLboard = m_pLeaderboardInfo->lboard;
+            m_pLeaderboardInfo->lboard = &lboard->lboard;
+
+            // update the runtime memory reference too
+            auto* pRuntimeLboard = pGame->runtime.lboards;
+            const auto* pRuntimeLboardStop = pRuntimeLboard + pGame->runtime.lboard_count;
+            for (; pRuntimeLboard < pRuntimeLboardStop; ++pRuntimeLboard)
+            {
+                if (pRuntimeLboard->lboard == pOldLboard &&
+                    pRuntimeLboard->id == m_pLeaderboardInfo->public_.id)
+                {
+                    pRuntimeLboard->lboard = m_pLeaderboardInfo->lboard;
+                    pRuntimeLboard->serialized_size = 0;
+                    memcpy(pRuntimeLboard->md5, md5, sizeof(md5));
+                    break;
+                }
+            }
+
+            m_pLeaderboardBuffer = std::move(lboard_buffer);
+
+            // sync state to new leaderboard
+            SyncStateToRuntime(GetState());
+
+            // sync tracker to new leaderboard in case value changed
+            SyncTrackerToRuntime();
+        }
+    }
+    else
+    {
+        // parse error - discard old tracker
+        ReleaseLeaderboardTracker(m_pLeaderboardInfo);
+    }
+
+    rc_mutex_unlock(&pClient->state.mutex);
+
+    rc_destroy_preparse_state(&preparse);
 }
 
 void LeaderboardModel::SetDefinition(const std::string& sDefinition)
@@ -440,13 +455,13 @@ std::string LeaderboardModel::GetDefinition() const
         "::CAN:" + GetCancelTrigger() + "::VAL:" + GetValueDefinition();
 }
 
-void LeaderboardModel::Attach(struct rc_client_leaderboard_info_t& pLeaderboard,
-                              AssetCategory nCategory, const std::string& sDefinition)
+void LeaderboardModel::InitializeFromPublishedLeaderboard(
+    const struct rc_client_leaderboard_info_t& pLeaderboard, const std::string& sDefinition)
 {
     SetID(pLeaderboard.public_.id);
     SetName(ra::util::String::Widen(pLeaderboard.public_.title));
     SetDescription(ra::util::String::Widen(pLeaderboard.public_.description));
-    SetCategory(nCategory);
+    SetCategory(AssetCategory::Core);
     SetValueFormat(ra::itoe<ValueFormat>(pLeaderboard.format));
     SetLowerIsBetter(pLeaderboard.public_.lower_is_better);
     SetHidden(pLeaderboard.hidden);
@@ -455,26 +470,42 @@ void LeaderboardModel::Attach(struct rc_client_leaderboard_info_t& pLeaderboard,
     CreateServerCheckpoint();
     CreateLocalCheckpoint();
 
-    m_pLeaderboard = &pLeaderboard;
+    m_pPublishedLeaderboardInfo = &pLeaderboard;
 
-    DoFrame(); // sync state
+    if (pLeaderboard.lboard)
+        SyncStateFromRuntime(pLeaderboard.public_.state);
+    else
+        SetState(AssetState::Inactive);
 }
 
-void LeaderboardModel::ReplaceAttached(struct rc_client_leaderboard_info_t& pLeaderboard) noexcept
+const struct rc_lboard_t* LeaderboardModel::GetRuntimeLeaderboard() const
 {
-    m_pLeaderboard = &pLeaderboard;
+    if (m_pLeaderboardInfo != nullptr)
+    {
+        if (!m_pLeaderboardInfo->lboard)
+            ParseDefinition();
+
+        return m_pLeaderboardInfo->lboard;
+    }
+
+    return nullptr;
 }
 
-void LeaderboardModel::AttachAndInitialize(struct rc_client_leaderboard_info_t& pLeaderboard)
+void LeaderboardModel::SetLocalLeaderboardInfo(struct rc_client_leaderboard_info_t& pLeaderboard)
 {
-    pLeaderboard.public_.id = GetID();
+    m_pLeaderboardInfo = &pLeaderboard;
 
-    m_pLeaderboard = &pLeaderboard;
+    SyncStateToRuntime(GetState());
+}
 
-    SyncTitle();
-    SyncDescription();
-    SyncDefinition();
-    SyncValueFormat();
+void LeaderboardModel::SyncToLocalLeaderboardInfo()
+{
+    Expects(m_pLeaderboardInfo != nullptr);
+
+    SyncTitleToRuntime();
+    SyncDescriptionToRuntime();
+    SyncDefinitionToRuntime();
+    SyncValueFormatToRuntime();
 }
 
 void LeaderboardModel::Serialize(ra::services::TextWriter& pWriter) const

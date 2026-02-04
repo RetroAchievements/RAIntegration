@@ -275,7 +275,7 @@ public:
 
         leaderboard.mockRuntime.MockGame();
         auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboardWithLboard(leaderboard.GetID());
-        leaderboard.ReplaceAttached(*leaderboard_info);
+        leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
         rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
 
@@ -311,7 +311,7 @@ public:
 
         leaderboard.mockRuntime.MockGame();
         auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboardWithLboard(leaderboard.GetID());
-        leaderboard.ReplaceAttached(*leaderboard_info);
+        leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
         rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
         auto* leaderboard_info2 = leaderboard.mockRuntime.MockLeaderboardWithLboard(99);
@@ -347,7 +347,7 @@ public:
 
         leaderboard.mockRuntime.MockGame();
         auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboardWithLboard(leaderboard.GetID());
-        leaderboard.ReplaceAttached(*leaderboard_info);
+        leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
         rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
 
@@ -386,7 +386,7 @@ public:
 
         leaderboard.mockRuntime.MockGame();
         auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboard(leaderboard.GetID());
-        leaderboard.ReplaceAttached(*leaderboard_info);
+        leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
         // forcefully start the leaderboard
         leaderboard.SetState(AssetState::Primed);

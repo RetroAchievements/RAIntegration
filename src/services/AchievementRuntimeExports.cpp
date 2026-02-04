@@ -852,8 +852,10 @@ private:
             s_callbacks.log_callback(sMessage, s_callbacks.log_client);
     }
 
-    static void EventHandlerExternal(const rc_client_event_t* event, rc_client_t*) noexcept(false)
+    static void EventHandlerExternal(const rc_client_event_t* event, rc_client_t*)
     {
+        Expects(event != nullptr);
+
         if (event->type == RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED)
             CheckForPauseOnTrigger(*event->achievement);
 

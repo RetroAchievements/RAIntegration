@@ -3,6 +3,7 @@
 #include "RA_Defs.h"
 #include "util\Strings.hh"
 
+#include "ui\IDesktop.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -59,7 +60,9 @@ void FrameEventQueue::DoFrame()
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         pEmulatorContext.Pause();
 
-        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"The emulator has been paused.", sPauseMessage);
+        ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread([sPauseMessage]() {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"The emulator has been paused.", sPauseMessage);
+        });
     }
 }
 

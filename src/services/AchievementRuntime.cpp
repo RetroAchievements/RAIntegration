@@ -1584,22 +1584,11 @@ void AchievementRuntime::InvalidateAddress(ra::data::ByteAddress nAddress)
 
 static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchievement)
 {
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
+    const auto* vmAchievement = CheckForPauseOnTrigger(pAchievement);
     if (!vmAchievement)
     {
         RA_LOG_ERR("Received achievement triggered event for unknown achievement %u", pAchievement.id);
         return;
-    }
-
-    // immediately update the state to Triggered (instead of waiting for AssetListViewModel::DoFrame to do it).
-    // this captures the unlock time and rich presence state, even if KeepActive it selected.
-    vmAchievement->SetState(ra::data::models::AssetState::Triggered);
-
-    if (vmAchievement->IsPauseOnTrigger())
-    {
-        auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-        pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetName());
     }
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -1648,7 +1637,7 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
         bTakeScreenshot = false;
     }
 
-    if (bSubmit && pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
+    if (bSubmit && ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
     {
         std::wstring sHeader = vmPopup->GetTitle();
         sHeader.insert(0, L"Test ");

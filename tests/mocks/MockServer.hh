@@ -117,11 +117,6 @@ public:
         return HandleRequest<ra::api::LatestClient>(request);
     }
 
-    SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) override
-    {
-        return HandleRequest<ra::api::SubmitNewTitle>(request);
-    }
-
     FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override
     {
         return HandleRequest<ra::api::FetchBadgeIds>(request);

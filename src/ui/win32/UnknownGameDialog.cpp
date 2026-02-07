@@ -71,16 +71,16 @@ BOOL UnknownGameDialog::OnCommand(WORD nCommand)
         case IDOK:
         {
             auto* vmUnknownGame = dynamic_cast<ra::ui::viewmodels::UnknownGameViewModel*>(&m_vmWindow);
-            if (vmUnknownGame && vmUnknownGame->BeginTest())
-                SetDialogResult(ra::ui::DialogResult::OK);
+            if (vmUnknownGame)
+                vmUnknownGame->BeginTest();
             return TRUE;
         }
 
         case IDC_RA_LINK:
         {
             auto* vmUnknownGame = dynamic_cast<ra::ui::viewmodels::UnknownGameViewModel*>(&m_vmWindow);
-            if (vmUnknownGame && vmUnknownGame->Associate())
-                SetDialogResult(ra::ui::DialogResult::OK);
+            if (vmUnknownGame)
+                vmUnknownGame->Associate();
             return TRUE;
         }
 

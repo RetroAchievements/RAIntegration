@@ -975,60 +975,6 @@ LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request
     return response;
 }
 
-SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::Request& request)
-{
-    SubmitNewTitle::Response response;
-
-    rc_api_add_game_hash_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
-    api_params.username = pUserContext.GetUsername().c_str();
-    api_params.api_token = pUserContext.GetApiToken().c_str();
-
-    const std::string sGameName = ra::util::String::Narrow(request.GameName);
-    const std::string sDescription = ra::util::String::Narrow(request.Description);
-
-    api_params.console_id = request.ConsoleId;
-    api_params.hash = request.Hash.c_str();
-    api_params.title = sGameName.c_str();
-    api_params.game_id = request.GameId;
-
-    if (!sDescription.empty())
-        api_params.hash_description = sDescription.c_str();
-
-    rc_api_request_t api_request;
-    const int result = rc_api_init_add_game_hash_request(&api_request, &api_params);
-    if (result == RC_OK)
-    {
-        ra::services::Http::Response httpResponse;
-        if (DoRequest(api_request, SubmitNewTitle::Name(), httpResponse, response))
-        {
-            rc_api_add_game_hash_response_t api_response;
-            rc_api_server_response_t server_response;
-            HttpResponseToServerResponse(httpResponse, &server_response);
-
-            const auto nResult = rc_api_process_add_game_hash_server_response(&api_response, &server_response);
-
-            if (ValidateResponse(nResult, api_response.response, SubmitNewTitle::Name(), httpResponse.StatusCode(), response))
-            {
-                response.Result = ApiResult::Success;
-                response.GameId = api_response.game_id;
-            }
-
-            rc_api_destroy_add_game_hash_response(&api_response);
-        }
-    }
-    else
-    {
-        response.Result = ApiResult::Failed;
-        response.ErrorMessage = rc_error_str(result);
-    }
-
-    rc_api_destroy_request(&api_request);
-    return response;
-}
-
 FetchBadgeIds::Response ConnectedServer::FetchBadgeIds(const FetchBadgeIds::Request&)
 {
     FetchBadgeIds::Response response;

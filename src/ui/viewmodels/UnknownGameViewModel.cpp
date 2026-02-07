@@ -4,8 +4,6 @@
 
 #include "util\Strings.hh"
 
-#include "api\SubmitNewTitle.hh"
-
 #include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
 
@@ -16,9 +14,11 @@
 #include "services\IClipboard.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ILoginService.hh"
+#include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
+#include <rcheevos\include\rc_api_editor.h>
 #include <rcheevos\include\rc_api_info.h>
 #include <rcheevos\src\rc_client_external.h>
 #include <rcheevos\src\rc_client_internal.h>
@@ -71,7 +71,7 @@ void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
     request.console_id = ra::etoi(consoleId);
 
     rc_api_request_t api_request;
-    const auto nResult = rc_api_init_fetch_games_list_request_hosted(&api_request, &request, &pClient.GetClient()->state.host);
+    const auto nResult = rc_api_init_fetch_games_list_request_hosted(&api_request, &request, pClient.GetHost());
     Expects(nResult == RC_OK);
 
     pClient.DispatchRequest(api_request, [this, pAsyncHandle = CreateAsyncHandle()](const rc_api_server_response_t& api_response, void*) {
@@ -84,7 +84,7 @@ void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
         if (nResult != RC_OK)
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"Could not retrieve list of existing games",
-                ra::util::String::Widen(response.response.error_message ? response.response.error_message : rc_error_str(nResult)));
+                ra::context::IRcClient::GetErrorMessage(nResult, response.response));
         }
         else
         {
@@ -195,68 +195,98 @@ static void AddClientHash(const std::string& sHash, uint32_t nGameId, bool isUnk
     game_hash->is_unknown = isUnknown ? 1 : 0;
 }
 
-bool UnknownGameViewModel::Associate()
+void UnknownGameViewModel::Associate()
 {
-    ra::api::SubmitNewTitle::Request request;
+    rc_api_add_game_hash_request_t request;
+    memset(&request, 0, sizeof(request));
+
+    std::wstring sGameName;
 
     const auto nGameId = GetSelectedGameId();
     if (nGameId == 0)
     {
-        request.GameName = GetNewGameName();
-        ra::util::String::Trim(request.GameName);
+        sGameName = GetNewGameName();
+        ra::util::String::Trim(sGameName);
 
-        if (request.GameName.length() < 3)
+        if (sGameName.length() < 3)
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"New game name must be at least three characters long.");
-            return false;
+            return;
         }
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to create a new entry for '%s'?", request.GameName));
+        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to create a new entry for '%s'?", sGameName));
         vmMessageBox.SetMessage(L"If you were unable to find an existing title, please check to make sure that it's not listed under \"~unlicensed~\", \"~hack~\", \"~prototype~\", or had a leading article removed.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) == DialogResult::No)
-            return false;
+            return;
     }
     else
     {
-        request.GameId = nGameId;
-        request.GameName = m_vGameTitles.GetLabelForId(nGameId);
+        request.game_id = nGameId;
+        sGameName = m_vGameTitles.GetLabelForId(nGameId);
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to add a new hash to '%s'?", request.GameName));
+        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to add a new hash to '%s'?", sGameName));
         vmMessageBox.SetMessage(L"You should not do this unless you are certain that the new title is compatible. You can use 'Test' mode to check compatibility.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) == DialogResult::No)
-            return false;
+            return;
     }
+
+    const auto& pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>();
+    pClient.AddAuthentication(&request.username, &request.api_token);
 
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
-    request.ConsoleId = pConsoleContext.Id();
-    request.Hash = ra::util::String::Narrow(GetChecksum());
-    request.Description = GetEstimatedGameName();
+    request.console_id = ra::etoi(pConsoleContext.Id());
 
-    auto response = request.Call();
-    if (response.Succeeded())
-    {
-        SetSelectedGameId(ra::to_signed(response.GameId));
-        SetTestMode(false);
-        AddClientHash(request.Hash, response.GameId, 0);
-        return true;
-    }
+    const std::string sNarrowGameName = ra::util::String::Narrow(sGameName);
+    request.title = sNarrowGameName.c_str();
 
-    ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"Could not add new title",
-                                                              ra::util::String::Widen(response.ErrorMessage));
-    return false;
+    const std::string sNarrowDescription = ra::util::String::Narrow(GetEstimatedGameName());
+    if (!sNarrowDescription.empty())
+        request.hash_description = sNarrowDescription.c_str();
+
+    const std::string sNarrowHash = ra::util::String::Narrow(GetChecksum());
+    request.hash = sNarrowHash.c_str();
+
+    rc_api_request_t api_request;
+    const auto nResult = rc_api_init_add_game_hash_request_hosted(&api_request, &request, pClient.GetHost());
+    Expects(nResult == RC_OK);
+
+    SetValue(IsAssociateEnabledProperty, false);
+
+    pClient.DispatchRequest(api_request, [this, sNarrowHash, pAsyncHandle = CreateAsyncHandle()](const rc_api_server_response_t& api_response, void*) {
+        ra::data::AsyncKeepAlive pKeepAlive(*pAsyncHandle);
+        if (pAsyncHandle->IsDestroyed())
+            return;
+
+        rc_api_add_game_hash_response_t response;
+        const auto nResult = rc_api_process_add_game_hash_server_response(&response, &api_response);
+        if (nResult != RC_OK)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"Could not add new title",
+                ra::context::IRcClient::GetErrorMessage(nResult, response.response));
+
+            SetValue(IsAssociateEnabledProperty, true);
+        }
+        else
+        {
+            SetSelectedGameId(ra::to_signed(response.game_id));
+            SetTestMode(false);
+            AddClientHash(sNarrowHash, response.game_id, 0);
+            SetDialogResult(ra::ui::DialogResult::OK);
+        }
+    }, nullptr);
 }
 
-bool UnknownGameViewModel::BeginTest()
+void UnknownGameViewModel::BeginTest()
 {
     const auto nGameId = GetSelectedGameId();
     if (nGameId == 0U)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"You must select an existing game to test compatibility.");
-        return false;
+        return;
     }
 
     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
@@ -264,7 +294,7 @@ bool UnknownGameViewModel::BeginTest()
     vmMessageBox.SetMessage(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them.");
     vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
     if (vmMessageBox.ShowModal(*this) == DialogResult::No)
-        return false;
+        return;
 
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     auto sValue = EncodeID(nGameId, GetChecksum(), pConsoleContext.Id());
@@ -275,7 +305,7 @@ bool UnknownGameViewModel::BeginTest()
     SetTestMode(true);
     AddClientHash(ra::util::String::Narrow(GetChecksum()), nGameId, 1);
 
-    return true;
+    SetDialogResult(ra::ui::DialogResult::OK);
 }
 
 void UnknownGameViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)

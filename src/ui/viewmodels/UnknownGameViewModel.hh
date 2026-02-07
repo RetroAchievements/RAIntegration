@@ -209,17 +209,12 @@ public:
     /// <summary>
     /// Command handler for Associate button.
     /// </summary>    
-    /// <returns>
-    /// <c>true</c> if the association was successfully created and the dialog should be closed, 
-    /// <c>false</c> if not.
-    /// </returns>
-    bool Associate();
+    void Associate();
 
     /// <summary>
     /// Command handler for Test button.
     /// </summary>
-    /// <returns><c>true</c> if the dialog should be closed, <c>false</c> if not.</returns>
-    bool BeginTest();
+    void BeginTest();
 
     static unsigned int GetPreviousAssociation(const std::wstring& sHash);
 

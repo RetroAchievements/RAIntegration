@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace ra {
 namespace context {
@@ -30,12 +31,27 @@ public:
     rc_client_t* GetClient() const noexcept { return m_pClient.get(); }
 
     /// <summary>
+    /// Sets the username and api_token fields of an API request.
+    /// </summary>
+    virtual void AddAuthentication(const char** username, const char** api_token) const = 0;
+
+    /// <summary>
+    /// Gets the underlying rc_client object for directly calling into rcheevos.
+    /// </summary>
+    rc_api_host_t* GetHost() const noexcept;
+
+    /// <summary>
     /// Makes an API call to the server asynchronously.
     /// </summary>
     /// <param name="pRequest">Information about the API call to make.</param>
     /// <param name="fCallback">Function to call with the API response.</param>
     /// <param name="pCallbackData">Additional data to pass to the <paramref name="fCallback" /> function.</param>
     virtual void DispatchRequest(const rc_api_request_t& pRequest, std::function<void(const rc_api_server_response_t&, void*)> fCallback, void* fCallbackData) const = 0;
+
+    /// <summary>
+    /// Extracts an error message from a response.
+    /// </summary>
+    static const std::wstring GetErrorMessage(int nResult, const rc_api_response_t& pResponse);
 
 protected:
     IRcClient() noexcept = default;

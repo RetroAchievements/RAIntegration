@@ -10,7 +10,6 @@
 #include "api/FetchUserFriends.hh"
 #include "api/LatestClient.hh"
 #include "api/ResolveHash.hh"
-#include "api/SubmitNewTitle.hh"
 #include "api/SubmitTicket.hh"
 #include "api/UpdateAchievement.hh"
 #include "api/UpdateCodeNote.hh"
@@ -42,7 +41,6 @@ public:
 
     // === other functions ===
     virtual LatestClient::Response LatestClient(const LatestClient::Request& request) = 0;
-    virtual SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) = 0;
     virtual FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) = 0;
     virtual UploadBadge::Response UploadBadge(const UploadBadge::Request& request) = 0;
 

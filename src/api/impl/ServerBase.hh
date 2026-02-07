@@ -76,11 +76,6 @@ public:
         return UnsupportedApi<LatestClient::Response>(LatestClient::Name());
     }
 
-    SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request&) override
-    {
-        return UnsupportedApi<SubmitNewTitle::Response>(SubmitNewTitle::Name());
-    }
-
     FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request&) override
     {
         return UnsupportedApi<FetchBadgeIds::Response>(FetchBadgeIds::Name());

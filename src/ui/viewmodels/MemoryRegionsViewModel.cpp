@@ -115,7 +115,7 @@ void MemoryRegionsViewModel::AddNewRegion()
     auto pItem = std::make_unique<MemoryRegionViewModel>();
     pItem->SetId(gsl::narrow_cast<int>(m_vRegions.Count()));
     pItem->SetLabel(L"New Custom Region");
-    pItem->SetRange(ra::StringPrintf(L"%s-%s",
+    pItem->SetRange(ra::util::String::Printf(L"%s-%s",
         pMemoryContext.FormatAddress(0),
         pMemoryContext.FormatAddress(0)));
     pItem->SetCustom(true);
@@ -166,8 +166,8 @@ void MemoryRegionsViewModel::InitializeRegions()
 
         auto pItem = std::make_unique<MemoryRegionViewModel>();
         pItem->SetId(gsl::narrow_cast<int>(m_vRegions.Count()));
-        pItem->SetLabel(ra::Widen(pRegion.GetDescription()));
-        pItem->SetRange(ra::StringPrintf(L"%s-%s",
+        pItem->SetLabel(pRegion.GetDescription());
+        pItem->SetRange(ra::util::String::Printf(L"%s-%s",
             pMemoryContext.FormatAddress(pRegion.GetStartAddress()),
             pMemoryContext.FormatAddress(pRegion.GetEndAddress())));
 
@@ -182,7 +182,7 @@ void MemoryRegionsViewModel::InitializeRegions()
             auto pItem = std::make_unique<MemoryRegionViewModel>();
             pItem->SetId(gsl::narrow_cast<int>(m_vRegions.Count()));
             pItem->SetLabel(pRegion.GetDescription());
-            pItem->SetRange(ra::StringPrintf(L"%s-%s",
+            pItem->SetRange(ra::util::String::Printf(L"%s-%s",
                 pMemoryContext.FormatAddress(pRegion.GetStartAddress()),
                 pMemoryContext.FormatAddress(pRegion.GetEndAddress())));
             pItem->SetCustom(true);

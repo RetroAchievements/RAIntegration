@@ -58,14 +58,14 @@ public:
         if (richPresence == nullptr)
         {
             auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
-            pRichPresence->SetScript(ra::StringPrintf("Display:\n%s\n", sValue));
+            pRichPresence->SetScript(ra::util::String::Printf("Display:\n%s\n", sValue));
             pRichPresence->CreateServerCheckpoint();
             pRichPresence->CreateLocalCheckpoint();
             Assets().Append(std::move(pRichPresence));
         }
         else
         {
-            richPresence->SetScript(ra::StringPrintf("Display:\n%s\n", sValue));
+            richPresence->SetScript(ra::util::String::Printf("Display:\n%s\n", sValue));
         }
 
         m_sRichPresenceDisplayString = sValue;
@@ -79,7 +79,7 @@ public:
             if (bValue)
                 pRichPresence->SetScript("Display:\nThis differs\n");
             else
-                pRichPresence->SetScript(ra::StringPrintf("Display:\n%s\n", m_sRichPresenceDisplayString));
+                pRichPresence->SetScript(ra::util::String::Printf("Display:\n%s\n", m_sRichPresenceDisplayString));
         }
     }
 
@@ -154,7 +154,7 @@ public:
 
     void MockSubset(uint32_t nGameId, uint32_t nAchievementSetId, const std::string& sName, SubsetType nType = SubsetType::Bonus)
     {
-        m_vSubsets.emplace_back(nAchievementSetId, nGameId, ra::Widen(sName), nType);
+        m_vSubsets.emplace_back(nAchievementSetId, nGameId, ra::util::String::Widen(sName), nType);
     }
 
 private:

@@ -40,7 +40,7 @@ private:
                 }
             }
 
-            Assert::Fail(ra::StringPrintf(L"Did not find region for %04x-%04x", nStartAddress, nEndAddress).c_str());
+            Assert::Fail(ra::util::String::Printf(L"Did not find region for %04x-%04x", nStartAddress, nEndAddress).c_str());
         }
     };
 
@@ -86,7 +86,7 @@ public:
         Assert::AreEqual(AssetChanges::None, regions.GetChanges());
 
         const std::string sSerialized = ":0x1234-0x2345:\"My region\"";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
 
         Assert::IsTrue(regions.Deserialize(pTokenizer));
@@ -100,7 +100,7 @@ public:
         Assert::AreEqual(AssetChanges::None, regions.GetChanges());
 
         const std::string sSerialized = ":0x1234-0x2345:\"My \\\"region\\\"\"";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
 
         Assert::IsTrue(regions.Deserialize(pTokenizer));

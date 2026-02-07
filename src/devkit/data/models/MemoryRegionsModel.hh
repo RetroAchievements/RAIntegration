@@ -23,7 +23,7 @@ public:
     bool IsShownInList() const noexcept override { return false; }
 
 	void Serialize(ra::services::TextWriter&) const override;
-    bool Deserialize(ra::Tokenizer&) override;
+    bool Deserialize(ra::util::Tokenizer&) override;
 
     /// <summary>
     /// Gets the custom regions.

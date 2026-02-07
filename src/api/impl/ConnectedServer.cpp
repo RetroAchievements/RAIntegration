@@ -42,11 +42,11 @@ _NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::StatusCode
         const auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
         const bool bRetry = pHttpRequester.IsRetryable(ra::etoi(nStatusCode));
         pResponse.Result = bRetry ? ApiResult::Incomplete : ApiResult::Error;
-        pResponse.ErrorMessage = ra::BuildString("HTTP error code: ", ra::etoi(nStatusCode));
+        pResponse.ErrorMessage = ra::util::String::Printf("HTTP error code: %u", ra::etoi(nStatusCode));
 
         const auto& pStatusCodeText = pHttpRequester.GetStatusCodeText(ra::etoi(nStatusCode));
         if (!pStatusCodeText.empty())
-            pResponse.ErrorMessage = ra::StringPrintf("%s (%s)", pResponse.ErrorMessage, pStatusCodeText);
+            pResponse.ErrorMessage = ra::util::String::Printf("%s (%s)", pResponse.ErrorMessage, pStatusCodeText);
 
         return true;
     }
@@ -90,7 +90,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
         if (pDocument.GetParseError() == rapidjson::kParseErrorValueInvalid && pDocument.GetErrorOffset() == 0)
         {
             // server did not return JSON, check for HTML
-            if (ra::StringStartsWith(httpResponse.Content(), "<html>"))
+            if (ra::util::String::StartsWith(httpResponse.Content(), "<html>"))
             {
                 const auto nStartIndex = httpResponse.Content().find("<title>");
                 if (nStartIndex != std::string::npos)
@@ -112,7 +112,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
                 if (nIndex != std::string::npos)
                 {
                     sContent.resize(nIndex);
-                    ra::TrimLineEnding(sContent);
+                    ra::util::String::TrimLineEnding(sContent);
                 }
 
                 if (!sContent.empty())
@@ -123,7 +123,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
         if (pResponse.ErrorMessage.empty())
         {
             pResponse.ErrorMessage =
-                ra::StringPrintf("JSON Parse Error: %s (at %zu)", GetParseError_En(pDocument.GetParseError()), pDocument.GetErrorOffset());
+                ra::util::String::Printf("JSON Parse Error: %s (at %zu)", GetParseError_En(pDocument.GetParseError()), pDocument.GetErrorOffset());
         }
 
         return false;
@@ -171,7 +171,7 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
 
         response.Result = ApiResult::Error;
         if (response.ErrorMessage.empty())
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
+            response.ErrorMessage = ra::util::String::Printf("%s not found in response", sField);
     }
     else
     {
@@ -244,7 +244,7 @@ static bool DoRequestWithoutLog(const rc_api_request_t& api_request, _UNUSED con
             // not HTML or JSON, return the first line of the response as the error message
             const auto nIndex = pHttpResponse.Content().find('\n');
             std::string sContent = (nIndex != std::string::npos) ? pHttpResponse.Content().substr(0, nIndex) : pHttpResponse.Content();
-            ra::TrimLineEnding(sContent);
+            ra::util::String::TrimLineEnding(sContent);
 
             if (!sContent.empty())
             {
@@ -296,7 +296,7 @@ static bool DoRequest(const rc_api_request_t& api_request, const char* sApiName,
                 sParams.append(ptr);
         }
 
-        pLogger.LogMessage(ra::services::LogLevel::Info, ra::StringPrintf("%s Request: %s", sApiName, sParams));
+        pLogger.LogMessage(ra::services::LogLevel::Info, ra::util::String::Printf("%s Request: %s", sApiName, sParams));
     }
 #endif
     return DoRequestWithoutLog(api_request, sApiName, pHttpResponse, pResponse);
@@ -308,9 +308,9 @@ static bool ValidateResponse(int nResult, const rc_api_response_t& api_response,
     {
         /* parse error */
         if (nResult == RC_MISSING_VALUE && api_response.error_message)
-            pResponse.ErrorMessage = ra::StringPrintf("JSON Parse Error: %s", api_response.error_message);
+            pResponse.ErrorMessage = ra::util::String::Printf("JSON Parse Error: %s", api_response.error_message);
         else
-            pResponse.ErrorMessage = ra::StringPrintf("JSON Parse Error: %s", rc_error_str(nResult));
+            pResponse.ErrorMessage = ra::util::String::Printf("JSON Parse Error: %s", rc_error_str(nResult));
 
         pResponse.Result = ApiResult::Error;
         RA_LOG_ERR("-- %s %s", sApiName, pResponse.ErrorMessage);
@@ -360,12 +360,12 @@ static bool DoUpload(const std::string& sHost, const char* _RESTRICT sApiName, c
     if (nFileSize < 0)
     {
         pResponse.Result = ra::api::ApiResult::Error;
-        pResponse.ErrorMessage = ra::StringPrintf("Could not open %s", sFilePath);
+        pResponse.ErrorMessage = ra::util::String::Printf("Could not open %s", sFilePath);
         return false;
     }
 
-    std::string sExt = ra::Narrow(pFileSystem.GetExtension(sFilePath));
-    ra::StringMakeLowercase(sExt);
+    std::string sExt = ra::util::String::Narrow(pFileSystem.GetExtension(sFilePath));
+    ra::util::String::MakeLowercase(sExt);
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     RA_LOG_INFO("%s Request: file=%s (%zu bytes)", sApiName, sFilePath, nFileSize);
@@ -394,8 +394,8 @@ static bool DoUpload(const std::string& sHost, const char* _RESTRICT sApiName, c
     sPostData.append("\r\n");
     sPostData.append("Content-Disposition: form-data; name=\"file\"; filename=\"");
     sPostData.append(sRequestName);
-    sPostData.append(ra::StringPrintf(".%s\"\r\n", sExt));
-    sPostData.append(ra::StringPrintf("Content-Type: image/%s\r\n\r\n", sExt));
+    sPostData.append(ra::util::String::Printf(".%s\"\r\n", sExt));
+    sPostData.append(ra::util::String::Printf("Content-Type: image/%s\r\n\r\n", sExt));
 
     auto pFile = pFileSystem.OpenTextFile(sFilePath);
     if (pFile != nullptr)
@@ -412,8 +412,8 @@ static bool DoUpload(const std::string& sHost, const char* _RESTRICT sApiName, c
     sPostData.append(sBoundary);
     sPostData.append("--\r\n");
 
-    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/doupload.php", sHost));
-    httpRequest.SetContentType(ra::StringPrintf("multipart/form-data; boundary=%s", sBoundary));
+    ra::services::Http::Request httpRequest(ra::util::String::Printf("%s/doupload.php", sHost));
+    httpRequest.SetContentType(ra::util::String::Printf("multipart/form-data; boundary=%s", sBoundary));
 
     httpRequest.SetPostData(sPostData);
 
@@ -468,10 +468,10 @@ FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFrie
                         pFriend.AvatarUrl = pUser.avatar_url;
                     pFriend.Score = pUser.score;
                     if (pUser.recent_activity.description)
-                        pFriend.LastActivity = ra::Widen(pUser.recent_activity.description);
+                        pFriend.LastActivity = ra::util::String::Widen(pUser.recent_activity.description);
                     pFriend.LastActivityContextId = pUser.recent_activity.context_id;
                     if (pUser.recent_activity.context)
-                        pFriend.LastActivityContext = ra::Widen(pUser.recent_activity.context);
+                        pFriend.LastActivityContext = ra::util::String::Widen(pUser.recent_activity.context);
                     if (pUser.recent_activity.context_image_url)
                         pFriend.LastActivityImageUrl = pUser.recent_activity.context_image_url;
                     pFriend.LastActivityTime = pUser.recent_activity.when;
@@ -602,9 +602,9 @@ void ConnectedServer::ProcessCodeNotes(FetchCodeNotes::Response& response, const
         auto& pNote = response.Notes.emplace_back();
         pNote.Author = note->author;
         pNote.Address = note->address;
-        pNote.Note = ra::Widen(note->note);
+        pNote.Note = ra::util::String::Widen(note->note);
 
-        ra::NormalizeLineEndings(pNote.Note);
+        ra::util::String::NormalizeLineEndings(pNote.Note);
     }
 }
 #pragma warning(pop)
@@ -654,7 +654,7 @@ UpdateCodeNote::Response ConnectedServer::UpdateCodeNote(const UpdateCodeNote::R
 {
     UpdateCodeNote::Response response;
 
-    const std::string sNote = ra::Narrow(request.Note);
+    const std::string sNote = ra::util::String::Narrow(request.Note);
     SetCodeNote(response, UpdateCodeNote::Name(), request.GameId, request.Address, sNote.c_str());
 
     return response;
@@ -680,8 +680,8 @@ UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchie
     api_params.username = pUserContext.GetUsername().c_str();
     api_params.api_token = pUserContext.GetApiToken().c_str();
 
-    const std::string sTitle = ra::Narrow(request.Title);
-    const std::string sDescription = ra::Narrow(request.Description);
+    const std::string sTitle = ra::util::String::Narrow(request.Title);
+    const std::string sDescription = ra::util::String::Narrow(request.Description);
 
     api_params.achievement_id = request.AchievementId;
     api_params.game_id = request.GameId;
@@ -798,8 +798,8 @@ UpdateLeaderboard::Response ConnectedServer::UpdateLeaderboard(const UpdateLeade
     api_params.username = pUserContext.GetUsername().c_str();
     api_params.api_token = pUserContext.GetApiToken().c_str();
 
-    const std::string sTitle = ra::Narrow(request.Title);
-    const std::string sDescription = ra::Narrow(request.Description);
+    const std::string sTitle = ra::util::String::Narrow(request.Title);
+    const std::string sDescription = ra::util::String::Narrow(request.Description);
 
     api_params.leaderboard_id = request.LeaderboardId;
     api_params.game_id = request.GameId;
@@ -959,7 +959,7 @@ LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request
     AppendUrlParam(sPostData, "e", std::to_string(request.EmulatorId));
     RA_LOG_INFO("%s Request: %s", LatestClient::Name(), sPostData.c_str());
 
-    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/dorequest.php", m_sHost));
+    ra::services::Http::Request httpRequest(ra::util::String::Printf("%s/dorequest.php", m_sHost));
     httpRequest.SetPostData(sPostData);
 
     const auto httpResponse = httpRequest.Call();
@@ -1005,7 +1005,7 @@ FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::R
                 for (unsigned i = 0; i < api_response.num_entries; ++i)
                 {
                     const auto* pEntry = &api_response.entries[i];
-                    response.Games.emplace_back(pEntry->id, ra::Widen(pEntry->name));
+                    response.Games.emplace_back(pEntry->id, ra::util::String::Widen(pEntry->name));
                 }
             }
 
@@ -1033,8 +1033,8 @@ SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::R
     api_params.username = pUserContext.GetUsername().c_str();
     api_params.api_token = pUserContext.GetApiToken().c_str();
 
-    const std::string sGameName = ra::Narrow(request.GameName);
-    const std::string sDescription = ra::Narrow(request.Description);
+    const std::string sGameName = ra::util::String::Narrow(request.GameName);
+    const std::string sDescription = ra::util::String::Narrow(request.Description);
 
     api_params.console_id = request.ConsoleId;
     api_params.hash = request.Hash.c_str();
@@ -1130,7 +1130,7 @@ UploadBadge::Response ConnectedServer::UploadBadge(const UploadBadge::Request& r
                 response.Result = ApiResult::Error;
 
             if (response.ErrorMessage.empty())
-                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
+                response.ErrorMessage = ra::util::String::Printf("%s not found in response", "Response");
         }
         else
         {

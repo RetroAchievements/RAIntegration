@@ -172,7 +172,7 @@ public:
         GetASCIIText(sText, pBuffer.data(), pBuffer.size());
 
         const unsigned int nPreviousValue = pResult.nValue;
-        pResult.nValue = ra::StringHash(sText);
+        pResult.nValue = ra::util::String::Hash(sText);
 
         if (sFormattedValue)
             sFormattedValue->swap(sText);

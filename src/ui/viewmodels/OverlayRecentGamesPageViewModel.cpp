@@ -41,9 +41,9 @@ void OverlayRecentGamesPageViewModel::Refresh()
         pvmItem.SetId(pGameStats.GameId);
 
         const auto tLastSessionStart = std::chrono::system_clock::to_time_t(pGameStats.LastSessionStart);
-        pvmItem.SetDetail(ra::StringPrintf(L"Last played: %s (%s)",
-            ra::FormatDate(tLastSessionStart),
-            ra::FormatDateRecent(tLastSessionStart)));
+        pvmItem.SetDetail(ra::util::String::Printf(L"Last played: %s (%s)",
+            ra::util::String::FormatDate(tLastSessionStart),
+            ra::util::String::FormatDateRecent(tLastSessionStart)));
 
         const auto& pIter2 = m_mGameBadges.find(pGameStats.GameId);
         const auto& pIter = m_mGameNames.find(pGameStats.GameId);
@@ -91,14 +91,14 @@ void OverlayRecentGamesPageViewModel::Refresh()
                     rc_api_server_response_t server_response;
                     memset(&server_response, 0, sizeof(server_response));
 
-                    if (ra::StringStartsWith(sContents, "{\"Success\""))
+                    if (ra::util::String::StartsWith(sContents, "{\"Success\""))
                     {
                         server_response.body = sContents.c_str();
                         server_response.body_length = sContents.length();
 
                         rc_api_fetch_game_sets_response_t response;
                         if (rc_api_process_fetch_game_sets_server_response(&response, &server_response) == RC_OK)
-                            UpdateGameEntry(nGameId, ra::Widen(response.title), response.image_name);
+                            UpdateGameEntry(nGameId, ra::util::String::Widen(response.title), response.image_name);
                         else
                             bAnyMissing = true;
                     }
@@ -112,7 +112,7 @@ void OverlayRecentGamesPageViewModel::Refresh()
 
                         rc_api_fetch_game_data_response_t response;
                         if (rc_api_process_fetch_game_data_server_response(&response, &server_response) == RC_OK)
-                            UpdateGameEntry(nGameId, ra::Widen(response.title), response.image_name);
+                            UpdateGameEntry(nGameId, ra::util::String::Widen(response.title), response.image_name);
                         else
                             bAnyMissing = true;
                     }
@@ -143,7 +143,7 @@ void OverlayRecentGamesPageViewModel::Refresh()
                         {
                             for (uint32_t i = 0; i < response.num_entries; i++)
                             {
-                                UpdateGameEntry(response.entries[i].id, ra::Widen(response.entries[i].title),
+                                UpdateGameEntry(response.entries[i].id, ra::util::String::Widen(response.entries[i].title),
                                     response.entries[i].image_name);
                             }
                         }
@@ -177,7 +177,7 @@ void OverlayRecentGamesPageViewModel::UpdateGameEntry(ItemViewModel& pvmItem,
     const std::wstring& sGameName, const std::string& sGameBadge, std::chrono::seconds nPlayTimeSeconds)
 {
     const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
-    pvmItem.SetLabel(ra::StringPrintf(L"%s - %dh%02dm", sGameName, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
+    pvmItem.SetLabel(ra::util::String::Printf(L"%s - %dh%02dm", sGameName, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
     pvmItem.Image.ChangeReference(ra::ui::ImageType::Icon, sGameBadge);
 }
 

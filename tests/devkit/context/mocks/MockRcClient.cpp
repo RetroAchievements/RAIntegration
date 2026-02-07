@@ -96,7 +96,7 @@ void MockRcClient::OnBeforeResponse(const std::string& sRequestParams, const std
         }
     }
 
-    Assert::Fail(ra::StringPrintf(L"No response registered for: %s", sRequestParams).c_str());
+    Assert::Fail(ra::util::String::Printf(L"No response registered for: %s", sRequestParams).c_str());
 }
 
 void MockRcClient::AssertCalled(const std::string& sRequestParams) const
@@ -110,7 +110,7 @@ void MockRcClient::AssertCalled(const std::string& sRequestParams) const
         }
     }
 
-    Assert::Fail(ra::StringPrintf(L"Could not find mock response for %s", sRequestParams).c_str());
+    Assert::Fail(ra::util::String::Printf(L"Could not find mock response for %s", sRequestParams).c_str());
 }
 
 void MockRcClient::AssertNoPendingRequests() const
@@ -119,7 +119,7 @@ void MockRcClient::AssertNoPendingRequests() const
     {
         if (pResponse.fAsyncCallback != nullptr && !pResponse.bSeen)
         {
-            Assert::Fail(ra::StringPrintf(L"Unexpected request pending for %s", pResponse.sRequestParams).c_str());
+            Assert::Fail(ra::util::String::Printf(L"Unexpected request pending for %s", pResponse.sRequestParams).c_str());
             return;
         }
     }

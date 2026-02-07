@@ -24,7 +24,7 @@ FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Req
     if (pData == nullptr)
     {
         response.Result = ApiResult::Failed;
-        response.ErrorMessage = ra::StringPrintf("Code notes for game %u not found in cache", request.GameId);
+        response.ErrorMessage = ra::util::String::Printf("Code notes for game %u not found in cache", request.GameId);
         return response;
     }
 
@@ -33,7 +33,7 @@ FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Req
     {
         response.Result = ApiResult::Error;
         response.ErrorMessage =
-            ra::StringPrintf("%s (%zu)", GetParseError_En(document.GetParseError()), document.GetErrorOffset());
+            ra::util::String::Printf("%s (%zu)", GetParseError_En(document.GetParseError()), document.GetErrorOffset());
     }
     else
     {

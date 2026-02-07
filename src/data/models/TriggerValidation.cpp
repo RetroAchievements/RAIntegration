@@ -29,13 +29,13 @@ static bool ValidateLeaderboardCondSet(const rc_condset_t* pCondSet, std::wstrin
         switch (pCondition->type)
         {
             case RC_CONDITION_MEASURED:
-                sError = ra::StringPrintf(L"%s has no effect in leaderboard triggers", L"Measured");
+                sError = ra::util::String::Printf(L"%s has no effect in leaderboard triggers", L"Measured");
                 return false;
             case RC_CONDITION_MEASURED_IF:
-                sError = ra::StringPrintf(L"%s has no effect in leaderboard triggers", L"MeasuredIf");
+                sError = ra::util::String::Printf(L"%s has no effect in leaderboard triggers", L"MeasuredIf");
                 return false;
             case RC_CONDITION_TRIGGER:
-                sError = ra::StringPrintf(L"%s has no effect in leaderboard triggers", L"Trigger");
+                sError = ra::util::String::Printf(L"%s has no effect in leaderboard triggers", L"Trigger");
                 return false;
             default:
                 break;
@@ -85,7 +85,7 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
         nStartAddress = pNotes.FindCodeNoteStart(nAddress);
         if (nStartAddress == 0xFFFFFFFF)
         {
-            sError = ra::StringPrintf(L"No code note for address %s", pMemoryContext.FormatAddress(nAddress).substr(2));
+            sError = ra::util::String::Printf(L"No code note for address %s", pMemoryContext.FormatAddress(nAddress).substr(2));
             return false;
         }
 
@@ -105,19 +105,19 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
         if (Memory::SizeBits(nMemRefSize) <= 8)
             return true;
 
-        sError = ra::StringPrintf(L"%s read of address %s differs from implied code note size %s", Memory::SizeString(nMemRefSize),
-                                  pMemoryContext.FormatAddress(nAddress).substr(2), Memory::SizeString(Memory::Size::EightBit));
+        sError = ra::util::String::Printf(L"%s read of address %s differs from implied code note size %s", Memory::SizeString(nMemRefSize),
+                                          pMemoryContext.FormatAddress(nAddress).substr(2), Memory::SizeString(Memory::Size::EightBit));
     }
     else
     {
-        sError = ra::StringPrintf(L"%s read of address %s differs from code note size %s", Memory::SizeString(nMemRefSize),
-                                  pMemoryContext.FormatAddress(nAddress).substr(2), Memory::SizeString(nNoteSize));
+        sError = ra::util::String::Printf(L"%s read of address %s differs from code note size %s", Memory::SizeString(nMemRefSize),
+                                          pMemoryContext.FormatAddress(nAddress).substr(2), Memory::SizeString(nNoteSize));
     }
 
     if (nStartAddress != nAddress)
     {
         sError.append(L" at ");
-        sError.append(pMemoryContext.FormatAddress(nStartAddress).substr(2));
+        sError.append(ra::util::String::Widen(pMemoryContext.FormatAddress(nStartAddress).substr(2)));
     }
 
     return false;
@@ -151,14 +151,14 @@ static bool ValidateCodeNotesCondSet(const rc_condset_t* pCondSet, const ra::dat
         if (pOperand1 && rc_operand_is_memref(pOperand1) &&
             !ValidateCodeNotesOperand(*pOperand1, pNotes, sError))
         {
-            sError = ra::StringPrintf(L"Condition %u: %s", nIndex, sError);
+            sError = ra::util::String::Printf(L"Condition %u: %s", nIndex, sError);
             return false;
         }
 
         if (rc_operand_is_memref(&pCondition->operand2) &&
             !ValidateCodeNotesOperand(pCondition->operand2, pNotes, sError))
         {
-            sError = ra::StringPrintf(L"Condition %u: %s", nIndex, sError);
+            sError = ra::util::String::Printf(L"Condition %u: %s", nIndex, sError);
             return false;
         }
     }
@@ -189,7 +189,7 @@ static bool ValidateCodeNotes(const rc_trigger_t* pTrigger, std::wstring& sError
         nIndex++;
         if (!ValidateCodeNotesCondSet(pCondSet, *pNotes, sError))
         {
-            sError = ra::StringPrintf(L"Alt%u %s", nIndex, sError);
+            sError = ra::util::String::Printf(L"Alt%u %s", nIndex, sError);
             return false;
         }
     }
@@ -210,7 +210,7 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     const auto nSize = preparse.parse.offset;
     if (nSize < 0)
     {
-        sError = ra::Widen(rc_error_str(nSize));
+        sError = ra::util::String::Widen(rc_error_str(nSize));
         return false;
     }
 
@@ -270,7 +270,7 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     }
     else
     {
-        sError = ra::Widen(sErrorBuffer);
+        sError = ra::util::String::Widen(sErrorBuffer);
         return false;
     }
 }

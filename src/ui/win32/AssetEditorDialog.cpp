@@ -1,5 +1,6 @@
 #include "AssetEditorDialog.hh"
 
+#include "RA_Defs.h"
 #include "RA_Resource.h"
 
 #include "api\FetchBadgeIds.hh"
@@ -424,9 +425,9 @@ public:
 
         const auto nTotalHits = vmItems.GetItemValue(nIndex, TriggerConditionViewModel::TotalHitsProperty);
         if (nTotalHits != 0)
-            return ra::StringPrintf(L"%d (%d) [%d]", nRequiredHits, nCurrentHits, nTotalHits);
+            return ra::util::String::Printf(L"%d (%d) [%d]", nRequiredHits, nCurrentHits, nTotalHits);
 
-        return ra::StringPrintf(L"%d (%d)", nRequiredHits, nCurrentHits);
+        return ra::util::String::Printf(L"%d (%d)", nRequiredHits, nCurrentHits);
     }
 
     bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
@@ -523,7 +524,7 @@ void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstrin
 {
     InvokeOnUIThread([this, sTextCopy = sText]()
     {
-        if (ra::StringStartsWith(sTextCopy, L"local\\"))
+        if (ra::util::String::StartsWith(sTextCopy, L"local\\"))
         {
             SetWindowTextW(m_hWnd, L"[local]");
             ::EnableWindow(m_hWndSpinner, false);
@@ -573,7 +574,7 @@ void AssetEditorDialog::ActiveCheckBoxBinding::OnCommand()
         {
             Button_SetCheck(m_hWnd, BST_UNCHECKED);
 
-            const auto sError = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+            const auto sError = ra::util::String::Printf(L"The following errors must be corrected:\n* %s",
                 GetValue(ra::ui::viewmodels::AssetEditorViewModel::AssetValidationErrorProperty));
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to activate", sError);
 

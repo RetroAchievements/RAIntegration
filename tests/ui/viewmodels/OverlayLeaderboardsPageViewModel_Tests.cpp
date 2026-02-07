@@ -84,8 +84,8 @@ private:
             Assert::IsFalse(pItem->IsHeader());
             Assert::AreEqual(pLeaderboard->public_.id, static_cast<uint32_t>(pItem->GetId()));
 
-            Assert::AreEqual(ra::Widen(pLeaderboard->public_.title), pItem->GetLabel());
-            Assert::AreEqual(ra::Widen(pLeaderboard->public_.description), pItem->GetDetail());
+            Assert::AreEqual(ra::util::String::Widen(pLeaderboard->public_.title), pItem->GetLabel());
+            Assert::AreEqual(ra::util::String::Widen(pLeaderboard->public_.description), pItem->GetDetail());
             Assert::AreEqual(sTrackerValue, pItem->GetProgressString());
             if (sTrackerValue.empty())
                 Assert::AreEqual(0.0f, pItem->GetProgressPercentage());

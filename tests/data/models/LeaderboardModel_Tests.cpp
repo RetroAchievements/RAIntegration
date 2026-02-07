@@ -56,7 +56,7 @@ public:
         LeaderboardModelHarness leaderboard;
 
         const std::string sSerialized = ":\"0xH1234=1\":\"0xH1234=2\":\"0xH1234=3\":\"0xH1234\":FRAMES:Title:Desc:0";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
 
         Assert::IsTrue(leaderboard.Deserialize(pTokenizer));
@@ -76,7 +76,7 @@ public:
         LeaderboardModelHarness leaderboard;
 
         const std::string sSerialized = ":\"0xH1234=1_P:0xH2345=2\":\"0xH1234<2\":\"0xH1234>3\":\"M:0xH1234\":MILLISECS:\"My Title\":\"My Desc\":1";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
 
         Assert::IsTrue(leaderboard.Deserialize(pTokenizer));
@@ -96,7 +96,7 @@ public:
         LeaderboardModelHarness leaderboard;
 
         const std::string sSerialized = ":\"0xH1234=1\":\"0xH1234=2\":\"0xH1234=3\":\"0xH1234\":FRAMES:Title:Desc";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
 
         Assert::IsTrue(leaderboard.Deserialize(pTokenizer));
@@ -116,7 +116,7 @@ public:
         LeaderboardModelHarness leaderboard;
 
         const std::string sSerialized = ":\"\":\"\":\"\":\"\":::";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
 
         Assert::IsTrue(leaderboard.Deserialize(pTokenizer));
@@ -149,7 +149,7 @@ public:
         std::string sExpected = ":\"0xH1234=1\":\"0xH1234=2\":\"0xH1234=3\":\"0xH1234\":" + sFormat + ":Title:Desc:0";
         Assert::AreEqual(sExpected, sSerialized);
 
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
         LeaderboardModel leaderboard2;
         Assert::IsTrue(leaderboard2.Deserialize(pTokenizer));

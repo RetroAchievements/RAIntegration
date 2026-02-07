@@ -36,7 +36,7 @@ protected:
 
     std::wstring GetFormattedValue(const SearchResults&, const SearchResult& pResult) const override
     {
-        return ra::StringPrintf(L"%u (%c%c%c%c%c%c%c%c)", GetBitCount(pResult.nValue),
+        return ra::util::String::Printf(L"%u (%c%c%c%c%c%c%c%c)", GetBitCount(pResult.nValue),
             (pResult.nValue & 0x80) ? '1' : '0',
             (pResult.nValue & 0x40) ? '1' : '0',
             (pResult.nValue & 0x20) ? '1' : '0',

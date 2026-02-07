@@ -81,10 +81,10 @@ static void LogHeader(_In_ const ra::services::ILogger& pLogger,
     std::ostringstream oss;
     oss << std::put_time(&tTimeStruct, "%D %T %Z");
 
-    const auto sLine = StringPrintf("Log started at %s", oss.str());
+    const auto sLine = util::String::Printf("Log started at %s", oss.str());
     pLogger.LogMessage(LogLevel::Info, sLine);
 
-    pLogger.LogMessage(LogLevel::Info, StringPrintf("BaseDirectory: %s", ra::Narrow(pFileSystem.BaseDirectory())));
+    pLogger.LogMessage(LogLevel::Info, util::String::Printf("BaseDirectory: %s", pFileSystem.BaseDirectory()));
 }
 
 void Initialization::RegisterCoreServices()
@@ -134,7 +134,7 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
 
     auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(
         &ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
-    const auto sFilename = ra::StringPrintf(L"%sRAPrefs_%s.cfg", pFileSystem.BaseDirectory(), sClientName);
+    const auto sFilename = ra::util::String::Printf(L"%sRAPrefs_%s.cfg", pFileSystem.BaseDirectory(), sClientName);
     pConfiguration->Load(sFilename);
 
     auto pLocalStorage = std::make_unique<ra::services::impl::FileLocalStorage>(pFileSystem);
@@ -201,7 +201,7 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
 
     auto pWindowManager = std::make_unique<ra::ui::viewmodels::WindowManager>();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(std::move(pWindowManager));
-    ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
+    ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::util::String::Widen(sClientName));
 
     auto pOverlayWindow = std::make_unique<ra::ui::win32::OverlayWindow>();
     ra::services::ServiceLocator::Provide<ra::ui::win32::OverlayWindow>(std::move(pOverlayWindow));
@@ -254,6 +254,9 @@ void Initialization::Shutdown()
     // clear out the IThreadPool and IConfiguration services to indicate things have been de-initialized
     ra::services::ServiceLocator::Provide<ra::services::IThreadPool>(nullptr);
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(nullptr);
+
+    // prevent exception attempting to log during shutdown
+    ra::services::ServiceLocator::Provide<ra::services::IClock>(nullptr);
 
     s_bIsInitialized = false;
 }

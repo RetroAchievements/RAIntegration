@@ -205,7 +205,7 @@ public:
 
         std::string sTrigger;
         for (int i = 0; i < 65535/12 - 1; i++)
-            sTrigger.append(ra::StringPrintf("0xH00%04X=0_", i));
+            sTrigger.append(ra::util::String::Printf("0xH00%04X=0_", i));
         sTrigger.append("0xX00FFF0=12345");
         Assert::AreEqual({65535U}, sTrigger.length());
         achievement.SetTrigger(sTrigger);

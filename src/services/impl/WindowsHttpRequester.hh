@@ -15,7 +15,7 @@ namespace impl {
 class WindowsHttpRequester : public IHttpRequester
 {
 public:
-    void SetUserAgent(const std::string& sUserAgent) override { m_sUserAgent = ra::Widen(sUserAgent); }
+    void SetUserAgent(const std::string& sUserAgent) override { m_sUserAgent = ra::util::String::Widen(sUserAgent); }
 
     unsigned int Request(const Http::Request& pRequest, TextWriter& pContentWriter) const override;
 

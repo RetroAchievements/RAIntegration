@@ -112,7 +112,7 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     if (doc.HasMember("Mastery Screenshot"))
         SetFeatureEnabled(Feature::MasteryNotificationScreenshot, doc["Mastery Screenshot"].GetBool());
     if (doc.HasMember("Screenshot Directory"))
-        SetScreenshotDirectory(ra::Widen(doc["Screenshot Directory"].GetString()));
+        SetScreenshotDirectory(ra::util::String::Widen(doc["Screenshot Directory"].GetString()));
 
     if (doc.HasMember("Leaderboards Active"))
         SetFeatureEnabled(Feature::Leaderboards, doc["Leaderboards Active"].GetBool());
@@ -132,7 +132,7 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     if (doc.HasMember("Num Background Threads"))
         m_nBackgroundThreads = doc["Num Background Threads"].GetUint();
     if (doc.HasMember("ROM Directory"))
-        m_sRomDirectory = ra::Widen(doc["ROM Directory"].GetString());
+        m_sRomDirectory = ra::util::String::Widen(doc["ROM Directory"].GetString());
 
     if (doc.HasMember("Window Positions"))
     {
@@ -221,10 +221,10 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Num Background Threads", m_nBackgroundThreads, a);
 
     if (!m_sRomDirectory.empty())
-        doc.AddMember("ROM Directory", ra::Narrow(m_sRomDirectory), a);
+        doc.AddMember("ROM Directory", ra::util::String::Narrow(m_sRomDirectory), a);
 
     if (!m_sScreenshotDirectory.empty())
-        doc.AddMember("Screenshot Directory", ra::Narrow(m_sScreenshotDirectory), a);
+        doc.AddMember("Screenshot Directory", ra::util::String::Narrow(m_sScreenshotDirectory), a);
 
     rapidjson::Value positions(rapidjson::kObjectType);
     for (WindowPositionMap::const_iterator iter = m_mWindowPositions.begin(); iter != m_mWindowPositions.end(); ++iter)
@@ -359,7 +359,7 @@ void JsonFileConfiguration::UpdateHost()
 
 #ifndef RA_UTEST
         const auto sOSVersion = ra::ui::win32::Desktop::GetWindowsVersionString();
-        if (ra::StringStartsWith(sOSVersion, "WindowsNT "))
+        if (ra::util::String::StartsWith(sOSVersion, "WindowsNT "))
         {
             // Windows 7 (and Vista and XP) only support TLS 1.0 by default. Windows 8+ support TLS 1.2.
             // https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/b27a9ddd-d8f7-408c-8029-cf5f8f9ddbef/winhttp-winhttpcallbackstatusflagsecuritychannelerror-on-win7?forum=vcgeneral

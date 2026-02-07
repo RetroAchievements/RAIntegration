@@ -42,7 +42,7 @@ static void PrepareDirectory(const ra::services::IFileSystem& pFileSystem, const
                 if (pFileSystem.GetLastModified(sPath) < tExpire)
                 {
                     // if it's not a user file, it can be refetched from the server, delete it
-                    if (!ra::StringEndsWith(sFile, L"-User.txt"))
+                    if (!ra::util::String::EndsWith(sFile, L"-User.txt"))
                         pFileSystem.DeleteFile(sPath);
                 }
             }

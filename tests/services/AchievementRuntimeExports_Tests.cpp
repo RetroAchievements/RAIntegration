@@ -127,7 +127,7 @@ public:
             if (nChangedMenuItemId == nMenuItemId)
                 return;
         }
-        Assert::Fail(ra::StringPrintf(L"MENUITEM check changed event not seen for %d", nMenuItemId).c_str());
+        Assert::Fail(ra::util::String::Printf(L"MENUITEM check changed event not seen for %d", nMenuItemId).c_str());
     }
 
     void ResetSeenEvents() noexcept

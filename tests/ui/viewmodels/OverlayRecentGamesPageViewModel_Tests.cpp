@@ -91,8 +91,8 @@ public:
         Ensures(pItem1 != nullptr);
         Assert::AreEqual(3, pItem1->GetId());
         Assert::AreEqual(std::wstring(L"Game Name - 1h23m"), pItem1->GetLabel());
-        Assert::IsTrue(ra::StringStartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
-        Assert::IsTrue(ra::StringEndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
+        Assert::IsTrue(ra::util::String::StartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
+        Assert::IsTrue(ra::util::String::EndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
         Assert::AreEqual(std::string("BADGE"), pItem1->Image.Name());
     }
 
@@ -116,8 +116,8 @@ public:
         Ensures(pItem1 != nullptr);
         Assert::AreEqual(3, pItem1->GetId());
         Assert::AreEqual(std::wstring(L"Loading - 1h23m"), pItem1->GetLabel());
-        Assert::IsTrue(ra::StringStartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
-        Assert::IsTrue(ra::StringEndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
+        Assert::IsTrue(ra::util::String::StartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
+        Assert::IsTrue(ra::util::String::EndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
         Assert::AreEqual(std::string(""), pItem1->Image.Name());
 
         gamesPage.mockTheadPool.ExecuteNextTask(); // scanning cache occurs on background thread
@@ -128,8 +128,8 @@ public:
         Ensures(pItem1 != nullptr);
         Assert::AreEqual(3, pItem1->GetId());
         Assert::AreEqual(std::wstring(L"Loading - 1h23m"), pItem1->GetLabel());
-        Assert::IsTrue(ra::StringStartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
-        Assert::IsTrue(ra::StringEndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
+        Assert::IsTrue(ra::util::String::StartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
+        Assert::IsTrue(ra::util::String::EndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
         Assert::AreEqual(std::string(""), pItem1->Image.Name());
 
         gamesPage.mockRcClient.MockResponse("r=gameinfolist&g=3",
@@ -148,8 +148,8 @@ public:
         Ensures(pItem1 != nullptr);
         Assert::AreEqual(3, pItem1->GetId());
         Assert::AreEqual(std::wstring(L"Game Name - 1h23m"), pItem1->GetLabel());
-        Assert::IsTrue(ra::StringStartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
-        Assert::IsTrue(ra::StringEndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
+        Assert::IsTrue(ra::util::String::StartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
+        Assert::IsTrue(ra::util::String::EndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
         Assert::AreEqual(std::string("BADGE"), pItem1->Image.Name());
     }
 
@@ -181,8 +181,8 @@ public:
         Ensures(pItem1 != nullptr);
         Assert::AreEqual(3, pItem1->GetId());
         Assert::AreEqual(std::wstring(L"Loading - 1h23m"), pItem1->GetLabel());
-        Assert::IsTrue(ra::StringStartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
-        Assert::IsTrue(ra::StringEndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
+        Assert::IsTrue(ra::util::String::StartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
+        Assert::IsTrue(ra::util::String::EndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
         Assert::AreEqual(std::string(""), pItem1->Image.Name());
 
         gamesPage.mockTheadPool.ExecuteNextTask(); // scanning cache occurs on background thread
@@ -194,8 +194,8 @@ public:
         Ensures(pItem1 != nullptr);
         Assert::AreEqual(3, pItem1->GetId());
         Assert::AreEqual(std::wstring(L"Game Name - 1h23m"), pItem1->GetLabel());
-        Assert::IsTrue(ra::StringStartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
-        Assert::IsTrue(ra::StringEndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
+        Assert::IsTrue(ra::util::String::StartsWith(pItem1->GetDetail(), std::wstring(L"Last played: Fri 13 Feb 2009 (")));
+        Assert::IsTrue(ra::util::String::EndsWith(pItem1->GetDetail(), std::wstring(L" ago)")));
         Assert::AreEqual(std::string("BADGE"), pItem1->Image.Name());
     }
 };

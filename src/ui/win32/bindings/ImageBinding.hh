@@ -57,7 +57,7 @@ private:
         auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
         pImageRepository.RemoveNotifyTarget(*this);
 
-        m_pImageReference.ChangeReference(nImageType, ra::Narrow(GetValue(*m_pImageBoundProperty)));
+        m_pImageReference.ChangeReference(nImageType, ra::util::String::Narrow(GetValue(*m_pImageBoundProperty)));
 
         TryUpdateImage();
     }

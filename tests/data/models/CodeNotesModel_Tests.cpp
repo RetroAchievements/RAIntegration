@@ -79,13 +79,13 @@ private:
         {
             const auto* pNote = FindCodeNote(nAddress);
             if (pNote != nullptr)
-                Assert::Fail(ra::StringPrintf(L"Note found for address %04X: %s", nAddress, *pNote).c_str());
+                Assert::Fail(ra::util::String::Printf(L"Note found for address %04X: %s", nAddress, *pNote).c_str());
         }
 
         void AssertNote(ra::data::ByteAddress nAddress, const std::wstring& sExpected)
         {
             const auto* pNote = FindCodeNote(nAddress);
-            Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X", nAddress).c_str());
+            Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X", nAddress).c_str());
             Ensures(pNote != nullptr);
             Assert::AreEqual(sExpected, *pNote);
         }
@@ -95,22 +95,22 @@ private:
             AssertNote(nAddress, sExpected);
 
             Assert::AreEqual(nExpectedSize, GetCodeNoteMemSize(nAddress),
-                ra::StringPrintf(L"Size for address %04X", nAddress).c_str());
+                ra::util::String::Printf(L"Size for address %04X", nAddress).c_str());
 
             if (nExpectedBytes)
             {
                 Assert::AreEqual(nExpectedBytes, GetCodeNoteBytes(nAddress),
-                    ra::StringPrintf(L"Bytes for address %04X", nAddress).c_str());
+                    ra::util::String::Printf(L"Bytes for address %04X", nAddress).c_str());
             }
         }
 
         void AssertIndirectNote(ra::data::ByteAddress nAddress, unsigned nOffset, const std::wstring& sExpected)
         {
             const auto* pNote = FindCodeNoteModel(nAddress);
-            Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X", nAddress).c_str());
+            Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X", nAddress).c_str());
             Ensures(pNote != nullptr);
             pNote = pNote->GetPointerNoteAtOffset(nOffset);
-            Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X + %u", nAddress, nOffset).c_str());
+            Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X + %u", nAddress, nOffset).c_str());
             Ensures(pNote != nullptr);
             Assert::AreEqual(sExpected, pNote->GetNote());
         }
@@ -121,12 +121,12 @@ private:
             if (!sExpected)
             {
                 if (pNote != nullptr)
-                    Assert::IsNull(pNote, ra::StringPrintf(L"Note found for address %04X: %s", nAddress, pNote->GetNote()).c_str());
+                    Assert::IsNull(pNote, ra::util::String::Printf(L"Note found for address %04X: %s", nAddress, pNote->GetNote()).c_str());
 
                 return;
             }
 
-            Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X", nAddress).c_str());
+            Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X", nAddress).c_str());
             Ensures(pNote != nullptr);
             if (pNote->IsPointer())
                 Assert::AreEqual(std::wstring(sExpected), pNote->GetPointerDescription());
@@ -1350,7 +1350,7 @@ public:
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
         const std::string sSerialized = ":0x1234:\"This is a note.\"";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
 
         Assert::IsTrue(notes.Deserialize(pTokenizer));
@@ -1364,7 +1364,7 @@ public:
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
         const std::string sSerialized = ":0x1234:\"16-bit pointer\\n+2:\\t\\\"a\\\"\\n+4:\\tb\\n\"";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
 
         Assert::IsTrue(notes.Deserialize(pTokenizer));
@@ -1379,7 +1379,7 @@ public:
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
         const std::string sSerialized = ":0x1234:\"This is a note.\"";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
 
         Assert::IsTrue(notes.Deserialize(pTokenizer));
@@ -1394,7 +1394,7 @@ public:
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
         const std::string sSerialized = ":0x1234:\"\"";
-        ra::Tokenizer pTokenizer(sSerialized);
+        ra::util::Tokenizer pTokenizer(sSerialized);
         pTokenizer.Consume(':');
 
         Assert::IsTrue(notes.Deserialize(pTokenizer));

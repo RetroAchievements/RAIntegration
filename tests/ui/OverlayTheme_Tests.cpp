@@ -67,28 +67,28 @@ public:
         {
             const Color nDefaultColor = pair.second(defaultTheme);
             const Color nLoadedColor = pair.second(theme);
-            Assert::AreEqual(nDefaultColor.ARGB, nLoadedColor.ARGB, ra::Widen(pair.first).c_str());
+            Assert::AreEqual(nDefaultColor.ARGB, nLoadedColor.ARGB, ra::util::String::Widen(pair.first).c_str());
         }
 
         for (const auto& pair : OverlayColorProperties)
         {
             const Color nDefaultColor = pair.second(defaultTheme);
             const Color nLoadedColor = pair.second(theme);
-            Assert::AreEqual(nDefaultColor.ARGB, nLoadedColor.ARGB, ra::Widen(pair.first).c_str());
+            Assert::AreEqual(nDefaultColor.ARGB, nLoadedColor.ARGB, ra::util::String::Widen(pair.first).c_str());
         }
 
         for (const auto& pair : PopupFontSizeProperties)
         {
             const auto nDefaultSize = pair.second(defaultTheme);
             const auto nLoadedSize = pair.second(theme);
-            Assert::AreEqual(nDefaultSize, nLoadedSize, ra::Widen(pair.first).c_str());
+            Assert::AreEqual(nDefaultSize, nLoadedSize, ra::util::String::Widen(pair.first).c_str());
         }
 
         for (const auto& pair : OverlayFontSizeProperties)
         {
             const auto nDefaultSize = pair.second(defaultTheme);
             const auto nLoadedSize = pair.second(theme);
-            Assert::AreEqual(nDefaultSize, nLoadedSize, ra::Widen(pair.first).c_str());
+            Assert::AreEqual(nDefaultSize, nLoadedSize, ra::util::String::Widen(pair.first).c_str());
         }
 
         Assert::AreEqual(defaultTheme.Transparent(), theme.Transparent());
@@ -106,14 +106,14 @@ public:
         {
             const Color nDefaultColor = pair.second(defaultTheme);
             const Color nLoadedColor = pair.second(theme);
-            Assert::AreEqual(nDefaultColor.ARGB, nLoadedColor.ARGB, ra::Widen(pair.first).c_str());
+            Assert::AreEqual(nDefaultColor.ARGB, nLoadedColor.ARGB, ra::util::String::Widen(pair.first).c_str());
         }
 
         for (const auto& pair : OverlayColorProperties)
         {
             const Color nDefaultColor = pair.second(defaultTheme);
             const Color nLoadedColor = pair.second(theme);
-            Assert::AreEqual(nDefaultColor.ARGB, nLoadedColor.ARGB, ra::Widen(pair.first).c_str());
+            Assert::AreEqual(nDefaultColor.ARGB, nLoadedColor.ARGB, ra::util::String::Widen(pair.first).c_str());
         }
     }
 
@@ -125,7 +125,7 @@ public:
         {
             OverlayThemeHarness theme;
             theme.mockFileSystem.MockFile(L".\\Overlay\\theme.json",
-                ra::StringPrintf("{\"Popup\":{\"Colors\":{\"%s\":\"#123456\"}}}", pair.first));
+                ra::util::String::Printf("{\"Popup\":{\"Colors\":{\"%s\":\"#123456\"}}}", pair.first));
             theme.LoadFromFile();
 
             for (const auto& pair2 : PopupColorProperties)
@@ -133,7 +133,7 @@ public:
                 const Color nDefaultColor = pair2.second(defaultTheme);
                 const Color nLoadedColor = pair2.second(theme);
 
-                auto sMessage = ra::Widen(pair.first);
+                auto sMessage = ra::util::String::Widen(pair.first);
                 if (pair.first == pair2.first)
                 {
                     Assert::AreEqual((unsigned char)0xFF, nLoadedColor.Channel.A, sMessage.c_str());
@@ -150,7 +150,7 @@ public:
         {
             OverlayThemeHarness theme;
             theme.mockFileSystem.MockFile(L".\\Overlay\\theme.json",
-                ra::StringPrintf("{\"Overlay\":{\"Colors\":{\"%s\":\"#123456\"}}}", pair.first));
+                ra::util::String::Printf("{\"Overlay\":{\"Colors\":{\"%s\":\"#123456\"}}}", pair.first));
             theme.LoadFromFile();
 
             for (const auto& pair2 : OverlayColorProperties)
@@ -158,7 +158,7 @@ public:
                 const Color nDefaultColor = pair2.second(defaultTheme);
                 const Color nLoadedColor = pair2.second(theme);
 
-                auto sMessage = ra::Widen(pair.first);
+                auto sMessage = ra::util::String::Widen(pair.first);
                 if (pair.first == pair2.first)
                 {
                     Assert::AreEqual((unsigned char)0xFF, nLoadedColor.Channel.A, sMessage.c_str());
@@ -201,7 +201,7 @@ public:
         {
             OverlayThemeHarness theme;
             theme.mockFileSystem.MockFile(L".\\Overlay\\theme.json",
-                ra::StringPrintf("{\"Popup\":{\"FontSizes\":{\"%s\":99}}}", pair.first));
+                ra::util::String::Printf("{\"Popup\":{\"FontSizes\":{\"%s\":99}}}", pair.first));
             theme.LoadFromFile();
 
             for (const auto& pair2 : PopupFontSizeProperties)
@@ -209,7 +209,7 @@ public:
                 const auto nDefaultSize = pair2.second(defaultTheme);
                 const auto nLoadedSize = pair2.second(theme);
 
-                auto sMessage = ra::Widen(pair.first);
+                auto sMessage = ra::util::String::Widen(pair.first);
                 if (pair.first == pair2.first)
                     Assert::AreEqual(99, nLoadedSize, sMessage.c_str());
                 else
@@ -221,7 +221,7 @@ public:
         {
             OverlayThemeHarness theme;
             theme.mockFileSystem.MockFile(L".\\Overlay\\theme.json",
-                ra::StringPrintf("{\"Overlay\":{\"FontSizes\":{\"%s\":99}}}", pair.first));
+                ra::util::String::Printf("{\"Overlay\":{\"FontSizes\":{\"%s\":99}}}", pair.first));
             theme.LoadFromFile();
 
             for (const auto& pair2 : OverlayFontSizeProperties)
@@ -229,7 +229,7 @@ public:
                 const auto nDefaultSize = pair2.second(defaultTheme);
                 const auto nLoadedSize = pair2.second(theme);
 
-                auto sMessage = ra::Widen(pair.first);
+                auto sMessage = ra::util::String::Widen(pair.first);
                 if (pair.first == pair2.first)
                     Assert::AreEqual(99, nLoadedSize, sMessage.c_str());
                 else

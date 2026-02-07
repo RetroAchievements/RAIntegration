@@ -17,7 +17,7 @@
 { \
     const auto& __pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>(); \
     if (__pLogger.IsEnabled(lvl)) \
-        __pLogger.LogMessage(lvl, ra::StringPrintf(__VA_ARGS__)); \
+        __pLogger.LogMessage(lvl, ra::util::String::Printf(__VA_ARGS__)); \
 }
 
 #endif

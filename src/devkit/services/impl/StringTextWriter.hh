@@ -38,7 +38,7 @@ public:
         }
     }
 
-    void Write(_In_ const std::wstring& sText) override { Write(ra::Narrow(sText)); }
+    void Write(_In_ const std::wstring& sText) override { Write(ra::util::String::Narrow(sText)); }
     void WriteLine() override { Write(std::string("\n")); }
     std::streampos GetPosition() const noexcept override { return m_nWritePosition; }
 

@@ -156,7 +156,7 @@ public:
     void DoFrame() override;
 
     void Serialize(ra::services::TextWriter& pWriter) const override;
-    bool Deserialize(ra::Tokenizer& pTokenizer) override;
+    bool Deserialize(ra::util::Tokenizer& pTokenizer) override;
 
     // Attaches an rc_client_achievement_info_t and populates the model from it.
     void Attach(struct rc_client_achievement_info_t& pAchievement,

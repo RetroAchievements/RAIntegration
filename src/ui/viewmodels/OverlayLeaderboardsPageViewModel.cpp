@@ -25,8 +25,8 @@ static void SetLeaderboard(OverlayListPageViewModel::ItemViewModel& vmItem,
                            const rc_client_leaderboard_t& pLeaderboard)
 {
     vmItem.SetId(pLeaderboard.id);
-    vmItem.SetLabel(ra::Widen(pLeaderboard.title));
-    vmItem.SetDetail(ra::Widen(pLeaderboard.description));
+    vmItem.SetLabel(ra::util::String::Widen(pLeaderboard.title));
+    vmItem.SetDetail(ra::util::String::Widen(pLeaderboard.description));
     vmItem.SetCollapsed(false);
 
     switch (pLeaderboard.state)
@@ -38,7 +38,7 @@ static void SetLeaderboard(OverlayListPageViewModel::ItemViewModel& vmItem,
             break;
 
         case RC_CLIENT_LEADERBOARD_STATE_TRACKING:
-            vmItem.SetProgressString(ra::Widen(pLeaderboard.tracker_value));
+            vmItem.SetProgressString(ra::util::String::Widen(pLeaderboard.tracker_value));
             vmItem.SetProgressPercentage(-1.0f);
             vmItem.SetDisabled(false);
             break;
@@ -106,7 +106,7 @@ void OverlayLeaderboardsPageViewModel::Refresh()
         for (; pBucket < pBucketStop; ++pBucket)
         {
             auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, ra::Widen(pBucket->label));
+            SetHeader(pvmHeader, ra::util::String::Widen(pBucket->label));
 
             bool bCollapsed = false;
             if (bCanCollapseHeaders)
@@ -145,7 +145,7 @@ void OverlayLeaderboardsPageViewModel::Refresh()
     if (nNumberOfLeaderboards == 0)
         SetSubTitle(L"No leaderboards present");
     else
-        SetSubTitle(ra::StringPrintf(L"%u leaderboards present", nNumberOfLeaderboards));
+        SetSubTitle(ra::util::String::Printf(L"%u leaderboards present", nNumberOfLeaderboards));
 }
 
 bool OverlayLeaderboardsPageViewModel::OnHeaderClicked(ItemViewModel& vmItem)
@@ -246,10 +246,10 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         {
             auto& vmEntry = vmLeaderboard.Add();
             vmEntry.SetId(pEntry.Rank);
-            vmEntry.SetLabel(ra::Widen(pEntry.User));
+            vmEntry.SetLabel(ra::util::String::Widen(pEntry.User));
 
             rc_format_value(sBuffer, sizeof(sBuffer), pEntry.Score, nFormat);
-            vmEntry.SetDetail(ra::Widen(sBuffer));
+            vmEntry.SetDetail(ra::util::String::Widen(sBuffer));
 
             if (pEntry.User == sUsername)
                 vmEntry.SetDisabled(true);

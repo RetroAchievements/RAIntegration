@@ -29,7 +29,7 @@ public:
     {
     public:
         GSL_SUPPRESS_F6 SessionTrackerHarness(const char* sUsername = "User") noexcept
-            : m_sUsername(sUsername), m_sUsernameWide(ra::Widen(sUsername))
+            : m_sUsername(sUsername), m_sUsernameWide(ra::util::String::Widen(sUsername))
         {
             mockRuntime.MockGame();
         }

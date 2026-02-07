@@ -44,7 +44,7 @@ void __gsl_contract_handler(const char* const file, unsigned int line)
     if (ra::services::ServiceLocator::Exists<ra::services::IMessageDispatcher>())
     {
         ra::services::ServiceLocator::Get<ra::services::IMessageDispatcher>()
-            .ReportErrorMessage(L"Unexpected error", ra::Widen(buffer));
+            .ReportErrorMessage(L"Unexpected error", ra::util::String::Widen(buffer));
     }
 
     gsl::details::throw_exception(gsl::fail_fast(buffer));
@@ -55,14 +55,14 @@ void __gsl_contract_handler(const char* const file, unsigned int line)
 void __gsl_contract_handler(const char* const file, unsigned int line, const char* const error)
 {
     const char* const filename = __gsl_filename(file);
-    const auto sError = ra::StringPrintf("Assertion failure at %s: %d: %s", filename, line, error);
+    const auto sError = ra::util::String::Printf("Assertion failure at %s: %d: %s", filename, line, error);
 
     if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
     {
         RA_LOG_ERR("%s", sError.c_str());
     }
 
-    _wassert(ra::Widen(error).c_str(), ra::Widen(filename).c_str(), line);
+    _wassert(ra::util::String::Widen(error).c_str(), ra::util::String::Widen(filename).c_str(), line);
 }
 
 #endif

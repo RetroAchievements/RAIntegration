@@ -26,7 +26,7 @@ const BoolModelProperty LoginViewModel::IsPasswordRememberedProperty("LoginViewM
 LoginViewModel::LoginViewModel()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    SetUsername(ra::Widen(pConfiguration.GetUsername()));
+    SetUsername(ra::util::String::Widen(pConfiguration.GetUsername()));
 }
 
 LoginViewModel::LoginViewModel(const std::wstring&& sUsername)
@@ -49,7 +49,7 @@ bool LoginViewModel::Login() const
     }
 
     auto& pLoginService = ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>();
-    if (!pLoginService.Login(ra::Narrow(GetUsername()), ra::Narrow(GetPassword())))
+    if (!pLoginService.Login(ra::util::String::Narrow(GetUsername()), ra::util::String::Narrow(GetPassword())))
         return false;
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
@@ -60,7 +60,7 @@ bool LoginViewModel::Login() const
     pConfiguration.Save();
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(std::wstring(L"Successfully logged in as ") +
-                                                             ra::Widen(pUserContext.GetDisplayName()));
+                                                             ra::util::String::Widen(pUserContext.GetDisplayName()));
 
     return true;
 }

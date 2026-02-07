@@ -114,7 +114,7 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId, const char* sClientName
                 const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
                 const auto sFileName = pDesktop.GetRunningExecutable();
                 const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-                m_sClientName = ra::Narrow(pFileSystem.RemoveExtension(pFileSystem.GetFileName(sFileName)));
+                m_sClientName = ra::util::String::Narrow(pFileSystem.RemoveExtension(pFileSystem.GetFileName(sFileName)));
             }
             m_nEmulatorId = EmulatorID::UnknownEmulator;
             break;
@@ -123,7 +123,7 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId, const char* sClientName
 
 static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
 {
-    sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
+    sUserAgent.append(ra::util::String::Printf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
         RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_PATCH,
         RA_INTEGRATION_VERSION_REVISION));
 
@@ -247,12 +247,12 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         auto response = request.Call();
         if (!response.Succeeded())
         {
-            if (ra::StringStartsWith(response.ErrorMessage, "Unknown client"))
+            if (ra::util::String::StartsWith(response.ErrorMessage, "Unknown client"))
             {
                 // if m_nEmulatorID is not recognized by the server, let it through regardless of version.
                 // assume it's a new emulator that hasn't been released yet.
                 m_sLatestVersion = "0.0.0.0";
-                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Could not retrieve latest client version.", ra::Widen(response.ErrorMessage));
+                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Could not retrieve latest client version.", ra::util::String::Widen(response.ErrorMessage));
             }
             else
             {
@@ -307,7 +307,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         {
             if (!sError.empty())
                 sError += L"\n";
-            sError += ra::Widen(m_sLatestVersionError);
+            sError += ra::util::String::Widen(m_sLatestVersionError);
         }
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not retrieve latest client version.", sError);
@@ -325,13 +325,13 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
     std::string sClientVersion = m_sVersion;
     while (!sClientVersion.empty() && (isalpha(sClientVersion.at(0)) || isspace(sClientVersion.at(0))))
         sClientVersion.erase(0, 1);
-    while (ra::StringEndsWith(sClientVersion, ".0"))
+    while (ra::util::String::EndsWith(sClientVersion, ".0"))
         sClientVersion.resize(sClientVersion.length() - 2);
     if (sClientVersion.find('.') == std::string::npos)
         sClientVersion.append(".0");
 
     std::string sNewVersion = m_sLatestVersion;
-    while (ra::StringEndsWith(sNewVersion, ".0"))
+    while (ra::util::String::EndsWith(sNewVersion, ".0"))
         sNewVersion.resize(sNewVersion.length() - 2);
     if (sNewVersion.find('.') == std::string::npos)
         sNewVersion.append(".0");
@@ -347,7 +347,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         // enforce minimum version required for hardcore
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetHeader(L"A newer client is required for hardcore mode.");
-        vmMessageBox.SetMessage(ra::StringPrintf(
+        vmMessageBox.SetMessage(ra::util::String::Printf(
             L"A new version of %s is available to download at %s.\n\n- Current version: %s\n- New version: %s\n\n"
             L"Press OK to logout and download the new version, or Cancel to disable hardcore mode and proceed.",
             m_sClientName,
@@ -373,7 +373,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         // allow any version in non-hardcore, but inform the user a new version is available
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetHeader(L"Would you like to update?");
-        vmMessageBox.SetMessage(ra::StringPrintf(
+        vmMessageBox.SetMessage(ra::util::String::Printf(
             L"A new version of %s is available to download at %s.\n\n- Current version: %s\n- New version: %s",
             m_sClientName,
             pConfiguration.GetHostName(),
@@ -388,7 +388,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
     if (bUpdate)
     {
         ra::services::ServiceLocator::Get<ra::ui::IDesktop>().OpenUrl(
-            ra::StringPrintf("%s/download.php", pConfiguration.GetHostUrl()));
+            ra::util::String::Printf("%s/download.php", pConfiguration.GetHostUrl()));
     }
 
     return bResult;
@@ -406,7 +406,7 @@ bool EmulatorContext::WarnDisableHardcoreMode(const std::string& sActivity)
         // prompt. if user doesn't consent, return failure - caller should not continue
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetHeader(L"Disable Hardcore mode?");
-        vmMessageBox.SetMessage(ra::StringPrintf(L"You cannot %s while Hardcore mode is active.", sActivity));
+        vmMessageBox.SetMessage(ra::util::String::Printf(L"You cannot %s while Hardcore mode is active.", sActivity));
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
         if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
@@ -543,7 +543,7 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
 
 std::wstring EmulatorContext::GetAppTitle(const std::string& sMessage) const
 {
-    ra::StringBuilder builder;
+    ra::util::StringBuilder builder;
     builder.Append(m_sClientName);
     builder.Append(" - ");
 

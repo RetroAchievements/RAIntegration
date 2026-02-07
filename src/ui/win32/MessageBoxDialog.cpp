@@ -53,7 +53,7 @@ void MessageBoxDialog::Presenter::DoShowModal(ra::ui::WindowViewModelBase& oView
         if (pTaskDialog == nullptr && !oMessageBoxViewModel.GetHeader().empty())
         {
             sMessage.reserve(oMessageBoxViewModel.GetHeader().length() + pMessage->length() + 2);
-            sMessage = StringPrintf(L"%s\n\n%s", oMessageBoxViewModel.GetHeader(), *pMessage);
+            sMessage = util::String::Printf(L"%s\n\n%s", oMessageBoxViewModel.GetHeader(), *pMessage);
             pMessage = gsl::make_not_null(&sMessage);
         }
 

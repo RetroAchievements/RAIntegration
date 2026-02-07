@@ -32,7 +32,7 @@ const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel
 static void SetImage(OverlayListPageViewModel::ItemViewModel& vmItem, const std::string& sBadgeName, bool bLocked)
 {
     std::string sImageName = sBadgeName;
-    if (bLocked && !ra::StringStartsWith(sBadgeName, "local")) // local images don't have _lock equivalents
+    if (bLocked && !ra::util::String::StartsWith(sBadgeName, "local")) // local images don't have _lock equivalents
     {
         sImageName += "_lock";
         vmItem.SetDisabled(true);
@@ -49,9 +49,9 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
                            const rc_client_achievement_t& pAchievement)
 {
     vmItem.SetId(pAchievement.id);
-    vmItem.SetLabel(ra::StringPrintf(L"%s (%s %s)", pAchievement.title, pAchievement.points,
+    vmItem.SetLabel(ra::util::String::Printf(L"%s (%s %s)", pAchievement.title, pAchievement.points,
                                      (pAchievement.points == 1) ? "point" : "points"));
-    vmItem.SetDetail(ra::Widen(pAchievement.description));
+    vmItem.SetDetail(ra::util::String::Widen(pAchievement.description));
     vmItem.SetCollapsed(false);
 
     std::string sBadgeName = ra::services::AchievementRuntime::GetAchievementBadge(pAchievement);
@@ -63,7 +63,7 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
 
             if (pAchievement.measured_progress[0])
             {
-                vmItem.SetProgressString(ra::Widen(pAchievement.measured_progress));
+                vmItem.SetProgressString(ra::util::String::Widen(pAchievement.measured_progress));
                 vmItem.SetProgressPercentage(pAchievement.measured_percent / 100.0f);
             }
             else
@@ -156,7 +156,7 @@ void OverlayAchievementsPageViewModel::Refresh()
         for (; pBucket < pBucketStop; ++pBucket)
         {
             auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, ra::Widen(pBucket->label));
+            SetHeader(pvmHeader, ra::util::String::Widen(pBucket->label));
 
             bool bCollapsed = false;
             if (bCanCollapseHeaders)
@@ -230,14 +230,14 @@ void OverlayAchievementsPageViewModel::Refresh()
     }
     else if (summary.num_core_achievements > 0)
     {
-        SetSubTitle(ra::StringPrintf(L"%u of %u achievements",
+        SetSubTitle(ra::util::String::Printf(L"%u of %u achievements",
             summary.num_unlocked_achievements, summary.num_core_achievements));
 
-        m_sSummary = ra::StringPrintf(L"%d of %d points", summary.points_unlocked, summary.points_core);
+        m_sSummary = ra::util::String::Printf(L"%d of %d points", summary.points_unlocked, summary.points_core);
     }
     else
     {
-        SetSubTitle(ra::StringPrintf(L"%u achievements present", nNumberOfAchievements));
+        SetSubTitle(ra::util::String::Printf(L"%u achievements present", nNumberOfAchievements));
     }
 
     // playtime
@@ -249,7 +249,7 @@ void OverlayAchievementsPageViewModel::Refresh()
     {
         const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(pGameContext.GameId());
         const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
-        SetTitleDetail(ra::StringPrintf(L"%s - %dh%02dm", m_sSummary, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
+        SetTitleDetail(ra::util::String::Printf(L"%s - %dh%02dm", m_sSummary, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
         m_fElapsed = static_cast<double>(nPlayTimeSeconds.count() % 60);
     }
 
@@ -266,7 +266,7 @@ bool OverlayAchievementsPageViewModel::Update(double fElapsed)
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(pGameContext.GameId());
     const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
-    SetTitleDetail(ra::StringPrintf(L"%s - %dh%02dm", m_sSummary, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
+    SetTitleDetail(ra::util::String::Printf(L"%s - %dh%02dm", m_sSummary, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
 
     do
     {
@@ -378,8 +378,8 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         return;
 
     auto& vmAchievement = m_vAchievementDetails[nAchievementID];
-    vmAchievement.SetCreatedDate(ra::Widen(ra::FormatDateTime(pAchievement->created_time)));
-    vmAchievement.SetModifiedDate(ra::Widen(ra::FormatDateTime(pAchievement->updated_time)));
+    vmAchievement.SetCreatedDate(ra::util::String::FormatDateTime(pAchievement->created_time));
+    vmAchievement.SetModifiedDate(ra::util::String::FormatDateTime(pAchievement->updated_time));
 
     if (nAchievementID >= ra::data::context::GameAssets::FirstLocalId)
     {
@@ -400,19 +400,19 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         auto& vmAchievement = pIter->second;
         if (!response.Succeeded())
         {
-            vmAchievement.SetWonBy(ra::Widen(response.ErrorMessage));
+            vmAchievement.SetWonBy(ra::util::String::Widen(response.ErrorMessage));
             return;
         }
 
-        vmAchievement.SetWonBy(ra::StringPrintf(L"Won by %u of %u (%1.0f%%)", response.EarnedBy, response.NumPlayers,
+        vmAchievement.SetWonBy(ra::util::String::Printf(L"Won by %u of %u (%1.0f%%)", response.EarnedBy, response.NumPlayers,
             (static_cast<double>(response.EarnedBy) * 100) / response.NumPlayers));
 
         const auto& sUsername = ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName();
         for (const auto& pWinner : response.Entries)
         {
             auto& vmWinner = vmAchievement.RecentWinners.Add();
-            vmWinner.SetLabel(ra::Widen(pWinner.User));
-            vmWinner.SetDetail(ra::StringPrintf(L"%s (%s)", ra::FormatDateTime(pWinner.DateAwarded), ra::FormatDateRecent(pWinner.DateAwarded)));
+            vmWinner.SetLabel(ra::util::String::Widen(pWinner.User));
+            vmWinner.SetDetail(ra::util::String::Printf(L"%s (%s)", ra::util::String::FormatDateTime(pWinner.DateAwarded), ra::util::String::FormatDateRecent(pWinner.DateAwarded)));
 
             if (pWinner.User == sUsername)
                 vmWinner.SetDisabled(true);

@@ -76,7 +76,7 @@ void __gsl_contract_handler(const char* const file, unsigned int line)
 
     if (ra::services::ServiceLocator::Exists<ra::ui::IDesktop>())
     {
-        const auto sBuffer = ra::Widen(buffer);
+        const auto sBuffer = ra::util::String::Widen(buffer);
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unexpected error", sBuffer);
     }
 
@@ -86,14 +86,14 @@ void __gsl_contract_handler(const char* const file, unsigned int line)
 void __gsl_contract_handler(const char* const file, unsigned int line, const char* const error)
 {
     const char* const filename = __gsl_filename(file);
-    const auto sError = ra::StringPrintf("Assertion failure at %s: %d: %s", filename, line, error);
+    const auto sError = ra::util::String::Printf("Assertion failure at %s: %d: %s", filename, line, error);
 
     if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
     {
         RA_LOG_ERR("%s", sError.c_str());
     }
 
-    _wassert(ra::Widen(error).c_str(), ra::Widen(filename).c_str(), line);
+    _wassert(ra::util::String::Widen(error).c_str(), ra::util::String::Widen(filename).c_str(), line);
 }
 #endif
 
@@ -213,7 +213,7 @@ API int CCONV _RA_ConfirmLoadNewRom(int bQuittingApp)
 
     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
     vmMessageBox.SetHeader(bQuittingApp ? L"Are you sure that you want to exit?" : L"Continue load?");
-    vmMessageBox.SetMessage(ra::StringPrintf(L"You have unsaved changes in the %s achievements set. If you %s, you will lose these changes.",
+    vmMessageBox.SetMessage(ra::util::String::Printf(L"You have unsaved changes in the %s achievements set. If you %s, you will lose these changes.",
         sModifiedSet, bQuittingApp ? L"quit now" : L"load a new ROM"));
     vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
     vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);

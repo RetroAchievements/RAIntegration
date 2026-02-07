@@ -102,7 +102,7 @@ void CodeNotesViewModel::ResetFilter()
             if (nBytes <= 4)
                 sAddress = pMemoryContext.FormatAddress(nAddress);
             else
-                sAddress = ra::StringPrintf(L"%s\n- %s", pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nAddress + nBytes - 1));
+                sAddress = ra::util::String::Printf(L"%s\n- %s", pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nAddress + nBytes - 1));
 
             auto* vmNote = m_vNotes.GetItemAt(nIndex);
             if (vmNote)
@@ -133,7 +133,7 @@ void CodeNotesViewModel::ResetFilter()
     m_vNotes.EndUpdate();
 
     m_nUnfilteredNotesCount = m_vNotes.Count();
-    SetValue(ResultCountProperty, ra::StringPrintf(L"%u/%u", m_nUnfilteredNotesCount, m_nUnfilteredNotesCount));
+    SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_nUnfilteredNotesCount, m_nUnfilteredNotesCount));
 }
 
 void CodeNotesViewModel::ApplyFilter()
@@ -145,7 +145,7 @@ void CodeNotesViewModel::ApplyFilter()
         return;
 
     std::wstring sFilterLower = sFilter;
-    ra::StringMakeLowercase(sFilterLower);
+    ra::util::String::MakeLowercase(sFilterLower);
 
     m_vNotes.BeginUpdate();
 
@@ -156,13 +156,13 @@ void CodeNotesViewModel::ApplyFilter()
 
         if (bOnlyUnpublished && !pNote->IsModified())
             m_vNotes.RemoveAt(i);
-        else if (!sFilterLower.empty() && !ra::StringContainsCaseInsensitive(pNote->GetNote(), sFilterLower, true))
+        else if (!sFilterLower.empty() && !ra::util::String::ContainsCaseInsensitive(pNote->GetNote(), sFilterLower))
             m_vNotes.RemoveAt(i);
     }
 
     m_vNotes.EndUpdate();
 
-    SetValue(ResultCountProperty, ra::StringPrintf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
+    SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
 }
 
 void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
@@ -187,7 +187,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
             if (sFilter.empty())
                 bMatchesFilter = true;
             else if (sNewNote.length() > sFilter.length())
-                bMatchesFilter = ra::StringContainsCaseInsensitive(sNewNote, sFilter);
+                bMatchesFilter = ra::util::String::ContainsCaseInsensitive(sNewNote, sFilter);
         }
     }
 
@@ -225,13 +225,13 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
                 if (pNote->nBytes <= 4)
                     sAddress = pMemoryContext.FormatAddress(nAddress);
                 else
-                    sAddress = ra::StringPrintf(L"%s\n- %s",
+                    sAddress = ra::util::String::Printf(L"%s\n- %s",
                         pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nAddress + pNote->nBytes - 1));
 
                 pNote->SetLabel(sAddress);
             }
 
-            SetValue(ResultCountProperty, ra::StringPrintf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
+            SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
             return;
         }
         else if (pNote->nAddress > nAddress)
@@ -252,7 +252,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
         m_vNotes.EndUpdate();
     }
 
-    SetValue(ResultCountProperty, ra::StringPrintf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
+    SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
 }
 
 void CodeNotesViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)
@@ -380,7 +380,7 @@ void CodeNotesViewModel::PublishSelected()
     if (vNotesToPublish.size() > 1)
     {
         ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
-        vmPrompt.SetHeader(ra::StringPrintf(L"Publish %zu notes?", vNotesToPublish.size()));
+        vmPrompt.SetHeader(ra::util::String::Printf(L"Publish %zu notes?", vNotesToPublish.size()));
         vmPrompt.SetMessage(L"The selected modified notes will be uploaded to the server.");
         vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmPrompt.ShowModal() == DialogResult::No)
@@ -420,11 +420,11 @@ void CodeNotesViewModel::RevertSelected()
     if (vNotesToRevert.size() == 1)
     {
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-        vmPrompt.SetHeader(ra::StringPrintf(L"Revert note for address %s?", pMemoryContext.FormatAddress(vNotesToRevert.at(0))));
+        vmPrompt.SetHeader(ra::util::String::Printf(L"Revert note for address %s?", pMemoryContext.FormatAddress(vNotesToRevert.at(0))));
     }
     else
     {
-        vmPrompt.SetHeader(ra::StringPrintf(L"Revert %zu notes?", vNotesToRevert.size()));
+        vmPrompt.SetHeader(ra::util::String::Printf(L"Revert %zu notes?", vNotesToRevert.size()));
     }
 
     vmPrompt.SetMessage(L"This will discard all local work and revert the notes to the last state retrieved from the server.");

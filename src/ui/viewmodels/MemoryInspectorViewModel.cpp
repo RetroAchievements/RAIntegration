@@ -66,7 +66,7 @@ void MemoryInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs
     {
         if ((args.tNewValue ^ args.tOldValue) & 0xFF)
         {
-            SetValue(CurrentAddressBitsProperty, ra::StringPrintf(L"%d %d %d %d %d %d %d %d",
+            SetValue(CurrentAddressBitsProperty, ra::util::String::Printf(L"%d %d %d %d %d %d %d %d",
                 (args.tNewValue & 0x80) >> 7,
                 (args.tNewValue & 0x40) >> 6,
                 (args.tNewValue & 0x20) >> 5,
@@ -287,7 +287,7 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nNe
         if (nIndirectSource != 0xFFFFFFFF)
         {
             const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-            SetCurrentAddressNoteInternal(ra::StringPrintf(L"[Indirect from %s]\r\n%s", pMemoryContext.FormatAddress(nIndirectSource), *pNote));
+            SetCurrentAddressNoteInternal(ra::util::String::Printf(L"[Indirect from %s]\r\n%s", pMemoryContext.FormatAddress(nIndirectSource), *pNote));
         }
         else
         {
@@ -401,7 +401,7 @@ void MemoryInspectorViewModel::RevertCurrentAddressNote()
     {
         ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-        vmPrompt.SetHeader(ra::StringPrintf(L"Revert note for address %s?", pMemoryContext.FormatAddress(nAddress)));
+        vmPrompt.SetHeader(ra::util::String::Printf(L"Revert note for address %s?", pMemoryContext.FormatAddress(nAddress)));
         vmPrompt.SetMessage(L"This will discard all local work and revert the note to the last state retrieved from the server.");
         vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmPrompt.ShowModal() == DialogResult::No)

@@ -70,11 +70,6 @@ public:
     virtual std::unique_ptr<ra::ui::drawing::ISurface> CaptureClientArea(const WindowViewModelBase& vmViewModel) const = 0;
 
     /// <summary>
-    /// Returns <c>true</c> if an external tool is detected that can modify memory.
-    /// </summary>
-    virtual bool IsDebuggerPresent() const = 0;
-
-    /// <summary>
     /// Returns <c>true</c> if the current thread is the UI thread.
     /// </summary>
     virtual bool IsOnUIThread() const = 0;

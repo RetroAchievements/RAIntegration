@@ -46,6 +46,12 @@
     <ClCompile Include="data\models\CodeNoteModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
+    <ClCompile Include="util\StringBuilder_Tests.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="util\Tokenizer_Tests.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
     <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>

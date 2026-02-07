@@ -520,7 +520,7 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
                 break;
             }
 
-            StringMakeLowercase(sLine);
+            ra::util::String::MakeLowercase(sLine);
 
             const auto nPointerIndex = sLine.find(L"pointer");
             if (nPointerIndex == std::string::npos)

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Analysis|Win32">
@@ -73,7 +73,9 @@
     <ClCompile Include="data\models\MemoryRegionsModel.cpp" />
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="util\GSL.cpp" />
+    <ClCompile Include="util\StringBuilder.cpp" />
     <ClCompile Include="util\Strings.cpp" />
+    <ClCompile Include="util\Tokenizer.cpp" />
     <ClInclude Include="context\IConsoleContext.hh" />
     <ClInclude Include="context\IEmulatorMemoryContext.hh" />
     <ClInclude Include="context\impl\ConsoleContext.hh" />
@@ -115,7 +117,9 @@
     <ClInclude Include="util\EnumOps.hh" />
     <ClInclude Include="util\GSL.hh" />
     <ClInclude Include="util\Log.hh" />
+    <ClInclude Include="util\StringBuilder.hh" />
     <ClInclude Include="util\Strings.hh" />
+    <ClInclude Include="util\Tokenizer.hh" />
     <ClInclude Include="util\TypeCasts.hh" />
     <ClInclude Include="util\TypeTraits.hh" />
   </ItemGroup>

@@ -223,7 +223,7 @@ std::string Desktop::GetWindowsVersionString()
         {
             RtlGetVersion(&osVersion);
             if (osVersion.dwMajorVersion > 0UL)
-                return ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion, osVersion.dwMinorVersion);
+                return ra::util::String::Printf("WindowsNT %lu.%lu", osVersion.dwMajorVersion, osVersion.dwMinorVersion);
         }
     }
 
@@ -232,8 +232,8 @@ std::string Desktop::GetWindowsVersionString()
 
 void Desktop::OpenUrl(const std::string& sUrl) const
 {
-    const auto sNativeUrl = NativeStr(sUrl);
-    ShellExecute(nullptr, TEXT("open"), sNativeUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    const auto sNativeUrl = ra::util::String::Widen(sUrl);
+    ::ShellExecuteW(nullptr, L"open", sNativeUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 std::unique_ptr<ra::ui::drawing::ISurface> Desktop::CaptureClientArea(const WindowViewModelBase& vmViewModel) const
@@ -263,65 +263,6 @@ std::unique_ptr<ra::ui::drawing::ISurface> Desktop::CaptureClientArea(const Wind
     }
 
     return pSurface;
-}
-
-static bool IsSuspiciousProcessRunning()
-{
-    bool bFound = false;
-
-    const HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hSnapshot)
-    {
-        PROCESSENTRY32 pe32;
-        pe32.dwSize = sizeof(PROCESSENTRY32);
-        if (Process32First(hSnapshot, &pe32))
-        {
-            do
-            {
-                if (tcslen_s(pe32.szExeFile) >= 15)
-                {
-                    std::string sFilename = ra::Narrow(pe32.szExeFile);
-                    ra::StringMakeLowercase(sFilename);
-
-                    // cannot reliably detect injection without ObRegisterCallbacks, which requires Vista,
-                    // instead just look for the default process names (it's better than nothing)
-                    // [Cheat Engine.exe, cheatengine-i386.exe, cheatengine-x86_64.exe]
-                    if (sFilename.find("cheat") != std::string::npos &&
-                        sFilename.find("engine") != std::string::npos)
-                    {
-                        RA_LOG_WARN("Cheat Engine detected");
-                        bFound = true;
-                        break;
-                    }
-                }
-            } while (Process32Next(hSnapshot, &pe32));
-        }
-        CloseHandle(hSnapshot);
-    }
-
-    return bFound;
-}
-
-bool Desktop::IsDebuggerPresent() const
-{
-#ifdef NDEBUG // allow debugger-limited functionality when using a DEBUG build
-    if (::IsDebuggerPresent())
-    {
-        RA_LOG_WARN("Debugger detected");
-        return true;
-    }
-
-    BOOL bDebuggerPresent;
-    if (::CheckRemoteDebuggerPresent(GetCurrentProcess(), &bDebuggerPresent) && bDebuggerPresent)
-    {
-        RA_LOG_WARN("Remote debugger detected");
-        return true;
-    }
-#endif
-
-    // real cheating tools don't register as debuggers (or intercept and override the call)
-    // also check for known bad agents and assume that the player is using them to cheat
-    return IsSuspiciousProcessRunning();
 }
 
 bool Desktop::IsOnUIThread() const noexcept

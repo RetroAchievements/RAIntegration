@@ -99,7 +99,7 @@ void LocalBadgesModel::Commit(const std::wstring& sPreviousBadgeName, const std:
         if (pIter->second.nCommittedCount == 0 && pIter->second.nUncommittedCount == 0)
         {
             const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
-            const auto sFilename = pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(pIter->first));
+            const auto sFilename = pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::util::String::Narrow(pIter->first));
             const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
             pFileSystem.DeleteFile(sFilename);
             m_mReferences.erase(pIter);

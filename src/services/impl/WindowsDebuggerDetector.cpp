@@ -22,16 +22,16 @@ static bool IsSuspiciousProcessRunning()
         {
             do
             {
-                if (tcslen_s(pe32.szExeFile) >= 15)
+                if (wcslen(pe32.szExeFile) >= 15)
                 {
-                    std::string sFilename = ra::Narrow(pe32.szExeFile);
-                    ra::StringMakeLowercase(sFilename);
+                    std::wstring sFilename = pe32.szExeFile;
+                    ra::util::String::MakeLowercase(sFilename);
 
                     // cannot reliably detect injection without ObRegisterCallbacks, which requires Vista,
                     // instead just look for the default process names (it's better than nothing)
                     // [Cheat Engine.exe, cheatengine-i386.exe, cheatengine-x86_64.exe]
-                    if (sFilename.find("cheat") != std::string::npos &&
-                        sFilename.find("engine") != std::string::npos)
+                    if (sFilename.find(L"cheat") != std::string::npos &&
+                        sFilename.find(L"engine") != std::string::npos)
                     {
                         RA_LOG_WARN("Cheat Engine detected");
                         bFound = true;

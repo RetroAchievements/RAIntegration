@@ -132,7 +132,7 @@ void RichPresenceModel::ReloadRichPresenceScript()
     }
 
     // remove UTF-8 BOM if present
-    if (ra::StringStartsWith(sRichPresence, "\xef\xbb\xbf"))
+    if (ra::util::String::StartsWith(sRichPresence, "\xef\xbb\xbf"))
         sRichPresence.erase(0, 3);
 
     BeginUpdate();
@@ -173,7 +173,7 @@ void RichPresenceModel::Serialize(ra::services::TextWriter&) const noexcept
 {
 }
 
-bool RichPresenceModel::Deserialize(ra::Tokenizer&) noexcept
+bool RichPresenceModel::Deserialize(ra::util::Tokenizer&) noexcept
 {
     return false;
 }

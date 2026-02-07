@@ -331,7 +331,7 @@ void MemorySearchViewModel::DefinePredefinedFilterRange(gsl::index nIndex, int n
     if (bIncludeRangeInLabel)
     {
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-        pItem->SetLabel(ra::StringPrintf(L"%s (%s-%s)", sLabel,
+        pItem->SetLabel(ra::util::String::Printf(L"%s (%s-%s)", sLabel,
             pMemoryContext.FormatAddress(nStartAddress), pMemoryContext.FormatAddress(nEndAddress)));
     }
     else
@@ -385,7 +385,7 @@ void MemorySearchViewModel::OnPredefinedFilterRangeChanged(const IntModelPropert
 
     m_bSelectingFilter = true;
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-    SetFilterRange(ra::StringPrintf(L"%s-%s",
+    SetFilterRange(ra::util::String::Printf(L"%s-%s",
         pMemoryContext.FormatAddress(pEntry->GetStartAddress()), pMemoryContext.FormatAddress(pEntry->GetEndAddress())));
     m_bSelectingFilter = false;
 }
@@ -416,7 +416,7 @@ void MemorySearchViewModel::OnFilterRangeChanged()
     pEntry->SetEndAddress(nEnd);
 
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-    pEntry->SetLabel(ra::StringPrintf(L"Custom (%s-%s)", pMemoryContext.FormatAddress(nStart), pMemoryContext.FormatAddress(nEnd)));
+    pEntry->SetLabel(ra::util::String::Printf(L"Custom (%s-%s)", pMemoryContext.FormatAddress(nStart), pMemoryContext.FormatAddress(nEnd)));
 
     SetPredefinedFilterRange(MEMORY_RANGE_CUSTOM);
 }
@@ -521,7 +521,7 @@ void MemorySearchViewModel::BeginNewSearch(ra::data::ByteAddress nStart, ra::dat
     std::unique_ptr<SearchResult> pResult;
     pResult.reset(new SearchResult());
     pResult->pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, nSearchType);
-    pResult->sSummary = ra::StringPrintf(L"New %s%s Search",
+    pResult->sSummary = ra::util::String::Printf(L"New %s%s Search",
         SearchTypes().GetLabelForId(ra::etoi(GetSearchType())),
         bIsAligned ? L" (aligned)" : L"");
 
@@ -608,7 +608,7 @@ void MemorySearchViewModel::DoApplyFilter()
         }
     }
 
-    ra::StringBuilder builder;
+    ra::util::StringBuilder builder;
     builder.Append(ComparisonTypes().GetLabelForId(ra::etoi(GetComparisonType())));
     builder.Append(L" ");
     switch (GetValueType())
@@ -747,7 +747,7 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
         std::lock_guard lock(m_oMutex);
         m_nSelectedSearchResult = nNewPage;
     }
-    SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
+    SetValue(SelectedPageProperty, ra::util::String::Printf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
 
     const auto& pResult = *m_vSearchResults.at(nNewPage).get();
     const auto nMatches = pResult.pResults.MatchingAddressCount();
@@ -892,7 +892,7 @@ void MemorySearchViewModel::UpdateResults()
                     break;
             }
 
-            pRow->SetAddress(ra::Widen(sAddress));
+            pRow->SetAddress(ra::util::String::Widen(sAddress));
 
             UpdateResult(*pRow, pCurrentResults.pResults, pResult, true, pMemoryContext);
 
@@ -951,7 +951,7 @@ bool MemorySearchViewModel::GetResult(gsl::index nIndex, ra::services::SearchRes
 
 std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmResult) const
 {
-    std::wstring sTooltip = ra::StringPrintf(L"%s\n%s | Current\n",
+    std::wstring sTooltip = ra::util::String::Printf(L"%s\n%s | Current\n",
         vmResult.GetAddress(), vmResult.GetCurrentValue());
 
     const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult)->pResults;
@@ -1276,7 +1276,7 @@ void MemorySearchViewModel::ExportResults() const
     vmFileDialog.SetDefaultExtension(L"csv");
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-SearchResults.csv", pGameContext.GameId()));
+    vmFileDialog.SetFileName(ra::util::String::Printf(L"%u-SearchResults.csv", pGameContext.GameId()));
 
     if (vmFileDialog.ShowSaveFileDialog() == ra::ui::DialogResult::OK)
     {
@@ -1285,7 +1285,7 @@ void MemorySearchViewModel::ExportResults() const
         if (pTextWriter == nullptr)
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                ra::StringPrintf(L"Could not create %s", vmFileDialog.GetFileName()));
+                ra::util::String::Printf(L"Could not create %s", vmFileDialog.GetFileName()));
         }
         else
         {
@@ -1294,7 +1294,7 @@ void MemorySearchViewModel::ExportResults() const
             if (pResults.MatchingAddressCount() > 500)
             {
                 ra::ui::viewmodels::ProgressViewModel vmProgress;
-                vmProgress.SetMessage(ra::StringPrintf(L"Exporting %d search results", nResults));
+                vmProgress.SetMessage(ra::util::String::Printf(L"Exporting %d search results", nResults));
                 vmProgress.QueueTask([this, &pTextWriter, &vmProgress]() {
                     SaveResults(*pTextWriter, [&vmProgress](int nProgress) {
                         vmProgress.SetProgress(nProgress);
@@ -1336,7 +1336,7 @@ void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::fu
             const auto nSize = (pResult.nAddress & 1) ? ra::data::Memory::Size::NibbleUpper : ra::data::Memory::Size::NibbleLower;
             const auto nAddress = pResult.nAddress >> 1;
 
-            sFile.WriteLine(ra::StringPrintf(L"%s%s,%s,%s,%s",
+            sFile.WriteLine(ra::util::String::Printf(L"%s%s,%s,%s,%s",
                 pMemoryContext.FormatAddress(nAddress), (pResult.nAddress & 1) ? "U" : "L",
                 pResults.GetFormattedValue(nAddress, nSize),
                 pCompareResults.GetFormattedValue(nAddress, nSize),
@@ -1359,7 +1359,7 @@ void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::fu
                 continue;
 
             const auto nAddress = pResult.nAddress;
-            sFile.WriteLine(ra::StringPrintf(L"%s,%s,%s,%s",
+            sFile.WriteLine(ra::util::String::Printf(L"%s,%s,%s,%s",
                 pMemoryContext.FormatAddress(nAddress),
                 pResults.GetFormattedValue(nAddress, nSize),
                 pCompareResults.GetFormattedValue(nAddress, nSize),
@@ -1382,7 +1382,7 @@ void MemorySearchViewModel::ImportResults()
         case ra::services::SearchType::BitCount:
         case ra::services::SearchType::FourBit:
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                ra::StringPrintf(L"Cannot import %s search results",
+                ra::util::String::Printf(L"Cannot import %s search results",
                     m_vSearchTypes.GetLabelForId(ra::etoi(GetSearchType()))));
             return;
     }
@@ -1403,7 +1403,7 @@ void MemorySearchViewModel::ImportResults()
     vmFileDialog.SetDefaultExtension(L"csv");
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-SearchResults.csv", pGameContext.GameId()));
+    vmFileDialog.SetFileName(ra::util::String::Printf(L"%u-SearchResults.csv", pGameContext.GameId()));
 
     if (vmFileDialog.ShowOpenFileDialog() == ra::ui::DialogResult::OK)
     {
@@ -1412,7 +1412,7 @@ void MemorySearchViewModel::ImportResults()
         if (pTextReader == nullptr)
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                ra::StringPrintf(L"Could not open %s", vmFileDialog.GetFileName()));
+                ra::util::String::Printf(L"Could not open %s", vmFileDialog.GetFileName()));
         }
         else
         {
@@ -1430,7 +1430,7 @@ void MemorySearchViewModel::ImportResults()
                 std::unique_ptr<SearchResult> pResult;
                 pResult.reset(new SearchResult());
                 pResult->sSummary =
-                    ra::StringPrintf(L"Imported Search", SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
+                    ra::util::String::Printf(L"Imported Search", SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
 
                 LoadResults(*pTextReader, *pResult);
 

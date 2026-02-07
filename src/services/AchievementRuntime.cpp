@@ -152,7 +152,7 @@ static int RichPresenceOverride(rc_client_t*, char buffer[], size_t buffer_size)
     // don't send text from modified rich presence to server
     const auto* pRichPresence = pGameContext.Assets().FindRichPresence();
     if (pRichPresence && pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
-        return snprintf(buffer, buffer_size, "Playing %s", ra::Narrow(pGameContext.GameTitle()).c_str());
+        return snprintf(buffer, buffer_size, "Playing %s", ra::util::String::Narrow(pGameContext.GameTitle()).c_str());
 
     // allow default behavior
     return 0;
@@ -164,15 +164,15 @@ static uint32_t IdentifyUnknownHash(uint32_t console_id, const char* hash, rc_cl
     RA_LOG_INFO("Could not identify game with hash %s", hash);
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+    auto sEstimatedGameTitle = ra::util::String::Widen(pEmulatorContext.GetGameTitle());
 
     if (console_id == RC_CONSOLE_UNKNOWN)
         console_id = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>().Id();
 
     ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
     vmUnknownGame.InitializeGameTitles(ra::itoe<ConsoleID>(console_id));
-    vmUnknownGame.SetSystemName(ra::Widen(rc_console_name(console_id)));
-    vmUnknownGame.SetChecksum(ra::Widen(hash));
+    vmUnknownGame.SetSystemName(ra::util::String::Widen(rc_console_name(console_id)));
+    vmUnknownGame.SetChecksum(ra::util::String::Widen(hash));
     vmUnknownGame.SetEstimatedGameName(sEstimatedGameTitle);
     vmUnknownGame.SetNewGameName(sEstimatedGameTitle);
 
@@ -463,8 +463,8 @@ private:
                     if (pAchievement->public_.badge_name[0] == 'L')
                     {
                         const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
-                        auto sUrl = ra::StringPrintf("file://%s",
-                            pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement->GetBadge())));
+                        auto sUrl = ra::util::String::Printf("file://%s",
+                            pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::util::String::Narrow(vmAchievement->GetBadge())));
                         std::replace(sUrl.begin(), sUrl.end(), '\\', '/');
                         pAchievement->public_.badge_url = pAchievement->public_.badge_locked_url =
                             rc_buffer_strncpy(&pSubsetWrapper->pBuffer, sUrl.c_str(), sUrl.length());
@@ -824,7 +824,7 @@ std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         auto* vmLocalAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
         if (vmLocalAchievement != nullptr)
-            sBadgeName = ra::Narrow(vmLocalAchievement->GetBadge());
+            sBadgeName = ra::util::String::Narrow(vmLocalAchievement->GetBadge());
     }
 
     return sBadgeName;
@@ -955,7 +955,7 @@ std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
 {
     if (m_nRichPresenceParseResult != RC_OK)
     {
-        return ra::StringPrintf(L"Parse error %d (line %d): %s", m_nRichPresenceParseResult,
+        return ra::util::String::Printf(L"Parse error %d (line %d): %s", m_nRichPresenceParseResult,
             m_nRichPresenceErrorLine, rc_error_str(m_nRichPresenceParseResult));
     }
 
@@ -966,7 +966,7 @@ std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
 
     char sRichPresence[256];
     if (rc_client_get_rich_presence_message(pClient, sRichPresence, sizeof(sRichPresence)) > 0)
-        return ra::Widen(sRichPresence);
+        return ra::util::String::Widen(sRichPresence);
 
     return L"";
 }
@@ -1251,12 +1251,12 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
 
             // we don't have the actual game title, so we can't just call InitializeTestCompatibilityMode
             vmUnknownGame.InitializeGameTitles(ra::itoe<ConsoleID>(pClient->game->public_.console_id));
-            vmUnknownGame.SetSystemName(ra::Widen(rc_console_name(pClient->game->public_.console_id)));
-            vmUnknownGame.SetChecksum(ra::Widen(pClient->game->public_.hash));
+            vmUnknownGame.SetSystemName(ra::util::String::Widen(rc_console_name(pClient->game->public_.console_id)));
+            vmUnknownGame.SetChecksum(ra::util::String::Widen(pClient->game->public_.hash));
             vmUnknownGame.SetSelectedGameId(nGameId);
 
             const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-            auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+            auto sEstimatedGameTitle = ra::util::String::Widen(pEmulatorContext.GetGameTitle());
             vmUnknownGame.SetEstimatedGameName(sEstimatedGameTitle);
 
             if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
@@ -1417,7 +1417,7 @@ static void RaisePauseOnChangeEvents(std::vector<rc_client_achievement_info_t*>&
         if (pAchievement != nullptr && pAchievement->trigger && !pAchievement->trigger->has_hits)
         {
             auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-            pFrameEventQueue.QueuePauseOnReset(ra::Widen(pAchievement->public_.title));
+            pFrameEventQueue.QueuePauseOnReset(ra::util::String::Widen(pAchievement->public_.title));
         }
     }
 }
@@ -1450,25 +1450,25 @@ static void RaisePauseOnChangeEvents(
                 if ((nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Start) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnReset(ra::StringPrintf(L"Start: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnReset(ra::util::String::Printf(L"Start: %s", pair.first->public_.title));
                 }
 
                 if ((nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Cancel) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnReset(ra::StringPrintf(L"Cancel: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnReset(ra::util::String::Printf(L"Cancel: %s", pair.first->public_.title));
                 }
 
                 if ((nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Submit) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnReset(ra::StringPrintf(L"Submit: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnReset(ra::util::String::Printf(L"Submit: %s", pair.first->public_.title));
                 }
 
                 if ((nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Value) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnReset(ra::StringPrintf(L"Value: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnReset(ra::util::String::Printf(L"Value: %s", pair.first->public_.title));
                 }
             }
         }
@@ -1496,19 +1496,19 @@ static void RaisePauseOnChangeEvents(
                 if ((nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Start) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnTrigger(ra::StringPrintf(L"Start: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnTrigger(ra::util::String::Printf(L"Start: %s", pair.first->public_.title));
                 }
 
                 if ((nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Cancel) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnTrigger(ra::StringPrintf(L"Cancel: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnTrigger(ra::util::String::Printf(L"Cancel: %s", pair.first->public_.title));
                 }
 
                 if ((nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Submit) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnTrigger(ra::StringPrintf(L"Submit: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnTrigger(ra::util::String::Printf(L"Submit: %s", pair.first->public_.title));
                 }
             }
         }
@@ -1608,8 +1608,8 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
     bool bIsError = false;
 
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement.title, pAchievement.points));
-    vmPopup->SetDetail(ra::Widen(pAchievement.description));
+    vmPopup->SetDescription(ra::util::String::Printf(L"%s (%u)", pAchievement.title, pAchievement.points));
+    vmPopup->SetDetail(ra::util::String::Widen(pAchievement.description));
     vmPopup->SetImage(ra::ui::ImageType::Badge, AchievementRuntime::GetAchievementBadge(pAchievement));
     vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
 
@@ -1703,11 +1703,11 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
 
         if (nRarity >= 10.0)
         {
-            vmPopup->SetTitle(ra::StringPrintf(L"Achievement Unlocked - %0.2f%%", nRarity));
+            vmPopup->SetTitle(ra::util::String::Printf(L"Achievement Unlocked - %0.2f%%", nRarity));
         }
         else if (nRarity > 0.0)
         {
-            vmPopup->SetTitle(ra::StringPrintf(L"Rare Achievement Unlocked - %0.2f%%", nRarity));
+            vmPopup->SetTitle(ra::util::String::Printf(L"Rare Achievement Unlocked - %0.2f%%", nRarity));
 
             const wchar_t* sPath = L"Overlay\\rareunlock.wav";
             const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
@@ -1732,7 +1732,7 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
         if (bTakeScreenshot)
         {
             std::wstring sPath =
-                ra::StringPrintf(L"%s%u.png", pConfiguration.GetScreenshotDirectory(), pAchievement.id);
+                ra::util::String::Printf(L"%s%u.png", pConfiguration.GetScreenshotDirectory(), pAchievement.id);
             pOverlayManager.CaptureScreenshot(nPopupId, sPath);
         }
 
@@ -1756,7 +1756,7 @@ static void HandleChallengeIndicatorShowEvent(const rc_client_achievement_t& pAc
     {
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.AddChallengeIndicator(vmAchievement->GetID(), ra::ui::ImageType::Badge,
-                                              ra::Narrow(vmAchievement->GetBadge()));
+                                              ra::util::String::Narrow(vmAchievement->GetBadge()));
     }
 }
 
@@ -1782,12 +1782,12 @@ static void HandleProgressIndicatorUpdateEvent(const rc_client_achievement_t& pA
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
 
         // use locked badge if available
-        auto sBadgeName = ra::Narrow(vmAchievement->GetBadge());
-        if (!ra::StringStartsWith(sBadgeName, "local\\"))
+        auto sBadgeName = ra::util::String::Narrow(vmAchievement->GetBadge());
+        if (!ra::util::String::StartsWith(sBadgeName, "local\\"))
             sBadgeName += "_lock";
 
         pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, sBadgeName,
-                                              ra::Widen(pAchievement.measured_progress));
+                                              ra::util::String::Widen(pAchievement.measured_progress));
     }
 }
 
@@ -1818,9 +1818,9 @@ static void ShowCompletionPopup(uint32_t nGameId, const std::wstring& sTitle, ui
     const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
 
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmMessage->SetTitle(ra::StringPrintf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", sTitle));
-    vmMessage->SetDescription(ra::StringPrintf(L"%u achievements, %u points", nAchievements, nPoints));
-    vmMessage->SetDetail(ra::StringPrintf(L"%s | Play time: %dh%02dm", pUserContext.GetDisplayName(),
+    vmMessage->SetTitle(ra::util::String::Printf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", sTitle));
+    vmMessage->SetDescription(ra::util::String::Printf(L"%u achievements, %u points", nAchievements, nPoints));
+    vmMessage->SetDetail(ra::util::String::Printf(L"%s | Play time: %dh%02dm", pUserContext.GetDisplayName(),
         nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
     vmMessage->SetImage(ra::ui::ImageType::Icon, sBadgeName);
     vmMessage->SetPopupType(ra::ui::viewmodels::Popup::Mastery);
@@ -1831,7 +1831,7 @@ static void ShowCompletionPopup(uint32_t nGameId, const std::wstring& sTitle, ui
 
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot))
     {
-        std::wstring sPath = ra::StringPrintf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), nGameId);
+        std::wstring sPath = ra::util::String::Printf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), nGameId);
         pOverlayManager.CaptureScreenshot(nPopupId, sPath);
     }
 }
@@ -1851,7 +1851,7 @@ static void HandleSubsetCompletedEvent(const rc_client_subset_t& pSubset)
                     nPoints += pAchievement->GetPoints();
             }
 
-            const auto sTitle = ra::StringPrintf(L"%s (%s)", pGameSubset.Title(), pGameContext.GameTitle());
+            const auto sTitle = ra::util::String::Printf(L"%s (%s)", pGameSubset.Title(), pGameContext.GameTitle());
             ShowCompletionPopup(pGameSubset.GameID(), sTitle, pSubset.num_achievements, nPoints, pSubset.badge_name);
             break;
         }
@@ -1866,7 +1866,7 @@ static void HandleGameCompletedEvent(const rc_client_t& pClient)
     rc_client_user_game_summary_t summary;
     rc_client_get_user_game_summary(&pClient, &summary);
 
-    ShowCompletionPopup(pGame->id, ra::Widen(pGame->title), summary.num_core_achievements, summary.points_core, pGame->badge_name);
+    ShowCompletionPopup(pGame->id, ra::util::String::Widen(pGame->title), summary.num_core_achievements, summary.points_core, pGame->badge_name);
 }
 
 static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeaderboard)
@@ -1887,7 +1887,7 @@ static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeader
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardStarted, L"Leaderboard attempt started",
-                                     ra::Widen(pLeaderboard.title), ra::Widen(pLeaderboard.description));
+                                     ra::util::String::Widen(pLeaderboard.title), ra::util::String::Widen(pLeaderboard.description));
     }
 }
 
@@ -1909,7 +1909,7 @@ static void HandleLeaderboardFailedEvent(const rc_client_leaderboard_t& pLeaderb
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardCanceled, L"Leaderboard attempt failed",
-                                     ra::Widen(pLeaderboard.title), ra::Widen(pLeaderboard.description));
+                                     ra::util::String::Widen(pLeaderboard.title), ra::util::String::Widen(pLeaderboard.description));
     }
 }
 
@@ -1924,13 +1924,13 @@ static void ShowSimplifiedScoreboard(const rc_client_leaderboard_t& pLeaderboard
     }
 
     auto vmScoreboard = std::make_unique<ra::ui::viewmodels::ScoreboardViewModel>();
-    vmScoreboard->SetHeaderText(ra::Widen(pLeaderboard.title));
+    vmScoreboard->SetHeaderText(ra::util::String::Widen(pLeaderboard.title));
 
     const auto& pUserName = ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName();
     auto& pEntryViewModel = vmScoreboard->Entries().Add();
     pEntryViewModel.SetRank(0);
-    pEntryViewModel.SetScore(ra::Widen(pLeaderboard.tracker_value));
-    pEntryViewModel.SetUserName(ra::Widen(pUserName));
+    pEntryViewModel.SetScore(ra::util::String::Widen(pLeaderboard.tracker_value));
+    pEntryViewModel.SetUserName(ra::util::String::Widen(pUserName));
     pEntryViewModel.SetHighlighted(true);
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
@@ -1952,7 +1952,7 @@ static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLead
         return;
 
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmPopup->SetDescription(ra::Widen(pLeaderboard.title));
+    vmPopup->SetDescription(ra::util::String::Widen(pLeaderboard.title));
     std::wstring sTitle = L"Leaderboard Submitted";
     bool bSubmit = true;
 
@@ -2036,7 +2036,7 @@ static void HandleLeaderboardTrackerUpdateEvent(const rc_client_leaderboard_trac
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     auto* pScoreTracker = pOverlayManager.GetScoreTracker(pTracker.id);
     if (pScoreTracker)
-        pScoreTracker->SetDisplayText(ra::Widen(pTracker.display));
+        pScoreTracker->SetDisplayText(ra::util::String::Widen(pTracker.display));
 }
 
 static void HandleLeaderboardTrackerShowEvent(const rc_client_leaderboard_tracker_t& pTracker)
@@ -2048,7 +2048,7 @@ static void HandleLeaderboardTrackerShowEvent(const rc_client_leaderboard_tracke
     {
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         auto& pScoreTracker = pOverlayManager.AddScoreTracker(pTracker.id);
-        pScoreTracker.SetDisplayText(ra::Widen(pTracker.display));
+        pScoreTracker.SetDisplayText(ra::util::String::Widen(pTracker.display));
     }
 }
 
@@ -2070,7 +2070,7 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
     }
 
     auto vmScoreboard = std::make_unique<ra::ui::viewmodels::ScoreboardViewModel>();
-    vmScoreboard->SetHeaderText(ra::Widen(pLeaderboard.title));
+    vmScoreboard->SetHeaderText(ra::util::String::Widen(pLeaderboard.title));
 
     const auto& pUserName = ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName();
     constexpr uint32_t nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
@@ -2082,8 +2082,8 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
     {
         auto& pEntryViewModel = vmScoreboard->Entries().Add();
         pEntryViewModel.SetRank(pEntry->rank);
-        pEntryViewModel.SetScore(ra::Widen(pEntry->score));
-        pEntryViewModel.SetUserName(ra::Widen(pEntry->username));
+        pEntryViewModel.SetScore(ra::util::String::Widen(pEntry->score));
+        pEntryViewModel.SetUserName(ra::util::String::Widen(pEntry->username));
 
         if (pEntry->username == pUserName)
         {
@@ -2091,7 +2091,7 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
             pEntryViewModel.SetHighlighted(true);
 
             if (strcmp(pScoreboard.best_score, pScoreboard.submitted_score) != 0)
-                pEntryViewModel.SetScore(ra::StringPrintf(L"(%s) %s", pScoreboard.submitted_score, pScoreboard.best_score));
+                pEntryViewModel.SetScore(ra::util::String::Printf(L"(%s) %s", pScoreboard.submitted_score, pScoreboard.best_score));
         }
     }
 
@@ -2104,11 +2104,11 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
 
             if (strcmp(pScoreboard.best_score, pScoreboard.submitted_score) != 0)
                 pEntryViewModel->SetScore(
-                    ra::StringPrintf(L"(%s) %s", pScoreboard.submitted_score, pScoreboard.best_score));
+                    ra::util::String::Printf(L"(%s) %s", pScoreboard.submitted_score, pScoreboard.best_score));
             else
-                pEntryViewModel->SetScore(ra::Widen(pScoreboard.best_score));
+                pEntryViewModel->SetScore(ra::util::String::Widen(pScoreboard.best_score));
 
-            pEntryViewModel->SetUserName(ra::Widen(pUserName));
+            pEntryViewModel->SetUserName(ra::util::String::Widen(pUserName));
             pEntryViewModel->SetHighlighted(true);
         }
     }
@@ -2125,7 +2125,7 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
         const auto nPopupId = s_mAchievementPopups[nAchievementId];
 
         const auto sErrorMessage =
-            pServerError.error_message ? ra::Widen(pServerError.error_message) : L"Error submitting unlock";
+            pServerError.error_message ? ra::util::String::Widen(pServerError.error_message) : L"Error submitting unlock";
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         auto pPopup = pOverlayManager.GetMessage(nPopupId);
         if (pPopup != nullptr)
@@ -2147,12 +2147,12 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
             if (pAchievement != nullptr)
             {
                 vmPopup->SetDescription(
-                    ra::StringPrintf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
-                vmPopup->SetImage(ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()));
+                    ra::util::String::Printf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
+                vmPopup->SetImage(ra::ui::ImageType::Badge, ra::util::String::Narrow(pAchievement->GetBadge()));
             }
             else
             {
-                vmPopup->SetDescription(ra::StringPrintf(L"Achievement %u", nAchievementId));
+                vmPopup->SetDescription(ra::util::String::Printf(L"Achievement %u", nAchievementId));
             }
 
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
@@ -2172,9 +2172,9 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nLeaderboardId);
         std::wstring sLeaderboardName = (pLeaderboard != nullptr) ?
-            pLeaderboard->GetName() : ra::StringPrintf(L"Leaderboard %u", nLeaderboardId);
+            pLeaderboard->GetName() : ra::util::String::Printf(L"Leaderboard %u", nLeaderboardId);
         const auto sErrorMessage = pServerError.error_message ?
-            ra::Widen(pServerError.error_message) : L"Error submitting leaderboard entry";
+            ra::util::String::Widen(pServerError.error_message) : L"Error submitting leaderboard entry";
 
         std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
         vmMessage->SetTitle(L"Leaderboard Submit FAILED");
@@ -2190,7 +2190,7 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
     }
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-        ra::StringPrintf(L"%s:%u %s", pServerError.api, pServerError.related_id, pServerError.error_message));
+        ra::util::String::Printf(L"%s:%u %s", pServerError.api, pServerError.related_id, pServerError.error_message));
 }
 
 static void HandleResetEvent()
@@ -2288,7 +2288,7 @@ void AchievementRuntime::ResetRuntime()
     rc_client_reset(pClient);
 }
 
-static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigger_t* pTrigger,
+static void ProcessStateString(ra::util::Tokenizer& pTokenizer, unsigned int nId, rc_trigger_t* pTrigger,
                                const std::string& sSalt, const std::string& sMemString)
 {
     struct ConditionState
@@ -2339,9 +2339,9 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
     const size_t nEnd = pTokenizer.CurrentPosition();
 
     // read the given md5s
-    std::string sGivenMD5Progress = pTokenizer.ReadTo(':');
+    const auto sGivenMD5Progress = pTokenizer.ReadTo(':');
     pTokenizer.Advance();
-    std::string sGivenMD5Achievement = pTokenizer.ReadTo(':');
+    const auto sGivenMD5Achievement = pTokenizer.ReadTo(':');
     pTokenizer.Advance();
 
     if (!pTrigger)
@@ -2362,7 +2362,7 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
             // regenerate the md5 and see if it sticks
             const char* pStart = pTokenizer.GetPointer(nStart);
             std::string sModifiedProgressString =
-                ra::StringPrintf("%s%.*s%s%u", sSalt, nEnd - nStart, pStart, sSalt, nId);
+                ra::util::String::Printf("%s%.*s%s%u", sSalt, nEnd - nStart, pStart, sSalt, nId);
             std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
             if (sMD5Progress != sGivenMD5Progress)
             {
@@ -2413,7 +2413,7 @@ static bool LoadProgressV1(rc_client_t* pClient, const std::string& sProgress)
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
 
-    Tokenizer pTokenizer(sProgress);
+    ra::util::Tokenizer pTokenizer(sProgress);
 
     while (!pTokenizer.EndOfString())
     {
@@ -2464,7 +2464,7 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
         if (sLine.empty())
             continue;
 
-        Tokenizer tokenizer(sLine);
+        ra::util::Tokenizer tokenizer(sLine);
         const auto c = tokenizer.PeekChar();
         tokenizer.Advance();
 
@@ -2623,7 +2623,7 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
 
     std::string sContents;
 
-    std::wstring sAchievementStateFile = ra::Widen(sLoadStateFilename) + L".rap";
+    std::wstring sAchievementStateFile = ra::util::String::Widen(sLoadStateFilename) + L".rap";
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     auto pFile = pFileSystem.OpenTextFile(sAchievementStateFile);
     if (pFile == nullptr || !pFile->GetLine(sContents))
@@ -2680,7 +2680,7 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
     if (sSaveStateFilename == nullptr)
         return;
 
-    std::wstring sAchievementStateFile = ra::Widen(sSaveStateFilename) + L".rap";
+    std::wstring sAchievementStateFile = ra::util::String::Widen(sSaveStateFilename) + L".rap";
     auto pFile = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().CreateTextFile(sAchievementStateFile);
     if (pFile == nullptr)
     {

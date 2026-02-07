@@ -111,7 +111,7 @@ void GameAssets::OnBeforeItemRemoved(ModelBase& pModel)
     if (pLocalBadges)
     {
         const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pModel);
-        if (pAchievement && ra::StringStartsWith(pAchievement->GetBadge(), L"local\\"))
+        if (pAchievement && ra::util::String::StartsWith(pAchievement->GetBadge(), L"local\\"))
             pLocalBadges->RemoveReference(pAchievement->GetBadge(), pAchievement->IsBadgeCommitted());
     }
 
@@ -202,7 +202,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
         unsigned nId = 0;
         unsigned nSubsetId = 0;
 
-        ra::Tokenizer pTokenizer(sLine);
+        ra::util::Tokenizer pTokenizer(sLine);
         switch (pTokenizer.PeekChar())
         {
             case '0': case '1': case '2': case '3': case '4':

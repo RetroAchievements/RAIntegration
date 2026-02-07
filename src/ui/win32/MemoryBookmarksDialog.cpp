@@ -104,7 +104,7 @@ public:
         const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
         if (pItem->IsIndirectAddress())
-            return ra::StringPrintf(L"(%s)", pMemoryContext.FormatAddress(nValue).substr(2));
+            return ra::util::String::Printf(L"(%s)", pMemoryContext.FormatAddress(nValue).substr(2));
 
         return pMemoryContext.FormatAddress(nValue);
     }

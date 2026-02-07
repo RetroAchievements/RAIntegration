@@ -197,7 +197,7 @@ public:
     const std::string* GetServerCodeNoteAuthor(ra::data::ByteAddress nAddress) const;
 
 	void Serialize(ra::services::TextWriter&) const override;
-    bool Deserialize(ra::Tokenizer&) override;
+    bool Deserialize(ra::util::Tokenizer&) override;
 
     void DoFrame() override;
 

@@ -89,7 +89,7 @@ void RichPresenceMonitorViewModel::UpdateDisplayString()
         case ra::data::models::AssetState::Disabled: // parse error, still display it
         {
             auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-            const std::wstring sDisplayString = ra::Widen(pRuntime.GetRichPresenceDisplayString());
+            const std::wstring sDisplayString = ra::util::String::Widen(pRuntime.GetRichPresenceDisplayString());
             SetDisplayString(sDisplayString);
             return;
         }

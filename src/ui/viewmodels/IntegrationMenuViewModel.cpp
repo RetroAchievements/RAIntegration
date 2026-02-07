@@ -201,7 +201,7 @@ void IntegrationMenuViewModel::OpenUserPage()
     {
         const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        const auto sUrl = ra::StringPrintf("%s/user/%s", pConfiguration.GetHostUrl(), pUserContext.GetDisplayName());
+        const auto sUrl = ra::util::String::Printf("%s/user/%s", pConfiguration.GetHostUrl(), pUserContext.GetDisplayName());
 
         const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
         pDesktop.OpenUrl(sUrl);
@@ -214,7 +214,7 @@ void IntegrationMenuViewModel::OpenGamePage()
     if (pGameContext.GameId() != 0)
     {
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        const auto sUrl = ra::StringPrintf("%s/game/%u", pConfiguration.GetHostUrl(), pGameContext.ActiveGameId());
+        const auto sUrl = ra::util::String::Printf("%s/game/%u", pConfiguration.GetHostUrl(), pGameContext.ActiveGameId());
 
         const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
         pDesktop.OpenUrl(sUrl);
@@ -393,7 +393,7 @@ void IntegrationMenuViewModel::ShowGameHash()
         vmUnknownGame.InitializeTestCompatibilityMode();
 
         auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetGameTitle();
-        vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
+        vmUnknownGame.SetEstimatedGameName(ra::util::String::Widen(sEstimatedGameTitle));
         vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::context::IConsoleContext>().Name());
 
         if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
@@ -413,12 +413,12 @@ void IntegrationMenuViewModel::ShowGameHash()
             if (nConsoleId != ConsoleID::UnknownConsoleID)
             {
                 const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-                auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+                auto sEstimatedGameTitle = ra::util::String::Widen(pEmulatorContext.GetGameTitle());
 
                 ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
                 vmUnknownGame.InitializeGameTitles(nConsoleId);
                 vmUnknownGame.SetSystemName(pConsoleContext.Name());
-                vmUnknownGame.SetChecksum(ra::Widen(pGameContext.GameHash()));
+                vmUnknownGame.SetChecksum(ra::util::String::Widen(pGameContext.GameHash()));
                 vmUnknownGame.SetEstimatedGameName(sEstimatedGameTitle);
                 vmUnknownGame.SetNewGameName(sEstimatedGameTitle);
 

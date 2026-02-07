@@ -23,7 +23,6 @@ UpdateLeaderboard::Response UpdateLeaderboard::Request::Call() const { return Se
 FetchLeaderboardInfo::Response FetchLeaderboardInfo::Request::Call() const { return Server().FetchLeaderboardInfo(*this); }
 UpdateRichPresence::Response UpdateRichPresence::Request::Call() const { return Server().UpdateRichPresence(*this); }
 LatestClient::Response LatestClient::Request::Call() const { return Server().LatestClient(*this); }
-FetchGamesList::Response FetchGamesList::Request::Call() const { return Server().FetchGamesList(*this); }
 SubmitNewTitle::Response SubmitNewTitle::Request::Call() const { return Server().SubmitNewTitle(*this); }
 FetchBadgeIds::Response FetchBadgeIds::Request::Call() const { return Server().FetchBadgeIds(*this); }
 UploadBadge::Response UploadBadge::Request::Call() const { return Server().UploadBadge(*this); }

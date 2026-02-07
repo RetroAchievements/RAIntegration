@@ -85,18 +85,6 @@ public:
         UnknownGameViewModelHarness vmUnknownGame;
         vmUnknownGame.mockConsoleContext.SetId(ConsoleID::C64);
 
-        vmUnknownGame.mockServer.HandleRequest<ra::api::FetchGamesList>([]
-            (const ra::api::FetchGamesList::Request& request, ra::api::FetchGamesList::Response& response)
-        {
-            Assert::AreEqual(30U, request.ConsoleId);
-
-            response.Result = ra::api::ApiResult::Success;
-            response.Games.emplace_back(33U, L"Game 33");
-            response.Games.emplace_back(37U, L"Game 37");
-
-            return true;
-        });
-
         vmUnknownGame.InitializeGameTitles();
 
         // <New Title> item should be loaded immediately, but linking should be disabled
@@ -105,6 +93,10 @@ public:
         Assert::IsFalse(vmUnknownGame.GameTitles().IsFrozen());
         Assert::IsFalse(vmUnknownGame.IsAssociateEnabled());
         Assert::IsFalse(vmUnknownGame.IsSelectedGameEnabled());
+
+        // trigger the response
+        vmUnknownGame.mockRcClient.MockResponse("r=gameslist&c=30",
+            "{\"Success\":true,\"Response\":{\"33\":\"Game 33\",\"37\":\"Game 37\"}}");
 
         // after server response, collection should have three items and be frozen. linking should be enabled
         vmUnknownGame.mockThreadPool.ExecuteNextTask();
@@ -563,21 +555,17 @@ public:
         UnknownGameViewModelHarness vmUnknownGame;
         vmUnknownGame.mockConsoleContext.SetId(ConsoleID::C64);
 
-        vmUnknownGame.mockServer.HandleRequest<ra::api::FetchGamesList>([]
-        (const ra::api::FetchGamesList::Request&, ra::api::FetchGamesList::Response& response)
-            {
-                response.Result = ra::api::ApiResult::Success;
-                response.Games.emplace_back(6U, L"Another Game");
-                response.Games.emplace_back(2U, L"Game the First");
-                response.Games.emplace_back(1U, L"My First Game");
-                response.Games.emplace_back(3U, L"Not This Game");
-                response.Games.emplace_back(5U, L"Only That Game");
-                response.Games.emplace_back(4U, L"Play This");
-                return true;
-            });
+        vmUnknownGame.mockRcClient.MockResponse("r=gameslist&c=30",
+            "{\"Success\":true,\"Response\":{"
+                "\"6\":\"Another Game\","
+                "\"2\":\"Game the First\","
+                "\"1\":\"My First Game\","
+                "\"3\":\"Not This Game\","
+                "\"5\":\"Only That Game\","
+                "\"4\":\"Play This\""
+            "}}");
 
         vmUnknownGame.InitializeGameTitles();
-        vmUnknownGame.mockThreadPool.ExecuteNextTask();
         vmUnknownGame.SetSelectedGameId(4);
 
         // initial list should be everything

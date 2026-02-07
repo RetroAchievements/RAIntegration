@@ -4,7 +4,6 @@
 
 #include "util\Strings.hh"
 
-#include "api\FetchGamesList.hh"
 #include "api\SubmitNewTitle.hh"
 
 #include "context\IConsoleContext.hh"
@@ -20,8 +19,9 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-#include "rcheevos\src\rc_client_external.h"
-#include "rcheevos\src\rc_client_internal.h"
+#include <rcheevos\include\rc_api_info.h>
+#include <rcheevos\src\rc_client_external.h>
+#include <rcheevos\src\rc_client_internal.h>
 
 namespace ra {
 namespace ui {
@@ -64,27 +64,37 @@ void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
     SetValue(IsSelectedGameEnabledProperty, false);
     SetValue(IsAssociateEnabledProperty, false);
 
-    ra::api::FetchGamesList::Request request;
-    request.ConsoleId = consoleId;
+    const auto& pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>();
 
-    request.CallAsync([this, pAsyncHandle = CreateAsyncHandle()](const ra::api::FetchGamesList::Response& response)
-    {
+    rc_api_fetch_games_list_request_t request;
+    memset(&request, 0, sizeof(request));
+    request.console_id = ra::etoi(consoleId);
+
+    rc_api_request_t api_request;
+    const auto nResult = rc_api_init_fetch_games_list_request_hosted(&api_request, &request, &pClient.GetClient()->state.host);
+    Expects(nResult == RC_OK);
+
+    pClient.DispatchRequest(api_request, [this, pAsyncHandle = CreateAsyncHandle()](const rc_api_server_response_t& api_response, void*) {
         ra::data::AsyncKeepAlive pKeepAlive(*pAsyncHandle);
         if (pAsyncHandle->IsDestroyed())
             return;
 
-        if (response.Failed())
+        rc_api_fetch_games_list_response_t response;
+        const auto nResult = rc_api_process_fetch_games_list_server_response(&response, &api_response);
+        if (nResult != RC_OK)
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"Could not retrieve list of existing games",
-                                                                      ra::util::String::Widen(response.ErrorMessage));
+                ra::util::String::Widen(response.response.error_message ? response.response.error_message : rc_error_str(nResult)));
         }
         else
         {
             m_vGameTitles.BeginUpdate();
-            for (const auto& pGame : response.Games)
+            for (uint32_t i = 0; i < response.num_entries; ++i)
             {
-                m_vAllGameTitles.push_back(std::make_pair(pGame.Id, pGame.Name));
-                m_vGameTitles.Add(pGame.Id, pGame.Name);
+                const auto nId = response.entries[i].id;
+                const auto sTitle = ra::util::String::Widen(response.entries[i].name);
+                m_vAllGameTitles.push_back(std::make_pair(nId, sTitle));
+                m_vGameTitles.Add(nId, sTitle);
             }
             m_vGameTitles.EndUpdate();
         }
@@ -99,7 +109,8 @@ void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
         const auto nSelectedGameId = GetSelectedGameId();
         if (nSelectedGameId == 0)
             CheckForPreviousAssociation();
-    });
+
+    }, nullptr);
 }
 
 void UnknownGameViewModel::InitializeTestCompatibilityMode()

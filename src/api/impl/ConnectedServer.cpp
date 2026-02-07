@@ -975,53 +975,6 @@ LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request
     return response;
 }
 
-FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::Request& request)
-{
-    FetchGamesList::Response response;
-
-    rc_api_fetch_games_list_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    api_params.console_id = request.ConsoleId;
-
-    rc_api_request_t api_request;
-    const int result = rc_api_init_fetch_games_list_request(&api_request, &api_params);
-    if (result == RC_OK)
-    {
-        ra::services::Http::Response httpResponse;
-        if (DoRequest(api_request, FetchGamesList::Name(), httpResponse, response))
-        {
-            rc_api_fetch_games_list_response_t api_response;
-            rc_api_server_response_t server_response;
-            HttpResponseToServerResponse(httpResponse, &server_response);
-
-            const auto nResult = rc_api_process_fetch_games_list_server_response(&api_response, &server_response);
-
-            if (ValidateResponse(nResult, api_response.response, FetchGamesList::Name(), httpResponse.StatusCode(), response))
-            {
-                response.Result = ApiResult::Success;
-
-                response.Games.reserve(api_response.num_entries);
-                for (unsigned i = 0; i < api_response.num_entries; ++i)
-                {
-                    const auto* pEntry = &api_response.entries[i];
-                    response.Games.emplace_back(pEntry->id, ra::util::String::Widen(pEntry->name));
-                }
-            }
-
-            rc_api_destroy_fetch_games_list_response(&api_response);
-        }
-    }
-    else
-    {
-        response.Result = ApiResult::Failed;
-        response.ErrorMessage = rc_error_str(result);
-    }
-
-    rc_api_destroy_request(&api_request);
-    return response;
-}
-
 SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::Request& request)
 {
     SubmitNewTitle::Response response;

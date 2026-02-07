@@ -76,11 +76,6 @@ public:
         return UnsupportedApi<LatestClient::Response>(LatestClient::Name());
     }
 
-    FetchGamesList::Response FetchGamesList(const FetchGamesList::Request&) override
-    {
-        return UnsupportedApi<FetchGamesList::Response>(FetchGamesList::Name());
-    }
-
     SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request&) override
     {
         return UnsupportedApi<SubmitNewTitle::Response>(SubmitNewTitle::Name());

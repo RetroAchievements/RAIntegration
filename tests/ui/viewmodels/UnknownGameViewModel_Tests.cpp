@@ -52,7 +52,11 @@ private:
             m_vGameTitles.Add(40, L"Game 40");
             m_vGameTitles.Add(50, L"Game 50");
             m_vGameTitles.Add(60, L"Game 60");
-            m_vGameTitles.Freeze();
+        }
+
+        const std::wstring& GetGameTitle(gsl::index nIndex)
+        {
+            return m_vGameTitles.GetItemValue(nIndex, ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
         }
 
         void TestAsyncHandle(ra::services::mocks::MockThreadPool& threadPool, std::function<void()>&& fCallback)
@@ -108,7 +112,6 @@ public:
         Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GameTitles().GetLabelForId(0));
         Assert::AreEqual(std::wstring(L"Game 33"), vmUnknownGame.GameTitles().GetLabelForId(33));
         Assert::AreEqual(std::wstring(L"Game 37"), vmUnknownGame.GameTitles().GetLabelForId(37));
-        Assert::IsTrue(vmUnknownGame.GameTitles().IsFrozen());
         Assert::IsTrue(vmUnknownGame.IsAssociateEnabled());
         Assert::IsTrue(vmUnknownGame.IsSelectedGameEnabled());
     }
@@ -465,6 +468,7 @@ public:
         Assert::AreEqual(33, vmUnknownGame.GetSelectedGameId());
         Assert::AreEqual(std::wstring(L"CHECKSUM"), vmUnknownGame.GetChecksum());
         Assert::IsTrue(vmUnknownGame.GameTitles().IsFrozen());
+        Assert::AreEqual(std::wstring(L"1/1"), vmUnknownGame.GetFilterResults());
 
         Assert::IsFalse(vmUnknownGame.IsSelectedGameEnabled());
     }
@@ -552,6 +556,91 @@ public:
         Assert::IsNotNull(pGameHash);
         Assert::AreEqual(40U, pGameHash->game_id);
         Assert::AreEqual({0}, pGameHash->is_unknown);
+    }
+
+    TEST_METHOD(TestApplyFilter)
+    {
+        UnknownGameViewModelHarness vmUnknownGame;
+        vmUnknownGame.mockConsoleContext.SetId(ConsoleID::C64);
+
+        vmUnknownGame.mockServer.HandleRequest<ra::api::FetchGamesList>([]
+        (const ra::api::FetchGamesList::Request&, ra::api::FetchGamesList::Response& response)
+            {
+                response.Result = ra::api::ApiResult::Success;
+                response.Games.emplace_back(6U, L"Another Game");
+                response.Games.emplace_back(2U, L"Game the First");
+                response.Games.emplace_back(1U, L"My First Game");
+                response.Games.emplace_back(3U, L"Not This Game");
+                response.Games.emplace_back(5U, L"Only That Game");
+                response.Games.emplace_back(4U, L"Play This");
+                return true;
+            });
+
+        vmUnknownGame.InitializeGameTitles();
+        vmUnknownGame.mockThreadPool.ExecuteNextTask();
+        vmUnknownGame.SetSelectedGameId(4);
+
+        // initial list should be everything
+        Assert::AreEqual({ 7U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"Another Game"), vmUnknownGame.GetGameTitle(1));
+        Assert::AreEqual(std::wstring(L"Game the First"), vmUnknownGame.GetGameTitle(2));
+        Assert::AreEqual(std::wstring(L"My First Game"), vmUnknownGame.GetGameTitle(3));
+        Assert::AreEqual(std::wstring(L"Not This Game"), vmUnknownGame.GetGameTitle(4));
+        Assert::AreEqual(std::wstring(L"Only That Game"), vmUnknownGame.GetGameTitle(5));
+        Assert::AreEqual(std::wstring(L"Play This"), vmUnknownGame.GetGameTitle(6));
+        Assert::AreEqual(std::wstring(L"6/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(4, vmUnknownGame.GetSelectedGameId());
+
+        // apply filter should drop all but two games and <New Title>
+        vmUnknownGame.SetFilterText(L"This");
+        Assert::AreEqual({ 3U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"Not This Game"), vmUnknownGame.GetGameTitle(1));
+        Assert::AreEqual(std::wstring(L"Play This"), vmUnknownGame.GetGameTitle(2));
+        Assert::AreEqual(std::wstring(L"2/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(4, vmUnknownGame.GetSelectedGameId()); // selected item still visible
+
+        // apply different filter
+        vmUnknownGame.SetFilterText(L"Game");
+        Assert::AreEqual({ 6U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"Another Game"), vmUnknownGame.GetGameTitle(1));
+        Assert::AreEqual(std::wstring(L"Game the First"), vmUnknownGame.GetGameTitle(2));
+        Assert::AreEqual(std::wstring(L"My First Game"), vmUnknownGame.GetGameTitle(3));
+        Assert::AreEqual(std::wstring(L"Not This Game"), vmUnknownGame.GetGameTitle(4));
+        Assert::AreEqual(std::wstring(L"Only That Game"), vmUnknownGame.GetGameTitle(5));
+        Assert::AreEqual(std::wstring(L"5/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(6, vmUnknownGame.GetSelectedGameId()); // selected item no longer visible, select first visible
+
+        // no matches
+        vmUnknownGame.SetFilterText(L"Banana");
+        Assert::AreEqual({ 1U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"0/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(0, vmUnknownGame.GetSelectedGameId()); // no items visible, select <New Title>
+
+        // case insensitive partial match
+        vmUnknownGame.SetFilterText(L"Not");
+        Assert::AreEqual({ 3U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"Another Game"), vmUnknownGame.GetGameTitle(1));
+        Assert::AreEqual(std::wstring(L"Not This Game"), vmUnknownGame.GetGameTitle(2));
+        Assert::AreEqual(std::wstring(L"2/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(6, vmUnknownGame.GetSelectedGameId()); // automatically select first item if <New Title> was selected
+
+        // empty filter returns all
+        vmUnknownGame.SetFilterText(L"");
+        Assert::AreEqual({ 7U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"Another Game"), vmUnknownGame.GetGameTitle(1));
+        Assert::AreEqual(std::wstring(L"Game the First"), vmUnknownGame.GetGameTitle(2));
+        Assert::AreEqual(std::wstring(L"My First Game"), vmUnknownGame.GetGameTitle(3));
+        Assert::AreEqual(std::wstring(L"Not This Game"), vmUnknownGame.GetGameTitle(4));
+        Assert::AreEqual(std::wstring(L"Only That Game"), vmUnknownGame.GetGameTitle(5));
+        Assert::AreEqual(std::wstring(L"Play This"), vmUnknownGame.GetGameTitle(6));
+        Assert::AreEqual(std::wstring(L"6/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(6, vmUnknownGame.GetSelectedGameId()); // selected item still visible
     }
 };
 

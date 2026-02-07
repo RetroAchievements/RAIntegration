@@ -35,6 +35,8 @@ const StringModelProperty UnknownGameViewModel::ProblemHeaderProperty("UnknownGa
 const StringModelProperty UnknownGameViewModel::ChecksumProperty("UnknownGameViewModel", "Checksum", L"");
 const StringModelProperty UnknownGameViewModel::EstimatedGameNameProperty("UnknownGameViewModel", "EstimatedGameName", L"");
 const StringModelProperty UnknownGameViewModel::SystemNameProperty("UnknownGameViewModel", "SystemName", L"");
+const StringModelProperty UnknownGameViewModel::FilterTextProperty("UnknownGameViewModel", "FilterText", L"");
+const StringModelProperty UnknownGameViewModel::FilterResultsProperty("UnknownGameViewModel", "FilterResults", L"1/1");
 const BoolModelProperty UnknownGameViewModel::TestModeProperty("UnknownGameViewModel", "TestMode", false);
 
 UnknownGameViewModel::UnknownGameViewModel() noexcept
@@ -80,11 +82,16 @@ void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
         {
             m_vGameTitles.BeginUpdate();
             for (const auto& pGame : response.Games)
+            {
+                m_vAllGameTitles.push_back(std::make_pair(pGame.Id, pGame.Name));
                 m_vGameTitles.Add(pGame.Id, pGame.Name);
+            }
             m_vGameTitles.EndUpdate();
         }
 
-        m_vGameTitles.Freeze();
+        SetValue(FilterResultsProperty, ra::util::String::Printf(L"%u/%u",
+            gsl::narrow_cast<uint32_t>(m_vAllGameTitles.size()),
+            gsl::narrow_cast<uint32_t>(m_vAllGameTitles.size())));
 
         SetValue(IsAssociateEnabledProperty, true);
         SetValue(IsSelectedGameEnabledProperty, true);
@@ -262,7 +269,11 @@ bool UnknownGameViewModel::BeginTest()
 
 void UnknownGameViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (args.Property == NewGameNameProperty && !m_bSelectingGame)
+    if (args.Property == FilterTextProperty)
+    {
+        ApplyFilter();
+    }
+    else if (args.Property == NewGameNameProperty && !m_bSelectingGame)
     {
         // user is entering a custom name, make sure <New Game> is selected
         SetSelectedGameId(0);
@@ -293,6 +304,62 @@ void UnknownGameViewModel::CopyChecksumToClipboard() const
 {
     const auto& pClipboard = ra::services::ServiceLocator::Get<ra::services::IClipboard>();
     pClipboard.SetText(GetChecksum());
+}
+
+void UnknownGameViewModel::ApplyFilter()
+{
+    const auto& pFilterText = GetFilterText();
+
+    m_vGameTitles.BeginUpdate();
+    gsl::index nInsertIndex = 1; // <New Game> should always be visible
+    uint32_t nIdAtInsertIndex = m_vGameTitles.GetItemValue(nInsertIndex, LookupItemViewModel::IdProperty);
+
+    for (auto& pPair : m_vAllGameTitles)
+    {
+        const bool bVisible = pFilterText.empty() || ra::util::String::ContainsCaseInsensitive(pPair.second, pFilterText);
+        if (bVisible)
+        {
+            if (nInsertIndex == gsl::narrow_cast<gsl::index>(m_vGameTitles.Count()))
+            {
+                m_vGameTitles.Add(pPair.first, pPair.second);
+            }
+            else if (nIdAtInsertIndex != pPair.first)
+            {
+                m_vGameTitles.Add(pPair.first, pPair.second);
+                m_vGameTitles.MoveItem(m_vGameTitles.Count() - 1, nInsertIndex);
+            }
+            else
+            {
+                nIdAtInsertIndex = m_vGameTitles.GetItemValue(nInsertIndex + 1, LookupItemViewModel::IdProperty);
+            }
+
+            ++nInsertIndex;
+        }
+        else
+        {
+            if (pPair.first == nIdAtInsertIndex)
+            {
+                m_vGameTitles.RemoveAt(nInsertIndex);
+                nIdAtInsertIndex = m_vGameTitles.GetItemValue(nInsertIndex, LookupItemViewModel::IdProperty);
+            }
+        }
+    }
+    m_vGameTitles.EndUpdate();
+
+    const auto nSelectedGameId = GetSelectedGameId();
+    if (nSelectedGameId == 0 || m_vGameTitles.FindItemIndex(LookupItemViewModel::IdProperty, nSelectedGameId) == -1)
+    {
+        // previously selected item is no longer visible. select the first matching item, or <New Value> if no matches exist
+        if (m_vGameTitles.Count() > 1)
+            SetSelectedGameId(m_vGameTitles.GetItemValue(1, LookupItemViewModel::IdProperty));
+        else
+            SetSelectedGameId(0);
+    }
+
+    SetValue(FilterResultsProperty, ra::util::String::Printf(L"%u/%u",
+        gsl::narrow_cast<uint32_t>(m_vGameTitles.Count()) - 1, // ignore <New Title>
+        gsl::narrow_cast<uint32_t>(m_vAllGameTitles.size())));
+
 }
 
 } // namespace viewmodels

@@ -28,6 +28,7 @@ void UnknownGameDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oView
 UnknownGameDialog::UnknownGameDialog(ra::ui::viewmodels::UnknownGameViewModel& vmUnknownGame) :
     DialogBase(vmUnknownGame),
     m_bindExistingTitle(vmUnknownGame),
+    m_bindFilterText(vmUnknownGame),
     m_bindNewTitle(vmUnknownGame)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Center, RelativePosition::Center);
@@ -36,6 +37,11 @@ UnknownGameDialog::UnknownGameDialog(ra::ui::viewmodels::UnknownGameViewModel& v
     m_bindExistingTitle.BindItems(vmUnknownGame.GameTitles());
     m_bindExistingTitle.BindSelectedItem(ra::ui::viewmodels::UnknownGameViewModel::SelectedGameIdProperty);
     m_bindWindow.BindEnabled(IDC_RA_KNOWNGAMES, ra::ui::viewmodels::UnknownGameViewModel::IsSelectedGameEnabledProperty);
+
+    m_bindFilterText.BindText(ra::ui::viewmodels::UnknownGameViewModel::FilterTextProperty,
+        ra::ui::win32::bindings::TextBoxBinding::UpdateMode::Typing);
+    m_bindWindow.BindLabel(IDC_RA_RESULT_COUNT, ra::ui::viewmodels::UnknownGameViewModel::FilterResultsProperty);
+    m_bindWindow.BindEnabled(IDC_RA_FILTER_VALUE, ra::ui::viewmodels::UnknownGameViewModel::IsSelectedGameEnabledProperty);
 
     m_bindNewTitle.BindText(ra::ui::viewmodels::UnknownGameViewModel::NewGameNameProperty,
         ra::ui::win32::bindings::TextBoxBinding::UpdateMode::KeyPress);
@@ -52,6 +58,7 @@ UnknownGameDialog::UnknownGameDialog(ra::ui::viewmodels::UnknownGameViewModel& v
 BOOL UnknownGameDialog::OnInitDialog()
 {
     m_bindExistingTitle.SetControl(*this, IDC_RA_KNOWNGAMES);
+    m_bindFilterText.SetControl(*this, IDC_RA_FILTER_VALUE);
     m_bindNewTitle.SetControl(*this, IDC_RA_GAMETITLE);
 
     return DialogBase::OnInitDialog();

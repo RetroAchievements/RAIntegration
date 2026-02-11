@@ -1,4 +1,5 @@
 #include "AchievementRuntime.hh"
+#include "AchievementRuntimeExports.hh"
 
 #include "Exports.hh"
 #include "util\Log.hh"
@@ -11,6 +12,7 @@
 
 #include "data\context\GameContext.hh"
 
+#include "services\FrameEventQueue.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
@@ -850,8 +852,13 @@ private:
             s_callbacks.log_callback(sMessage, s_callbacks.log_client);
     }
 
-    static void EventHandlerExternal(const rc_client_event_t* event, rc_client_t*) noexcept(false)
+    static void EventHandlerExternal(const rc_client_event_t* event, rc_client_t*)
     {
+        Expects(event != nullptr);
+
+        if (event->type == RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED)
+            CheckForPauseOnTrigger(*event->achievement);
+
         if (s_callbacks.event_handler)
             s_callbacks.event_handler(event, s_callbacks.event_client);
     }
@@ -1029,6 +1036,30 @@ std::array<AchievementRuntimeExports::MemoryBlockWrapper, 16> AchievementRuntime
 
 } // namespace services
 } // namespace ra
+
+const ra::data::models::AchievementModel* CheckForPauseOnTrigger(const rc_client_achievement_t& pAchievement)
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
+    if (vmAchievement)
+    {
+        // immediately update the state to Triggered (instead of waiting for AssetListViewModel::DoFrame to do it).
+        // this captures the unlock time and rich presence state, even if KeepActive it selected.
+        vmAchievement->SetState(ra::data::models::AssetState::Triggered);
+
+        if (vmAchievement->IsPauseOnTrigger())
+        {
+            auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+            pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetName());
+        }
+    }
+
+    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+    if (pRuntime.HasRichPresence())
+        vmAchievement->SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
+
+    return vmAchievement;
+}
 
 void ResetExternalRcheevosClient() noexcept
 {

@@ -804,7 +804,6 @@ void TriggerViewModel::InitializeFrom(const std::string& sTrigger)
 
     if (m_pTrigger)
     {
-        // TODO: pCapturedHits.Restore(m_pTrigger, sTrigger);
         InitializeGroups(*m_pTrigger);
     }
     else if (m_bIsValue)

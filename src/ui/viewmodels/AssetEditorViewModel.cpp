@@ -988,15 +988,16 @@ void AssetEditorViewModel::UpdateDebugHighlights()
     {
         case ra::data::models::AssetType::Achievement:
         {
-            const auto* pAchievement = static_cast<ra::data::models::AchievementModel*>(m_pAsset);
-            pTrigger = pAchievement->GetRuntimeTrigger();
+            const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
+            if (pAchievement)
+                pTrigger = pAchievement->GetRuntimeTrigger();
             break;
         }
 
         case ra::data::models::AssetType::Leaderboard:
         {
-            const auto* pLeaderboard = static_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
-            const auto* pLeaderboardDefinition = pLeaderboard->GetRuntimeLeaderboard();
+            const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+            const auto* pLeaderboardDefinition = pLeaderboard ? pLeaderboard->GetRuntimeLeaderboard() : nullptr;
             if (pLeaderboardDefinition == nullptr)
                 break;
 

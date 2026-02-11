@@ -566,6 +566,19 @@ const struct rc_trigger_t* AchievementModel::GetRuntimeTrigger() const
     return nullptr;
 }
 
+struct rc_trigger_t* AchievementModel::GetMutableRuntimeTrigger()
+{
+    if (m_pAchievementInfo != nullptr)
+    {
+        if (!m_pAchievementInfo->trigger)
+            ParseTrigger();
+
+        return m_pAchievementInfo->trigger;
+    }
+
+    return nullptr;
+}
+
 void AchievementModel::SetLocalAchievementInfo(struct rc_client_achievement_info_t& pAchievement)
 {
     m_pAchievementInfo = &pAchievement;

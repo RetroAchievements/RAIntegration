@@ -982,18 +982,21 @@ static void UpdateLeaderboardPartColors(ViewModelCollection<AssetEditorViewModel
 
 void AssetEditorViewModel::UpdateDebugHighlights()
 {
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     const rc_trigger_t* pTrigger = nullptr;
 
     switch (m_pAsset->GetType())
     {
         case ra::data::models::AssetType::Achievement:
-            pTrigger = pRuntime.GetAchievementTrigger(m_pAsset->GetID());
+        {
+            const auto* pAchievement = static_cast<ra::data::models::AchievementModel*>(m_pAsset);
+            pTrigger = pAchievement->GetRuntimeTrigger();
             break;
+        }
 
         case ra::data::models::AssetType::Leaderboard:
         {
-            const auto* pLeaderboardDefinition = pRuntime.GetLeaderboardDefinition(m_pAsset->GetID());
+            const auto* pLeaderboard = static_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+            const auto* pLeaderboardDefinition = pLeaderboard->GetRuntimeLeaderboard();
             if (pLeaderboardDefinition == nullptr)
                 break;
 
@@ -1039,7 +1042,7 @@ void AssetEditorViewModel::UpdateMeasuredValue()
             const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
             if (pAchievement != nullptr)
             {
-                auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
+                auto* pTrigger = pAchievement->GetRuntimeTrigger();
                 if (!pTrigger)
                 {
                     pTrigger = Trigger().GetTriggerFromString();
@@ -1055,7 +1058,7 @@ void AssetEditorViewModel::UpdateMeasuredValue()
                 const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
                 if (pLeaderboard != nullptr)
                 {
-                    const auto* pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(pLeaderboard->GetID());
+                    const auto* pLeaderboardDefinition = pLeaderboard->GetRuntimeLeaderboard();
                     if (pLeaderboardDefinition)
                     {
                         const unsigned nValue = pLeaderboardDefinition->value.value.value;

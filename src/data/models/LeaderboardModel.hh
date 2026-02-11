@@ -216,6 +216,7 @@ public:
     /// Gets the attached rc_lboard_t.
     /// </summary>
     const struct rc_lboard_t* GetRuntimeLeaderboard() const;
+    struct rc_lboard_t* GetMutableRuntimeLeaderboard();
 
     /// <summary>
     /// Gets the maximum size of the serialized leaderboard definition.

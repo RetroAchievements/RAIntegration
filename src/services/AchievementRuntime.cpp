@@ -811,30 +811,6 @@ static rc_client_achievement_info_t* GetAchievementInfo(rc_client_t* pClient, ra
     return nullptr;
 }
 
-rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId) const
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-
-    rc_client_achievement_info_t* achievement = GetAchievementInfo(pClient, nId);
-    return (achievement != nullptr) ? achievement->trigger : nullptr;
-}
-
-const rc_client_achievement_info_t* AchievementRuntime::GetPublishedAchievementInfo(ra::AchievementID nId) const
-{
-    if (m_pClientSynchronizer != nullptr)
-        return m_pClientSynchronizer->GetPublishedAchievementInfo(nId);
-
-    return nullptr;
-}
-
-const rc_client_leaderboard_info_t* AchievementRuntime::GetPublishedLeaderboardInfo(ra::LeaderboardID nId) const
-{
-    if (m_pClientSynchronizer != nullptr)
-        return m_pClientSynchronizer->GetPublishedLeaderboardInfo(nId);
-
-    return nullptr;
-}
-
 std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_t& pAchievement)
 {
     std::string sBadgeName = pAchievement.badge_name;
@@ -930,14 +906,6 @@ static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra
     }
 
     return nullptr;
-}
-
-rc_lboard_t* AchievementRuntime::GetLeaderboardDefinition(ra::LeaderboardID nId) const
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-
-    rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(pClient, nId);
-    return (leaderboard != nullptr) ? leaderboard->lboard : nullptr;
 }
 
 bool AchievementRuntime::HasRichPresence() const

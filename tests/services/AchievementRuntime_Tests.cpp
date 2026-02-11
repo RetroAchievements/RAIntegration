@@ -81,7 +81,7 @@ public:
     ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
     ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-    rc_client_t* GetClient()
+    rc_client_t* GetClient() const
     {
         return ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     }
@@ -251,6 +251,21 @@ public:
 
         mockGameContext.Assets().Append(std::move(vmAchievement));
         return mockGameContext.Assets().FindAchievement(pAchievement->public_.id);
+    }
+
+    rc_trigger_t* GetAchievementTrigger(uint32_t nId) const
+    {
+        const auto* pSubset = GetClient()->game->subsets;
+        for (; pSubset; pSubset = pSubset->next)
+        {
+            for (uint32_t i = 0; i < pSubset->public_.num_achievements; ++i)
+            {
+                if (pSubset->achievements[i].public_.id == nId)
+                    return pSubset->achievements[i].trigger;
+            }
+        }
+
+        return nullptr;
     }
 
     rc_client_leaderboard_info_t* MockLeaderboard(uint32_t nId, const std::string& sDefinition)

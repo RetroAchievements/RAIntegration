@@ -178,6 +178,7 @@ public:
     /// Gets the attached rc_trigger_t.
     /// </summary>
     const struct rc_trigger_t* GetRuntimeTrigger() const;
+    struct rc_trigger_t* GetMutableRuntimeTrigger();
 
     /// <summary>
     /// Gets the list of acceptable point values.

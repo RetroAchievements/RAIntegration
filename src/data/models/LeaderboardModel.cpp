@@ -491,6 +491,19 @@ const struct rc_lboard_t* LeaderboardModel::GetRuntimeLeaderboard() const
     return nullptr;
 }
 
+struct rc_lboard_t* LeaderboardModel::GetMutableRuntimeLeaderboard()
+{
+    if (m_pLeaderboardInfo != nullptr)
+    {
+        if (!m_pLeaderboardInfo->lboard)
+            ParseDefinition();
+
+        return m_pLeaderboardInfo->lboard;
+    }
+
+    return nullptr;
+}
+
 void LeaderboardModel::SetLocalLeaderboardInfo(struct rc_client_leaderboard_info_t& pLeaderboard)
 {
     m_pLeaderboardInfo = &pLeaderboard;

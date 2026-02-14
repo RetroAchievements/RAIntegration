@@ -723,6 +723,24 @@ public:
         Assert::AreEqual(std::wstring(L"0x000c (0x0008+4)\r\n[8 bytes] This is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
+    TEST_METHOD(TestTooltipAddressLargeArrayNote)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetCodeNote({ 8U }, L"[100 bytes] This is a note.");
+
+        condition.Parse("0xH0008=3");
+        Assert::AreEqual(std::wstring(L"0x0008\r\n[100 bytes] This is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        condition.Parse("0xH000C=3");
+        Assert::AreEqual(std::wstring(L"0x000c (0x0008+4)\r\n[100 bytes] This is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        condition.Parse("0xH0016=3");
+        Assert::AreEqual(std::wstring(L"0x0016 (0x0008+0x0e)\r\n[100 bytes] This is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        condition.Parse("0xH003E=3");
+        Assert::AreEqual(std::wstring(L"0x003e (0x0008+0x36)\r\n[100 bytes] This is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
     TEST_METHOD(TestTooltipAddressBitNote)
     {
         TriggerConditionViewModelHarness condition;

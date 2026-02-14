@@ -850,7 +850,11 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
                     pNote = pCodeNotes->FindCodeNoteModel(nNoteStart);
 
                     if (sPointerChain.empty())
-                        sAddress = ra::util::String::Printf(L"%s (%s+%u)", pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nNoteStart), nAddress - nNoteStart);
+                    {
+                        const auto nOffset = nAddress - nNoteStart;
+                        const wchar_t* sFormat = nOffset < 10 ? L"%s (%s+%u)" : L"%s (%s+0x%02x)";
+                        sAddress = ra::util::String::Printf(sFormat, pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nNoteStart), nOffset);
+                    }
                 }
             }
         }

@@ -22,6 +22,8 @@ public:
 
     void Shutdown() noexcept override;
 
+    void AddAuthentication(const char** pUsername, const char** pApiToken) const override;
+
     void DispatchRequest(const rc_api_request_t& pRequest, std::function<void(const rc_api_server_response_t&, void*)> fCallback, void* fCallbackData) const override;
 
 protected:

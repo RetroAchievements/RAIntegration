@@ -13,7 +13,6 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockLoginService.hh"
-#include "tests\mocks\MockServer.hh"
 
 #include "tests\ui\UIAsserts.hh"
 
@@ -30,7 +29,6 @@ private:
     class UnknownGameViewModelHarness : public UnknownGameViewModel
     {
     public:
-        ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
@@ -52,7 +50,11 @@ private:
             m_vGameTitles.Add(40, L"Game 40");
             m_vGameTitles.Add(50, L"Game 50");
             m_vGameTitles.Add(60, L"Game 60");
-            m_vGameTitles.Freeze();
+        }
+
+        const std::wstring& GetGameTitle(gsl::index nIndex)
+        {
+            return m_vGameTitles.GetItemValue(nIndex, ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
         }
 
         void TestAsyncHandle(ra::services::mocks::MockThreadPool& threadPool, std::function<void()>&& fCallback)
@@ -81,18 +83,6 @@ public:
         UnknownGameViewModelHarness vmUnknownGame;
         vmUnknownGame.mockConsoleContext.SetId(ConsoleID::C64);
 
-        vmUnknownGame.mockServer.HandleRequest<ra::api::FetchGamesList>([]
-            (const ra::api::FetchGamesList::Request& request, ra::api::FetchGamesList::Response& response)
-        {
-            Assert::AreEqual(30U, request.ConsoleId);
-
-            response.Result = ra::api::ApiResult::Success;
-            response.Games.emplace_back(33U, L"Game 33");
-            response.Games.emplace_back(37U, L"Game 37");
-
-            return true;
-        });
-
         vmUnknownGame.InitializeGameTitles();
 
         // <New Title> item should be loaded immediately, but linking should be disabled
@@ -102,13 +92,16 @@ public:
         Assert::IsFalse(vmUnknownGame.IsAssociateEnabled());
         Assert::IsFalse(vmUnknownGame.IsSelectedGameEnabled());
 
+        // trigger the response
+        vmUnknownGame.mockRcClient.MockResponse("r=gameslist&c=30",
+            "{\"Success\":true,\"Response\":{\"33\":\"Game 33\",\"37\":\"Game 37\"}}");
+        vmUnknownGame.mockRcClient.AssertNoUnhandled();
+
         // after server response, collection should have three items and be frozen. linking should be enabled
-        vmUnknownGame.mockThreadPool.ExecuteNextTask();
         Assert::AreEqual({ 3U }, vmUnknownGame.GameTitles().Count());
         Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GameTitles().GetLabelForId(0));
         Assert::AreEqual(std::wstring(L"Game 33"), vmUnknownGame.GameTitles().GetLabelForId(33));
         Assert::AreEqual(std::wstring(L"Game 37"), vmUnknownGame.GameTitles().GetLabelForId(37));
-        Assert::IsTrue(vmUnknownGame.GameTitles().IsFrozen());
         Assert::IsTrue(vmUnknownGame.IsAssociateEnabled());
         Assert::IsTrue(vmUnknownGame.IsSelectedGameEnabled());
     }
@@ -183,24 +176,15 @@ public:
             return ra::ui::DialogResult::Yes;
         });
 
-        vmUnknownGame.mockServer.HandleRequest<ra::api::SubmitNewTitle>([]
-            (const ra::api::SubmitNewTitle::Request& request, ra::api::SubmitNewTitle::Response& response)
-        {
-            Assert::AreEqual(41U, request.ConsoleId);
-            Assert::AreEqual(std::string("CHECKSUM"), request.Hash);
-            Assert::AreEqual(std::wstring(L"Game 40"), request.GameName);
-            Assert::AreEqual(std::wstring(L"GAME40"), request.Description);
-            Assert::AreEqual(40U, request.GameId);
+        vmUnknownGame.mockRcClient.MockResponse("r=submitgametitle&u=USERNAME&t=APITOKEN&c=41&m=CHECKSUM&i=Game+40&g=40&d=GAME40",
+            "{\"Success\":true,\"Response\":{\"GameID\":40}}");
 
-            response.Result = ra::api::ApiResult::Success;
-            response.GameId = 40U;
+        vmUnknownGame.Associate();
 
-            return true;
-        });
-
-        Assert::IsTrue(vmUnknownGame.Associate());
+        vmUnknownGame.mockRcClient.AssertNoUnhandled();
         Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
         Assert::IsFalse(vmUnknownGame.GetTestMode());
+        Assert::AreEqual(ra::ui::DialogResult::OK, vmUnknownGame.GetDialogResult());
     }
 
     TEST_METHOD(TestAssociateExistingDecline)
@@ -211,14 +195,19 @@ public:
         vmUnknownGame.SetSelectedGameId(40);
         vmUnknownGame.SetChecksum(L"CHECKSUM");
 
-        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel&)
-        {
-            return ra::ui::DialogResult::No;
-        });
+        bool bDialogSeen = false;
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel&)
+            {
+                bDialogSeen = true;
+                return ra::ui::DialogResult::No;
+            });
 
-        vmUnknownGame.mockServer.ExpectUncalled<ra::api::SubmitNewTitle>();
+        vmUnknownGame.Associate();
 
-        Assert::IsFalse(vmUnknownGame.Associate());
+        Assert::IsTrue(bDialogSeen);
+        vmUnknownGame.mockRcClient.AssertNoPendingRequests();
+        Assert::AreEqual(ra::ui::DialogResult::None, vmUnknownGame.GetDialogResult());
     }
 
     TEST_METHOD(TestAssociateNew)
@@ -230,30 +219,25 @@ public:
         vmUnknownGame.SetChecksum(L"CHECKSUM");
         vmUnknownGame.SetEstimatedGameName(L"GAME96");
 
-        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Are you sure you want to create a new entry for 'Game 96'?"), vmMessageBox.GetHeader());
-            return ra::ui::DialogResult::Yes;
-        });
+        bool bDialogSeen = false;
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+            {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"Are you sure you want to create a new entry for 'Game 96'?"), vmMessageBox.GetHeader());
+                return ra::ui::DialogResult::Yes;
+            });
 
-        vmUnknownGame.mockServer.HandleRequest<ra::api::SubmitNewTitle>([]
-            (const ra::api::SubmitNewTitle::Request& request, ra::api::SubmitNewTitle::Response& response)
-        {
-            Assert::AreEqual(34U, request.ConsoleId);
-            Assert::AreEqual(std::string("CHECKSUM"), request.Hash);
-            Assert::AreEqual(std::wstring(L"Game 96"), request.GameName);
-            Assert::AreEqual(std::wstring(L"GAME96"), request.Description);
-            Assert::AreEqual(0U, request.GameId);
+        vmUnknownGame.mockRcClient.MockResponse("r=submitgametitle&u=USERNAME&t=APITOKEN&c=34&m=CHECKSUM&i=Game+96&d=GAME96",
+            "{\"Success\":true,\"Response\":{\"GameID\":102}}");
 
-            response.Result = ra::api::ApiResult::Success;
-            response.GameId = 102U;
+        vmUnknownGame.Associate();
 
-            return true;
-        });
-
-        Assert::IsTrue(vmUnknownGame.Associate());
+        Assert::IsTrue(bDialogSeen);
+        vmUnknownGame.mockRcClient.AssertNoUnhandled();
         Assert::AreEqual(102, vmUnknownGame.GetSelectedGameId());
         Assert::IsFalse(vmUnknownGame.GetTestMode());
+        Assert::AreEqual(ra::ui::DialogResult::OK, vmUnknownGame.GetDialogResult());
     }
 
     TEST_METHOD(TestAssociateNewTrimmed)
@@ -266,29 +250,24 @@ public:
         vmUnknownGame.SetEstimatedGameName(L"GAME96");
 
         // name should be trimmed in both the dialog and the request
-        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Are you sure you want to create a new entry for 'Game 96'?"), vmMessageBox.GetHeader());
-            return ra::ui::DialogResult::Yes;
-        });
+        bool bDialogSeen = false;
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+            {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"Are you sure you want to create a new entry for 'Game 96'?"), vmMessageBox.GetHeader());
+                return ra::ui::DialogResult::Yes;
+            });
 
-        vmUnknownGame.mockServer.HandleRequest<ra::api::SubmitNewTitle>([]
-        (const ra::api::SubmitNewTitle::Request& request, ra::api::SubmitNewTitle::Response& response)
-        {
-            Assert::AreEqual(34U, request.ConsoleId);
-            Assert::AreEqual(std::string("CHECKSUM"), request.Hash);
-            Assert::AreEqual(std::wstring(L"Game 96"), request.GameName);
-            Assert::AreEqual(std::wstring(L"GAME96"), request.Description);
-            Assert::AreEqual(0U, request.GameId);
+        vmUnknownGame.mockRcClient.MockResponse("r=submitgametitle&u=USERNAME&t=APITOKEN&c=34&m=CHECKSUM&i=Game+96&d=GAME96",
+            "{\"Success\":true,\"Response\":{\"GameID\":102}}");
 
-            response.Result = ra::api::ApiResult::Success;
-            response.GameId = 102U;
+        vmUnknownGame.Associate();
 
-            return true;
-        });
-
-        Assert::IsTrue(vmUnknownGame.Associate());
+        Assert::IsTrue(bDialogSeen);
+        vmUnknownGame.mockRcClient.AssertNoUnhandled();
         Assert::AreEqual(102, vmUnknownGame.GetSelectedGameId());
+        Assert::AreEqual(ra::ui::DialogResult::OK, vmUnknownGame.GetDialogResult());
     }
 
     TEST_METHOD(TestAssociateNewDecline)
@@ -299,14 +278,19 @@ public:
         vmUnknownGame.SetNewGameName(L"Game 96");
         vmUnknownGame.SetChecksum(L"CHECKSUM");
 
-        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel&)
-        {
-            return ra::ui::DialogResult::No;
-        });
+        bool bDialogSeen = false;
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel&)
+            {
+                bDialogSeen = true;
+                return ra::ui::DialogResult::No;
+            });
 
-        vmUnknownGame.mockServer.ExpectUncalled<ra::api::SubmitNewTitle>();
+        vmUnknownGame.Associate();
 
-        Assert::IsFalse(vmUnknownGame.Associate());
+        Assert::IsTrue(bDialogSeen);
+        vmUnknownGame.mockRcClient.AssertNoPendingRequests();
+        Assert::AreEqual(ra::ui::DialogResult::None, vmUnknownGame.GetDialogResult());
     }
 
     TEST_METHOD(TestAssociateNewNoName)
@@ -317,15 +301,20 @@ public:
         vmUnknownGame.SetNewGameName(L"");
         vmUnknownGame.SetChecksum(L"CHECKSUM");
 
-        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"New game name must be at least three characters long."), vmMessageBox.GetMessage());
-            return ra::ui::DialogResult::OK;
-        });
+        bool bDialogSeen = false;
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+            {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"New game name must be at least three characters long."), vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::OK;
+            });
 
-        vmUnknownGame.mockServer.ExpectUncalled<ra::api::SubmitNewTitle>();
+        vmUnknownGame.Associate();
 
-        Assert::IsFalse(vmUnknownGame.Associate());
+        Assert::IsTrue(bDialogSeen);
+        vmUnknownGame.mockRcClient.AssertNoPendingRequests();
+        Assert::AreEqual(ra::ui::DialogResult::None, vmUnknownGame.GetDialogResult());
     }
 
     TEST_METHOD(TestAsyncHandle)
@@ -360,13 +349,19 @@ public:
         vmUnknownGame.SetNewGameName(L"TestGame");
         vmUnknownGame.SetChecksum(L"CHECKSUM");
 
-        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"You must select an existing game to test compatibility."), vmMessageBox.GetMessage());
-            return ra::ui::DialogResult::OK;
-        });
+        bool bDialogSeen = false;
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+            {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"You must select an existing game to test compatibility."), vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::OK;
+            });
 
-        Assert::IsFalse(vmUnknownGame.BeginTest());
+        vmUnknownGame.BeginTest();
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(ra::ui::DialogResult::None, vmUnknownGame.GetDialogResult());
     }
 
     TEST_METHOD(TestBeginTestExistingGame)
@@ -381,14 +376,20 @@ public:
         Assert::AreEqual(std::string(),
             vmUnknownGame.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, L"CHECKSUM"));
 
-        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them."), vmMessageBox.GetMessage());
-            return ra::ui::DialogResult::Yes;
-        });
+        bool bDialogSeen = false;
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+            {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them."), vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::Yes;
+            });
 
-        Assert::IsTrue(vmUnknownGame.BeginTest());
+        vmUnknownGame.BeginTest();
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(ra::ui::DialogResult::OK, vmUnknownGame.GetDialogResult());
         Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
         Assert::IsTrue(vmUnknownGame.GetTestMode());
 
@@ -408,14 +409,20 @@ public:
         Assert::AreEqual(std::string(),
             vmUnknownGame.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, L"CHECKSUM"));
 
-        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them."), vmMessageBox.GetMessage());
-            return ra::ui::DialogResult::No;
-        });
+        bool bDialogSeen = false;
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+            {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them."), vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::No;
+            });
 
-        Assert::IsFalse(vmUnknownGame.BeginTest());
+        vmUnknownGame.BeginTest();
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(ra::ui::DialogResult::None, vmUnknownGame.GetDialogResult());
 
         Assert::AreEqual(std::string(),
             vmUnknownGame.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, L"CHECKSUM"));
@@ -434,14 +441,20 @@ public:
 
         Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
 
-        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them."), vmMessageBox.GetMessage());
-            return ra::ui::DialogResult::Yes;
-        });
+        bool bDialogSeen = false;
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+            {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them."), vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::Yes;
+            });
 
-        Assert::IsTrue(vmUnknownGame.BeginTest());
+        vmUnknownGame.BeginTest();
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(ra::ui::DialogResult::OK, vmUnknownGame.GetDialogResult());
         Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
         Assert::IsTrue(vmUnknownGame.GetTestMode());
 
@@ -465,6 +478,7 @@ public:
         Assert::AreEqual(33, vmUnknownGame.GetSelectedGameId());
         Assert::AreEqual(std::wstring(L"CHECKSUM"), vmUnknownGame.GetChecksum());
         Assert::IsTrue(vmUnknownGame.GameTitles().IsFrozen());
+        Assert::AreEqual(std::wstring(L"1/1"), vmUnknownGame.GetFilterResults());
 
         Assert::IsFalse(vmUnknownGame.IsSelectedGameEnabled());
     }
@@ -479,28 +493,23 @@ public:
         vmUnknownGame.SetEstimatedGameName(L"GAME40");
         vmUnknownGame.InitializeTestCompatibilityMode();
 
-        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Are you sure you want to add a new hash to 'Game 40'?"), vmMessageBox.GetHeader());
-            return ra::ui::DialogResult::Yes;
-        });
+        bool bDialogSeen = false;
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+            {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"Are you sure you want to add a new hash to 'Game 40'?"), vmMessageBox.GetHeader());
+                return ra::ui::DialogResult::Yes;
+            });
 
-        vmUnknownGame.mockServer.HandleRequest<ra::api::SubmitNewTitle>([]
-        (const ra::api::SubmitNewTitle::Request& request, ra::api::SubmitNewTitle::Response& response)
-        {
-            Assert::AreEqual(41U, request.ConsoleId);
-            Assert::AreEqual(std::string("CHECKSUM"), request.Hash);
-            Assert::AreEqual(std::wstring(L"Game 40"), request.GameName);
-            Assert::AreEqual(std::wstring(L"GAME40"), request.Description);
-            Assert::AreEqual(40U, request.GameId);
+        vmUnknownGame.mockRcClient.MockResponse("r=submitgametitle&u=USERNAME&t=APITOKEN&c=41&m=CHECKSUM&i=Game+40&g=40&d=GAME40",
+            "{\"Success\":true,\"Response\":{\"GameID\":40}}");
 
-            response.Result = ra::api::ApiResult::Success;
-            response.GameId = 40U;
+        vmUnknownGame.Associate();
 
-            return true;
-        });
-
-        Assert::IsTrue(vmUnknownGame.Associate());
+        Assert::IsTrue(bDialogSeen);
+        vmUnknownGame.mockRcClient.AssertNoUnhandled();
+        Assert::AreEqual(ra::ui::DialogResult::OK, vmUnknownGame.GetDialogResult());
         Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
         Assert::IsFalse(vmUnknownGame.GetTestMode());
     }
@@ -515,26 +524,21 @@ public:
         vmUnknownGame.SetEstimatedGameName(L"GAME40");
         vmUnknownGame.InitializeTestCompatibilityMode();
 
+        bool bDialogSeen = false;
         vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
-            [](ra::ui::viewmodels::MessageBoxViewModel&) {
+            [&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel&) {
+                bDialogSeen = true;
                 return ra::ui::DialogResult::Yes;
             });
 
-        vmUnknownGame.mockServer.HandleRequest<ra::api::SubmitNewTitle>(
-            [](const ra::api::SubmitNewTitle::Request& request, ra::api::SubmitNewTitle::Response& response) {
-                Assert::AreEqual(41U, request.ConsoleId);
-                Assert::AreEqual(std::string("CHECKSUM"), request.Hash);
-                Assert::AreEqual(std::wstring(L"Game 40"), request.GameName);
-                Assert::AreEqual(std::wstring(L"GAME40"), request.Description);
-                Assert::AreEqual(40U, request.GameId);
+        vmUnknownGame.mockRcClient.MockResponse("r=submitgametitle&u=USERNAME&t=APITOKEN&c=41&m=CHECKSUM&i=Game+40&g=40&d=GAME40",
+            "{\"Success\":true,\"Response\":{\"GameID\":40}}");
 
-                response.Result = ra::api::ApiResult::Success;
-                response.GameId = 40U;
+        // start a compatibility test
+        vmUnknownGame.BeginTest();
 
-                return true;
-            });
-
-        Assert::IsTrue(vmUnknownGame.BeginTest());
+        Assert::IsTrue(bDialogSeen); // Compatibility mode?
+        Assert::AreEqual(ra::ui::DialogResult::OK, vmUnknownGame.GetDialogResult());
         Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
         Assert::IsTrue(vmUnknownGame.GetTestMode());
 
@@ -544,7 +548,16 @@ public:
         Assert::AreEqual(40U, pGameHash->game_id);
         Assert::AreEqual({1}, pGameHash->is_unknown);
 
-        Assert::IsTrue(vmUnknownGame.Associate());
+        // reset the dialog
+        bDialogSeen = false;
+        vmUnknownGame.SetDialogResult(ra::ui::DialogResult::None);
+
+        // promote the association
+        vmUnknownGame.Associate();
+
+        Assert::IsTrue(bDialogSeen); // New entry?
+        vmUnknownGame.mockRcClient.AssertNoUnhandled();
+        Assert::AreEqual(ra::ui::DialogResult::OK, vmUnknownGame.GetDialogResult());
         Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
         Assert::IsFalse(vmUnknownGame.GetTestMode());
 
@@ -552,6 +565,87 @@ public:
         Assert::IsNotNull(pGameHash);
         Assert::AreEqual(40U, pGameHash->game_id);
         Assert::AreEqual({0}, pGameHash->is_unknown);
+    }
+
+    TEST_METHOD(TestApplyFilter)
+    {
+        UnknownGameViewModelHarness vmUnknownGame;
+        vmUnknownGame.mockConsoleContext.SetId(ConsoleID::C64);
+
+        vmUnknownGame.mockRcClient.MockResponse("r=gameslist&c=30",
+            "{\"Success\":true,\"Response\":{"
+                "\"6\":\"Another Game\","
+                "\"2\":\"Game the First\","
+                "\"1\":\"My First Game\","
+                "\"3\":\"Not This Game\","
+                "\"5\":\"Only That Game\","
+                "\"4\":\"Play This\""
+            "}}");
+
+        vmUnknownGame.InitializeGameTitles();
+        vmUnknownGame.SetSelectedGameId(4);
+
+        // initial list should be everything
+        Assert::AreEqual({ 7U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"Another Game"), vmUnknownGame.GetGameTitle(1));
+        Assert::AreEqual(std::wstring(L"Game the First"), vmUnknownGame.GetGameTitle(2));
+        Assert::AreEqual(std::wstring(L"My First Game"), vmUnknownGame.GetGameTitle(3));
+        Assert::AreEqual(std::wstring(L"Not This Game"), vmUnknownGame.GetGameTitle(4));
+        Assert::AreEqual(std::wstring(L"Only That Game"), vmUnknownGame.GetGameTitle(5));
+        Assert::AreEqual(std::wstring(L"Play This"), vmUnknownGame.GetGameTitle(6));
+        Assert::AreEqual(std::wstring(L"6/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(4, vmUnknownGame.GetSelectedGameId());
+
+        // apply filter should drop all but two games and <New Title>
+        vmUnknownGame.SetFilterText(L"This");
+        Assert::AreEqual({ 3U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"Not This Game"), vmUnknownGame.GetGameTitle(1));
+        Assert::AreEqual(std::wstring(L"Play This"), vmUnknownGame.GetGameTitle(2));
+        Assert::AreEqual(std::wstring(L"2/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(4, vmUnknownGame.GetSelectedGameId()); // selected item still visible
+
+        // apply different filter
+        vmUnknownGame.SetFilterText(L"Game");
+        Assert::AreEqual({ 6U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"Another Game"), vmUnknownGame.GetGameTitle(1));
+        Assert::AreEqual(std::wstring(L"Game the First"), vmUnknownGame.GetGameTitle(2));
+        Assert::AreEqual(std::wstring(L"My First Game"), vmUnknownGame.GetGameTitle(3));
+        Assert::AreEqual(std::wstring(L"Not This Game"), vmUnknownGame.GetGameTitle(4));
+        Assert::AreEqual(std::wstring(L"Only That Game"), vmUnknownGame.GetGameTitle(5));
+        Assert::AreEqual(std::wstring(L"5/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(6, vmUnknownGame.GetSelectedGameId()); // selected item no longer visible, select first visible
+
+        // no matches
+        vmUnknownGame.SetFilterText(L"Banana");
+        Assert::AreEqual({ 1U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"0/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(0, vmUnknownGame.GetSelectedGameId()); // no items visible, select <New Title>
+
+        // case insensitive partial match
+        vmUnknownGame.SetFilterText(L"Not");
+        Assert::AreEqual({ 3U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"Another Game"), vmUnknownGame.GetGameTitle(1));
+        Assert::AreEqual(std::wstring(L"Not This Game"), vmUnknownGame.GetGameTitle(2));
+        Assert::AreEqual(std::wstring(L"2/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(6, vmUnknownGame.GetSelectedGameId()); // automatically select first item if <New Title> was selected
+
+        // empty filter returns all
+        vmUnknownGame.SetFilterText(L"");
+        Assert::AreEqual({ 7U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GetGameTitle(0));
+        Assert::AreEqual(std::wstring(L"Another Game"), vmUnknownGame.GetGameTitle(1));
+        Assert::AreEqual(std::wstring(L"Game the First"), vmUnknownGame.GetGameTitle(2));
+        Assert::AreEqual(std::wstring(L"My First Game"), vmUnknownGame.GetGameTitle(3));
+        Assert::AreEqual(std::wstring(L"Not This Game"), vmUnknownGame.GetGameTitle(4));
+        Assert::AreEqual(std::wstring(L"Only That Game"), vmUnknownGame.GetGameTitle(5));
+        Assert::AreEqual(std::wstring(L"Play This"), vmUnknownGame.GetGameTitle(6));
+        Assert::AreEqual(std::wstring(L"6/6"), vmUnknownGame.GetFilterResults());
+        Assert::AreEqual(6, vmUnknownGame.GetSelectedGameId()); // selected item still visible
     }
 };
 

@@ -1,9 +1,12 @@
 #include "RcClient.hh"
 
+#include "context/UserContext.hh"
+
 #include "services/IHttpRequester.hh"
 #include "services/ServiceLocator.hh"
 
 #include "util/Log.hh"
+#include "util/Strings.hh"
 
 #include <rcheevos/src/rc_client_internal.h>
 
@@ -13,6 +16,19 @@ namespace context {
 IRcClient::~IRcClient() noexcept
 {
     // destructor must be defined in a scope where rc_client_t is not a forward declaration
+}
+
+rc_api_host_t* IRcClient::GetHost() const noexcept
+{
+    return &m_pClient->state.host;
+}
+
+const std::wstring IRcClient::GetErrorMessage(int nResult, const rc_api_response_t& pResponse)
+{
+    if (pResponse.error_message)
+        return ra::util::String::Widen(pResponse.error_message);
+
+    return ra::util::String::Widen(rc_error_str(nResult));
 }
 
 namespace impl {
@@ -49,6 +65,15 @@ void RcClient::LogMessage(const char* sMessage, const rc_client_t*)
     const auto& pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>();
     if (pLogger.IsEnabled(ra::services::LogLevel::Info))
         pLogger.LogMessage(ra::services::LogLevel::Info, sMessage);
+}
+
+void RcClient::AddAuthentication(const char** pUsername, const char** pApiToken) const
+{
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
+    if (pUsername)
+        *pUsername = pUserContext.GetUsername().c_str();
+    if (pApiToken)
+        *pApiToken = pUserContext.GetApiToken().c_str();
 }
 
 static void ConvertHttpResponseToApiServerResponse(rc_api_server_response_t& pResponse,

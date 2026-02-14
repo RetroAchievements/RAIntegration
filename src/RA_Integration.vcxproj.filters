@@ -617,12 +617,6 @@
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
-    <ClInclude Include="api\FetchGamesList.hh">
-      <Filter>API</Filter>
-    </ClInclude>
-    <ClInclude Include="api\SubmitNewTitle.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>

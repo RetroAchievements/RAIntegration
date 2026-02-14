@@ -142,6 +142,31 @@ public:
     void SetEstimatedGameName(const std::wstring& sValue) { SetValue(EstimatedGameNameProperty, sValue); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the filter text.
+    /// </summary>
+    static const StringModelProperty FilterTextProperty;
+
+    /// <summary>
+    /// Gets the filter text.
+    /// </summary>
+    const std::wstring& GetFilterText() const { return GetValue(FilterTextProperty); }
+
+    /// <summary>
+    /// Sets the filter text.
+    /// </summary>
+    void SetFilterText(const std::wstring& sValue) { SetValue(FilterTextProperty, sValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the filter results.
+    /// </summary>
+    static const StringModelProperty FilterResultsProperty;
+
+    /// <summary>
+    /// Gets the filter results.
+    /// </summary>
+    const std::wstring& GetFilterResults() const { return GetValue(FilterResultsProperty); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the system name.
     /// </summary>
     static const StringModelProperty SystemNameProperty;
@@ -184,17 +209,12 @@ public:
     /// <summary>
     /// Command handler for Associate button.
     /// </summary>    
-    /// <returns>
-    /// <c>true</c> if the association was successfully created and the dialog should be closed, 
-    /// <c>false</c> if not.
-    /// </returns>
-    bool Associate();
+    void Associate();
 
     /// <summary>
     /// Command handler for Test button.
     /// </summary>
-    /// <returns><c>true</c> if the dialog should be closed, <c>false</c> if not.</returns>
-    bool BeginTest();
+    void BeginTest();
 
     static unsigned int GetPreviousAssociation(const std::wstring& sHash);
 
@@ -203,12 +223,15 @@ protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     void CheckForPreviousAssociation();
+    void ApplyFilter();
 
     static unsigned DecodeID(const std::string& sEncoded, const std::wstring& sHash, ConsoleID nConsoleId);
     static std::string EncodeID(unsigned nId, const std::wstring& sHash, ConsoleID nConsoleId);
 
     LookupItemViewModelCollection m_vGameTitles;
     bool m_bSelectingGame = false;
+
+    std::vector<std::pair<uint32_t, std::wstring>> m_vAllGameTitles;
 };
 
 } // namespace viewmodels

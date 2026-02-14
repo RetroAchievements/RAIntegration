@@ -117,16 +117,6 @@ public:
         return HandleRequest<ra::api::LatestClient>(request);
     }
 
-    FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) override
-    {
-        return HandleRequest<ra::api::FetchGamesList>(request);
-    }
-
-    SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) override
-    {
-        return HandleRequest<ra::api::SubmitNewTitle>(request);
-    }
-
     FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override
     {
         return HandleRequest<ra::api::FetchBadgeIds>(request);

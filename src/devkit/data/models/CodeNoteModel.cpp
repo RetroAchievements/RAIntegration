@@ -329,158 +329,6 @@ std::wstring CodeNoteModel::GetPrimaryNote() const
     return m_sNote;
 }
 
-static bool IsValue(const std::wstring& sNote, size_t nIndex, size_t nStopIndex, unsigned& nLength, bool& bHex)
-{
-    if (nStopIndex == std::string::npos)
-        nStopIndex = sNote.length();
-
-    while (nIndex < nStopIndex)
-    {
-        const wchar_t c = sNote.at(nIndex);
-        if (c >= 256 || !isspace(c))
-            break;
-        ++nIndex;
-    }
-    while (nStopIndex > nIndex)
-    {
-        const wchar_t c = sNote.at(nStopIndex - 1);
-        if (c >= 256 || !isspace(c))
-            break;
-        --nStopIndex;
-    }
-
-    bHex = false;
-
-    if (nStopIndex - nIndex > 2 && sNote.at(nIndex) == '0' && sNote.at(nIndex + 1) == 'x')
-    {
-        // explicit hex prefix
-        nIndex += 2;
-        bHex = true;
-    }
-    else if (nStopIndex - nIndex > 1 && sNote.at(nStopIndex - 1) == 'h')
-    {
-        // explicit hex suffix
-        nStopIndex--;
-        bHex = true;
-    }
-
-    nLength = 0;
-    while (nIndex < nStopIndex)
-    {
-        const auto c = sNote.at(nIndex++);
-        switch (c)
-        {
-            case '0': case '1': case '2': case '3': case '4':
-            case '5': case '6': case '7': case '8': case '9':
-                nLength++;
-                break;
-
-            case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-            case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-                nLength++;
-                bHex = true;
-                break;
-
-            default:
-                return false;
-        }
-    }
-
-    return true;
-}
-
-static bool IsBitX(const std::wstring& sNote, size_t nIndex, size_t nStopIndex)
-{
-    if (nStopIndex == std::string::npos)
-        nStopIndex = sNote.length();
-
-    if (nStopIndex - nIndex < 4)
-        return false;
-
-    auto c = sNote.at(nIndex);
-    if (c != 'b' && c != 'B')
-        return false;
-
-    c = sNote.at(nIndex + 1);
-    if (c != 'i' && c != 'I')
-        return false;
-
-    c = sNote.at(nIndex + 2);
-    if (c != 't' && c != 'T')
-        return false;
-
-    c = sNote.at(nIndex + 3);
-    if (c < '0' || c > '9')
-        return false;
-
-    nIndex += 4;
-    while (nIndex < nStopIndex)
-    {
-        c = sNote.at(nIndex++);
-        if (c < 256 && !isspace(c))
-            return false;
-    }
-
-    return true;
-}
-
-void CodeNoteModel::CheckForHexEnum(size_t nNextIndex)
-{
-    bool bAllValuesPotentialHex = true;
-    bool bFoundPotentialHexValueWithLeadingZero = false;
-    while (nNextIndex != std::string::npos)
-    {
-        auto nIndex = nNextIndex + 1;
-
-        // 12=Happy
-        // 12-Happy
-        // 12|Happy
-        // 12: Happy
-        const auto nSplitIndex = m_sNote.find_first_of(L"=-|:", nIndex);
-        if (nSplitIndex == std::string::npos)
-            break;
-
-        do
-        {
-            nNextIndex = m_sNote.find(L'\n', nIndex);
-            if (nNextIndex == std::string::npos || nNextIndex > nSplitIndex)
-                break;
-
-            nIndex = nNextIndex + 1;
-        } while (true);
-
-        if (m_sNote.at(nIndex) == '*') // bulleted list
-            ++nIndex;
-
-        unsigned nLength;
-        bool bHex;
-        if (IsValue(m_sNote, nIndex, nSplitIndex, nLength, bHex) ||       // 12=Happy
-            IsValue(m_sNote, nSplitIndex + 1, nNextIndex, nLength, bHex)) // Happy=12
-        {
-            if (bHex)
-            {
-                m_nMemFormat = Memory::Format::Hex;
-                break;
-            }
-            else if (bAllValuesPotentialHex)
-            {
-                if (nLength != m_nBytes * 2)
-                    bAllValuesPotentialHex = false;
-                else if (m_sNote.at(nIndex) == '0')
-                    bFoundPotentialHexValueWithLeadingZero = true;
-            }
-        }
-        else if (IsBitX(m_sNote, nIndex, nSplitIndex)) // bit1=Happy
-        {
-            m_nMemFormat = Memory::Format::Hex;
-            break;
-        }
-    }
-
-    if (bAllValuesPotentialHex && bFoundPotentialHexValueWithLeadingZero)
-        m_nMemFormat = Memory::Format::Hex;
-}
-
 void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
 {
     if (m_sNote == sNote)
@@ -574,7 +422,10 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
     } while (true);
 
     if (m_nMemFormat == Memory::Format::Dec) // implicitly ignored nested notes as pointers will be flagged as hex
-        CheckForHexEnum(nNextIndex);
+    {
+        if (nNextIndex != std::wstring::npos)
+            m_nMemFormat = DeterminePreferredMemFormat(std::wstring_view(sNote).substr(nNextIndex));
+    }
 }
 
 Memory::Size CodeNoteModel::GetImpliedPointerSize()
@@ -1377,8 +1228,10 @@ static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHig
 {
     if (svRange.size() > 2 && svRange.at(0) == L'0' && svRange.at(1) == L'x')
         svRange = svRange.substr(2);
-    else if (svRange.size() > 1 && (svRange.at(0) == L'h' || svRange.at(0) == L'H'))
+    else if (svRange.size() > 1 && (svRange.front() == L'h' || svRange.front() == L'H'))
         svRange = svRange.substr(1);
+    else if (svRange.size() > 1 && (svRange.back() == L'h' || svRange.back() == L'H'))
+        svRange = svRange.substr(0, svRange.size() - 1);
 
     size_t nIndex = 0;
     while (nIndex < svRange.size() && IsHexDigit(svRange.at(nIndex)))
@@ -1419,7 +1272,7 @@ static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHig
 
 static constexpr size_t FindValueSplit(const std::wstring_view svLine) noexcept
 {
-    auto nSplit = svLine.find_first_of(L"=:");
+    auto nSplit = svLine.find_first_of(L"=:|");
     if (nSplit == std::wstring::npos)
         nSplit = svLine.find(L"->");
 
@@ -1429,104 +1282,68 @@ static constexpr size_t FindValueSplit(const std::wstring_view svLine) noexcept
 static std::wstring_view GetValues(const std::wstring_view svLine)
 {
     const auto nSplit = FindValueSplit(svLine);
-    if (nSplit == std::wstring::npos)
+    if (nSplit == std::wstring::npos || nSplit == 0)
         return {};
 
-    size_t nRightBracket = svLine.size() + 1;
     const auto nLeftBracket = svLine.find_last_of(L"([{", nSplit);
-    if (nLeftBracket == std::wstring::npos)
+    if (nLeftBracket != std::wstring::npos)
     {
-        uint32_t nLow, nHigh;
-        if (ParseBitRange(svLine, nLow, nHigh) || ParseRange(svLine, nLow, nHigh, true))
-            return svLine;
-
-        auto nIndex = nSplit;
-        while (nIndex > 0 && (isalnum(svLine.at(nIndex - 1)) || isspace(svLine.at(nIndex - 1))))
-            --nIndex;
-
-        if (nIndex == 0 || nIndex == nSplit)
-            return svLine;
-
-        while (isspace(svLine.at(nIndex)))
-            ++nIndex;
-
-        return svLine.substr(nIndex);
-    }
-
-    switch (svLine.at(nLeftBracket))
-    {
-        case '(':
-            nRightBracket = svLine.find(L')', nSplit);
-            break;
-        case '[':
-            nRightBracket = svLine.find(L']', nSplit);
-            break;
-        case '{':
-            nRightBracket = svLine.find(L'}', nSplit);
-            break;
-    }
-
-    if (nRightBracket == std::wstring::npos)
-        return svLine;
-
-    return svLine.substr(nLeftBracket + 1, nRightBracket - nLeftBracket - 1);
-}
-
-CodeNoteModel::EnumState CodeNoteModel::DetermineEnumState(const std::wstring_view svNote)
-{
-    EnumState nState = EnumState::None;
-    size_t nStart = 0;
-    while (nStart < svNote.size())
-    {
-        auto nEnd = svNote.find_first_of(L"\n\r", nStart);
-
-        if (nStart != nEnd)
+        // found opening bracket before assignment. look for closing bracket
+        size_t nRightBracket = std::wstring::npos;
+        switch (svLine.at(nLeftBracket))
         {
-            const auto svLine = svNote.substr(nStart, nEnd - nStart);
-            const auto svValues = GetValues(svLine);
-            if (!svValues.empty())
-            {
-                size_t nFront = 0;
-                do {
-                    const auto nComma = svValues.find_first_of(L",;", nFront);
-                    const auto svValue = (nComma == std::wstring::npos) ? svValues.substr(nFront) : svValues.substr(nFront, nComma - nFront);
-
-                    const auto nSplit = FindValueSplit(svValue);
-                    if (nSplit != std::wstring::npos)
-                    {
-                        uint32_t nLow, nHigh;
-                        const auto svLeft = svValue.substr(0, nSplit);
-                        if (ParseBitRange(svLeft, nLow, nHigh))
-                        {
-                            if (nState == EnumState::None)
-                                nState = EnumState::Bits;
-                        }
-                        else if (ParseRange(svLeft, nLow, nHigh, true))
-                        {
-                            if (svLeft.find_first_of(L"ABCDEFabcdefHhx") != std::wstring::npos)
-                                return EnumState::Hex;
-
-                            nState = EnumState::Dec;
-                        }
-                    }
-
-                    if (nComma == std::wstring::npos)
-                        break;
-
-                    nFront = nComma + 1;
-                    while (nFront < svValues.size() && isspace(svValues.at(nFront)))
-                        ++nFront;
-                } while (nFront < svValues.size());
-            }
+            case '(':
+                nRightBracket = svLine.find(L')', nSplit);
+                break;
+            case '[':
+                nRightBracket = svLine.find(L']', nSplit);
+                break;
+            case '{':
+                nRightBracket = svLine.find(L'}', nSplit);
+                break;
         }
 
-        while (nEnd < svNote.size() && (svNote.at(nEnd) == L'\n' || svNote.at(nEnd) == L'\r'))
-            ++nEnd;
+        // no right bracket found. take the rest of the line
+        if (nRightBracket == std::wstring::npos)
+            nRightBracket = svLine.size();
 
-        nStart = nEnd;
+        return svLine.substr(nLeftBracket + 1, nRightBracket - nLeftBracket - 1);
     }
 
-    return nState;
+    // skip over any leading non-alphanumeric characters
+    if (!isalnum(svLine.at(0)))
+    {
+        for (auto nScan = 1; nScan < nSplit; ++nScan)
+        {
+            if (isalnum(svLine.at(nScan)))
+                return GetValues(svLine.substr(nScan));
+        }
+
+        // no non-alphanumeric characters before value splitter, abort
+        return {};
+    }
+
+    // if the line starts with mapped values, return the whole line
+    const auto svLeft = svLine.substr(0, nSplit);
+    uint32_t nLow, nHigh;
+    if (ParseBitRange(svLeft, nLow, nHigh) || ParseRange(svLeft, nLow, nHigh, true))
+        return svLine;
+
+    // scan backwards from the splitter to find the first non-alphanumeric non-whitespace character
+    auto nIndex = nSplit;
+    while (nIndex > 0 && (isalnum(svLine.at(nIndex - 1)) || isspace(svLine.at(nIndex - 1))))
+        --nIndex;
+
+    // if nIndex is 0, we should have matched mapped values earlier. must be invalid. ignore.
+    if (nIndex == 0 || nIndex == nSplit)
+        return {};
+
+    // ignore leading whitespace
+    while (isspace(svLine.at(nIndex)))
+        ++nIndex;
+
+    // return remainder of line
+    return svLine.substr(nIndex);
 }
 
 static std::wstring_view MatchSubNote(std::wstring_view svNote, std::function<bool(std::wstring_view)> fMatch)
@@ -1538,7 +1355,7 @@ static std::wstring_view MatchSubNote(std::wstring_view svNote, std::function<bo
 
         if (nStart != nEnd)
         {
-            const auto svLine = svNote.substr(nStart, nEnd - nStart);
+            const auto svLine = nEnd != std::wstring::npos ? svNote.substr(nStart, nEnd - nStart) : svNote.substr(nStart);
             const auto svValues = GetValues(svLine);
             if (!svValues.empty())
             {
@@ -1567,6 +1384,43 @@ static std::wstring_view MatchSubNote(std::wstring_view svNote, std::function<bo
     }
 
     return {};
+}
+
+CodeNoteModel::EnumState CodeNoteModel::DetermineEnumState(const std::wstring_view svNote)
+{
+    EnumState nState = EnumState::None;
+
+    MatchSubNote(svNote, [&nState](std::wstring_view svValue)
+    {
+        const auto nSplit = FindValueSplit(svValue);
+        if (nSplit != std::wstring::npos)
+        {
+            uint32_t nLow, nHigh;
+            const auto svLeft = svValue.substr(0, nSplit);
+            if (ParseBitRange(svLeft, nLow, nHigh))
+            {
+                // if we've already flagged things as dec/hex, don't reclassify to bits (b3 looks like hex)
+                if (nState == EnumState::None)
+                    nState = EnumState::Bits;
+            }
+            else if (ParseRange(svLeft, nLow, nHigh, true))
+            {
+                if (svLeft.find_first_of(L"ABCDEFabcdefHhx") != std::wstring::npos)
+                {
+                    // hex state is definitive. we can stop scanning
+                    nState = EnumState::Hex;
+                    return true;
+                }
+
+                // a dec value doesn't preclude a hex value appearing later (03, 07, 0E)
+                nState = EnumState::Dec;
+            }
+        }
+
+        return false;
+    });
+
+    return nState;
 }
 
 static bool MatchEnumText(const std::wstring_view svValue, uint32_t nValue, bool isHex)
@@ -1722,6 +1576,105 @@ std::wstring CodeNoteModel::GetSummary() const
     }
 
     return TrimSize(std::wstring(svNote), false);
+}
+
+static ra::data::Memory::Format GetNumberFormat(std::wstring_view svValue)
+{
+    auto nFormat = ra::data::Memory::Format::Dec;
+
+    if (svValue.size() > 2 && svValue.at(0) == L'0' && svValue.at(1) == L'x')
+    {
+        svValue = svValue.substr(2);
+        nFormat = ra::data::Memory::Format::Hex;
+    }
+    else if (svValue.size() > 1 && (svValue.front() == L'h' || svValue.front() == L'H'))
+    {
+        svValue = svValue.substr(1);
+        nFormat = ra::data::Memory::Format::Hex;
+    }
+    else if (svValue.size() > 1 && (svValue.back() == L'h' || svValue.back() == L'H'))
+    {
+        svValue = svValue.substr(0, svValue.size() - 1);
+        nFormat = ra::data::Memory::Format::Hex;
+    }
+
+    size_t nIndex = 0;
+    while (nIndex < svValue.size())
+    {
+        const auto c = svValue.at(nIndex);
+        if (c >= 'a' && c <= 'f')
+            nFormat = ra::data::Memory::Format::Hex;
+        else if (c >= 'A' && c <= 'F')
+            nFormat = ra::data::Memory::Format::Hex;
+        else if (c < '0' || c > '9')
+            break;
+
+        ++nIndex;
+    }
+
+    if (nIndex == 0)
+    {
+        // did not match any digits
+        nFormat = ra::data::Memory::Format::Unknown;
+    }
+    else if (nIndex < svValue.size() && isalpha(svValue.at(nIndex)))
+    {
+        // trailing alphabetic characters after matching digits
+        nFormat = ra::data::Memory::Format::Unknown;
+    }
+
+    return nFormat;
+}
+
+ra::data::Memory::Format CodeNoteModel::DeterminePreferredMemFormat(std::wstring_view sNote)
+{
+    auto nMemFormat = ra::data::Memory::Format::Dec;
+    auto bPotentiallyPaddedHex = false;
+    auto bAllValuesPotentiallyPaddedHex = true;
+
+    MatchSubNote(sNote, [&nMemFormat, &bPotentiallyPaddedHex, &bAllValuesPotentiallyPaddedHex](std::wstring_view svValue)
+    {
+        const auto nSplit = FindValueSplit(svValue);
+        if (nSplit != std::wstring::npos)
+        {
+            const auto nLeft = svValue.substr(0, nSplit);
+            const auto nLeftFormat = GetNumberFormat(nLeft);
+            switch (nLeftFormat)
+            {
+                case ra::data::Memory::Format::Hex:
+                    nMemFormat = ra::data::Memory::Format::Hex;
+                    return true;
+
+                case ra::data::Memory::Format::Dec:
+                    nMemFormat = ra::data::Memory::Format::Dec;
+
+                    // if the key has a leading zero and is a multiple of two characters long (i.e. 0027), assume it's hex
+                    if (nLeft.length() % 2 != 0)
+                        bAllValuesPotentiallyPaddedHex = false;
+                    else if (nLeft.at(0) == '0')
+                        bPotentiallyPaddedHex = true;
+                    break;
+
+                default:
+                {
+                    uint32_t nLow, nHigh;
+                    if (ParseBitRange(nLeft, nLow, nHigh))
+                    {
+                        // found a bit indicator. prefer hex format for value display
+                        nMemFormat = ra::data::Memory::Format::Hex;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    });
+
+    if (nMemFormat == ra::data::Memory::Format::Dec && bPotentiallyPaddedHex && bAllValuesPotentiallyPaddedHex)
+        nMemFormat = ra::data::Memory::Format::Hex;
+
+    return nMemFormat;
 }
 
 } // namespace models

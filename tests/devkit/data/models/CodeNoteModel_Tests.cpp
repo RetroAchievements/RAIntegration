@@ -277,10 +277,19 @@ public:
         // h prefix
         const std::wstring sNote7 =
             L"[16-bit] location\r\n"
+            L"h00=Unknown\r\n"
+            L"h10=Level 1\r\n"
+            L"h68=Credits\r\n";
+        note.SetNote(sNote7);
+
+        Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
+        // h suffix
+        const std::wstring sNote8 =
+            L"[16-bit] location\r\n"
             L"00h=Unknown\r\n"
             L"10h=Level 1\r\n"
             L"68h=Credits\r\n";
-        note.SetNote(sNote7);
+        note.SetNote(sNote8);
 
         Assert::AreEqual(Memory::Format::Hex, note.GetDefaultMemFormat());
     }
@@ -742,6 +751,7 @@ public:
         Assert::AreEqual(std::wstring_view(L"2=Green"), note.GetEnumText(2));
         Assert::AreEqual(std::wstring_view(L"3=Blue"), note.GetEnumText(3));
         Assert::AreEqual(std::wstring_view(), note.GetEnumText(4));
+        Assert::AreEqual(ra::data::Memory::Format::Dec, note.GetDefaultMemFormat());
     }
 
     TEST_METHOD(TestGetEnumTextSingleLine)
@@ -756,6 +766,7 @@ public:
         Assert::AreEqual(std::wstring_view(L"2=Green"), note.GetEnumText(2));
         Assert::AreEqual(std::wstring_view(L"3=Blue"), note.GetEnumText(3));
         Assert::AreEqual(std::wstring_view(), note.GetEnumText(4));
+        Assert::AreEqual(ra::data::Memory::Format::Dec, note.GetDefaultMemFormat());
     }
 
     TEST_METHOD(TestGetEnumTextSingleLineAlternateFormat)
@@ -770,6 +781,7 @@ public:
         Assert::AreEqual(std::wstring_view(L"2: Green"), note.GetEnumText(2));
         Assert::AreEqual(std::wstring_view(L"3: Blue"), note.GetEnumText(3));
         Assert::AreEqual(std::wstring_view(), note.GetEnumText(4));
+        Assert::AreEqual(ra::data::Memory::Format::Dec, note.GetDefaultMemFormat());
     }
 
     TEST_METHOD(TestGetEnumTextHexPrefix0x)
@@ -789,6 +801,7 @@ public:
         Assert::AreEqual(std::wstring_view(L"0x4C=Green"), note.GetEnumText(0x4C));
         Assert::AreEqual(std::wstring_view(L"0xA3=Blue"), note.GetEnumText(0xA3));
         Assert::AreEqual(std::wstring_view(), note.GetEnumText(0x2A));
+        Assert::AreEqual(ra::data::Memory::Format::Hex, note.GetDefaultMemFormat());
     }
 
     TEST_METHOD(TestGetEnumTextHexPrefixH)
@@ -808,6 +821,7 @@ public:
         Assert::AreEqual(std::wstring_view(L"h4c=Green"), note.GetEnumText(0x4C));
         Assert::AreEqual(std::wstring_view(L"ha3=Blue"), note.GetEnumText(0xA3));
         Assert::AreEqual(std::wstring_view(), note.GetEnumText(0x2A));
+        Assert::AreEqual(ra::data::Memory::Format::Hex, note.GetDefaultMemFormat());
     }
 
     TEST_METHOD(TestGetEnumTextHexPrefixNone)
@@ -827,6 +841,67 @@ public:
         Assert::AreEqual(std::wstring_view(L"4C=Green"), note.GetEnumText(0x4C));
         Assert::AreEqual(std::wstring_view(L"A3=Blue"), note.GetEnumText(0xA3));
         Assert::AreEqual(std::wstring_view(), note.GetEnumText(0x2A));
+        Assert::AreEqual(ra::data::Memory::Format::Hex, note.GetDefaultMemFormat());
+    }
+
+    TEST_METHOD(TestGetEnumTextIndentSpace)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"[8-bit] Color\r\n"
+            L"  0x00=None\r\n"
+            L"  0x10=Red\r\n"
+            L"  0x4C=Green\r\n"
+            L"  0xA3=Blue\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
+        Assert::AreEqual(std::wstring_view(L"0x00=None"), note.GetEnumText(0x00));
+        Assert::AreEqual(std::wstring_view(L"0x10=Red"), note.GetEnumText(0x10));
+        Assert::AreEqual(std::wstring_view(L"0x4C=Green"), note.GetEnumText(0x4C));
+        Assert::AreEqual(std::wstring_view(L"0xA3=Blue"), note.GetEnumText(0xA3));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(0x2A));
+        Assert::AreEqual(ra::data::Memory::Format::Hex, note.GetDefaultMemFormat());
+    }
+
+    TEST_METHOD(TestGetEnumTextIndentNonAlphanumeric)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"[8-bit] Color\r\n"
+            L"..0x00=None\r\n"
+            L"..0x10=Red\r\n"
+            L"..0x4C=Green\r\n"
+            L"..0xA3=Blue\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
+        Assert::AreEqual(std::wstring_view(L"0x00=None"), note.GetEnumText(0x00));
+        Assert::AreEqual(std::wstring_view(L"0x10=Red"), note.GetEnumText(0x10));
+        Assert::AreEqual(std::wstring_view(L"0x4C=Green"), note.GetEnumText(0x4C));
+        Assert::AreEqual(std::wstring_view(L"0xA3=Blue"), note.GetEnumText(0xA3));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(0x2A));
+        Assert::AreEqual(ra::data::Memory::Format::Hex, note.GetDefaultMemFormat());
+    }
+
+    TEST_METHOD(TestGetEnumTextIndentBullet)
+    {
+        CodeNoteModelHarness note;
+        const std::wstring sNote =
+            L"[8-bit] Color\r\n"
+            L"* 0x00=None\r\n"
+            L"* 0x10=Red\r\n"
+            L"* 0x4C=Green\r\n"
+            L"* 0xA3=Blue\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
+        Assert::AreEqual(std::wstring_view(L"0x00=None"), note.GetEnumText(0x00));
+        Assert::AreEqual(std::wstring_view(L"0x10=Red"), note.GetEnumText(0x10));
+        Assert::AreEqual(std::wstring_view(L"0x4C=Green"), note.GetEnumText(0x4C));
+        Assert::AreEqual(std::wstring_view(L"0xA3=Blue"), note.GetEnumText(0xA3));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(0x2A));
+        Assert::AreEqual(ra::data::Memory::Format::Hex, note.GetDefaultMemFormat());
     }
 
     TEST_METHOD(TestGetEnumTextRange)
@@ -850,6 +925,7 @@ public:
         Assert::AreEqual(std::wstring_view(L"15-18=Blue"), note.GetEnumText(17));
         Assert::AreEqual(std::wstring_view(), note.GetEnumText(8));
         Assert::AreEqual(std::wstring_view(), note.GetEnumText(20));
+        Assert::AreEqual(ra::data::Memory::Format::Dec, note.GetDefaultMemFormat());
     }
 
     TEST_METHOD(TestGetEnumTextIndirect)
@@ -876,6 +952,7 @@ public:
         Assert::AreEqual(std::wstring_view(L"1=Red"), pSubNote->GetEnumText(1));
         Assert::AreEqual(std::wstring_view(L"2=Green"), pSubNote->GetEnumText(2));
         Assert::AreEqual(std::wstring_view(), pSubNote->GetEnumText(3));
+        Assert::AreEqual(ra::data::Memory::Format::Dec, pSubNote->GetDefaultMemFormat());
     }
 
     TEST_METHOD(TestGetSubNote)

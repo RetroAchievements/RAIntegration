@@ -242,7 +242,7 @@ private:
     void ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex);
     void ExtractSize(const std::wstring& sNote, bool bIsPointer);
     static Memory::Size GetImpliedPointerSize();
-    void CheckForHexEnum(size_t nStartIndex);
+    static Memory::Format DeterminePreferredMemFormat(std::wstring_view sNote);
 };
 
 } // namespace models

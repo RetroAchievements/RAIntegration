@@ -1313,7 +1313,7 @@ static std::wstring_view GetValues(const std::wstring_view svLine)
     // skip over any leading non-alphanumeric characters
     if (!isalnum(svLine.at(0)))
     {
-        for (auto nScan = 1; nScan < nSplit; ++nScan)
+        for (size_t nScan = 1; nScan < nSplit; ++nScan)
         {
             if (isalnum(svLine.at(nScan)))
                 return GetValues(svLine.substr(nScan));

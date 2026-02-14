@@ -414,12 +414,9 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
             for (; pAchievementData < pAchievementStop; ++pAchievementData)
             {
                 // if the server has provided an unexpected category (usually 0), ignore it.
-                ra::data::models::AssetCategory nCategory = ra::data::models::AssetCategory::None;
                 switch (pAchievementData->public_.category)
                 {
                     case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
-                        nCategory = ra::data::models::AssetCategory::Core;
-
                         // automatically activate all core achievements in compatibility mode
                         if (GetMode() == Mode::CompatibilityTest)
                         {
@@ -431,8 +428,6 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                         break;
 
                     case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:
-                        nCategory = ra::data::models::AssetCategory::Unofficial;
-
                         // all unofficial achievements should start inactive.
                         // rc_client automatically activates them.
                         pAchievementData->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
@@ -449,10 +444,11 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
 
                 const auto sDefinition = mAchievementDefinitions.find(pAchievementData->public_.id);
                 if (sDefinition != mAchievementDefinitions.end())
-                    vmAchievement->Attach(*pAchievementData, nCategory, sDefinition->second);
+                    vmAchievement->InitializeFromPublishedAchievement(*pAchievementData, sDefinition->second);
                 else
-                    vmAchievement->Attach(*pAchievementData, nCategory, "");
+                    vmAchievement->InitializeFromPublishedAchievement(*pAchievementData, "");
 
+                vmAchievement->SetLocalAchievementInfo(*pAchievementData);
                 vmAchievement->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmAchievement));
@@ -481,14 +477,13 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
             {
                 auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
 
-                const auto nCategory = ra::data::models::AssetCategory::Core; // all published leaderboards are core
-
                 const auto sDefinition = mLeaderboardDefinitions.find(pLeaderboardData->public_.id);
                 if (sDefinition != mLeaderboardDefinitions.end())
-                    vmLeaderboard->Attach(*pLeaderboardData, nCategory, sDefinition->second);
+                    vmLeaderboard->InitializeFromPublishedLeaderboard(*pLeaderboardData, sDefinition->second);
                 else
-                    vmLeaderboard->Attach(*pLeaderboardData, nCategory, "");
+                    vmLeaderboard->InitializeFromPublishedLeaderboard(*pLeaderboardData, "");
 
+                vmLeaderboard->SetLocalLeaderboardInfo(*pLeaderboardData);
                 vmLeaderboard->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmLeaderboard));

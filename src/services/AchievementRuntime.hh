@@ -48,26 +48,12 @@ public:
     /// </summary>
     void ResetRuntime();
 
-    /// <summary>
-    /// Gets the raw trigger for the achievement.
-    /// </summary>
-    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const;
-    const rc_client_achievement_info_t* GetPublishedAchievementInfo(ra::AchievementID nId) const;
-
     static std::string GetAchievementBadge(const rc_client_achievement_t& pAchievement);
 
     void RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const;
 
     void UpdateActiveAchievements() noexcept(false);
     void UpdateActiveLeaderboards();
-
-    /// <summary>
-    /// Gets the raw definition for the leaderboard.
-    /// </summary>
-    rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const;
-    const rc_client_leaderboard_info_t* GetPublishedLeaderboardInfo(ra::LeaderboardID nId) const;
-
-    void ReleaseLeaderboardTracker(ra::LeaderboardID nId);
 
     /// <summary>
     /// Specifies the rich presence to process each frame.

@@ -28,6 +28,7 @@
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
+#include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
@@ -75,6 +76,7 @@ public:
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
+        ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulator;

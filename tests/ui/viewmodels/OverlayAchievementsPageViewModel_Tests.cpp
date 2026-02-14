@@ -81,13 +81,15 @@ private:
 
         void SetProgress(ra::AchievementID nId, int nValue, int nMax)
         {
-            auto* pTrigger = mockAchievementRuntime.GetAchievementTrigger(nId);
-            if (pTrigger == nullptr)
+            auto* pAchievement = mockGameContext.Assets().FindAchievement(nId);
+            if (!pAchievement)
             {
-                mockAchievementRuntime.ActivateAchievement(nId, "0=1");
-                pTrigger = mockAchievementRuntime.GetAchievementTrigger(nId);
+                pAchievement = &mockGameContext.Assets().NewAchievement();
+                pAchievement->SetID(nId);
+                pAchievement->SetTrigger("0=1");
             }
 
+            auto* pTrigger = pAchievement->GetRuntimeAchievementInfo()->trigger;
             pTrigger->measured_value = nValue;
             pTrigger->measured_target = nMax;
         }

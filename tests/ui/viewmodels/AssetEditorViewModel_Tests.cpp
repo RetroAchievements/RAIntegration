@@ -15,6 +15,7 @@
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -788,6 +789,7 @@ public:
     TEST_METHOD(TestActivateNewLeaderboard)
     {
         AssetEditorViewModelHarness editor;
+        ra::services::mocks::MockThreadPool mockThreadPool;
 
         editor.mockRuntime.MockLocalLeaderboard(111000001U, "Leaderboard");
         editor.mockGameContext.InitializeFromAchievementRuntime();
@@ -811,8 +813,10 @@ public:
         editor.SetState(AssetState::Waiting);
         Assert::IsTrue(bDialogSeen);
 
-        // rely on leaderboard to deactivate itself
-        leaderboard->DoFrame();
+        // to work around a binding issue, changing the state back is done asynchronously.
+        // advance time to ensure the state gets changed back.
+        mockThreadPool.AdvanceTime(std::chrono::milliseconds(200));
+
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
 
         // set additional properties so leaderboard is valid and attempt to activate again
@@ -1352,7 +1356,7 @@ public:
         editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         Assert::AreEqual(1U, pTrigger->requirement->conditions->operand2.value.num);
 
@@ -1373,7 +1377,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=2"), vmAch->GetTrigger());
 
         // make sure the runtime record got updated
-        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         Assert::AreEqual(2U, pTrigger->requirement->conditions->operand2.value.num);
 
@@ -1443,7 +1447,7 @@ public:
         editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         Assert::AreEqual(1U, pTrigger->requirement->conditions->operand2.value.num);
 
@@ -1464,7 +1468,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=2"), vmAch->GetTrigger());
 
         // make sure the runtime record got updated
-        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         Assert::AreEqual(2U, pTrigger->requirement->conditions->operand2.value.num);
 
@@ -1493,7 +1497,7 @@ public:
         editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
 
         Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
@@ -1549,7 +1553,7 @@ public:
         editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
 
         editor.Trigger().SetSelectedGroupIndex(2);
@@ -1667,7 +1671,7 @@ public:
         editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
 
         Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
@@ -1724,7 +1728,7 @@ public:
         editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Value);
 
         // make sure the record got loaded into the runtime
-        const auto* pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        const auto* pLeaderboard = vmLbd->GetRuntimeLeaderboard();
         Expects(pLeaderboard != nullptr);
 
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
@@ -1741,7 +1745,7 @@ public:
         Assert::AreEqual(std::string("M:0xH2222"), vmLbd->GetValueDefinition());
 
         // make sure the runtime record got updated
-        pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        pLeaderboard = vmLbd->GetRuntimeLeaderboard();
         Expects(pLeaderboard != nullptr);
         Assert::AreEqual(0x2222U, pLeaderboard->value.conditions->conditions->operand1.value.memref->address);
 
@@ -1761,7 +1765,7 @@ public:
         Assert::AreEqual(std::string("M:0xH3333"), vmLbd->GetValueDefinition());
 
         // make sure the runtime record got updated
-        pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        pLeaderboard = vmLbd->GetRuntimeLeaderboard();
         Expects(pLeaderboard != nullptr);
         Assert::AreEqual(0x3333U, pLeaderboard->value.conditions->conditions->operand1.value.memref->address);
     }
@@ -1781,7 +1785,7 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(0U, pCondition->GetCurrentHits());
 
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
         Assert::AreEqual(0U, pCondition->GetCurrentHits());
@@ -1806,7 +1810,7 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(0U, pCondition->GetCurrentHits());
 
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
         Assert::AreEqual(0U, pCondition->GetCurrentHits());
@@ -1832,7 +1836,7 @@ public:
 
         editor.LoadAsset(vmAch);
 
-        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        auto* pTrigger = vmAch->GetMutableRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->measured_value = 6U;
         Assert::AreEqual(std::wstring(L"0/99"), editor.GetMeasuredValue());
@@ -1851,7 +1855,7 @@ public:
 
         editor.LoadAsset(vmLbd);
 
-        auto* pDefinition = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        auto* pDefinition = vmLbd->GetMutableRuntimeLeaderboard();
         Expects(pDefinition != nullptr);
         pDefinition->value.value.value = 6U;
         Assert::AreEqual(std::wstring(L"0"), editor.GetMeasuredValue());
@@ -1911,7 +1915,7 @@ public:
         auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
         editor.mockRuntime.SyncAssets();
 
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
 
@@ -1950,7 +1954,7 @@ public:
         auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
         editor.mockRuntime.SyncAssets();
 
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
 
         editor.LoadAsset(vmAch);
@@ -2008,7 +2012,7 @@ public:
         auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
         editor.mockRuntime.SyncAssets();
 
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
 
@@ -2041,7 +2045,7 @@ public:
         auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
         editor.mockRuntime.SyncAssets();
 
-        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        auto* pTrigger = vmAch->GetMutableRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
         pTrigger->has_hits = 1;
@@ -2079,7 +2083,7 @@ public:
         auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
         editor.mockRuntime.SyncAssets();
 
-        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        auto* pTrigger = vmAch->GetMutableRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
         pTrigger->has_hits = 1;
@@ -2410,11 +2414,12 @@ public:
         const auto nDefaultColor = ra::to_unsigned(TriggerConditionViewModel::RowColorProperty.GetDefaultValue());
 
         AchievementModel achievement;
-        achievement.SetTrigger("0=1S0=1S1=1");
-        editor.mockRuntime.ActivateAchievement(achievement.GetID(), achievement.GetTrigger()); // must be in runtime to apply colors
+        auto* info = editor.mockRuntime.ActivateAchievement(1, "0=1S0=1S1=1"); // must be in runtime to apply colors
+        achievement.InitializeFromPublishedAchievement(*info, "0=1S0=1S1=1");
+        achievement.SetLocalAchievementInfo(*info);
         editor.LoadAsset(&achievement);
 
-        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(achievement.GetID());
+        auto* pTrigger = achievement.GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->alternative->next->conditions->is_true = 1; // simulate evaluation of 1=1 being true
 

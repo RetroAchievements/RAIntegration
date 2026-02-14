@@ -4,8 +4,6 @@
 
 #include "data\context\EmulatorContext.hh"
 
-#include "data\models\CapturedTriggerHits.hh"
-
 #include "ui\ViewModelBase.hh"
 #include "ui\ViewModelCollection.hh"
 #include "ui\Types.hh"
@@ -96,7 +94,7 @@ public:
     void SerializeAppend(std::string& sBuffer) const;
 
     void InitializeFrom(const rc_trigger_t& pTrigger);
-    void InitializeFrom(const std::string& sTrigger, const ra::data::models::CapturedTriggerHits& pCapturedHits);
+    void InitializeFrom(const std::string& sTrigger);
     void UpdateFrom(const rc_trigger_t& pTrigger);
     void UpdateFrom(const std::string& sTrigger);
     rc_trigger_t* GetTriggerFromString() const noexcept { return m_pTrigger; }

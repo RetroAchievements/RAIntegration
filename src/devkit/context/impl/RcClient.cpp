@@ -118,35 +118,32 @@ void RcClient::DispatchRequest(const rc_api_request_t& pRequest,
             sApi.push_back(c);
         }
 
-        std::string sParams;
-        bool redacted = false;
-        for (const char c : httpRequest.GetPostData())
-        {
-            if (c == '=')
-            {
-                const auto param = sParams.back();
-                redacted = (param == 't') || (param == 'p' && ra::util::String::StartsWith(sApi, "login"));
-
-                if (redacted)
-                {
-                    sParams.append("=[redacted]");
-                    continue;
-                }
-            }
-            else if (c == '&')
-            {
-                redacted = false;
-            }
-            else if (redacted)
-            {
-                continue;
-            }
-
-            sParams.push_back(c);
-        }
-
         if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
         {
+            std::string sParams = httpRequest.GetPostData();
+            nIndex = sParams.find("&t=");
+            if (nIndex != std::string::npos)
+            {
+                nIndex += 3;
+                auto nIndex2 = sParams.find('&', nIndex);
+                if (nIndex2 == std::string::npos)
+                    nIndex2 = sParams.length();
+                sParams.replace(nIndex, nIndex2 - nIndex, "[redacted]");
+            }
+
+            if (ra::util::String::StartsWith(sApi, "login"))
+            {
+                nIndex = sParams.find("&p=");
+                if (nIndex != std::string::npos)
+                {
+                    nIndex += 3;
+                    auto nIndex2 = sParams.find('&', nIndex);
+                    if (nIndex2 == std::string::npos)
+                        nIndex2 = sParams.length();
+                    sParams.replace(nIndex, nIndex2 - nIndex, "[redacted]");
+                }
+            }
+
             RA_LOG_INFO(">> %s request: %s", sApi.c_str(), sParams.c_str());
         }
     }
@@ -166,7 +163,24 @@ void RcClient::CallApi(const std::string& sApi, const ra::services::Http::Reques
 
             if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
             {
-                RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
+                if (httpResponse.StatusCode() == ra::services::Http::StatusCode::OK &&
+                    ra::util::String::StartsWith(sApi, "login"))
+                {
+                    auto sResponse = httpResponse.Content();
+                    auto nIndex = sResponse.find("\"Token\":\"");
+                    if (nIndex != std::string::npos)
+                    {
+                        nIndex += 9;
+                        const auto nIndex2 = sResponse.find('"', nIndex);
+                        if (nIndex2 != std::string::npos)
+                            sResponse.replace(nIndex, nIndex2 - nIndex, "[redacted]");
+                    }
+                    RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), sResponse.c_str());
+                }
+                else
+                {
+                    RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
+                }
             }
 
             fCallback(pResponse, pCallbackData);

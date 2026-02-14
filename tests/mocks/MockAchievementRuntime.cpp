@@ -324,6 +324,8 @@ void MockGameContext::InitializeFromAchievementRuntime()
     {
         GameContext::InitializeFromAchievementRuntime(pMockRuntime->GetAchievementDefinitions(),
                                                       pMockRuntime->GetLeaderboardDefinitions());
+
+        pMockRuntime->SyncAssets();
     }
     else
     {

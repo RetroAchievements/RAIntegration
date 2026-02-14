@@ -794,7 +794,7 @@ rc_trigger_t* TriggerViewModel::ParseTrigger(const std::string& sTrigger)
     return nullptr;
 }
 
-void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::data::models::CapturedTriggerHits& pCapturedHits)
+void TriggerViewModel::InitializeFrom(const std::string& sTrigger)
 {
     {
         std::lock_guard<std::mutex> lock(m_pMutex);
@@ -804,7 +804,6 @@ void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::dat
 
     if (m_pTrigger)
     {
-        pCapturedHits.Restore(m_pTrigger, sTrigger);
         InitializeGroups(*m_pTrigger);
     }
     else if (m_bIsValue)

@@ -73,8 +73,7 @@ private:
 
     void Parse(TriggerViewModel& vmTrigger, const std::string& sInput)
     {
-        ra::data::models::CapturedTriggerHits pCapturedHits;
-        vmTrigger.InitializeFrom(sInput, pCapturedHits);
+        vmTrigger.InitializeFrom(sInput);
     }
 
     void ParseAndRegenerate(const std::string& sInput)
@@ -1682,7 +1681,7 @@ public:
     {
         ra::data::models::AchievementModel pAchievement;
         TriggerViewModelHarness vmTrigger;
-        vmTrigger.InitializeFrom(pAchievement.GetTrigger(), pAchievement.GetCapturedHits());
+        vmTrigger.InitializeFrom(pAchievement.GetTrigger());
         vmTrigger.AddGroup();
         vmTrigger.SetSelectedGroupIndex(1);
         vmTrigger.NewCondition();

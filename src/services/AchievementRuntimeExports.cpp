@@ -1054,6 +1054,10 @@ const ra::data::models::AchievementModel* CheckForPauseOnTrigger(const rc_client
         }
     }
 
+    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+    if (pRuntime.HasRichPresence())
+        vmAchievement->SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
+
     return vmAchievement;
 }
 

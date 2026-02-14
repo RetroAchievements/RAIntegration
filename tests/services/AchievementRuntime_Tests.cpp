@@ -81,7 +81,7 @@ public:
     ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
     ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-    rc_client_t* GetClient()
+    rc_client_t* GetClient() const
     {
         return ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     }
@@ -244,10 +244,28 @@ public:
             }
         }
 
-        vmAchievement->Attach(*pAchievement, nCategory, "");
+        vmAchievement->InitializeFromPublishedAchievement(*pAchievement, "");
+        vmAchievement->SetLocalAchievementInfo(*pAchievement);
+        vmAchievement->SetCategory(nCategory);
+        vmAchievement->UpdateServerCheckpoint();
 
         mockGameContext.Assets().Append(std::move(vmAchievement));
         return mockGameContext.Assets().FindAchievement(pAchievement->public_.id);
+    }
+
+    rc_trigger_t* GetAchievementTrigger(uint32_t nId) const
+    {
+        const auto* pSubset = GetClient()->game->subsets;
+        for (; pSubset; pSubset = pSubset->next)
+        {
+            for (uint32_t i = 0; i < pSubset->public_.num_achievements; ++i)
+            {
+                if (pSubset->achievements[i].public_.id == nId)
+                    return pSubset->achievements[i].trigger;
+            }
+        }
+
+        return nullptr;
     }
 
     rc_client_leaderboard_info_t* MockLeaderboard(uint32_t nId, const std::string& sDefinition)
@@ -307,7 +325,11 @@ public:
         }
 
         auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
-        vmLeaderboard->Attach(*pLeaderboard, nCategory, "");
+        vmLeaderboard->InitializeFromPublishedLeaderboard(*pLeaderboard, "");
+        vmLeaderboard->SetLocalLeaderboardInfo(*pLeaderboard);
+        vmLeaderboard->SetCategory(nCategory);
+        vmLeaderboard->UpdateServerCheckpoint();
+
         pLeaderboard->lboard->state = RC_LBOARD_STATE_ACTIVE; // syncing State sets this back to waiting
 
         mockGameContext.Assets().Append(std::move(vmLeaderboard));
@@ -620,7 +642,7 @@ public:
         pAchievement = runtime.GetClient()->game->subsets->next->achievements;
         Expects(pAchievement != nullptr);
         const auto* pNewestTrigger = pAchievement->trigger;
-        Assert::AreNotEqual(static_cast<const void*>(pNewerTrigger), static_cast<const void*>(pNewestTrigger));
+        Assert::IsNotNull(pNewestTrigger); // cannot compare pointer as the freed memory may get reallocated and the pointer won't appear to have changed
     }
 
     TEST_METHOD(TestSyncAssetsModifiedCoreAchievement)
@@ -640,7 +662,8 @@ public:
         pSubset->public_.num_achievements = 1;
 
         auto vmNewAchievement = std::make_unique<ra::data::models::AchievementModel>();
-        vmNewAchievement->Attach(*pAchievement, ra::data::models::AssetCategory::Core, "0xH0000=1");
+        vmNewAchievement->InitializeFromPublishedAchievement(*pAchievement, "0xH0000=1");
+        vmNewAchievement->SetLocalAchievementInfo(*pAchievement);
         vmNewAchievement->SetSubsetID(1U);
         const auto& vmAchievement = reinterpret_cast<ra::data::models::AchievementModel&>(runtime.mockGameContext.Assets().Append(std::move(vmNewAchievement)));
 

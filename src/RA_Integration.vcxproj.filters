@@ -333,9 +333,6 @@
     <ClCompile Include="data\models\LocalBadgesModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CapturedTriggerHits.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\ChallengeIndicatorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -840,9 +837,6 @@
       <Filter>UI\Win32</Filter>
     </ClInclude>
     <ClInclude Include="data\models\LocalBadgesModel.hh">
-      <Filter>Data\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="data\models\CapturedTriggerHits.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\NumericUpDownBinding.hh">

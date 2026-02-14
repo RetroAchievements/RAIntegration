@@ -6,6 +6,7 @@
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
+#include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\EditorTheme.hh"
@@ -224,14 +225,14 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
                 SetPauseOnReset(pAchievement->IsPauseOnReset());
                 SetPauseOnTrigger(pAchievement->IsPauseOnTrigger());
 
-                auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAsset->GetID());
+                auto* pTrigger = pAchievement->GetRuntimeTrigger();
                 if (pTrigger != nullptr)
                 {
                     Trigger().InitializeFrom(*pTrigger);
                 }
                 else
                 {
-                    Trigger().InitializeFrom(pAchievement->GetTrigger(), pAchievement->GetCapturedHits());
+                    Trigger().InitializeFrom(pAchievement->GetTrigger());
                     pTrigger = Trigger().GetTriggerFromString();
                 }
 
@@ -239,8 +240,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
             }
             else
             {
-                ra::data::models::CapturedTriggerHits pCapturedHits;
-                Trigger().InitializeFrom("", pCapturedHits);
+                Trigger().InitializeFrom("");
                 SetPauseOnReset(PauseOnResetProperty.GetDefaultValue());
                 SetPauseOnTrigger(PauseOnTriggerProperty.GetDefaultValue());
                 SetValue(HasMeasuredProperty, false);
@@ -275,8 +275,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
         SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
         SetValue(AssetValidationWarningProperty, AssetValidationErrorProperty.GetDefaultValue());
 
-        ra::data::models::CapturedTriggerHits pCapturedHits;
-        Trigger().InitializeFrom("", pCapturedHits);
+        Trigger().InitializeFrom("");
     }
 
     OnTriggerChanged(true);
@@ -316,20 +315,13 @@ void AssetEditorViewModel::UpdateLeaderboardTrigger()
     }
 
     const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
-    if (pLeaderboard != nullptr)
-    {
-        using namespace ra::bitwise_ops;
+    Expects(pLeaderboard != nullptr);
 
-        SetPauseOnReset((pLeaderboard->GetPauseOnReset() & LeaderboardPartToParts(nPart)) != ra::data::models::LeaderboardModel::LeaderboardParts::None);
-        SetPauseOnTrigger((pLeaderboard->GetPauseOnTrigger() & LeaderboardPartToParts(nPart)) != ra::data::models::LeaderboardModel::LeaderboardParts::None);
-    }
-    else
-    {
-        SetPauseOnReset(false);
-        SetPauseOnTrigger(false);
-    }
+    using namespace ra::bitwise_ops;
+    SetPauseOnReset((pLeaderboard->GetPauseOnReset() & LeaderboardPartToParts(nPart)) != ra::data::models::LeaderboardModel::LeaderboardParts::None);
+    SetPauseOnTrigger((pLeaderboard->GetPauseOnTrigger() & LeaderboardPartToParts(nPart)) != ra::data::models::LeaderboardModel::LeaderboardParts::None);
 
-    const auto* pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(m_pAsset->GetID());
+    const auto* pLeaderboardDefinition = pLeaderboard->GetRuntimeLeaderboard();
     if (pLeaderboardDefinition != nullptr)
     {
         switch (nPart)
@@ -350,29 +342,28 @@ void AssetEditorViewModel::UpdateLeaderboardTrigger()
                 break;
         }
     }
-    else if (pLeaderboard != nullptr)
+    else
     {
         switch (nPart)
         {
             case LeaderboardPart::Start:
-                Trigger().InitializeFrom(pLeaderboard->GetStartTrigger(), pLeaderboard->GetStartCapturedHits());
+                Trigger().InitializeFrom(pLeaderboard->GetStartTrigger());
                 return;
             case LeaderboardPart::Submit:
-                Trigger().InitializeFrom(pLeaderboard->GetSubmitTrigger(), pLeaderboard->GetSubmitCapturedHits());
+                Trigger().InitializeFrom(pLeaderboard->GetSubmitTrigger());
                 return;
             case LeaderboardPart::Cancel:
-                Trigger().InitializeFrom(pLeaderboard->GetCancelTrigger(), pLeaderboard->GetCancelCapturedHits());
+                Trigger().InitializeFrom(pLeaderboard->GetCancelTrigger());
                 return;
             case LeaderboardPart::Value:
-                Trigger().InitializeFrom(pLeaderboard->GetValueDefinition(), pLeaderboard->GetValueCapturedHits());
+                Trigger().InitializeFrom(pLeaderboard->GetValueDefinition());
                 return;
             default:
                 break;
         }
     }
 
-    ra::data::models::CapturedTriggerHits pCapturedHits;
-    Trigger().InitializeFrom("", pCapturedHits);
+    Trigger().InitializeFrom("");
 }
 
 void AssetEditorViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)
@@ -620,31 +611,51 @@ void AssetEditorViewModel::HandleStateChanged(ra::data::models::AssetState nOldS
     if (nNewState == ra::data::models::AssetState::Triggered)
         Trigger().DoFrame();
 
-    // update the state of the asset
-    m_pAsset->SetState(nNewState);
-
-    // if the asset became active, rebind to the actual trigger
     const bool bIsActive = ra::data::models::AssetModelBase::IsActive(nNewState);
     const bool bWasActive = ra::data::models::AssetModelBase::IsActive(nOldState);
     if (bIsActive && !bWasActive)
     {
-        UpdateTriggerBinding();
+        // make sure the asset is in a valid state before activation
+        auto bCanActivate = false;
+        switch (m_pAsset->GetType())
+        {
+            case ra::data::models::AssetType::Achievement:
+            {
+                const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
+                if (pAchievement != nullptr)
+                    bCanActivate = (pAchievement->GetRuntimeTrigger() != nullptr);
+                break;
+            }
 
-        const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        const auto bActivateSucceeded = IsAchievement()
-            ? (pRuntime.GetAchievementTrigger(m_pAsset->GetID()) != nullptr)
-            : (pRuntime.GetLeaderboardDefinition(m_pAsset->GetID()) != nullptr);
+            case ra::data::models::AssetType::Leaderboard:
+            {
+                const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+                if (pLeaderboard != nullptr)
+                    bCanActivate = (pLeaderboard->GetRuntimeLeaderboard() != nullptr);
+                break;
+            }
+        }
 
-        if (!bActivateSucceeded)
+        if (!bCanActivate)
         {
             MessageBoxViewModel::ShowErrorMessage(*this, L"Activation failed.");
-            // NOTE: cannot set State back to Inactive here as the this code is triggered
+
+            // NOTE: we cannot set State back to Inactive here as the this code is triggered
             // by the binding and the binding disables watching the model while it's firing
-            // its notifications. Instead, let Asset.DoFrame() deactivate the asset and
-            // that will fire events that will cause the binding to uncheck itself.
+            // its notifications. Instead, schedule a task to set it back in a few milliseconds.
+            ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>()
+                .ScheduleAsync(std::chrono::milliseconds(100), [this, nOldState]() {
+                    SetState(nOldState);
+                });
             return;
         }
+
+        // if the asset became active, rebind to the actual trigger
+        UpdateTriggerBinding();
     }
+
+    // update the state of the asset
+    m_pAsset->SetState(nNewState);
 
     // if the state changed to/from Waiting, update the Waiting label
     if (nNewState == ra::data::models::AssetState::Waiting)
@@ -797,10 +808,7 @@ void AssetEditorViewModel::UpdateTriggerBinding()
     const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
     if (pAchievement != nullptr)
     {
-        const rc_trigger_t* pTrigger = nullptr;
-        if (pAchievement->IsActive())
-            pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
-
+        const rc_trigger_t* pTrigger = pAchievement->GetRuntimeTrigger();
         if (pTrigger != nullptr)
         {
             Trigger().UpdateFrom(*pTrigger);
@@ -819,10 +827,7 @@ void AssetEditorViewModel::UpdateTriggerBinding()
         const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
         if (pLeaderboard != nullptr)
         {
-            const rc_lboard_t* pLeaderboardDefinition = nullptr;
-            if (pLeaderboard->IsActive())
-                pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(pLeaderboard->GetID());
-
+            const rc_lboard_t* pLeaderboardDefinition = pLeaderboard->GetRuntimeLeaderboard();
             if (pLeaderboardDefinition != nullptr)
             {
                 switch (GetSelectedLeaderboardPart())
@@ -977,18 +982,22 @@ static void UpdateLeaderboardPartColors(ViewModelCollection<AssetEditorViewModel
 
 void AssetEditorViewModel::UpdateDebugHighlights()
 {
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     const rc_trigger_t* pTrigger = nullptr;
 
     switch (m_pAsset->GetType())
     {
         case ra::data::models::AssetType::Achievement:
-            pTrigger = pRuntime.GetAchievementTrigger(m_pAsset->GetID());
+        {
+            const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
+            if (pAchievement)
+                pTrigger = pAchievement->GetRuntimeTrigger();
             break;
+        }
 
         case ra::data::models::AssetType::Leaderboard:
         {
-            const auto* pLeaderboardDefinition = pRuntime.GetLeaderboardDefinition(m_pAsset->GetID());
+            const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+            const auto* pLeaderboardDefinition = pLeaderboard ? pLeaderboard->GetRuntimeLeaderboard() : nullptr;
             if (pLeaderboardDefinition == nullptr)
                 break;
 
@@ -1034,7 +1043,7 @@ void AssetEditorViewModel::UpdateMeasuredValue()
             const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
             if (pAchievement != nullptr)
             {
-                auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
+                auto* pTrigger = pAchievement->GetRuntimeTrigger();
                 if (!pTrigger)
                 {
                     pTrigger = Trigger().GetTriggerFromString();
@@ -1050,7 +1059,7 @@ void AssetEditorViewModel::UpdateMeasuredValue()
                 const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
                 if (pLeaderboard != nullptr)
                 {
-                    const auto* pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(pLeaderboard->GetID());
+                    const auto* pLeaderboardDefinition = pLeaderboard->GetRuntimeLeaderboard();
                     if (pLeaderboardDefinition)
                     {
                         const unsigned nValue = pLeaderboardDefinition->value.value.value;

@@ -398,7 +398,7 @@ private:
                         if (pSrcAchievement != nullptr)
                         {
                             memcpy(pAchievement, pSrcAchievement, sizeof(*pAchievement));
-                            vmAchievement->ReplaceAttached(*pAchievement++);
+                            vmAchievement->SetLocalAchievementInfo(*pAchievement++);
                             break;
                         }
                     }
@@ -428,14 +428,14 @@ private:
                         }
                     }
 
-                    if (pSrcAchievement != nullptr && pSrcAchievement == vmAchievement->GetAttached())
+                    if (pSrcAchievement != nullptr && pSrcAchievement == vmAchievement->GetRuntimeAchievementInfo())
                     {
                         // transfer the trigger ownership to the new SubsetWrapper
                         if (pSrcAchievement->trigger && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pSrcAchievement->trigger))
                             pSubsetWrapper->vAllocatedMemory.push_back(pSrcAchievement->trigger);
 
                         memcpy(pAchievement, pSrcAchievement, sizeof(*pAchievement));
-                        vmAchievement->ReplaceAttached(*pAchievement);
+                        vmAchievement->SetLocalAchievementInfo(*pAchievement);
                     }
                     else
                     {
@@ -455,8 +455,28 @@ private:
                             }
                         }
 
-                        // no rc_client_achievement_t found for this achievement, populate from the model
-                        vmAchievement->AttachAndInitialize(*pAchievement);
+                        // no rc_client_achievement_t found for this achievement, completely populate from the model
+                        vmAchievement->SetLocalAchievementInfo(*pAchievement);
+                        vmAchievement->SyncToLocalAchievementInfo();
+
+                        if (pAchievement->public_.badge_name[0] != 'L' && strcmp(pAchievement->public_.badge_name, "00000") != 0)
+                        {
+                            auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+                            std::string sBadgeName = pAchievement->public_.badge_name;
+                            char buffer[256];
+
+                            if (rc_client_achievement_get_image_url(&pAchievement->public_, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, buffer, sizeof(buffer)) == RC_OK)
+                            {
+                                pAchievement->public_.badge_url = rc_buffer_strcpy(&pSubsetWrapper->pBuffer, buffer);
+                                pImageRepository.FetchImage(ra::ui::ImageType::Badge, sBadgeName, pAchievement->public_.badge_url);
+                            }
+
+                            if (rc_client_achievement_get_image_url(&pAchievement->public_, RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE, buffer, sizeof(buffer)) == RC_OK)
+                            {
+                                pAchievement->public_.badge_locked_url = rc_buffer_strcpy(&pSubsetWrapper->pBuffer, buffer);
+                                pImageRepository.FetchImage(ra::ui::ImageType::Badge, sBadgeName + "_lock", pAchievement->public_.badge_locked_url);
+                            }
+                        }
                     }
 
                     // have to generate local urls for local images
@@ -524,7 +544,7 @@ private:
                                 }
                             }
 
-                            vmLeaderboard->ReplaceAttached(*pLeaderboard++);
+                            vmLeaderboard->SetLocalLeaderboardInfo(*pLeaderboard++);
                             break;
                         }
                     }
@@ -532,7 +552,7 @@ private:
                 else
                 {
                     pSrcLeaderboard = nullptr;
-                    if (m_pSubsetWrapper != nullptr && vmLeaderboard->GetAttached() != nullptr)
+                    if (m_pSubsetWrapper != nullptr && vmLeaderboard->GetRuntimeLeaderboard() != nullptr)
                     {
                         if (vmLeaderboard->GetCategory() == ra::data::models::AssetCategory::Local)
                         {
@@ -554,14 +574,14 @@ private:
                         }
                     }
 
-                    if (pSrcLeaderboard != nullptr && pSrcLeaderboard == vmLeaderboard->GetAttached())
+                    if (pSrcLeaderboard != nullptr && pSrcLeaderboard == vmLeaderboard->GetRuntimeLeaderboardInfo())
                     {
                         // transfer the lboard ownership to the new SubsetWrapper
                         if (pSrcLeaderboard->lboard && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pSrcLeaderboard->lboard))
                             pSubsetWrapper->vAllocatedMemory.push_back(pSrcLeaderboard->lboard);
 
                         memcpy(pLeaderboard, pSrcLeaderboard, sizeof(*pLeaderboard));
-                        vmLeaderboard->ReplaceAttached(*pLeaderboard++);
+                        vmLeaderboard->SetLocalLeaderboardInfo(*pLeaderboard++);
                     }
                     else
                     {
@@ -582,7 +602,8 @@ private:
                         }
 
                         // no rc_client_leaderboard_t found for this leaderboard, populate from the model
-                        vmLeaderboard->AttachAndInitialize(*pLeaderboard++);
+                        vmLeaderboard->SetLocalLeaderboardInfo(*pLeaderboard++);
+                        vmLeaderboard->SyncToLocalLeaderboardInfo();
                     }
                 }
             }
@@ -790,30 +811,6 @@ static rc_client_achievement_info_t* GetAchievementInfo(rc_client_t* pClient, ra
     return nullptr;
 }
 
-rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId) const
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-
-    rc_client_achievement_info_t* achievement = GetAchievementInfo(pClient, nId);
-    return (achievement != nullptr) ? achievement->trigger : nullptr;
-}
-
-const rc_client_achievement_info_t* AchievementRuntime::GetPublishedAchievementInfo(ra::AchievementID nId) const
-{
-    if (m_pClientSynchronizer != nullptr)
-        return m_pClientSynchronizer->GetPublishedAchievementInfo(nId);
-
-    return nullptr;
-}
-
-const rc_client_leaderboard_info_t* AchievementRuntime::GetPublishedLeaderboardInfo(ra::LeaderboardID nId) const
-{
-    if (m_pClientSynchronizer != nullptr)
-        return m_pClientSynchronizer->GetPublishedLeaderboardInfo(nId);
-
-    return nullptr;
-}
-
 std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_t& pAchievement)
 {
     std::string sBadgeName = pAchievement.badge_name;
@@ -909,39 +906,6 @@ static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra
     }
 
     return nullptr;
-}
-
-rc_lboard_t* AchievementRuntime::GetLeaderboardDefinition(ra::LeaderboardID nId) const
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-
-    rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(pClient, nId);
-    return (leaderboard != nullptr) ? leaderboard->lboard : nullptr;
-}
-
-void AchievementRuntime::ReleaseLeaderboardTracker(ra::LeaderboardID nId)
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-    rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(pClient, nId);
-    if (leaderboard)
-    {
-        rc_client_leaderboard_tracker_info_t* tracker = leaderboard->tracker;
-        if (tracker)
-        {
-            rc_client_release_leaderboard_tracker(pClient->game, leaderboard);
-
-            if (tracker->pending_events & RC_CLIENT_LEADERBOARD_TRACKER_PENDING_EVENT_HIDE)
-            {
-                rc_client_event_t pEvent;
-                memset(&pEvent, 0, sizeof(pEvent));
-                pEvent.leaderboard_tracker = &tracker->public_;
-                pEvent.type = RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE;
-                pClient->callbacks.event_handler(&pEvent, pClient);
-
-                tracker->pending_events = RC_CLIENT_LEADERBOARD_TRACKER_PENDING_EVENT_NONE;
-            }
-        }
-    }
 }
 
 bool AchievementRuntime::HasRichPresence() const

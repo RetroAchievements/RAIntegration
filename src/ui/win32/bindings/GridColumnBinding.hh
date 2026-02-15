@@ -50,7 +50,31 @@ public:
     virtual std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
     {
         if (m_pBoundTooltipProperty)
-            return vmItems.GetItemValue(nIndex, *m_pBoundTooltipProperty);
+        {
+            std::wstring sTooltip = vmItems.GetItemValue(nIndex, *m_pBoundTooltipProperty);
+            size_t nCount = 0;
+            size_t nTruncateIndex = 0;
+            auto nScan = sTooltip.find('\n');
+            while (nScan != std::wstring::npos)
+            {
+                nCount++;
+
+                if (nCount == 20)
+                {
+                    nTruncateIndex = nScan;
+                }
+                else if (nCount == 25)
+                {
+                    sTooltip.resize(nTruncateIndex);
+                    sTooltip.append(L"\n...");
+                    break;
+                }
+
+                nScan = sTooltip.find('\n', nScan + 1);
+            }
+
+            return sTooltip;
+        }
 
         return L"";
     }

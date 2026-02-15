@@ -405,6 +405,27 @@ void AchievementModel::SyncTriggerToRuntime()
     ParseTrigger();
 }
 
+static void UpdateRuntimeLeaderboard(rc_client_game_info_t* pGame, rc_client_achievement_info_t* pAchievementInfo, rc_trigger_t* trigger)
+{
+    const auto* pOldTrigger = pAchievementInfo->trigger;
+    pAchievementInfo->trigger = trigger;
+
+    // update the runtime memory reference too
+    auto* pRuntimeTrigger = pGame->runtime.triggers;
+    const auto* pRuntimeTriggerStop = pRuntimeTrigger + pGame->runtime.trigger_count;
+    for (; pRuntimeTrigger < pRuntimeTriggerStop; ++pRuntimeTrigger)
+    {
+        if (pRuntimeTrigger->trigger == pOldTrigger &&
+            pRuntimeTrigger->id == pAchievementInfo->public_.id)
+        {
+            pRuntimeTrigger->trigger = pAchievementInfo->trigger;
+            pRuntimeTrigger->serialized_size = 0;
+            memcpy(pRuntimeTrigger->md5, pAchievementInfo->md5, sizeof(pAchievementInfo->md5));
+            break;
+        }
+    }
+}
+
 void AchievementModel::ParseTrigger() const
 {
     const auto& sTrigger = GetTrigger();
@@ -464,28 +485,21 @@ void AchievementModel::ParseTrigger() const
             rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
             trigger->trigger.has_memrefs = 1;
 
-            const auto* pOldTrigger = m_pAchievementInfo->trigger;
-            m_pAchievementInfo->trigger = &trigger->trigger;
-
-            // update the runtime memory reference too
-            auto* pRuntimeTrigger = pGame->runtime.triggers;
-            const auto* pRuntimeTriggerStop = pRuntimeTrigger + pGame->runtime.trigger_count;
-            for (; pRuntimeTrigger < pRuntimeTriggerStop; ++pRuntimeTrigger)
-            {
-                if (pRuntimeTrigger->trigger == pOldTrigger &&
-                    pRuntimeTrigger->id == m_pAchievementInfo->public_.id)
-                {
-                    pRuntimeTrigger->trigger = m_pAchievementInfo->trigger;
-                    pRuntimeTrigger->serialized_size = 0;
-                    memcpy(pRuntimeTrigger->md5, md5, sizeof(md5));
-                    break;
-                }
-            }
+            UpdateRuntimeLeaderboard(pGame, m_pAchievementInfo, &trigger->trigger);
 
             m_pTriggerBuffer = std::move(trigger_buffer);
 
             SyncStateToRuntime();
         }
+    }
+    else
+    {
+        // parse error - disable achievement
+        m_pAchievementInfo->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
+        UpdateRuntimeLeaderboard(pGame, m_pAchievementInfo, nullptr);
+
+        // release allocated memory
+        m_pTriggerBuffer.reset();
     }
 
     rc_mutex_unlock(&pClient->state.mutex);

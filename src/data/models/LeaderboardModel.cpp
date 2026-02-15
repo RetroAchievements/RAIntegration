@@ -331,7 +331,7 @@ void LeaderboardModel::SyncDefinitionToRuntime()
     ParseDefinition();
 }
 
-static void UpdateRuntimeLeaderboard(rc_client_game_info_t* pGame, rc_client_leaderboard_info_t* pLeaderboardInfo, rc_lboard_t* lboard)
+static void UpdateRuntimeLeaderboard(rc_client_game_info_t* pGame, rc_client_leaderboard_info_t* pLeaderboardInfo, rc_lboard_t* lboard) noexcept
 {
     const auto* pOldLboard = pLeaderboardInfo->lboard;
     pLeaderboardInfo->lboard = lboard;

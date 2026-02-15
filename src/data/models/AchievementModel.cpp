@@ -405,7 +405,7 @@ void AchievementModel::SyncTriggerToRuntime()
     ParseTrigger();
 }
 
-static void UpdateRuntimeLeaderboard(rc_client_game_info_t* pGame, rc_client_achievement_info_t* pAchievementInfo, rc_trigger_t* trigger)
+static void UpdateRuntimeLeaderboard(rc_client_game_info_t* pGame, rc_client_achievement_info_t* pAchievementInfo, rc_trigger_t* trigger) noexcept
 {
     const auto* pOldTrigger = pAchievementInfo->trigger;
     pAchievementInfo->trigger = trigger;

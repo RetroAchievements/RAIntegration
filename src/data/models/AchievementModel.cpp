@@ -9,7 +9,6 @@
 #include "data\models\LocalBadgesModel.hh"
 #include "data\models\TriggerValidation.hh"
 
-#include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
 
 #include <rcheevos\src\rcheevos\rc_internal.h>

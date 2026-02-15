@@ -683,9 +683,7 @@ void AssetEditorViewModel::HandleStateChanged(ra::data::models::AssetState nOldS
 
 static void AppendTrigger(std::string& sDefinition, const std::string& sTrigger)
 {
-    if (sTrigger.empty())
-        sDefinition += "0=1";
-    else
+    if (!sTrigger.empty())
         sDefinition += sTrigger;
 }
 

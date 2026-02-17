@@ -1889,6 +1889,7 @@ void AssetListViewModel::CloneSelected()
             vmAchievement.SetBadge(pSourceAchievement->GetBadge());
             vmAchievement.SetPoints(pSourceAchievement->GetPoints());
             vmAchievement.SetTrigger(pSourceAchievement->GetTrigger());
+            vmAchievement.SetAchievementType(pSourceAchievement->GetAchievementType());
             vmAchievement.SetNew();
 
             EnsureAppearsInFilteredList(vmAchievement);

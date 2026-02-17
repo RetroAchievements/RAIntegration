@@ -23,6 +23,8 @@
 #include <rcheevos\src\rc_client_external.h>
 #include <rcheevos\include\rc_client_raintegration.h>
 
+extern void OnStateRestored(); // in Exports.cpp
+
 namespace ra {
 namespace services {
 
@@ -561,7 +563,9 @@ public:
     static int deserialize_progress(const uint8_t* buffer, size_t buffer_size)
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-        return rc_client_deserialize_progress_sized(pClient, buffer, buffer_size);
+        const auto nResult = rc_client_deserialize_progress_sized(pClient, buffer, buffer_size);
+        OnStateRestored();
+        return nResult;
     }
 
     static void set_raintegration_write_memory_function(rc_client_t* client, rc_client_raintegration_write_memory_func_t handler) noexcept

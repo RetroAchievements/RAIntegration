@@ -977,13 +977,20 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
 
 void MemorySearchViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote)
 {
+    if (m_vResults.Count() == 0 || m_vSearchResults.empty())
+        return;
+
+    const auto nSize = m_vSearchResults.front()->pResults.GetSize();
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (!pCodeNotes)
+        return;
+
     for (auto& pRow : m_vResults)
     {
-        if (pRow.nAddress == nAddress)
-        {
-            pRow.UpdateCodeNote(sNote);
-            break;
-        }
+        const auto sProcessedNote = pCodeNotes->FindCodeNote(pRow.nAddress, nSize);
+        pRow.UpdateCodeNote(sProcessedNote);
     }
 }
 

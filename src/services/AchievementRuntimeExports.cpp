@@ -438,7 +438,7 @@ public:
     static const rc_client_achievement_t* get_next_achievement_info(uint32_t id, int32_t grouping)
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-        auto* pAchievement = id ? rc_client_get_achievement_info(pClient, id) : NULL;
+        auto* pAchievement = id ? rc_client_get_achievement_info(pClient, id) : nullptr;
         return rc_client_get_next_achievement_info(pClient, pAchievement, grouping);
     }
 

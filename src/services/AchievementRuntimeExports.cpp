@@ -369,6 +369,22 @@ public:
         return rc_client_get_subset_info(pClient, subset_id);
     }
 
+    static rc_client_subset_list_info_t* create_subset_list()
+    {
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        GSL_SUPPRESS_TYPE1
+            auto* list = reinterpret_cast<rc_client_subset_list_info_t*>(
+                rc_client_create_subset_list(pClient));
+        list->destroy_func = destroy_subset_list;
+        return list;
+    }
+
+    static void get_user_subset_summary(uint32_t subset_id, rc_client_user_game_summary_t* summary)
+    {
+        const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        rc_client_get_user_subset_summary(pClient, subset_id, summary);
+    }
+
     static void get_user_game_summary(rc_client_user_game_summary_t* summary)
     {
         const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
@@ -417,6 +433,13 @@ public:
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_achievement_info(pClient, id);
+    }
+
+    static const rc_client_achievement_t* get_next_achievement_info(uint32_t id, int32_t grouping)
+    {
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        auto* pAchievement = id ? rc_client_get_achievement_info(pClient, id) : NULL;
+        return rc_client_get_next_achievement_info(pClient, pAchievement, grouping);
     }
 
     static rc_client_leaderboard_list_info_t* create_leaderboard_list(int grouping)
@@ -983,6 +1006,12 @@ private:
         return 0;
     }
 
+    static void destroy_subset_list(rc_client_subset_list_info_t* list) noexcept
+    {
+        if (list)
+            free(list);
+    }
+
     static void destroy_achievement_list(rc_client_achievement_list_info_t* list) noexcept
     {
         if (list)
@@ -1245,6 +1274,31 @@ static void GetExternalClientV4(rc_client_external_t* pClientExternal) noexcept
         ra::services::AchievementRuntimeExports::set_allow_background_memory_reads;
 }
 
+static void GetExternalClientV5(rc_client_external_t* pClientExternal) noexcept
+{
+    // ASSERT: the v5 summary structure is a superset of the v1 summary structures with all
+    //         fields at the same offset, so we can pass pointers to a v5 summary structure to
+    //         the client as either a v5 summary structure or v1 summary structure and the client
+    //         will be able to find the data they're looking for.
+    pClientExternal->get_user_game_summary_v5 =
+        ra::services::AchievementRuntimeExports::get_user_game_summary;
+
+    pClientExternal->get_user_subset_summary =
+        ra::services::AchievementRuntimeExports::get_user_subset_summary;
+}
+
+static void GetExternalClientV6(rc_client_external_t* pClientExternal) noexcept
+{
+    pClientExternal->create_subset_list =
+        ra::services::AchievementRuntimeExports::create_subset_list;
+}
+
+static void GetExternalClientV7(rc_client_external_t* pClientExternal) noexcept
+{
+    pClientExternal->get_next_achievement_info =
+        ra::services::AchievementRuntimeExports::get_next_achievement_info;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1255,6 +1309,18 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal,
     {
         default:
             RA_LOG_WARN("Unknown rc_client_external interface version: %s", nVersion);
+            __fallthrough;
+
+        case 7:
+            GetExternalClientV7(pClientExternal);
+            __fallthrough;
+
+        case 6:
+            GetExternalClientV6(pClientExternal);
+            __fallthrough;
+
+        case 5:
+            GetExternalClientV5(pClientExternal);
             __fallthrough;
 
         case 4:

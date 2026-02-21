@@ -3828,6 +3828,7 @@ public:
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
         vmAssetList.mockGameContext.Assets().FindAchievement(2)->SetAuthor(L"OriginalAuthor");
+        vmAssetList.mockGameContext.Assets().FindAchievement(2)->SetAchievementType(ra::data::models::AchievementType::Progression);
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -3867,6 +3868,7 @@ public:
         Assert::AreEqual(std::wstring(L"11111"), pAchievement->GetBadge());
         Assert::AreEqual(std::string("0xH1111=1"), pAchievement->GetTrigger());
         Assert::AreEqual(std::wstring(L"DisplayName"), pAchievement->GetAuthor());
+        Assert::AreEqual(ra::data::models::AchievementType::Progression, pAchievement->GetAchievementType());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
         Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());

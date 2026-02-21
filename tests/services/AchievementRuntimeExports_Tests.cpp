@@ -315,14 +315,14 @@ private:
     }
 
     GSL_SUPPRESS_TYPE4
-        static void AssertV2Exports(const rc_client_external_t & pClient)
+    static void AssertV2Exports(const rc_client_external_t & pClient)
     {
         Assert::IsNotNull((void*)pClient.add_game_hash, L"add_game_hash not set");
         Assert::IsNotNull((void*)pClient.load_unknown_game, L"load_unknown_game not set");
     }
 
     GSL_SUPPRESS_TYPE4
-        static void AssertV3Exports(const rc_client_external_t & pClient)
+    static void AssertV3Exports(const rc_client_external_t & pClient)
     {
         Assert::IsNotNull((void*)pClient.get_user_info_v3, L"get_user_info_v3 not set");
         Assert::IsNotNull((void*)pClient.get_game_info_v3, L"get_game_info_v3 not set");
@@ -331,6 +331,34 @@ private:
         Assert::IsNotNull((void*)pClient.create_achievement_list_v3, L"create_achievement_list_v3 not set");
     }
 
+    GSL_SUPPRESS_TYPE4
+    static void AssertV4Exports(const rc_client_external_t& pClient)
+    {
+        Assert::IsNotNull((void*)pClient.get_user_info_v3, L"get_user_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.get_game_info_v3, L"get_game_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.get_subset_info_v3, L"get_subset_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.get_achievement_info_v3, L"get_achievement_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.create_achievement_list_v3, L"create_achievement_list_v3 not set");
+    }
+
+    GSL_SUPPRESS_TYPE4
+    static void AssertV5Exports(const rc_client_external_t& pClient)
+    {
+        Assert::IsNotNull((void*)pClient.get_user_game_summary_v5, L"get_user_game_summary_v5 not set");
+        Assert::IsNotNull((void*)pClient.get_user_subset_summary, L"get_user_subset_summary not set");
+    }
+
+    GSL_SUPPRESS_TYPE4
+    static void AssertV6Exports(const rc_client_external_t& pClient)
+    {
+        Assert::IsNotNull((void*)pClient.create_subset_list, L"create_subset_list not set");
+    }
+
+    GSL_SUPPRESS_TYPE4
+    static void AssertV7Exports(const rc_client_external_t& pClient)
+    {
+        Assert::IsNotNull((void*)pClient.get_next_achievement_info, L"get_next_achievement_info not set");
+    }
 public:
     TEST_METHOD(TestGetExternalClientV1)
     {
@@ -373,6 +401,80 @@ public:
         AssertV1Exports(pClient);
         AssertV2Exports(pClient);
         AssertV3Exports(pClient);
+
+        Assert::IsTrue(IsExternalRcheevosClient());
+    }
+
+    TEST_METHOD(TestGetExternalClientV4)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 4);
+
+        AssertV1Exports(pClient);
+        AssertV2Exports(pClient);
+        AssertV3Exports(pClient);
+        AssertV4Exports(pClient);
+
+        Assert::IsTrue(IsExternalRcheevosClient());
+    }
+
+    TEST_METHOD(TestGetExternalClientV5)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 5);
+
+        AssertV1Exports(pClient);
+        AssertV2Exports(pClient);
+        AssertV3Exports(pClient);
+        AssertV4Exports(pClient);
+        AssertV5Exports(pClient);
+
+        Assert::IsTrue(IsExternalRcheevosClient());
+    }
+
+    TEST_METHOD(TestGetExternalClientV6)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 6);
+
+        AssertV1Exports(pClient);
+        AssertV2Exports(pClient);
+        AssertV3Exports(pClient);
+        AssertV4Exports(pClient);
+        AssertV5Exports(pClient);
+        AssertV6Exports(pClient);
+
+        Assert::IsTrue(IsExternalRcheevosClient());
+    }
+
+    TEST_METHOD(TestGetExternalClientV7)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 7);
+
+        AssertV1Exports(pClient);
+        AssertV2Exports(pClient);
+        AssertV3Exports(pClient);
+        AssertV4Exports(pClient);
+        AssertV5Exports(pClient);
+        AssertV6Exports(pClient);
+        AssertV7Exports(pClient);
 
         Assert::IsTrue(IsExternalRcheevosClient());
     }

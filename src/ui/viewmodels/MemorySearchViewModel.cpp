@@ -975,15 +975,35 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
     return sTooltip;
 }
 
-void MemorySearchViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote)
+void MemorySearchViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring&)
 {
+    if (m_vResults.Count() == 0 || m_vSearchResults.empty())
+        return;
+
+    const auto nSize = m_vSearchResults.front()->pResults.GetSize();
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (!pCodeNotes)
+        return;
+
+    const auto* pNote = pCodeNotes->FindCodeNoteModel(nAddress);
+    if (pNote != nullptr)
+    {
+        // if updated note is before first visible result, ignore
+        if (pNote->GetAddress() + pNote->GetBytes() <= nAddress)
+            return;
+
+        // if updated note is after last visible result, ignore
+        const auto nBytesForSize = ra::data::Memory::SizeBytes(nSize);
+        if (pNote->GetAddress() > m_vResults.GetItemAt(m_vResults.Count() - 1)->nAddress + nBytesForSize)
+            return;
+    }
+
     for (auto& pRow : m_vResults)
     {
-        if (pRow.nAddress == nAddress)
-        {
-            pRow.UpdateCodeNote(sNote);
-            break;
-        }
+        const auto sProcessedNote = pCodeNotes->FindCodeNote(pRow.nAddress, nSize);
+        pRow.UpdateCodeNote(sProcessedNote);
     }
 }
 

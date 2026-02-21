@@ -1771,7 +1771,6 @@ public:
         Assert::AreEqual(std::wstring(L"Continuous Filter"), search.ContinuousFilterLabel());
     }
 
-
     TEST_METHOD(TestOnCodeNoteChanged)
     {
         MemorySearchViewModelHarness search;
@@ -1805,6 +1804,62 @@ public:
         search.mockGameContext.SetCodeNote({ 12U }, L"");
         Assert::AreEqual(std::wstring(L"System RAM"), pRow->GetDescription());
         Assert::IsFalse(pRow->bHasCodeNote);
+    }
+
+    TEST_METHOD(TestOnCodeNoteChangedMultiline)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
+        search.BeginNewSearch();
+        search.mockGameContext.SetCodeNote({ 12U }, L"Summary\n1=A\n2=B");
+
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"12");
+
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        auto* pRow = search.Results().GetItemAt(0);
+        Assert::IsNotNull(pRow);
+        Ensures(pRow != nullptr);
+
+        Assert::AreEqual({ 12U }, pRow->nAddress);
+        Assert::AreEqual(std::wstring(L"Summary"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasCodeNote);
+
+        search.mockGameContext.SetCodeNote({ 12U }, L"Summary\n1=C\2=D");
+        Assert::AreEqual(std::wstring(L"Summary"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasCodeNote);
+    }
+
+    TEST_METHOD(TestOnCodeNoteChangedPartial)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
+        search.BeginNewSearch();
+        search.mockGameContext.SetCodeNote({ 10U }, L"[4-byte] Summary");
+
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"12");
+
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        auto* pRow = search.Results().GetItemAt(0);
+        Assert::IsNotNull(pRow);
+        Ensures(pRow != nullptr);
+
+        Assert::AreEqual({ 12U }, pRow->nAddress);
+        Assert::AreEqual(std::wstring(L"[4-byte] Summary [3/4]"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasCodeNote);
+
+        search.mockGameContext.SetCodeNote({ 10U }, L"[4-byte] Banana");
+        Assert::AreEqual(std::wstring(L"[4-byte] Banana [3/4]"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasCodeNote);
     }
 
     TEST_METHOD(TestScrollDisplaysCurrentValue)

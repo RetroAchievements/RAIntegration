@@ -89,6 +89,8 @@ std::wstring ToString<ra::data::Memory::Format>(const ra::data::Memory::Format& 
             return L"Hex";
         case ra::data::Memory::Format::Dec:
             return L"Dec";
+        case ra::data::Memory::Format::Unknown:
+            return L"Unknown";
         default:
             return std::to_wstring(ra::etoi(t));
     }

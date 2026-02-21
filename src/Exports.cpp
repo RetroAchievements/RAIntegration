@@ -641,7 +641,7 @@ static bool CanRestoreState()
     return true;
 }
 
-static void OnStateRestored()
+void OnStateRestored()
 {
     auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
     pAssets.BeginUpdate();

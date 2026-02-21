@@ -2,11 +2,8 @@
 
 #include "context\IRcClient.hh"
 
-#include "data\context\GameContext.hh"
-
 #include "data\models\TriggerValidation.hh"
 
-#include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 
 #include <rcheevos\src\rc_client_internal.h>
@@ -331,6 +328,27 @@ void LeaderboardModel::SyncDefinitionToRuntime()
     ParseDefinition();
 }
 
+static void UpdateRuntimeLeaderboard(rc_client_game_info_t* pGame, rc_client_leaderboard_info_t* pLeaderboardInfo, rc_lboard_t* lboard) noexcept
+{
+    const auto* pOldLboard = pLeaderboardInfo->lboard;
+    pLeaderboardInfo->lboard = lboard;
+
+    // update the runtime memory reference too
+    auto* pRuntimeLboard = pGame->runtime.lboards;
+    const auto* pRuntimeLboardStop = pRuntimeLboard + pGame->runtime.lboard_count;
+    for (; pRuntimeLboard < pRuntimeLboardStop; ++pRuntimeLboard)
+    {
+        if (pRuntimeLboard->lboard == pOldLboard &&
+            pRuntimeLboard->id == pLeaderboardInfo->public_.id)
+        {
+            pRuntimeLboard->lboard = lboard;
+            pRuntimeLboard->serialized_size = 0;
+            memcpy(pRuntimeLboard->md5, pLeaderboardInfo->md5, sizeof(pLeaderboardInfo->md5));
+            break;
+        }
+    }
+}
+
 void LeaderboardModel::ParseDefinition() const
 {
     const auto& sMemAddr = GetDefinition();
@@ -388,23 +406,7 @@ void LeaderboardModel::ParseDefinition() const
             rc_parse_lboard_internal(&lboard->lboard, sMemAddr.c_str(), &preparse.parse);
             lboard->lboard.has_memrefs = 1;
 
-            const auto* pOldLboard = m_pLeaderboardInfo->lboard;
-            m_pLeaderboardInfo->lboard = &lboard->lboard;
-
-            // update the runtime memory reference too
-            auto* pRuntimeLboard = pGame->runtime.lboards;
-            const auto* pRuntimeLboardStop = pRuntimeLboard + pGame->runtime.lboard_count;
-            for (; pRuntimeLboard < pRuntimeLboardStop; ++pRuntimeLboard)
-            {
-                if (pRuntimeLboard->lboard == pOldLboard &&
-                    pRuntimeLboard->id == m_pLeaderboardInfo->public_.id)
-                {
-                    pRuntimeLboard->lboard = m_pLeaderboardInfo->lboard;
-                    pRuntimeLboard->serialized_size = 0;
-                    memcpy(pRuntimeLboard->md5, md5, sizeof(md5));
-                    break;
-                }
-            }
+            UpdateRuntimeLeaderboard(pGame, m_pLeaderboardInfo, &lboard->lboard);
 
             m_pLeaderboardBuffer = std::move(lboard_buffer);
 
@@ -417,8 +419,15 @@ void LeaderboardModel::ParseDefinition() const
     }
     else
     {
-        // parse error - discard old tracker
+        // parse error - disable leaderboard
+        m_pLeaderboardInfo->public_.state = RC_CLIENT_LEADERBOARD_STATE_DISABLED;
+        UpdateRuntimeLeaderboard(pGame, m_pLeaderboardInfo, nullptr);
+
+        // discard old tracker
         ReleaseLeaderboardTracker(m_pLeaderboardInfo);
+
+        // release allocated memory
+        m_pLeaderboardBuffer.reset();
     }
 
     rc_mutex_unlock(&pClient->state.mutex);

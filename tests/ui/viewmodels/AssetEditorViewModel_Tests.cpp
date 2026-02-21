@@ -768,22 +768,14 @@ public:
         Assert::IsTrue(editor.IsLeaderboard());
         Assert::IsTrue(editor.IsTrigger());
         Assert::IsTrue(editor.HasMeasured());
-        Assert::IsFalse(editor.HasAssetValidationError());
-        Assert::IsTrue(editor.HasAssetValidationWarning());
-        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Missing start condition"), editor.GetAssetValidationError());
         Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
 
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager; // to copy address from memory viewer
         editor.Trigger().NewCondition();
-        Assert::IsFalse(editor.HasAssetValidationError());
-        Assert::IsTrue(editor.HasAssetValidationWarning());
-        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
-
-        // warning is only updated when record is saved to prevent spam when constructing a record
-        leaderboard.Validate();
-        Assert::IsFalse(editor.HasAssetValidationError());
-        Assert::IsTrue(editor.HasAssetValidationWarning());
-        Assert::AreEqual(std::wstring(L"No Cancel condition"), editor.GetAssetValidationWarning());
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Missing cancel condition"), editor.GetAssetValidationError());
     }
 
     TEST_METHOD(TestActivateNewLeaderboard)
@@ -798,9 +790,8 @@ public:
 
         editor.LoadAsset(leaderboard);
 
-        Assert::IsFalse(editor.HasAssetValidationError());
-        Assert::IsTrue(editor.HasAssetValidationWarning());
-        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Missing start condition"), editor.GetAssetValidationError());
 
         // attempt to start incomplete leaderboard should fail
         bool bDialogSeen = false;
@@ -2461,6 +2452,36 @@ public:
         editor.Trigger().SetSelectedGroupIndex(2);
         Assert::AreEqual(2, editor.Trigger().GetSelectedGroupIndex());
         Assert::AreEqual(nDefaultColor, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+    }
+
+    TEST_METHOD(TestClearOutLeaderboardSubmit)
+    {
+        AssetEditorViewModelHarness editor;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [](ra::ui::viewmodels::MessageBoxViewModel&)
+            {
+                return DialogResult::Yes;
+            });
+
+        LeaderboardModel leaderboard;
+        leaderboard.SetDefinition("STA:0x1234=1::CAN:0x1234=2::SUB:0x1234=3::VAL=0x1235");
+        leaderboard.SetValueFormat(ra::data::ValueFormat::Score);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Submit);
+
+        Assert::AreEqual({ 1 }, editor.Trigger().Conditions().Count());
+        editor.Trigger().SelectRange(0, 0, true);
+        editor.Trigger().RemoveSelectedConditions();
+        Assert::AreEqual({ 0 }, editor.Trigger().Conditions().Count());
+
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Cancel);
+        Assert::AreEqual({ 1 }, editor.Trigger().Conditions().Count());
+
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Submit);
+        Assert::AreEqual({ 0 }, editor.Trigger().Conditions().Count());
     }
 };
 

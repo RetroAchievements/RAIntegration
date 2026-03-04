@@ -288,6 +288,8 @@ private:
     bool m_bSyncingNote = false;
     bool m_bRebuildNodes = false;
 
+    std::mutex m_mtxLoadNote;
+
     const ra::data::models::CodeNoteModel* m_pCurrentNote = nullptr;
 };
 

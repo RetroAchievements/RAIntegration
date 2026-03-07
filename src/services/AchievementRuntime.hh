@@ -50,6 +50,7 @@ public:
 
     static std::string GetAchievementBadge(const rc_client_achievement_t& pAchievement);
 
+    void InitializeRcClient();
     void RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const;
 
     void UpdateActiveAchievements() noexcept(false);
@@ -178,7 +179,6 @@ public:
 
 protected:
     AchievementRuntime(bool bInitializeRcClient);
-    void InitializeRcClient();
 
 private:
     bool m_bPaused = false;

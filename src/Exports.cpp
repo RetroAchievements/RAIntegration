@@ -106,6 +106,9 @@ static void InitializeOfflineMode()
     ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<ra::api::impl::OfflineServer>());
     ra::services::ServiceLocator::Provide<ra::context::IRcClient>(std::make_unique<ra::services::impl::OfflineRcClient>());
 
+    // reattach hooks to new rc_client_t
+    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InitializeRcClient();
+
     auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::context::UserContext>();
     const auto& sUsername = pConfiguration.GetUsername();
     if (sUsername.empty())

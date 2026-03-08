@@ -1345,6 +1345,14 @@ void AssetListViewModel::ValidateLeaderboardForCore(std::wstring& sError, const 
         sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
 }
 
+
+void AssetListViewModel::ValidateRichPresenceForCore(std::wstring& sError, const ra::data::models::RichPresenceModel& pRichPresence) const
+{
+    const auto& sScript = pRichPresence.GetScript();
+    if (sScript.length() > ra::data::models::RichPresenceModel::MaxScriptLength)
+        sError.append(ra::util::String::Printf(L"\n* %s: %s", L"Rich Presence", pRichPresence.GetValidationError()));
+}
+
 bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly)
 {
     std::wstring sError;
@@ -1371,6 +1379,14 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
                     sError.append(ra::util::String::Printf(L"\n* %s: No Value definition", pLeaderboard->GetName()));
 
                 ValidateLeaderboardForCore(sError, *pLeaderboard);
+            }
+            else
+            {
+                const auto* pRichPresence = dynamic_cast<const ra::data::models::RichPresenceModel*>(pAsset);
+                if (pRichPresence != nullptr)
+                {
+                    ValidateRichPresenceForCore(sError, *pRichPresence);
+                }
             }
         }
     }

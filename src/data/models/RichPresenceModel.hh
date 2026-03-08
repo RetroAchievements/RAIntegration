@@ -16,17 +16,17 @@ public:
     RichPresenceModel() noexcept;
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the start trigger version.
+    /// The <see cref="ModelProperty" /> for the rich presence script.
     /// </summary>
     static const IntModelProperty ScriptProperty;
 
     /// <summary>
-    /// Gets the start trigger definition.
+    /// Gets the rich presence script.
     /// </summary>
     const std::string& GetScript() const { return GetAssetDefinition(m_pScript); }
 
     /// <summary>
-    /// Sets the start trigger definition.
+    /// Sets the rich presence script.
     /// </summary>
     void SetScript(const std::string& sScript);
 
@@ -38,8 +38,19 @@ public:
     void Serialize(ra::services::TextWriter& pWriter) const noexcept override;
     bool Deserialize(ra::util::Tokenizer& pTokenizer) noexcept override;
 
+    /// <summary>
+    /// Gets the maximum size of the rich presence script.
+    /// </summary>
+    /// <remarks>
+    /// This is the absolute maximum number of bytes (in UTF-8).
+    /// There's a soft limit of 60000 characters due to the way the webpage validates length.
+    /// </remarks>
+    static constexpr size_t MaxScriptLength = 65535;
+
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+    bool ValidateAsset(std::wstring& sError) override;
 
 private:
     void WriteRichPresenceScript();

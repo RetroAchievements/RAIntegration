@@ -72,6 +72,20 @@ void RichPresenceModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
     AssetModelBase::OnValueChanged(args);
 }
 
+bool RichPresenceModel::ValidateAsset(std::wstring& sError)
+{
+    const auto& sScript = GetScript();
+    if (sScript.length() > MaxScriptLength)
+    {
+        sError = ra::util::String::Printf(L"Script length exceeds limit: %d/%d", sScript.length(), MaxScriptLength);
+        return false;
+    }
+
+    // TODO: validate parse and validate logic
+
+    return true;
+}
+
 void RichPresenceModel::SetScript(const std::string& sScript)
 {
     bool bIsOnlyWhitespace = true;
@@ -103,6 +117,8 @@ void RichPresenceModel::SetScript(const std::string& sScript)
         sNormalizedScript.push_back('\n');
 
     SetAssetDefinition(m_pScript, sNormalizedScript);
+
+    // TODO: parse and load into runtime
 }
 
 void RichPresenceModel::ReloadRichPresenceScript()

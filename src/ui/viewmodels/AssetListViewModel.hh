@@ -339,6 +339,7 @@ private:
     gsl::index GetFilteredAssetIndex(const ra::data::models::AssetModelBase& pAsset) const;
     void ApplyFilter();
     bool m_bInitializingFilter = false;
+    mutable std::mutex m_mtxFilteredItems;
 
     void RevalidateNoteAssetValidationWarnings();
 

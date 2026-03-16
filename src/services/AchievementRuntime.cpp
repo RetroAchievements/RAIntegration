@@ -233,6 +233,13 @@ AchievementRuntime::~AchievementRuntime()
     if (!ra::services::ServiceLocator::IsShuttingDown() &&
         ra::services::ServiceLocator::Exists<ra::context::IRcClient>())
     {
+        if (ra::services::ServiceLocator::Exists<ra::data::context::GameContext>())
+        {
+            auto* pRichPrecense = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets().FindRichPresence();
+            if (pRichPrecense)
+                pRichPrecense->Deactivate(); // prevents runtime from trying to free memory owned by RichPresence
+        }
+
         GSL_SUPPRESS_F6
         ra::services::ServiceLocator::GetMutable<ra::context::IRcClient>().Shutdown();
     }
@@ -908,65 +915,6 @@ static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra
     return nullptr;
 }
 
-bool AchievementRuntime::HasRichPresence() const
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-
-    return m_nRichPresenceParseResult != RC_OK || rc_client_has_rich_presence(pClient);
-}
-
-std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
-{
-    if (m_nRichPresenceParseResult != RC_OK)
-    {
-        return ra::util::String::Printf(L"Parse error %d (line %d): %s", m_nRichPresenceParseResult,
-            m_nRichPresenceErrorLine, rc_error_str(m_nRichPresenceParseResult));
-    }
-
-    if (!HasRichPresence())
-        return L"No Rich Presence defined.";
-
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-
-    char sRichPresence[256];
-    if (rc_client_get_rich_presence_message(pClient, sRichPresence, sizeof(sRichPresence)) > 0)
-        return ra::util::String::Widen(sRichPresence);
-
-    return L"";
-}
-
-bool AchievementRuntime::ActivateRichPresence(const std::string& sScript)
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-    auto* game = pClient->game;
-    if (!game)
-    {
-        // game still loading - assume success
-        return true;
-    }
-    auto* runtime = &game->runtime;
-    Expects(runtime != nullptr);
-
-    rc_mutex_lock(&pClient->state.mutex);
-
-    if (sScript.empty())
-    {
-        m_nRichPresenceParseResult = RC_OK;
-        if (runtime->richpresence != nullptr)
-            runtime->richpresence->richpresence = nullptr;
-    }
-    else
-    {
-        m_nRichPresenceParseResult = rc_runtime_activate_richpresence(runtime, sScript.c_str(), nullptr, 0);
-        if (m_nRichPresenceParseResult != RC_OK)
-            m_nRichPresenceParseResult = rc_richpresence_size_lines(sScript.c_str(), &m_nRichPresenceErrorLine);
-    }
-
-    rc_mutex_unlock(&pClient->state.mutex);
-
-    return (m_nRichPresenceParseResult == RC_OK);
-}
-
 /* ---- Login ----- */
 
 void AchievementRuntime::BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
@@ -1114,7 +1062,7 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 
     auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
-    pRichPresence->SetScript(game_data_response->rich_presence_script);
+    pRichPresence->InitializeFromPublishedScript(nullptr, game_data_response->rich_presence_script);
     pRichPresence->CreateServerCheckpoint();
     pRichPresence->CreateLocalCheckpoint();
     pGameContext.Assets().Append(std::move(pRichPresence));

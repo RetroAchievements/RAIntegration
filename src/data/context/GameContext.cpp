@@ -135,6 +135,10 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
         {
             m_nGameId = 0;
 
+            auto* pRichPresence = m_vAssets.FindRichPresence();
+            if (pRichPresence != nullptr)
+                pRichPresence->Deactivate(); // detach custom rich presence
+
             auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
             rc_client_unload_game(pClient);
 
@@ -489,6 +493,11 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 m_vAssets.Append(std::move(vmLeaderboard));
             }
         }
+
+        // rich presence
+        auto* pRichPresence = m_vAssets.FindRichPresence();
+        if (pRichPresence != nullptr)
+            pRichPresence->InitializeFromPublishedScript(pClient->game->runtime.richpresence, pRichPresence->GetScript());
     }
 }
 

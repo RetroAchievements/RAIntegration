@@ -5,20 +5,15 @@ namespace data {
 
 std::wstring ModelPropertyContainer::s_sEmpty;
 
-int ModelPropertyContainer::CompareModelPropertyKey(const ModelPropertyContainer::ModelPropertyValue& left, int nKey) noexcept
-{
-    return left.nKey < nKey;
-}
-
 const int* ModelPropertyContainer::FindValue(int nKey) const
 {
     std::lock_guard<std::mutex> pLock(m_mtxData);
 
-    const auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), nKey, CompareModelPropertyKey);
-    if (iter == m_vValues.end() || iter->nKey != nKey)
+    const auto iter = m_vValues.find(nKey);
+    if (iter == m_vValues.end())
         return nullptr;
 
-    return &iter->nValue;
+    return &iter->second;
 }
 
 void ModelPropertyContainer::SetValue(const BoolModelProperty& pProperty, bool bValue)
@@ -27,23 +22,23 @@ void ModelPropertyContainer::SetValue(const BoolModelProperty& pProperty, bool b
     {
         std::lock_guard<std::mutex> pLock(m_mtxData);
 
-        auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
-        if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
+        auto iter = m_vValues.find(pProperty.GetKey());
+        if (iter == m_vValues.end())
         {
             if (bValue == pProperty.GetDefaultValue())
                 return;
 
-            m_vValues.emplace(iter, pProperty.GetKey(), nValue);
+            m_vValues.emplace(pProperty.GetKey(), nValue);
         }
         else
         {
-            if (nValue == iter->nValue)
+            if (nValue == iter->second)
                 return;
 
             if (bValue == pProperty.GetDefaultValue())
                 m_vValues.erase(iter);
             else
-                iter->nValue = nValue;
+                iter->second = nValue;
         }
 
 #ifdef _DEBUG
@@ -112,8 +107,8 @@ void ModelPropertyContainer::SetValue(const StringModelProperty& pProperty, cons
     {
         std::lock_guard<std::mutex> pLock(m_mtxData);
 
-        auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
-        if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
+        auto iter = m_vValues.find(pProperty.GetKey());
+        if (iter == m_vValues.end())
         {
             // no entry for property. if setting to default, do nothing
             if (sValue == pProperty.GetDefaultValue())
@@ -132,7 +127,7 @@ void ModelPropertyContainer::SetValue(const StringModelProperty& pProperty, cons
                 nValue = LoadIntoEmptyStringSlot(sValue);
             }
 
-            m_vValues.emplace(iter, pProperty.GetKey(), nValue);
+            m_vValues.emplace(pProperty.GetKey(), nValue);
             pOldValue = &pProperty.GetDefaultValue();
         }
         else
@@ -140,19 +135,19 @@ void ModelPropertyContainer::SetValue(const StringModelProperty& pProperty, cons
             pOldValue = &sOldValue;
             gsl::not_null<std::wstring*> sString = gsl::make_not_null(&sOldValue);
 
-            if (iter->nValue == -1)
+            if (iter->second == -1)
             {
                 // negative nValue is empty string. if new value is also empty, do nothing
                 if (sValue.empty())
                     return;
 
-                iter->nValue = LoadIntoEmptyStringSlot(sValue);
+                iter->second = LoadIntoEmptyStringSlot(sValue);
             }
             else
             {
                 // find the current value. if the new value is the same, do nothing
                 ModelPropertyStrings* pStrings = m_pStrings.get();
-                int nIndex = iter->nValue;
+                int nIndex = iter->second;
                 while (nIndex >= ModelPropertyStrings::ChunkCount && pStrings)
                 {
                     pStrings = pStrings->pNext.get();
@@ -201,25 +196,25 @@ void ModelPropertyContainer::SetValue(const IntModelProperty& pProperty, int nVa
     {
         std::lock_guard<std::mutex> pLock(m_mtxData);
 
-        auto iter = std::lower_bound(m_vValues.begin(), m_vValues.end(), pProperty.GetKey(), CompareModelPropertyKey);
-        if (iter == m_vValues.end() || iter->nKey != pProperty.GetKey())
+        auto iter = m_vValues.find(pProperty.GetKey());
+        if (iter == m_vValues.end())
         {
             nOldValue = pProperty.GetDefaultValue();
             if (nValue == nOldValue)
                 return;
 
-            m_vValues.emplace(iter, pProperty.GetKey(), nValue);
+            m_vValues.emplace(pProperty.GetKey(), nValue);
         }
         else
         {
-            nOldValue = iter->nValue;
+            nOldValue = iter->second;
             if (nValue == nOldValue)
                 return;
 
             if (nValue == pProperty.GetDefaultValue())
                 m_vValues.erase(iter);
             else
-                iter->nValue = nValue;
+                iter->second = nValue;
         }
 
 #ifdef _DEBUG

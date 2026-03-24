@@ -5,6 +5,7 @@
 #include "data/ModelProperty.hh"
 
 #include <mutex>
+#include <map>
 
 namespace ra {
 namespace data {
@@ -105,17 +106,7 @@ public:
     virtual void OnValueChanged(const IntModelProperty::ChangeArgs& args) noexcept(false);
 
 private:
-    typedef struct ModelPropertyValue
-    {
-        ModelPropertyValue(int nKey, int nValue) noexcept
-            : nKey(nKey), nValue(nValue)
-        {
-        }
-
-        int nKey;
-        int nValue;
-    } ModelPropertyValue;
-    std::vector<ModelPropertyValue> m_vValues;
+    std::unordered_map<int, int> m_vValues;
 
     typedef struct ModelPropertyStrings
     {
@@ -135,7 +126,6 @@ private:
 
     static std::wstring s_sEmpty;
 
-    static int CompareModelPropertyKey(const ModelPropertyValue& left, int nKey) noexcept;
     const int* FindValue(int nKey) const;
     const std::wstring& GetString(int nIndex) const noexcept;
     int LoadIntoEmptyStringSlot(const std::wstring& sValue);

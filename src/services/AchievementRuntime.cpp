@@ -1491,7 +1491,7 @@ void AchievementRuntime::DoFrame()
         return;
     }
 
-    auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
+    const auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
     if (!pAssets.HasPauseOnXAssets())
     {
         rc_client_do_frame(pClient);

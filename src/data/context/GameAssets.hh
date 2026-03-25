@@ -156,7 +156,7 @@ public:
 
     static constexpr uint32_t LocalSubsetId = 0xFFFFFFFF;
 
-    bool HasPauseOnXAssets() const;
+    bool HasPauseOnXAssets() const noexcept;
     void GetPauseOnResetAchievements(std::vector<const ra::data::models::AchievementModel*>& vAchievements) const;
     void GetPauseOnResetLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const;
     void GetPauseOnTriggerLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const;

@@ -144,7 +144,7 @@ void GameAssets::OnModelValueChanged(gsl::index nIndex, const IntModelProperty::
     ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnModelValueChanged(nIndex, args);
 }
 
-bool GameAssets::HasPauseOnXAssets() const
+bool GameAssets::HasPauseOnXAssets() const noexcept
 {
     return !m_vPauseOnResetAchievementIds.empty() ||
         !m_vPauseOnResetLeaderboardIds.empty() ||

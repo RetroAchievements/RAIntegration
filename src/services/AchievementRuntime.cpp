@@ -1286,7 +1286,7 @@ void AchievementRuntime::UnloadGame()
 
 /* ---- DoFrame ----- */
 
-static void PrepareForPauseOnReset(ra::data::context::GameAssets& pAssets,
+static void PrepareForPauseOnReset(const ra::data::context::GameAssets& pAssets,
     std::vector<const rc_client_achievement_info_t*>& vAchievementsWithHits)
 {
     std::vector<const ra::data::models::AchievementModel*> vAchievements;
@@ -1303,7 +1303,7 @@ static void PrepareForPauseOnReset(ra::data::context::GameAssets& pAssets,
     }
 }
 
-static void PrepareForPauseOnReset(ra::data::context::GameAssets& pAssets,
+static void PrepareForPauseOnReset(const ra::data::context::GameAssets& pAssets,
     std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits)
 {
     std::vector<const ra::data::models::LeaderboardModel*> vLeaderboards;
@@ -1338,7 +1338,7 @@ static void PrepareForPauseOnReset(ra::data::context::GameAssets& pAssets,
     }
 }
 
-static void PrepareForPauseOnTrigger(ra::data::context::GameAssets& pAssets,
+static void PrepareForPauseOnTrigger(const ra::data::context::GameAssets& pAssets,
     std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
 {
     std::vector<const ra::data::models::LeaderboardModel*> vLeaderboards;

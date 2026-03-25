@@ -232,6 +232,7 @@ protected:
 private:
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
 
+    void SyncIDToRuntime() const;
     void SyncTitleToRuntime();
     void SyncDescriptionToRuntime();
     void SyncStateToRuntime(AssetState nNewState) const;

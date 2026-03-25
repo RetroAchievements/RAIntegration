@@ -279,6 +279,11 @@ void LeaderboardModel::SyncStateToRuntime(AssetState nNewState) const
     rc_mutex_unlock(&pClient->state.mutex);
 }
 
+void LeaderboardModel::SyncIDToRuntime() const
+{
+    m_pLeaderboardInfo->public_.id = GetID();
+}
+
 void LeaderboardModel::SyncTitleToRuntime()
 {
     m_sTitleBuffer = ra::util::String::Narrow(GetName());
@@ -524,6 +529,7 @@ void LeaderboardModel::SyncToLocalLeaderboardInfo()
 {
     Expects(m_pLeaderboardInfo != nullptr);
 
+    SyncIDToRuntime();
     SyncTitleToRuntime();
     SyncDescriptionToRuntime();
     SyncDefinitionToRuntime();

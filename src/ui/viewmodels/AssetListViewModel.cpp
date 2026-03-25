@@ -108,8 +108,6 @@ void AssetListViewModel::OnActiveGameChanged()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     SetGameId(pGameContext.ActiveGameId());
 
-    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().AuditPauseOnXAssets();
-
     m_bInitializingFilter = true;
 
     switch (pGameContext.Assets().MostPublishedAssetCategory())
@@ -259,16 +257,6 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         if (GetSpecialFilter() != SpecialFilter::All)
             AddOrRemoveFilteredItem(nIndex);
     }
-    else if (args.Property == ra::data::models::LeaderboardModel::PauseOnResetProperty ||
-        args.Property == ra::data::models::LeaderboardModel::PauseOnTriggerProperty)
-    {
-        auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-        Expects(pAsset != nullptr);
-
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        pRuntime.OnAssetPauseOnXChanged(*pAsset, args);
-    }
 
     // these properties potentially affect visibility
     if (args.Property == ra::data::models::AssetModelBase::CategoryProperty)
@@ -347,19 +335,6 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
     }
 }
 
-void AssetListViewModel::OnDataModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
-{
-    if (args.Property == ra::data::models::AchievementModel::PauseOnResetProperty)
-    {
-        auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-        Expects(pAsset != nullptr);
-
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        pRuntime.OnAssetPauseOnXChanged(*pAsset, args);
-    }
-}
-
 void AssetListViewModel::OnDataModelAdded(_UNUSED gsl::index nIndex)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
@@ -394,8 +369,6 @@ void AssetListViewModel::OnDataModelRemoved(_UNUSED gsl::index nIndex)
         }
 
         UpdateTotals();
-
-        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().AuditPauseOnXAssets();
     }
 }
 
@@ -415,8 +388,6 @@ void AssetListViewModel::OnDataModelChanged(_UNUSED gsl::index nIndex)
 void AssetListViewModel::OnEndDataModelCollectionUpdate()
 {
     ApplyFilter();
-
-    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().AuditPauseOnXAssets();
 }
 
 void AssetListViewModel::UpdateTotals()

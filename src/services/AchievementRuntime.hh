@@ -53,10 +53,6 @@ public:
     void UpdateActiveAchievements() noexcept(false);
     void UpdateActiveLeaderboards();
 
-    void OnAssetPauseOnXChanged(const ra::data::models::AssetModelBase& pAsset, const ra::data::IntModelProperty::ChangeArgs& args);
-    void OnAssetPauseOnXChanged(const ra::data::models::AssetModelBase& pAsset, const ra::data::BoolModelProperty::ChangeArgs& args);
-    void AuditPauseOnXAssets();
-
     /// <summary>
     /// Specifies the rich presence to process each frame.
     /// </summary>
@@ -187,10 +183,6 @@ private:
 
     class ClientSynchronizer;
     std::unique_ptr<ClientSynchronizer> m_pClientSynchronizer;
-
-    std::set<ra::AchievementID> m_vPauseOnResetAchievements;
-    std::set<ra::LeaderboardID> m_vPauseOnResetLeaderboards;
-    std::set<ra::LeaderboardID> m_vPauseOnTriggerLeaderboards;
 
     int m_nRichPresenceParseResult = RC_OK;
     int m_nRichPresenceErrorLine = 0;

@@ -42,7 +42,8 @@ namespace ra {
 namespace services {
 namespace tests {
 
-class AchievementRuntimeHarness : public AchievementRuntime
+class AchievementRuntimeHarness : public AchievementRuntime,
+    protected ra::data::context::GameAssets::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 AchievementRuntimeHarness()
@@ -375,6 +376,11 @@ public:
         }
     }
 
+    void WatchAssetProperties()
+    {
+        mockGameContext.Assets().AddNotifyTarget(*this);
+    }
+
     GSL_SUPPRESS_TYPE1
     void SaveProgressToString(std::string& sBuffer)
     {
@@ -404,6 +410,28 @@ public:
     void MockInspectingMemory(bool bInspectingMemory)
     {
         mockWindowManager.MemoryBookmarks.SetIsVisible(bInspectingMemory);
+    }
+
+protected:
+    void OnDataModelIntValueChanged(gsl::index nIndex, const ra::data::IntModelProperty::ChangeArgs& args)
+    {
+        if (args.Property == ra::data::models::LeaderboardModel::PauseOnResetProperty ||
+            args.Property == ra::data::models::LeaderboardModel::PauseOnTriggerProperty)
+        {
+            auto* pAsset = mockGameContext.Assets().GetItemAt(nIndex);
+            Expects(pAsset != nullptr);
+            OnAssetPauseOnXChanged(*pAsset, args);
+        }
+    }
+
+    void OnDataModelBoolValueChanged(gsl::index nIndex, const ra::data::BoolModelProperty::ChangeArgs& args)
+    {
+        if (args.Property == ra::data::models::AchievementModel::PauseOnResetProperty)
+        {
+            auto* pAsset = mockGameContext.Assets().GetItemAt(nIndex);
+            Expects(pAsset != nullptr);
+            OnAssetPauseOnXChanged(*pAsset, args);
+        }
     }
 
 private:
@@ -1346,6 +1374,7 @@ public:
         runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pAchievement = runtime.MockAchievement(4U, "1=1.3._R:0xH0000=1");
         auto* vmAchievement = runtime.WrapAchievement(pAchievement);
+        runtime.WatchAssetProperties();
 
         // HitCount should increase, but no trigger
         runtime.DoFrame();
@@ -1393,6 +1422,7 @@ public:
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=0_0xH0000=9_R:0xH0001=1::SUB:0xH0000=1::CAN:0xH0000=2::VAL:0xH0000");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+        runtime.WatchAssetProperties();
 
         // impossible start condition - but it should accumulate hits so we can detect a reset.
         runtime.DoFrame();
@@ -1439,6 +1469,7 @@ public:
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=0_0xH0000=9_R:0xH0001=1::CAN:0xH0000=2::VAL:0xH0000");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+        runtime.WatchAssetProperties();
 
         // accumulate hits on submit
         runtime.DoFrame();
@@ -1485,6 +1516,7 @@ public:
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=0_0xH0000=9_R:0xH0001=1::VAL:0xH0000");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+        runtime.WatchAssetProperties();
 
         // accumulate hits on cancel
         runtime.DoFrame();
@@ -1531,6 +1563,7 @@ public:
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=0::SUB:0xH0000=2::CAN:0xH0000=3::VAL:R:0xH0001=1_M:0xH0002=0");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+        runtime.WatchAssetProperties();
 
         // start the leaderboard so we can start counting hits on the value
         runtime.DoFrame();
@@ -1581,6 +1614,7 @@ public:
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+        runtime.WatchAssetProperties();
 
         runtime.DoFrame();
         Assert::AreEqual({0U}, runtime.GetEventCount());
@@ -1623,6 +1657,7 @@ public:
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+        runtime.WatchAssetProperties();
 
         runtime.DoFrame();
         Assert::AreEqual({0U}, runtime.GetEventCount());
@@ -1669,6 +1704,7 @@ public:
         runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U, "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+        runtime.WatchAssetProperties();
 
         runtime.DoFrame();
         Assert::AreEqual({0U}, runtime.GetEventCount());

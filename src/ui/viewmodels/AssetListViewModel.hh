@@ -300,6 +300,7 @@ protected:
 private:
     // DataModelCollectionBase::NotifyTarget
     void OnDataModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
+    void OnDataModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnDataModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnDataModelAdded(gsl::index nIndex) override;
     void OnDataModelRemoved(gsl::index nIndex) override;

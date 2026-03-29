@@ -693,6 +693,8 @@ public:
         const auto* pNewTrigger = pSubset->achievements->trigger;
         Assert::AreNotEqual(static_cast<const void*>(pOriginalTrigger), static_cast<const void*>(pNewTrigger));
 
+        Assert::AreEqual(2U, pNewTrigger->requirement->conditions->operand2.value.num);
+
         runtime.SyncAssets();
 
         pSubset = runtime.GetClient()->game->subsets;

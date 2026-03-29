@@ -775,6 +775,9 @@ public:
                "\"Created\":1234567890,\"Modified\":123459999},"
              "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
                "\"Points\":15,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999},"
+             "{\"ID\":9,\"Title\":\"Ach3\",\"Description\":\"Desc3\",\"Flags\":3,"
+               "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth3\",\"BadgeName\":\"12345\","
                "\"Created\":1234567890,\"Modified\":123459999}"
         );
 
@@ -782,6 +785,7 @@ public:
             "Version\n"
             "Game\n"
             "7:1=2:Ach2b:Desc2b::::Auth2b:25:1234554321:1234555555:::54321\n"
+            "9:1=2:Ach3b:Desc3b::::Auth3b:25:1234554321:1234555555:::54321\n"
             "0:\"1=1\":\"Ach3\":\"Desc3\"::::Auth3:20:1234511111:1234500000:::555\n"
             "0:R:1=1:Ach4:Desc4::::Auth4:10:1234511111:1234500000:::556\n"
         );
@@ -810,6 +814,24 @@ public:
         Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, pAch->GetCategory()); // category not merged
         Assert::AreEqual(25, pAch->GetPoints());
         Assert::AreEqual(std::string("1=2"), pAch->GetTrigger());
+
+        const auto* pTrigger = pAch->GetRuntimeTrigger();
+        Assert::AreEqual(2U, pTrigger->requirement->conditions->operand2.value.num); // runtime trigger updated
+
+        // local achievement data for 9 should be merged with server achievement data
+        pAch = game.Assets().FindAchievement(9U);
+        Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
+        Assert::AreEqual(std::wstring(L"Ach3b"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Desc3b"), pAch->GetDescription());
+        Assert::AreEqual(std::wstring(L"Auth3"), pAch->GetAuthor()); // author not merged
+        Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
+        Assert::AreEqual(ra::data::models::AssetCategory::Core, pAch->GetCategory()); // category not merged
+        Assert::AreEqual(25, pAch->GetPoints());
+        Assert::AreEqual(std::string("1=2"), pAch->GetTrigger());
+
+        pTrigger = pAch->GetRuntimeTrigger();
+        Assert::AreEqual(2U, pTrigger->requirement->conditions->operand2.value.num); // runtime trigger updated
 
         // no server achievement, assign FirstLocalId
         pAch = game.Assets().FindAchievement(GameAssets::FirstLocalId);

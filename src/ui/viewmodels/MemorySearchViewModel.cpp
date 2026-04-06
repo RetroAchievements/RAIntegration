@@ -186,9 +186,7 @@ void MemorySearchViewModel::OnBeforeActiveGameChanged()
 void MemorySearchViewModel::OnActiveGameChanged()
 {
     // rebuild list with custom filters once the game has loaded
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    if (pGameContext.Assets().FindMemoryRegions() != nullptr)
-        RebuildPredefinedFilterRanges();
+    RebuildPredefinedFilterRanges();
 }
 
 void MemorySearchViewModel::OnTotalMemorySizeChanged()

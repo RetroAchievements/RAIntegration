@@ -156,10 +156,24 @@ public:
 
     static constexpr uint32_t LocalSubsetId = 0xFFFFFFFF;
 
+    bool HasPauseOnXAssets() const noexcept;
+    void GetPauseOnResetAchievements(std::vector<const ra::data::models::AchievementModel*>& vAchievements) const;
+    void GetPauseOnResetLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const;
+    void GetPauseOnTriggerLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const;
+
 protected:
+    bool IsWatching() const noexcept override { return true; }
+
+    void OnModelValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
+    void OnModelValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
+
     void OnBeforeItemRemoved(ModelBase& pModel) override;
 
     uint32_t m_nNextLocalId = FirstLocalId;
+
+    std::set<ra::AchievementID> m_vPauseOnResetAchievementIds;
+    std::set<ra::LeaderboardID> m_vPauseOnResetLeaderboardIds;
+    std::set<ra::LeaderboardID> m_vPauseOnTriggerLeaderboardIds;
 };
 
 } // namespace context

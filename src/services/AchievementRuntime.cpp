@@ -894,27 +894,6 @@ void AchievementRuntime::UpdateActiveLeaderboards()
     }
 }
 
-static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra::LeaderboardID nId) noexcept
-{
-    if (!pClient || !pClient->game)
-        return nullptr;
-
-    rc_client_subset_info_t* subset = pClient->game->subsets;
-    for (; subset; subset = subset->next)
-    {
-        rc_client_leaderboard_info_t* leaderboard = subset->leaderboards;
-        const rc_client_leaderboard_info_t* stop = leaderboard + subset->public_.num_leaderboards;
-
-        for (; leaderboard < stop; ++leaderboard)
-        {
-            if (leaderboard->public_.id == nId)
-                return leaderboard;
-        }
-    }
-
-    return nullptr;
-}
-
 /* ---- Login ----- */
 
 void AchievementRuntime::BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
@@ -1255,74 +1234,92 @@ void AchievementRuntime::UnloadGame()
 
 /* ---- DoFrame ----- */
 
-static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
-    std::vector<rc_client_achievement_info_t*>& vAchievementsWithHits,
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits,
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
+static void PrepareForPauseOnReset(const ra::data::context::GameAssets& pAssets,
+    std::vector<const rc_client_achievement_info_t*>& vAchievementsWithHits)
 {
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    for (auto& vmAsset : pGameContext.Assets())
+    std::vector<const ra::data::models::AchievementModel*> vAchievements;
+    pAssets.GetPauseOnResetAchievements(vAchievements);
+
+    for (const auto* vmAchievement : vAchievements)
     {
-        const auto* vmAchievement = dynamic_cast<ra::data::models::AchievementModel*>(&vmAsset);
-        if (vmAchievement != nullptr)
+        if (vmAchievement && vmAchievement->IsActive())
         {
-            if (vmAchievement->IsPauseOnReset())
-            {
-                auto* pAchievement = GetAchievementInfo(pClient, vmAchievement->GetID());
-                if (pAchievement && pAchievement->trigger && pAchievement->trigger->has_hits)
-                    vAchievementsWithHits.push_back(pAchievement);
-            }
-
-            continue;
+            const auto* pAchievement = vmAchievement->GetRuntimeTrigger();
+            if (pAchievement != nullptr && pAchievement->has_hits)
+                vAchievementsWithHits.push_back(vmAchievement->GetRuntimeAchievementInfo());
         }
+    }
+}
 
-        const auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(&vmAsset);
-        if (vmLeaderboard != nullptr)
+static void PrepareForPauseOnReset(const ra::data::context::GameAssets& pAssets,
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits)
+{
+    std::vector<const ra::data::models::LeaderboardModel*> vLeaderboards;
+    pAssets.GetPauseOnResetLeaderboards(vLeaderboards);
+
+    for (const auto* vmLeaderboard : vLeaderboards)
+    {
+        if (vmLeaderboard && vmLeaderboard->IsActive())
         {
-            using namespace ra::bitwise_ops;
-
-            auto nPauseOnReset = vmLeaderboard->GetPauseOnReset();
-            if (nPauseOnReset != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+            const auto* pLeaderboard = vmLeaderboard->GetRuntimeLeaderboard();
+            if (pLeaderboard != nullptr)
             {
-                auto* pLeaderboard = GetLeaderboardInfo(pClient, vmLeaderboard->GetID());
-                if (pLeaderboard && pLeaderboard->lboard)
+                auto nPauseOnReset = vmLeaderboard->GetPauseOnReset();
+                if (nPauseOnReset != ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    if (!pLeaderboard->lboard->start.has_hits)
+                    using namespace ra::bitwise_ops;
+
+                    if (!pLeaderboard->start.has_hits)
                         nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Start;
-                    if (!pLeaderboard->lboard->cancel.has_hits)
+                    if (!pLeaderboard->cancel.has_hits)
                         nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
-                    if (!pLeaderboard->lboard->submit.has_hits)
+                    if (!pLeaderboard->submit.has_hits)
                         nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
-                    if (!pLeaderboard->lboard->value.value.value)
+                    if (!pLeaderboard->value.value.value)
                         nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Value;
 
                     if (nPauseOnReset != ra::data::models::LeaderboardModel::LeaderboardParts::None)
-                        mLeaderboardsWithHits[pLeaderboard] = nPauseOnReset;
-                }
-            }
-
-            auto nPauseOnTrigger = vmLeaderboard->GetPauseOnTrigger();
-            if (nPauseOnTrigger != ra::data::models::LeaderboardModel::LeaderboardParts::None)
-            {
-                auto* pLeaderboard = GetLeaderboardInfo(pClient, vmLeaderboard->GetID());
-                if (pLeaderboard && pLeaderboard->lboard)
-                {
-                    if (pLeaderboard->lboard->start.state == RC_TRIGGER_STATE_TRIGGERED)
-                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Start;
-                    if (pLeaderboard->lboard->cancel.state == RC_TRIGGER_STATE_TRIGGERED)
-                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
-                    if (pLeaderboard->lboard->submit.state == RC_TRIGGER_STATE_TRIGGERED)
-                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
-
-                    if (nPauseOnTrigger != ra::data::models::LeaderboardModel::LeaderboardParts::None)
-                        mActiveLeaderboards[pLeaderboard] = nPauseOnTrigger;
+                        mLeaderboardsWithHits[vmLeaderboard->GetRuntimeLeaderboardInfo()] = nPauseOnReset;
                 }
             }
         }
     }
 }
 
-static void RaisePauseOnChangeEvents(std::vector<rc_client_achievement_info_t*>& vAchievementsWithHits)
+static void PrepareForPauseOnTrigger(const ra::data::context::GameAssets& pAssets,
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
+{
+    std::vector<const ra::data::models::LeaderboardModel*> vLeaderboards;
+    pAssets.GetPauseOnTriggerLeaderboards(vLeaderboards);
+
+    for (const auto* vmLeaderboard : vLeaderboards)
+    {
+        if (vmLeaderboard && vmLeaderboard->IsActive())
+        {
+            const auto* pLeaderboard = vmLeaderboard->GetRuntimeLeaderboard();
+            if (pLeaderboard != nullptr)
+            {
+                auto nPauseOnTrigger = vmLeaderboard->GetPauseOnTrigger();
+                if (nPauseOnTrigger != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                {
+                    using namespace ra::bitwise_ops;
+
+                    if (pLeaderboard->start.state == RC_TRIGGER_STATE_TRIGGERED)
+                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Start;
+                    if (pLeaderboard->cancel.state == RC_TRIGGER_STATE_TRIGGERED)
+                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
+                    if (pLeaderboard->submit.state == RC_TRIGGER_STATE_TRIGGERED)
+                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
+
+                    if (nPauseOnTrigger != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                        mActiveLeaderboards[vmLeaderboard->GetRuntimeLeaderboardInfo()] = nPauseOnTrigger;
+                }
+            }
+        }
+    }
+}
+
+static void RaisePauseOnChangeEvents(std::vector<const rc_client_achievement_info_t*>& vAchievementsWithHits)
 {
     for (const auto* pAchievement : vAchievementsWithHits)
     {
@@ -1335,8 +1332,7 @@ static void RaisePauseOnChangeEvents(std::vector<rc_client_achievement_info_t*>&
 }
 
 static void RaisePauseOnChangeEvents(
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits,
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits)
 {
     for (auto pair : mLeaderboardsWithHits)
     {
@@ -1385,7 +1381,11 @@ static void RaisePauseOnChangeEvents(
             }
         }
     }
+}
 
+static void RaisePauseOnTriggerEvents(
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
+{
     for (auto pair : mActiveLeaderboards)
     {
         if (pair.first && pair.first->lboard)
@@ -1439,18 +1439,30 @@ void AchievementRuntime::DoFrame()
         return;
     }
 
-    std::vector<rc_client_achievement_info_t*> vAchievementsWithHits;
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mLeaderboardsWithHits;
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mActiveLeaderboards;
+    const auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
+    if (!pAssets.HasPauseOnXAssets())
+    {
+        rc_client_do_frame(pClient);
+        return;
+    }
 
-    PrepareForPauseOnChangeEvents(pClient, vAchievementsWithHits, mLeaderboardsWithHits, mActiveLeaderboards);
+    std::vector<const rc_client_achievement_info_t*> vAchievementsWithHits;
+    PrepareForPauseOnReset(pAssets, vAchievementsWithHits);
+
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mLeaderboardsWithHits;
+    PrepareForPauseOnReset(pAssets, mLeaderboardsWithHits);
+
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mActiveLeaderboards;
+    PrepareForPauseOnTrigger(pAssets, mActiveLeaderboards);
 
     rc_client_do_frame(pClient);
 
     if (!vAchievementsWithHits.empty())
         RaisePauseOnChangeEvents(vAchievementsWithHits);
-    if (!mLeaderboardsWithHits.empty() || !mActiveLeaderboards.empty())
-        RaisePauseOnChangeEvents(mLeaderboardsWithHits, mActiveLeaderboards);
+    if (!mLeaderboardsWithHits.empty())
+        RaisePauseOnChangeEvents(mLeaderboardsWithHits);
+    if (!mActiveLeaderboards.empty())
+        RaisePauseOnTriggerEvents(mActiveLeaderboards);
 }
 
 void AchievementRuntime::Idle() const

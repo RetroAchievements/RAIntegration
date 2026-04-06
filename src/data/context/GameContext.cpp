@@ -452,7 +452,6 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 else
                     vmAchievement->InitializeFromPublishedAchievement(*pAchievementData, "");
 
-                vmAchievement->SetLocalAchievementInfo(*pAchievementData);
                 vmAchievement->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmAchievement));
@@ -487,7 +486,6 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 else
                     vmLeaderboard->InitializeFromPublishedLeaderboard(*pLeaderboardData, "");
 
-                vmLeaderboard->SetLocalLeaderboardInfo(*pLeaderboardData);
                 vmLeaderboard->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmLeaderboard));

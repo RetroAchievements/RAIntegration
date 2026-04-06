@@ -325,8 +325,12 @@ void PointerInspectorViewModel::OnSelectedNodeChanged(int nNewNode)
     SetValue(HasSelectedNodeProperty, nNewNode >= PointerNodeViewModel::RootNodeId);
 
     DispatchMemoryRead([this, nNewNode]() {
-        const auto* pNote = UpdatePointerChain(nNewNode);
-        LoadNote(pNote);
+        const auto nSelectedNode = GetSelectedNode();
+        if (nSelectedNode == nNewNode)
+        {
+            const auto* pNote = UpdatePointerChain(nNewNode);
+            LoadNote(pNote);
+        }
     });
 }
 
@@ -501,62 +505,74 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::CodeNoteModel* 
         return;
     }
 
-    m_bSyncingNote = true;
-    SetCurrentAddressNote(pNote->GetPrimaryNote());
-    m_bSyncingNote = false;
+    {
+        std::lock_guard<std::mutex> lock(m_mtxLoadNote);
 
-    m_pCurrentNote = pNote;
-    const auto nBaseAddress = m_pCurrentNote->GetPointerAddress();
-    gsl::index nCount = gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count());
+        m_bSyncingNote = true;
+        SetCurrentAddressNote(pNote->GetPrimaryNote());
+        m_bSyncingNote = false;
 
-    gsl::index nInsertIndex = 0;
-    m_vmFields.Items().BeginUpdate();
-    pNote->EnumeratePointerNotes([this, &nCount, &nInsertIndex, nBaseAddress]
-        (ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pOffsetNote)
+        m_pCurrentNote = pNote;
+        const auto nBaseAddress = pNote->GetPointerAddress();
+        gsl::index nCount = gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count());
+
+        gsl::index nInsertIndex = 0;
+        m_vmFields.Items().BeginUpdate();
+        pNote->EnumeratePointerNotes([this, &nCount, &nInsertIndex, nBaseAddress]
+            (ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pOffsetNote)
+            {
+                const auto nOffset = nAddress - nBaseAddress;
+                const std::wstring sOffset = ra::util::String::Printf(L"+%04x", nOffset);
+
+                StructFieldViewModel* pItem = nullptr;
+                if (nInsertIndex < nCount)
+                {
+                    pItem = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nInsertIndex);
+                    Expects(pItem != nullptr);
+                    pItem->SetSelected(false);
+                }
+                else
+                {
+                    ++nCount;
+                    pItem = &m_vmFields.Items().Add<StructFieldViewModel>();
+                }
+
+                pItem->BeginInitialization();
+
+                pItem->m_nOffset = nOffset;
+                pItem->SetOffset(sOffset);
+                m_bSyncingNote = true;
+                SyncField(*pItem, pOffsetNote);
+                m_bSyncingNote = false;
+
+                // EndInitialization does memory reads, so it must be dispatched. we'll do it in a bit
+
+                ++nInsertIndex;
+                return true;
+            });
+
+        while (nCount > nInsertIndex)
+            m_vmFields.Items().RemoveAt(--nCount);
+    }
+
+    DispatchMemoryRead([this, pNote]() {
+        if (pNote == m_pCurrentNote)
         {
-            const auto nOffset = nAddress - nBaseAddress;
-            const std::wstring sOffset = ra::util::String::Printf(L"+%04x", nOffset);
-
-            StructFieldViewModel* pItem = nullptr;
-            if (nInsertIndex < nCount)
+            std::lock_guard lock(m_mtxLoadNote);
+            if (pNote == m_pCurrentNote)
             {
-                pItem = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nInsertIndex);
-                Expects(pItem != nullptr);
-                pItem->SetSelected(false);
+                for (auto& pItem : m_vmFields.Items())
+                    pItem.EndInitialization();
+
+                UpdateValues();
             }
-            else
-            {
-                ++nCount;
-                pItem = &m_vmFields.Items().Add<StructFieldViewModel>();
-            }
+        }
 
-            pItem->BeginInitialization();
+        m_vmFields.Items().EndUpdate();
 
-            pItem->m_nOffset = nOffset;
-            pItem->SetOffset(sOffset);
-            m_bSyncingNote = true;
-            SyncField(*pItem, pOffsetNote);
-            m_bSyncingNote = false;
-
-            // EndInitialization does memory reads, so it must be dispatched. we'll do it in a bit
-
-            ++nInsertIndex;
-            return true;
-        });
-
-    while (nCount > nInsertIndex)
-        m_vmFields.Items().RemoveAt(--nCount);
-
-    DispatchMemoryRead([this]() {
-        for (auto& pItem : m_vmFields.Items())
-            pItem.EndInitialization();
-
-        UpdateValues();
+        if (pNote == m_pCurrentNote)
+            OnSelectedFieldChanged(m_vmFields.GetSingleSelectionIndex());
     });
-
-    m_vmFields.Items().EndUpdate();
-
-    OnSelectedFieldChanged(m_vmFields.GetSingleSelectionIndex());
 }
 
 static void LoadSubNotes(LookupItemViewModelCollection& vNodes,

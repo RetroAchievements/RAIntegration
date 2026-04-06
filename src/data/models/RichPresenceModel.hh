@@ -18,17 +18,17 @@ public:
     RichPresenceModel() noexcept;
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the start trigger version.
+    /// The <see cref="ModelProperty" /> for the rich presence script.
     /// </summary>
     static const IntModelProperty ScriptProperty;
 
     /// <summary>
-    /// Gets the start trigger definition.
+    /// Gets the rich presence script.
     /// </summary>
     const std::string& GetScript() const { return GetAssetDefinition(m_pScript); }
 
     /// <summary>
-    /// Sets the start trigger definition.
+    /// Sets the rich presence script.
     /// </summary>
     void SetScript(const std::string& sScript);
 
@@ -51,8 +51,12 @@ public:
     struct rc_richpresence_t* GetMutableRuntimeDefinition();
 
     /// <summary>
-    /// Gets the maximum size of the script.
+    /// Gets the maximum size of the rich presence script.
     /// </summary>
+    /// <remarks>
+    /// This is the absolute maximum number of bytes (in UTF-8).
+    /// There's a soft limit of 60000 characters due to the way the webpage validates length.
+    /// </remarks>
     static constexpr size_t MaxScriptLength = 65535;
 
 protected:

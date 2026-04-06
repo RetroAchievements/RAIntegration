@@ -105,14 +105,107 @@ ra::data::models::AssetCategory GameAssets::MostPublishedAssetCategory() const
     return ra::data::models::AssetCategory::None;
 }
 
+void GameAssets::OnModelValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == ra::data::models::AchievementModel::PauseOnResetProperty)
+    {
+        const auto nId = GetItemValue(nIndex, ra::data::models::AssetModelBase::IDProperty);
+
+        if (!args.tNewValue) // no longer PauseOnReset, remove from watch list
+            m_vPauseOnResetAchievementIds.erase(nId);
+        else
+            m_vPauseOnResetAchievementIds.insert(nId);
+    }
+
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnModelValueChanged(nIndex, args);
+}
+
+void GameAssets::OnModelValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == ra::data::models::LeaderboardModel::PauseOnResetProperty)
+    {
+        const auto nId = GetItemValue(nIndex, ra::data::models::AssetModelBase::IDProperty);
+
+        if (args.tNewValue == 0) // no longer PauseOnReset, remove from watch list
+            m_vPauseOnResetLeaderboardIds.erase(nId);
+        else
+            m_vPauseOnResetLeaderboardIds.insert(nId);
+    }
+    else if (args.Property == ra::data::models::LeaderboardModel::PauseOnTriggerProperty)
+    {
+        const auto nId = GetItemValue(nIndex, ra::data::models::AssetModelBase::IDProperty);
+
+        if (args.tNewValue == 0) // no longer PauseOnTrigger, remove from watch list
+            m_vPauseOnTriggerLeaderboardIds.erase(nId);
+        else
+            m_vPauseOnTriggerLeaderboardIds.insert(nId);
+    }
+
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnModelValueChanged(nIndex, args);
+}
+
+bool GameAssets::HasPauseOnXAssets() const noexcept
+{
+    return !m_vPauseOnResetAchievementIds.empty() ||
+        !m_vPauseOnResetLeaderboardIds.empty() ||
+        !m_vPauseOnTriggerLeaderboardIds.empty();
+}
+
+void GameAssets::GetPauseOnResetAchievements(std::vector<const ra::data::models::AchievementModel*>& vAchievements) const
+{
+    for (const auto nId : m_vPauseOnResetAchievementIds)
+    {
+        const auto* vmAchievement = FindAchievement(nId);
+        if (vmAchievement != nullptr)
+            vAchievements.push_back(vmAchievement);
+    }
+}
+
+void GameAssets::GetPauseOnResetLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const
+{
+    for (const auto nId : m_vPauseOnResetLeaderboardIds)
+    {
+        const auto* vmLeaderboard = FindLeaderboard(nId);
+        if (vmLeaderboard != nullptr)
+            vLeaderboards.push_back(vmLeaderboard);
+    }
+}
+
+void GameAssets::GetPauseOnTriggerLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const
+{
+    for (const auto nId : m_vPauseOnTriggerLeaderboardIds)
+    {
+        const auto* vmLeaderboard = FindLeaderboard(nId);
+        if (vmLeaderboard != nullptr)
+            vLeaderboards.push_back(vmLeaderboard);
+    }
+}
+
 void GameAssets::OnBeforeItemRemoved(ModelBase& pModel)
 {
-    auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
-    if (pLocalBadges)
+    const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pModel);
+    if (pAchievement)
     {
-        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pModel);
-        if (pAchievement && ra::util::String::StartsWith(pAchievement->GetBadge(), L"local\\"))
-            pLocalBadges->RemoveReference(pAchievement->GetBadge(), pAchievement->IsBadgeCommitted());
+        if (ra::util::String::StartsWith(pAchievement->GetBadge(), L"local\\"))
+        {
+            auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
+            if (pLocalBadges)
+                pLocalBadges->RemoveReference(pAchievement->GetBadge(), pAchievement->IsBadgeCommitted());
+        }
+
+        if (pAchievement->IsPauseOnReset())
+            m_vPauseOnResetAchievementIds.erase(pAchievement->GetID());
+    }
+    else
+    {
+        const auto* pLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(&pModel);
+        if (pLeaderboard)
+        {
+            if (pLeaderboard->GetPauseOnReset() != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                m_vPauseOnResetLeaderboardIds.erase(pLeaderboard->GetID());
+            if (pLeaderboard->GetPauseOnTrigger() != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                m_vPauseOnTriggerLeaderboardIds.erase(pLeaderboard->GetID());
+        }
     }
 
     ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnBeforeItemRemoved(pModel);

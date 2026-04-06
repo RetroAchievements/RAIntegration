@@ -99,6 +99,8 @@ bool RichPresenceModel::ValidateAsset(std::wstring& sError)
         return false;
     }
 
+    // TODO: validate logic
+
     return true;
 }
 
@@ -149,6 +151,8 @@ void RichPresenceModel::SetScript(const std::string& sScript)
         sNormalizedScript.push_back('\n');
 
     SetAssetDefinition(m_pScript, sNormalizedScript);
+
+    // TODO: parse and load into runtime
 }
 
 void RichPresenceModel::ReloadRichPresenceScript()

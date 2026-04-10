@@ -2,8 +2,6 @@
 
 #include "RA_Resource.h"
 
-#include "api\SubmitTicket.hh"
-
 #include "ui\win32\bindings\GridBooleanColumnBinding.hh"
 #include "ui\win32\bindings\GridCheckBoxColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"

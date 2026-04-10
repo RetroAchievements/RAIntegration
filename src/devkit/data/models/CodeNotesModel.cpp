@@ -1,10 +1,10 @@
 #include "CodeNotesModel.hh"
 
-#include "context\IRcClient.hh"
-#include "context\UserContext.hh"
+#include "context/IRcClient.hh"
+#include "context/UserContext.hh"
 
-#include "services\ServiceLocator.hh"
-#include "services\IMessageDispatcher.hh"
+#include "services/ServiceLocator.hh"
+#include "services/IMessageDispatcher.hh"
 
 #include <rcheevos/include/rc_api_editor.h>
 

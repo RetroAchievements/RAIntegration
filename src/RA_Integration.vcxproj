@@ -82,7 +82,6 @@
     <ClCompile Include="data\context\GameContext.cpp" />
     <ClCompile Include="data\context\SessionTracker.cpp" />
     <ClCompile Include="data\models\AchievementModel.cpp" />
-    <ClCompile Include="data\models\CodeNotesModel.cpp" />
     <ClCompile Include="data\models\LeaderboardModel.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel.cpp" />
     <ClCompile Include="data\models\RichPresenceModel.cpp" />
@@ -217,7 +216,6 @@
     <ClInclude Include="data\context\GameContext.hh" />
     <ClInclude Include="data\context\SessionTracker.hh" />
     <ClInclude Include="data\models\AchievementModel.hh" />
-    <ClInclude Include="data\models\CodeNotesModel.hh" />
     <ClInclude Include="data\models\LeaderboardModel.hh" />
     <ClInclude Include="data\models\LocalBadgesModel.hh" />
     <ClInclude Include="data\models\RichPresenceModel.hh" />

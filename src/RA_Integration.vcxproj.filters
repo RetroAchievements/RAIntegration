@@ -354,9 +354,6 @@
     <ClCompile Include="data\models\RichPresenceModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CodeNotesModel.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\EmulatorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -858,9 +855,6 @@
       <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="data\models\RichPresenceModel.hh">
-      <Filter>Data\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="data\models\CodeNotesModel.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\PointerFinderViewModel.hh">

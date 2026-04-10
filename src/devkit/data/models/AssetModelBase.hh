@@ -6,7 +6,7 @@
 
 #include "services/TextWriter.hh"
 
-#include "util/Strings.hh"
+#include "util/TypeCasts.hh"
 #include "util/Tokenizer.hh"
 
 namespace ra {

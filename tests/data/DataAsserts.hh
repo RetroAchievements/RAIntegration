@@ -3,7 +3,6 @@
 #pragma once
 
 #include "data\context\GameContext.hh"
-#include "data\models\AssetModelBase.hh"
 
 namespace Microsoft {
 namespace VisualStudio {

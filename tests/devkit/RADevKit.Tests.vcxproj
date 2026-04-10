@@ -70,6 +70,7 @@
     <ClCompile Include="data\Memory_Tests.cpp" />
     <ClCompile Include="data\ModelPropertyContainer_Tests.cpp" />
     <ClCompile Include="data\ModelProperty_Tests.cpp" />
+    <ClCompile Include="data\models\CodeNotesModel_Tests.cpp" />
     <ClCompile Include="util\Tokenizer_Tests.cpp" />
     <ClInclude Include="context\mocks\MockConsoleContext.hh" />
     <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh" />

@@ -497,9 +497,6 @@
     <ClInclude Include="ui\viewmodels\WindowManager.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
-    <ClInclude Include="services\ILocalStorage.hh">
-      <Filter>Services</Filter>
-    </ClInclude>
     <ClInclude Include="services\impl\FileLocalStorage.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
@@ -667,9 +664,6 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
-    </ClInclude>
-    <ClInclude Include="api\FetchCodeNotes.hh">
-      <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="api\UpdateCodeNote.hh">
       <Filter>API</Filter>

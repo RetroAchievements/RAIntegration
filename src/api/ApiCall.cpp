@@ -14,7 +14,6 @@ static ra::api::IServer& Server()
 
 FetchUserFriends::Response FetchUserFriends::Request::Call() const { return Server().FetchUserFriends(*this); }
 ResolveHash::Response ResolveHash::Request::Call() const { return Server().ResolveHash(*this); }
-FetchCodeNotes::Response FetchCodeNotes::Request::Call() const { return Server().FetchCodeNotes(*this); }
 UpdateCodeNote::Response UpdateCodeNote::Request::Call() const { return Server().UpdateCodeNote(*this); }
 DeleteCodeNote::Response DeleteCodeNote::Request::Call() const { return Server().DeleteCodeNote(*this); }
 UpdateAchievement::Response UpdateAchievement::Request::Call() const { return Server().UpdateAchievement(*this); }

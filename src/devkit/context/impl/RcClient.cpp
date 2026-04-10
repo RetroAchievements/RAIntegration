@@ -3,6 +3,7 @@
 #include "context/UserContext.hh"
 
 #include "services/IHttpRequester.hh"
+#include "services/ILocalStorage.hh"
 #include "services/ServiceLocator.hh"
 
 #include "util/Log.hh"
@@ -96,6 +97,21 @@ static void ConvertHttpResponseToApiServerResponse(rc_api_server_response_t& pRe
     }
 }
 
+static std::string_view FindParameter(const std::string& sInput, const std::string& sParameter)
+{
+    auto nIndex = sInput.find(sParameter);
+    if (nIndex != std::string::npos)
+    {
+        nIndex += 3;
+        auto nIndex2 = sInput.find('&', nIndex);
+        if (nIndex2 == std::string::npos)
+            nIndex2 = sInput.length();
+        return std::string_view(&sInput.at(nIndex), nIndex2 - nIndex);
+    }
+
+    return {};
+}
+
 void RcClient::DispatchRequest(const rc_api_request_t& pRequest,
     std::function<void(const rc_api_server_response_t&, void*)> fCallback,
     void* pCallbackData) const
@@ -121,27 +137,15 @@ void RcClient::DispatchRequest(const rc_api_request_t& pRequest,
         if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
         {
             std::string sParams = httpRequest.GetPostData();
-            nIndex = sParams.find("&t=");
-            if (nIndex != std::string::npos)
-            {
-                nIndex += 3;
-                auto nIndex2 = sParams.find('&', nIndex);
-                if (nIndex2 == std::string::npos)
-                    nIndex2 = sParams.length();
-                sParams.replace(nIndex, nIndex2 - nIndex, "[redacted]");
-            }
+            const auto svToken = FindParameter(sParams, "&t=");
+            if (!svToken.empty())
+                sParams.replace(svToken.data() - sParams.data(), svToken.length(), "[redacted]");
 
             if (ra::util::String::StartsWith(sApi, "login"))
             {
-                nIndex = sParams.find("&p=");
-                if (nIndex != std::string::npos)
-                {
-                    nIndex += 3;
-                    auto nIndex2 = sParams.find('&', nIndex);
-                    if (nIndex2 == std::string::npos)
-                        nIndex2 = sParams.length();
-                    sParams.replace(nIndex, nIndex2 - nIndex, "[redacted]");
-                }
+                const auto svPassword = FindParameter(sParams, "&p=");
+                if (!svPassword.empty())
+                    sParams.replace(svPassword.data() - sParams.data(), svPassword.length(), "[redacted]");
             }
 
             RA_LOG_INFO(">> %s request: %s", sApi.c_str(), sParams.c_str());
@@ -151,11 +155,34 @@ void RcClient::DispatchRequest(const rc_api_request_t& pRequest,
     CallApi(sApi, httpRequest, fCallback, pCallbackData);
 }
 
+static void CacheCodeNotesResponse(const rc_api_server_response_t& pResponse, const std::wstring& sGameId)
+{
+    // store a copy in the cache for offline mode
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::CodeNotes, sGameId);
+    if (pData != nullptr)
+    {
+        std::string sContent(pResponse.body, pResponse.body_length);
+        auto nIndex = sContent.find('[');
+        sContent.erase(0, nIndex);
+        nIndex = sContent.find_last_of(']');
+        sContent.erase(nIndex + 1);
+        pData->Write(sContent);
+    }
+}
+
 void RcClient::CallApi(const std::string& sApi, const ra::services::Http::Request& pRequest,
     std::function<void(const rc_api_server_response_t&, void*)> fCallback,
     void* pCallbackData) const
 {
-    pRequest.CallAsync([fCallback, pCallbackData, sApi](const ra::services::Http::Response& httpResponse)
+    std::wstring sParameter;
+    if (sApi == "codenotes2") {
+        const auto svGameId = FindParameter(pRequest.GetPostData(), "&g=");
+        if (!svGameId.empty())
+            sParameter = ra::util::String::Widen(svGameId);
+    }
+
+    pRequest.CallAsync([fCallback, pCallbackData, sApi=sApi, sParameter](const ra::services::Http::Response& httpResponse)
         {
             rc_api_server_response_t pResponse;
             std::string sErrorBuffer;
@@ -181,6 +208,10 @@ void RcClient::CallApi(const std::string& sApi, const ra::services::Http::Reques
                 {
                     RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
                 }
+            }
+
+            if (sApi == "codenotes2") {
+                CacheCodeNotesResponse(pResponse, sParameter);
             }
 
             fCallback(pResponse, pCallbackData);

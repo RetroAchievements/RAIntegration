@@ -98,6 +98,28 @@ static ra::services::Http::Response HandleOfflineRequest(const ra::services::Htt
     if (sApi == "startsession")
         return ra::services::Http::Response(ra::services::Http::StatusCode::OK, "{\"Success\":true}");
 
+    if (sApi == "codenotes2")
+    {
+        const auto sGameId = GetParam(httpRequest, "g");
+
+        // see if the data is available in the cache
+        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::CodeNotes, ra::util::String::Widen(sGameId));
+        if (pData == nullptr)
+        {
+            return ra::services::Http::Response(ra::services::Http::StatusCode::NotFound,
+                ra::util::String::Printf("{\"Success\":false,\"Error\":\"Code notes for game %s not found in cache\"}", sGameId));
+        }
+
+        std::string sContents = "{\"Success\":true,\"CodeNotes\":";
+        std::string sLine;
+        while (pData->GetLine(sLine))
+            sContents.append(sLine);
+        sContents.push_back('}');
+
+        return ra::services::Http::Response(ra::services::Http::StatusCode::OK, sContents);
+    }
+
     return ra::services::Http::Response(ra::services::Http::StatusCode::NotImplemented,
         ra::util::String::Printf("{\"Success\":false,\"Error\":\"No offline implementation for %s\"}", sApi));
 }

@@ -134,5 +134,14 @@
     <ClInclude Include="testutil\AssetAsserts.hh">
       <Filter>testutil</Filter>
     </ClInclude>
+    <ClInclude Include="services\mocks\MockDebuggerDetector.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockLocalStorage.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockMessageDispatcher.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -2,8 +2,6 @@
 
 #include "util\Strings.hh"
 
-#include "api\SubmitTicket.hh"
-
 #include "data\context\GameContext.hh"
 #include "data\context\GameAssets.hh"
 

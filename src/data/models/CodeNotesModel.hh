@@ -6,8 +6,6 @@
 
 #include "data/models/CodeNoteModel.hh"
 
-#include "data/Types.hh"
-
 namespace ra {
 namespace data {
 namespace models {
@@ -21,8 +19,6 @@ public:
 	CodeNotesModel& operator=(const CodeNotesModel&) noexcept = delete;
 	CodeNotesModel(CodeNotesModel&&) noexcept = delete;
 	CodeNotesModel& operator=(CodeNotesModel&&) noexcept = delete;
-
-    bool IsShownInList() const noexcept override { return false; }
 
     typedef std::function<void(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)> CodeNoteChangedFunction;
     typedef std::function<void(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNewNote)> CodeNoteMovedFunction;
@@ -70,39 +66,6 @@ public:
     std::wstring FindCodeNote(ra::data::ByteAddress nAddress, Memory::Size nSize) const;
 
     /// <summary>
-    /// Returns the note associated with the specified address.
-    /// </summary>
-    /// <param name="nAddress">The address to look up.</param>
-    /// <param name="sAuthor">The author associated to the address.</param>
-    /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    /// <remarks>Does not find notes derived from pointers</remarks>
-    const std::wstring* FindCodeNote(ra::data::ByteAddress nAddress, _Inout_ std::string& sAuthor) const;
-
-    /// <summary>
-    /// Returns the number of bytes associated to the code note at the specified address.
-    /// </summary>
-    /// <param name="nAddress">Address to query.</param>
-    /// <returns>Number of bytes associated to the code note, or 0 if no note exists at the address.</returns>
-    /// <remarks>Only works for the first byte of a multi-byte address.</remarks>
-    unsigned GetCodeNoteBytes(ra::data::ByteAddress nAddress) const
-    {
-        const auto* pNote = FindCodeNoteModel(nAddress);
-        return (pNote == nullptr) ? 0 : pNote->GetBytes();
-    }
-
-    /// <summary>
-    /// Returns the number of bytes associated to the code note at the specified address.
-    /// </summary>
-    /// <param name="nAddress">Address to query.</param>
-    /// <returns>Memory::Size associated to the code note, or Unknown if no note exists at the address.</returns>
-    /// <remarks>Only works for the first byte of a multi-byte address.</remarks>
-    Memory::Size GetCodeNoteMemSize(ra::data::ByteAddress nAddress) const
-    {
-        const auto* pNote = FindCodeNoteModel(nAddress);
-        return (pNote == nullptr) ? Memory::Size::Unknown : pNote->GetMemSize();
-    }
-
-    /// <summary>
     /// Returns the address of the real code note from which an indirect code note was derived.
     /// </summary>
     /// <returns>
@@ -125,20 +88,6 @@ public:
     ///  Returns 0xFFFFFFFF if not found.
     /// </returns>
     ra::data::ByteAddress GetPreviousNoteAddress(ra::data::ByteAddress nBeforeAddress, bool bIncludeDerived = false) const;
-
-    /// <summary>
-    /// Enumerates the code notes
-    /// </summary>
-    /// <remarks>
-    /// <paramref name="callback" /> is called for each known code note. If it returns <c>false</c> enumeration stops.
-    /// </remarks>
-    void EnumerateCodeNotes(std::function<bool(ra::data::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)> callback, bool bIncludeDerived = false) const
-    {
-        EnumerateCodeNotes([callback](ra::data::ByteAddress nAddress, const CodeNoteModel& pCodeNote)
-        {
-            return callback(nAddress, pCodeNote.GetBytes(), pCodeNote.GetNote());
-        }, bIncludeDerived);
-    }
 
     /// <summary>
     /// Enumerates the code notes
@@ -201,6 +150,8 @@ public:
 
     void DoFrame() override;
 
+    bool IsShownInList() const noexcept override { return false; }
+
 protected:
     void AddCodeNote(ra::data::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
     void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote);
@@ -212,7 +163,6 @@ protected:
 
     std::pair<ra::data::ByteAddress, const CodeNoteModel*> FindIndirectCodeNoteInternal(ra::data::ByteAddress nAddress) const;
 
-    unsigned int m_nGameId = 0;
     bool m_bHasPointers = false;
     bool m_bRefreshing = false;
 

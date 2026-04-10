@@ -2,10 +2,10 @@
 #define RA_SERVICES_MOCK_LOGGER_HH
 #pragma once
 
-#include "services\ILogger.hh"
-#include "services\ServiceLocator.hh"
+#include "services/ILogger.hh"
+#include "services/ServiceLocator.hh"
 
-#include "testutil\CppUnitTest.hh"
+#include "testutil/CppUnitTest.hh"
 
 namespace ra {
 namespace services {
@@ -31,7 +31,8 @@ public:
 
     void AssertContains(const std::string& sMessage) const
     {
-        for (size_t i = 0; i < m_vLog.size(); ++i) {
+        for (size_t i = 0; i < m_vLog.size(); ++i)
+        {
             if (m_vLog.at(i) == sMessage)
                 return;
         }

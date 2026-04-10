@@ -6,10 +6,7 @@
 
 #include "util/Strings.hh"
 
-#include "RA_Defs.h"
-
 #include "data/context/GameContext.hh"
-#include "data/context/EmulatorContext.hh"
 
 #include <rcheevos/src/rcheevos/rc_validate.h>
 #include <rcheevos/src/rcheevos/rc_internal.h>
@@ -89,7 +86,8 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
             return false;
         }
 
-        nNoteSize = pNotes.GetCodeNoteMemSize(nStartAddress);
+        const auto pStartNote = pNotes.FindCodeNoteModel(nStartAddress, false);
+        nNoteSize = pStartNote ? pStartNote->GetMemSize() : Memory::Size::Unknown;
     }
 
     if (nMemRefSize == nNoteSize)

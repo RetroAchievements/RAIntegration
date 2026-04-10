@@ -298,6 +298,7 @@ void RichPresenceModel::ParseScript()
     rc_richpresence_with_memrefs_t* richpresence = RC_ALLOC(rc_richpresence_with_memrefs_t, &preparse.parse);
     preparse.parse.variables = &richpresence->richpresence.values;
     rc_parse_richpresence_internal(&richpresence->richpresence, sScript.c_str(), &preparse.parse);
+    rc_preparse_alloc_memrefs(nullptr, &preparse);
 
     const auto nSize = preparse.parse.offset;
     if (nSize < 0)

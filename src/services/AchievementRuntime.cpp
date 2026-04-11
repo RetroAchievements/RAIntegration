@@ -228,6 +228,7 @@ void AchievementRuntime::InitializeRcClient()
     rc_client_set_event_handler(pClient, EventHandler);
 }
 
+GSL_SUPPRESS_F6
 AchievementRuntime::~AchievementRuntime()
 {
     if (!ra::services::ServiceLocator::IsShuttingDown() &&
@@ -240,7 +241,6 @@ AchievementRuntime::~AchievementRuntime()
                 pRichPrecense->Deactivate(); // prevents runtime from trying to free memory owned by RichPresence
         }
 
-        GSL_SUPPRESS_F6
         ra::services::ServiceLocator::GetMutable<ra::context::IRcClient>().Shutdown();
     }
 }

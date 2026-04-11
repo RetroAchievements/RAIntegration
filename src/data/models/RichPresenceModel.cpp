@@ -4,7 +4,6 @@
 
 #include "data\context\GameContext.hh"
 
-#include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
@@ -233,7 +232,7 @@ void RichPresenceModel::SyncScriptToRuntime()
     ParseScript();
 }
 
-void RichPresenceModel::DetachRuntimeLeaderboard(struct rc_client_game_info_t* pGame)
+void RichPresenceModel::DetachRuntimeLeaderboard(struct rc_client_game_info_t* pGame) noexcept
 {
     if (m_pRichPresenceInfo)
         free(m_pRichPresenceInfo);
@@ -282,7 +281,7 @@ void RichPresenceModel::ParseScript()
 
         if (IsActive()) // attach if active
         {
-            pGame->runtime.richpresence = const_cast<rc_runtime_richpresence_t*>(m_pPublishedRichPresenceInfo);
+            GSL_SUPPRESS_TYPE3 pGame->runtime.richpresence = const_cast<rc_runtime_richpresence_t*>(m_pPublishedRichPresenceInfo);
             rc_reset_richpresence(pGame->runtime.richpresence->richpresence);
         }
 
@@ -337,7 +336,7 @@ void RichPresenceModel::ParseScript()
 
             // alloc here so runtime can free
             if (!m_pRichPresenceInfo)
-                m_pRichPresenceInfo = (rc_runtime_richpresence_t*)calloc(1, sizeof(rc_runtime_richpresence_t));
+                m_pRichPresenceInfo = static_cast<rc_runtime_richpresence_t*>(calloc(1, sizeof(rc_runtime_richpresence_t)));
 
             // switch to the new rich presence
             if (m_pRichPresenceInfo != nullptr)

@@ -67,7 +67,7 @@ protected:
 private:
     void WriteRichPresenceScript();
 
-    void DetachRuntimeLeaderboard(struct rc_client_game_info_t* pGame);
+    void DetachRuntimeLeaderboard(struct rc_client_game_info_t* pGame) noexcept;
     void SyncScriptToRuntime();
     void ParseScript();
     AssetDefinition m_pScript;

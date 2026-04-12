@@ -42,7 +42,7 @@ public:
             if (m_vMessages.at(i).first == sSummary)
             {
                 sMatch = &m_vMessages.at(i).second;
-                if (*sMatch == sDetail)
+                if (sMatch && *sMatch == sDetail)
                     return;
             }
         }
@@ -62,7 +62,7 @@ public:
             if (m_vErrorMessages.at(i).first == sSummary)
             {
                 sMatch = &m_vErrorMessages.at(i).second;
-                if (*sMatch == sDetail)
+                if (sMatch && *sMatch == sDetail)
                     return;
             }
         }

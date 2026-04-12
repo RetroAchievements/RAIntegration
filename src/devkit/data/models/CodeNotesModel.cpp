@@ -6,6 +6,8 @@
 #include "services/ServiceLocator.hh"
 #include "services/IMessageDispatcher.hh"
 
+#include "util/Strings.hh"
+
 #include <rcheevos/include/rc_api_editor.h>
 
 namespace ra {

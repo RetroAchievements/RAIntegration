@@ -5,6 +5,8 @@
 
 #include "ui\ImageReference.hh"
 
+#include "util\Strings.hh"
+
 namespace ra {
 namespace data {
 namespace models {

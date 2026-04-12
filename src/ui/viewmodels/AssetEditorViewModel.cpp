@@ -15,6 +15,7 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "util\EnumOps.hh"
+#include "util\Strings.hh"
 
 #include <rcheevos\src\rcheevos\rc_internal.h>
 

@@ -20,7 +20,7 @@ public:
     /// <summary>
     /// Dispatches a message.
     /// </summary>
-    void ReportMessage(const std::wstring& sSummary, const std::wstring& sDetail) const
+    void ReportMessage(const std::wstring& sSummary, const std::wstring& sDetail) const override
     {
         m_vMessages.emplace_back(sSummary, sDetail);
     }
@@ -28,7 +28,7 @@ public:
     /// <summary>
     /// Dispatches an error message.
     /// </summary>
-    void ReportErrorMessage(const std::wstring& sSummary, const std::wstring& sDetail) const
+    void ReportErrorMessage(const std::wstring& sSummary, const std::wstring& sDetail) const override
     {
         m_vErrorMessages.emplace_back(sSummary, sDetail);
     }

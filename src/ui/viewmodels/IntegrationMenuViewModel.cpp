@@ -23,6 +23,8 @@
 #include "ui/viewmodels/UnknownGameViewModel.hh"
 #include "ui/viewmodels/WindowManager.hh"
 
+#include "util/Strings.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {

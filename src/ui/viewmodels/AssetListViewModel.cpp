@@ -19,11 +19,13 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
+#include "util\Log.hh"
+#include "util\Strings.hh"
+
 #include "rcheevos\src\rc_client_internal.h"
 
 #include "Exports.hh"
 #include "RA_BuildVer.h"
-#include "util\Log.hh"
 
 namespace ra {
 namespace ui {

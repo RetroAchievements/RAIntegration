@@ -6,6 +6,8 @@
 
 #include "services\ServiceLocator.hh"
 
+#include "util\Strings.hh"
+
 namespace ra {
 namespace data {
 namespace context {

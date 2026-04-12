@@ -1,5 +1,3 @@
-#include "CppUnitTest.h"
-
 #include "data/models/CodeNotesModel.hh"
 
 #include "services/impl/StringTextWriter.hh"

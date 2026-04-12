@@ -20,7 +20,7 @@ public:
     void DispatchRequest(const rc_api_request_t& pRequest, std::function<void(const rc_api_server_response_t&, void*)> fCallback, void* fCallbackData) const override;
 
     void MockResponse(const std::string& sRequestParams, const std::string& sResponseBody);
-    bool HasMockResponse(const std::string& sRequestParams) const;
+    bool HasMockResponse(const std::string& sRequestParams) const noexcept;
 
     void OnBeforeResponse(const std::string& sRequestParams, const std::function<void()>&& fHandler);
 

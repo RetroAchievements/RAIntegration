@@ -74,14 +74,18 @@ private:
             const auto* pNote = FindCodeNote(nAddress);
             Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X", nAddress).c_str());
             Ensures(pNote != nullptr);
+
             Assert::AreEqual(sExpected, *pNote);
         }
 
         void AssertNote(ra::data::ByteAddress nAddress, const std::wstring& sExpected, Memory::Size nExpectedSize, unsigned nExpectedBytes = 0)
         {
-            AssertNote(nAddress, sExpected);
-
             const auto* pNote = FindCodeNoteModel(nAddress);
+            Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X", nAddress).c_str());
+            Ensures(pNote != nullptr);
+
+            Assert::AreEqual(sExpected, pNote->GetNote());
+
             Assert::AreEqual(nExpectedSize, pNote->GetMemSize(),
                 ra::util::String::Printf(L"Size for address %04X", nAddress).c_str());
 

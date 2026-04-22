@@ -6,6 +6,8 @@
 
 #include "services\ServiceLocator.hh"
 
+#include "util\Strings.hh"
+
 namespace ra {
 namespace data {
 namespace context {
@@ -91,7 +93,7 @@ public:
             Assets().RemoveAt(nIndex);
 
         auto pCodeNotes = std::make_unique<MockCodeNotesModel>();
-        pCodeNotes->Initialize(1U,
+        pCodeNotes->Initialize(
             [this](ra::data::ByteAddress nAddress, const std::wstring& sNote) {
                 // a note with pointer notation is expected to keep track of where each
                 // pointed-at note exists. this normally occurs in DoFrame, but for
@@ -161,9 +163,8 @@ private:
     class MockCodeNotesModel : public ra::data::models::CodeNotesModel
     {
     public:
-        void Initialize(unsigned nGameId, CodeNoteChangedFunction fCodeNoteChanged, CodeNoteMovedFunction fCodeNoteMoved)
+        void Initialize(CodeNoteChangedFunction fCodeNoteChanged, CodeNoteMovedFunction fCodeNoteMoved)
         {
-            m_nGameId = nGameId;
             m_fCodeNoteChanged = fCodeNoteChanged;
             m_fCodeNoteMoved = fCodeNoteMoved;
         }

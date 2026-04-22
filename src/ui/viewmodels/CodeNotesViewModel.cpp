@@ -93,10 +93,11 @@ void CodeNotesViewModel::ResetFilter()
     auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes != nullptr)
     {
-        pCodeNotes->EnumerateCodeNotes([this, &nIndex, pCodeNotes](ra::data::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)
+        pCodeNotes->EnumerateCodeNotes([this, &nIndex, pCodeNotes](ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pCodeNote)
         {
             const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
             const auto bNoteModified = pCodeNotes->IsNoteModified(nAddress);
+            const auto nBytes = pCodeNote.GetBytes();
 
             std::wstring sAddress;
             if (nBytes <= 4)
@@ -104,6 +105,7 @@ void CodeNotesViewModel::ResetFilter()
             else
                 sAddress = ra::util::String::Printf(L"%s\n- %s", pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nAddress + nBytes - 1));
 
+            const auto& sNote = pCodeNote.GetNote();
             auto* vmNote = m_vNotes.GetItemAt(nIndex);
             if (vmNote)
             {
@@ -220,7 +222,8 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
             {
                 pNote->SetModified(bNoteModified);
 
-                pNote->nBytes = pCodeNotes->GetCodeNoteBytes(nAddress);
+                const auto* pCodeNote = pCodeNotes->FindCodeNoteModel(nAddress);
+                pNote->nBytes = pCodeNote ? pCodeNote->GetBytes() : 0;
                 std::wstring sAddress;
                 if (pNote->nBytes <= 4)
                     sAddress = pMemoryContext.FormatAddress(nAddress);

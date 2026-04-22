@@ -70,11 +70,6 @@ public:
         return HandleRequest<ra::api::ResolveHash>(request);
     }
 
-    FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override
-    {
-        return HandleRequest<ra::api::FetchCodeNotes>(request);
-    }
-
     UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) override
     {
         return HandleRequest<ra::api::UpdateCodeNote>(request);

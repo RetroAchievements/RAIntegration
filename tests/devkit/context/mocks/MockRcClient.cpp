@@ -104,6 +104,17 @@ void MockRcClient::MockResponse(const std::string& sRequestParams, const std::st
     pNewResponse.nHttpStatus = 200;
 }
 
+bool MockRcClient::HasMockResponse(const std::string& sRequestParams) const noexcept
+{
+    for (auto& pResponse : m_vResponses)
+    {
+        if (pResponse.sRequestParams == sRequestParams)
+            return true;
+    }
+
+    return false;
+}
+
 void MockRcClient::OnBeforeResponse(const std::string& sRequestParams, const std::function<void()>&& fHandler)
 {
     for (auto& pResponse : m_vResponses)

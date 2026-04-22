@@ -5,6 +5,9 @@
 #include "services\TextReader.hh"
 #include "services\TextWriter.hh"
 
+#include <chrono>
+#include <memory>
+
 namespace ra {
 namespace services {
 

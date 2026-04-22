@@ -6,12 +6,12 @@
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockLoginService.hh"
 
 #include "tests\ui\UIAsserts.hh"

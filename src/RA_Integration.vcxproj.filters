@@ -354,9 +354,6 @@
     <ClCompile Include="data\models\RichPresenceModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CodeNotesModel.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\EmulatorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -496,9 +493,6 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\WindowManager.hh">
       <Filter>UI\ViewModels</Filter>
-    </ClInclude>
-    <ClInclude Include="services\ILocalStorage.hh">
-      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\FileLocalStorage.hh">
       <Filter>Services\Impl</Filter>
@@ -667,9 +661,6 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
-    </ClInclude>
-    <ClInclude Include="api\FetchCodeNotes.hh">
-      <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="api\UpdateCodeNote.hh">
       <Filter>API</Filter>
@@ -864,9 +855,6 @@
       <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="data\models\RichPresenceModel.hh">
-      <Filter>Data\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="data\models\CodeNotesModel.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\PointerFinderViewModel.hh">

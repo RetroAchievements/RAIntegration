@@ -787,9 +787,10 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, co
     Expects(pCodeNotes != nullptr);
 
     const auto nSelectedAddress = GetAddress();
+    const auto* pCodeNote = pCodeNotes->FindCodeNoteModel(nAddress);
 
     const auto nMax = nFirstAddress + nVisibleLines * 16 - nAddress;
-    const auto nSize = std::min(std::max(pCodeNotes->GetCodeNoteBytes(nAddress), 1U), nMax);
+    const auto nSize = std::min(pCodeNote ? pCodeNote->GetBytes() : 1U, nMax);
     for (unsigned i = 0; i < nSize; ++i)
     {
         auto nNewColor = (nAddress == nSelectedAddress) ?

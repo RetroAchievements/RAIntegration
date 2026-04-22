@@ -7,11 +7,11 @@
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockLocalStorage.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

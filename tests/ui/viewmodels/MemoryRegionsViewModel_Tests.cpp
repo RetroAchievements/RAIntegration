@@ -5,13 +5,13 @@
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\ui\UIAsserts.hh"
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

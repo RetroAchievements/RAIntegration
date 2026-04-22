@@ -2,7 +2,6 @@
 #define RA_DATA_TRIGGER_VALIDATION_H
 #pragma once
 
-#include "data\Types.hh"
 #include "data\models\AssetModelBase.hh"
 
 namespace ra {

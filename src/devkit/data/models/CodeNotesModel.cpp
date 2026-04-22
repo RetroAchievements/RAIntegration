@@ -1,16 +1,14 @@
 #include "CodeNotesModel.hh"
 
-#include "RA_Defs.h"
+#include "context/IRcClient.hh"
+#include "context/UserContext.hh"
 
-#include "api\DeleteCodeNote.hh"
-#include "api\FetchCodeNotes.hh"
-#include "api\UpdateCodeNote.hh"
+#include "services/ServiceLocator.hh"
+#include "services/IMessageDispatcher.hh"
 
-#include "context\UserContext.hh"
+#include "util/Strings.hh"
 
-#include "data\context\EmulatorContext.hh"
-
-#include "ui\viewmodels\MessageBoxViewModel.hh"
+#include <rcheevos/include/rc_api_editor.h>
 
 namespace ra {
 namespace data {
@@ -26,7 +24,6 @@ void CodeNotesModel::Refresh(unsigned int nGameId,
     CodeNoteChangedFunction fCodeNoteChanged, CodeNoteMovedFunction fCodeNoteMoved,
     std::function<void()> callback)
 {
-    m_nGameId = nGameId;
     m_vCodeNotes.clear();
     m_bHasPointers = false;
 
@@ -49,31 +46,45 @@ void CodeNotesModel::Refresh(unsigned int nGameId,
         m_bRefreshing = true;
     }
 
-    ra::api::FetchCodeNotes::Request request;
-    request.GameId = nGameId;
-    request.CallAsync([this, callback](const ra::api::FetchCodeNotes::Response& response)
-    {
-        if (response.Failed())
+    const auto& pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>();
+    rc_api_fetch_code_notes_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+    api_params.game_id = nGameId;
+
+    rc_api_request_t request;
+    const auto nResult = rc_api_init_fetch_code_notes_request_hosted(&request, &api_params, pClient.GetHost());
+    Expects(nResult == RC_OK);
+
+    pClient.DispatchRequest(request, [this, callback](const rc_api_server_response_t& api_response, void*) {
+        rc_api_fetch_code_notes_response_t response;
+        const auto nResult = rc_api_process_fetch_code_notes_server_response(&response, &api_response);
+        if (nResult != RC_OK)
         {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download code notes",
-                ra::util::String::Widen(response.ErrorMessage));
+            ra::services::ServiceLocator::Get<ra::services::IMessageDispatcher>()
+                .ReportErrorMessage(L"Failed to download code notes",
+                    ra::context::IRcClient::GetErrorMessage(nResult, response.response));
         }
         else
         {
-            for (const auto& pNote : response.Notes)
+            const auto* pNote = response.notes;
+            const auto* pStop = pNote + response.num_notes;
+            for (; pNote < pStop; ++pNote)
             {
+                auto sNote = ra::util::String::Widen(pNote->note);
+                ra::util::String::NormalizeLineEndings(sNote);
+
                 {
                     std::unique_lock<std::mutex> lock(m_oMutex);
-                    const auto pIter = m_mOriginalCodeNotes.find(pNote.Address);
+                    const auto pIter = m_mOriginalCodeNotes.find(pNote->address);
                     if (pIter != m_mOriginalCodeNotes.end())
                     {
-                        pIter->second.first = pNote.Author;
-                        pIter->second.second = pNote.Note;
+                        pIter->second.first = pNote->author;
+                        pIter->second.second = sNote;
                         continue;
                     }
                 }
 
-                AddCodeNote(pNote.Address, pNote.Author, pNote.Note);
+                AddCodeNote(pNote->address, pNote->author, sNote);
             }
         }
 
@@ -97,7 +108,7 @@ void CodeNotesModel::Refresh(unsigned int nGameId,
         }
 
         callback();
-    });
+    }, nullptr);
 }
 
 GSL_SUPPRESS_R30 // left has to be a const ref to the unique_ptr because the function is used in lower_bound
@@ -270,22 +281,6 @@ std::wstring CodeNotesModel::FindCodeNote(ra::data::ByteAddress nAddress, Memory
     }
 
     return std::wstring();
-}
-
-const std::wstring* CodeNotesModel::FindCodeNote(ra::data::ByteAddress nAddress, _Inout_ std::string& sAuthor) const
-{
-    const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
-    if (pIter != m_vCodeNotes.end())
-    {
-        const auto* pCodeNote = pIter->get();
-        if (pCodeNote && pCodeNote->GetAddress() == nAddress)
-        {
-            sAuthor = pCodeNote->GetAuthor();
-            return &pCodeNote->GetNote();
-        }
-    }
-
-    return nullptr;
 }
 
 void CodeNotesModel::SetCodeNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)

@@ -29,11 +29,6 @@ public:
         return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
     }
 
-    FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request&) override
-    {
-        return UnsupportedApi<FetchCodeNotes::Response>(FetchCodeNotes::Name());
-    }
-
     UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request&) override
     {
         return UnsupportedApi<UpdateCodeNote::Response>(UpdateCodeNote::Name());

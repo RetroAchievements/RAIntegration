@@ -270,12 +270,11 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nNe
         pNote = pCodeNotes->FindCodeNote(nNewAddress);
         if (pNote)
         {
-            // found a note. call the override that asks for an author to
             // see if there's a non-indirect note at the address. if so, use it.
             std::string sAuthor;
-            const auto* pDirectNote = pCodeNotes->FindCodeNote(nNewAddress, sAuthor);
+            const auto* pDirectNote = pCodeNotes->FindCodeNoteModel(nNewAddress, false);
             if (pDirectNote != nullptr)
-                pNote = pDirectNote;
+                pNote = &pDirectNote->GetNote();
             else
                 m_bNoteIsIndirect = true;
         }

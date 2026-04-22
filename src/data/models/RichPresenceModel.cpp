@@ -8,6 +8,8 @@
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
+#include "util\Strings.hh"
+
 #include <rcheevos\src\rcheevos\rc_internal.h>
 #include <rcheevos\src\rc_client_internal.h>
 

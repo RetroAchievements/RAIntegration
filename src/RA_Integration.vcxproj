@@ -82,7 +82,6 @@
     <ClCompile Include="data\context\GameContext.cpp" />
     <ClCompile Include="data\context\SessionTracker.cpp" />
     <ClCompile Include="data\models\AchievementModel.cpp" />
-    <ClCompile Include="data\models\CodeNotesModel.cpp" />
     <ClCompile Include="data\models\LeaderboardModel.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel.cpp" />
     <ClCompile Include="data\models\RichPresenceModel.cpp" />
@@ -199,7 +198,6 @@
     <ClInclude Include="api\DeleteCodeNote.hh" />
     <ClInclude Include="api\FetchAchievementInfo.hh" />
     <ClInclude Include="api\FetchBadgeIds.hh" />
-    <ClInclude Include="api\FetchCodeNotes.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
     <ClInclude Include="api\FetchUserFriends.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
@@ -218,7 +216,6 @@
     <ClInclude Include="data\context\GameContext.hh" />
     <ClInclude Include="data\context\SessionTracker.hh" />
     <ClInclude Include="data\models\AchievementModel.hh" />
-    <ClInclude Include="data\models\CodeNotesModel.hh" />
     <ClInclude Include="data\models\LeaderboardModel.hh" />
     <ClInclude Include="data\models\LocalBadgesModel.hh" />
     <ClInclude Include="data\models\RichPresenceModel.hh" />
@@ -244,7 +241,6 @@
     <ClInclude Include="services\IAudioSystem.hh" />
     <ClInclude Include="services\IClipboard.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
-    <ClInclude Include="services\ILocalStorage.hh" />
     <ClInclude Include="services\ILoginService.hh" />
     <ClInclude Include="services\impl\FileLocalStorage.hh" />
     <ClInclude Include="services\impl\FileLogger.hh" />

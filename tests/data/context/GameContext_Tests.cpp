@@ -20,6 +20,8 @@
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
+#include "tests\devkit\services\mocks\MockMessageDispatcher.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -29,7 +31,6 @@
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockImageRepository.hh"
-#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
@@ -76,6 +77,7 @@ public:
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
+        ra::services::mocks::MockMessageDispatcher mockMessageDispatcher;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::context::mocks::MockConsoleContext mockConsoleContext;

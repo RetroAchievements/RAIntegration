@@ -12,13 +12,13 @@
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
-#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

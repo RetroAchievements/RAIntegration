@@ -1,20 +1,13 @@
-#include "CppUnitTest.h"
+#include "data/models/CodeNotesModel.hh"
 
-#include "data\models\CodeNotesModel.hh"
+#include "services/impl/StringTextWriter.hh"
 
-#include "services\impl\StringTextWriter.hh"
-
-#include "tests\RA_UnitTestHelpers.h"
-#include "tests\data\DataAsserts.hh"
-
-#include "tests\devkit\context\mocks\MockConsoleContext.hh"
-#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
-#include "tests\devkit\context\mocks\MockUserContext.hh"
-#include "tests\devkit\services\mocks\MockThreadPool.hh"
-#include "tests\devkit\testutil\AssetAsserts.hh"
-#include "tests\devkit\testutil\MemoryAsserts.hh"
-#include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockServer.hh"
+#include "tests/devkit/context/mocks/MockConsoleContext.hh"
+#include "tests/devkit/context/mocks/MockEmulatorMemoryContext.hh"
+#include "tests/devkit/context/mocks/MockRcClient.hh"
+#include "tests/devkit/context/mocks/MockUserContext.hh"
+#include "tests/devkit/testutil/AssetAsserts.hh"
+#include "tests/devkit/testutil/MemoryAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -29,18 +22,19 @@ private:
     class CodeNotesModelHarness : public CodeNotesModel
     {
     public:
-        ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockUserContext mockUserContext;
-        ra::services::mocks::MockThreadPool mockThreadPool;
-        ra::ui::mocks::MockDesktop mockDesktop;
 
         std::map<unsigned, std::wstring> mNewNotes;
 
         void InitializeCodeNotes(unsigned nGameId)
         {
             mNewNotes.clear();
+
+            if (!mockRcClient.HasMockResponse("r=codenotes2&g=1"))
+                mockRcClient.MockResponse("r=codenotes2&g=1", "{\"Success\":true,\"CodeNotes\":[]}");
 
             CodeNotesModel::Refresh(nGameId,
                 [this](ra::data::ByteAddress nAddress, const std::wstring& sNewNote) {
@@ -52,8 +46,6 @@ private:
                     mNewNotes[nNewAddress] = sNote;
                 },
                 []() {});
-
-            mockThreadPool.ExecuteNextTask(); // FetchCodeNotes is async
         }
 
         void MonitorCodeNoteChanges()
@@ -66,11 +58,6 @@ private:
                     mNewNotes[nOldAddress] = L"";
                 mNewNotes[nNewAddress] = sNote;
             };
-        }
-
-        void SetGameId(unsigned nGameId) noexcept
-        {
-            m_nGameId = nGameId;
         }
 
         using CodeNotesModel::AddCodeNote;
@@ -87,19 +74,24 @@ private:
             const auto* pNote = FindCodeNote(nAddress);
             Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X", nAddress).c_str());
             Ensures(pNote != nullptr);
+
             Assert::AreEqual(sExpected, *pNote);
         }
 
         void AssertNote(ra::data::ByteAddress nAddress, const std::wstring& sExpected, Memory::Size nExpectedSize, unsigned nExpectedBytes = 0)
         {
-            AssertNote(nAddress, sExpected);
+            const auto* pNote = FindCodeNoteModel(nAddress);
+            Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X", nAddress).c_str());
+            Ensures(pNote != nullptr);
 
-            Assert::AreEqual(nExpectedSize, GetCodeNoteMemSize(nAddress),
+            Assert::AreEqual(sExpected, pNote->GetNote());
+
+            Assert::AreEqual(nExpectedSize, pNote->GetMemSize(),
                 ra::util::String::Printf(L"Size for address %04X", nAddress).c_str());
 
             if (nExpectedBytes)
             {
-                Assert::AreEqual(nExpectedBytes, GetCodeNoteBytes(nAddress),
+                Assert::AreEqual(nExpectedBytes, pNote->GetBytes(),
                     ra::util::String::Printf(L"Bytes for address %04X", nAddress).c_str());
             }
         }
@@ -142,6 +134,57 @@ private:
 
             Assert::AreEqual(sExpected, sSerialized);
         }
+
+        struct MockNote
+        {
+            uint32_t nAddress;
+            std::string sNote;
+            std::string sAuthor;
+        };
+
+        static std::string MockNotesResponse(std::initializer_list<MockNote> vNotes)
+        {
+            std::string sResponse = "{\"Success\":true,\"CodeNotes\":[";
+
+            std::string sAddress;
+            sAddress.resize(8);
+
+            for (MockNote pNote : vNotes) {
+                snprintf(sAddress.data(), sAddress.capacity(), "0x%06x", pNote.nAddress);
+                sResponse.append("{\"User\":\"");
+                sResponse.append(pNote.sAuthor);
+                sResponse.append("\",\"Address\":\"");
+                sResponse.append(sAddress);
+                sResponse.append("\",\"Note\":\"");
+                for (const char c : pNote.sNote) {
+                    switch (c)
+                    {
+                        case '\n':
+                            sResponse.append("\\n");
+                            break;
+
+                        case '\r':
+                            sResponse.append("\\r");
+                            break;
+
+                        case '"':
+                            sResponse.append("\\\"");
+                            break;
+
+                        default:
+                            sResponse.push_back(c);
+                            break;
+                    }
+                }
+                sResponse.append("\"},");
+            }
+
+            if (sResponse.back() == ',')
+                sResponse.pop_back();
+
+            sResponse.append("]}");
+            return sResponse;
+        }
     };
 
 public:
@@ -162,15 +205,11 @@ public:
     TEST_METHOD(TestLoadCodeNotes)
     {
         CodeNotesModelHarness notes;
-        notes.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1234, L"Note1", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 2345, L"Note2", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 3456, L"Note3", "Author" });
-            return true;
-        });
+        notes.mockRcClient.MockResponse("r=codenotes2&g=1", CodeNotesModelHarness::MockNotesResponse({
+            { 1234, "Note1", "Author" },
+            { 2345, "Note2", "Author" },
+            { 3456, "Note3\nSubNote3", "Author" },
+        }));
 
         notes.InitializeCodeNotes(1U);
         Assert::AreEqual({3U}, notes.mNewNotes.size());
@@ -181,8 +220,9 @@ public:
         notes.AssertNote(2345U, L"Note2");
         Assert::AreEqual(std::wstring(L"Note2"), notes.mNewNotes[2345U]);
 
-        notes.AssertNote(3456U, L"Note3");
-        Assert::AreEqual(std::wstring(L"Note3"), notes.mNewNotes[3456U]);
+        // newlines should be normalized when loaded into the note.
+        notes.AssertNote(3456U, L"Note3\r\nSubNote3");
+        Assert::AreEqual(std::wstring(L"Note3\r\nSubNote3"), notes.mNewNotes[3456U]);
 
         const auto* pNote4 = notes.FindCodeNote(4567U);
         Assert::IsNull(pNote4);
@@ -196,17 +236,13 @@ public:
     TEST_METHOD(TestFindCodeNoteSized)
     {
         CodeNotesModelHarness notes;
-        notes.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1000, L"[32-bit] Location", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1100, L"Level", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1110, L"[16-bit] Strength", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1120, L"[8 byte] Exp", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1200, L"[20 bytes] Items\r\nMultiline ignored", "Author" });
-            return true;
-        });
+        notes.mockRcClient.MockResponse("r=codenotes2&g=1", CodeNotesModelHarness::MockNotesResponse({
+            { 1000, "[32-bit] Location", "Author" },
+            { 1100, "Level", "Author" },
+            { 1110, "[16-bit] Strength", "Author" },
+            { 1120, "[8 byte] Exp", "Author" },
+            { 1200, "[20 bytes] Items\r\nMultiline ignored", "Author" },
+        }));
 
         notes.InitializeCodeNotes(1U);
 
@@ -267,17 +303,13 @@ public:
     TEST_METHOD(TestFindCodeNoteStart)
     {
         CodeNotesModelHarness notes;
-        notes.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1000, L"[32-bit] Location", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1100, L"Level", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1110, L"[16-bit] Strength", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1120, L"[8 byte] Exp", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1200, L"[20 bytes] Items", "Author" });
-            return true;
-        });
+        notes.mockRcClient.MockResponse("r=codenotes2&g=1", CodeNotesModelHarness::MockNotesResponse({
+            { 1000, "[32-bit] Location", "Author" },
+            { 1100, "Level", "Author" },
+            { 1110, "[16-bit] Strength", "Author" },
+            { 1120, "[8 byte] Exp", "Author" },
+            { 1200, "[20 bytes] Items", "Author" },
+        }));
 
         notes.InitializeCodeNotes(1U);
 
@@ -313,18 +345,14 @@ public:
     TEST_METHOD(TestFindCodeNoteStartOverlap)
     {
         CodeNotesModelHarness notes;
-        notes.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1000, L"[100 bytes] Outer", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1010, L"[10 bytes] Inner", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1015, L"Individual", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1120, L"[10 bytes] Secondary", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1125, L"[10 bytes] Overlap", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1200, L"Extra", "Author" });
-            return true;
-        });
+        notes.mockRcClient.MockResponse("r=codenotes2&g=1", CodeNotesModelHarness::MockNotesResponse({
+            { 1000, "[100 bytes] Outer", "Author" },
+            { 1010, "[10 bytes] Inner", "Author" },
+            { 1015, "Individual", "Author" },
+            { 1120, "[10 bytes] Secondary", "Author" },
+            { 1125, "[10 bytes] Overlap", "Author" },
+            { 1200, "Extra", "Author" },
+        }));
 
         notes.InitializeCodeNotes(1U);
 
@@ -369,52 +397,6 @@ public:
         notes.AssertNoNote(1234U);
         Assert::AreEqual(std::wstring(L""), notes.mNewNotes[1234U]);
         Assert::AreEqual({ 0U }, notes.CodeNoteCount());
-    }
-
-    TEST_METHOD(TestDeleteCodeNote)
-    {
-        CodeNotesModelHarness notes;
-        notes.mockServer.HandleRequest<ra::api::UpdateCodeNote>([](const ra::api::UpdateCodeNote::Request&, ra::api::UpdateCodeNote::Response& response)
-        {
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
-
-        notes.mockServer.HandleRequest<ra::api::DeleteCodeNote>([](const ra::api::DeleteCodeNote::Request& request, ra::api::DeleteCodeNote::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-            Assert::AreEqual(1234U, request.Address);
-
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
-
-        notes.SetGameId(1U);
-        notes.SetCodeNote(1234U, L"Note1");
-        notes.SetServerCodeNote(1234U, L"Note1");
-
-        notes.AssertNote(1234U, L"Note1");
-
-        // setting a note to blank does not actually delete it until it's committed
-        notes.SetCodeNote(1234U, L"");
-        notes.AssertNote(1234U, L"");
-        Assert::IsTrue(notes.IsNoteModified(1234U));
-
-        // committed deleted note should no longer exist
-        notes.SetServerCodeNote(1234U, L"");
-        notes.AssertNoNote(1234U);
-    }
-
-    TEST_METHOD(TestDeleteCodeNoteNonExistant)
-    {
-        CodeNotesModelHarness notes;
-        notes.mockServer.ExpectUncalled<ra::api::DeleteCodeNote>();
-
-        notes.SetGameId(1U);
-
-        notes.SetCodeNote(1234, L"");
-        const auto* pNote1 = notes.FindCodeNote(1234U);
-        Assert::IsNull(pNote1);
     }
 
     TEST_METHOD(TestFindCodeNotePointer1)
@@ -782,7 +764,10 @@ public:
         notes.DoFrame();
 
         int i = 0;
-        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
+        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, const CodeNoteModel& pCodeNote) {
+            const auto nBytes = pCodeNote.GetBytes();
+            const auto& sNote = pCodeNote.GetNote();
+
             switch (i++)
             {
                 case 0:
@@ -831,7 +816,10 @@ public:
         notes.DoFrame();
 
         int i = 0;
-        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
+        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, const CodeNoteModel& pCodeNote) {
+            const auto nBytes = pCodeNote.GetBytes();
+            const auto& sNote = pCodeNote.GetNote();
+
             switch (i++)
             {
                 case 0:
@@ -892,7 +880,10 @@ public:
         notes.DoFrame();
 
         int i = 0;
-        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
+        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, const CodeNoteModel& pCodeNote) {
+            const auto nBytes = pCodeNote.GetBytes();
+            const auto& sNote = pCodeNote.GetNote();
+
             switch (i++)
             {
                 case 0:

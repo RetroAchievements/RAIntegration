@@ -1629,6 +1629,25 @@ public:
         Assert::AreEqual(std::wstring(L"0x00000000 (recall)\r\n[invalid recall]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
     }
 
+    TEST_METHOD(TestTooltipRecallChainInvalid)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.mockGameContext.InitializeCodeNotes();
+        vmTrigger.Parse("K:{recall}+6_A:{recall}_0xH0000=1");
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+
+        // there is no Remember for the first condition to point to
+        const auto* pCondition1 = vmTrigger.Conditions().GetItemAt(0);
+        Expects(pCondition1 != nullptr);
+        Assert::AreEqual(std::wstring(L"0x00000000 (recall)\r\n[invalid recall]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+
+        // the second condition points to the first one, but it's broken too
+        const auto* pCondition2 = vmTrigger.Conditions().GetItemAt(1);
+        Expects(pCondition2 != nullptr);
+        Assert::AreEqual(std::wstring(L"0x00000006 (recall)\r\n1: 0x00000000 + 0x00000006 -> 0x00000006"),
+            pCondition2->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+    }
+
     TEST_METHOD(TestTooltipRecallInvalidInPauseIf)
     {
         IndirectAddressTriggerViewModelHarness vmTrigger;

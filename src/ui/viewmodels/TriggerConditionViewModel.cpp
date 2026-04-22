@@ -979,9 +979,12 @@ std::wstring TriggerConditionViewModel::GetRecallTooltip(bool bOperand2) const
                 break;
         }
 
-        const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
-        if ((pOperand1 && pOperand1->type == RC_OPERAND_RECALL) || pCondition->operand2.type == RC_OPERAND_RECALL)
-            mRememberRef[nConditionIndex] = { nLastRememberIndex, pLastRememberCondition };
+        if (pLastRememberCondition) // if something has been remembered, check for recalls that might map to it.
+        {
+            const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
+            if ((pOperand1 && pOperand1->type == RC_OPERAND_RECALL) || pCondition->operand2.type == RC_OPERAND_RECALL)
+                mRememberRef[nConditionIndex] = { nLastRememberIndex, pLastRememberCondition };
+        }
 
         if (pCondition->type == RC_CONDITION_REMEMBER)
         {

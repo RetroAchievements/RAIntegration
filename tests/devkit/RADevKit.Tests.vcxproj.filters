@@ -146,5 +146,8 @@
     <ClInclude Include="services\mocks\MockMessageDispatcher.hh">
       <Filter>services\mocks</Filter>
     </ClInclude>
+    <ClInclude Include="testutil\ValueAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -4,8 +4,9 @@
 
 #include "CppUnitTest.hh"
 
-#include "data\MemoryRegion.hh"
-#include "util\TypeCasts.hh"
+#include "data/MemoryRegion.hh"
+
+#include "util/TypeCasts.hh"
 
 namespace Microsoft {
 namespace VisualStudio {

@@ -735,7 +735,7 @@ UpdateLeaderboard::Response ConnectedServer::UpdateLeaderboard(const UpdateLeade
     api_params.cancel_trigger = request.CancelTrigger.c_str();
     api_params.value_definition = request.ValueDefinition.c_str();
     api_params.lower_is_better = request.LowerIsBetter ? 1 : 0;
-    api_params.format = ValueFormatToString(request.Format);
+    api_params.format = ra::data::Value::FormatToServerEnum(request.Format);
 
     rc_api_request_t api_request;
     const int result = rc_api_init_update_leaderboard_request(&api_request, &api_params);

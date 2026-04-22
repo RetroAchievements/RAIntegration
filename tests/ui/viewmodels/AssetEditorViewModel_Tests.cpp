@@ -18,6 +18,7 @@
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
+#include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConfiguration.hh"
@@ -142,7 +143,7 @@ public:
         Assert::IsFalse(editor.IsLeaderboard());
         Assert::IsFalse(editor.IsTrigger());
         Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Start, (int)editor.GetSelectedLeaderboardPart());
-        Assert::AreEqual(ra::data::ValueFormat::Value, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Value, editor.GetValueFormat());
 
         Assert::AreEqual({ 4U }, editor.AchievementTypes().Count());
         Assert::AreEqual((int)ra::data::models::AchievementType::None, editor.AchievementTypes().GetItemAt(0)->GetId());
@@ -155,33 +156,33 @@ public:
         Assert::AreEqual(std::wstring(L"Win"), editor.AchievementTypes().GetItemAt(3)->GetLabel());
 
         Assert::AreEqual({ 14U }, editor.Formats().Count());
-        Assert::AreEqual((int)ra::data::ValueFormat::Score, editor.Formats().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Score, editor.Formats().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Score"), editor.Formats().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Frames, editor.Formats().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Frames, editor.Formats().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Time (Frames)"), editor.Formats().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Centiseconds, editor.Formats().GetItemAt(2)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Centiseconds, editor.Formats().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"Time (Centiseconds)"), editor.Formats().GetItemAt(2)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Seconds, editor.Formats().GetItemAt(3)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Seconds, editor.Formats().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Time (Seconds)"), editor.Formats().GetItemAt(3)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Minutes, editor.Formats().GetItemAt(4)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Minutes, editor.Formats().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L"Time (Minutes)"), editor.Formats().GetItemAt(4)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::SecondsAsMinutes, editor.Formats().GetItemAt(5)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::SecondsAsMinutes, editor.Formats().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"Time (Seconds as Minutes)"), editor.Formats().GetItemAt(5)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Value, editor.Formats().GetItemAt(6)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Value, editor.Formats().GetItemAt(6)->GetId());
         Assert::AreEqual(std::wstring(L"Value"), editor.Formats().GetItemAt(6)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::UnsignedValue, editor.Formats().GetItemAt(7)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::UnsignedValue, editor.Formats().GetItemAt(7)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Unsigned)"), editor.Formats().GetItemAt(7)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Tens, editor.Formats().GetItemAt(8)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Tens, editor.Formats().GetItemAt(8)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Tens)"), editor.Formats().GetItemAt(8)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Hundreds, editor.Formats().GetItemAt(9)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Hundreds, editor.Formats().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Hundreds)"), editor.Formats().GetItemAt(9)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Thousands, editor.Formats().GetItemAt(10)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Thousands, editor.Formats().GetItemAt(10)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Thousands)"), editor.Formats().GetItemAt(10)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Fixed1, editor.Formats().GetItemAt(11)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Fixed1, editor.Formats().GetItemAt(11)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Fixed1)"), editor.Formats().GetItemAt(11)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Fixed2, editor.Formats().GetItemAt(12)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Fixed2, editor.Formats().GetItemAt(12)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Fixed2)"), editor.Formats().GetItemAt(12)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Fixed3, editor.Formats().GetItemAt(13)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Fixed3, editor.Formats().GetItemAt(13)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Fixed3)"), editor.Formats().GetItemAt(13)->GetLabel());
 
         Assert::AreEqual({ 4U }, editor.LeaderboardParts().Count());
@@ -681,7 +682,7 @@ public:
         leaderboard.SetCancelTrigger("0xH1234=2");
         leaderboard.SetSubmitTrigger("0xH1234=3");
         leaderboard.SetValueDefinition("0xH2345");
-        leaderboard.SetValueFormat(ra::data::ValueFormat::Centiseconds);
+        leaderboard.SetValueFormat(ra::data::Value::Format::Centiseconds);
         leaderboard.SetLowerIsBetter(false);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
@@ -694,7 +695,7 @@ public:
         Assert::AreEqual(std::wstring(L"Do something cool"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
-        Assert::AreEqual(ra::data::ValueFormat::Centiseconds, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Centiseconds, editor.GetValueFormat());
         Assert::IsFalse(editor.IsLowerBetter());
         Assert::IsFalse(editor.IsPauseOnReset());
         Assert::IsFalse(editor.IsPauseOnTrigger());
@@ -759,7 +760,7 @@ public:
         Assert::AreEqual(std::wstring(L""), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Local, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
-        Assert::AreEqual(ra::data::ValueFormat::Value, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Value, editor.GetValueFormat());
         Assert::IsFalse(editor.IsLowerBetter());
         Assert::IsFalse(editor.IsPauseOnReset());
         Assert::IsFalse(editor.IsPauseOnTrigger());
@@ -1105,21 +1106,21 @@ public:
     {
         AssetEditorViewModelHarness editor;
         LeaderboardModel leaderboard;
-        leaderboard.SetValueFormat(ra::data::ValueFormat::Score);
+        leaderboard.SetValueFormat(ra::data::Value::Format::Score);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
 
         editor.LoadAsset(&leaderboard);
-        Assert::AreEqual(ra::data::ValueFormat::Score, editor.GetValueFormat());
-        Assert::AreEqual(ra::data::ValueFormat::Score, leaderboard.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Score, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Score, leaderboard.GetValueFormat());
 
-        editor.SetValueFormat(ra::data::ValueFormat::Frames);
-        Assert::AreEqual(ra::data::ValueFormat::Frames, editor.GetValueFormat());
-        Assert::AreEqual(ra::data::ValueFormat::Frames, leaderboard.GetValueFormat());
+        editor.SetValueFormat(ra::data::Value::Format::Frames);
+        Assert::AreEqual(ra::data::Value::Format::Frames, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Frames, leaderboard.GetValueFormat());
 
-        leaderboard.SetValueFormat(ra::data::ValueFormat::Centiseconds);
-        Assert::AreEqual(ra::data::ValueFormat::Centiseconds, editor.GetValueFormat());
-        Assert::AreEqual(ra::data::ValueFormat::Centiseconds, leaderboard.GetValueFormat());
+        leaderboard.SetValueFormat(ra::data::Value::Format::Centiseconds);
+        Assert::AreEqual(ra::data::Value::Format::Centiseconds, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Centiseconds, leaderboard.GetValueFormat());
     }
 
     TEST_METHOD(TestSyncLowerIsBetter)
@@ -2465,7 +2466,7 @@ public:
 
         LeaderboardModel leaderboard;
         leaderboard.SetDefinition("STA:0x1234=1::CAN:0x1234=2::SUB:0x1234=3::VAL=0x1235");
-        leaderboard.SetValueFormat(ra::data::ValueFormat::Score);
+        leaderboard.SetValueFormat(ra::data::Value::Format::Score);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
 

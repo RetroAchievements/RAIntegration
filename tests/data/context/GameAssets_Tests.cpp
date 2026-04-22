@@ -6,10 +6,10 @@
 #include "data\models\LocalBadgesModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
-#include "tests\data\DataAsserts.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
+#include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockGameContext.hh"
 
@@ -114,7 +114,7 @@ public:
 
         ra::data::models::LeaderboardModel& AddLeaderboard(AssetCategory nCategory,
             const std::wstring& sTitle, const std::wstring& sDescription, const std::string& sStart,
-            const std::string& sCancel, const std::string& sSubmit, const std::string& sValue, ValueFormat nFormat)
+            const std::string& sCancel, const std::string& sSubmit, const std::string& sValue, Value::Format nFormat)
         {
             auto& pLeaderboard = NewLeaderboard();
             pLeaderboard.SetCategory(nCategory);
@@ -748,8 +748,8 @@ public:
     TEST_METHOD(TestSaveLocalLeaderboard)
     {
         GameAssetsHarness gameAssets;
-        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", ValueFormat::Seconds);
-        gameAssets.AddLeaderboard(AssetCategory::Local, L"LB2", L"Desc2", "0xH2234=1", "0xH2234=2", "0xH2234=3", "M:0xH2235", ValueFormat::Minutes);
+        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", Value::Format::Seconds);
+        gameAssets.AddLeaderboard(AssetCategory::Local, L"LB2", L"Desc2", "0xH2234=1", "0xH2234=2", "0xH2234=3", "M:0xH2235", Value::Format::Minutes);
 
         gameAssets.SaveAllAssets();
 
@@ -761,7 +761,7 @@ public:
     {
         GameAssetsHarness gameAssets;
         gameAssets.AddThreeAchievements();
-        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", ValueFormat::Seconds);
+        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", Value::Format::Seconds);
         gameAssets.MockUserFileContents(
             "111000001:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n"
             "L111000002:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2\n");
@@ -784,7 +784,7 @@ public:
         Assert::AreEqual(std::string("0xH2234=2"), pAsset2->GetCancelTrigger());
         Assert::AreEqual(std::string("0xH2234=3"), pAsset2->GetSubmitTrigger());
         Assert::AreEqual(std::string("M:0xH2235"), pAsset2->GetValueDefinition());
-        Assert::AreEqual(ValueFormat::Minutes, pAsset2->GetValueFormat());
+        Assert::AreEqual(Value::Format::Minutes, pAsset2->GetValueFormat());
         Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset2->GetChanges());
     }

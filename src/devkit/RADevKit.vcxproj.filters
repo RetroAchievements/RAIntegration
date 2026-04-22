@@ -167,6 +167,7 @@
     </ClInclude>
     <ClInclude Include="services\ILocalStorage.hh" />
     <ClInclude Include="data\models\CodeNotesModel.hh" />
+    <ClInclude Include="data\Value.hh" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -227,5 +228,6 @@
       <Filter>data\models</Filter>
     </ClCompile>
     <ClCompile Include="data\models\CodeNotesModel.cpp" />
+    <ClCompile Include="data\Value.cpp" />
   </ItemGroup>
 </Project>

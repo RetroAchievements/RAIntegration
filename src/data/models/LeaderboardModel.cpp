@@ -19,7 +19,7 @@ const IntModelProperty LeaderboardModel::StartTriggerProperty("LeaderboardModel"
 const IntModelProperty LeaderboardModel::SubmitTriggerProperty("LeaderboardModel", "SubmitTrigger", 0);
 const IntModelProperty LeaderboardModel::CancelTriggerProperty("LeaderboardModel", "CancelTrigger", 0);
 const IntModelProperty LeaderboardModel::ValueDefinitionProperty("LeaderboardModel", "ValueDefinition", 0);
-const IntModelProperty LeaderboardModel::ValueFormatProperty("LeaderboardModel", "ValueFormat", ra::etoi(ValueFormat::Value));
+const IntModelProperty LeaderboardModel::ValueFormatProperty("LeaderboardModel", "ValueFormat", ra::etoi(ra::data::Value::Format::Value));
 const IntModelProperty LeaderboardModel::PauseOnResetProperty("LeaderboardModel", "PauseOnReset", ra::etoi(LeaderboardModel::LeaderboardParts::None));
 const IntModelProperty LeaderboardModel::PauseOnTriggerProperty("LeaderboardModel", "PauseOnTrigger", ra::etoi(LeaderboardModel::LeaderboardParts::None));
 const BoolModelProperty LeaderboardModel::LowerIsBetterProperty("LeaderboardModel", "LowerIsBetter", false);
@@ -478,7 +478,7 @@ void LeaderboardModel::InitializeFromPublishedLeaderboard(
     SetName(ra::util::String::Widen(pLeaderboard.public_.title));
     SetDescription(ra::util::String::Widen(pLeaderboard.public_.description));
     SetCategory(AssetCategory::Core);
-    SetValueFormat(ra::itoe<ValueFormat>(pLeaderboard.format));
+    SetValueFormat(Value::FormatFromRcheevosFormat(pLeaderboard.format));
     SetLowerIsBetter(pLeaderboard.public_.lower_is_better);
     SetHidden(pLeaderboard.hidden);
     SetDefinition(sDefinition);
@@ -545,7 +545,7 @@ void LeaderboardModel::Serialize(ra::services::TextWriter& pWriter) const
     WriteQuoted(pWriter, GetLocalAssetDefinition(m_pSubmitTrigger));
     WriteQuoted(pWriter, GetLocalAssetDefinition(m_pValueDefinition));
 
-    WritePossiblyQuoted(pWriter, ValueFormatToString(GetValueFormat()));
+    WritePossiblyQuoted(pWriter, Value::FormatToServerEnum(GetValueFormat()));
 
     WritePossiblyQuoted(pWriter, GetLocalValue(NameProperty));
     WritePossiblyQuoted(pWriter, GetLocalValue(DescriptionProperty));
@@ -603,16 +603,9 @@ bool LeaderboardModel::Deserialize(ra::util::Tokenizer& pTokenizer)
     SetValueDefinition(sValueDefinition);
     SetLowerIsBetter(nLowerIsBetter != 0);
 
-    SetValueFormat(ValueFormatFromString(sFormat));
+    SetValueFormat(Value::FormatFromServerEnum(sFormat));
 
     return true;
-}
-
-std::string LeaderboardModel::FormatScore(int nValue) const
-{
-    char buffer[32];
-    rc_format_value(buffer, sizeof(buffer), nValue, ra::etoi(GetValueFormat()));
-    return std::string(buffer);
 }
 
 } // namespace models

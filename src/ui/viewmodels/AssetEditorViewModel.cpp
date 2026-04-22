@@ -34,7 +34,7 @@ const StringModelProperty AssetEditorViewModel::BadgeProperty("AssetEditorViewMo
 const BoolModelProperty AssetEditorViewModel::IsLeaderboardProperty("AssetEditorViewModel", "IsLeaderboard", false);
 const IntModelProperty AssetEditorViewModel::SelectedLeaderboardPartProperty("AssetEditorViewModel", "SelectedLeaderboardPart", ra::etoi(AssetEditorViewModel::LeaderboardPart::Start));
 const StringModelProperty AssetEditorViewModel::GroupsHeaderProperty("AssetEditorViewModel", "GroupsHeader", L"Groups:");
-const IntModelProperty AssetEditorViewModel::ValueFormatProperty("AssetEditorViewModel", "ValueFormat", ra::etoi(ra::data::ValueFormat::Value));
+const IntModelProperty AssetEditorViewModel::ValueFormatProperty("AssetEditorViewModel", "ValueFormat", ra::etoi(ra::data::Value::Format::Value));
 const BoolModelProperty AssetEditorViewModel::LowerIsBetterProperty("AssetEditorViewModel", "LowerIsBetter", false);
 const StringModelProperty AssetEditorViewModel::FormattedValueProperty("AssetEditorViewModel", "FormattedValue", L"0");
 const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorViewModel", "PauseOnReset", false);
@@ -63,21 +63,23 @@ AssetEditorViewModel::AssetEditorViewModel() noexcept
     m_vAchievementTypes.Add(ra::etoi(ra::data::models::AchievementType::Missable), L"Missable");
     m_vAchievementTypes.Add(ra::etoi(ra::data::models::AchievementType::Progression), L"Progression");
     m_vAchievementTypes.Add(ra::etoi(ra::data::models::AchievementType::Win), L"Win");
+    m_vAchievementTypes.Freeze();
 
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Score), L"Score");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Frames), L"Time (Frames)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Centiseconds), L"Time (Centiseconds)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Seconds), L"Time (Seconds)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Minutes), L"Time (Minutes)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::SecondsAsMinutes), L"Time (Seconds as Minutes)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Value), L"Value");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::UnsignedValue), L"Value (Unsigned)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Tens), L"Value (Tens)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Hundreds), L"Value (Hundreds)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Thousands), L"Value (Thousands)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed1), L"Value (Fixed1)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed2), L"Value (Fixed2)");
-    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed3), L"Value (Fixed3)");
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Score), ra::data::Value::FormatString(ra::data::Value::Format::Score));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Frames), ra::data::Value::FormatString(ra::data::Value::Format::Frames));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Centiseconds), ra::data::Value::FormatString(ra::data::Value::Format::Centiseconds));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Seconds), ra::data::Value::FormatString(ra::data::Value::Format::Seconds));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Minutes), ra::data::Value::FormatString(ra::data::Value::Format::Minutes));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::SecondsAsMinutes), ra::data::Value::FormatString(ra::data::Value::Format::SecondsAsMinutes));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Value), ra::data::Value::FormatString(ra::data::Value::Format::Value));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::UnsignedValue), ra::data::Value::FormatString(ra::data::Value::Format::UnsignedValue));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Tens), ra::data::Value::FormatString(ra::data::Value::Format::Tens));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Hundreds), ra::data::Value::FormatString(ra::data::Value::Format::Hundreds));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Thousands), ra::data::Value::FormatString(ra::data::Value::Format::Thousands));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Fixed1), ra::data::Value::FormatString(ra::data::Value::Format::Fixed1));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Fixed2), ra::data::Value::FormatString(ra::data::Value::Format::Fixed2));
+    m_vFormats.Add(ra::etoi(ra::data::Value::Format::Fixed3), ra::data::Value::FormatString(ra::data::Value::Format::Fixed3));
+    m_vFormats.Freeze();
 
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Start), L"Start");
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Cancel), L"Cancel");
@@ -425,7 +427,7 @@ void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::Ch
     else if (args.Property == ra::data::models::AchievementModel::AchievementTypeProperty)
         SetAchievementType(ra::itoe<ra::data::models::AchievementType>(args.tNewValue));
     else if (args.Property == ra::data::models::LeaderboardModel::ValueFormatProperty)
-        SetValueFormat(ra::itoe<ra::data::ValueFormat>(args.tNewValue));
+        SetValueFormat(ra::itoe<ra::data::Value::Format>(args.tNewValue));
     else if (args.Property == ra::data::models::AssetModelBase::IDProperty)
         SetValue(IDProperty, args.tNewValue);
 }
@@ -594,7 +596,7 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
                     }
                     else if (args.Property == ValueFormatProperty)
                     {
-                        pLeaderboard->SetValueFormat(ra::itoe<ra::data::ValueFormat>(args.tNewValue));
+                        pLeaderboard->SetValueFormat(ra::itoe<ra::data::Value::Format>(args.tNewValue));
                         UpdateMeasuredValue();
                     }
                 }
@@ -1063,10 +1065,7 @@ void AssetEditorViewModel::UpdateMeasuredValue()
                     {
                         const unsigned nValue = pLeaderboardDefinition->value.value.value;
                         SetValue(MeasuredValueProperty, std::to_wstring(nValue));
-
-                        char buffer[16];
-                        rc_format_value(buffer, sizeof(buffer), nValue, ra::etoi(GetValueFormat()));
-                        SetValue(FormattedValueProperty, ra::util::String::Widen(buffer));
+                        SetValue(FormattedValueProperty, ra::data::Value::FormatValue(nValue, GetValueFormat()));
                     }
                 }
             }

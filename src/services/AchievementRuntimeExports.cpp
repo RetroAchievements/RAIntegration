@@ -1089,9 +1089,13 @@ const ra::data::models::AchievementModel* CheckForPauseOnTrigger(const rc_client
         }
     }
 
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    if (pRuntime.HasRichPresence())
-        vmAchievement->SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    if (rc_client_has_rich_presence(pClient))
+    {
+        char sRichPresence[256];
+        if (rc_client_get_rich_presence_message(pClient, sRichPresence, sizeof(sRichPresence)) > 0)
+            vmAchievement->SetUnlockRichPresence(ra::util::String::Widen(sRichPresence));
+    }
 
     return vmAchievement;
 }

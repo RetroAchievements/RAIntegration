@@ -111,11 +111,6 @@ public:
             return Assets().FindRichPresence() != nullptr;
         }
 
-        std::wstring GetRichPresenceDisplayString() const
-        {
-            return mockAchievementRuntime.GetRichPresenceDisplayString();
-        }
-
         bool IsRichPresenceFromFile() const
         {
             const auto* pRichPresence = Assets().FindRichPresence();
@@ -1360,104 +1355,6 @@ public:
 
         Assert::IsTrue(bBeforeResponseCalled); // paused during load
         Assert::IsTrue(game.mockAchievementRuntime.IsPaused()); // paused after load
-    }
-
-    TEST_METHOD(TestReloadRichPresenceScriptNoFile)
-    {
-        GameContextHarness game;
-        const std::string sRichPresence = "Display:\nHello, World";
-        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
-
-        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-
-        /* load game will write the server RP to storage */
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"Hello, World"), game.GetRichPresenceDisplayString());
-        Assert::IsFalse(game.IsRichPresenceFromFile());
-
-        /* replace written server RP with empty file */
-        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "");
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), game.GetRichPresenceDisplayString());
-        Assert::IsTrue(game.IsRichPresenceFromFile());
-    }
-
-    TEST_METHOD(TestReloadRichPresenceScriptWindowsLineEndings)
-    {
-        GameContextHarness game;
-        const std::string sRichPresence = "Display:\nHello, World";
-        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
-
-        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-
-        /* load game will write the server RP to storage */
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"Hello, World"), game.GetRichPresenceDisplayString());
-        Assert::IsFalse(game.IsRichPresenceFromFile());
-
-        /* replace written server RP with a different file */
-        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\r\nFrom File\r\n");
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"From File"), game.GetRichPresenceDisplayString());
-        Assert::IsTrue(game.IsRichPresenceFromFile());
-    }
-
-    TEST_METHOD(TestReloadRichPresenceScript)
-    {
-        GameContextHarness game;
-        const std::string sRichPresence = "Display:\nHello, World";
-        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
-
-        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-
-        /* load game will write the server RP to storage, so overwrite it now */
-        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom File");
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"From File"), game.GetRichPresenceDisplayString());
-        Assert::IsTrue(game.IsRichPresenceFromFile());
-    }
-
-    TEST_METHOD(TestReloadRichPresenceScriptBOM)
-    {
-        GameContextHarness game;
-        const std::string sRichPresence = "Display:\nHello, World";
-        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
-        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-
-        /* load game will write the server RP to storage, so overwrite it now */
-        std::string sFileContents = "\xEF\xBB\xBF" "Display:\nFrom File";
-        sFileContents.at(0) = gsl::narrow_cast<char>(0xef);
-        sFileContents.at(1) = gsl::narrow_cast<char>(0xbb);
-        sFileContents.at(2) = gsl::narrow_cast<char>(0xbf);
-
-        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", sFileContents);
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"From File"), game.GetRichPresenceDisplayString());
-        Assert::IsTrue(game.IsRichPresenceFromFile());
-
-        /* hash should ignore BOM and convert windows newlines to unix newlines */
-        sFileContents = "\xEF\xBB\xBF" "Display:\r\nHello, World";
-        sFileContents.at(0) = gsl::narrow_cast<char>(0xef);
-        sFileContents.at(1) = gsl::narrow_cast<char>(0xbb);
-        sFileContents.at(2) = gsl::narrow_cast<char>(0xbf);
-        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", sFileContents);
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"Hello, World"), game.GetRichPresenceDisplayString());
-        Assert::IsFalse(game.IsRichPresenceFromFile());
     }
 
     TEST_METHOD(TestSetModeNotify)

@@ -53,23 +53,6 @@ public:
     void UpdateActiveAchievements() noexcept(false);
     void UpdateActiveLeaderboards();
 
-    /// <summary>
-    /// Specifies the rich presence to process each frame.
-    /// </summary>
-    /// <remarks>Only updates the memrefs each frame (for deltas), the script is not processed here.</remarks>
-    /// <returns><c>true</c> if the rich presence was activated, <c>false</c> if there was an error.</returns>
-    bool ActivateRichPresence(const std::string& sScript);
-
-    /// <summary>
-    /// Gets whether or not the loaded game has a rich presence script.
-    /// </summary>
-    bool HasRichPresence() const;
-
-    /// <summary>
-    /// Gets the current rich presence display string.
-    /// </summary>
-    std::wstring GetRichPresenceDisplayString() const;
-
     void InvalidateAddress(ra::data::ByteAddress nAddress);
 
     /// <summary>

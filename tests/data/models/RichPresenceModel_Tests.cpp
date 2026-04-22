@@ -311,6 +311,84 @@ public:
         Assert::AreEqual(std::string("Display:\nFrom file\n"),
             richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"2"));
     }
+
+    TEST_METHOD(TestReloadNoFile)
+    {
+        RichPresenceModelHarness richPresence;
+        richPresence.mockGameContext.SetGameId(1);
+        richPresence.mockGameContext.SetActiveGameId(2);
+        richPresence.CreateServerCheckpoint();
+        richPresence.CreateLocalCheckpoint();
+
+        richPresence.ReloadRichPresenceScript();
+
+        Assert::AreEqual(std::string(""), richPresence.GetScript());
+        Assert::AreEqual(AssetChanges::None, richPresence.GetChanges());
+        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+
+        Assert::IsFalse(richPresence.mockLocalStorage.HasStoredData(ra::services::StorageItemType::RichPresence, L"2"));
+    }
+
+    TEST_METHOD(TestActivateDeactivate)
+    {
+        RichPresenceModelHarness richPresence;
+        richPresence.SetScript("Display:\nTest\n");
+        richPresence.CreateServerCheckpoint();
+        richPresence.CreateLocalCheckpoint();
+
+        Assert::AreEqual(AssetState::Inactive, richPresence.GetState());
+        Assert::IsNull(richPresence.GetRuntimeDefinition());
+
+        richPresence.Activate();
+        Assert::AreEqual(AssetState::Active, richPresence.GetState());
+        Assert::IsNotNull(richPresence.GetRuntimeDefinition());
+
+        richPresence.Deactivate();
+        Assert::AreEqual(AssetState::Inactive, richPresence.GetState());
+        Assert::IsNotNull(richPresence.GetRuntimeDefinition());
+    }
+
+    TEST_METHOD(TestChangeWhileActive)
+    {
+        RichPresenceModelHarness richPresence;
+        richPresence.SetScript("Display:\nTest\n");
+        richPresence.CreateServerCheckpoint();
+        richPresence.CreateLocalCheckpoint();
+        richPresence.Activate();
+
+        Assert::AreEqual(std::wstring(L"Test"), richPresence.GetMessage());
+
+        richPresence.SetScript("Display:\nNew String\n");
+        Assert::AreEqual(std::wstring(L"New String"), richPresence.GetMessage());
+
+        richPresence.SetScript("");
+        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), richPresence.GetMessage());
+    }
+
+
+    TEST_METHOD(TestChangeToError)
+    {
+        RichPresenceModelHarness richPresence;
+        richPresence.SetScript("Display:\nTest\n");
+        richPresence.CreateServerCheckpoint();
+        richPresence.CreateLocalCheckpoint();
+        richPresence.Activate();
+
+        Assert::AreEqual(std::wstring(L"Test"), richPresence.GetMessage());
+        Assert::AreEqual(AssetState::Active, richPresence.GetState());
+
+        richPresence.SetScript("Display:\n@Number(0H01)\n");
+        Assert::AreEqual(std::wstring(L"Parse error -6 (line 2): Invalid operator"), richPresence.GetMessage());
+        Assert::AreEqual(AssetState::Disabled, richPresence.GetState());
+
+        richPresence.Activate();
+        Assert::AreEqual(std::wstring(L"Parse error -6 (line 2): Invalid operator"), richPresence.GetMessage());
+        Assert::AreEqual(AssetState::Disabled, richPresence.GetState());
+
+        richPresence.SetScript("Display:\nNew String\n");
+        Assert::AreEqual(std::wstring(L"New String"), richPresence.GetMessage());
+        Assert::AreEqual(AssetState::Active, richPresence.GetState());
+    }
 };
 
 } // namespace tests

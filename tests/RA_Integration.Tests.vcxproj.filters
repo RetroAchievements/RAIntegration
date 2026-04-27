@@ -243,16 +243,13 @@
     <ClCompile Include="..\src\ui\viewmodels\MemoryViewerViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ui\viewmodels\CodeNotesViewModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\MemorySearchViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\MemorySearchViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="ui\viewmodels\CodeNotesViewModel_Tests.cpp">
+    <ClCompile Include="ui\viewmodels\MemoryNotesViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\MemoryInspectorViewModel_Tests.cpp">
@@ -439,6 +436,9 @@
       <Filter>Tests\Services</Filter>
     </ClCompile>
     <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\MemoryNotesViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>

@@ -6,7 +6,7 @@
 #include "data\Types.hh"
 
 #include "data\models\AchievementModel.hh"
-#include "data\models\CodeNotesModel.hh"
+#include "data\models\MemoryNotesModel.hh"
 #include "data\models\LeaderboardModel.hh"
 #include "data\models\MemoryRegionsModel.hh"
 #include "data\models\RichPresenceModel.hh"
@@ -94,19 +94,19 @@ public:
     }
 
     /// <summary>
-    /// Finds the code notes asset.
+    /// Finds the memory notes asset.
     /// </summary>
-    ra::data::models::CodeNotesModel* FindCodeNotes()
+    ra::data::models::MemoryNotesModel* FindMemoryNotes()
     {
-        return dynamic_cast<ra::data::models::CodeNotesModel*>(FindAsset(ra::data::models::AssetType::CodeNotes, 0));
+        return dynamic_cast<ra::data::models::MemoryNotesModel*>(FindAsset(ra::data::models::AssetType::MemoryNotes, 0));
     }
 
     /// <summary>
-    /// Finds the code notes asset.
+    /// Finds the memory notes asset.
     /// </summary>
-    const ra::data::models::CodeNotesModel* FindCodeNotes() const
+    const ra::data::models::MemoryNotesModel* FindMemoryNotes() const
     {
-        return dynamic_cast<const ra::data::models::CodeNotesModel*>(FindAsset(ra::data::models::AssetType::CodeNotes, 0));
+        return dynamic_cast<const ra::data::models::MemoryNotesModel*>(FindAsset(ra::data::models::AssetType::MemoryNotes, 0));
     }
 
     /// <summary>

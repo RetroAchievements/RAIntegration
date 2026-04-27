@@ -71,7 +71,7 @@ ra::data::models::AssetCategory GameAssets::MostPublishedAssetCategory() const
     {
         // we really only care about published achievements and
         // leaderboards. if a set only has published rich presence
-        // or code notes, don't consider it a published set.
+        // or memory notes, don't consider it a published set.
         switch (pAsset.GetType())
         {
             case ra::data::models::AssetType::Achievement:
@@ -264,10 +264,9 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     case ra::data::models::AssetType::RichPresence:
                         continue;
 
-                    // ignore CodeNotes model (it's actually a collection of notes)
-                    case ra::data::models::AssetType::CodeNotes:
+                    // ignore MemoryNotes model (it's actually a collection of notes)
+                    case ra::data::models::AssetType::MemoryNotes:
                         continue;
-
 
                     // ignore MemoryRegions model (it's actually a collection of regions)
                     case ra::data::models::AssetType::MemoryRegions:
@@ -312,7 +311,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 break;
 
             case 'N':
-                nType = ra::data::models::AssetType::CodeNotes;
+                nType = ra::data::models::AssetType::MemoryNotes;
                 pTokenizer.Consume('N');
                 break;
 
@@ -387,8 +386,8 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     break;
                 }
 
-                case ra::data::models::AssetType::CodeNotes:
-                    pAsset = FindCodeNotes();
+                case ra::data::models::AssetType::MemoryNotes:
+                    pAsset = FindMemoryNotes();
                     if (pAsset)
                         pAsset->Deserialize(pTokenizer);
 
@@ -550,7 +549,7 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
                 pData->Write("L");
                 break;
 
-            case ra::data::models::AssetType::CodeNotes:
+            case ra::data::models::AssetType::MemoryNotes:
                 pData->Write("N");
                 break;
 

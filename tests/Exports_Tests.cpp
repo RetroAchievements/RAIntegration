@@ -490,7 +490,7 @@ private:
         AssertMenuItem(&menu[10], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         AssertMenuItem(&menu[11], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         AssertMenuItem(&menu[12], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        AssertMenuItem(&menu[13], IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        AssertMenuItem(&menu[13], IDM_RA_FILES_CODENOTES, L"Memory &Notes");
         AssertMenuItem(&menu[14], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         AssertMenuItem(&menu[15], 0, nullptr);
         AssertMenuItem(&menu[16], IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
@@ -521,7 +521,7 @@ private:
         AssertMenuItem(&menu[13], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         AssertMenuItem(&menu[14], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         AssertMenuItem(&menu[15], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        AssertMenuItem(&menu[16], IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        AssertMenuItem(&menu[16], IDM_RA_FILES_CODENOTES, L"Memory &Notes");
         AssertMenuItem(&menu[17], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         AssertMenuItem(&menu[18], 0, nullptr);
         AssertMenuItem(&menu[19], IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
@@ -558,7 +558,7 @@ private:
         AssertMenuItem(&menu[13], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         AssertMenuItem(&menu[14], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         AssertMenuItem(&menu[15], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        AssertMenuItem(&menu[16], IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        AssertMenuItem(&menu[16], IDM_RA_FILES_CODENOTES, L"Memory &Notes");
         AssertMenuItem(&menu[17], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         AssertMenuItem(&menu[18], 0, nullptr);
         AssertMenuItem(&menu[19], IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");

@@ -219,10 +219,10 @@ public:
     public:
         bool GetActiveGameChanged() const noexcept { return m_bActiveGameChanged; }
 
-        const std::wstring* GetNewCodeNote(ra::data::ByteAddress nAddress)
+        const std::wstring* GetNewMemoryNote(ra::data::ByteAddress nAddress)
         {
-            const auto pIter = m_vCodeNotesChanged.find(nAddress);
-            if (pIter != m_vCodeNotesChanged.end())
+            const auto pIter = m_vNotesChanged.find(nAddress);
+            if (pIter != m_vNotesChanged.end())
                 return &pIter->second;
 
             return nullptr;
@@ -232,17 +232,17 @@ public:
         void OnActiveGameChanged() noexcept override
         {
             m_bActiveGameChanged = true;
-            m_vCodeNotesChanged.clear();
+            m_vNotesChanged.clear();
         }
 
-        void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override
+        void OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override
         {
-            m_vCodeNotesChanged.insert_or_assign(nAddress, sNewNote);
+            m_vNotesChanged.insert_or_assign(nAddress, sNewNote);
         }
 
     private:
         bool m_bActiveGameChanged = false;
-        std::map<ra::data::ByteAddress, std::wstring> m_vCodeNotesChanged;
+        std::map<ra::data::ByteAddress, std::wstring> m_vNotesChanged;
     };
 
     TEST_METHOD(TestLoadGameTitle)

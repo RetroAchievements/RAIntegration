@@ -85,24 +85,24 @@ public:
         }
     }
 
-    void InitializeCodeNotes()
+    void InitializeNotes()
     {
         const auto nIndex = Assets().FindItemIndex(ra::data::models::AssetModelBase::TypeProperty,
-                                                   ra::etoi(ra::data ::models::AssetType::CodeNotes));
+                                                   ra::etoi(ra::data ::models::AssetType::MemoryNotes));
         if (nIndex != -1)
             Assets().RemoveAt(nIndex);
 
-        auto pCodeNotes = std::make_unique<MockCodeNotesModel>();
-        pCodeNotes->Initialize(
+        auto pMemoryNotes = std::make_unique<MockMemoryNotesModel>();
+        pMemoryNotes->Initialize(
             [this](ra::data::ByteAddress nAddress, const std::wstring& sNote) {
                 // a note with pointer notation is expected to keep track of where each
                 // pointed-at note exists. this normally occurs in DoFrame, but for
                 // the unit tests, force the update immediately after the note is updated
-                auto* pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
-                if (pCodeNotes)
+                auto* pMemoryNotes = dynamic_cast<MockMemoryNotesModel*>(Assets().FindMemoryNotes());
+                if (pMemoryNotes)
                 {
                     GSL_SUPPRESS_TYPE3
-                    auto* pNote = const_cast<ra::data::models::CodeNoteModel*>(pCodeNotes->FindCodeNoteModel(nAddress, false));
+                    auto* pNote = const_cast<ra::data::models::MemoryNoteModel*>(pMemoryNotes->FindMemoryNoteModel(nAddress, false));
                     if (pNote && pNote->IsPointer())
                     {
                         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
@@ -110,39 +110,39 @@ public:
                     }
                 }
 
-                OnCodeNoteChanged(nAddress, sNote);
+                OnMemoryNoteChanged(nAddress, sNote);
             },
             [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) {
-                OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
+                OnMemoryNoteMoved(nOldAddress, nNewAddress, sNote);
             });
-        Assets().Append(std::move(pCodeNotes));
+        Assets().Append(std::move(pMemoryNotes));
     }
 
-    bool SetCodeNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
+    bool SetNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
     {
-        auto* pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
-        if (pCodeNotes == nullptr)
+        auto* pMemoryNotes = dynamic_cast<MockMemoryNotesModel*>(Assets().FindMemoryNotes());
+        if (pMemoryNotes == nullptr)
         {
-            InitializeCodeNotes();
-            pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
-            Expects(pCodeNotes != nullptr);
+            InitializeNotes();
+            pMemoryNotes = dynamic_cast<MockMemoryNotesModel*>(Assets().FindMemoryNotes());
+            Expects(pMemoryNotes != nullptr);
         }
 
-        pCodeNotes->SetServerCodeNote(nAddress, sNote);
+        pMemoryNotes->SetServerNote(nAddress, sNote);
         return true;
     }
 
-    bool UpdateCodeNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
+    bool UpdateMemoryNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
     {
-        auto* pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
-        if (pCodeNotes == nullptr)
+        auto* pMemoryNotes = dynamic_cast<MockMemoryNotesModel*>(Assets().FindMemoryNotes());
+        if (pMemoryNotes == nullptr)
         {
-            InitializeCodeNotes();
-            pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
-            Expects(pCodeNotes != nullptr);
+            InitializeNotes();
+            pMemoryNotes = dynamic_cast<MockMemoryNotesModel*>(Assets().FindMemoryNotes());
+            Expects(pMemoryNotes != nullptr);
         }
 
-        pCodeNotes->SetCodeNote(nAddress, sNote);
+        pMemoryNotes->SetNote(nAddress, sNote);
         return true;
     }
 
@@ -160,13 +160,13 @@ public:
     }
 
 private:
-    class MockCodeNotesModel : public ra::data::models::CodeNotesModel
+    class MockMemoryNotesModel : public ra::data::models::MemoryNotesModel
     {
     public:
-        void Initialize(CodeNoteChangedFunction fCodeNoteChanged, CodeNoteMovedFunction fCodeNoteMoved)
+        void Initialize(MemoryNoteChangedFunction fMemoryNoteChanged, MemoryNoteMovedFunction fMemoryNoteMoved)
         {
-            m_fCodeNoteChanged = fCodeNoteChanged;
-            m_fCodeNoteMoved = fCodeNoteMoved;
+            m_fMemoryNoteChanged = fMemoryNoteChanged;
+            m_fMemoryNoteMoved = fMemoryNoteMoved;
         }
     };
 

@@ -115,7 +115,7 @@ public:
 
         // cached file contains only the notes array, but is not normalized (or unescaped)
         std::string sPatchData = "[{\"User\":\"Username\",\"Address\":\"0x00f304\",\"Note\":\"Line1\\nLine2\\r\\nLine3\\n\"}]";
-        Assert::AreEqual(sPatchData, client.mockLocalStorage.GetStoredData(ra::services::StorageItemType::CodeNotes, L"1234"));
+        Assert::AreEqual(sPatchData, client.mockLocalStorage.GetStoredData(ra::services::StorageItemType::MemoryNotes, L"1234"));
     }
 
     TEST_METHOD(TestLoggingRedactToken)

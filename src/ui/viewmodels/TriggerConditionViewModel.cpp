@@ -447,7 +447,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
 
         if (IsIndirect())
         {
-            const ra::data::models::CodeNoteModel* pNote = nullptr;
+            const ra::data::models::MemoryNoteModel* pNote = nullptr;
             std::wstring sPointerChain;
             const auto nOffset = GetSourceAddress();
             const auto nIndirectAddress = GetIndirectAddress(nOffset, sPointerChain, &pNote);
@@ -476,7 +476,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
 
         if (IsIndirect())
         {
-            const ra::data::models::CodeNoteModel* pNote = nullptr;
+            const ra::data::models::MemoryNoteModel* pNote = nullptr;
             std::wstring sPointerChain;
             const auto nOffset = GetTargetAddress();
             const auto nIndirectAddress = GetIndirectAddress(nOffset, sPointerChain, &pNote);
@@ -510,7 +510,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProp
 
 std::wstring TriggerConditionViewModel::GetPotentialEnumValueTooltip(unsigned int nValue, ra::data::ByteAddress nCompareAddress) const
 {
-    const ra::data::models::CodeNoteModel* pNote = nullptr;
+    const ra::data::models::MemoryNoteModel* pNote = nullptr;
 
     if (IsIndirect())
     {
@@ -520,9 +520,9 @@ std::wstring TriggerConditionViewModel::GetPotentialEnumValueTooltip(unsigned in
     else
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        if (pCodeNotes)
-            pNote = pCodeNotes->FindCodeNoteModel(nCompareAddress);
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+        if (pMemoryNotes)
+            pNote = pMemoryNotes->FindMemoryNoteModel(nCompareAddress);
     }
 
     if (pNote != nullptr)
@@ -593,7 +593,7 @@ static void BuildOperatorTooltip(std::wstring& sTooltip, uint8_t nOperatorType)
 }
 
 static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperand, std::wstring& sPointerChain,
-    const ra::data::models::CodeNoteModel** pParentNote)
+    const ra::data::models::MemoryNoteModel** pParentNote)
 {
     Expects(pParentNote != nullptr);
 
@@ -625,10 +625,10 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
     {
         const auto nAddress = pOperand->value.memref->address;
 
-        // find the code note associated to the parent
+        // find the memory note associated to the parent
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        *pParentNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+        *pParentNote = pMemoryNotes ? pMemoryNotes->FindMemoryNoteModel(nAddress, false) : nullptr;
 
         sPointerChain.push_back('$');
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
@@ -665,10 +665,10 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
             sPointerChain.insert(0, sPrefix);
             sPointerChain.push_back(']');
 
-            // find the code note associated to the start of the array
+            // find the memory note associated to the start of the array
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-            const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-            *pParentNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
+            const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+            *pParentNote = pMemoryNotes ? pMemoryNotes->FindMemoryNoteModel(nAddress, false) : nullptr;
 
             // return the address offset into the array
             return pValue.value.u32;
@@ -804,7 +804,7 @@ const rc_condition_t* TriggerConditionViewModel::GetCondition() const
 }
 
 ra::data::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::data::ByteAddress nAddress, std::wstring& sPointerChain,
-    const ra::data::models::CodeNoteModel** pLeafNote) const
+    const ra::data::models::MemoryNoteModel** pLeafNote) const
 {
     Expects(pLeafNote != nullptr);
 
@@ -825,7 +825,7 @@ ra::data::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::data::By
 }
 
 std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize,
-    const std::wstring& sPointerChain, const ra::data::models::CodeNoteModel* pNote) const
+    const std::wstring& sPointerChain, const ra::data::models::MemoryNoteModel* pNote) const
 {
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
 
@@ -838,16 +838,16 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
     if (!pNote)
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        if (pCodeNotes)
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+        if (pMemoryNotes)
         {
-            pNote = pCodeNotes->FindCodeNoteModel(nAddress);
+            pNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
             if (pNote == nullptr)
             {
-                const auto nNoteStart = pCodeNotes->FindCodeNoteStart(nAddress);
+                const auto nNoteStart = pMemoryNotes->FindNoteStart(nAddress);
                 if (nNoteStart != 0xFFFFFFFF)
                 {
-                    pNote = pCodeNotes->FindCodeNoteModel(nNoteStart);
+                    pNote = pMemoryNotes->FindMemoryNoteModel(nNoteStart);
 
                     if (sPointerChain.empty())
                     {
@@ -859,7 +859,7 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
             }
         }
         if (!pNote)
-            return ra::util::String::Printf(L"%s\r\n[No code note]", sAddress);
+            return ra::util::String::Printf(L"%s\r\n[No memory note]", sAddress);
     }
 
     if (pNote->IsPointer() && GetType() == TriggerConditionType::AddAddress)
@@ -875,7 +875,7 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
         return ra::util::String::Printf(L"%s\r\n%s\r\n%s", sAddress, sSummary, svSubNote);
     }
 
-    // limit the tooltip to the first 20 lines of the code note
+    // limit the tooltip to the first 20 lines of the memory note
     const auto& sNote = pNote->GetNote();
     size_t nLines = 0;
     size_t nIndex = 0;

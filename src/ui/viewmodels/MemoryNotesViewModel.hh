@@ -1,5 +1,5 @@
-#ifndef RA_UI_CODENOTESVIEWMODEL_H
-#define RA_UI_CODENOTESVIEWMODEL_H
+#ifndef RA_UI_MEMORYNOTESVIEWMODEL_H
+#define RA_UI_MEMORYNOTESVIEWMODEL_H
 #pragma once
 
 #include "data\context\GameContext.hh"
@@ -12,29 +12,29 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class CodeNotesViewModel : public WindowViewModelBase,
+class MemoryNotesViewModel : public WindowViewModelBase,
     protected ra::data::context::GameContext::NotifyTarget,
     protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
 public:
-    GSL_SUPPRESS_F6 CodeNotesViewModel() noexcept;
-    ~CodeNotesViewModel() = default;
+    GSL_SUPPRESS_F6 MemoryNotesViewModel() noexcept;
+    ~MemoryNotesViewModel() = default;
 
-    CodeNotesViewModel(const CodeNotesViewModel&) noexcept = delete;
-    CodeNotesViewModel& operator=(const CodeNotesViewModel&) noexcept = delete;
-    CodeNotesViewModel(CodeNotesViewModel&&) noexcept = delete;
-    CodeNotesViewModel& operator=(CodeNotesViewModel&&) noexcept = delete;
+    MemoryNotesViewModel(const MemoryNotesViewModel&) noexcept = delete;
+    MemoryNotesViewModel& operator=(const MemoryNotesViewModel&) noexcept = delete;
+    MemoryNotesViewModel(MemoryNotesViewModel&&) noexcept = delete;
+    MemoryNotesViewModel& operator=(MemoryNotesViewModel&&) noexcept = delete;
     
-    class CodeNoteViewModel : public ViewModelBase
+    class MemoryNoteViewModel : public ViewModelBase
     {
     public:
-        CodeNoteViewModel(const std::wstring& sLabel, const std::wstring& sNote) noexcept
+        MemoryNoteViewModel(const std::wstring& sLabel, const std::wstring& sNote) noexcept
         {
             GSL_SUPPRESS_F6 SetValue(LabelProperty, sLabel);
             GSL_SUPPRESS_F6 SetValue(NoteProperty, sNote);
         }
 
-        CodeNoteViewModel(const std::wstring&& sLabel, const std::wstring&& sNote) noexcept
+        MemoryNoteViewModel(const std::wstring&& sLabel, const std::wstring&& sNote) noexcept
         {
             GSL_SUPPRESS_F6 SetValue(LabelProperty, sLabel);
             GSL_SUPPRESS_F6 SetValue(NoteProperty, sNote);
@@ -114,7 +114,7 @@ public:
     /// <summary>
     /// Gets the list of bookmarks.
     /// </summary>
-    ViewModelCollection<CodeNoteViewModel>& Notes() noexcept
+    ViewModelCollection<MemoryNoteViewModel>& Notes() noexcept
     {
         return m_vNotes;
     }
@@ -122,7 +122,7 @@ public:
     /// <summary>
     /// Gets the list of bookmarks.
     /// </summary>
-    const ViewModelCollection<CodeNoteViewModel>& Notes() const noexcept
+    const ViewModelCollection<MemoryNoteViewModel>& Notes() const noexcept
     {
         return m_vNotes;
     }
@@ -203,7 +203,7 @@ protected:
     // ra::data::context::GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
-    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
+    void OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
     // ra::ui::ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
@@ -213,7 +213,7 @@ private:
     void OnSelectedItemsChanged();
     void GetSelectedModifiedNoteAddresses(std::vector<ra::data::ByteAddress>& vAddresses);
 
-    ViewModelCollection<CodeNoteViewModel> m_vNotes;
+    ViewModelCollection<MemoryNoteViewModel> m_vNotes;
     size_t m_nUnfilteredNotesCount = 0U;
 
     gsl::index m_nSelectionStart = -1, m_nSelectionEnd = -1;
@@ -224,4 +224,4 @@ private:
 } // namespace ui
 } // namespace ra
 
-#endif !RA_UI_CODENOTESVIEWMODEL_H
+#endif !RA_UI_MEMORYNOTESVIEWMODEL_H

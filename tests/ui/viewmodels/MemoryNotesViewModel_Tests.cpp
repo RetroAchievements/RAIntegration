@@ -1,7 +1,7 @@
 #include "CppUnitTest.h"
 
 #include "ui\EditorTheme.hh"
-#include "ui\viewmodels\CodeNotesViewModel.hh"
+#include "ui\viewmodels\MemoryNotesViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "tests\ui\UIAsserts.hh"
@@ -25,10 +25,10 @@ namespace ui {
 namespace viewmodels {
 namespace tests {
 
-TEST_CLASS(CodeNotesViewModel_Tests)
+TEST_CLASS(MemoryNotesViewModel_Tests)
 {
 private:
-    class CodeNotesViewModelHarness : public CodeNotesViewModel
+    class MemoryNotesViewModelHarness : public MemoryNotesViewModel
     {
     public:
         ra::api::mocks::MockServer mockServer;
@@ -44,30 +44,30 @@ private:
 
         ra::ui::EditorTheme editorTheme;
 
-        CodeNotesViewModelHarness() noexcept : m_themeOverride(&editorTheme) {}
+        MemoryNotesViewModelHarness() noexcept : m_themeOverride(&editorTheme) {}
 
         void PopulateNotes()
         {
             mockGameContext.SetGameId(1U);
 
-            mockGameContext.SetCodeNote(0x0010, L"Score X000");
-            mockGameContext.SetCodeNote(0x0011, L"Score 0X00");
-            mockGameContext.SetCodeNote(0x0012, L"Score 00X0");
-            mockGameContext.SetCodeNote(0x0013, L"Score 000X");
-            mockGameContext.SetCodeNote(0x0016, L"[32-bit] Score");
+            mockGameContext.SetNote(0x0010, L"Score X000");
+            mockGameContext.SetNote(0x0011, L"Score 0X00");
+            mockGameContext.SetNote(0x0012, L"Score 00X0");
+            mockGameContext.SetNote(0x0013, L"Score 000X");
+            mockGameContext.SetNote(0x0016, L"[32-bit] Score");
 
-            mockGameContext.SetCodeNote(0x001A, L"Gender\n0=Male\n1=Female");
+            mockGameContext.SetNote(0x001A, L"Gender\n0=Male\n1=Female");
 
-            mockGameContext.SetCodeNote(0x0020, L"[16-bit] Max HP");
-            mockGameContext.SetCodeNote(0x0022, L"[16-bit] Current HP");
+            mockGameContext.SetNote(0x0020, L"[16-bit] Max HP");
+            mockGameContext.SetNote(0x0022, L"[16-bit] Current HP");
 
-            mockGameContext.SetCodeNote(0x0030, L"Item 1 Quantity");
-            mockGameContext.SetCodeNote(0x0031, L"Item 2 Quantity");
-            mockGameContext.SetCodeNote(0x0032, L"Item 3 Quantity");
-            mockGameContext.SetCodeNote(0x0033, L"Item 4 Quantity");
-            mockGameContext.SetCodeNote(0x0034, L"Item 5 Quantity");
+            mockGameContext.SetNote(0x0030, L"Item 1 Quantity");
+            mockGameContext.SetNote(0x0031, L"Item 2 Quantity");
+            mockGameContext.SetNote(0x0032, L"Item 3 Quantity");
+            mockGameContext.SetNote(0x0033, L"Item 4 Quantity");
+            mockGameContext.SetNote(0x0034, L"Item 5 Quantity");
 
-            mockGameContext.SetCodeNote(0x0040, L"[10 bytes] Inventory");
+            mockGameContext.SetNote(0x0040, L"[10 bytes] Inventory");
         }
 
         void PopulateMemory()
@@ -108,7 +108,7 @@ private:
         std::vector<ra::data::ByteAddress> m_nPublishedAddresses;
     };
 
-    void AssertRow(CodeNotesViewModelHarness& notes, gsl::index nRow, ra::data::ByteAddress nAddress,
+    void AssertRow(MemoryNotesViewModelHarness& notes, gsl::index nRow, ra::data::ByteAddress nAddress,
         const wchar_t* sAddress, const wchar_t* sNote)
     {
         auto* pRow = notes.Notes().GetItemAt(nRow);
@@ -123,7 +123,7 @@ private:
 public:
     TEST_METHOD(TestInitialValues)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
 
         Assert::AreEqual({ 0U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -132,7 +132,7 @@ public:
 
     TEST_METHOD(TestActivateGame)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -151,7 +151,7 @@ public:
 
     TEST_METHOD(TestApplyAndResetFilter)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -204,7 +204,7 @@ public:
 
     TEST_METHOD(TestAddNoteUnfiltered)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -213,7 +213,7 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0024, L"New Note");
+        notes.mockGameContext.UpdateMemoryNote(0x0024, L"New Note");
 
         Assert::AreEqual({ 15U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -226,7 +226,7 @@ public:
 
     TEST_METHOD(TestAddNoteFilteredMatch)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -238,7 +238,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0024, L"New em Note");
+        notes.mockGameContext.UpdateMemoryNote(0x0024, L"New em Note");
         Assert::AreEqual({ 7U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"7/15"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0024, L"0x0024", L"New em Note");
@@ -246,7 +246,7 @@ public:
 
     TEST_METHOD(TestAddNoteFilteredNoMatch)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -258,14 +258,14 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0024, L"New Note");
+        notes.mockGameContext.UpdateMemoryNote(0x0024, L"New Note");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/15"), notes.GetResultCount());
     }
 
     TEST_METHOD(TestAddRemoveNote)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -274,13 +274,13 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0024, L"New Note");
+        notes.mockGameContext.UpdateMemoryNote(0x0024, L"New Note");
 
         Assert::AreEqual({ 15U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"15/15"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0024, L"");
+        notes.mockGameContext.UpdateMemoryNote(0x0024, L"");
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -292,7 +292,7 @@ public:
 
     TEST_METHOD(TestAddRemoveNoteFiltered)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -307,13 +307,13 @@ public:
         Assert::AreEqual(std::wstring(L"em"), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0024, L"New Note");
+        notes.mockGameContext.UpdateMemoryNote(0x0024, L"New Note");
 
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"em"), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"6/15"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0024, L"");
+        notes.mockGameContext.UpdateMemoryNote(0x0024, L"");
 
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"em"), notes.GetFilterValue());
@@ -331,7 +331,7 @@ public:
 
     TEST_METHOD(TestUpdateNoteUnfiltered)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -340,7 +340,7 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0022, L"[8-bit] Current HP");
+        notes.mockGameContext.UpdateMemoryNote(0x0022, L"[8-bit] Current HP");
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -352,7 +352,7 @@ public:
 
     TEST_METHOD(TestUpdateNoteIndirectUnfiltered)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -368,7 +368,7 @@ public:
 
         // This creates an indirect note at $0008, which would bring the total
         // note count to 15. Make sure it's not added to the list.
-        notes.mockGameContext.UpdateCodeNote(0x0022, sPointerNote);
+        notes.mockGameContext.UpdateMemoryNote(0x0022, sPointerNote);
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -386,7 +386,7 @@ public:
 
     TEST_METHOD(TestUpdateNoteFilterStillApplies)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -398,7 +398,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0030, L"Item 1s");
+        notes.mockGameContext.UpdateMemoryNote(0x0030, L"Item 1s");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1s");
@@ -406,7 +406,7 @@ public:
 
     TEST_METHOD(TestUpdateNoteFilterMakesHidden)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -418,7 +418,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0030, L"Thing 1 Quantity");
+        notes.mockGameContext.UpdateMemoryNote(0x0030, L"Thing 1 Quantity");
         Assert::AreEqual({ 5U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"5/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0031, L"0x0031", L"Item 2 Quantity");
@@ -426,7 +426,7 @@ public:
 
     TEST_METHOD(TestUpdateNoteFilterDoesNotApply)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -438,7 +438,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0020, L"Still hidden");
+        notes.mockGameContext.UpdateMemoryNote(0x0020, L"Still hidden");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1 Quantity");
@@ -446,7 +446,7 @@ public:
 
     TEST_METHOD(TestUpdateNoteFilterMakesVisible)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -458,7 +458,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.UpdateCodeNote(0x0020, L"Heal them max");
+        notes.mockGameContext.UpdateMemoryNote(0x0020, L"Heal them max");
         Assert::AreEqual({ 7U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"7/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0020, L"0x0020", L"Heal them max");
@@ -467,12 +467,12 @@ public:
 
     TEST_METHOD(TestUpdateNoteDialogNotVisible)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
         // update before dialog is visible will be picked up when first made visible
-        notes.mockGameContext.UpdateCodeNote(0x0030, L"Item 1b");
+        notes.mockGameContext.UpdateMemoryNote(0x0030, L"Item 1b");
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
         notes.SetIsVisible(true);
@@ -487,7 +487,7 @@ public:
         notes.SetIsVisible(false);
 
         // change should be picked up even if not visible
-        notes.mockGameContext.UpdateCodeNote(0x0030, L"Item 1s");
+        notes.mockGameContext.UpdateMemoryNote(0x0030, L"Item 1s");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1s");
@@ -495,7 +495,7 @@ public:
 
     TEST_METHOD(TestRemoveNoteUnfiltered)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -505,10 +505,10 @@ public:
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
         // non-committed deleted note should still be visible in list (as [Deleted])
-        auto* pCodeNotes = notes.mockGameContext.Assets().FindCodeNotes();
-        Assert::IsNotNull(pCodeNotes);
-        Ensures(pCodeNotes != nullptr);
-        pCodeNotes->SetCodeNote(0x0022, L"");
+        auto* pMemoryNotes = notes.mockGameContext.Assets().FindMemoryNotes();
+        Assert::IsNotNull(pMemoryNotes);
+        Ensures(pMemoryNotes != nullptr);
+        pMemoryNotes->SetNote(0x0022, L"");
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -518,7 +518,7 @@ public:
         AssertRow(notes, 8, 0x0030, L"0x0030", L"Item 1 Quantity");
 
         // committed deleted note should be removed from the list
-        pCodeNotes->SetServerCodeNote(0x0022, L"");
+        pMemoryNotes->SetServerNote(0x0022, L"");
 
         Assert::AreEqual({ 13U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -529,7 +529,7 @@ public:
 
     TEST_METHOD(TestRemoveNoteFilterMatch)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -544,10 +544,10 @@ public:
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
         // non-committed deleted note will no longer matches filter (but still gets counted)
-        auto* pCodeNotes = notes.mockGameContext.Assets().FindCodeNotes();
-        Assert::IsNotNull(pCodeNotes);
-        Ensures(pCodeNotes != nullptr);
-        pCodeNotes->SetCodeNote(0x0031, L"");
+        auto* pMemoryNotes = notes.mockGameContext.Assets().FindMemoryNotes();
+        Assert::IsNotNull(pMemoryNotes);
+        Ensures(pMemoryNotes != nullptr);
+        pMemoryNotes->SetNote(0x0031, L"");
 
         Assert::AreEqual({ 5U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"5/14"), notes.GetResultCount());
@@ -555,7 +555,7 @@ public:
         AssertRow(notes, 2, 0x0032, L"0x0032", L"Item 3 Quantity");
 
         // committed deleted note no longer exists
-        pCodeNotes->SetServerCodeNote(0x0031, L"");
+        pMemoryNotes->SetServerNote(0x0031, L"");
 
         Assert::AreEqual({ 5U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"5/13"), notes.GetResultCount());
@@ -565,7 +565,7 @@ public:
 
     TEST_METHOD(TestRemoveNoteFilterUnmatched)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -580,17 +580,17 @@ public:
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
         // non-committed deleted note not matching filter still gets counted
-        auto* pCodeNotes = notes.mockGameContext.Assets().FindCodeNotes();
-        Assert::IsNotNull(pCodeNotes);
-        Ensures(pCodeNotes != nullptr);
-        pCodeNotes->SetCodeNote(0x0022, L"");
+        auto* pMemoryNotes = notes.mockGameContext.Assets().FindMemoryNotes();
+        Assert::IsNotNull(pMemoryNotes);
+        Ensures(pMemoryNotes != nullptr);
+        pMemoryNotes->SetNote(0x0022, L"");
 
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1 Quantity");
 
         // committed deleted note no longer exists
-        pCodeNotes->SetServerCodeNote(0x0022, L"");
+        pMemoryNotes->SetServerNote(0x0022, L"");
 
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/13"), notes.GetResultCount());
@@ -599,7 +599,7 @@ public:
 
     TEST_METHOD(TestBookmarkSelected)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         notes.PopulateMemory();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
@@ -627,7 +627,7 @@ public:
         Assert::AreEqual({ 0x0040U }, pBookmarks.Items().GetItemAt(3)->GetAddress());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, pBookmarks.Items().GetItemAt(3)->GetSize());
 
-        notes.mockGameContext.SetCodeNote(0x0016, L"[32-bit BE] Score");
+        notes.mockGameContext.SetNote(0x0016, L"[32-bit BE] Score");
         notes.Notes().GetItemAt(0)->SetSelected(false);
         notes.Notes().GetItemAt(7)->SetSelected(false);
         notes.Notes().GetItemAt(13)->SetSelected(false);
@@ -640,7 +640,7 @@ public:
 
     TEST_METHOD(TestModifiedIndicator)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
@@ -656,18 +656,18 @@ public:
         Ensures(pRow != nullptr);
         Assert::AreEqual(0xFF000000, pRow->GetBookmarkColor().ARGB);
 
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0016, L"Changed");
         AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed");
         Assert::AreEqual(0xFFC04040, pRow->GetBookmarkColor().ARGB);
 
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"[32-bit] Score");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0016, L"[32-bit] Score");
         AssertRow(notes, 4, 0x0016, L"0x0016", L"[32-bit] Score");
         Assert::AreEqual(0xFF000000, pRow->GetBookmarkColor().ARGB);
     }
     
     TEST_METHOD(TestModifiedFilter)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         notes.SetIsVisible(true);
 
@@ -675,9 +675,9 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0031, L"Changed 49");
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0004, L"Changed 4");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0031, L"Changed 49");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0004, L"Changed 4");
 
         notes.SetOnlyUnpublishedFilter(true);
         notes.ApplyFilter();
@@ -693,7 +693,7 @@ public:
 
     TEST_METHOD(TestRevertSingleApprove)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         notes.SetIsVisible(true);
 
@@ -701,8 +701,8 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0031, L"Changed 49");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0031, L"Changed 49");
 
         notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
         notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
@@ -733,7 +733,7 @@ public:
 
     TEST_METHOD(TestRevertSingleReject)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         notes.SetIsVisible(true);
 
@@ -741,8 +741,8 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0031, L"Changed 49");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0031, L"Changed 49");
 
         notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
         notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
@@ -769,7 +769,7 @@ public:
 
     TEST_METHOD(TestRevertMultiple)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         notes.SetIsVisible(true);
 
@@ -777,8 +777,8 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0040, L"Changed 64");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0040, L"Changed 64");
 
         notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
         notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
@@ -810,7 +810,7 @@ public:
 
     TEST_METHOD(TestPublishSingle)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         notes.PreparePublish();
         notes.SetIsVisible(true);
@@ -819,8 +819,8 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0031, L"Changed 49");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0031, L"Changed 49");
 
         notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
         notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
@@ -850,7 +850,7 @@ public:
 
     TEST_METHOD(TestPublishSingleOffline)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
         notes.PopulateNotes();
         notes.PreparePublish();
@@ -860,8 +860,8 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0031, L"Changed 49");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0031, L"Changed 49");
 
         notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
         notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
@@ -888,7 +888,7 @@ public:
 
     TEST_METHOD(TestPublishMultipleApprove)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         notes.PreparePublish();
         notes.SetIsVisible(true);
@@ -897,8 +897,8 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0040, L"Changed 64");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0040, L"Changed 64");
 
         notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
         notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
@@ -946,7 +946,7 @@ public:
 
     TEST_METHOD(TestPublishMultipleReject)
     {
-        CodeNotesViewModelHarness notes;
+        MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
         notes.PreparePublish();
         notes.SetIsVisible(true);
@@ -955,8 +955,8 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
-        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0040, L"Changed 64");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindMemoryNotes()->SetNote(0x0040, L"Changed 64");
 
         notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
         notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16

@@ -84,7 +84,7 @@ void IntegrationMenuViewModel::AddCommonMenuItems(LookupItemViewModelCollection&
     vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
     vmMenu.Add(IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
     vmMenu.Add(IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-    vmMenu.Add(IDM_RA_FILES_CODENOTES, L"Code &Notes");
+    vmMenu.Add(IDM_RA_FILES_CODENOTES, L"Memory &Notes");
     vmMenu.Add(IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
     vmMenu.Add(0, L"-----");
     vmMenu.Add(IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
@@ -152,7 +152,7 @@ void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
             break;
 
         case IDM_RA_FILES_CODENOTES:
-            ShowCodeNotes();
+            ShowMemoryNotes();
             break;
 
         case IDM_RA_PARSERICHPRESENCE:
@@ -337,13 +337,13 @@ void IntegrationMenuViewModel::ShowPointerInspector()
     }
 }
 
-void IntegrationMenuViewModel::ShowCodeNotes()
+void IntegrationMenuViewModel::ShowMemoryNotes()
 {
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    if (pEmulatorContext.WarnDisableHardcoreMode("view code notes"))
+    if (pEmulatorContext.WarnDisableHardcoreMode("view memory notes"))
     {
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-        pWindowManager.CodeNotes.Show();
+        pWindowManager.MemoryNotes.Show();
     }
 }
 
@@ -369,7 +369,7 @@ void IntegrationMenuViewModel::ShowAllEditors()
         pWindowManager.AssetEditor.Show();
         pWindowManager.MemoryInspector.Show();
         pWindowManager.MemoryBookmarks.Show();
-        pWindowManager.CodeNotes.Show();
+        pWindowManager.MemoryNotes.Show();
     }
     else
     {

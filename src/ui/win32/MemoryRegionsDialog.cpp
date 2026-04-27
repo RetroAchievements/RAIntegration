@@ -42,7 +42,7 @@ void MemoryRegionsDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmV
     {
         m_pDialog.reset(new MemoryRegionsDialog(*vmMemoryRegions));
         if (!m_pDialog->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_MEMORYREGIONS), this))
-            RA_LOG_ERR("Could not create Code Notes dialog!");
+            RA_LOG_ERR("Could not create Memory Regions dialog!");
     }
 
     m_pDialog->ShowDialogWindow();

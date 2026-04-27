@@ -145,7 +145,7 @@ void AssetListViewModel::OnActiveGameChanged()
     ApplyFilter();
 }
 
-void AssetListViewModel::OnCodeNoteChanged(ra::data::ByteAddress, const std::wstring&)
+void AssetListViewModel::OnMemoryNoteChanged(ra::data::ByteAddress, const std::wstring&)
 {
     RevalidateNoteAssetValidationWarnings();
 }
@@ -156,7 +156,7 @@ void AssetListViewModel::RevalidateNoteAssetValidationWarnings()
     for (auto& pAsset : pGameContext.Assets())
     {
         const auto& sValidationError = pAsset.GetValidationError();
-        if (sValidationError.find(L"code note") != std::wstring::npos)
+        if (sValidationError.find(L"memory note") != std::wstring::npos)
             pAsset.Validate();
     }
 }

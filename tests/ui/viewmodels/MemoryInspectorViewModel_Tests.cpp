@@ -62,7 +62,7 @@ private:
 
             mockUserContext.SetUsername("Author");
 
-            mockGameContext.InitializeCodeNotes();
+            mockGameContext.InitializeNotes();
 
             Viewer().DoFrame(); // load memory into viewer so CurrentAddress value can be read
         }
@@ -80,10 +80,10 @@ private:
 
         bool CurrentBitsVisible() const { return GetValue(CurrentBitsVisibleProperty); }
 
-        const std::wstring* FindCodeNote(ra::data::ByteAddress nAddress) const
+        const std::wstring* FindNote(ra::data::ByteAddress nAddress) const
         {
-            const auto* pCodeNotes = mockGameContext.Assets().FindCodeNotes();
-            return (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
+            const auto* pMemoryNotes = mockGameContext.Assets().FindMemoryNotes();
+            return (pMemoryNotes != nullptr) ? pMemoryNotes->FindNote(nAddress) : nullptr;
         }
 
         void PreparePublish(ra::data::ByteAddress nAddress, std::wstring sNote)
@@ -110,7 +110,7 @@ private:
 
             SetValue(CanModifyNotesProperty, true);
 
-            mockGameContext.Assets().FindCodeNotes()->SetCodeNote(nAddress, sNote);
+            mockGameContext.Assets().FindMemoryNotes()->SetNote(nAddress, sNote);
             SetCurrentAddress(nAddress);
 
             Assert::AreEqual(sNote, GetCurrentAddressNote());
@@ -138,7 +138,7 @@ private:
 
             SetValue(CanModifyNotesProperty, true);
 
-            mockGameContext.Assets().FindCodeNotes()->SetCodeNote(nAddress, sNote);
+            mockGameContext.Assets().FindMemoryNotes()->SetNote(nAddress, sNote);
             SetCurrentAddress(nAddress);
 
             Assert::AreEqual(sNote, GetCurrentAddressNote());
@@ -212,8 +212,8 @@ public:
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
         inspector.SetCurrentAddress({ 3U });
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote({3U}, L"Note on 3");
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({3U}, L"Note on 3");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetServerNote({3U}, L"Note on 3");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({3U}, L"Note on 3");
 
         Assert::AreEqual({ 3U }, inspector.GetCurrentAddress());
         Assert::AreEqual(std::wstring(L"0x0003"), inspector.GetCurrentAddressText());
@@ -225,7 +225,7 @@ public:
         Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
 
         // update note directly as SetCurrentNoteAddress doesn't cause UpdateNoteButtons to be called
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({3U}, L"Modified Note on 3");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({3U}, L"Modified Note on 3");
 
         Assert::IsFalse(inspector.IsCurrentAddressNoteReadOnly());
         Assert::IsTrue(inspector.CanEditCurrentAddressNote());
@@ -238,7 +238,7 @@ public:
         MemoryInspectorViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote({3U}, L"[8-bit Pointer]\n+1 Test");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetServerNote({3U}, L"[8-bit Pointer]\n+1 Test");
 
         inspector.SetCurrentAddress({ 3U });
 
@@ -263,7 +263,7 @@ public:
         Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
 
         inspector.mockEmulatorContext.WriteMemoryByte({3U}, 2);
-        inspector.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+        inspector.mockGameContext.Assets().FindMemoryNotes()->DoFrame();
         
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
         Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
@@ -372,7 +372,7 @@ public:
         MemoryInspectorViewModelHarness inspector;
 
         bool bWindowSeen = false;
-        inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::CodeNotesViewModel>([&bWindowSeen](ra::ui::viewmodels::CodeNotesViewModel&)
+        inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::MemoryNotesViewModel>([&bWindowSeen](ra::ui::viewmodels::MemoryNotesViewModel&)
         {
             bWindowSeen = true;
             return ra::ui::DialogResult::OK;
@@ -386,10 +386,10 @@ public:
     {
         MemoryInspectorViewModelHarness inspector;
         inspector.mockGameContext.SetGameId({ 3 });
-        inspector.mockGameContext.SetCodeNote({ 8 }, L"Eight");
-        inspector.mockGameContext.SetCodeNote({ 12 }, L"Twelve");
-        inspector.mockGameContext.SetCodeNote({ 16 }, L"Sixteen");
-        inspector.mockGameContext.SetCodeNote({ 20 }, L"Twenty");
+        inspector.mockGameContext.SetNote({ 8 }, L"Eight");
+        inspector.mockGameContext.SetNote({ 12 }, L"Twelve");
+        inspector.mockGameContext.SetNote({ 16 }, L"Sixteen");
+        inspector.mockGameContext.SetNote({ 20 }, L"Twenty");
 
         inspector.SetCurrentAddress(14);
         Assert::AreEqual(std::wstring(), inspector.GetCurrentAddressNote());
@@ -411,10 +411,10 @@ public:
     {
         MemoryInspectorViewModelHarness inspector;
         inspector.mockGameContext.SetGameId({ 3 });
-        inspector.mockGameContext.SetCodeNote({ 8 }, L"Eight");
-        inspector.mockGameContext.SetCodeNote({ 12 }, L"Twelve");
-        inspector.mockGameContext.SetCodeNote({ 16 }, L"Sixteen");
-        inspector.mockGameContext.SetCodeNote({ 20 }, L"Twenty");
+        inspector.mockGameContext.SetNote({ 8 }, L"Eight");
+        inspector.mockGameContext.SetNote({ 12 }, L"Twelve");
+        inspector.mockGameContext.SetNote({ 16 }, L"Sixteen");
+        inspector.mockGameContext.SetNote({ 20 }, L"Twenty");
 
         inspector.SetCurrentAddress(14);
         Assert::AreEqual(std::wstring(), inspector.GetCurrentAddressNote());
@@ -456,7 +456,7 @@ public:
     TEST_METHOD(TestPublishCurrentAddressNoteDelete)
     {
         MemoryInspectorViewModelHarness inspector;
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote(0x12, L"Test");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetServerNote(0x12, L"Test");
         inspector.PreparePublish(0x12, L"");
 
         Assert::IsTrue(inspector.CanPublishCurrentAddressNote());
@@ -470,7 +470,7 @@ public:
     TEST_METHOD(TestPublishCurrentAddressNoteCancel)
     {
         MemoryInspectorViewModelHarness inspector;
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote(0x12, L"Test");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetServerNote(0x12, L"Test");
         inspector.mockUserContext.SetUsername("Me");
         inspector.PreparePublish(0x12, L"Test2");
 
@@ -497,7 +497,7 @@ public:
     TEST_METHOD(TestRevertCurrentAddressNoteApprove)
     {
         MemoryInspectorViewModelHarness inspector;
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote(0x12, L"Test");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetServerNote(0x12, L"Test");
         inspector.mockUserContext.SetUsername("Me");
         inspector.PreparePublish(0x12, L"Test2");
 
@@ -518,14 +518,14 @@ public:
         Assert::IsTrue(bWindowSeen);
         Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
         Assert::AreEqual(std::wstring(L"Test"), inspector.GetCurrentAddressNote());
-        Assert::AreEqual(std::wstring(L"Test"), *inspector.mockGameContext.Assets().FindCodeNotes()->FindCodeNote(0x12));
-        Assert::IsFalse(inspector.mockGameContext.Assets().FindCodeNotes()->IsNoteModified(0x12));
+        Assert::AreEqual(std::wstring(L"Test"), *inspector.mockGameContext.Assets().FindMemoryNotes()->FindNote(0x12));
+        Assert::IsFalse(inspector.mockGameContext.Assets().FindMemoryNotes()->IsNoteModified(0x12));
     }
 
     TEST_METHOD(TestRevertCurrentAddressNoteCancel)
     {
         MemoryInspectorViewModelHarness inspector;
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote(0x12, L"Test");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetServerNote(0x12, L"Test");
         inspector.mockUserContext.SetUsername("Me");
         inspector.PreparePublish(0x12, L"Test2");
 
@@ -546,8 +546,8 @@ public:
         Assert::IsTrue(bWindowSeen);
         Assert::IsTrue(inspector.CanRevertCurrentAddressNote());
         Assert::AreEqual(std::wstring(L"Test2"), inspector.GetCurrentAddressNote());
-        Assert::AreEqual(std::wstring(L"Test2"), *inspector.mockGameContext.Assets().FindCodeNotes()->FindCodeNote(0x12));
-        Assert::IsTrue(inspector.mockGameContext.Assets().FindCodeNotes()->IsNoteModified(0x12));
+        Assert::AreEqual(std::wstring(L"Test2"), *inspector.mockGameContext.Assets().FindMemoryNotes()->FindNote(0x12));
+        Assert::IsTrue(inspector.mockGameContext.Assets().FindMemoryNotes()->IsNoteModified(0x12));
     }
 
     TEST_METHOD(TestPublishCurrentAddressNoteFailed)
@@ -558,7 +558,7 @@ public:
         bool bWindowSeen = false;
         inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
             Assert::AreEqual(std::wstring(L"Publish failed."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"0 items successfully uploaded.\n\n1 items failed:\n* Code Notes: "), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"0 items successfully uploaded.\n\n1 items failed:\n* Memory Notes: "), vmMessageBox.GetMessage());
             Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::OK, vmMessageBox.GetButtons());
 
             bWindowSeen = true;
@@ -681,8 +681,8 @@ public:
     {
         MemoryInspectorViewModelHarness inspector;
         inspector.mockGameContext.SetGameId({ 3 });
-        inspector.mockGameContext.SetCodeNote({ 3U }, L"Test");
-        inspector.mockGameContext.SetCodeNote({ 5U }, L"Test2");
+        inspector.mockGameContext.SetNote({ 3U }, L"Test");
+        inspector.mockGameContext.SetNote({ 5U }, L"Test2");
 
         inspector.mockGameContext.NotifyGameLoad();
 
@@ -740,11 +740,11 @@ public:
         inspector.mockEmulatorContext.MockMemory(memory);
         memory.at(4) = 12;
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\n"
             L"+4: [32-bit] Current HP\n"
             L"+8: [32-bit] Max HP");
-        inspector.mockGameContext.DoFrame(); // force indirect code note initialization
+        inspector.mockGameContext.DoFrame(); // force indirect memory note initialization
 
         inspector.SetCurrentAddress(16U);
         inspector.BookmarkCurrentAddress();

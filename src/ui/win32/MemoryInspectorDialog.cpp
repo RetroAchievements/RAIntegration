@@ -228,7 +228,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
         nullptr // Search results are readonly, no need to multi-set values
     );
 
-    // Code Notes
+    // Memory Notes
     m_bindAddress.BindText(MemoryInspectorViewModel::CurrentAddressTextProperty, ra::ui::win32::bindings::TextBoxBinding::UpdateMode::KeyPress);
     m_bindAddress.BindKey(VK_UP, [this]()
     {
@@ -322,7 +322,7 @@ BOOL MemoryInspectorDialog::OnInitDialog()
     m_bindSearchResults.SetControl(*this, IDC_RA_RESULTS);
     m_bindSearchResults.InitializeTooltips(std::chrono::seconds(3));
 
-    // Code Notes
+    // Memory Notes
     m_bindAddress.SetControl(*this, IDC_RA_ADDRESS);
     m_bindNoteText.SetControl(*this, IDC_RA_NOTE_TEXT);
 

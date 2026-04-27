@@ -197,7 +197,7 @@ bool ConsoleContext::GetRealAddressConversion(ra::data::Memory::Size* nReadSize,
             //  $02000000 -> $00008000 (via an offset)
             // However, most developers who have implemented sets just do a 24-bit
             // read _and_ use a +0x8000 offset when necessary. As these offsets are
-            // encoded in the code notes, we shouldn't provide an explicit offset here.
+            // encoded in the memory notes, we shouldn't provide an explicit offset here.
             *nReadSize = ra::data::Memory::Size::TwentyFourBit;
             *nMask = 0x00FFFFFF;
             *nOffset = 0;

@@ -36,7 +36,7 @@ public:
     Color ColorHeader() const noexcept { return m_colorHeader; }
     Color ColorHeaderSelected() const noexcept { return m_colorHeaderSelected; }
 
-    // ===== code notes =====
+    // ===== memory notes =====
     Color ColorNoteNormal() const noexcept { return m_colorNoteNormal; }
     Color ColorNoteModified() const noexcept { return m_colorNoteModified; }
 

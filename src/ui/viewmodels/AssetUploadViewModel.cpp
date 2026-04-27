@@ -44,8 +44,8 @@ void AssetUploadViewModel::QueueAsset(ra::data::models::AssetModelBase& pAsset)
             QueueRichPresence(*(dynamic_cast<ra::data::models::RichPresenceModel*>(&pAsset)));
             break;
 
-        case ra::data::models::AssetType::CodeNotes:
-            QueueCodeNotes(*(dynamic_cast<ra::data::models::CodeNotesModel*>(&pAsset)));
+        case ra::data::models::AssetType::MemoryNotes:
+            QueueMemoryNotes(*(dynamic_cast<ra::data::models::MemoryNotesModel*>(&pAsset)));
             break;
 
         default:
@@ -110,11 +110,11 @@ void AssetUploadViewModel::QueueRichPresence(ra::data::models::RichPresenceModel
     });
 }
 
-void AssetUploadViewModel::QueueCodeNotes(ra::data::models::CodeNotesModel& pNotes)
+void AssetUploadViewModel::QueueMemoryNotes(ra::data::models::MemoryNotesModel& pMemoryNotes)
 {
-    pNotes.EnumerateModifiedCodeNotes([this, pNotes = &pNotes](ra::data::ByteAddress nAddress)
+    pMemoryNotes.EnumerateModifiedNotes([this, pNotes = &pMemoryNotes](ra::data::ByteAddress nAddress)
     {
-        QueueCodeNote(*pNotes, nAddress);
+        QueueMemoryNote(*pNotes, nAddress);
         return true;
     });
 }
@@ -124,9 +124,9 @@ static std::wstring ShortenNote(const std::wstring& sNote)
     return sNote.length() > 256 ? (sNote.substr(0, 253) + L"...") : sNote;
 }
 
-void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::data::ByteAddress nAddress)
+void AssetUploadViewModel::QueueMemoryNote(ra::data::models::MemoryNotesModel& pMemoryNotes, ra::data::ByteAddress nAddress)
 {
-    const auto* pOriginalAuthor = pNotes.GetServerCodeNoteAuthor(nAddress);
+    const auto* pOriginalAuthor = pMemoryNotes.GetServerNoteAuthor(nAddress);
     if (pOriginalAuthor != nullptr && !pOriginalAuthor->empty())
     {
         const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
@@ -136,11 +136,11 @@ void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNote
 
             // author changed - confirm overwrite
             std::wstring sEmpty;
-            const auto* pOriginalNote = pNotes.GetServerCodeNote(nAddress);
+            const auto* pOriginalNote = pMemoryNotes.GetServerNote(nAddress);
             if (pOriginalNote == nullptr)
                 pOriginalNote = &sEmpty;
 
-            const auto* pNote = pNotes.FindCodeNote(nAddress);
+            const auto* pNote = pMemoryNotes.FindNote(nAddress);
             if (pNote == nullptr)
                 pNote = &sEmpty;
 
@@ -180,12 +180,12 @@ void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNote
     }
 
     auto& pItem = m_vUploadQueue.emplace_back();
-    pItem.pAsset = &pNotes;
+    pItem.pAsset = &pMemoryNotes;
     pItem.nExtra = ra::to_signed(nAddress);
 
-    QueueTask([this, pNotes = &pNotes, nAddress]()
+    QueueTask([this, pNotes = &pMemoryNotes, nAddress]()
     {
-        UploadCodeNote(*pNotes, nAddress);
+        UploadMemoryNote(*pNotes, nAddress);
     });
 }
 
@@ -451,12 +451,12 @@ void AssetUploadViewModel::UploadRichPresence(ra::data::models::RichPresenceMode
     }
 }
 
-void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::data::ByteAddress nAddress)
+void AssetUploadViewModel::UploadMemoryNote(ra::data::models::MemoryNotesModel& pNotes, ra::data::ByteAddress nAddress)
 {
     std::string sErrorMessage;
     UploadState nState = UploadState::Failed;
 
-    const auto* pNote = pNotes.FindCodeNote(nAddress);
+    const auto* pNote = pNotes.FindNote(nAddress);
     if (pNote == nullptr || pNote->empty())
     {
         ra::api::DeleteCodeNote::Request request;
@@ -467,13 +467,13 @@ void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNot
 
         if (response.Succeeded())
         {
-            pNotes.SetServerCodeNote(nAddress, L"");
+            pNotes.SetServerNote(nAddress, L"");
             nState = UploadState::Success;
         }
         else if (response.Result == ra::api::ApiResult::Incomplete)
         {
             Rest();
-            UploadCodeNote(pNotes, nAddress);
+            UploadMemoryNote(pNotes, nAddress);
             return;
         }
 
@@ -490,13 +490,13 @@ void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNot
 
         if (response.Succeeded())
         {
-            pNotes.SetServerCodeNote(nAddress, *pNote);
+            pNotes.SetServerNote(nAddress, *pNote);
             nState = UploadState::Success;
         }
         else if (response.Result == ra::api::ApiResult::Incomplete)
         {
             Rest();
-            UploadCodeNote(pNotes, nAddress);
+            UploadMemoryNote(pNotes, nAddress);
             return;
         }
 

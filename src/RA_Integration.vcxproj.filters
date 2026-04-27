@@ -252,10 +252,10 @@
     <ClCompile Include="ui\viewmodels\MemoryViewerViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="ui\viewmodels\CodeNotesViewModel.cpp">
+    <ClCompile Include="ui\viewmodels\MemoryNotesViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="ui\win32\CodeNotesDialog.cpp">
+    <ClCompile Include="ui\win32\MemoryNotesDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
     <ClCompile Include="ui\win32\bindings\MultiLineGridBinding.cpp">
@@ -737,10 +737,10 @@
     <ClInclude Include="ui\viewmodels\MemoryViewerViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
-    <ClInclude Include="ui\viewmodels\CodeNotesViewModel.hh">
+    <ClInclude Include="ui\viewmodels\MemoryNotesViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
-    <ClInclude Include="ui\win32\CodeNotesDialog.hh">
+    <ClInclude Include="ui\win32\MemoryNotesDialog.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\MultiLineGridBinding.hh">

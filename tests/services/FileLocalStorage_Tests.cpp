@@ -111,7 +111,7 @@ public:
         MockFileSystem mockFileSystem;
         FileLocalStorage storage(mockFileSystem);
         Assert::AreEqual(storage.GetPath(ra::services::StorageItemType::GameData, L"12345"), std::wstring(L".\\RACache\\Data\\12345.json"));
-        Assert::AreEqual(storage.GetPath(ra::services::StorageItemType::CodeNotes, L"12345"), std::wstring(L".\\RACache\\Data\\12345-Notes.json"));
+        Assert::AreEqual(storage.GetPath(ra::services::StorageItemType::MemoryNotes, L"12345"), std::wstring(L".\\RACache\\Data\\12345-Notes.json"));
         Assert::AreEqual(storage.GetPath(ra::services::StorageItemType::RichPresence, L"12345"), std::wstring(L".\\RACache\\Data\\12345-Rich.txt"));
         Assert::AreEqual(storage.GetPath(ra::services::StorageItemType::UserAchievements, L"12345"), std::wstring(L".\\RACache\\Data\\12345-User.txt"));
         Assert::AreEqual(storage.GetPath(ra::services::StorageItemType::Badge, L"12345"), std::wstring(L".\\RACache\\Badge\\12345.png"));

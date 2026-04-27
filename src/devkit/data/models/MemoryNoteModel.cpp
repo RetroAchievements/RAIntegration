@@ -1,4 +1,4 @@
-#include "CodeNoteModel.hh"
+#include "MemoryNoteModel.hh"
 
 #include "context\IConsoleContext.hh"
 
@@ -10,7 +10,7 @@ namespace ra {
 namespace data {
 namespace models {
 
-struct CodeNoteModel::PointerData
+struct MemoryNoteModel::PointerData
 {
     uint32_t RawPointerValue = 0xFFFFFFFF;       // last raw value of pointer captured
     ra::data::ByteAddress PointerAddress = 0xFFFFFFFF; // raw pointer value converted to RA address
@@ -27,13 +27,13 @@ struct CodeNoteModel::PointerData
     };
     OffsetType OffsetType = OffsetType::None;
 
-    std::vector<CodeNoteModel> OffsetNotes;
+    std::vector<MemoryNoteModel> OffsetNotes;
 };
 
 // these must be defined here because of forward declaration of PointerData in header file.
-CodeNoteModel::CodeNoteModel() noexcept {}
-CodeNoteModel::~CodeNoteModel() {}
-CodeNoteModel::CodeNoteModel(CodeNoteModel&& pOther) noexcept
+MemoryNoteModel::MemoryNoteModel() noexcept {}
+MemoryNoteModel::~MemoryNoteModel() {}
+MemoryNoteModel::MemoryNoteModel(MemoryNoteModel&& pOther) noexcept
     : m_sAuthor(std::move(pOther.m_sAuthor)),
       m_sNote(std::move(pOther.m_sNote)),
       m_nBytes(pOther.m_nBytes),
@@ -43,7 +43,7 @@ CodeNoteModel::CodeNoteModel(CodeNoteModel&& pOther) noexcept
       m_pPointerData(std::move(pOther.m_pPointerData))
 {
 }
-CodeNoteModel& CodeNoteModel::operator=(CodeNoteModel&& pOther) noexcept
+MemoryNoteModel& MemoryNoteModel::operator=(MemoryNoteModel&& pOther) noexcept
 {
     m_sAuthor = std::move(pOther.m_sAuthor);
     m_sNote = std::move(pOther.m_sNote);
@@ -55,27 +55,27 @@ CodeNoteModel& CodeNoteModel::operator=(CodeNoteModel&& pOther) noexcept
     return *this;
 }
 
-std::wstring CodeNoteModel::GetPointerDescription() const
+std::wstring MemoryNoteModel::GetPointerDescription() const
 {
     return m_pPointerData != nullptr ? m_sNote.substr(0, m_pPointerData->HeaderLength) : std::wstring();
 }
 
-ra::data::ByteAddress CodeNoteModel::GetPointerAddress() const noexcept
+ra::data::ByteAddress MemoryNoteModel::GetPointerAddress() const noexcept
 {
     return m_pPointerData != nullptr ? m_pPointerData->PointerAddress : 0xFFFFFFFF;
 }
 
-bool CodeNoteModel::HasRawPointerValue() const noexcept
+bool MemoryNoteModel::HasRawPointerValue() const noexcept
 {
     return m_pPointerData != nullptr ? m_pPointerData->PointerRead : false;
 }
 
-uint32_t CodeNoteModel::GetRawPointerValue() const noexcept
+uint32_t MemoryNoteModel::GetRawPointerValue() const noexcept
 {
     return m_pPointerData != nullptr ? m_pPointerData->RawPointerValue : 0xFFFFFFFF;
 }
 
-bool CodeNoteModel::HasNestedPointers() const noexcept
+bool MemoryNoteModel::HasNestedPointers() const noexcept
 {
     return m_pPointerData != nullptr && m_pPointerData->HasPointers;
 }
@@ -90,7 +90,7 @@ static ra::data::ByteAddress ConvertPointer(ra::data::ByteAddress nAddress)
     return nAddress;
 }
 
-void CodeNoteModel::UpdateRawPointerValue(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext,
+void MemoryNoteModel::UpdateRawPointerValue(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext,
                                           NoteMovedFunction fNoteMovedCallback)
 {
     if (m_pPointerData == nullptr)
@@ -134,7 +134,7 @@ void CodeNoteModel::UpdateRawPointerValue(ra::data::ByteAddress nAddress, const 
     }
 }
 
-const CodeNoteModel* CodeNoteModel::GetPointerNoteAtOffset(int nOffset) const
+const MemoryNoteModel* MemoryNoteModel::GetPointerNoteAtOffset(int nOffset) const
 {
     if (m_pPointerData == nullptr)
         return nullptr;
@@ -162,7 +162,7 @@ const CodeNoteModel* CodeNoteModel::GetPointerNoteAtOffset(int nOffset) const
     return nullptr;
 }
 
-std::pair<ra::data::ByteAddress, const CodeNoteModel*> CodeNoteModel::GetPointerNoteAtAddress(ra::data::ByteAddress nAddress) const
+std::pair<ra::data::ByteAddress, const MemoryNoteModel*> MemoryNoteModel::GetPointerNoteAtAddress(ra::data::ByteAddress nAddress) const
 {
     if (m_pPointerData == nullptr)
         return {0, nullptr};
@@ -220,7 +220,7 @@ std::pair<ra::data::ByteAddress, const CodeNoteModel*> CodeNoteModel::GetPointer
     return {0, nullptr};
 }
 
-bool CodeNoteModel::GetPointerChain(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pRootNote) const
+bool MemoryNoteModel::GetPointerChain(std::vector<const MemoryNoteModel*>& vChain, const MemoryNoteModel& pRootNote) const
 {
     if (!pRootNote.IsPointer())
         return false;
@@ -233,8 +233,8 @@ bool CodeNoteModel::GetPointerChain(std::vector<const CodeNoteModel*>& vChain, c
     return GetPointerChainRecursive(vChain, pRootNote);
 }
 
-bool CodeNoteModel::GetPointerChainRecursive(std::vector<const CodeNoteModel*>& vChain,
-                                             const CodeNoteModel& pParentNote) const
+bool MemoryNoteModel::GetPointerChainRecursive(std::vector<const MemoryNoteModel*>& vChain,
+                                             const MemoryNoteModel& pParentNote) const
 {
     for (auto& pNote : pParentNote.m_pPointerData->OffsetNotes)
     {
@@ -258,7 +258,7 @@ bool CodeNoteModel::GetPointerChainRecursive(std::vector<const CodeNoteModel*>& 
     return false;
 }
 
-bool CodeNoteModel::GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra::data::ByteAddress& nPreviousAddress) const
+bool MemoryNoteModel::GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra::data::ByteAddress& nPreviousAddress) const
 {
     if (m_pPointerData == nullptr)
         return false;
@@ -285,7 +285,7 @@ bool CodeNoteModel::GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra:
     return bResult;
 }
 
-bool CodeNoteModel::GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data::ByteAddress& nNextAddress) const
+bool MemoryNoteModel::GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data::ByteAddress& nNextAddress) const
 {
     if (m_pPointerData == nullptr)
         return false;
@@ -312,7 +312,7 @@ bool CodeNoteModel::GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data
     return bResult;
 }
 
-std::wstring CodeNoteModel::GetPrimaryNote() const
+std::wstring MemoryNoteModel::GetPrimaryNote() const
 {
     if (m_pPointerData != nullptr)
     {
@@ -329,7 +329,7 @@ std::wstring CodeNoteModel::GetPrimaryNote() const
     return m_sNote;
 }
 
-void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
+void MemoryNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
 {
     if (m_sNote == sNote)
         return;
@@ -395,12 +395,12 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
                     m_nBytes = Memory::SizeBytes(m_nMemSize);
                 }
 
-                // if there are any lines starting with a plus sign, extract the indirect code notes
+                // if there are any lines starting with a plus sign, extract the indirect memory notes
                 nIndex = sNote.find(L"\n+", nIndex + 1);
                 if (nIndex != std::string::npos)
                     ProcessIndirectNotes(sNote, nIndex);
 
-                // failed to find nested code notes. create a PointerData object so the note still
+                // failed to find nested memory notes. create a PointerData object so the note still
                 // gets treated as a pointer
                 if (!m_pPointerData)
                 {
@@ -428,7 +428,7 @@ void CodeNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
     }
 }
 
-Memory::Size CodeNoteModel::GetImpliedPointerSize()
+Memory::Size MemoryNoteModel::GetImpliedPointerSize()
 {
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
 
@@ -452,7 +452,7 @@ static constexpr bool IsHexDigit(wchar_t c)
     return false;
 }
 
-CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& sWord) const
+MemoryNoteModel::Parser::TokenType MemoryNoteModel::Parser::NextToken(std::wstring& sWord) const
 {
     wchar_t cFirstLetter = '\0';
     bool bWordIsNumber = false;
@@ -604,7 +604,7 @@ CodeNoteModel::Parser::TokenType CodeNoteModel::Parser::NextToken(std::wstring& 
     return TokenType::Other;
 }
 
-void CodeNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
+void MemoryNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
 {
     // provide defaults in case no matches are found
     m_nBytes = 1;
@@ -848,7 +848,7 @@ static void RemoveIndentPrefix(std::wstring& sNote)
     }
 }
 
-void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex)
+void MemoryNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex)
 {
     auto pointerData = std::make_unique<PointerData>();
     pointerData->HeaderLength = gsl::narrow_cast<unsigned int>(nIndex);
@@ -937,7 +937,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
         const auto sNoteBody = sNextNote.substr(pEnd - sNextNote.c_str());
         const auto nAddress = gsl::narrow_cast<ra::data::ByteAddress>(nOffset);
 
-        CodeNoteModel* pExistingNote = nullptr;
+        MemoryNoteModel* pExistingNote = nullptr;
         for (auto& pOffsetNote : pointerData->OffsetNotes)
         {
             if (pOffsetNote.GetAddress() == nAddress)
@@ -956,7 +956,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
         }
         else
         {
-            CodeNoteModel offsetNote;
+            MemoryNoteModel offsetNote;
             offsetNote.SetAuthor(m_sAuthor);
             offsetNote.SetAddress(nAddress);
 
@@ -1000,7 +1000,7 @@ void CodeNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nInde
     m_pPointerData = std::move(pointerData);
 }
 
-std::wstring CodeNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPointer)
+std::wstring MemoryNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPointer)
 {
     size_t nEndIndex = 0;
     size_t nStartIndex = sNote.find('[');
@@ -1023,19 +1023,19 @@ std::wstring CodeNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPointe
 
     bool bPointer = false;
     std::wstring sWord;
-    ra::data::models::CodeNoteModel::Parser::TokenType nTokenType;
-    const ra::data::models::CodeNoteModel::Parser parser(sNote, nStartIndex + 1, nEndIndex);
+    ra::data::models::MemoryNoteModel::Parser::TokenType nTokenType;
+    const ra::data::models::MemoryNoteModel::Parser parser(sNote, nStartIndex + 1, nEndIndex);
     do
     {
         nTokenType = parser.NextToken(sWord);
-        if (nTokenType == ra::data::models::CodeNoteModel::Parser::TokenType::Other)
+        if (nTokenType == ra::data::models::MemoryNoteModel::Parser::TokenType::Other)
         {
             if (sWord == L"pointer")
                 bPointer = true;
             else
                 return sNote;
         }
-    } while (nTokenType != ra::data::models::CodeNoteModel::Parser::TokenType::None);
+    } while (nTokenType != ra::data::models::MemoryNoteModel::Parser::TokenType::None);
 
     while (nStartIndex > 0)
     {
@@ -1070,8 +1070,8 @@ std::wstring CodeNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPointe
     return sNoteCopy;
 }
 
-void CodeNoteModel::EnumeratePointerNotes(
-    std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const
+void MemoryNoteModel::EnumeratePointerNotes(
+    std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel&)> fCallback) const
 {
     if (m_pPointerData == nullptr)
         return;
@@ -1082,8 +1082,8 @@ void CodeNoteModel::EnumeratePointerNotes(
         EnumeratePointerNotes(m_pPointerData->PointerAddress, fCallback);
 }
 
-void CodeNoteModel::EnumeratePointerNotes(ra::data::ByteAddress nPointerAddress,
-    std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const
+void MemoryNoteModel::EnumeratePointerNotes(ra::data::ByteAddress nPointerAddress,
+    std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel&)> fCallback) const
 {
     if (m_pPointerData == nullptr)
         return;
@@ -1386,7 +1386,7 @@ static std::wstring_view MatchSubNote(std::wstring_view svNote, std::function<bo
     return {};
 }
 
-CodeNoteModel::EnumState CodeNoteModel::DetermineEnumState(const std::wstring_view svNote)
+MemoryNoteModel::EnumState MemoryNoteModel::DetermineEnumState(const std::wstring_view svNote)
 {
     EnumState nState = EnumState::None;
 
@@ -1453,7 +1453,7 @@ static bool MatchEnumText(const std::wstring_view svValue, uint32_t nValue, bool
     return false;
 }
 
-std::wstring_view CodeNoteModel::GetEnumText(uint32_t nValue) const
+std::wstring_view MemoryNoteModel::GetEnumText(uint32_t nValue) const
 {
     if (m_nEnumState == EnumState::None)
         return {};
@@ -1505,7 +1505,7 @@ static bool MatchBitsText(const std::wstring_view svValue, ra::data::Memory::Siz
     return false;
 }
 
-std::wstring_view CodeNoteModel::GetSubNote(ra::data::Memory::Size nBits) const
+std::wstring_view MemoryNoteModel::GetSubNote(ra::data::Memory::Size nBits) const
 {
     if (ra::data::Memory::SizeBits(nBits) >= 8 || nBits == ra::data::Memory::Size::BitCount)
         return {};
@@ -1530,7 +1530,7 @@ std::wstring_view CodeNoteModel::GetSubNote(ra::data::Memory::Size nBits) const
     });
 }
 
-std::wstring CodeNoteModel::GetSummary() const
+std::wstring MemoryNoteModel::GetSummary() const
 {
     if (m_pPointerData != nullptr)
     {
@@ -1626,7 +1626,7 @@ static ra::data::Memory::Format GetNumberFormat(std::wstring_view svValue)
     return nFormat;
 }
 
-ra::data::Memory::Format CodeNoteModel::DeterminePreferredMemFormat(std::wstring_view sNote)
+ra::data::Memory::Format MemoryNoteModel::DeterminePreferredMemFormat(std::wstring_view sNote)
 {
     auto nMemFormat = ra::data::Memory::Format::Dec;
     auto bPotentiallyPaddedHex = false;

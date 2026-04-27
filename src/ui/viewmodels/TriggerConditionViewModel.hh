@@ -85,7 +85,7 @@ public:
     static const BoolModelProperty IsIndirectProperty;
     bool IsIndirect() const { return GetValue(IsIndirectProperty); }
     void SetIndirect(bool bValue) { SetValue(IsIndirectProperty, bValue); }
-    ra::data::ByteAddress GetIndirectAddress(ra::data::ByteAddress nAddress, std::wstring& sPointerChain, const ra::data::models::CodeNoteModel** pLeafNote) const;
+    ra::data::ByteAddress GetIndirectAddress(ra::data::ByteAddress nAddress, std::wstring& sPointerChain, const ra::data::models::MemoryNoteModel** pLeafNote) const;
 
     static const BoolModelProperty IsSelectedProperty;
     bool IsSelected() const { return GetValue(IsSelectedProperty); }
@@ -121,7 +121,7 @@ private:
 
     std::wstring GetPotentialEnumValueTooltip(unsigned int nValue, ra::data::ByteAddress nCompareAddress) const;
     static std::wstring GetValueTooltip(unsigned int nValue);
-    std::wstring GetAddressTooltip(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize, const std::wstring& sPointerChain, const ra::data::models::CodeNoteModel* pNote) const;
+    std::wstring GetAddressTooltip(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize, const std::wstring& sPointerChain, const ra::data::models::MemoryNoteModel* pNote) const;
     std::wstring GetRecallTooltip(bool bOperand2) const;
     ra::data::ByteAddress GetSourceAddress() const;
     ra::data::ByteAddress GetTargetAddress() const;

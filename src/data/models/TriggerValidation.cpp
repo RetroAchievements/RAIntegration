@@ -57,8 +57,8 @@ static bool ValidateLeaderboardTrigger(const rc_trigger_t* pTrigger, std::wstrin
     return true;
 }
 
-static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::data::models::CodeNotesModel& pNotes,
-                                     std::wstring& sError)
+static bool ValidateMemoryNotesOperand(const rc_operand_t& pOperand, const ra::data::models::MemoryNotesModel& pNotes,
+                                       std::wstring& sError)
 {
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     const auto nMemRefSize = Memory::SizeFromRcheevosSize(pOperand.size);
@@ -67,7 +67,7 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
     ra::data::ByteAddress nStartAddress = nAddress;
     Memory::Size nNoteSize = Memory::Size::Unknown;
 
-    const auto* pNote = pNotes.FindCodeNoteModel(nAddress, false);
+    const auto* pNote = pNotes.FindMemoryNoteModel(nAddress, false);
     if (pNote)
     {
         // ignore bit/nibble reads inside a known address
@@ -79,14 +79,14 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
     else
     {
         // no note at address. see if it's included in a larger container note
-        nStartAddress = pNotes.FindCodeNoteStart(nAddress);
+        nStartAddress = pNotes.FindNoteStart(nAddress);
         if (nStartAddress == 0xFFFFFFFF)
         {
-            sError = ra::util::String::Printf(L"No code note for address %s", pMemoryContext.FormatAddress(nAddress).substr(2));
+            sError = ra::util::String::Printf(L"No memory note for address %s", pMemoryContext.FormatAddress(nAddress).substr(2));
             return false;
         }
 
-        const auto pStartNote = pNotes.FindCodeNoteModel(nStartAddress, false);
+        const auto pStartNote = pNotes.FindMemoryNoteModel(nStartAddress, false);
         nNoteSize = pStartNote ? pStartNote->GetMemSize() : Memory::Size::Unknown;
     }
 
@@ -103,12 +103,12 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
         if (Memory::SizeBits(nMemRefSize) <= 8)
             return true;
 
-        sError = ra::util::String::Printf(L"%s read of address %s differs from implied code note size %s", Memory::SizeString(nMemRefSize),
+        sError = ra::util::String::Printf(L"%s read of address %s differs from implied memory note size %s", Memory::SizeString(nMemRefSize),
                                           pMemoryContext.FormatAddress(nAddress).substr(2), Memory::SizeString(Memory::Size::EightBit));
     }
     else
     {
-        sError = ra::util::String::Printf(L"%s read of address %s differs from code note size %s", Memory::SizeString(nMemRefSize),
+        sError = ra::util::String::Printf(L"%s read of address %s differs from memory note size %s", Memory::SizeString(nMemRefSize),
                                           pMemoryContext.FormatAddress(nAddress).substr(2), Memory::SizeString(nNoteSize));
     }
 
@@ -121,8 +121,8 @@ static bool ValidateCodeNotesOperand(const rc_operand_t& pOperand, const ra::dat
     return false;
 }
 
-static bool ValidateCodeNotesCondSet(const rc_condset_t* pCondSet, const ra::data::models::CodeNotesModel& pNotes,
-                                     std::wstring& sError)
+static bool ValidateMemoryNotesCondSet(const rc_condset_t* pCondSet, const ra::data::models::MemoryNotesModel& pNotes,
+                                       std::wstring& sError)
 {
     if (!pCondSet)
         return true;
@@ -147,14 +147,14 @@ static bool ValidateCodeNotesCondSet(const rc_condset_t* pCondSet, const ra::dat
 
         const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
         if (pOperand1 && rc_operand_is_memref(pOperand1) &&
-            !ValidateCodeNotesOperand(*pOperand1, pNotes, sError))
+            !ValidateMemoryNotesOperand(*pOperand1, pNotes, sError))
         {
             sError = ra::util::String::Printf(L"Condition %u: %s", nIndex, sError);
             return false;
         }
 
         if (rc_operand_is_memref(&pCondition->operand2) &&
-            !ValidateCodeNotesOperand(pCondition->operand2, pNotes, sError))
+            !ValidateMemoryNotesOperand(pCondition->operand2, pNotes, sError))
         {
             sError = ra::util::String::Printf(L"Condition %u: %s", nIndex, sError);
             return false;
@@ -164,16 +164,16 @@ static bool ValidateCodeNotesCondSet(const rc_condset_t* pCondSet, const ra::dat
     return true;
 }
 
-static bool ValidateCodeNotes(const rc_trigger_t* pTrigger, std::wstring& sError)
+static bool ValidateMemoryNotes(const rc_trigger_t* pTrigger, std::wstring& sError)
 {
     if (!ra::services::ServiceLocator::Exists<ra::data::context::GameContext>())
         return true;
 
-    const auto* pNotes = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets().FindCodeNotes();
+    const auto* pNotes = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets().FindMemoryNotes();
     if (!pNotes)
         return true;
 
-    if (!ValidateCodeNotesCondSet(pTrigger->requirement, *pNotes, sError))
+    if (!ValidateMemoryNotesCondSet(pTrigger->requirement, *pNotes, sError))
     {
         if (pTrigger->alternative)
             sError = L"Core " + sError;
@@ -185,7 +185,7 @@ static bool ValidateCodeNotes(const rc_trigger_t* pTrigger, std::wstring& sError
     for (; pCondSet; pCondSet = pCondSet->next)
     {
         nIndex++;
-        if (!ValidateCodeNotesCondSet(pCondSet, *pNotes, sError))
+        if (!ValidateMemoryNotesCondSet(pCondSet, *pNotes, sError))
         {
             sError = ra::util::String::Printf(L"Alt%u %s", nIndex, sError);
             return false;
@@ -260,7 +260,7 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
                 return false;
         }
 
-        if (!ValidateCodeNotes(&trigger->trigger, sError))
+        if (!ValidateMemoryNotes(&trigger->trigger, sError))
             return false;
 
         sError.clear();

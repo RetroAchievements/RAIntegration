@@ -3,7 +3,7 @@
 
 #include "AssetEditorViewModel.hh"
 #include "AssetListViewModel.hh"
-#include "CodeNotesViewModel.hh"
+#include "MemoryNotesViewModel.hh"
 #include "EmulatorViewModel.hh"
 #include "MemoryBookmarksViewModel.hh"
 #include "MemoryInspectorViewModel.hh"
@@ -23,7 +23,7 @@ public:
     AssetEditorViewModel AssetEditor;
     MemoryBookmarksViewModel MemoryBookmarks;
     MemoryInspectorViewModel MemoryInspector;
-    CodeNotesViewModel CodeNotes;
+    MemoryNotesViewModel MemoryNotes;
     PointerFinderViewModel PointerFinder;
     PointerInspectorViewModel PointerInspector;
 };

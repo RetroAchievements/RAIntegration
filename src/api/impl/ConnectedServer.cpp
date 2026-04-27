@@ -534,7 +534,7 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
     return response;
 }
 
-static void SetCodeNote(ApiResponseBase& response, const char* sApiName,
+static void SetNote(ApiResponseBase& response, const char* sApiName,
     unsigned nGameId, ra::data::ByteAddress nAddress, const char* sNote)
 {
     rc_api_update_code_note_request_t api_params;
@@ -580,7 +580,7 @@ UpdateCodeNote::Response ConnectedServer::UpdateCodeNote(const UpdateCodeNote::R
     UpdateCodeNote::Response response;
 
     const std::string sNote = ra::util::String::Narrow(request.Note);
-    SetCodeNote(response, UpdateCodeNote::Name(), request.GameId, request.Address, sNote.c_str());
+    SetNote(response, UpdateCodeNote::Name(), request.GameId, request.Address, sNote.c_str());
 
     return response;
 }
@@ -589,7 +589,7 @@ DeleteCodeNote::Response ConnectedServer::DeleteCodeNote(const DeleteCodeNote::R
 {
     DeleteCodeNote::Response response;
 
-    SetCodeNote(response, DeleteCodeNote::Name(), request.GameId, request.Address, nullptr);
+    SetNote(response, DeleteCodeNote::Name(), request.GameId, request.Address, nullptr);
 
     return response;
 }

@@ -198,19 +198,19 @@ static MemoryViewerViewModel::TextColor GetColor(ra::data::ByteAddress nAddress,
 
     if (bCheckNotes)
     {
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        if (pCodeNotes != nullptr)
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+        if (pMemoryNotes != nullptr)
         {
-            const auto nNoteStart = pCodeNotes->FindCodeNoteStart(nAddress);
+            const auto nNoteStart = pMemoryNotes->FindNoteStart(nAddress);
             if (nNoteStart != 0xFFFFFFFF)
             {
-                if (nNoteStart == 0 && pCodeNotes->FindCodeNoteModel(nAddress, false) == nullptr)
+                if (nNoteStart == 0 && pMemoryNotes->FindMemoryNoteModel(nAddress, false) == nullptr)
                     return MemoryViewerViewModel::TextColor::Default;
 
                 if (nNoteStart != nAddress)
                     return MemoryViewerViewModel::TextColor::HasSurrogateNote;
 
-                const auto* pNote = pCodeNotes->FindCodeNote(nAddress);
+                const auto* pNote = pMemoryNotes->FindNote(nAddress);
                 if (pNote != nullptr && !pNote->empty())
                     return MemoryViewerViewModel::TextColor::HasNote;
             }
@@ -232,12 +232,12 @@ void MemoryViewerViewModel::UpdateColors()
     for (int i = 0; i < nVisibleLines * 16; ++i)
         m_pColor[i] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext, false)));
 
-    // apply code notes
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes != nullptr)
+    // apply memory notes
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    if (pMemoryNotes != nullptr)
     {
         const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
-        pCodeNotes->EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pNote) {
+        pMemoryNotes->EnumerateMemoryNotes([nFirstAddress, nStopAddress, this](ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel& pNote) {
             auto nBytes = pNote.GetBytes();
             if (nAddress + nBytes <= nFirstAddress) // not to viewing window yet
                 return true;
@@ -751,7 +751,7 @@ void MemoryViewerViewModel::OnActiveGameChanged()
     UpdateColors();
 }
 
-void MemoryViewerViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
+void MemoryViewerViewModel::OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     const auto nFirstAddress = GetFirstAddress();
     const auto nVisibleLines = GetNumVisibleLines();
@@ -760,17 +760,17 @@ void MemoryViewerViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, r
     if (nOldAddress >= nFirstAddress && nOldAddress < nFirstNonVisibleAddress)
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        Expects(pCodeNotes != nullptr);
-        const auto pNote = pCodeNotes->FindCodeNoteModel(nOldAddress);
-        OnCodeNoteChanged(nOldAddress, pNote ? pNote->GetNote() : std::wstring());
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+        Expects(pMemoryNotes != nullptr);
+        const auto pNote = pMemoryNotes->FindMemoryNoteModel(nOldAddress);
+        OnMemoryNoteChanged(nOldAddress, pNote ? pNote->GetNote() : std::wstring());
     }
 
     if (nNewAddress >= nFirstAddress && nNewAddress < nFirstNonVisibleAddress)
-        OnCodeNoteChanged(nNewAddress, sNote);
+        OnMemoryNoteChanged(nNewAddress, sNote);
 }
 
-void MemoryViewerViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote)
+void MemoryViewerViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote)
 {
     const auto nFirstAddress = GetFirstAddress();
     if (nAddress < nFirstAddress)
@@ -783,14 +783,14 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, co
 
     const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    Expects(pCodeNotes != nullptr);
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    Expects(pMemoryNotes != nullptr);
 
     const auto nSelectedAddress = GetAddress();
-    const auto* pCodeNote = pCodeNotes->FindCodeNoteModel(nAddress);
+    const auto* pMemoryNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
 
     const auto nMax = nFirstAddress + nVisibleLines * 16 - nAddress;
-    const auto nSize = std::min(pCodeNote ? pCodeNote->GetBytes() : 1U, nMax);
+    const auto nSize = std::min(pMemoryNote ? pMemoryNote->GetBytes() : 1U, nMax);
     for (unsigned i = 0; i < nSize; ++i)
     {
         auto nNewColor = (nAddress == nSelectedAddress) ?
@@ -816,7 +816,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, co
     }
 
     // if the note size shrunk, clear out the surrogate indicators
-    const auto nNextAddress = pCodeNotes->GetNextNoteAddress(nAddress);
+    const auto nNextAddress = pMemoryNotes->GetNextNoteAddress(nAddress);
     const auto nMaxOffset = ra::to_unsigned(nVisibleLines) * 16;
     while (nAddress < nNextAddress && nOffset < nMaxOffset)
     {

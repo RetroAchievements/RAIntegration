@@ -9,13 +9,13 @@
 #include "ui/win32/AssetListDialog.hh"
 #include "ui/win32/AssetEditorDialog.hh"
 #include "ui/win32/BrokenAchievementsDialog.hh"
-#include "ui/win32/CodeNotesDialog.hh"
 #include "ui/win32/FileDialog.hh"
 #include "ui/win32/GameChecksumDialog.hh"
 #include "ui/win32/LoginDialog.hh"
 #include "ui/win32/MessageBoxDialog.hh"
 #include "ui/win32/MemoryBookmarksDialog.hh"
 #include "ui/win32/MemoryInspectorDialog.hh"
+#include "ui/win32/MemoryNotesDialog.hh"
 #include "ui/win32/MemoryRegionsDialog.hh"
 #include "ui/win32/NewAssetDialog.hh"
 #include "ui/win32/OverlaySettingsDialog.hh"
@@ -46,7 +46,7 @@ Desktop::Desktop() noexcept
     m_vDialogPresenters.emplace_back(new (std::nothrow) MemoryInspectorDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) MemoryRegionsDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) MemoryBookmarksDialog::Presenter);
-    m_vDialogPresenters.emplace_back(new (std::nothrow) CodeNotesDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) MemoryNotesDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) AssetListDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) AssetEditorDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) PointerFinderDialog::Presenter);

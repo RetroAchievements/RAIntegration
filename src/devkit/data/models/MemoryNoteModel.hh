@@ -1,5 +1,5 @@
-#ifndef RA_DATA_MODELS_CODENOTEMODEL_H
-#define RA_DATA_MODELS_CODENOTEMODEL_H
+#ifndef RA_DATA_MODELS_MEMORYNOTEMODEL_H
+#define RA_DATA_MODELS_MEMORYNOTEMODEL_H
 #pragma once
 
 #include "context/IEmulatorMemoryContext.hh"
@@ -8,15 +8,15 @@ namespace ra {
 namespace data {
 namespace models {
 
-class CodeNoteModel
+class MemoryNoteModel
 {
 public:
-	CodeNoteModel() noexcept;
-	virtual ~CodeNoteModel();
-	CodeNoteModel(const CodeNoteModel&) noexcept = delete;
-    CodeNoteModel& operator=(const CodeNoteModel&) noexcept = delete;
-    CodeNoteModel(CodeNoteModel&&) noexcept;
-    CodeNoteModel& operator=(CodeNoteModel&&) noexcept;
+	MemoryNoteModel() noexcept;
+	virtual ~MemoryNoteModel();
+	MemoryNoteModel(const MemoryNoteModel&) noexcept = delete;
+    MemoryNoteModel& operator=(const MemoryNoteModel&) noexcept = delete;
+    MemoryNoteModel(MemoryNoteModel&&) noexcept;
+    MemoryNoteModel& operator=(MemoryNoteModel&&) noexcept;
 
     /// <summary>
     /// Gets the author of the note.
@@ -108,7 +108,7 @@ public:
     /// </summary>
     uint32_t GetRawPointerValue() const noexcept;
 
-    typedef std::function<void(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const CodeNoteModel&)> NoteMovedFunction;
+    typedef std::function<void(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel&)> NoteMovedFunction;
     /// <summary>
     /// Updates the raw pointer value by reading from memory.
     /// </summary>
@@ -131,13 +131,13 @@ public:
     /// Get the subnote for the field at the specified offset.
     /// </summary>
     /// <returns>Requested subnote, <c>null</c> if not found.</returns>
-    const CodeNoteModel* GetPointerNoteAtOffset(int nOffset) const;
+    const MemoryNoteModel* GetPointerNoteAtOffset(int nOffset) const;
 
     /// <summary>
     /// Gets the subnote for the specified address.
     /// </summary>
     /// <returns>A pair representing the nested note and its actual address, or an empty pair if not found.</returns>
-    std::pair<ra::data::ByteAddress, const CodeNoteModel*> GetPointerNoteAtAddress(ra::data::ByteAddress nAddress) const;
+    std::pair<ra::data::ByteAddress, const MemoryNoteModel*> GetPointerNoteAtAddress(ra::data::ByteAddress nAddress) const;
 
     /// <summary>
     /// Attempts to build a path from the provided root note to this note.
@@ -145,7 +145,7 @@ public:
     /// <param name="vChain">If a path is found, it will be captured here (root first).</param>
     /// <param name="pRootNote">The root note that is suspected to contain this note.</param>
     /// <returns><c>true</c> if a path is found, <c>false</c> if not.</returns>
-    virtual bool GetPointerChain(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pRootNote) const;
+    virtual bool GetPointerChain(std::vector<const MemoryNoteModel*>& vChain, const MemoryNoteModel& pRootNote) const;
 
     /// <summary>
     /// Gets the address of the closest subnote before the specified address.
@@ -168,7 +168,7 @@ public:
     /// <summary>
     /// Calls the provided callback for each subnote.
     /// </summary>
-    void EnumeratePointerNotes(std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
+    void EnumeratePointerNotes(std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel&)> fCallback) const;
 
     /// <summary>
     /// Removes the size annotation from a note string.
@@ -214,7 +214,7 @@ protected:
     };
 
 private:
-    std::string m_sAuthor; // TODO: make this a reference to data stored in the CodeNotesModel.
+    std::string m_sAuthor; // TODO: make this a reference to data stored in the MemoryNotesModel.
     std::wstring m_sNote;
     ra::data::ByteAddress m_nAddress = 0; // address of root nodes, offset to indirect nodes
     unsigned int m_nBytes = 1;
@@ -234,10 +234,10 @@ private:
     struct PointerData;
     std::unique_ptr<PointerData> m_pPointerData;
 
-    bool GetPointerChainRecursive(std::vector<const CodeNoteModel*>& vChain, const CodeNoteModel& pParentNote) const;
+    bool GetPointerChainRecursive(std::vector<const MemoryNoteModel*>& vChain, const MemoryNoteModel& pParentNote) const;
 
     void EnumeratePointerNotes(ra::data::ByteAddress nPointerAddress,
-        std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback) const;
+        std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel&)> fCallback) const;
 
     void ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex);
     void ExtractSize(const std::wstring& sNote, bool bIsPointer);
@@ -249,4 +249,4 @@ private:
 } // namespace data
 } // namespace ra
 
-#endif RA_DATA_MODELS_CODENOTEMODEL_H
+#endif RA_DATA_MODELS_MEMORYNOTEMODEL_H

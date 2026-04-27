@@ -159,7 +159,7 @@ static void CacheCodeNotesResponse(const rc_api_server_response_t& pResponse, co
 {
     // store a copy in the cache for offline mode
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::CodeNotes, sGameId);
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::MemoryNotes, sGameId);
     if (pData != nullptr)
     {
         std::string sContent(pResponse.body, pResponse.body_length);

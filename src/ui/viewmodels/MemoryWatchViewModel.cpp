@@ -126,7 +126,7 @@ std::wstring MemoryWatchViewModel::ExtractDescriptionHeader(const std::wstring& 
     // extract the first line into DescriptionHeader
     const auto nIndex = sFullNote.find('\n');
     if (nIndex == std::string::npos)
-        return ra::data::models::CodeNoteModel::TrimSize(sFullNote, true);
+        return ra::data::models::MemoryNoteModel::TrimSize(sFullNote, true);
 
     std::wstring sNote = sFullNote;
     sNote.resize(nIndex);
@@ -134,7 +134,7 @@ std::wstring MemoryWatchViewModel::ExtractDescriptionHeader(const std::wstring& 
     if (sNote.back() == '\r')
         sNote.pop_back();
 
-    return ra::data::models::CodeNoteModel::TrimSize(sNote, true);
+    return ra::data::models::MemoryNoteModel::TrimSize(sNote, true);
 }
 
 static rc_condition_t* FindMeasuredCondition(rc_value_t* pValue) noexcept
@@ -505,14 +505,14 @@ void MemoryWatchViewModel::UpdateRealNote()
     if (pGameContext.IsGameLoading()) // no notes available
         return;
 
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    const ra::data::models::CodeNoteModel* pNote = nullptr;
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    const ra::data::models::MemoryNoteModel* pNote = nullptr;
 
-    if (pCodeNotes)
+    if (pMemoryNotes)
     {
         if (!IsIndirectAddress())
         {
-            pNote = pCodeNotes->FindCodeNoteModel(GetAddress());
+            pNote = pMemoryNotes->FindMemoryNoteModel(GetAddress());
         }
         else
         {
@@ -533,7 +533,7 @@ void MemoryWatchViewModel::UpdateRealNote()
                 if (pNote)
                     pNote = pNote->GetPointerNoteAtOffset(nAddress);
                 else
-                    pNote = pCodeNotes->FindCodeNoteModel(nAddress);
+                    pNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
 
                 if (!pNote)
                     break;

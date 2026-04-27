@@ -1,4 +1,4 @@
-#include "CodeNotesViewModel.hh"
+#include "MemoryNotesViewModel.hh"
 
 #include "RA_Defs.h"
 #include "util\Strings.hh"
@@ -17,18 +17,18 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const StringModelProperty CodeNotesViewModel::ResultCountProperty("CodeNotesViewModel", "ResultCount", L"0/0");
-const StringModelProperty CodeNotesViewModel::FilterValueProperty("CodeNotesViewModel", "FilterValue", L"");
-const BoolModelProperty CodeNotesViewModel::OnlyUnpublishedFilterProperty("CodeNotesViewModel", "OnlyUnpublishedFilter", false);
-const BoolModelProperty CodeNotesViewModel::CanRevertCurrentAddressNoteProperty("CodeNotesViewModel", "CanRevertCurrentAddressNote", false);
-const BoolModelProperty CodeNotesViewModel::CanPublishCurrentAddressNoteProperty("CodeNotesViewModel", "CanPublishCurrentAddressNote", false);
+const StringModelProperty MemoryNotesViewModel::ResultCountProperty("MemoryNotesViewModel", "ResultCount", L"0/0");
+const StringModelProperty MemoryNotesViewModel::FilterValueProperty("MemoryNotesViewModel", "FilterValue", L"");
+const BoolModelProperty MemoryNotesViewModel::OnlyUnpublishedFilterProperty("MemoryNotesViewModel", "OnlyUnpublishedFilter", false);
+const BoolModelProperty MemoryNotesViewModel::CanRevertCurrentAddressNoteProperty("MemoryNotesViewModel", "CanRevertCurrentAddressNote", false);
+const BoolModelProperty MemoryNotesViewModel::CanPublishCurrentAddressNoteProperty("MemoryNotesViewModel", "CanPublishCurrentAddressNote", false);
 
-const StringModelProperty CodeNotesViewModel::CodeNoteViewModel::LabelProperty("CodeNoteViewModel", "Label", L"");
-const StringModelProperty CodeNotesViewModel::CodeNoteViewModel::NoteProperty("CodeNoteViewModel", "Note", L"");
-const BoolModelProperty CodeNotesViewModel::CodeNoteViewModel::IsSelectedProperty("CodeNoteViewModel", "IsSelected", false);
-const IntModelProperty CodeNotesViewModel::CodeNoteViewModel::BookmarkColorProperty("CodeNoteViewModel", "BookmarkColor", 0);
+const StringModelProperty MemoryNotesViewModel::MemoryNoteViewModel::LabelProperty("MemoryNoteViewModel", "Label", L"");
+const StringModelProperty MemoryNotesViewModel::MemoryNoteViewModel::NoteProperty("MemoryNoteViewModel", "Note", L"");
+const BoolModelProperty MemoryNotesViewModel::MemoryNoteViewModel::IsSelectedProperty("MemoryNoteViewModel", "IsSelected", false);
+const IntModelProperty MemoryNotesViewModel::MemoryNoteViewModel::BookmarkColorProperty("MemoryNoteViewModel", "BookmarkColor", 0);
 
-void CodeNotesViewModel::CodeNoteViewModel::SetModified(bool bValue)
+void MemoryNotesViewModel::MemoryNoteViewModel::SetModified(bool bValue)
 {
     if (m_bModified != bValue || GetBookmarkColor().ARGB == 0)
     {
@@ -39,14 +39,14 @@ void CodeNotesViewModel::CodeNoteViewModel::SetModified(bool bValue)
     }
 }
 
-CodeNotesViewModel::CodeNotesViewModel() noexcept
+MemoryNotesViewModel::MemoryNotesViewModel() noexcept
 {
-    SetWindowTitle(L"Code Notes");
+    SetWindowTitle(L"Memory Notes");
 
     m_vNotes.AddNotifyTarget(*this);
 }
 
-void CodeNotesViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
+void MemoryNotesViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == IsVisibleProperty)
     {
@@ -67,7 +67,7 @@ void CodeNotesViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& arg
     WindowViewModelBase::OnValueChanged(args);
 }
 
-void CodeNotesViewModel::OnActiveGameChanged()
+void MemoryNotesViewModel::OnActiveGameChanged()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     m_nGameId = pGameContext.GameId();
@@ -78,26 +78,26 @@ void CodeNotesViewModel::OnActiveGameChanged()
         ResetFilter();
 }
 
-void CodeNotesViewModel::OnEndGameLoad()
+void MemoryNotesViewModel::OnEndGameLoad()
 {
     ResetFilter();
 }
 
-void CodeNotesViewModel::ResetFilter()
+void MemoryNotesViewModel::ResetFilter()
 {
     m_vNotes.BeginUpdate();
 
     gsl::index nIndex = 0;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes != nullptr)
+    auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    if (pMemoryNotes != nullptr)
     {
-        pCodeNotes->EnumerateCodeNotes([this, &nIndex, pCodeNotes](ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pCodeNote)
+        pMemoryNotes->EnumerateMemoryNotes([this, &nIndex, pMemoryNotes](ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel& pMemoryNote)
         {
             const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-            const auto bNoteModified = pCodeNotes->IsNoteModified(nAddress);
-            const auto nBytes = pCodeNote.GetBytes();
+            const auto bNoteModified = pMemoryNotes->IsNoteModified(nAddress);
+            const auto nBytes = pMemoryNote.GetBytes();
 
             std::wstring sAddress;
             if (nBytes <= 4)
@@ -105,7 +105,7 @@ void CodeNotesViewModel::ResetFilter()
             else
                 sAddress = ra::util::String::Printf(L"%s\n- %s", pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nAddress + nBytes - 1));
 
-            const auto& sNote = pCodeNote.GetNote();
+            const auto& sNote = pMemoryNote.GetNote();
             auto* vmNote = m_vNotes.GetItemAt(nIndex);
             if (vmNote)
             {
@@ -138,7 +138,7 @@ void CodeNotesViewModel::ResetFilter()
     SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_nUnfilteredNotesCount, m_nUnfilteredNotesCount));
 }
 
-void CodeNotesViewModel::ApplyFilter()
+void MemoryNotesViewModel::ApplyFilter()
 {
     const bool bOnlyUnpublished = OnlyUnpublishedFilter();
 
@@ -167,18 +167,18 @@ void CodeNotesViewModel::ApplyFilter()
     SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
 }
 
-void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
+void MemoryNotesViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (pGameContext.IsGameLoading())
         return;
 
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes == nullptr || pCodeNotes->GetIndirectSource(nAddress) != 0xFFFFFFFF)
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    if (pMemoryNotes == nullptr || pMemoryNotes->GetIndirectSource(nAddress) != 0xFFFFFFFF)
         return;
 
-    m_nUnfilteredNotesCount = pCodeNotes->CodeNoteCount();
-    const bool bNoteModified = pCodeNotes->IsNoteModified(nAddress);
+    m_nUnfilteredNotesCount = pMemoryNotes->NoteCount();
+    const bool bNoteModified = pMemoryNotes->IsNoteModified(nAddress);
 
     bool bMatchesFilter = false;
     if (bNoteModified || !OnlyUnpublishedFilter())
@@ -222,8 +222,8 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
             {
                 pNote->SetModified(bNoteModified);
 
-                const auto* pCodeNote = pCodeNotes->FindCodeNoteModel(nAddress);
-                pNote->nBytes = pCodeNote ? pCodeNote->GetBytes() : 0;
+                const auto* pMemoryNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
+                pNote->nBytes = pMemoryNote ? pMemoryNote->GetBytes() : 0;
                 std::wstring sAddress;
                 if (pNote->nBytes <= 4)
                     sAddress = pMemoryContext.FormatAddress(nAddress);
@@ -258,21 +258,21 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const
     SetValue(ResultCountProperty, ra::util::String::Printf(L"%u/%u", m_vNotes.Count(), m_nUnfilteredNotesCount));
 }
 
-void CodeNotesViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)
+void MemoryNotesViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)
 {
-    if (args.Property == CodeNoteViewModel::IsSelectedProperty)
+    if (args.Property == MemoryNoteViewModel::IsSelectedProperty)
     {
         if (!m_vNotes.IsUpdating())
             OnSelectedItemsChanged();
     }
 }
 
-void CodeNotesViewModel::OnEndViewModelCollectionUpdate()
+void MemoryNotesViewModel::OnEndViewModelCollectionUpdate()
 {
     OnSelectedItemsChanged();
 }
 
-void CodeNotesViewModel::OnSelectedItemsChanged()
+void MemoryNotesViewModel::OnSelectedItemsChanged()
 {
     bool bHasModifiedSelectedItem = false;
     for (const auto& pNote : m_vNotes)
@@ -294,7 +294,7 @@ void CodeNotesViewModel::OnSelectedItemsChanged()
     SetValue(CanRevertCurrentAddressNoteProperty, bHasModifiedSelectedItem);
 }
 
-void CodeNotesViewModel::BookmarkSelected() const
+void MemoryNotesViewModel::BookmarkSelected() const
 {
     auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     if (!vmBookmarks.IsVisible())
@@ -303,7 +303,7 @@ void CodeNotesViewModel::BookmarkSelected() const
     vmBookmarks.Bookmarks().Items().BeginUpdate();
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
 
     int nCount = 0;
     for (const auto& pNote : m_vNotes)
@@ -312,10 +312,10 @@ void CodeNotesViewModel::BookmarkSelected() const
         {
             auto nSize = ra::data::Memory::Size::Unknown;
 
-            const auto* pCodeNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(pNote.nAddress, false) : nullptr;
-            if (pCodeNote != nullptr)
+            const auto* pMemoryNote = pMemoryNotes ? pMemoryNotes->FindMemoryNoteModel(pNote.nAddress, false) : nullptr;
+            if (pMemoryNote != nullptr)
             {
-                nSize = pCodeNote->GetMemSize();
+                nSize = pMemoryNote->GetMemSize();
                 if (vmBookmarks.Bookmarks().Sizes().FindItemIndex(LookupItemViewModel::IdProperty, ra::etoi(nSize)) == -1)
                 {
                     // size not supported by viewer
@@ -355,7 +355,7 @@ void CodeNotesViewModel::BookmarkSelected() const
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Can only create 100 new bookmarks at a time.");
 }
 
-void CodeNotesViewModel::GetSelectedModifiedNoteAddresses(std::vector<ra::data::ByteAddress>& vAddresses)
+void MemoryNotesViewModel::GetSelectedModifiedNoteAddresses(std::vector<ra::data::ByteAddress>& vAddresses)
 {
     for (const auto& pNote : m_vNotes)
     {
@@ -364,7 +364,7 @@ void CodeNotesViewModel::GetSelectedModifiedNoteAddresses(std::vector<ra::data::
     }
 }
 
-void CodeNotesViewModel::PublishSelected()
+void MemoryNotesViewModel::PublishSelected()
 {
     if (!CanPublishCurrentAddressNote())
         return;
@@ -376,8 +376,8 @@ void CodeNotesViewModel::PublishSelected()
         return;
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes == nullptr)
+    auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    if (pMemoryNotes == nullptr)
         return;
 
     if (vNotesToPublish.size() > 1)
@@ -393,20 +393,20 @@ void CodeNotesViewModel::PublishSelected()
     ra::ui::viewmodels::AssetUploadViewModel vmAssetUpload;
 
     for (const auto nAddress : vNotesToPublish)
-        vmAssetUpload.QueueCodeNote(*pCodeNotes, nAddress);
+        vmAssetUpload.QueueMemoryNote(*pMemoryNotes, nAddress);
 
     vmAssetUpload.ShowModal(*this);
     if (vNotesToPublish.size() > 1 || vmAssetUpload.HasFailures())
         vmAssetUpload.ShowResults();
 
     std::vector<ra::data::models::AssetModelBase*> vAssets;
-    vAssets.push_back(pCodeNotes);
+    vAssets.push_back(pMemoryNotes);
     pGameContext.Assets().SaveAssets(vAssets);
 
     OnSelectedItemsChanged();
 }
 
-void CodeNotesViewModel::RevertSelected()
+void MemoryNotesViewModel::RevertSelected()
 {
     std::vector<ra::data::ByteAddress> vNotesToRevert;
     GetSelectedModifiedNoteAddresses(vNotesToRevert);
@@ -415,8 +415,8 @@ void CodeNotesViewModel::RevertSelected()
         return;
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes == nullptr)
+    auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    if (pMemoryNotes == nullptr)
         return;
 
     ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
@@ -437,17 +437,17 @@ void CodeNotesViewModel::RevertSelected()
 
     for (const auto nAddress : vNotesToRevert)
     {
-        const auto* pOriginalNote = pCodeNotes->GetServerCodeNote(nAddress);
+        const auto* pOriginalNote = pMemoryNotes->GetServerNote(nAddress);
         if (pOriginalNote)
         {
             // make a copy as the original note will be destroyed when we eliminate the modification
             const std::wstring pOriginalNoteCopy = *pOriginalNote;
-            pCodeNotes->SetCodeNote(nAddress, pOriginalNoteCopy);
+            pMemoryNotes->SetNote(nAddress, pOriginalNoteCopy);
         }
     }
 
     std::vector<ra::data::models::AssetModelBase*> vAssets;
-    vAssets.push_back(pCodeNotes);
+    vAssets.push_back(pMemoryNotes);
     pGameContext.Assets().SaveAssets(vAssets);
 
     OnSelectedItemsChanged();

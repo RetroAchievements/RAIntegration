@@ -98,6 +98,7 @@
     <ClInclude Include="testutil\HttpAsserts.hh" />
     <ClInclude Include="testutil\MemoryAsserts.hh" />
     <ClInclude Include="testutil\MemoryRegionAsserts.hh" />
+    <ClInclude Include="testutil\ValueAsserts.hh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

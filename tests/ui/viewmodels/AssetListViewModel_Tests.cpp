@@ -22,6 +22,7 @@
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
+#include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -4476,7 +4477,7 @@ public:
         vmLeaderboard->SetSubmitTrigger("0xH1234=1");
         vmLeaderboard->SetCancelTrigger("0xH1234=2");
         vmLeaderboard->SetValueDefinition("0xH5555*2");
-        vmLeaderboard->SetValueFormat(ra::data::ValueFormat::Score);
+        vmLeaderboard->SetValueFormat(ra::data::Value::Format::Score);
         vmLeaderboard->SetLowerIsBetter(true);
         vmLeaderboard->SetAuthor(L"OriginalAuthor");
 
@@ -4517,7 +4518,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=1"), pLeaderboard->GetSubmitTrigger());
         Assert::AreEqual(std::string("0xH1234=2"), pLeaderboard->GetCancelTrigger());
         Assert::AreEqual(std::string("0xH5555*2"), pLeaderboard->GetValueDefinition());
-        Assert::AreEqual(ra::data::ValueFormat::Score, pLeaderboard->GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Score, pLeaderboard->GetValueFormat());
         Assert::IsTrue(pLeaderboard->IsLowerBetter());
         Assert::AreEqual(std::wstring(L"DisplayName"), pLeaderboard->GetAuthor());
 

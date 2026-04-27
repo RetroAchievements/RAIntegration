@@ -4,9 +4,9 @@
 
 #include "CppUnitTest.hh"
 
-#include "services\Http.hh"
+#include "services/Http.hh"
 
-#include "util\TypeCasts.hh"
+#include "util/TypeCasts.hh"
 
 namespace Microsoft {
 namespace VisualStudio {

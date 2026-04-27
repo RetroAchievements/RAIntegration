@@ -7,7 +7,6 @@
 #include "data\models\AchievementModel.hh"
 #include "data\models\LeaderboardModel.hh"
 
-#include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
@@ -15,6 +14,7 @@
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
+#include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -123,7 +123,7 @@ private:
 
         LeaderboardModel& AddLeaderboard(AssetCategory nCategory, const std::wstring& sTitle,
             const std::wstring& sDescription, const std::string& sStartTrigger, const std::string& sSubmitTrigger,
-            const std::string& sCancelTrigger, const std::string& sValueDefinition, ra::data::ValueFormat nFormat)
+            const std::string& sCancelTrigger, const std::string& sValueDefinition, ra::data::Value::Format nFormat)
         {
             auto vmLeaderboard = std::make_unique<LeaderboardModel>();
             if (nCategory == AssetCategory::Local)
@@ -1074,7 +1074,7 @@ public:
     TEST_METHOD(TestSingleLocalLeaderboard)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::ValueFormat::Score);
+        auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
         Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
 
         vmUpload.QueueAsset(pLeaderboard);
@@ -1092,7 +1092,7 @@ public:
             Assert::AreEqual(std::string("0xH1234=2"), pRequest.SubmitTrigger);
             Assert::AreEqual(std::string("0xH1234=3"), pRequest.CancelTrigger);
             Assert::AreEqual(std::string("0xH2345"), pRequest.ValueDefinition);
-            Assert::AreEqual(ra::data::ValueFormat::Score, pRequest.Format);
+            Assert::AreEqual(ra::data::Value::Format::Score, pRequest.Format);
             Assert::IsFalse(pRequest.LowerIsBetter);
             Assert::AreEqual(0U, pRequest.LeaderboardId);
 
@@ -1118,7 +1118,7 @@ public:
         AssetUploadViewModelHarness vmUpload;
         vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
         auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1",
-                                                     "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::ValueFormat::Score);
+                                                     "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
         pLeaderboard.SetSubsetID(22U);
         Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
 
@@ -1137,7 +1137,7 @@ public:
                 Assert::AreEqual(std::string("0xH1234=2"), pRequest.SubmitTrigger);
                 Assert::AreEqual(std::string("0xH1234=3"), pRequest.CancelTrigger);
                 Assert::AreEqual(std::string("0xH2345"), pRequest.ValueDefinition);
-                Assert::AreEqual(ra::data::ValueFormat::Score, pRequest.Format);
+                Assert::AreEqual(ra::data::Value::Format::Score, pRequest.Format);
                 Assert::IsFalse(pRequest.LowerIsBetter);
                 Assert::AreEqual(0U, pRequest.LeaderboardId);
 

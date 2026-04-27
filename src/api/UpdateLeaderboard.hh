@@ -4,7 +4,7 @@
 
 #include "ApiCall.hh"
 
-#include "data\Types.hh"
+#include "data\Value.hh"
 
 namespace ra {
 namespace api {
@@ -29,7 +29,7 @@ public:
         std::string SubmitTrigger;
         std::string CancelTrigger;
         std::string ValueDefinition;
-        ra::data::ValueFormat Format{ ra::data::ValueFormat::Value };
+        ra::data::Value::Format Format{ ra::data::Value::Format::Value };
         bool LowerIsBetter{ false };
 
         using Callback = std::function<void(const Response& response)>;

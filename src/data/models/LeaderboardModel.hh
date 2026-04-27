@@ -4,7 +4,7 @@
 
 #include "data/models/AssetModelBase.hh"
 
-#include "data\Types.hh"
+#include "data/Value.hh"
 
 struct rc_client_leaderboard_info_t;
 struct rc_lboard_t;
@@ -130,17 +130,12 @@ public:
     /// <summary>
     /// Gets the value format.
     /// </summary>
-    ValueFormat GetValueFormat() const { return ra::itoe<ValueFormat>(GetValue(ValueFormatProperty)); }
+    Value::Format GetValueFormat() const { return ra::itoe<Value::Format>(GetValue(ValueFormatProperty)); }
 
     /// <summary>
     /// Sets the value format.
     /// </summary>
-    void SetValueFormat(ValueFormat nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
-
-    /// <summary>
-    /// Converts a raw score into a display string.
-    /// </summary>
-    std::string FormatScore(int nValue) const;
+    void SetValueFormat(Value::Format nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not lower values are better.

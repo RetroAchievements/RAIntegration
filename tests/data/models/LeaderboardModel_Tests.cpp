@@ -5,10 +5,10 @@
 #include "services\impl\StringTextWriter.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
-#include "tests\data\DataAsserts.hh"
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
+#include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockGameContext.hh"
 
@@ -65,7 +65,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=2"), leaderboard.GetCancelTrigger());
         Assert::AreEqual(std::string("0xH1234=3"), leaderboard.GetSubmitTrigger());
         Assert::AreEqual(std::string("0xH1234"), leaderboard.GetValueDefinition());
-        Assert::AreEqual(ValueFormat::Frames, leaderboard.GetValueFormat());
+        Assert::AreEqual(Value::Format::Frames, leaderboard.GetValueFormat());
         Assert::AreEqual(std::wstring(L"Title"), leaderboard.GetName());
         Assert::AreEqual(std::wstring(L"Desc"), leaderboard.GetDescription());
         Assert::IsFalse(leaderboard.IsLowerBetter());
@@ -85,7 +85,7 @@ public:
         Assert::AreEqual(std::string("0xH1234<2"), leaderboard.GetCancelTrigger());
         Assert::AreEqual(std::string("0xH1234>3"), leaderboard.GetSubmitTrigger());
         Assert::AreEqual(std::string("M:0xH1234"), leaderboard.GetValueDefinition());
-        Assert::AreEqual(ValueFormat::Centiseconds, leaderboard.GetValueFormat());
+        Assert::AreEqual(Value::Format::Centiseconds, leaderboard.GetValueFormat());
         Assert::AreEqual(std::wstring(L"My Title"), leaderboard.GetName());
         Assert::AreEqual(std::wstring(L"My Desc"), leaderboard.GetDescription());
         Assert::IsTrue(leaderboard.IsLowerBetter());
@@ -105,7 +105,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=2"), leaderboard.GetCancelTrigger());
         Assert::AreEqual(std::string("0xH1234=3"), leaderboard.GetSubmitTrigger());
         Assert::AreEqual(std::string("0xH1234"), leaderboard.GetValueDefinition());
-        Assert::AreEqual(ValueFormat::Frames, leaderboard.GetValueFormat());
+        Assert::AreEqual(Value::Format::Frames, leaderboard.GetValueFormat());
         Assert::AreEqual(std::wstring(L"Title"), leaderboard.GetName());
         Assert::AreEqual(std::wstring(L"Desc"), leaderboard.GetDescription());
         Assert::IsFalse(leaderboard.IsLowerBetter());
@@ -125,13 +125,13 @@ public:
         Assert::AreEqual(std::string(), leaderboard.GetCancelTrigger());
         Assert::AreEqual(std::string(), leaderboard.GetSubmitTrigger());
         Assert::AreEqual(std::string(), leaderboard.GetValueDefinition());
-        Assert::AreEqual(ValueFormat::Value, leaderboard.GetValueFormat());
+        Assert::AreEqual(Value::Format::Value, leaderboard.GetValueFormat());
         Assert::AreEqual(std::wstring(), leaderboard.GetName());
         Assert::AreEqual(std::wstring(), leaderboard.GetDescription());
         Assert::IsFalse(leaderboard.IsLowerBetter());
     }
 
-    void TestSerializeValueFormat(ValueFormat nFormat, const std::string& sFormat)
+    void TestSerializeValueFormat(Value::Format nFormat, const std::string& sFormat)
     {
         LeaderboardModelHarness leaderboard;
         leaderboard.SetID(1U);
@@ -159,20 +159,20 @@ public:
 
     TEST_METHOD(TestSerializeValueFormats)
     {
-        TestSerializeValueFormat(ValueFormat::Score, "SCORE");
-        TestSerializeValueFormat(ValueFormat::Value, "VALUE");
-        TestSerializeValueFormat(ValueFormat::Frames, "TIME");
-        TestSerializeValueFormat(ValueFormat::Centiseconds, "MILLISECS");
-        TestSerializeValueFormat(ValueFormat::Seconds, "TIMESECS");
-        TestSerializeValueFormat(ValueFormat::Minutes, "MINUTES");
-        TestSerializeValueFormat(ValueFormat::SecondsAsMinutes, "SECS_AS_MINS");
-        TestSerializeValueFormat(ValueFormat::Fixed1, "FIXED1");
-        TestSerializeValueFormat(ValueFormat::Fixed2, "FIXED2");
-        TestSerializeValueFormat(ValueFormat::Fixed3, "FIXED3");
-        TestSerializeValueFormat(ValueFormat::Tens, "TENS");
-        TestSerializeValueFormat(ValueFormat::Hundreds, "HUNDREDS");
-        TestSerializeValueFormat(ValueFormat::Thousands, "THOUSANDS");
-        TestSerializeValueFormat(ValueFormat::UnsignedValue, "UNSIGNED");
+        TestSerializeValueFormat(Value::Format::Score, "SCORE");
+        TestSerializeValueFormat(Value::Format::Value, "VALUE");
+        TestSerializeValueFormat(Value::Format::Frames, "TIME");
+        TestSerializeValueFormat(Value::Format::Centiseconds, "MILLISECS");
+        TestSerializeValueFormat(Value::Format::Seconds, "TIMESECS");
+        TestSerializeValueFormat(Value::Format::Minutes, "MINUTES");
+        TestSerializeValueFormat(Value::Format::SecondsAsMinutes, "SECS_AS_MINS");
+        TestSerializeValueFormat(Value::Format::Fixed1, "FIXED1");
+        TestSerializeValueFormat(Value::Format::Fixed2, "FIXED2");
+        TestSerializeValueFormat(Value::Format::Fixed3, "FIXED3");
+        TestSerializeValueFormat(Value::Format::Tens, "TENS");
+        TestSerializeValueFormat(Value::Format::Hundreds, "HUNDREDS");
+        TestSerializeValueFormat(Value::Format::Thousands, "THOUSANDS");
+        TestSerializeValueFormat(Value::Format::UnsignedValue, "UNSIGNED");
     }
 
     TEST_METHOD(TestTransactionalProperties)
@@ -182,17 +182,17 @@ public:
         leaderboard.SetName(L"Title");
         leaderboard.SetDescription(L"Desc");
         leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
-        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetValueFormat(Value::Format::Value);
         leaderboard.SetLowerIsBetter(true);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
 
         Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
 
-        leaderboard.SetValueFormat(ValueFormat::Score);
+        leaderboard.SetValueFormat(Value::Format::Score);
         Assert::AreEqual(AssetChanges::Modified, leaderboard.GetChanges());
 
-        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetValueFormat(Value::Format::Value);
         Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
 
         leaderboard.SetLowerIsBetter(false);
@@ -208,7 +208,7 @@ public:
         leaderboard.SetID(1U);
         leaderboard.SetName(L"Title");
         leaderboard.SetDescription(L"Desc");
-        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetValueFormat(Value::Format::Value);
         leaderboard.SetLowerIsBetter(true);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
@@ -240,7 +240,7 @@ public:
         leaderboard.SetName(L"Title");
         leaderboard.SetDescription(L"Desc");
         leaderboard.SetDefinition("STA:N:0xH1234=1::SUB:N:0xH1234=2::CAN:N:0xH1234=3::VAL:0xH1234");
-        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetValueFormat(Value::Format::Value);
         leaderboard.SetLowerIsBetter(true);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
@@ -268,7 +268,7 @@ public:
         leaderboard.SetName(L"Title");
         leaderboard.SetDescription(L"Desc");
         leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
-        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetValueFormat(Value::Format::Value);
         leaderboard.SetLowerIsBetter(true);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
@@ -304,7 +304,7 @@ public:
         leaderboard.SetName(L"Title");
         leaderboard.SetDescription(L"Desc");
         leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
-        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetValueFormat(Value::Format::Value);
         leaderboard.SetLowerIsBetter(true);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
@@ -340,7 +340,7 @@ public:
         leaderboard.SetName(L"Title");
         leaderboard.SetDescription(L"Desc");
         leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
-        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetValueFormat(Value::Format::Value);
         leaderboard.SetLowerIsBetter(true);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
@@ -379,7 +379,7 @@ public:
         leaderboard.SetName(L"Title");
         leaderboard.SetDescription(L"Desc");
         leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
-        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetValueFormat(Value::Format::Value);
         leaderboard.SetLowerIsBetter(true);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();

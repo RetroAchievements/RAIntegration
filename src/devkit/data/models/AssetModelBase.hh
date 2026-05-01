@@ -20,7 +20,7 @@ enum class AssetType
     Leaderboard,
     RichPresence,
     LocalBadges,
-    CodeNotes,
+    MemoryNotes,
     MemoryRegions,
 };
 

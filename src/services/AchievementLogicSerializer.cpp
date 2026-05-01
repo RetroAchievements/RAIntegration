@@ -298,10 +298,10 @@ void AchievementLogicSerializer::AppendHitTarget(std::string& sBuffer, uint32_t 
     }
 }
 
-std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models::CodeNoteModel& pRootNote,
-    const ra::data::models::CodeNoteModel& pLeafNote)
+std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models::MemoryNoteModel& pRootNote,
+    const ra::data::models::MemoryNoteModel& pLeafNote)
 {
-    std::vector<const ra::data::models::CodeNoteModel*> vChain;
+    std::vector<const ra::data::models::MemoryNoteModel*> vChain;
     if (!pLeafNote.GetPointerChain(vChain, pRootNote))
         return std::string();
 

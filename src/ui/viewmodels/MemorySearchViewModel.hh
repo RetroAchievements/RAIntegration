@@ -348,11 +348,11 @@ public:
         unsigned nCurrentValue = 0;
         bool bMatchesFilter = false;
         bool bHasBookmark = false;
-        bool bHasCodeNote = false;
+        bool bHasMemoryNote = false;
         bool bHasBeenModified = false;
 
         void UpdateRowColor();
-        void UpdateCodeNote(const std::wstring& sNote);
+        void UpdateMemoryNote(const std::wstring& sNote);
     };
 
     /// <summary>
@@ -507,8 +507,8 @@ protected:
     // GameContext::NotifyTarget
     void OnBeforeActiveGameChanged() override;
     void OnActiveGameChanged() override;
-    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote) override;
-    void OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
+    void OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote) override;
+    void OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
     void SaveResults(ra::services::TextWriter& sFile, std::function<bool(int)> pProgressCallback) const;
 

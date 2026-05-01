@@ -15,7 +15,7 @@ enum class StorageItemType
 {
     None = 0,
     GameData,
-    CodeNotes,
+    MemoryNotes,
     RichPresence,
     UserAchievements,
     Badge,

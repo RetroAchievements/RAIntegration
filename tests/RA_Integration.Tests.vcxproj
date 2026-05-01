@@ -112,13 +112,13 @@
     <ClCompile Include="..\src\ui\viewmodels\AssetUploadViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\ChallengeIndicatorViewModel.cpp" />
-    <ClCompile Include="..\src\ui\viewmodels\CodeNotesViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\EmulatorViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\IntegrationMenuViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryBookmarksViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryInspectorViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\MemoryNotesViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryRegionsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemorySearchViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryViewerViewModel.cpp" />
@@ -184,7 +184,7 @@
     <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\AssetUploadViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
-    <ClCompile Include="ui\viewmodels\CodeNotesViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\MemoryNotesViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\IntegrationMenuViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel_Tests.cpp" />

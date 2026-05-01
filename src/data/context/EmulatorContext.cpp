@@ -506,8 +506,8 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     if (pWindowManager.AssetEditor.IsVisible())
         pDesktop.CloseWindow(pWindowManager.AssetEditor);
 
-    if (pWindowManager.CodeNotes.IsVisible())
-        pDesktop.CloseWindow(pWindowManager.CodeNotes);
+    if (pWindowManager.MemoryNotes.IsVisible())
+        pDesktop.CloseWindow(pWindowManager.MemoryNotes);
 
     if (pWindowManager.PointerFinder.IsVisible())
         pDesktop.CloseWindow(pWindowManager.PointerFinder);

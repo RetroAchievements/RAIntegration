@@ -178,8 +178,8 @@ protected:
     void OnBeforeActiveGameChanged() override;
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
-    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
-    void OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
+    void OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
+    void OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
 private:
     static const IntModelProperty CurrentAddressValueProperty;
@@ -193,7 +193,7 @@ private:
     MemoryViewerViewModel m_pViewer;
     unsigned m_nGameId = 0;
     bool m_bSyncingAddress = false;
-    bool m_bSyncingCodeNote = false;
+    bool m_bSyncingMemoryNote = false;
     bool m_bNoteIsIndirect = false;
     ra::data::ByteAddress m_nUncommittedNoteAddress = 0xFFFFFFFF;
     std::wstring m_sOriginalNoteValue;

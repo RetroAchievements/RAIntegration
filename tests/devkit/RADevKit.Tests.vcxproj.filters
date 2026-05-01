@@ -43,7 +43,7 @@
     <ClCompile Include="data\models\AssetModelBase_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CodeNoteModel_Tests.cpp">
+    <ClCompile Include="data\models\MemoryNoteModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
     <ClCompile Include="util\StringBuilder_Tests.cpp">
@@ -58,7 +58,7 @@
     <ClCompile Include="data\Memory_Tests.cpp">
       <Filter>data</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CodeNotesModel_Tests.cpp">
+    <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
   </ItemGroup>

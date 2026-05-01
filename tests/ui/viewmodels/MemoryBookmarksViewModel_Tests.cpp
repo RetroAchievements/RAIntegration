@@ -236,12 +236,12 @@ public:
         Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Items().Count());
     }
 
-    TEST_METHOD(TestLoadBookmarksDescriptionFromCodeNotes)
+    TEST_METHOD(TestLoadBookmarksDescriptionFromMemoryNotes)
     {
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -258,12 +258,12 @@ public:
         Assert::IsFalse(bookmark.IsCustomDescription());
     }
 
-    TEST_METHOD(TestLoadBookmarksDescriptionFromMultilineCodeNotes)
+    TEST_METHOD(TestLoadBookmarksDescriptionFromMultilineMemoryNotes)
     {
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"[8-bit] Selected Character\r\n1=Bob\r\n2=Jane");
+        bookmarks.mockGameContext.SetNote(1234U, L"[8-bit] Selected Character\r\n1=Bob\r\n2=Jane");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
                                                   "{\"Bookmarks\":[{\"MemAddr\":\"0xH4D2\"}]}");
 
@@ -319,12 +319,12 @@ public:
         Assert::IsTrue(bookmark.IsCustomDescription());
     }
 
-    TEST_METHOD(TestLoadBookmarksDescriptionFromFileAndCodeNotes)
+    TEST_METHOD(TestLoadBookmarksDescriptionFromFileAndMemoryNotes)
     {
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"desc\"}]}");
 
@@ -341,12 +341,12 @@ public:
         Assert::IsTrue(bookmark.IsCustomDescription());
     }
 
-    TEST_METHOD(TestLoadBookmarksDescriptionFromFileMatchesCodeNote)
+    TEST_METHOD(TestLoadBookmarksDescriptionFromFileMatchesMemoryNote)
     {
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"Note description\"}]}");
 
@@ -368,7 +368,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
 
         bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>([](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
         {
@@ -405,7 +405,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -429,7 +429,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Description\":\"Old\",\"Size\":10}]}");
 
@@ -502,12 +502,12 @@ public:
         Assert::AreEqual(std::string("{\"Bookmarks\":[{\"MemAddr\":\"I:0xG005c7d80&536870911_M:fI00000038\"}]}"), sContents);
     }
 
-    TEST_METHOD(TestCodeNoteChanged)
+    TEST_METHOD(TestMemoryNoteChanged)
     {
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -524,7 +524,7 @@ public:
         Assert::AreEqual(ra::data::Memory::Format::Hex, bookmark->GetFormat());
         Assert::IsFalse(bookmark->IsCustomDescription());
 
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"New description");
+        bookmarks.mockGameContext.SetNote(1234U, L"New description");
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         bookmark = bookmarks.GetBookmark(0);
@@ -537,12 +537,12 @@ public:
         Assert::IsFalse(bookmark->IsCustomDescription());
     }
 
-    TEST_METHOD(TestCodeNoteChangedCustomDescription)
+    TEST_METHOD(TestMemoryNoteChangedCustomDescription)
     {
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"My Description\"}]}");
 
@@ -559,7 +559,7 @@ public:
         Assert::AreEqual(ra::data::Memory::Format::Hex, bookmark->GetFormat());
         Assert::IsTrue(bookmark->IsCustomDescription());
 
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"New description");
+        bookmarks.mockGameContext.SetNote(1234U, L"New description");
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         bookmark = bookmarks.GetBookmark(0);
@@ -571,7 +571,7 @@ public:
         Assert::AreEqual(ra::data::Memory::Format::Hex, bookmark->GetFormat());
         Assert::IsTrue(bookmark->IsCustomDescription());
 
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"My Description");
+        bookmarks.mockGameContext.SetNote(1234U, L"My Description");
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         bookmark = bookmarks.GetBookmark(0);
@@ -583,7 +583,7 @@ public:
         Assert::AreEqual(ra::data::Memory::Format::Hex, bookmark->GetFormat());
         Assert::IsFalse(bookmark->IsCustomDescription());
 
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"New description");
+        bookmarks.mockGameContext.SetNote(1234U, L"New description");
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Items().Count());
         bookmark = bookmarks.GetBookmark(0);
@@ -673,7 +673,7 @@ public:
     TEST_METHOD(TestAddBookmarkForNote)
     {
         MemoryBookmarksViewModelHarness bookmarks;
-        bookmarks.mockGameContext.SetCodeNote(2345U, L"NOTE");
+        bookmarks.mockGameContext.SetNote(2345U, L"NOTE");
 
         bookmarks.AddBookmark(2345U, ra::data::Memory::Size::SixteenBit);
 
@@ -694,7 +694,7 @@ public:
     TEST_METHOD(TestAddBookmarkForNoteHex)
     {
         MemoryBookmarksViewModelHarness bookmarks;
-        bookmarks.mockGameContext.SetCodeNote(2345U, L"NOTE (BCD)");
+        bookmarks.mockGameContext.SetNote(2345U, L"NOTE (BCD)");
 
         bookmarks.AddBookmark(2345U, ra::data::Memory::Size::SixteenBit);
 
@@ -902,7 +902,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockFileSystem.MockFile(L"E:\\Data\\3-Bookmarks.json",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -939,7 +939,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockFileSystem.MockFile(L"E:\\Data\\3-Bookmarks.json",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -970,7 +970,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"MemAddr\":\"0xH04d2\"}]}");
 
@@ -1009,7 +1009,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -1392,7 +1392,7 @@ public:
 
         bookmarks.AddBookmark(4U, ra::data::Memory::Size::Double32);
 
-        // without a code note, assume the user is bookmarking the 4 significant bytes
+        // without a memory note, assume the user is bookmarking the 4 significant bytes
         Assert::AreEqual({1U}, bookmarks.Bookmarks().Items().Count());
         const auto& bookmark = *bookmarks.GetBookmark(0);
         Assert::AreEqual(std::wstring(L""), bookmark.GetRealNote());
@@ -1410,8 +1410,8 @@ public:
         Assert::AreEqual(std::wstring(L"0.0"), bookmark.GetPreviousValue());
         Assert::AreEqual(1U, bookmark.GetChanges());
 
-        // with a code note, align the bookmark to the 4 significant bytes
-        bookmarks.mockGameContext.SetCodeNote(8U, L"[double] Note description");
+        // with a memory note, align the bookmark to the 4 significant bytes
+        bookmarks.mockGameContext.SetNote(8U, L"[double] Note description");
 
         bookmarks.AddBookmark(8U, ra::data::Memory::Size::Double32);
         Assert::AreEqual({2U}, bookmarks.Bookmarks().Items().Count());
@@ -1431,7 +1431,7 @@ public:
         Assert::AreEqual(std::wstring(L"0.0"), bookmark2.GetPreviousValue());
         Assert::AreEqual(1U, bookmark2.GetChanges());
 
-        // does not exactly match code note address, assume the user is bookmarking the most significant bytes
+        // does not exactly match memory note address, assume the user is bookmarking the most significant bytes
         bookmarks.AddBookmark(12U, ra::data::Memory::Size::Double32);
         Assert::AreEqual({3U}, bookmarks.Bookmarks().Items().Count());
         const auto& bookmark3 = *bookmarks.GetBookmark(2);
@@ -1610,7 +1610,7 @@ public:
 
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(0x0020U, L"[16-bit pointer]\n+8: data here");
+        bookmarks.mockGameContext.SetNote(0x0020U, L"[16-bit pointer]\n+8: data here");
 
         bookmarks.AddBookmark("I:0x 0020_M:0xW0008");
 
@@ -1638,14 +1638,14 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(0x0020U, L"[16-bit pointer]\n+8: data here");
+        bookmarks.mockGameContext.SetNote(0x0020U, L"[16-bit pointer]\n+8: data here");
         bookmarks.mockFileSystem.MockFile(L"E:\\Data\\3-Bookmarks.json",
                                           "{\"Bookmarks\":[{\"MemAddr\":\"I:0x 0020_M:0xW0008\"}]}");
 
         std::array<unsigned char, 64> memory{};
         bookmarks.mockEmulatorContext.MockMemory(memory);
         memory.at(0x20) = 0x10;
-        bookmarks.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+        bookmarks.mockGameContext.Assets().FindMemoryNotes()->DoFrame();
 
         bool bDialogSeen = false;
         bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
@@ -1681,7 +1681,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
                                                   "{\"Bookmarks\":[{\"MemAddr\":\"0xH04d2\"}]}");
 
@@ -1719,14 +1719,14 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(0x0020U, L"[16-bit pointer]\n+8: data here");
+        bookmarks.mockGameContext.SetNote(0x0020U, L"[16-bit pointer]\n+8: data here");
         bookmarks.mockFileSystem.MockFile(L"E:\\Data\\3-Bookmarks.json",
             "{\"Bookmarks\":[{\"Size\":15,\"MemAddr\":\"I:0x 0020_M:0xW0008\"}]}");
 
         std::array<unsigned char, 64> memory{};
         bookmarks.mockEmulatorContext.MockMemory(memory);
         memory.at(0x20) = 0x10;
-        bookmarks.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+        bookmarks.mockGameContext.Assets().FindMemoryNotes()->DoFrame();
 
         bool bDialogSeen = false;
         bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
@@ -1762,7 +1762,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 

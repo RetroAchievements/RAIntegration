@@ -78,9 +78,9 @@ void MemorySearchViewModel::SearchResultViewModel::UpdateRowColor()
         // green if bookmark found
         SetRowColor(ra::ui::Color(0xFFE0FFE0));
     }
-    else if (bHasCodeNote)
+    else if (bHasMemoryNote)
     {
-        // blue if code note found
+        // blue if memory note found
         SetRowColor(ra::ui::Color(0xFFE0F0FF));
     }
     else if (bHasBeenModified)
@@ -95,17 +95,17 @@ void MemorySearchViewModel::SearchResultViewModel::UpdateRowColor()
     }
 }
 
-void MemorySearchViewModel::SearchResultViewModel::UpdateCodeNote(const std::wstring& sNote)
+void MemorySearchViewModel::SearchResultViewModel::UpdateMemoryNote(const std::wstring& sNote)
 {
     if (!sNote.empty())
     {
-        bHasCodeNote = true;
+        bHasMemoryNote = true;
         SetDescription(sNote);
         SetDescriptionColor(ra::ui::Color(ra::to_unsigned(DescriptionColorProperty.GetDefaultValue())));
     }
     else
     {
-        bHasCodeNote = false;
+        bHasMemoryNote = false;
 
         const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
         const auto* pRegion = pConsoleContext.GetMemoryRegion(nAddress);
@@ -856,7 +856,7 @@ void MemorySearchViewModel::UpdateResults()
         const auto& vmBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
 
         m_vResults.RemoveNotifyTarget(*this);
         m_vResults.BeginUpdate();
@@ -894,9 +894,9 @@ void MemorySearchViewModel::UpdateResults()
 
             UpdateResult(*pRow, pCurrentResults.pResults, pResult, true, pMemoryContext);
 
-            const auto pCodeNote = (pCodeNotes != nullptr) ?
-                pCodeNotes->FindCodeNote(pResult.nAddress, pResult.nSize) : std::wstring(L"");
-            pRow->UpdateCodeNote(pCodeNote);
+            const auto pMemoryNote = (pMemoryNotes != nullptr) ?
+                pMemoryNotes->FindNote(pResult.nAddress, pResult.nSize) : std::wstring(L"");
+            pRow->UpdateMemoryNote(pMemoryNote);
 
             pRow->SetSelected(m_vSelectedAddresses.find(pRow->nAddress) != m_vSelectedAddresses.end());
 
@@ -973,7 +973,7 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
     return sTooltip;
 }
 
-void MemorySearchViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring&)
+void MemorySearchViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring&)
 {
     if (m_vResults.Count() == 0 || m_vSearchResults.empty())
         return;
@@ -981,11 +981,11 @@ void MemorySearchViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, co
     const auto nSize = m_vSearchResults.front()->pResults.GetSize();
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (!pCodeNotes)
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    if (!pMemoryNotes)
         return;
 
-    const auto* pNote = pCodeNotes->FindCodeNoteModel(nAddress);
+    const auto* pNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
     if (pNote != nullptr)
     {
         // if updated note is before first visible result, ignore
@@ -1000,19 +1000,19 @@ void MemorySearchViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, co
 
     for (auto& pRow : m_vResults)
     {
-        const auto sProcessedNote = pCodeNotes->FindCodeNote(pRow.nAddress, nSize);
-        pRow.UpdateCodeNote(sProcessedNote);
+        const auto sProcessedNote = pMemoryNotes->FindNote(pRow.nAddress, nSize);
+        pRow.UpdateMemoryNote(sProcessedNote);
     }
 }
 
-void MemorySearchViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
+void MemorySearchViewModel::OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     for (auto& pRow : m_vResults)
     {
         if (pRow.nAddress == nOldAddress)
-            pRow.UpdateCodeNote(L"");
+            pRow.UpdateMemoryNote(L"");
         else if (pRow.nAddress == nNewAddress)
-            pRow.UpdateCodeNote(sNote);
+            pRow.UpdateMemoryNote(sNote);
     }
 }
 

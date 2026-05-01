@@ -1,4 +1,4 @@
-#include "data/models/CodeNotesModel.hh"
+#include "data/models/MemoryNotesModel.hh"
 
 #include "services/impl/StringTextWriter.hh"
 
@@ -16,10 +16,10 @@ namespace data {
 namespace models {
 namespace tests {
 
-TEST_CLASS(CodeNotesModel_Tests)
+TEST_CLASS(MemoryNotesModel_Tests)
 {
 private:
-    class CodeNotesModelHarness : public CodeNotesModel
+    class MemoryNotesModelHarness : public MemoryNotesModel
     {
     public:
         ra::context::mocks::MockConsoleContext mockConsoleContext;
@@ -29,14 +29,14 @@ private:
 
         std::map<unsigned, std::wstring> mNewNotes;
 
-        void InitializeCodeNotes(unsigned nGameId)
+        void InitializeNotes(unsigned nGameId)
         {
             mNewNotes.clear();
 
             if (!mockRcClient.HasMockResponse("r=codenotes2&g=1"))
                 mockRcClient.MockResponse("r=codenotes2&g=1", "{\"Success\":true,\"CodeNotes\":[]}");
 
-            CodeNotesModel::Refresh(nGameId,
+            MemoryNotesModel::Refresh(nGameId,
                 [this](ra::data::ByteAddress nAddress, const std::wstring& sNewNote) {
                     mNewNotes[nAddress] = sNewNote;
                 },
@@ -48,30 +48,30 @@ private:
                 []() {});
         }
 
-        void MonitorCodeNoteChanges()
+        void MonitorNoteChanges()
         {
-            m_fCodeNoteChanged = [this](ra::data::ByteAddress nAddress, const std::wstring& sNewNote) {
+            m_fMemoryNoteChanged = [this](ra::data::ByteAddress nAddress, const std::wstring& sNewNote) {
                 mNewNotes[nAddress] = sNewNote;
             };
-            m_fCodeNoteMoved = [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) {
+            m_fMemoryNoteMoved = [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) {
                 if (nOldAddress != 0xFFFFFFFF)
                     mNewNotes[nOldAddress] = L"";
                 mNewNotes[nNewAddress] = sNote;
             };
         }
 
-        using CodeNotesModel::AddCodeNote;
+        using MemoryNotesModel::AddMemoryNote;
 
         void AssertNoNote(ra::data::ByteAddress nAddress)
         {
-            const auto* pNote = FindCodeNote(nAddress);
+            const auto* pNote = FindNote(nAddress);
             if (pNote != nullptr)
                 Assert::Fail(ra::util::String::Printf(L"Note found for address %04X: %s", nAddress, *pNote).c_str());
         }
 
         void AssertNote(ra::data::ByteAddress nAddress, const std::wstring& sExpected)
         {
-            const auto* pNote = FindCodeNote(nAddress);
+            const auto* pNote = FindNote(nAddress);
             Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X", nAddress).c_str());
             Ensures(pNote != nullptr);
 
@@ -80,7 +80,7 @@ private:
 
         void AssertNote(ra::data::ByteAddress nAddress, const std::wstring& sExpected, Memory::Size nExpectedSize, unsigned nExpectedBytes = 0)
         {
-            const auto* pNote = FindCodeNoteModel(nAddress);
+            const auto* pNote = FindMemoryNoteModel(nAddress);
             Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X", nAddress).c_str());
             Ensures(pNote != nullptr);
 
@@ -98,7 +98,7 @@ private:
 
         void AssertIndirectNote(ra::data::ByteAddress nAddress, unsigned nOffset, const std::wstring& sExpected)
         {
-            const auto* pNote = FindCodeNoteModel(nAddress);
+            const auto* pNote = FindMemoryNoteModel(nAddress);
             Assert::IsNotNull(pNote, ra::util::String::Printf(L"Note not found for address %04X", nAddress).c_str());
             Ensures(pNote != nullptr);
             pNote = pNote->GetPointerNoteAtOffset(nOffset);
@@ -109,7 +109,7 @@ private:
 
         void AssertNoteDescription(ra::data::ByteAddress nAddress, const wchar_t* sExpected)
         {
-            const auto* pNote = FindCodeNoteModel(nAddress);
+            const auto* pNote = FindMemoryNoteModel(nAddress);
             if (!sExpected)
             {
                 if (pNote != nullptr)
@@ -190,11 +190,11 @@ private:
 public:
     TEST_METHOD(TestInitialValues)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
 
-        Assert::AreEqual(AssetType::CodeNotes, notes.GetType());
+        Assert::AreEqual(AssetType::MemoryNotes, notes.GetType());
         Assert::AreEqual(0U, notes.GetID());
-        Assert::AreEqual(std::wstring(L"Code Notes"), notes.GetName());
+        Assert::AreEqual(std::wstring(L"Memory Notes"), notes.GetName());
         Assert::AreEqual(std::wstring(L""), notes.GetDescription());
         Assert::AreEqual(AssetCategory::Core, notes.GetCategory());
         Assert::AreEqual(AssetState::Inactive, notes.GetState());
@@ -202,16 +202,16 @@ public:
     }
 
     
-    TEST_METHOD(TestLoadCodeNotes)
+    TEST_METHOD(TestLoadMemoryNotes)
     {
-        CodeNotesModelHarness notes;
-        notes.mockRcClient.MockResponse("r=codenotes2&g=1", CodeNotesModelHarness::MockNotesResponse({
+        MemoryNotesModelHarness notes;
+        notes.mockRcClient.MockResponse("r=codenotes2&g=1", MemoryNotesModelHarness::MockNotesResponse({
             { 1234, "Note1", "Author" },
             { 2345, "Note2", "Author" },
             { 3456, "Note3\nSubNote3", "Author" },
         }));
 
-        notes.InitializeCodeNotes(1U);
+        notes.InitializeNotes(1U);
         Assert::AreEqual({3U}, notes.mNewNotes.size());
 
         notes.AssertNote(1234U, L"Note1");
@@ -224,19 +224,19 @@ public:
         notes.AssertNote(3456U, L"Note3\r\nSubNote3");
         Assert::AreEqual(std::wstring(L"Note3\r\nSubNote3"), notes.mNewNotes[3456U]);
 
-        const auto* pNote4 = notes.FindCodeNote(4567U);
+        const auto* pNote4 = notes.FindNote(4567U);
         Assert::IsNull(pNote4);
 
-        notes.InitializeCodeNotes(0U);
-        const auto* pNote5 = notes.FindCodeNote(1234U);
+        notes.InitializeNotes(0U);
+        const auto* pNote5 = notes.FindNote(1234U);
         Assert::IsNull(pNote5);
         Assert::AreEqual({0U}, notes.mNewNotes.size());
     }
 
-    TEST_METHOD(TestFindCodeNoteSized)
+    TEST_METHOD(TestFindNoteSized)
     {
-        CodeNotesModelHarness notes;
-        notes.mockRcClient.MockResponse("r=codenotes2&g=1", CodeNotesModelHarness::MockNotesResponse({
+        MemoryNotesModelHarness notes;
+        notes.mockRcClient.MockResponse("r=codenotes2&g=1", MemoryNotesModelHarness::MockNotesResponse({
             { 1000, "[32-bit] Location", "Author" },
             { 1100, "Level", "Author" },
             { 1110, "[16-bit] Strength", "Author" },
@@ -244,66 +244,66 @@ public:
             { 1200, "[20 bytes] Items\r\nMultiline ignored", "Author" },
         }));
 
-        notes.InitializeCodeNotes(1U);
+        notes.InitializeNotes(1U);
 
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(100, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(999, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [1/4]"), notes.FindCodeNote(1000, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [2/4]"), notes.FindCodeNote(1001, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [3/4]"), notes.FindCodeNote(1002, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [4/4]"), notes.FindCodeNote(1003, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(1004, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Level"), notes.FindCodeNote(1100, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[16-bit] Strength [1/2]"), notes.FindCodeNote(1110, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[16-bit] Strength [2/2]"), notes.FindCodeNote(1111, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[8 byte] Exp [1/8]"), notes.FindCodeNote(1120, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[8 byte] Exp [2/8]"), notes.FindCodeNote(1121, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[8 byte] Exp [3/8]"), notes.FindCodeNote(1122, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[8 byte] Exp [4/8]"), notes.FindCodeNote(1123, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[8 byte] Exp [5/8]"), notes.FindCodeNote(1124, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[8 byte] Exp [6/8]"), notes.FindCodeNote(1125, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[8 byte] Exp [7/8]"), notes.FindCodeNote(1126, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[8 byte] Exp [8/8]"), notes.FindCodeNote(1127, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(1128, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[20 bytes] Items [1/20]"), notes.FindCodeNote(1200, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[20 bytes] Items [10/20]"), notes.FindCodeNote(1209, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"[20 bytes] Items [20/20]"), notes.FindCodeNote(1219, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(1300, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(100, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(999, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [1/4]"), notes.FindNote(1000, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [2/4]"), notes.FindNote(1001, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [3/4]"), notes.FindNote(1002, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [4/4]"), notes.FindNote(1003, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(1004, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Level"), notes.FindNote(1100, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [1/2]"), notes.FindNote(1110, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [2/2]"), notes.FindNote(1111, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [1/8]"), notes.FindNote(1120, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [2/8]"), notes.FindNote(1121, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [3/8]"), notes.FindNote(1122, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [4/8]"), notes.FindNote(1123, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [5/8]"), notes.FindNote(1124, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [6/8]"), notes.FindNote(1125, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [7/8]"), notes.FindNote(1126, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [8/8]"), notes.FindNote(1127, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(1128, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[20 bytes] Items [1/20]"), notes.FindNote(1200, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[20 bytes] Items [10/20]"), notes.FindNote(1209, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"[20 bytes] Items [20/20]"), notes.FindNote(1219, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(1300, Memory::Size::EightBit));
 
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(100, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(998, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindCodeNote(999, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindCodeNote(1000, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindCodeNote(1001, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindCodeNote(1002, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindCodeNote(1003, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(1004, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Level [partial]"), notes.FindCodeNote(1099, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Level [partial]"), notes.FindCodeNote(1100, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), notes.FindCodeNote(1109, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"[16-bit] Strength"), notes.FindCodeNote(1110, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), notes.FindCodeNote(1111, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(100, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(998, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindNote(999, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindNote(1000, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindNote(1001, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindNote(1002, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindNote(1003, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(1004, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), notes.FindNote(1099, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), notes.FindNote(1100, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), notes.FindNote(1109, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength"), notes.FindNote(1110, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), notes.FindNote(1111, Memory::Size::SixteenBit));
 
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(100, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(996, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindCodeNote(997, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location"), notes.FindCodeNote(1000, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindCodeNote(1001, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindCodeNote(1002, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindCodeNote(1003, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(1004, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L"Level [partial]"), notes.FindCodeNote(1097, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L"Level [partial]"), notes.FindCodeNote(1100, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), notes.FindCodeNote(1107, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), notes.FindCodeNote(1110, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), notes.FindCodeNote(1111, Memory::Size::ThirtyTwoBit));
-        Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(1112, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(100, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(996, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindNote(997, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location"), notes.FindNote(1000, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindNote(1001, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindNote(1002, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), notes.FindNote(1003, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(1004, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), notes.FindNote(1097, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), notes.FindNote(1100, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), notes.FindNote(1107, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), notes.FindNote(1110, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), notes.FindNote(1111, Memory::Size::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L""), notes.FindNote(1112, Memory::Size::ThirtyTwoBit));
     }
 
-    TEST_METHOD(TestFindCodeNoteStart)
+    TEST_METHOD(TestFindNoteStart)
     {
-        CodeNotesModelHarness notes;
-        notes.mockRcClient.MockResponse("r=codenotes2&g=1", CodeNotesModelHarness::MockNotesResponse({
+        MemoryNotesModelHarness notes;
+        notes.mockRcClient.MockResponse("r=codenotes2&g=1", MemoryNotesModelHarness::MockNotesResponse({
             { 1000, "[32-bit] Location", "Author" },
             { 1100, "Level", "Author" },
             { 1110, "[16-bit] Strength", "Author" },
@@ -311,41 +311,41 @@ public:
             { 1200, "[20 bytes] Items", "Author" },
         }));
 
-        notes.InitializeCodeNotes(1U);
+        notes.InitializeNotes(1U);
 
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(100));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(100));
 
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(999));
-        Assert::AreEqual(1000U, notes.FindCodeNoteStart(1000));
-        Assert::AreEqual(1000U, notes.FindCodeNoteStart(1001));
-        Assert::AreEqual(1000U, notes.FindCodeNoteStart(1002));
-        Assert::AreEqual(1000U, notes.FindCodeNoteStart(1003));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1004));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(999));
+        Assert::AreEqual(1000U, notes.FindNoteStart(1000));
+        Assert::AreEqual(1000U, notes.FindNoteStart(1001));
+        Assert::AreEqual(1000U, notes.FindNoteStart(1002));
+        Assert::AreEqual(1000U, notes.FindNoteStart(1003));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1004));
 
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1099));
-        Assert::AreEqual(1100U, notes.FindCodeNoteStart(1100));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1101));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1099));
+        Assert::AreEqual(1100U, notes.FindNoteStart(1100));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1101));
 
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1109));
-        Assert::AreEqual(1110U, notes.FindCodeNoteStart(1110));
-        Assert::AreEqual(1110U, notes.FindCodeNoteStart(1111));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1112));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1109));
+        Assert::AreEqual(1110U, notes.FindNoteStart(1110));
+        Assert::AreEqual(1110U, notes.FindNoteStart(1111));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1112));
 
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1119));
-        Assert::AreEqual(1120U, notes.FindCodeNoteStart(1120));
-        Assert::AreEqual(1120U, notes.FindCodeNoteStart(1127));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1128));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1119));
+        Assert::AreEqual(1120U, notes.FindNoteStart(1120));
+        Assert::AreEqual(1120U, notes.FindNoteStart(1127));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1128));
 
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1199));
-        Assert::AreEqual(1200U, notes.FindCodeNoteStart(1200));
-        Assert::AreEqual(1200U, notes.FindCodeNoteStart(1219));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1220));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1199));
+        Assert::AreEqual(1200U, notes.FindNoteStart(1200));
+        Assert::AreEqual(1200U, notes.FindNoteStart(1219));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1220));
     }
 
-    TEST_METHOD(TestFindCodeNoteStartOverlap)
+    TEST_METHOD(TestFindNoteStartOverlap)
     {
-        CodeNotesModelHarness notes;
-        notes.mockRcClient.MockResponse("r=codenotes2&g=1", CodeNotesModelHarness::MockNotesResponse({
+        MemoryNotesModelHarness notes;
+        notes.mockRcClient.MockResponse("r=codenotes2&g=1", MemoryNotesModelHarness::MockNotesResponse({
             { 1000, "[100 bytes] Outer", "Author" },
             { 1010, "[10 bytes] Inner", "Author" },
             { 1015, "Individual", "Author" },
@@ -354,59 +354,59 @@ public:
             { 1200, "Extra", "Author" },
         }));
 
-        notes.InitializeCodeNotes(1U);
+        notes.InitializeNotes(1U);
 
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(999));
-        Assert::AreEqual(1000U, notes.FindCodeNoteStart(1000));
-        Assert::AreEqual(1000U, notes.FindCodeNoteStart(1009));
-        Assert::AreEqual(1010U, notes.FindCodeNoteStart(1010));
-        Assert::AreEqual(1010U, notes.FindCodeNoteStart(1014));
-        Assert::AreEqual(1015U, notes.FindCodeNoteStart(1015));
-        Assert::AreEqual(1010U, notes.FindCodeNoteStart(1016));
-        Assert::AreEqual(1010U, notes.FindCodeNoteStart(1019));
-        Assert::AreEqual(1000U, notes.FindCodeNoteStart(1020));
-        Assert::AreEqual(1000U, notes.FindCodeNoteStart(1099));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1100));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1119));
-        Assert::AreEqual(1120U, notes.FindCodeNoteStart(1120));
-        Assert::AreEqual(1120U, notes.FindCodeNoteStart(1124));
-        Assert::AreEqual(1125U, notes.FindCodeNoteStart(1125));
-        Assert::AreEqual(1125U, notes.FindCodeNoteStart(1126));
-        Assert::AreEqual(1125U, notes.FindCodeNoteStart(1130));
-        Assert::AreEqual(1125U, notes.FindCodeNoteStart(1134));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1135));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1199));
-        Assert::AreEqual(1200U, notes.FindCodeNoteStart(1200));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(1201));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(999));
+        Assert::AreEqual(1000U, notes.FindNoteStart(1000));
+        Assert::AreEqual(1000U, notes.FindNoteStart(1009));
+        Assert::AreEqual(1010U, notes.FindNoteStart(1010));
+        Assert::AreEqual(1010U, notes.FindNoteStart(1014));
+        Assert::AreEqual(1015U, notes.FindNoteStart(1015));
+        Assert::AreEqual(1010U, notes.FindNoteStart(1016));
+        Assert::AreEqual(1010U, notes.FindNoteStart(1019));
+        Assert::AreEqual(1000U, notes.FindNoteStart(1020));
+        Assert::AreEqual(1000U, notes.FindNoteStart(1099));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1100));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1119));
+        Assert::AreEqual(1120U, notes.FindNoteStart(1120));
+        Assert::AreEqual(1120U, notes.FindNoteStart(1124));
+        Assert::AreEqual(1125U, notes.FindNoteStart(1125));
+        Assert::AreEqual(1125U, notes.FindNoteStart(1126));
+        Assert::AreEqual(1125U, notes.FindNoteStart(1130));
+        Assert::AreEqual(1125U, notes.FindNoteStart(1134));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1135));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1199));
+        Assert::AreEqual(1200U, notes.FindNoteStart(1200));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(1201));
     }
 
-    TEST_METHOD(TestSetCodeNote)
+    TEST_METHOD(TestSetNote)
     {
-        CodeNotesModelHarness notes;
-        notes.InitializeCodeNotes(1U);
+        MemoryNotesModelHarness notes;
+        notes.InitializeNotes(1U);
         notes.mNewNotes.clear();
-        Assert::AreEqual({ 0U }, notes.CodeNoteCount());
+        Assert::AreEqual({ 0U }, notes.NoteCount());
 
-        notes.SetCodeNote(1234, L"Note1");
+        notes.SetNote(1234, L"Note1");
 
         notes.AssertNote(1234U, L"Note1");
         Assert::AreEqual(std::wstring(L"Note1"), notes.mNewNotes[1234U]);
-        Assert::AreEqual({ 1U }, notes.CodeNoteCount());
+        Assert::AreEqual({ 1U }, notes.NoteCount());
 
-        notes.SetCodeNote(1234, L"");
+        notes.SetNote(1234, L"");
         notes.AssertNoNote(1234U);
         Assert::AreEqual(std::wstring(L""), notes.mNewNotes[1234U]);
-        Assert::AreEqual({ 0U }, notes.CodeNoteCount());
+        Assert::AreEqual({ 0U }, notes.NoteCount());
     }
 
     TEST_METHOD(TestFindCodeNotePointer1)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sNote =
             L"Bomb Timer Pointer (24-bit)\n"
             L"+03 - Bombs Defused\n"
             L"+04 - Bomb Timer";
-        notes.AddCodeNote(12, "Author", sNote);
+        notes.AddMemoryNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x04;
@@ -419,15 +419,15 @@ public:
         notes.AssertNote(4+4U, L"Bomb Timer", Memory::Size::Unknown, 1);
     }
 
-    TEST_METHOD(TestFindCodeNotePointer2)
+    TEST_METHOD(TestFindNotePointer2)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sNote =
             L"Pointer [32bit]\n"
             L"+0x1B | Equipment - Head - String[24 Bytes]\n"
             L"---DEFAULT_HEAD = Barry's Head\n"
             L"---FRAGGER_HEAD = Fragger Helmet";
-        notes.AddCodeNote(12, "Author", sNote);
+        notes.AddMemoryNote(12, "Author", sNote);
         std::array<unsigned char, 64> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x04;
@@ -440,15 +440,15 @@ public:
             L"---FRAGGER_HEAD = Fragger Helmet", Memory::Size::Array, 24);
     }
 
-    TEST_METHOD(TestFindCodeNotePointer3)
+    TEST_METHOD(TestFindNotePointer3)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sNote =
             L"[32-bit] Pointer for Races (only exists during Race Game)\n"
             L"+0x7F47 = [8-bit] Acorns collected in current track\n"
             L"+0x8000 = [8-bit] Current lap\n"
             L"+0x8033 = [16-bit] Total race time";
-        notes.AddCodeNote(12, "Author", sNote);
+        notes.AddMemoryNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x04;
@@ -461,9 +461,9 @@ public:
         notes.AssertNote(4+0x8033U, L"[16-bit] Total race time", Memory::Size::SixteenBit);
     }
 
-    TEST_METHOD(TestFindCodeNotePointer4)
+    TEST_METHOD(TestFindNotePointer4)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sNote =
             L"Pointer (16bit because negative)\n\n"
             L"Circuit:\n"
@@ -472,7 +472,7 @@ public:
             L"Free Run:\n"
             L"+0x1B5BE = Seconds 0x\n"
             L"+0x1B5CE = Lap";
-        notes.AddCodeNote(12, "Author", sNote);
+        notes.AddMemoryNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x04;
@@ -486,9 +486,9 @@ public:
         notes.AssertNote(4+0x1B5CEU, L"Lap", Memory::Size::Unknown, 1);
     }
 
-    TEST_METHOD(TestFindCodeNotePointer5)
+    TEST_METHOD(TestFindNotePointer5)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sNote =
             L"Pointer\r\n"
             L"[OFFSETS]\r\n"
@@ -497,7 +497,7 @@ public:
             L"+6 = Job Level (8-bit)\r\n"
             L"+20 = Stat Points (16-bit)\r\n"
             L"+22 = Skill Points (8-bit)";
-        notes.AddCodeNote(12, "Author", sNote);
+        notes.AddMemoryNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x04;
@@ -513,16 +513,16 @@ public:
         notes.AssertNote(4+22, L"Skill Points (8-bit)", Memory::Size::EightBit);
     }
 
-    TEST_METHOD(TestFindCodeNotePointerNested)
+    TEST_METHOD(TestFindNotePointerNested)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sNote =
             L"Pointer [32bit]\n"
             L"+4 | Pointer - Award - Tee Hee Two (32bit)\n"
             L"-- +2 | Flag\n"
             L"+8 | Pointer - Award - Pretty Woman (32bit)\n"
             L"-- +2 | Flag";
-        notes.AddCodeNote(12, "Author", sNote);
+        notes.AddMemoryNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x10;
@@ -539,15 +539,15 @@ public:
         notes.AssertNote(0x28+2U, L"Flag", Memory::Size::Unknown);
     }
 
-    TEST_METHOD(TestFindCodeNotePointerNonPrefixedOffsets)
+    TEST_METHOD(TestFindNotePointerNonPrefixedOffsets)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sNote =
             L"[24-bit] Mech stats pointer (health...)\n"
             L"+07 = Jump Jet {8-bit}\n"
             L"+5C = Right Leg Health {16-bit}\n"
             L"+5E = Left Leg Health {16-bit}";
-        notes.AddCodeNote(12, "Author", sNote);
+        notes.AddMemoryNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 4;
@@ -560,16 +560,16 @@ public:
         notes.AssertNoNote(4+0x5EU);
     }
 
-    TEST_METHOD(TestFindCodeNotePointerOverwrite)
+    TEST_METHOD(TestFindNotePointerOverwrite)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sNote =
             L"Pointer (16bit because negative)\n"
             L"+0x1B56E = Current Position\n"
             L"+0x1B57E = Total Racers\n"
             L"+0x1B56E = Seconds 0x\n"
             L"+0x1B5CE = Lap";
-        notes.AddCodeNote(12, "Author", sNote);
+        notes.AddMemoryNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 4;
@@ -583,9 +583,9 @@ public:
         notes.AssertNote(4+0x1B5CEU, L"Lap", Memory::Size::Unknown, 1);
     }
 
-    TEST_METHOD(TestFindCodeNoteSizedPointer)
+    TEST_METHOD(TestFindNoteSizedPointer)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sNote =
             L"Pointer\n"
             L"+1 = Unknown\n"
@@ -593,39 +593,39 @@ public:
             L"+4 = Medium (16-bit)\n"
             L"+6 = Large (32-bit)\n"
             L"+10 = Very Large (8 bytes)";
-        notes.AddCodeNote(12, "Author", sNote);
+        notes.AddMemoryNote(12, "Author", sNote);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(12) = 0x10;
         notes.DoFrame();
 
-        Assert::AreEqual(std::wstring(), notes.FindCodeNote(0, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Unknown [indirect]"), notes.FindCodeNote(0x10+1, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Small (8-bit) [indirect]"), notes.FindCodeNote(0x10+2, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Medium (16-bit) [1/2] [indirect]"), notes.FindCodeNote(0x10+4, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Medium (16-bit) [2/2] [indirect]"), notes.FindCodeNote(0x10+5, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Large (32-bit) [1/4] [indirect]"), notes.FindCodeNote(0x10+6, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Large (32-bit) [4/4] [indirect]"), notes.FindCodeNote(0x10+9, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [1/8] [indirect]"), notes.FindCodeNote(0x10+10, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [8/8] [indirect]"), notes.FindCodeNote(0x10+17, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(), notes.FindCodeNote(0x10+18, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(), notes.FindNote(0, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Unknown [indirect]"), notes.FindNote(0x10+1, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Small (8-bit) [indirect]"), notes.FindNote(0x10+2, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [1/2] [indirect]"), notes.FindNote(0x10+4, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [2/2] [indirect]"), notes.FindNote(0x10+5, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [1/4] [indirect]"), notes.FindNote(0x10+6, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [4/4] [indirect]"), notes.FindNote(0x10+9, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [1/8] [indirect]"), notes.FindNote(0x10+10, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [8/8] [indirect]"), notes.FindNote(0x10+17, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(), notes.FindNote(0x10+18, Memory::Size::EightBit));
 
-        Assert::AreEqual(std::wstring(L"Unknown [partial] [indirect]"), notes.FindCodeNote(0x10+0, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Unknown [partial] [indirect]"), notes.FindCodeNote(0x10+1, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Small (8-bit) [partial] [indirect]"), notes.FindCodeNote(0x10+2, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Medium (16-bit) [indirect]"), notes.FindCodeNote(0x10+4, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Medium (16-bit) [partial] [indirect]"), notes.FindCodeNote(0x10+5, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(0x10+6, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(0x10+9, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [partial] [indirect]"), notes.FindCodeNote(0x10+10, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [partial] [indirect]"), notes.FindCodeNote(0x10+17, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(), notes.FindCodeNote(0x10+18, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Unknown [partial] [indirect]"), notes.FindNote(0x10+0, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Unknown [partial] [indirect]"), notes.FindNote(0x10+1, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Small (8-bit) [partial] [indirect]"), notes.FindNote(0x10+2, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [indirect]"), notes.FindNote(0x10+4, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [partial] [indirect]"), notes.FindNote(0x10+5, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindNote(0x10+6, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindNote(0x10+9, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [partial] [indirect]"), notes.FindNote(0x10+10, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [partial] [indirect]"), notes.FindNote(0x10+17, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(), notes.FindNote(0x10+18, Memory::Size::SixteenBit));
     }
 
     
-    TEST_METHOD(TestFindCodeNoteSizedPointerOverflow)
+    TEST_METHOD(TestFindNoteSizedPointerOverflow)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
@@ -636,36 +636,36 @@ public:
             L"+0xFFFFFF88 = Small (8-bit)\n"   // 8+8=16
             L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
             L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
-        notes.AddCodeNote(4, "Author", sPointerNote);
-        notes.AddCodeNote(40, "Author", L"After [32-bit]");
-        notes.AddCodeNote(1, "Author", L"Before");
-        notes.AddCodeNote(20, "Author", L"In the middle");
+        notes.AddMemoryNote(4, "Author", sPointerNote);
+        notes.AddMemoryNote(40, "Author", L"After [32-bit]");
+        notes.AddMemoryNote(1, "Author", L"Before");
+        notes.AddMemoryNote(20, "Author", L"In the middle");
         notes.DoFrame();
 
-        Assert::AreEqual(std::wstring(), notes.FindCodeNote(0, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Before"), notes.FindCodeNote(1, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Pointer (32-bit) [1/4]"), notes.FindCodeNote(4, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Small (8-bit) [indirect]"), notes.FindCodeNote(16, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Medium (16-bit) [1/2] [indirect]"), notes.FindCodeNote(24, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Medium (16-bit) [2/2] [indirect]"), notes.FindCodeNote(25, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Large (32-bit) [1/4] [indirect]"), notes.FindCodeNote(32, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(L"Large (32-bit) [4/4] [indirect]"), notes.FindCodeNote(35, Memory::Size::EightBit));
-        Assert::AreEqual(std::wstring(), notes.FindCodeNote(36, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(), notes.FindNote(0, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Before"), notes.FindNote(1, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Pointer (32-bit) [1/4]"), notes.FindNote(4, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Small (8-bit) [indirect]"), notes.FindNote(16, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [1/2] [indirect]"), notes.FindNote(24, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [2/2] [indirect]"), notes.FindNote(25, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [1/4] [indirect]"), notes.FindNote(32, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [4/4] [indirect]"), notes.FindNote(35, Memory::Size::EightBit));
+        Assert::AreEqual(std::wstring(), notes.FindNote(36, Memory::Size::EightBit));
 
-        Assert::AreEqual(std::wstring(L"Before [partial]"), notes.FindCodeNote(0, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Before [partial]"), notes.FindCodeNote(1, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Pointer (32-bit) [partial]"), notes.FindCodeNote(4, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Small (8-bit) [partial] [indirect]"), notes.FindCodeNote(16, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Medium (16-bit) [indirect]"), notes.FindCodeNote(24, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Medium (16-bit) [partial] [indirect]"), notes.FindCodeNote(25, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(32, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(35, Memory::Size::SixteenBit));
-        Assert::AreEqual(std::wstring(), notes.FindCodeNote(36, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Before [partial]"), notes.FindNote(0, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Before [partial]"), notes.FindNote(1, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Pointer (32-bit) [partial]"), notes.FindNote(4, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Small (8-bit) [partial] [indirect]"), notes.FindNote(16, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [indirect]"), notes.FindNote(24, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [partial] [indirect]"), notes.FindNote(25, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindNote(32, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindNote(35, Memory::Size::SixteenBit));
+        Assert::AreEqual(std::wstring(), notes.FindNote(36, Memory::Size::SixteenBit));
     }
 
-    TEST_METHOD(TestFindCodeNoteBrokenPointerChain)
+    TEST_METHOD(TestFindNoteBrokenPointerChain)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sNote =
             L"Pointer [32bit]\r\n"
             L"+0 | Obj1 pointer\r\n"
@@ -674,7 +674,7 @@ public:
             L"+4 | Obj2 pointer\r\n"
             L"++0 | [32-bit] ID\r\n"
             L"+8 | Count";
-        notes.AddCodeNote(4U, "Author", sNote);
+        notes.AddMemoryNote(4U, "Author", sNote);
 
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
@@ -750,23 +750,23 @@ public:
         notes.AssertNoteDescription(2U, nullptr);
     }
 
-    TEST_METHOD(TestEnumerateCodeNotes)
+    TEST_METHOD(TestEnumerateMemoryNotes)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sPointerNote =
             L"Pointer\n"
             L"+8 = Unknown\n"
             L"+16 = Small (8-bit)";
-        notes.AddCodeNote(1234, "Author", sPointerNote);
-        notes.AddCodeNote(20, "Author", L"After [32-bit]");
-        notes.AddCodeNote(4, "Author", L"Before");
-        notes.AddCodeNote(12, "Author", L"In the middle");
+        notes.AddMemoryNote(1234, "Author", sPointerNote);
+        notes.AddMemoryNote(20, "Author", L"After [32-bit]");
+        notes.AddMemoryNote(4, "Author", L"Before");
+        notes.AddMemoryNote(12, "Author", L"In the middle");
         notes.DoFrame();
 
         int i = 0;
-        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, const CodeNoteModel& pCodeNote) {
-            const auto nBytes = pCodeNote.GetBytes();
-            const auto& sNote = pCodeNote.GetNote();
+        notes.EnumerateMemoryNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, const MemoryNoteModel& pMemoryNote) {
+            const auto nBytes = pMemoryNote.GetBytes();
+            const auto& sNote = pMemoryNote.GetNote();
 
             switch (i++)
             {
@@ -798,9 +798,9 @@ public:
         }, false);
     }
 
-    TEST_METHOD(TestEnumerateCodeNotesWithIndirect)
+    TEST_METHOD(TestEnumerateMemoryNotesWithIndirect)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         std::array<unsigned char, 128> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
         memory.at(120) = 0x02; // start with initial value for pointer
@@ -809,16 +809,16 @@ public:
             L"Pointer\n"
             L"+8 = Unknown\n"
             L"+16 = Small (16-bit)";
-        notes.AddCodeNote(120, "Author", sPointerNote);
-        notes.AddCodeNote(20, "Author", L"After [32-bit]");
-        notes.AddCodeNote(4, "Author", L"Before");
-        notes.AddCodeNote(12, "Author", L"In the middle");
+        notes.AddMemoryNote(120, "Author", sPointerNote);
+        notes.AddMemoryNote(20, "Author", L"After [32-bit]");
+        notes.AddMemoryNote(4, "Author", L"Before");
+        notes.AddMemoryNote(12, "Author", L"In the middle");
         notes.DoFrame();
 
         int i = 0;
-        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, const CodeNoteModel& pCodeNote) {
-            const auto nBytes = pCodeNote.GetBytes();
-            const auto& sNote = pCodeNote.GetNote();
+        notes.EnumerateMemoryNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, const MemoryNoteModel& pMemoryNote) {
+            const auto nBytes = pMemoryNote.GetBytes();
+            const auto& sNote = pMemoryNote.GetNote();
 
             switch (i++)
             {
@@ -860,9 +860,9 @@ public:
         }, true);
     }
     
-    TEST_METHOD(TestEnumerateCodeNotesWithIndirectOverflow)
+    TEST_METHOD(TestEnumerateMemoryNotesWithIndirectOverflow)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
@@ -873,16 +873,16 @@ public:
             L"+0xFFFFFF88 = Small (8-bit)\n"   // 8+8=16
             L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
             L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
-        notes.AddCodeNote(4, "Author", sPointerNote);
-        notes.AddCodeNote(40, "Author", L"After [32-bit]");
-        notes.AddCodeNote(1, "Author", L"Before");
-        notes.AddCodeNote(20, "Author", L"In the middle");
+        notes.AddMemoryNote(4, "Author", sPointerNote);
+        notes.AddMemoryNote(40, "Author", L"After [32-bit]");
+        notes.AddMemoryNote(1, "Author", L"Before");
+        notes.AddMemoryNote(20, "Author", L"In the middle");
         notes.DoFrame();
 
         int i = 0;
-        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, const CodeNoteModel& pCodeNote) {
-            const auto nBytes = pCodeNote.GetBytes();
-            const auto& sNote = pCodeNote.GetNote();
+        notes.EnumerateMemoryNotes([&i, &sPointerNote](ra::data::ByteAddress nAddress, const MemoryNoteModel& pMemoryNote) {
+            const auto nBytes = pMemoryNote.GetBytes();
+            const auto& sNote = pMemoryNote.GetNote();
 
             switch (i++)
             {
@@ -931,8 +931,8 @@ public:
 
     TEST_METHOD(TestDoFrame)
     {
-        CodeNotesModelHarness notes;
-        notes.MonitorCodeNoteChanges();
+        MemoryNotesModelHarness notes;
+        notes.MonitorNoteChanges();
 
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 0; i < memory.size(); i++)
@@ -945,7 +945,7 @@ public:
             L"+1 = Small (8-bit)\n"
             L"+2 = Medium (16-bit)\n"
             L"+4 = Large (32-bit)";
-        notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.AddMemoryNote(0x0000, "Author", sNote);
         notes.DoFrame();
 
         // should receive notifications for the pointer note, and for each subnote
@@ -1003,8 +1003,8 @@ public:
 
     TEST_METHOD(TestDoFrameRealAddressConversion)
     {
-        CodeNotesModelHarness notes;
-        notes.MonitorCodeNoteChanges();
+        MemoryNotesModelHarness notes;
+        notes.MonitorNoteChanges();
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
 
         std::array<unsigned char, 32> memory{};
@@ -1018,7 +1018,7 @@ public:
             L"+1 = Small (8-bit)\n"
             L"+2 = Medium (16-bit)\n"
             L"+4 = Large (32-bit)";
-        notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.AddMemoryNote(0x0000, "Author", sNote);
         notes.DoFrame();
 
         // should receive notifications for the pointer note, and for each subnote
@@ -1051,8 +1051,8 @@ public:
 
     TEST_METHOD(TestDoFrameRealAddressConversionBigEndian)
     {
-        CodeNotesModelHarness notes;
-        notes.MonitorCodeNoteChanges();
+        MemoryNotesModelHarness notes;
+        notes.MonitorNoteChanges();
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
 
         std::array<unsigned char, 32> memory{};
@@ -1066,7 +1066,7 @@ public:
             L"+1 = Small (8-bit)\n"
             L"+2 = Medium (16-bit)\n"
             L"+4 = Large (32-bit)";
-        notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.AddMemoryNote(0x0000, "Author", sNote);
         notes.DoFrame();
 
         // should receive notifications for the pointer note, and for each subnote
@@ -1099,8 +1099,8 @@ public:
     
     TEST_METHOD(TestDoFrameRealAddressConversionAvoidedByOverflow)
     {
-        CodeNotesModelHarness notes;
-        notes.MonitorCodeNoteChanges();
+        MemoryNotesModelHarness notes;
+        notes.MonitorNoteChanges();
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
 
         std::array<unsigned char, 32> memory{};
@@ -1114,7 +1114,7 @@ public:
             L"+0xFFFFFF81 = Small (8-bit)\n"
             L"+0xFFFFFF82 = Medium (16-bit)\n"
             L"+0xFFFFFF84 = Large (32-bit)";
-        notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.AddMemoryNote(0x0000, "Author", sNote);
         notes.DoFrame();
 
         // should receive notifications for the pointer note, and for each subnote
@@ -1147,8 +1147,8 @@ public:
 
     TEST_METHOD(TestFindCodeNoteStartPointer)
     {
-        CodeNotesModelHarness notes;
-        notes.MonitorCodeNoteChanges();
+        MemoryNotesModelHarness notes;
+        notes.MonitorNoteChanges();
 
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 0; i < memory.size(); i++)
@@ -1161,24 +1161,24 @@ public:
             L"+1 = Small (8-bit)\n"
             L"+2 = Medium (16-bit)\n"
             L"+4 = Large (32-bit)";
-        notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.AddMemoryNote(0x0000, "Author", sNote);
         notes.DoFrame();
 
         // indirect notes are at 0x11 (byte), 0x12 (word), and 0x14 (dword)
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(0x10));
-        Assert::AreEqual(0x11U, notes.FindCodeNoteStart(0x11));
-        Assert::AreEqual(0x12U, notes.FindCodeNoteStart(0x12));
-        Assert::AreEqual(0x12U, notes.FindCodeNoteStart(0x13));
-        Assert::AreEqual(0x14U, notes.FindCodeNoteStart(0x14));
-        Assert::AreEqual(0x14U, notes.FindCodeNoteStart(0x15));
-        Assert::AreEqual(0x14U, notes.FindCodeNoteStart(0x16));
-        Assert::AreEqual(0x14U, notes.FindCodeNoteStart(0x17));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(0x18));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(0x10));
+        Assert::AreEqual(0x11U, notes.FindNoteStart(0x11));
+        Assert::AreEqual(0x12U, notes.FindNoteStart(0x12));
+        Assert::AreEqual(0x12U, notes.FindNoteStart(0x13));
+        Assert::AreEqual(0x14U, notes.FindNoteStart(0x14));
+        Assert::AreEqual(0x14U, notes.FindNoteStart(0x15));
+        Assert::AreEqual(0x14U, notes.FindNoteStart(0x16));
+        Assert::AreEqual(0x14U, notes.FindNoteStart(0x17));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(0x18));
     }
 
     TEST_METHOD(TestFindCodeNoteStartPointerOverflow)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
@@ -1189,28 +1189,28 @@ public:
             L"+0xFFFFFF88 = Small (8-bit)\n"   // 8+8=16
             L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
             L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
-        notes.AddCodeNote(4, "Author", sPointerNote);
+        notes.AddMemoryNote(4, "Author", sPointerNote);
         notes.DoFrame();
 
         // indirect notes are at 16 (byte), 24 (word), and 32 (dword)
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(15));
-        Assert::AreEqual(16U, notes.FindCodeNoteStart(16));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(17));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(23));
-        Assert::AreEqual(24U, notes.FindCodeNoteStart(24));
-        Assert::AreEqual(24U, notes.FindCodeNoteStart(25));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(31));
-        Assert::AreEqual(32U, notes.FindCodeNoteStart(32));
-        Assert::AreEqual(32U, notes.FindCodeNoteStart(33));
-        Assert::AreEqual(32U, notes.FindCodeNoteStart(34));
-        Assert::AreEqual(32U, notes.FindCodeNoteStart(35));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(36));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(15));
+        Assert::AreEqual(16U, notes.FindNoteStart(16));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(17));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(23));
+        Assert::AreEqual(24U, notes.FindNoteStart(24));
+        Assert::AreEqual(24U, notes.FindNoteStart(25));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(31));
+        Assert::AreEqual(32U, notes.FindNoteStart(32));
+        Assert::AreEqual(32U, notes.FindNoteStart(33));
+        Assert::AreEqual(32U, notes.FindNoteStart(34));
+        Assert::AreEqual(32U, notes.FindNoteStart(35));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(36));
     }
 
     TEST_METHOD(TestGetIndirectSource)
     {
-        CodeNotesModelHarness notes;
-        notes.MonitorCodeNoteChanges();
+        MemoryNotesModelHarness notes;
+        notes.MonitorNoteChanges();
 
         std::array<unsigned char, 32> memory{};
         for (uint8_t i = 0; i < memory.size(); i++)
@@ -1223,8 +1223,8 @@ public:
             L"+1 = Small (8-bit)\n"
             L"+2 = Medium (16-bit)\n"
             L"+4 = Large (32-bit)";
-        notes.AddCodeNote(0x0000, "Author", sNote);
-        notes.AddCodeNote(0x0008, "Author", L"Not indirect");
+        notes.AddMemoryNote(0x0000, "Author", sNote);
+        notes.AddMemoryNote(0x0008, "Author", L"Not indirect");
         notes.DoFrame();
 
         // indirect notes are at 0x11 (byte), 0x12 (word), and 0x14 (dword)
@@ -1236,7 +1236,7 @@ public:
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x15));
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x16));
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x17));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(0x18));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(0x18));
 
         // non-indirect
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x08));
@@ -1244,7 +1244,7 @@ public:
 
     TEST_METHOD(TestGetIndirectSourceOverflow)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
@@ -1255,8 +1255,8 @@ public:
             L"+0xFFFFFF81 = Small (8-bit)\n"
             L"+0xFFFFFF82 = Medium (16-bit)\n"
             L"+0xFFFFFF84 = Large (32-bit)";
-        notes.AddCodeNote(0x0004, "Author", sNote);
-        notes.AddCodeNote(0x0008, "Author", L"Not indirect");
+        notes.AddMemoryNote(0x0004, "Author", sNote);
+        notes.AddMemoryNote(0x0008, "Author", L"Not indirect");
         notes.DoFrame();
 
         // indirect notes are at 0x11 (byte), 0x12 (word), and 0x14 (dword)
@@ -1268,7 +1268,7 @@ public:
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x15));
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x16));
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x17));
-        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(0x18));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindNoteStart(0x18));
 
         // non-indirect
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x08));
@@ -1276,46 +1276,46 @@ public:
     
     TEST_METHOD(TestSetServerCodeNote)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
-        notes.SetCodeNote(0x1234, L"This is a note.");
+        notes.SetNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
         notes.AssertNote(0x1234, std::wstring(L"This is a note."));
 
-        notes.SetServerCodeNote(0x1234, L"This is a note.");
+        notes.SetServerNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
         notes.AssertNote(0x1234, std::wstring(L"This is a note."));
 
-        notes.SetCodeNote(0x1234, L"This is a new note.");
+        notes.SetNote(0x1234, L"This is a new note.");
         Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
         notes.AssertNote(0x1234, std::wstring(L"This is a new note."));
 
-        notes.SetServerCodeNote(0x1234, L"This is a newer note.");
+        notes.SetServerNote(0x1234, L"This is a newer note.");
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
         notes.AssertNote(0x1234, std::wstring(L"This is a newer note."));
     }
 
     TEST_METHOD(TestSerialize)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
-        notes.SetCodeNote(0x1234, L"This is a note.");
+        notes.SetNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
         notes.AssertSerialize("N0:0x1234:\"This is a note.\"");
 
-        notes.SetCodeNote(0x1234, L"");
+        notes.SetNote(0x1234, L"");
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
     }
 
     TEST_METHOD(TestSerializeEscaped)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
-        notes.SetCodeNote(0x1234, L"16-bit pointer\n+2:\ta\n+4:\tb\n");
-        notes.SetCodeNote(0x0099, L"This string is \"quoted\".");
+        notes.SetNote(0x1234, L"16-bit pointer\n+2:\ta\n+4:\tb\n");
+        notes.SetNote(0x0099, L"This string is \"quoted\".");
         Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
         notes.AssertSerialize("N0:0x0099:\"This string is \\\"quoted\\\".\"\n"
                               "N0:0x1234:\"16-bit pointer\\n+2:\\ta\\n+4:\\tb\\n\"");
@@ -1323,21 +1323,21 @@ public:
 
     TEST_METHOD(TestSerializeDeleted)
     {
-        CodeNotesModelHarness notes;
-        notes.SetServerCodeNote(0x1234, L"This is a note.");
+        MemoryNotesModelHarness notes;
+        notes.SetServerNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
-        notes.SetCodeNote(0x1234, L"");
+        notes.SetNote(0x1234, L"");
         Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
         notes.AssertSerialize("N0:0x1234:\"\"");
 
-        notes.SetCodeNote(0x1234, L"This is a note.");
+        notes.SetNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
     }
 
     TEST_METHOD(TestDeserialize)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
         const std::string sSerialized = ":0x1234:\"This is a note.\"";
@@ -1351,7 +1351,7 @@ public:
 
     TEST_METHOD(TestDeserializeEscaped)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
         const std::string sSerialized = ":0x1234:\"16-bit pointer\\n+2:\\t\\\"a\\\"\\n+4:\\tb\\n\"";
@@ -1365,8 +1365,8 @@ public:
 
     TEST_METHOD(TestDeserializeUnchanged)
     {
-        CodeNotesModelHarness notes;
-        notes.SetServerCodeNote(0x1234, L"This is a note.");
+        MemoryNotesModelHarness notes;
+        notes.SetServerNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
         const std::string sSerialized = ":0x1234:\"This is a note.\"";
@@ -1380,8 +1380,8 @@ public:
 
     TEST_METHOD(TestDeserializeDeleted)
     {
-        CodeNotesModelHarness notes;
-        notes.SetServerCodeNote(0x1234, L"This is a note.");
+        MemoryNotesModelHarness notes;
+        notes.SetServerNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::None, notes.GetChanges());
 
         const std::string sSerialized = ":0x1234:\"\"";
@@ -1396,21 +1396,21 @@ public:
         Assert::IsTrue(notes.IsNoteModified(0x1234U));
 
         // committed deleted note does not exist
-        notes.SetServerCodeNote(0x1234U, L"");
+        notes.SetServerNote(0x1234U, L"");
         notes.AssertNoNote(0x1234);
     }
 
     TEST_METHOD(TestGetNextNoteAddress)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sPointerNote =
             L"Pointer\n"
             L"+8 = Unknown\n"
             L"+16 = Small (16-bit)";
-        notes.AddCodeNote(1234, "Author", sPointerNote);
-        notes.AddCodeNote(20, "Author", L"After [32-bit]");
-        notes.AddCodeNote(4, "Author", L"Before");
-        notes.AddCodeNote(12, "Author", L"In the middle");
+        notes.AddMemoryNote(1234, "Author", sPointerNote);
+        notes.AddMemoryNote(20, "Author", L"After [32-bit]");
+        notes.AddMemoryNote(4, "Author", L"Before");
+        notes.AddMemoryNote(12, "Author", L"In the middle");
         notes.DoFrame();
 
         Assert::AreEqual({4U}, notes.GetNextNoteAddress({0U}));
@@ -1430,7 +1430,7 @@ public:
 
     TEST_METHOD(TestGetNextNoteAddressOverflow)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
@@ -1441,10 +1441,10 @@ public:
             L"+0xFFFFFF88 = Small (8-bit)\n"   // 8+8=16
             L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
             L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
-        notes.AddCodeNote(4, "Author", sPointerNote);
-        notes.AddCodeNote(40, "Author", L"After [32-bit]");
-        notes.AddCodeNote(1, "Author", L"Before");
-        notes.AddCodeNote(20, "Author", L"In the middle");
+        notes.AddMemoryNote(4, "Author", sPointerNote);
+        notes.AddMemoryNote(40, "Author", L"After [32-bit]");
+        notes.AddMemoryNote(1, "Author", L"Before");
+        notes.AddMemoryNote(20, "Author", L"In the middle");
         notes.DoFrame();
 
         Assert::AreEqual({1U}, notes.GetNextNoteAddress({0U}));
@@ -1465,15 +1465,15 @@ public:
 
     TEST_METHOD(TestGetPreviousNoteAddress)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         const std::wstring sPointerNote =
             L"Pointer\n"
             L"+8 = Unknown\n"
             L"+16 = Small (16-bit)";
-        notes.AddCodeNote(1234, "Author", sPointerNote);
-        notes.AddCodeNote(20, "Author", L"After [32-bit]");
-        notes.AddCodeNote(4, "Author", L"Before");
-        notes.AddCodeNote(12, "Author", L"In the middle");
+        notes.AddMemoryNote(1234, "Author", sPointerNote);
+        notes.AddMemoryNote(20, "Author", L"After [32-bit]");
+        notes.AddMemoryNote(4, "Author", L"Before");
+        notes.AddMemoryNote(12, "Author", L"In the middle");
         notes.DoFrame();
 
         Assert::AreEqual({1234U}, notes.GetPreviousNoteAddress({0xFFFFFFFFU}));
@@ -1493,7 +1493,7 @@ public:
     
     TEST_METHOD(TestGetPreviousNoteAddressOverflow)
     {
-        CodeNotesModelHarness notes;
+        MemoryNotesModelHarness notes;
         notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::MemoryRegion::Type::SystemRAM, 0x80);
         std::array<unsigned char, 32> memory{};
         notes.mockEmulatorMemoryContext.MockMemory(memory);
@@ -1504,10 +1504,10 @@ public:
             L"+0xFFFFFF88 = Small (8-bit)\n"   // 8+8=16
             L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
             L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
-        notes.AddCodeNote(4, "Author", sPointerNote);
-        notes.AddCodeNote(40, "Author", L"After [32-bit]");
-        notes.AddCodeNote(1, "Author", L"Before");
-        notes.AddCodeNote(20, "Author", L"In the middle");
+        notes.AddMemoryNote(4, "Author", sPointerNote);
+        notes.AddMemoryNote(40, "Author", L"After [32-bit]");
+        notes.AddMemoryNote(1, "Author", L"Before");
+        notes.AddMemoryNote(20, "Author", L"In the middle");
         notes.DoFrame();
 
         Assert::AreEqual({40U}, notes.GetPreviousNoteAddress({0xFFFFFFFFU}));

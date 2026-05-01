@@ -143,8 +143,8 @@ static int DoShutdown()
         if (pWindowManager.AssetList.IsVisible())
             pDesktop.CloseWindow(pWindowManager.AssetList);
 
-        if (pWindowManager.CodeNotes.IsVisible())
-            pDesktop.CloseWindow(pWindowManager.CodeNotes);
+        if (pWindowManager.MemoryNotes.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.MemoryNotes);
 
         if (pWindowManager.PointerFinder.IsVisible())
             pDesktop.CloseWindow(pWindowManager.PointerFinder);

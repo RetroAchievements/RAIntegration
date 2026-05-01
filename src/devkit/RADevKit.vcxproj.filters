@@ -153,7 +153,7 @@
     <ClInclude Include="data\models\AssetModelBase.hh">
       <Filter>data\models</Filter>
     </ClInclude>
-    <ClInclude Include="data\models\CodeNoteModel.hh">
+    <ClInclude Include="data\models\MemoryNoteModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
     <ClInclude Include="util\StringBuilder.hh">
@@ -166,7 +166,7 @@
       <Filter>data\models</Filter>
     </ClInclude>
     <ClInclude Include="services\ILocalStorage.hh" />
-    <ClInclude Include="data\models\CodeNotesModel.hh" />
+    <ClInclude Include="data\models\MemoryNotesModel.hh" />
     <ClInclude Include="data\Value.hh" />
   </ItemGroup>
   <ItemGroup>
@@ -212,7 +212,7 @@
     <ClCompile Include="context\impl\EmulatorMemoryContext.cpp">
       <Filter>context\impl</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CodeNoteModel.cpp">
+    <ClCompile Include="data\models\MemoryNoteModel.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
     <ClCompile Include="data\models\AssetModelBase.cpp">
@@ -227,7 +227,7 @@
     <ClCompile Include="data\models\MemoryRegionsModel.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CodeNotesModel.cpp" />
+    <ClCompile Include="data\models\MemoryNotesModel.cpp" />
     <ClCompile Include="data\Value.cpp" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-#include "CodeNotesModel.hh"
+#include "MemoryNotesModel.hh"
 
 #include "context/IRcClient.hh"
 #include "context/UserContext.hh"
@@ -14,29 +14,29 @@ namespace ra {
 namespace data {
 namespace models {
 
-CodeNotesModel::CodeNotesModel() noexcept
+MemoryNotesModel::MemoryNotesModel() noexcept
 {
-    GSL_SUPPRESS_F6 SetValue(TypeProperty, ra::etoi(AssetType::CodeNotes));
-    GSL_SUPPRESS_F6 SetName(L"Code Notes");
+    GSL_SUPPRESS_F6 SetValue(TypeProperty, ra::etoi(AssetType::MemoryNotes));
+    GSL_SUPPRESS_F6 SetName(L"Memory Notes");
 }
 
-void CodeNotesModel::Refresh(unsigned int nGameId,
-    CodeNoteChangedFunction fCodeNoteChanged, CodeNoteMovedFunction fCodeNoteMoved,
+void MemoryNotesModel::Refresh(unsigned int nGameId,
+    MemoryNoteChangedFunction fMemoryNoteChanged, MemoryNoteMovedFunction fMemoryNoteMoved,
     std::function<void()> callback)
 {
-    m_vCodeNotes.clear();
+    m_vMemoryNotes.clear();
     m_bHasPointers = false;
 
     if (nGameId == 0)
     {
-        m_fCodeNoteChanged = nullptr;
-        m_fCodeNoteMoved = nullptr;
+        m_fMemoryNoteChanged = nullptr;
+        m_fMemoryNoteMoved = nullptr;
         callback();
         return;
     }
 
-    m_fCodeNoteChanged = fCodeNoteChanged;
-    m_fCodeNoteMoved = fCodeNoteMoved;
+    m_fMemoryNoteChanged = fMemoryNoteChanged;
+    m_fMemoryNoteMoved = fMemoryNoteMoved;
 
     if (callback == nullptr) // unit test workaround to avoid server call
         return;
@@ -61,7 +61,7 @@ void CodeNotesModel::Refresh(unsigned int nGameId,
         if (nResult != RC_OK)
         {
             ra::services::ServiceLocator::Get<ra::services::IMessageDispatcher>()
-                .ReportErrorMessage(L"Failed to download code notes",
+                .ReportErrorMessage(L"Failed to download memory notes",
                     ra::context::IRcClient::GetErrorMessage(nResult, response.response));
         }
         else
@@ -75,8 +75,8 @@ void CodeNotesModel::Refresh(unsigned int nGameId,
 
                 {
                     std::unique_lock<std::mutex> lock(m_oMutex);
-                    const auto pIter = m_mOriginalCodeNotes.find(pNote->address);
-                    if (pIter != m_mOriginalCodeNotes.end())
+                    const auto pIter = m_mOriginalNotes.find(pNote->address);
+                    if (pIter != m_mOriginalNotes.end())
                     {
                         pIter->second.first = pNote->author;
                         pIter->second.second = sNote;
@@ -84,21 +84,21 @@ void CodeNotesModel::Refresh(unsigned int nGameId,
                     }
                 }
 
-                AddCodeNote(pNote->address, pNote->author, sNote);
+                AddMemoryNote(pNote->address, pNote->author, sNote);
             }
         }
 
-        std::map<ra::data::ByteAddress, std::wstring> mPendingCodeNotes;
+        std::map<ra::data::ByteAddress, std::wstring> mPendingNotes;
         {
             std::unique_lock<std::mutex> lock(m_oMutex);
-            mPendingCodeNotes.swap(m_mPendingCodeNotes);
+            mPendingNotes.swap(m_mPendingNotes);
             m_bRefreshing = false;
         }
 
-        for (const auto& pNote : mPendingCodeNotes)
-            SetCodeNote(pNote.first, pNote.second);
+        for (const auto& pNote : mPendingNotes)
+            SetNote(pNote.first, pNote.second);
 
-        for (const auto& pNote : m_vCodeNotes)
+        for (const auto& pNote : m_vMemoryNotes)
         {
             if (pNote->IsPointer())
             {
@@ -113,15 +113,15 @@ void CodeNotesModel::Refresh(unsigned int nGameId,
 
 GSL_SUPPRESS_R30 // left has to be a const ref to the unique_ptr because the function is used in lower_bound
 GSL_SUPPRESS_R32 // left has to be a const ref to the unique_ptr because the function is used in lower_bound
-static int CompareNoteAddresses(const std::unique_ptr<CodeNoteModel>& left,
+static int CompareNoteAddresses(const std::unique_ptr<MemoryNoteModel>& left,
                                 ra::data::ByteAddress nAddress) noexcept
 {
     return left->GetAddress() < nAddress;
 }
 
-void CodeNotesModel::AddCodeNote(ra::data::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
+void MemoryNotesModel::AddMemoryNote(ra::data::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
 {
-    std::unique_ptr<CodeNoteModel> note = std::make_unique<CodeNoteModel>();
+    std::unique_ptr<MemoryNoteModel> note = std::make_unique<MemoryNoteModel>();
     note->SetAuthor(sAuthor);
     note->SetNote(sNote);
     note->SetAddress(nAddress);
@@ -132,57 +132,57 @@ void CodeNotesModel::AddCodeNote(ra::data::ByteAddress nAddress, const std::stri
 
     {
         std::unique_lock<std::mutex> lock(m_oMutex);
-        auto iter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
-        if (iter != m_vCodeNotes.end() && (*iter)->GetAddress() == note->GetAddress())
+        auto iter = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nAddress, CompareNoteAddresses);
+        if (iter != m_vMemoryNotes.end() && (*iter)->GetAddress() == note->GetAddress())
             iter->swap(note);
         else
-            m_vCodeNotes.insert(iter, std::move(note));
+            m_vMemoryNotes.insert(iter, std::move(note));
     }
 
-    OnCodeNoteChanged(nAddress, sNote);
+    OnMemoryNoteChanged(nAddress, sNote);
 
-    // CodeNoteChanged events for indirect child notes will be raised by first call to DoFrame
+    // MemoryNoteChanged events for indirect child notes will be raised by first call to DoFrame
 }
 
-void CodeNotesModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
+void MemoryNotesModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     SetValue(ra::data::models::AssetModelBase::ChangesProperty,
-             m_mOriginalCodeNotes.empty() ?
+             m_mOriginalNotes.empty() ?
                  ra::etoi(ra::data::models::AssetChanges::None) :
                  ra::etoi(ra::data::models::AssetChanges::Unpublished));
 
-    if (m_fCodeNoteChanged != nullptr)
-        m_fCodeNoteChanged(nAddress, sNewNote);
+    if (m_fMemoryNoteChanged != nullptr)
+        m_fMemoryNoteChanged(nAddress, sNewNote);
 }
 
-ra::data::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::data::ByteAddress nAddress) const
+ra::data::ByteAddress MemoryNotesModel::FindNoteStart(ra::data::ByteAddress nAddress) const
 {
-    auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
+    auto pIter = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nAddress, CompareNoteAddresses);
 
     // exact match, return it
-    if (pIter != m_vCodeNotes.end() && (*pIter)->GetAddress() == nAddress)
+    if (pIter != m_vMemoryNotes.end() && (*pIter)->GetAddress() == nAddress)
         return nAddress;
 
     // lower_bound returns the first item _after_ the search value. scan all items before
     // the found item to see if any of them contain the target address. have to scan
     // all items because a singular note may exist within a range.
-    if (pIter != m_vCodeNotes.begin())
+    if (pIter != m_vMemoryNotes.begin())
     {
         do
         {
             --pIter;
-            const auto* pCodeNote = pIter->get();
+            const auto* pMemoryNote = pIter->get();
 
-            if (pCodeNote && pCodeNote->GetBytes() > 1 && pCodeNote->GetBytes() + pCodeNote->GetAddress() > nAddress)
-                return pCodeNote->GetAddress();
+            if (pMemoryNote && pMemoryNote->GetBytes() > 1 && pMemoryNote->GetBytes() + pMemoryNote->GetAddress() > nAddress)
+                return pMemoryNote->GetAddress();
 
-        } while (pIter != m_vCodeNotes.begin());
+        } while (pIter != m_vMemoryNotes.begin());
     }
 
-    // also check for derived code notes
+    // also check for derived memory notes
     if (m_bHasPointers)
     {
-        for (const auto& pNote : m_vCodeNotes)
+        for (const auto& pNote : m_vMemoryNotes)
         {
             const auto pair = pNote->GetPointerNoteAtAddress(nAddress);
             if (pair.second != nullptr)
@@ -193,8 +193,8 @@ ra::data::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::data::ByteAddress nA
     return 0xFFFFFFFF;
 }
 
-std::wstring CodeNotesModel::BuildCodeNoteSized(ra::data::ByteAddress nAddress,
-    unsigned nCheckBytes, ra::data::ByteAddress nNoteAddress, const CodeNoteModel& pNote)
+std::wstring MemoryNotesModel::BuildNoteForAddress(ra::data::ByteAddress nAddress,
+    unsigned nCheckBytes, ra::data::ByteAddress nNoteAddress, const MemoryNoteModel& pNote)
 {
     // extract the first line
     std::wstring sNote = pNote.GetNote();
@@ -226,64 +226,64 @@ std::wstring CodeNotesModel::BuildCodeNoteSized(ra::data::ByteAddress nAddress,
     return sNote;
 }
 
-std::wstring CodeNotesModel::FindCodeNote(ra::data::ByteAddress nAddress, Memory::Size nSize) const
+std::wstring MemoryNotesModel::FindNote(ra::data::ByteAddress nAddress, Memory::Size nSize) const
 {
     const unsigned int nCheckBytes = ra::data::Memory::SizeBytes(nSize);
 
     // lower_bound will return the item if it's an exact match, or the *next* item otherwise
-    auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
-    if (pIter != m_vCodeNotes.end())
+    auto pIter = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nAddress, CompareNoteAddresses);
+    if (pIter != m_vMemoryNotes.end())
     {
-        const auto* pCodeNote = pIter->get();
-        Expects(pCodeNote != nullptr);
-        if (nAddress == pCodeNote->GetAddress())
+        const auto* pMemoryNote = pIter->get();
+        Expects(pMemoryNote != nullptr);
+        if (nAddress == pMemoryNote->GetAddress())
         {
             // exact match
-            return BuildCodeNoteSized(nAddress, nCheckBytes, pCodeNote->GetAddress(), *pCodeNote);
+            return BuildNoteForAddress(nAddress, nCheckBytes, pMemoryNote->GetAddress(), *pMemoryNote);
         }
-        else if (nAddress + nCheckBytes - 1 >= pCodeNote->GetAddress())
+        else if (nAddress + nCheckBytes - 1 >= pMemoryNote->GetAddress())
         {
             // requested number of bytes will overlap with the next item
-            return BuildCodeNoteSized(nAddress, nCheckBytes, pCodeNote->GetAddress(), *pCodeNote);
+            return BuildNoteForAddress(nAddress, nCheckBytes, pMemoryNote->GetAddress(), *pMemoryNote);
         }
     }
 
     // did not match/overlap with the found item, check the item before the found item
-    if (pIter != m_vCodeNotes.begin())
+    if (pIter != m_vMemoryNotes.begin())
     {
         --pIter;
 
-        const auto* pCodeNote = pIter->get();
-        if (pCodeNote && pCodeNote->GetAddress() + pCodeNote->GetBytes() - 1 >= nAddress)
+        const auto* pMemoryNote = pIter->get();
+        if (pMemoryNote && pMemoryNote->GetAddress() + pMemoryNote->GetBytes() - 1 >= nAddress)
         {
             // previous item overlaps with requested address
-            return BuildCodeNoteSized(nAddress, nCheckBytes, pCodeNote->GetAddress(), *pCodeNote);
+            return BuildNoteForAddress(nAddress, nCheckBytes, pMemoryNote->GetAddress(), *pMemoryNote);
         }
     }
 
-    // no code note on the address, check for pointers
+    // no memory note on the address, check for pointers
     if (m_bHasPointers)
     {
-        for (const auto& pCodeNote2 : m_vCodeNotes)
+        for (const auto& pMemoryNote2 : m_vMemoryNotes)
         {
-            const auto pair = pCodeNote2->GetPointerNoteAtAddress(nAddress);
+            const auto pair = pMemoryNote2->GetPointerNoteAtAddress(nAddress);
             if (pair.second != nullptr)
-                return BuildCodeNoteSized(nAddress, nCheckBytes, pair.first, *pair.second) + L" [indirect]";
+                return BuildNoteForAddress(nAddress, nCheckBytes, pair.first, *pair.second) + L" [indirect]";
         }
 
         const auto nLastAddress = nAddress + nCheckBytes - 1;
-        for (const auto& pCodeNote2 : m_vCodeNotes)
+        for (const auto& pMemoryNote2 : m_vMemoryNotes)
         {
-            const auto pair = pCodeNote2->GetPointerNoteAtAddress(nLastAddress);
+            const auto pair = pMemoryNote2->GetPointerNoteAtAddress(nLastAddress);
             if (pair.second != nullptr)
-                return BuildCodeNoteSized(nAddress, nCheckBytes, pair.first, *pair.second) + L" [indirect]";
+                return BuildNoteForAddress(nAddress, nCheckBytes, pair.first, *pair.second) + L" [indirect]";
         }
     }
 
     return std::wstring();
 }
 
-void CodeNotesModel::SetCodeNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
+void MemoryNotesModel::SetNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
 {
     std::string sOriginalAuthor;
 
@@ -292,12 +292,12 @@ void CodeNotesModel::SetCodeNote(ra::data::ByteAddress nAddress, const std::wstr
 
         if (m_bRefreshing)
         {
-            m_mPendingCodeNotes[nAddress] = sNote;
+            m_mPendingNotes[nAddress] = sNote;
             return;
         }
 
-        const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
-        if (pIter != m_vCodeNotes.end() && (*pIter)->GetAddress() == nAddress)
+        const auto pIter = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nAddress, CompareNoteAddresses);
+        if (pIter != m_vMemoryNotes.end() && (*pIter)->GetAddress() == nAddress)
         {
             if ((*pIter)->GetNote() == sNote)
             {
@@ -311,22 +311,22 @@ void CodeNotesModel::SetCodeNote(ra::data::ByteAddress nAddress, const std::wstr
             return;
         }
 
-        const auto pIter2 = m_mOriginalCodeNotes.find(nAddress);
-        if (pIter2 == m_mOriginalCodeNotes.end())
+        const auto pIter2 = m_mOriginalNotes.find(nAddress);
+        if (pIter2 == m_mOriginalNotes.end())
         {
             // note wasn't previously modified
-            if (pIter != m_vCodeNotes.end() && (*pIter)->GetAddress() == nAddress)
+            if (pIter != m_vMemoryNotes.end() && (*pIter)->GetAddress() == nAddress)
             {
                 // capture the original value
-                const auto* pCodeNote = pIter->get();
-                Expects(pCodeNote != nullptr);
-                m_mOriginalCodeNotes.insert_or_assign(nAddress,
-                    std::make_pair(pCodeNote->GetAuthor(), pCodeNote->GetNote()));
+                const auto* pMemoryNote = pIter->get();
+                Expects(pMemoryNote != nullptr);
+                m_mOriginalNotes.insert_or_assign(nAddress,
+                    std::make_pair(pMemoryNote->GetAuthor(), pMemoryNote->GetNote()));
             }
             else
             {
                 // add a dummy original value so it appears modified
-                m_mOriginalCodeNotes.insert_or_assign(nAddress, std::make_pair("", L""));
+                m_mOriginalNotes.insert_or_assign(nAddress, std::make_pair("", L""));
             }
         }
         else if (pIter2->second.second == sNote)
@@ -335,14 +335,14 @@ void CodeNotesModel::SetCodeNote(ra::data::ByteAddress nAddress, const std::wstr
             // and discard the modification tracker
             sOriginalAuthor = pIter2->second.first;
 
-            m_mOriginalCodeNotes.erase(pIter2);
+            m_mOriginalNotes.erase(pIter2);
 
             if (sNote.empty())
             {
                 // note didn't originally exist, don't keep a modification record if the
                 // changes were discarded.
-                m_vCodeNotes.erase(pIter);
-                OnCodeNoteChanged(nAddress, sNote);
+                m_vMemoryNotes.erase(pIter);
+                OnMemoryNoteChanged(nAddress, sNote);
                 return;
             }
         }
@@ -350,65 +350,65 @@ void CodeNotesModel::SetCodeNote(ra::data::ByteAddress nAddress, const std::wstr
 
     if (!sOriginalAuthor.empty())
     {
-        AddCodeNote(nAddress, sOriginalAuthor, sNote);
+        AddMemoryNote(nAddress, sOriginalAuthor, sNote);
     }
     else
     {
         const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
-        AddCodeNote(nAddress, pUserContext.GetDisplayName(), sNote);
+        AddMemoryNote(nAddress, pUserContext.GetDisplayName(), sNote);
     }
 }
 
-const CodeNoteModel* CodeNotesModel::FindCodeNoteModel(ra::data::ByteAddress nAddress, bool bIncludeDerived) const
+const MemoryNoteModel* MemoryNotesModel::FindMemoryNoteModel(ra::data::ByteAddress nAddress, bool bIncludeDerived) const
 {
-    const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
-    if (pIter != m_vCodeNotes.end() && (*pIter)->GetAddress() == nAddress)
+    const auto pIter = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nAddress, CompareNoteAddresses);
+    if (pIter != m_vMemoryNotes.end() && (*pIter)->GetAddress() == nAddress)
         return pIter->get();
 
     if (m_bHasPointers && bIncludeDerived)
-        return FindIndirectCodeNoteInternal(nAddress).second;
+        return FindIndirectMemoryNoteInternal(nAddress).second;
 
     return nullptr;
 }
 
-std::pair<ra::data::ByteAddress, const CodeNoteModel*>
-    CodeNotesModel::FindIndirectCodeNoteInternal(ra::data::ByteAddress nAddress) const
+std::pair<ra::data::ByteAddress, const MemoryNoteModel*>
+    MemoryNotesModel::FindIndirectMemoryNoteInternal(ra::data::ByteAddress nAddress) const
 {
-    for (const auto& pCodeNote : m_vCodeNotes)
+    for (const auto& pMemoryNote : m_vMemoryNotes)
     {
-        auto pair = pCodeNote->GetPointerNoteAtAddress(nAddress);
+        auto pair = pMemoryNote->GetPointerNoteAtAddress(nAddress);
         if (pair.second != nullptr && pair.first == nAddress) // only match start of note
-            return {pCodeNote->GetAddress(), pair.second};
+            return {pMemoryNote->GetAddress(), pair.second};
     }
 
     return {0, nullptr};
 }
 
-ra::data::ByteAddress CodeNotesModel::GetIndirectSource(ra::data::ByteAddress nAddress) const
+ra::data::ByteAddress MemoryNotesModel::GetIndirectSource(ra::data::ByteAddress nAddress) const
 {
     if (m_bHasPointers)
     {
-        const auto pCodeNote = FindIndirectCodeNoteInternal(nAddress);
-        if (pCodeNote.second != nullptr)
-            return pCodeNote.first;
+        const auto pMemoryNote = FindIndirectMemoryNoteInternal(nAddress);
+        if (pMemoryNote.second != nullptr)
+            return pMemoryNote.first;
     }
 
     return 0xFFFFFFFF;
 }
 
-ra::data::ByteAddress CodeNotesModel::GetNextNoteAddress(ra::data::ByteAddress nAfterAddress, bool bIncludeDerived) const
+ra::data::ByteAddress MemoryNotesModel::GetNextNoteAddress(ra::data::ByteAddress nAfterAddress, bool bIncludeDerived) const
 {
     ra::data::ByteAddress nBestAddress = 0xFFFFFFFF;
 
     // lower_bound will return the item if it's an exact match, or the *next* item otherwise
-    const auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAfterAddress + 1, CompareNoteAddresses);
-    if (pIter != m_vCodeNotes.end())
+    const auto pIter = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nAfterAddress + 1, CompareNoteAddresses);
+    if (pIter != m_vMemoryNotes.end())
         nBestAddress = (*pIter)->GetAddress();
 
     if (m_bHasPointers && bIncludeDerived)
     {
         ra::data::ByteAddress nNextAddress = 0U;
-        for (const auto& pNote : m_vCodeNotes)
+        for (const auto& pNote : m_vMemoryNotes)
         {
             if (pNote->GetNextAddress(nAfterAddress, nNextAddress))
                 nBestAddress = std::min(nBestAddress, nNextAddress);
@@ -418,19 +418,19 @@ ra::data::ByteAddress CodeNotesModel::GetNextNoteAddress(ra::data::ByteAddress n
     return nBestAddress;
 }
 
-ra::data::ByteAddress CodeNotesModel::GetPreviousNoteAddress(ra::data::ByteAddress nBeforeAddress, bool bIncludeDerived) const
+ra::data::ByteAddress MemoryNotesModel::GetPreviousNoteAddress(ra::data::ByteAddress nBeforeAddress, bool bIncludeDerived) const
 {
     unsigned nBestAddress = 0xFFFFFFFF;
 
     // lower_bound will return the item if it's an exact match, or the *next* item otherwise
-    auto pIter = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nBeforeAddress - 1, CompareNoteAddresses);
-    if (pIter != m_vCodeNotes.end() && (*pIter)->GetAddress() == nBeforeAddress - 1)
+    auto pIter = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nBeforeAddress - 1, CompareNoteAddresses);
+    if (pIter != m_vMemoryNotes.end() && (*pIter)->GetAddress() == nBeforeAddress - 1)
     {
         // exact match for 1 byte lower, return it.
         return (*pIter)->GetAddress();
     }
 
-    if (pIter != m_vCodeNotes.begin())
+    if (pIter != m_vMemoryNotes.begin())
     {
         // found next lower item, claim it
         --pIter;
@@ -442,7 +442,7 @@ ra::data::ByteAddress CodeNotesModel::GetPreviousNoteAddress(ra::data::ByteAddre
         ra::data::ByteAddress nPreviousAddress = 0U;
 
         // scan pointed-at addresses to see if there's anything between the next lower item and nBeforeAddress
-        for (const auto& pNote : m_vCodeNotes)
+        for (const auto& pNote : m_vMemoryNotes)
         {
             if (pNote->GetPreviousAddress(nBeforeAddress, nPreviousAddress))
                 nBestAddress = std::max(nBestAddress, nPreviousAddress);
@@ -452,14 +452,14 @@ ra::data::ByteAddress CodeNotesModel::GetPreviousNoteAddress(ra::data::ByteAddre
     return nBestAddress;
 }
 
-void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel& pCodeNote)> callback, bool bIncludeDerived) const
+void MemoryNotesModel::EnumerateMemoryNotes(std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel& pMemoryNote)> callback, bool bIncludeDerived) const
 {
     if (!bIncludeDerived || !m_bHasPointers)
     {
-        // no pointers, just iterate over the normal code notes
-        for (const auto& pCodeNote : m_vCodeNotes)
+        // no pointers, just iterate over the normal memory notes
+        for (const auto& pMemoryNote : m_vMemoryNotes)
         {
-            if (!callback(pCodeNote->GetAddress(), *pCodeNote))
+            if (!callback(pMemoryNote->GetAddress(), *pMemoryNote))
                 break;
         }
 
@@ -467,14 +467,14 @@ void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::data::ByteAddress
     }
 
     // create a hash from the current pointer addresses
-    std::map<ra::data::ByteAddress, const CodeNoteModel*> mNotes;
-    for (const auto& pCodeNote : m_vCodeNotes)
+    std::map<ra::data::ByteAddress, const MemoryNoteModel*> mNotes;
+    for (const auto& pMemoryNote : m_vMemoryNotes)
     {
-        if (!pCodeNote->IsPointer() || pCodeNote->GetRawPointerValue() == 0)
+        if (!pMemoryNote->IsPointer() || pMemoryNote->GetRawPointerValue() == 0)
             continue;
 
-        std::function<bool(ra::data::ByteAddress nAddress, const CodeNoteModel&)> fCallback =
-            [&mNotes, &fCallback](ra::data::ByteAddress nAddress, const CodeNoteModel& pNote)
+        std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel&)> fCallback =
+            [&mNotes, &fCallback](ra::data::ByteAddress nAddress, const MemoryNoteModel& pNote)
         {
             mNotes[nAddress] = &pNote;
 
@@ -485,13 +485,13 @@ void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::data::ByteAddress
             return true;
         };
 
-        pCodeNote->EnumeratePointerNotes(fCallback);
+        pMemoryNote->EnumeratePointerNotes(fCallback);
 
     }
 
     // merge in the non-pointer notes
-    for (const auto& pCodeNote : m_vCodeNotes)
-        mNotes[pCodeNote->GetAddress()] = pCodeNote.get();
+    for (const auto& pMemoryNote : m_vMemoryNotes)
+        mNotes[pMemoryNote->GetAddress()] = pMemoryNote.get();
 
     // and iterate the result
     for (const auto& pIter : mNotes)
@@ -501,91 +501,91 @@ void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::data::ByteAddress
     }
 }
 
-void CodeNotesModel::DoFrame()
+void MemoryNotesModel::DoFrame()
 {
     if (!m_bHasPointers)
         return;
 
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
 
-    for (auto& pCodeNote : m_vCodeNotes)
+    for (auto& pMemoryNote : m_vMemoryNotes)
     {
-        if (pCodeNote->IsPointer())
+        if (pMemoryNote->IsPointer())
         {
-            if (!m_fCodeNoteMoved)
+            if (!m_fMemoryNoteMoved)
             {
-                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pMemoryContext, nullptr);
+                pMemoryNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext, nullptr);
             }
-            else if (pCodeNote->HasRawPointerValue())
+            else if (pMemoryNote->HasRawPointerValue())
             {
-                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pMemoryContext,
-                    [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
-                        m_fCodeNoteMoved(nOldAddress, nNewAddress, pOffsetNote.GetNote());
+                pMemoryNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext,
+                    [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel& pOffsetNote) {
+                        m_fMemoryNoteMoved(nOldAddress, nNewAddress, pOffsetNote.GetNote());
                     });
             }
             else
             {
                 // pointer hasn't been read before, provide dummy previous address
-                pCodeNote->UpdateRawPointerValue(pCodeNote->GetAddress(), pMemoryContext,
-                    [this](ra::data::ByteAddress, ra::data::ByteAddress nNewAddress, const CodeNoteModel& pOffsetNote) {
-                        m_fCodeNoteMoved(0xFFFFFFFF, nNewAddress, pOffsetNote.GetNote());
+                pMemoryNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext,
+                    [this](ra::data::ByteAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel& pOffsetNote) {
+                        m_fMemoryNoteMoved(0xFFFFFFFF, nNewAddress, pOffsetNote.GetNote());
                     });
             }
         }
     }
 }
 
-void CodeNotesModel::SetServerCodeNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
+void MemoryNotesModel::SetServerNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
 {
-    const auto pIter = m_mOriginalCodeNotes.find(nAddress);
-    if (pIter != m_mOriginalCodeNotes.end())
+    const auto pIter = m_mOriginalNotes.find(nAddress);
+    if (pIter != m_mOriginalNotes.end())
     {
         // remove the original entry - we're setting a new original entry
-        m_mOriginalCodeNotes.erase(pIter);
+        m_mOriginalNotes.erase(pIter);
     }
 
     // if we're just committing the current value, we're done
-    const auto pIter2 = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), nAddress, CompareNoteAddresses);
-    if (pIter2 != m_vCodeNotes.end() && (*pIter2)->GetAddress() == nAddress && (*pIter2)->GetNote() == sNote)
+    const auto pIter2 = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nAddress, CompareNoteAddresses);
+    if (pIter2 != m_vMemoryNotes.end() && (*pIter2)->GetAddress() == nAddress && (*pIter2)->GetNote() == sNote)
     {
         if (sNote.empty())
-            m_vCodeNotes.erase(pIter2);
+            m_vMemoryNotes.erase(pIter2);
 
-        if (m_mOriginalCodeNotes.empty())
+        if (m_mOriginalNotes.empty())
             SetValue(ra::data::models::AssetModelBase::ChangesProperty, ra::etoi(ra::data::models::AssetChanges::None));
-        OnCodeNoteChanged(nAddress, sNote);
+        OnMemoryNoteChanged(nAddress, sNote);
         return;
     }
 
     // update the current value
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
-    AddCodeNote(nAddress, pUserContext.GetDisplayName(), sNote);
+    AddMemoryNote(nAddress, pUserContext.GetDisplayName(), sNote);
 }
 
-const std::wstring* CodeNotesModel::GetServerCodeNote(ra::data::ByteAddress nAddress) const
+const std::wstring* MemoryNotesModel::GetServerNote(ra::data::ByteAddress nAddress) const
 {
-    const auto pIter = m_mOriginalCodeNotes.find(nAddress);
-    if (pIter != m_mOriginalCodeNotes.end())
+    const auto pIter = m_mOriginalNotes.find(nAddress);
+    if (pIter != m_mOriginalNotes.end())
         return &pIter->second.second;
 
     return nullptr;
 }
 
-const std::string* CodeNotesModel::GetServerCodeNoteAuthor(ra::data::ByteAddress nAddress) const
+const std::string* MemoryNotesModel::GetServerNoteAuthor(ra::data::ByteAddress nAddress) const
 {
-    const auto pIter = m_mOriginalCodeNotes.find(nAddress);
-    if (pIter != m_mOriginalCodeNotes.end())
+    const auto pIter = m_mOriginalNotes.find(nAddress);
+    if (pIter != m_mOriginalNotes.end())
         return &pIter->second.first;
 
     return nullptr;
 }
 
-void CodeNotesModel::Serialize(ra::services::TextWriter& pWriter) const
+void MemoryNotesModel::Serialize(ra::services::TextWriter& pWriter) const
 {
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     bool first = true;
 
-    for (const auto& pIter : m_mOriginalCodeNotes)
+    for (const auto& pIter : m_mOriginalNotes)
     {
         // "N0" of first note will be written by GameAssets
         if (first)
@@ -601,15 +601,15 @@ void CodeNotesModel::Serialize(ra::services::TextWriter& pWriter) const
 
         pWriter.Write(pMemoryContext.FormatAddress(pIter.first));
 
-        const auto pIter2 = std::lower_bound(m_vCodeNotes.begin(), m_vCodeNotes.end(), pIter.first, CompareNoteAddresses);
-        if (pIter2 != m_vCodeNotes.end() && (*pIter2)->GetAddress() == pIter.first)
+        const auto pIter2 = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), pIter.first, CompareNoteAddresses);
+        if (pIter2 != m_vMemoryNotes.end() && (*pIter2)->GetAddress() == pIter.first)
             WriteQuoted(pWriter, (*pIter2)->GetNote());
         else
             WriteQuoted(pWriter, "");
     }
 }
 
-bool CodeNotesModel::Deserialize(ra::util::Tokenizer& pTokenizer)
+bool MemoryNotesModel::Deserialize(ra::util::Tokenizer& pTokenizer)
 {
     const auto sAddress = pTokenizer.ReadTo(':');
     pTokenizer.Consume(':');
@@ -620,7 +620,7 @@ bool CodeNotesModel::Deserialize(ra::util::Tokenizer& pTokenizer)
         return false;
 
     ra::util::String::NormalizeLineEndings(sNote);
-    SetCodeNote(nAddress, sNote);
+    SetNote(nAddress, sNote);
     return true;
 }
 

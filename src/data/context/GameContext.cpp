@@ -15,7 +15,7 @@
 #include "data\context\SessionTracker.hh"
 
 #include "data\models\AchievementModel.hh"
-#include "data\models\CodeNotesModel.hh"
+#include "data\models\MemoryNotesModel.hh"
 #include "data\models\LocalBadgesModel.hh"
 #include "data\models\RichPresenceModel.hh"
 
@@ -255,20 +255,20 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
         {
             BeginLoad();
 
-            auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
-            pCodeNotes->Refresh(
+            auto pMemoryNotes = std::make_unique<ra::data::models::MemoryNotesModel>();
+            pMemoryNotes->Refresh(
                 m_nGameId,
                 [this](ra::data::ByteAddress nAddress, const std::wstring& sNewNote) {
-                    OnCodeNoteChanged(nAddress, sNewNote);
+                    OnMemoryNoteChanged(nAddress, sNewNote);
                 },
                 [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring sNote) {
-                    OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
+                    OnMemoryNoteMoved(nOldAddress, nNewAddress, sNote);
                 },
                 [this]() {
                     EndLoad();
                 });
 
-            m_vAssets.Append(std::move(pCodeNotes));
+            m_vAssets.Append(std::move(pMemoryNotes));
 
             // the old server value (if different from current server value) will be stored as Local modification.
             // capture it now. ReloadAssets will load the XXX-Rich.txt file and replace it
@@ -506,7 +506,7 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
     std::lock_guard<std::mutex> lock(m_mLoadMutex);
     m_vSubsets.clear();
 
-    // GameID dictates which game is loaded for purposes of local achievement storage and code notes
+    // GameID dictates which game is loaded for purposes of local achievement storage and memory notes
     m_nGameId = GetRealGameId(game_data_response->id);
     // ActiveGameID dictates which game is running for purposes of rich presence and pings
     const auto nActiveGameId = GetRealGameId(game_data_response->session_game_id);
@@ -699,28 +699,28 @@ void GameContext::DoFrame()
         pAsset.DoFrame();
 }
 
-void GameContext::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
+void GameContext::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         if (!IsGameLoading())
         {
             for (auto& target : m_vNotifyTargets.Targets())
-                target.OnCodeNoteChanged(nAddress, sNewNote);
+                target.OnMemoryNoteChanged(nAddress, sNewNote);
         }
 
         m_vNotifyTargets.Unlock();
     }
 }
 
-void GameContext::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
+void GameContext::OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         if (!IsGameLoading())
         {
             for (auto& target : m_vNotifyTargets.Targets())
-                target.OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
+                target.OnMemoryNoteMoved(nOldAddress, nNewAddress, sNote);
         }
 
         m_vNotifyTargets.Unlock();

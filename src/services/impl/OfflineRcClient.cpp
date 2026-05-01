@@ -105,11 +105,11 @@ static ra::services::Http::Response HandleOfflineRequest(const ra::services::Htt
 
         // see if the data is available in the cache
         auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::CodeNotes, ra::util::String::Widen(sGameId));
+        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::MemoryNotes, ra::util::String::Widen(sGameId));
         if (pData == nullptr)
         {
             return ra::services::Http::Response(ra::services::Http::StatusCode::NotFound,
-                ra::util::String::Printf("{\"Success\":false,\"Error\":\"Code notes for game %s not found in cache\"}", sGameId));
+                ra::util::String::Printf("{\"Success\":false,\"Error\":\"Memory notes for game %s not found in cache\"}", sGameId));
         }
 
         std::string sContents = "{\"Success\":true,\"CodeNotes\":";

@@ -1,4 +1,4 @@
-#include "CodeNotesDialog.hh"
+#include "MemoryNotesDialog.hh"
 
 #include "RA_Resource.h"
 
@@ -12,54 +12,54 @@
 #include "util\EnumOps.hh"
 #include "util\Log.hh"
 
-using ra::ui::viewmodels::CodeNotesViewModel;
+using ra::ui::viewmodels::MemoryNotesViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;
 
 namespace ra {
 namespace ui {
 namespace win32 {
 
-bool CodeNotesDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
+bool MemoryNotesDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
 {
-    return (dynamic_cast<const CodeNotesViewModel*>(&vmViewModel) != nullptr);
+    return (dynamic_cast<const MemoryNotesViewModel*>(&vmViewModel) != nullptr);
 }
 
-void CodeNotesDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
+void MemoryNotesDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
-    auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&vmViewModel);
-    Expects(vmCodeNotes != nullptr);
+    auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&vmViewModel);
+    Expects(vmMemoryNotes != nullptr);
 
-    CodeNotesDialog oDialog(*vmCodeNotes);
+    MemoryNotesDialog oDialog(*vmMemoryNotes);
     oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_CODENOTES), this, hParentWnd);
 }
 
-void CodeNotesDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmViewModel)
+void MemoryNotesDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmViewModel)
 {
-    auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&vmViewModel);
-    Expects(vmCodeNotes != nullptr);
+    auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&vmViewModel);
+    Expects(vmMemoryNotes != nullptr);
 
     if (m_pDialog == nullptr)
     {
-        m_pDialog.reset(new CodeNotesDialog(*vmCodeNotes));
+        m_pDialog.reset(new MemoryNotesDialog(*vmMemoryNotes));
         if (!m_pDialog->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_CODENOTES), this))
-            RA_LOG_ERR("Could not create Code Notes dialog!");
+            RA_LOG_ERR("Could not create Memory Notes dialog!");
     }
 
     m_pDialog->ShowDialogWindow();
 }
 
-void CodeNotesDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
+void MemoryNotesDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 
 // ------------------------------------
 
-CodeNotesDialog::CodeNotesGridBinding::CodeNotesGridBinding(ViewModelBase& vmViewModel)
+MemoryNotesDialog::MemoryNotesGridBinding::MemoryNotesGridBinding(ViewModelBase& vmViewModel)
     : ra::ui::win32::bindings::MultiLineGridBinding(vmViewModel)
 {
     auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
     pMemoryContext.AddNotifyTarget(*this);
 }
 
-CodeNotesDialog::CodeNotesGridBinding::~CodeNotesGridBinding()
+MemoryNotesDialog::MemoryNotesGridBinding::~MemoryNotesGridBinding()
 {
     if (ra::services::ServiceLocator::Exists<ra::context::IEmulatorMemoryContext>())
     {
@@ -68,7 +68,7 @@ CodeNotesDialog::CodeNotesGridBinding::~CodeNotesGridBinding()
     }
 }
 
-void CodeNotesDialog::CodeNotesGridBinding::OnTotalMemorySizeChanged()
+void MemoryNotesDialog::MemoryNotesGridBinding::OnTotalMemorySizeChanged()
 {
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vColumns.size()); ++nIndex)
     {
@@ -86,56 +86,56 @@ void CodeNotesDialog::CodeNotesGridBinding::OnTotalMemorySizeChanged()
 
 // ------------------------------------
 
-CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
-    : DialogBase(vmCodeNotes),
-    m_bindNotes(vmCodeNotes),
-    m_bindFilterValue(vmCodeNotes),
-    m_bindUnpublished(vmCodeNotes)
+MemoryNotesDialog::MemoryNotesDialog(MemoryNotesViewModel& vmMemoryNotes)
+    : DialogBase(vmMemoryNotes),
+    m_bindNotes(vmMemoryNotes),
+    m_bindFilterValue(vmMemoryNotes),
+    m_bindUnpublished(vmMemoryNotes)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Code Notes");
 
-    m_bindFilterValue.BindText(CodeNotesViewModel::FilterValueProperty);
+    m_bindFilterValue.BindText(MemoryNotesViewModel::FilterValueProperty);
     m_bindFilterValue.BindKey(VK_RETURN, [this]()
     {
         m_bindFilterValue.UpdateSource();
 
-        auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
-        vmCodeNotes->ApplyFilter();
+        auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&m_vmWindow);
+        vmMemoryNotes->ApplyFilter();
         return true;
     });
     m_bindFilterValue.BindKey(VK_ESCAPE, [this]()
     {
-        auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
-        vmCodeNotes->SetFilterValue(L"");
-        vmCodeNotes->ResetFilter();
+        auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&m_vmWindow);
+        vmMemoryNotes->SetFilterValue(L"");
+        vmMemoryNotes->ResetFilter();
         return true;
     });
 
-    m_bindUnpublished.BindCheck(CodeNotesViewModel::OnlyUnpublishedFilterProperty);
+    m_bindUnpublished.BindCheck(MemoryNotesViewModel::OnlyUnpublishedFilterProperty);
 
-    m_bindWindow.BindLabel(IDC_RA_RESULT_COUNT, CodeNotesViewModel::ResultCountProperty);
+    m_bindWindow.BindLabel(IDC_RA_RESULT_COUNT, MemoryNotesViewModel::ResultCountProperty);
 
     auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        CodeNotesViewModel::CodeNoteViewModel::LabelProperty);
+        MemoryNotesViewModel::MemoryNoteViewModel::LabelProperty);
     pAddressColumn->SetHeader(L"Address");
     pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels,
         ra::ui::win32::bindings::GridAddressColumnBinding::CalculateWidth() + 12);
-    pAddressColumn->SetTextColorProperty(CodeNotesViewModel::CodeNoteViewModel::BookmarkColorProperty);
+    pAddressColumn->SetTextColorProperty(MemoryNotesViewModel::MemoryNoteViewModel::BookmarkColorProperty);
     m_bindNotes.BindColumn(0, std::move(pAddressColumn));
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        CodeNotesViewModel::CodeNoteViewModel::NoteProperty);
+        MemoryNotesViewModel::MemoryNoteViewModel::NoteProperty);
     pDescriptionColumn->SetHeader(L"Note");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 40);
-    pDescriptionColumn->SetTextColorProperty(CodeNotesViewModel::CodeNoteViewModel::BookmarkColorProperty);
+    pDescriptionColumn->SetTextColorProperty(MemoryNotesViewModel::MemoryNoteViewModel::BookmarkColorProperty);
     m_bindNotes.BindColumn(1, std::move(pDescriptionColumn));
 
-    m_bindNotes.BindItems(vmCodeNotes.Notes());
-    m_bindNotes.BindIsSelected(CodeNotesViewModel::CodeNoteViewModel::IsSelectedProperty);
+    m_bindNotes.BindItems(vmMemoryNotes.Notes());
+    m_bindNotes.BindIsSelected(MemoryNotesViewModel::MemoryNoteViewModel::IsSelectedProperty);
     m_bindNotes.SetDoubleClickHandler([this](gsl::index nIndex)
     {
-        const auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
-        const auto* pItem = vmCodeNotes->Notes().GetItemAt(nIndex);
+        const auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&m_vmWindow);
+        const auto* pItem = vmMemoryNotes->Notes().GetItemAt(nIndex);
         if (pItem)
         {
             auto& pMemoryInspector = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector;
@@ -146,8 +146,8 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
         }
     });
 
-    m_bindWindow.BindEnabled(IDC_RA_PUBLISH_NOTE, CodeNotesViewModel::CanPublishCurrentAddressNoteProperty);
-    m_bindWindow.BindEnabled(IDC_RA_REVERT_NOTE, CodeNotesViewModel::CanRevertCurrentAddressNoteProperty);
+    m_bindWindow.BindEnabled(IDC_RA_PUBLISH_NOTE, MemoryNotesViewModel::CanPublishCurrentAddressNoteProperty);
+    m_bindWindow.BindEnabled(IDC_RA_REVERT_NOTE, MemoryNotesViewModel::CanRevertCurrentAddressNoteProperty);
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);
@@ -163,16 +163,16 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     SetMinimumSize(327, 200);
 }
 
-BOOL CodeNotesDialog::OnInitDialog()
+BOOL MemoryNotesDialog::OnInitDialog()
 {
     m_bindNotes.SetControl(*this, IDC_RA_LBX_ADDRESSES);
     m_bindFilterValue.SetControl(*this, IDC_RA_FILTER_VALUE);
     m_bindUnpublished.SetControl(*this, IDC_RA_CHK_UNPUBLISHED);
 
-    auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmCodeNotes->Notes().Count()); ++nIndex)
+    auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&m_vmWindow);
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmMemoryNotes->Notes().Count()); ++nIndex)
     {
-        auto* pItem = vmCodeNotes->Notes().GetItemAt(nIndex);
+        auto* pItem = vmMemoryNotes->Notes().GetItemAt(nIndex);
         if (pItem && pItem->IsSelected())
         {
             m_bindNotes.EnsureVisible(nIndex);
@@ -184,15 +184,15 @@ BOOL CodeNotesDialog::OnInitDialog()
 }
 
 
-BOOL CodeNotesDialog::OnCommand(WORD nCommand)
+BOOL MemoryNotesDialog::OnCommand(WORD nCommand)
 {
     switch (nCommand)
     {
         case IDC_RA_RESET_FILTER:
         {
-            auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
-            if (vmCodeNotes)
-                vmCodeNotes->ResetFilter();
+            auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&m_vmWindow);
+            if (vmMemoryNotes)
+                vmMemoryNotes->ResetFilter();
 
             return TRUE;
         }
@@ -200,36 +200,36 @@ BOOL CodeNotesDialog::OnCommand(WORD nCommand)
         case IDOK: // this dialog doesn't have an OK button. if the user pressed Enter, apply the current filter
         case IDC_RA_APPLY_FILTER:
         {
-            auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
-            if (vmCodeNotes)
-                vmCodeNotes->ApplyFilter();
+            auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&m_vmWindow);
+            if (vmMemoryNotes)
+                vmMemoryNotes->ApplyFilter();
 
             return TRUE;
         }
 
         case IDC_RA_ADDBOOKMARK:
         {
-            const auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
-            if (vmCodeNotes)
-                vmCodeNotes->BookmarkSelected();
+            const auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&m_vmWindow);
+            if (vmMemoryNotes)
+                vmMemoryNotes->BookmarkSelected();
 
             return TRUE;
         }
 
         case IDC_RA_PUBLISH_NOTE:
         {
-            auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
-            if (vmCodeNotes)
-                vmCodeNotes->PublishSelected();
+            auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&m_vmWindow);
+            if (vmMemoryNotes)
+                vmMemoryNotes->PublishSelected();
 
             return TRUE;
         }
 
         case IDC_RA_REVERT_NOTE:
         {
-            auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
-            if (vmCodeNotes)
-                vmCodeNotes->RevertSelected();
+            auto* vmMemoryNotes = dynamic_cast<MemoryNotesViewModel*>(&m_vmWindow);
+            if (vmMemoryNotes)
+                vmMemoryNotes->RevertSelected();
 
             return TRUE;
         }

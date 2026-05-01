@@ -1064,14 +1064,14 @@ public:
         emulator.mockWindowManager.AssetEditor.Show();
         emulator.mockWindowManager.MemoryBookmarks.Show();
         emulator.mockWindowManager.MemoryInspector.Show();
-        emulator.mockWindowManager.CodeNotes.Show();
+        emulator.mockWindowManager.MemoryNotes.Show();
 
         Assert::IsTrue(emulator.mockWindowManager.RichPresenceMonitor.IsVisible());
         Assert::IsTrue(emulator.mockWindowManager.AssetList.IsVisible());
         Assert::IsTrue(emulator.mockWindowManager.AssetEditor.IsVisible());
         Assert::IsTrue(emulator.mockWindowManager.MemoryBookmarks.IsVisible());
         Assert::IsTrue(emulator.mockWindowManager.MemoryInspector.IsVisible());
-        Assert::IsTrue(emulator.mockWindowManager.CodeNotes.IsVisible());
+        Assert::IsTrue(emulator.mockWindowManager.MemoryNotes.IsVisible());
 
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
@@ -1081,7 +1081,7 @@ public:
         Assert::IsFalse(emulator.mockWindowManager.AssetEditor.IsVisible());
         Assert::IsFalse(emulator.mockWindowManager.MemoryBookmarks.IsVisible());
         Assert::IsFalse(emulator.mockWindowManager.MemoryInspector.IsVisible());
-        Assert::IsFalse(emulator.mockWindowManager.CodeNotes.IsVisible());
+        Assert::IsFalse(emulator.mockWindowManager.MemoryNotes.IsVisible());
     }
 
     TEST_METHOD(TestGetAppTitleDefault)

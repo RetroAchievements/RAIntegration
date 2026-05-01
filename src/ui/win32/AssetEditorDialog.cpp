@@ -299,7 +299,7 @@ public:
                 const auto* pConditionViewModel = dynamic_cast<const TriggerConditionViewModel*>(vmItems.GetViewModelAt(nIndex));
                 Expects(pConditionViewModel != nullptr);
                 std::wstring sPointerChain;
-                const ra::data::models::CodeNoteModel* pNote = nullptr;
+                const ra::data::models::MemoryNoteModel* pNote = nullptr;
                 nAddress = pConditionViewModel->GetIndirectAddress(nAddress, sPointerChain, &pNote);
             }
 

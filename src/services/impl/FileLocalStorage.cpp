@@ -74,7 +74,7 @@ std::wstring FileLocalStorage::GetPath(StorageItemType nType, const std::wstring
             sPath.append(L".json");
             break;
 
-        case StorageItemType::CodeNotes:
+        case StorageItemType::MemoryNotes:
             sPath.append(RA_DIR_DATA);
             sPath.append(sKey);
             sPath.append(L"-Notes.json");

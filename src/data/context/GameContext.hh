@@ -149,8 +149,8 @@ public:
         virtual void OnActiveGameChanged() noexcept(false) {}
         virtual void OnBeginGameLoad() noexcept(false) {}
         virtual void OnEndGameLoad() noexcept(false) {}
-        virtual void OnCodeNoteChanged(ra::data::ByteAddress, const std::wstring&) noexcept(false) {}
-        virtual void OnCodeNoteMoved(ra::data::ByteAddress, ra::data::ByteAddress, const std::wstring&) noexcept(false) {}
+        virtual void OnMemoryNoteChanged(ra::data::ByteAddress, const std::wstring&) noexcept(false) {}
+        virtual void OnMemoryNoteMoved(ra::data::ByteAddress, ra::data::ByteAddress, const std::wstring&) noexcept(false) {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Add(pTarget); }
@@ -205,8 +205,8 @@ private:
 protected:
     void OnBeforeActiveGameChanged();
     void OnActiveGameChanged();
-    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote);
-    void OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote);
+    void OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote);
+    void OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote);
     void BeginLoad();
     void EndLoad();
 

@@ -67,7 +67,7 @@ void MemoryWatchListViewModel::InitializeNotifyTargets(bool syncNotes)
     pMemoryContext.AddNotifyTarget(*this);
 }
 
-void MemoryWatchListViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
+void MemoryWatchListViewModel::OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     for (auto& pItem : m_vItems)
     {
@@ -82,7 +82,7 @@ void MemoryWatchListViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress
     }
 }
 
-void MemoryWatchListViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
+void MemoryWatchListViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     for (auto& pItem : m_vItems)
     {

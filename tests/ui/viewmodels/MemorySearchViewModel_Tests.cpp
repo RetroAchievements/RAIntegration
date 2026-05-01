@@ -86,7 +86,7 @@ private:
         {
             InitializeNotifyTargets();
 
-            mockGameContext.InitializeCodeNotes();
+            mockGameContext.InitializeNotes();
         }
 
         ra::context::mocks::MockConsoleContext mockConsoleContext;
@@ -1771,7 +1771,7 @@ public:
         Assert::AreEqual(std::wstring(L"Continuous Filter"), search.ContinuousFilterLabel());
     }
 
-    TEST_METHOD(TestOnCodeNoteChanged)
+    TEST_METHOD(TestOnMemoryNoteChanged)
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
@@ -1791,28 +1791,28 @@ public:
 
         Assert::AreEqual({ 12U }, pRow->nAddress);
         Assert::AreEqual(std::wstring(L"System RAM"), pRow->GetDescription());
-        Assert::IsFalse(pRow->bHasCodeNote);
+        Assert::IsFalse(pRow->bHasMemoryNote);
 
-        search.mockGameContext.SetCodeNote({ 12U }, L"Note");
+        search.mockGameContext.SetNote({ 12U }, L"Note");
         Assert::AreEqual(std::wstring(L"Note"), pRow->GetDescription());
-        Assert::IsTrue(pRow->bHasCodeNote);
+        Assert::IsTrue(pRow->bHasMemoryNote);
 
-        search.mockGameContext.SetCodeNote({ 12U }, L"Note 2");
+        search.mockGameContext.SetNote({ 12U }, L"Note 2");
         Assert::AreEqual(std::wstring(L"Note 2"), pRow->GetDescription());
-        Assert::IsTrue(pRow->bHasCodeNote);
+        Assert::IsTrue(pRow->bHasMemoryNote);
 
-        search.mockGameContext.SetCodeNote({ 12U }, L"");
+        search.mockGameContext.SetNote({ 12U }, L"");
         Assert::AreEqual(std::wstring(L"System RAM"), pRow->GetDescription());
-        Assert::IsFalse(pRow->bHasCodeNote);
+        Assert::IsFalse(pRow->bHasMemoryNote);
     }
 
-    TEST_METHOD(TestOnCodeNoteChangedMultiline)
+    TEST_METHOD(TestOnMemoryNoteChangedMultiline)
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
         search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
         search.BeginNewSearch();
-        search.mockGameContext.SetCodeNote({ 12U }, L"Summary\n1=A\n2=B");
+        search.mockGameContext.SetNote({ 12U }, L"Summary\n1=A\n2=B");
 
         search.SetComparisonType(ComparisonType::Equals);
         search.SetValueType(ra::services::SearchFilterType::Constant);
@@ -1827,20 +1827,20 @@ public:
 
         Assert::AreEqual({ 12U }, pRow->nAddress);
         Assert::AreEqual(std::wstring(L"Summary"), pRow->GetDescription());
-        Assert::IsTrue(pRow->bHasCodeNote);
+        Assert::IsTrue(pRow->bHasMemoryNote);
 
-        search.mockGameContext.SetCodeNote({ 12U }, L"Summary\n1=C\2=D");
+        search.mockGameContext.SetNote({ 12U }, L"Summary\n1=C\2=D");
         Assert::AreEqual(std::wstring(L"Summary"), pRow->GetDescription());
-        Assert::IsTrue(pRow->bHasCodeNote);
+        Assert::IsTrue(pRow->bHasMemoryNote);
     }
 
-    TEST_METHOD(TestOnCodeNoteChangedPartial)
+    TEST_METHOD(TestOnMemoryNoteChangedPartial)
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
         search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
         search.BeginNewSearch();
-        search.mockGameContext.SetCodeNote({ 10U }, L"[4-byte] Summary");
+        search.mockGameContext.SetNote({ 10U }, L"[4-byte] Summary");
 
         search.SetComparisonType(ComparisonType::Equals);
         search.SetValueType(ra::services::SearchFilterType::Constant);
@@ -1855,11 +1855,11 @@ public:
 
         Assert::AreEqual({ 12U }, pRow->nAddress);
         Assert::AreEqual(std::wstring(L"[4-byte] Summary [3/4]"), pRow->GetDescription());
-        Assert::IsTrue(pRow->bHasCodeNote);
+        Assert::IsTrue(pRow->bHasMemoryNote);
 
-        search.mockGameContext.SetCodeNote({ 10U }, L"[4-byte] Banana");
+        search.mockGameContext.SetNote({ 10U }, L"[4-byte] Banana");
         Assert::AreEqual(std::wstring(L"[4-byte] Banana [3/4]"), pRow->GetDescription());
-        Assert::IsTrue(pRow->bHasCodeNote);
+        Assert::IsTrue(pRow->bHasMemoryNote);
     }
 
     TEST_METHOD(TestScrollDisplaysCurrentValue)

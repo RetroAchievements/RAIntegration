@@ -32,8 +32,8 @@ std::wstring ToString<ra::data::models::AssetType>(const ra::data::models::Asset
             return L"RichPresence";
         case ra::data::models::AssetType::LocalBadges:
             return L"LocalBadges";
-        case ra::data::models::AssetType::CodeNotes:
-            return L"CodeNotes";
+        case ra::data::models::AssetType::MemoryNotes:
+            return L"MemoryNotes";
         case ra::data::models::AssetType::MemoryRegions:
             return L"MemoryRegions";
         default:

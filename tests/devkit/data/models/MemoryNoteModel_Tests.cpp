@@ -1,4 +1,4 @@
-#include "data/models/CodeNoteModel.hh"
+#include "data/models/MemoryNoteModel.hh"
 
 #include "tests/devkit/context/mocks/MockConsoleContext.hh"
 #include "tests/devkit/context/mocks/MockEmulatorMemoryContext.hh"
@@ -14,34 +14,34 @@ namespace data {
 namespace models {
 namespace tests {
 
-TEST_CLASS(CodeNoteModel_Tests)
+TEST_CLASS(MemoryNoteModel_Tests)
 {
 private:
-    class CodeNoteModelHarness : public CodeNoteModel
+    class MemoryNoteModelHarness : public MemoryNoteModel
     {
     public:
         ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
     };
 
-    void TestCodeNoteSize(const std::wstring& sNote, unsigned int nExpectedBytes, Memory::Size nExpectedSize)
+    void TestNoteSize(const std::wstring& sNote, unsigned int nExpectedBytes, Memory::Size nExpectedSize)
     {
-        CodeNoteModel note;
+        MemoryNoteModel note;
         note.SetNote(sNote);
 
         Assert::AreEqual(nExpectedBytes, note.GetBytes(), sNote.c_str());
         Assert::AreEqual(nExpectedSize, note.GetMemSize(), sNote.c_str());
     }
 
-    void TestCodeNoteFormat(const std::wstring& sNote, Memory::Format nExpectedFormat)
+    void TestNoteFormat(const std::wstring& sNote, Memory::Format nExpectedFormat)
     {
-        CodeNoteModel note;
+        MemoryNoteModel note;
         note.SetNote(sNote);
 
         Assert::AreEqual(nExpectedFormat, note.GetDefaultMemFormat(), sNote.c_str());
     }
 
-    const CodeNoteModel& AssertIndirectNote(const CodeNoteModel& note, unsigned int nOffset,
+    const MemoryNoteModel& AssertIndirectNote(const MemoryNoteModel& note, unsigned int nOffset,
         const std::wstring& sExpectedNote, Memory::Size nExpectedSize, unsigned int nExpectedBytes)
     {
         const auto* offsetNote = note.GetPointerNoteAtOffset(nOffset);
@@ -59,133 +59,133 @@ private:
 public:
     TEST_METHOD(TestExtractSize)
     {
-        TestCodeNoteSize(L"", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"Test", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"16-bit Test", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"Test 16-bit", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"Test 16-bi", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"[16-bit] Test", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"[16 bit] Test", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"[16 Bit] Test", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"[16-bit BCD] Test", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"[24-bit] Test", 3U, Memory::Size::TwentyFourBit);
-        TestCodeNoteSize(L"[32-bit] Test", 4U, Memory::Size::ThirtyTwoBit);
-        TestCodeNoteSize(L"[32 bit] Test", 4U, Memory::Size::ThirtyTwoBit);
-        TestCodeNoteSize(L"[32bit] Test", 4U, Memory::Size::ThirtyTwoBit);
-        TestCodeNoteSize(L"Test [16-bit]", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"Test (16-bit)", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"Test (16 bits)", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"[64-bit] Test", 8U, Memory::Size::Array);
-        TestCodeNoteSize(L"[128-bit] Test", 16U, Memory::Size::Array);
-        TestCodeNoteSize(L"[17-bit] Test", 3U, Memory::Size::TwentyFourBit);
-        TestCodeNoteSize(L"[100-bit] Test", 13U, Memory::Size::Array);
-        TestCodeNoteSize(L"[0-bit] Test", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"[1-bit] Test", 1U, Memory::Size::EightBit);
-        TestCodeNoteSize(L"[4-bit] Test", 1U, Memory::Size::EightBit);
-        TestCodeNoteSize(L"[8-bit] Test", 1U, Memory::Size::EightBit);
-        TestCodeNoteSize(L"[9-bit] Test", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"bit", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"9bit", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"-bit", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"Test", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"16-bit Test", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"Test 16-bit", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"Test 16-bi", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"[16-bit] Test", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"[16 bit] Test", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"[16 Bit] Test", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"[16-bit BCD] Test", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"[24-bit] Test", 3U, Memory::Size::TwentyFourBit);
+        TestNoteSize(L"[32-bit] Test", 4U, Memory::Size::ThirtyTwoBit);
+        TestNoteSize(L"[32 bit] Test", 4U, Memory::Size::ThirtyTwoBit);
+        TestNoteSize(L"[32bit] Test", 4U, Memory::Size::ThirtyTwoBit);
+        TestNoteSize(L"Test [16-bit]", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"Test (16-bit)", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"Test (16 bits)", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"[64-bit] Test", 8U, Memory::Size::Array);
+        TestNoteSize(L"[128-bit] Test", 16U, Memory::Size::Array);
+        TestNoteSize(L"[17-bit] Test", 3U, Memory::Size::TwentyFourBit);
+        TestNoteSize(L"[100-bit] Test", 13U, Memory::Size::Array);
+        TestNoteSize(L"[0-bit] Test", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"[1-bit] Test", 1U, Memory::Size::EightBit);
+        TestNoteSize(L"[4-bit] Test", 1U, Memory::Size::EightBit);
+        TestNoteSize(L"[8-bit] Test", 1U, Memory::Size::EightBit);
+        TestNoteSize(L"[9-bit] Test", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"bit", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"9bit", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"-bit", 1U, Memory::Size::Unknown);
 
-        TestCodeNoteSize(L"[16-bit BE] Test", 2U, Memory::Size::SixteenBitBigEndian);
-        TestCodeNoteSize(L"[24-bit BE] Test", 3U, Memory::Size::TwentyFourBitBigEndian);
-        TestCodeNoteSize(L"[32-bit BE] Test", 4U, Memory::Size::ThirtyTwoBitBigEndian);
-        TestCodeNoteSize(L"Test [32-bit BE]", 4U, Memory::Size::ThirtyTwoBitBigEndian);
-        TestCodeNoteSize(L"Test (32-bit BE)", 4U, Memory::Size::ThirtyTwoBitBigEndian);
-        TestCodeNoteSize(L"Test 32-bit BE", 4U, Memory::Size::ThirtyTwoBitBigEndian);
-        TestCodeNoteSize(L"[16-bit BigEndian] Test", 2U, Memory::Size::SixteenBitBigEndian);
-        TestCodeNoteSize(L"[16-bit-BE] Test", 2U, Memory::Size::SixteenBitBigEndian);
-        TestCodeNoteSize(L"[4-bit BE] Test", 1U, Memory::Size::EightBit);
-        TestCodeNoteSize(L"[US] Test [32-bit BE]", 4U, Memory::Size::ThirtyTwoBitBigEndian);
+        TestNoteSize(L"[16-bit BE] Test", 2U, Memory::Size::SixteenBitBigEndian);
+        TestNoteSize(L"[24-bit BE] Test", 3U, Memory::Size::TwentyFourBitBigEndian);
+        TestNoteSize(L"[32-bit BE] Test", 4U, Memory::Size::ThirtyTwoBitBigEndian);
+        TestNoteSize(L"Test [32-bit BE]", 4U, Memory::Size::ThirtyTwoBitBigEndian);
+        TestNoteSize(L"Test (32-bit BE)", 4U, Memory::Size::ThirtyTwoBitBigEndian);
+        TestNoteSize(L"Test 32-bit BE", 4U, Memory::Size::ThirtyTwoBitBigEndian);
+        TestNoteSize(L"[16-bit BigEndian] Test", 2U, Memory::Size::SixteenBitBigEndian);
+        TestNoteSize(L"[16-bit-BE] Test", 2U, Memory::Size::SixteenBitBigEndian);
+        TestNoteSize(L"[4-bit BE] Test", 1U, Memory::Size::EightBit);
+        TestNoteSize(L"[US] Test [32-bit BE]", 4U, Memory::Size::ThirtyTwoBitBigEndian);
 
-        TestCodeNoteSize(L"8 BYTE Test", 8U, Memory::Size::Array);
-        TestCodeNoteSize(L"Test 8 BYTE", 8U, Memory::Size::Array);
-        TestCodeNoteSize(L"Test 8 BYT", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"[2 Byte] Test", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"[4 Byte] Test", 4U, Memory::Size::ThirtyTwoBit);
-        TestCodeNoteSize(L"[4 Byte - Float] Test", 4U, Memory::Size::Float);
-        TestCodeNoteSize(L"[Float - 4 Byte] Test", 4U, Memory::Size::Float);
-        TestCodeNoteSize(L"[32-bit Float] Test", 4U, Memory::Size::Float);
-        TestCodeNoteSize(L"[Float 32-bit] Test", 4U, Memory::Size::Float);
-        TestCodeNoteSize(L"[8 Byte] Test", 8U, Memory::Size::Array);
-        TestCodeNoteSize(L"[0x80 Bytes] Test", 128U, Memory::Size::Array);
-        TestCodeNoteSize(L"[0xa8 bytes] Test", 168U, Memory::Size::Array);
-        TestCodeNoteSize(L"Test [0xE Bytes]", 14U, Memory::Size::Array);
-        TestCodeNoteSize(L"Test [0xET Bytes]", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"Test [0xE.3 Bytes]", 3U, Memory::Size::TwentyFourBit);
-        TestCodeNoteSize(L"[2 byte] Test", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"[2-byte] Test", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"Test (6 bytes)", 6U, Memory::Size::Array);
-        TestCodeNoteSize(L"[2byte] Test", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"[100 Bytes] Test", 100U, Memory::Size::Array);
+        TestNoteSize(L"8 BYTE Test", 8U, Memory::Size::Array);
+        TestNoteSize(L"Test 8 BYTE", 8U, Memory::Size::Array);
+        TestNoteSize(L"Test 8 BYT", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"[2 Byte] Test", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"[4 Byte] Test", 4U, Memory::Size::ThirtyTwoBit);
+        TestNoteSize(L"[4 Byte - Float] Test", 4U, Memory::Size::Float);
+        TestNoteSize(L"[Float - 4 Byte] Test", 4U, Memory::Size::Float);
+        TestNoteSize(L"[32-bit Float] Test", 4U, Memory::Size::Float);
+        TestNoteSize(L"[Float 32-bit] Test", 4U, Memory::Size::Float);
+        TestNoteSize(L"[8 Byte] Test", 8U, Memory::Size::Array);
+        TestNoteSize(L"[0x80 Bytes] Test", 128U, Memory::Size::Array);
+        TestNoteSize(L"[0xa8 bytes] Test", 168U, Memory::Size::Array);
+        TestNoteSize(L"Test [0xE Bytes]", 14U, Memory::Size::Array);
+        TestNoteSize(L"Test [0xET Bytes]", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"Test [0xE.3 Bytes]", 3U, Memory::Size::TwentyFourBit);
+        TestNoteSize(L"[2 byte] Test", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"[2-byte] Test", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"Test (6 bytes)", 6U, Memory::Size::Array);
+        TestNoteSize(L"[2byte] Test", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"[100 Bytes] Test", 100U, Memory::Size::Array);
 
-        TestCodeNoteSize(L"[float] Test", 4U, Memory::Size::Float);
-        TestCodeNoteSize(L"[float32] Test", 4U, Memory::Size::Float);
-        TestCodeNoteSize(L"Test float", 4U, Memory::Size::Float);
-        TestCodeNoteSize(L"Test floa", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"is floating", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"has floated", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"16-afloat", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"[float be] Test", 4U, Memory::Size::FloatBigEndian);
-        TestCodeNoteSize(L"[float bigendian] Test", 4U, Memory::Size::FloatBigEndian);
-        TestCodeNoteSize(L"[be float] Test", 4U, Memory::Size::FloatBigEndian);
-        TestCodeNoteSize(L"[bigendian float] Test", 4U, Memory::Size::FloatBigEndian);
-        TestCodeNoteSize(L"[32-bit] pointer to float", 4U, Memory::Size::ThirtyTwoBit);
-        TestCodeNoteSize(L"[8-bit] can double down", 1U, Memory::Size::EightBit);
+        TestNoteSize(L"[float] Test", 4U, Memory::Size::Float);
+        TestNoteSize(L"[float32] Test", 4U, Memory::Size::Float);
+        TestNoteSize(L"Test float", 4U, Memory::Size::Float);
+        TestNoteSize(L"Test floa", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"is floating", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"has floated", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"16-afloat", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"[float be] Test", 4U, Memory::Size::FloatBigEndian);
+        TestNoteSize(L"[float bigendian] Test", 4U, Memory::Size::FloatBigEndian);
+        TestNoteSize(L"[be float] Test", 4U, Memory::Size::FloatBigEndian);
+        TestNoteSize(L"[bigendian float] Test", 4U, Memory::Size::FloatBigEndian);
+        TestNoteSize(L"[32-bit] pointer to float", 4U, Memory::Size::ThirtyTwoBit);
+        TestNoteSize(L"[8-bit] can double down", 1U, Memory::Size::EightBit);
 
-        TestCodeNoteSize(L"[64-bit double] Test", 8U, Memory::Size::Double32);
-        TestCodeNoteSize(L"[64-bit double BE] Test", 8U, Memory::Size::Double32BigEndian);
-        TestCodeNoteSize(L"[double] Test", 8U, Memory::Size::Double32);
-        TestCodeNoteSize(L"[double BE] Test", 8U, Memory::Size::Double32BigEndian);
-        TestCodeNoteSize(L"[double32] Test", 4U, Memory::Size::Double32);
-        TestCodeNoteSize(L"[double32 BE] Test", 4U, Memory::Size::Double32BigEndian);
-        TestCodeNoteSize(L"[double64] Test", 8U, Memory::Size::Double32);
+        TestNoteSize(L"[64-bit double] Test", 8U, Memory::Size::Double32);
+        TestNoteSize(L"[64-bit double BE] Test", 8U, Memory::Size::Double32BigEndian);
+        TestNoteSize(L"[double] Test", 8U, Memory::Size::Double32);
+        TestNoteSize(L"[double BE] Test", 8U, Memory::Size::Double32BigEndian);
+        TestNoteSize(L"[double32] Test", 4U, Memory::Size::Double32);
+        TestNoteSize(L"[double32 BE] Test", 4U, Memory::Size::Double32BigEndian);
+        TestNoteSize(L"[double64] Test", 8U, Memory::Size::Double32);
 
-        TestCodeNoteSize(L"[MBF32] Test", 4U, Memory::Size::MBF32);
-        TestCodeNoteSize(L"[MBF40] Test", 5U, Memory::Size::MBF32);
-        TestCodeNoteSize(L"[MBF32 float] Test", 4U, Memory::Size::MBF32);
-        TestCodeNoteSize(L"[MBF80] Test", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"[MBF320] Test", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"[MBF-32] Test", 4U, Memory::Size::MBF32);
-        TestCodeNoteSize(L"[32-bit MBF] Test", 4U, Memory::Size::MBF32);
-        TestCodeNoteSize(L"[40-bit MBF] Test", 5U, Memory::Size::MBF32);
-        TestCodeNoteSize(L"[MBF] Test", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"Test MBF32", 4U, Memory::Size::MBF32);
-        TestCodeNoteSize(L"[MBF32 LE] Test", 4U, Memory::Size::MBF32LE);
-        TestCodeNoteSize(L"[MBF40-LE] Test", 5U, Memory::Size::MBF32LE);
+        TestNoteSize(L"[MBF32] Test", 4U, Memory::Size::MBF32);
+        TestNoteSize(L"[MBF40] Test", 5U, Memory::Size::MBF32);
+        TestNoteSize(L"[MBF32 float] Test", 4U, Memory::Size::MBF32);
+        TestNoteSize(L"[MBF80] Test", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"[MBF320] Test", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"[MBF-32] Test", 4U, Memory::Size::MBF32);
+        TestNoteSize(L"[32-bit MBF] Test", 4U, Memory::Size::MBF32);
+        TestNoteSize(L"[40-bit MBF] Test", 5U, Memory::Size::MBF32);
+        TestNoteSize(L"[MBF] Test", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"Test MBF32", 4U, Memory::Size::MBF32);
+        TestNoteSize(L"[MBF32 LE] Test", 4U, Memory::Size::MBF32LE);
+        TestNoteSize(L"[MBF40-LE] Test", 5U, Memory::Size::MBF32LE);
 
-        TestCodeNoteSize(L"42=bitten", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"42-bitten", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"bit by bit", 1U, Memory::Size::Unknown);
-        TestCodeNoteSize(L"bit1=chest", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"42=bitten", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"42-bitten", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"bit by bit", 1U, Memory::Size::Unknown);
+        TestNoteSize(L"bit1=chest", 1U, Memory::Size::Unknown);
 
-        TestCodeNoteSize(L"Bite count (16-bit)", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"Number of bits collected (32 bits)", 4U, Memory::Size::ThirtyTwoBit);
+        TestNoteSize(L"Bite count (16-bit)", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"Number of bits collected (32 bits)", 4U, Memory::Size::ThirtyTwoBit);
 
-        TestCodeNoteSize(L"100 32-bit pointers [400 bytes]", 400U, Memory::Size::Array);
-        TestCodeNoteSize(L"[400 bytes] 100 32-bit pointers", 400U, Memory::Size::Array);
+        TestNoteSize(L"100 32-bit pointers [400 bytes]", 400U, Memory::Size::Array);
+        TestNoteSize(L"[400 bytes] 100 32-bit pointers", 400U, Memory::Size::Array);
 
-        TestCodeNoteSize(L"[NTSCU]\r\n[16-bit] Test\r\n", 2U, Memory::Size::SixteenBit);
-        TestCodeNoteSize(L"[24-bit]\r\nIt's really 32-bit, but the top byte will never be non-zero\r\n", 3U, Memory::Size::TwentyFourBit);
+        TestNoteSize(L"[NTSCU]\r\n[16-bit] Test\r\n", 2U, Memory::Size::SixteenBit);
+        TestNoteSize(L"[24-bit]\r\nIt's really 32-bit, but the top byte will never be non-zero\r\n", 3U, Memory::Size::TwentyFourBit);
 
-        TestCodeNoteSize(L"[13-bytes ASCII] Character Name", 13U, Memory::Size::Text);
+        TestNoteSize(L"[13-bytes ASCII] Character Name", 13U, Memory::Size::Text);
     }
 
     TEST_METHOD(TestExtractFormat)
     {
-        TestCodeNoteFormat(L"", Memory::Format::Dec);
-        TestCodeNoteFormat(L"Test", Memory::Format::Dec);
-        TestCodeNoteFormat(L"16-bit Test", Memory::Format::Dec);
-        TestCodeNoteFormat(L"Test 16-bit", Memory::Format::Dec);
-        TestCodeNoteFormat(L"[16-bit] Test", Memory::Format::Dec);
+        TestNoteFormat(L"", Memory::Format::Dec);
+        TestNoteFormat(L"Test", Memory::Format::Dec);
+        TestNoteFormat(L"16-bit Test", Memory::Format::Dec);
+        TestNoteFormat(L"Test 16-bit", Memory::Format::Dec);
+        TestNoteFormat(L"[16-bit] Test", Memory::Format::Dec);
 
-        TestCodeNoteFormat(L"[16-bit BCD] Test", Memory::Format::Hex);
+        TestNoteFormat(L"[16-bit BCD] Test", Memory::Format::Hex);
     }
 
     TEST_METHOD(TestExtractFormatIndirect)
     {
-        CodeNoteModel note;
+        MemoryNoteModel note;
         const std::wstring sNote =
             L"Bomb Timer Pointer (24-bit)\r\n"
             L"+03 - Bombs Defused\r\n"
@@ -210,7 +210,7 @@ public:
 
     TEST_METHOD(TestExtractFormatImplied)
     {
-        CodeNoteModel note;
+        MemoryNoteModel note;
 
         // generic decimal values; assume decimal
         const std::wstring sNote =
@@ -297,7 +297,7 @@ public:
 
     TEST_METHOD(TestExtractFormatBits)
     {
-        CodeNoteModel note;
+        MemoryNoteModel note;
 
         // b0 looks like value hex for an 8-bit value
         const std::wstring sNote =
@@ -332,7 +332,7 @@ public:
 
     TEST_METHOD(TestGetPointerNoteAtOffset)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Bomb Timer Pointer (24-bit)\r\n"
             L"+03 - Bombs Defused\r\n"
@@ -349,7 +349,7 @@ public:
 
     TEST_METHOD(TestGetPointerNoteAtOffsetMultiline)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer [32bit]\r\n"
             L"+0x1BC | Equipment - Head - String[24 Bytes]\r\n"
@@ -370,7 +370,7 @@ public:
 
     TEST_METHOD(TestGetPointerNoteAtOffsetMultilineWithHeader)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"[PAL]\r\n"
             L"Pointer [32bit]\r\n"
@@ -392,7 +392,7 @@ public:
 
     TEST_METHOD(TestHeaderedPointer)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer (16bit because negative)\r\n\r\n"
             L"Circuit:\r\n"
@@ -415,7 +415,7 @@ public:
 
     TEST_METHOD(TestPointerOverlap)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer\r\r\n"
             L"[OFFSETS]\r\r\n"
@@ -435,7 +435,7 @@ public:
 
     TEST_METHOD(TestNestedPointer)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer [32bit]\r\n"
             L"+0x428 | Pointer - Award - Tee Hee Two (32bit)\r\n"
@@ -458,7 +458,7 @@ public:
 
     TEST_METHOD(TestUnannotatedPointerChain)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer [32bit]\r\n"
             L"+0x428 | Award - Tee Hee Two\r\n"
@@ -483,7 +483,7 @@ public:
 
     TEST_METHOD(TestNestedPointerAlternateFormat)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer [32bit]\r\n"
             L"+0x428 | (32-bit pointer) Award - Tee Hee Two\r\n"
@@ -506,7 +506,7 @@ public:
 
     TEST_METHOD(TestNestedPointerBracketNotSeparator)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer [32bit]\r\n"
             L"+0x428 [32bit] Pointer - Award - Tee Hee Two\r\n"
@@ -529,7 +529,7 @@ public:
 
     TEST_METHOD(TestNestedPointerMultiLine)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer [32bit]\r\n"
             L"+0x428 | Obj1 pointer\r\n"
@@ -558,7 +558,7 @@ public:
 
     TEST_METHOD(TestNestedPointerRepeatedNodes)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer [32bit]\r\n"
             L"+0x308\r\n"
@@ -590,7 +590,7 @@ public:
 
     TEST_METHOD(TestImpliedPointerChain)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Root Pointer [24 bits]\r\n"
             L"\r\n"
@@ -615,7 +615,7 @@ public:
 
     TEST_METHOD(TestArrayPointer)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer [32bit] (80 bytes)\r\n"
             L"+0x428 | Pointer - Award - Tee Hee Two (32bit)\r\n"
@@ -640,7 +640,7 @@ public:
 
     TEST_METHOD(TestPointerOverflow)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         note.mockConsoleContext.AddMemoryRegion(0, 0x7F, ra::data::MemoryRegion::Type::SystemRAM, 0x80000000);
         std::array<unsigned char, 256> memory{};
         memory.at(0x04) = 0x10; // pointer@0x04 = 0x80000010
@@ -658,7 +658,7 @@ public:
 
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
 
-        note.EnumeratePointerNotes([](ra::data::ByteAddress nAddress, const CodeNoteModel& nOffsetNote)
+        note.EnumeratePointerNotes([](ra::data::ByteAddress nAddress, const MemoryNoteModel& nOffsetNote)
             {
                 Assert::AreEqual(0x14U, nAddress);
                 Assert::AreEqual(0x80000004U, nOffsetNote.GetAddress());
@@ -670,7 +670,7 @@ public:
 
     TEST_METHOD(TestPointerNegative)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         note.mockConsoleContext.AddMemoryRegion(0, 0x7F, ra::data::MemoryRegion::Type::SystemRAM, 0x80000000);
         std::array<unsigned char, 256> memory{};
         memory.at(0x04) = 0x10; // pointer@0x04 = 0x80000010
@@ -689,7 +689,7 @@ public:
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, note.GetMemSize());
         Assert::AreEqual(std::wstring(L"root"), note.GetSummary());
 
-        note.EnumeratePointerNotes([](ra::data::ByteAddress nAddress, const CodeNoteModel& nOffsetNote)
+        note.EnumeratePointerNotes([](ra::data::ByteAddress nAddress, const MemoryNoteModel& nOffsetNote)
             {
                 Assert::AreEqual(0x08U, nAddress);
                 Assert::AreEqual(0xFFFFFFF8U, nOffsetNote.GetAddress());
@@ -701,7 +701,7 @@ public:
 
     TEST_METHOD(TestUpdateRawPointerValue)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Pointer [32bit]\r\n"
             L"+0 | Obj1 pointer\r\n"
@@ -737,7 +737,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextSimple)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"[8-bit] Color\r\n"
             L"0=None\r\n"
@@ -757,7 +757,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextSingleLine)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote = L"Color (0=None, 1=Red, 2=Green, 3=Blue)";
         note.SetNote(sNote);
 
@@ -772,7 +772,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextSingleLineAlternateFormat)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote = L"Color [0: None, 1: Red, 2: Green, 3: Blue]";
         note.SetNote(sNote);
 
@@ -787,7 +787,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextHexPrefix0x)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"[8-bit] Color\r\n"
             L"0x00=None\r\n"
@@ -807,7 +807,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextHexPrefixH)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"[8-bit] Color\r\n"
             L"h00=None\r\n"
@@ -827,7 +827,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextHexPrefixNone)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"[8-bit] Color\r\n"
             L"00=None\r\n"
@@ -847,7 +847,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextIndentSpace)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"[8-bit] Color\r\n"
             L"  0x00=None\r\n"
@@ -867,7 +867,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextIndentNonAlphanumeric)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"[8-bit] Color\r\n"
             L"..0x00=None\r\n"
@@ -887,7 +887,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextIndentBullet)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"[8-bit] Color\r\n"
             L"* 0x00=None\r\n"
@@ -907,7 +907,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextRange)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"[8-bit] Color\r\n"
             L"0-3=None\r\n"
@@ -931,7 +931,7 @@ public:
 
     TEST_METHOD(TestGetEnumTextIndirect)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"[32-bit pointer] Data\r\n"
             L"0=NULL\r\n"
@@ -958,7 +958,7 @@ public:
 
     TEST_METHOD(TestGetSubNote)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"Item flags\r\n"
             L"b0: found\r\n"
@@ -982,7 +982,7 @@ public:
 
     TEST_METHOD(TestGetSubNoteInlineSubClause)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote = L"Item flags [b0: found, bit1 = collected, B2-3=color, b4 - b7 -> count]\r\n";
         note.SetNote(sNote);
 
@@ -1001,7 +1001,7 @@ public:
 
     TEST_METHOD(TestGetSubNoteTrailingClause)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote = L"Item flags - b0: found, bit1 = collected, B2-3=color, b4 - b7 -> count\r\n";
         note.SetNote(sNote);
 
@@ -1020,7 +1020,7 @@ public:
 
     TEST_METHOD(TestGetSubNoteWithSetSuffix)
     {
-        CodeNoteModelHarness note;
+        MemoryNoteModelHarness note;
         const std::wstring sNote =
             L"US/EU discriminator\r\n"
             L"bit4 set: US\r\n"

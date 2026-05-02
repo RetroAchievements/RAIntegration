@@ -3,14 +3,14 @@
 #include "ui\viewmodels\TriggerViewModel.hh"
 
 #include "tests\ui\UIAsserts.hh"
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -26,10 +26,10 @@ private:
     class TriggerViewModelHarness : public TriggerViewModel
     {
     public:
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockClipboard mockClipboard;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -40,7 +40,7 @@ private:
         {
             // make sure to hook up the memory inspector first or we won't be able to set an address
             mockWindowManager.MemoryInspector.Viewer().InitializeNotifyTargets();
-            mockEmulatorContext.MockMemory(pMemory, nMemorySize);
+            mockEmulatorMemoryContext.MockMemory(pMemory, nMemorySize);
         }
 
         const std::set<unsigned int>& GetSelectedItems() const noexcept
@@ -73,8 +73,7 @@ private:
 
     void Parse(TriggerViewModel& vmTrigger, const std::string& sInput)
     {
-        ra::data::models::CapturedTriggerHits pCapturedHits;
-        vmTrigger.InitializeFrom(sInput, pCapturedHits);
+        vmTrigger.InitializeFrom(sInput);
     }
 
     void ParseAndRegenerate(const std::string& sInput)
@@ -1004,14 +1003,14 @@ public:
         Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312_0xX0004=117835012"), vmTrigger.Serialize());
     }
 
-    TEST_METHOD(TestNewConditionCodeNoteSize)
+    TEST_METHOD(TestNewConditionMemoryNoteSize)
     {
         std::array<uint8_t, 10> pMemory = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=16");
         Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
-        vmTrigger.mockGameContext.SetCodeNote({ 8U }, L"[16-bit] test");
-        vmTrigger.mockGameContext.SetCodeNote({ 4U }, L"[4 byte] test");
+        vmTrigger.mockGameContext.SetNote({ 8U }, L"[16-bit] test");
+        vmTrigger.mockGameContext.SetNote({ 4U }, L"[4 byte] test");
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
@@ -1029,14 +1028,14 @@ public:
         Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312_0xX0004=117835012"), vmTrigger.Serialize());
     }
 
-    TEST_METHOD(TestNewConditionCodeNoteSizeFloat)
+    TEST_METHOD(TestNewConditionMemoryNoteSizeFloat)
     {
         std::array<uint8_t, 12> pMemory = { 0, 1, 2, 3, 0xDB, 0x0F, 0x49, 0x40, 0x82, 0x80, 0x00, 0x00 };
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=16");
         Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
-        vmTrigger.mockGameContext.SetCodeNote({ 4U }, L"[float] test");
-        vmTrigger.mockGameContext.SetCodeNote({ 8U }, L"[MBF32] test");
+        vmTrigger.mockGameContext.SetNote({ 4U }, L"[float] test");
+        vmTrigger.mockGameContext.SetNote({ 8U }, L"[MBF32] test");
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(4);
@@ -1054,15 +1053,15 @@ public:
         Assert::AreEqual(std::string("0xH1234=16_fF0004=f3.141593_fM0008=f-2.0"), vmTrigger.Serialize());
     }
 
-    TEST_METHOD(TestNewConditionCodeNoteSizeViewerSize)
+    TEST_METHOD(TestNewConditionMemoryNoteSizeViewerSize)
     {
         std::array<uint8_t, 10> pMemory = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=16");
         Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
-        vmTrigger.mockGameContext.SetCodeNote({ 8U }, L"[16-bit] test");
-        vmTrigger.mockGameContext.SetCodeNote({ 2U }, L"[8-bit] test");
-        vmTrigger.mockGameContext.SetCodeNote({ 4U }, L"test");
+        vmTrigger.mockGameContext.SetNote({ 8U }, L"[16-bit] test");
+        vmTrigger.mockGameContext.SetNote({ 2U }, L"[8-bit] test");
+        vmTrigger.mockGameContext.SetNote({ 4U }, L"test");
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
@@ -1113,7 +1112,7 @@ public:
         vmTrigger.UpdateFrom("0xH1234=16_I:0xH0002_0xH0005=6"); // force refresh to rebuild indirect chain
         vmTrigger.DoFrame();
 
-        Assert::AreEqual(std::wstring(L"0x0007 (indirect $0x0002+0x05)\r\n[No code note]"),
+        Assert::AreEqual(std::wstring(L"0x0007 (indirect $0x0002+0x05)\r\n[No memory note]"),
             vmTrigger.Conditions().GetItemAt(2)->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
@@ -1126,7 +1125,7 @@ public:
         vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
 
         vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
-        vmTrigger.mockGameContext.SetCodeNote({4U}, L"[8-bit pointer] test\n+4=[16-bit] note");
+        vmTrigger.mockGameContext.SetNote({4U}, L"[8-bit pointer] test\n+4=[16-bit] note");
         vmTrigger.mockGameContext.DoFrame();
 
         vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
@@ -1682,7 +1681,7 @@ public:
     {
         ra::data::models::AchievementModel pAchievement;
         TriggerViewModelHarness vmTrigger;
-        vmTrigger.InitializeFrom(pAchievement.GetTrigger(), pAchievement.GetCapturedHits());
+        vmTrigger.InitializeFrom(pAchievement.GetTrigger());
         vmTrigger.AddGroup();
         vmTrigger.SetSelectedGroupIndex(1);
         vmTrigger.NewCondition();

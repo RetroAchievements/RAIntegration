@@ -8,16 +8,16 @@
 #include "tests\ui\UIAsserts.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockLocalStorage.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
@@ -34,10 +34,10 @@ private:
     class PointerInspectorViewModelHarness : public PointerInspectorViewModel
     {
     public:
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::services::mocks::MockClipboard mockClipboard;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
 
@@ -54,7 +54,7 @@ private:
 
             mockUserContext.SetUsername("Author");
 
-            mockGameContext.InitializeCodeNotes();
+            mockGameContext.InitializeNotes();
 
             SetIsVisible(true);
         }
@@ -73,10 +73,10 @@ private:
             PointerInspectorViewModel::DoFrame();
         }
 
-        const std::wstring* FindCodeNote(ra::data::ByteAddress nAddress) const
+        const std::wstring* FindNote(ra::data::ByteAddress nAddress) const
         {
-            const auto* pCodeNotes = mockGameContext.Assets().FindCodeNotes();
-            return (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
+            const auto* pMemoryNotes = mockGameContext.Assets().FindMemoryNotes();
+            return (pMemoryNotes != nullptr) ? pMemoryNotes->FindNote(nAddress) : nullptr;
         }
 
         void AssertField(gsl::index nIndex, int32_t nOffset, ra::data::ByteAddress nAddress,
@@ -142,7 +142,7 @@ private:
 
         void AssertNote(ra::data::ByteAddress nAddress, const std::wstring& sExpectedNote)
         {
-            const auto* pNote = mockGameContext.Assets().FindCodeNotes()->FindCodeNoteModel(nAddress);
+            const auto* pNote = mockGameContext.Assets().FindMemoryNotes()->FindMemoryNoteModel(nAddress);
             Assert::IsNotNull(pNote);
             Ensures(pNote != nullptr);
             Assert::AreEqual(sExpectedNote, pNote->GetNote());
@@ -197,14 +197,14 @@ public:
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
         inspector.SetCurrentAddress({ 3U });
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({3U}, L"Note on 3");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({3U}, L"Note on 3");
 
         Assert::AreEqual({ 3U }, inspector.GetCurrentAddress());
         Assert::AreEqual(std::wstring(L"0x0003"), inspector.GetCurrentAddressText());
         Assert::AreEqual(std::wstring(L"Note on 3"), inspector.GetCurrentAddressNote());
         Assert::AreEqual({ 0U }, inspector.Fields().Items().Count());
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({3U}, L"Modified Note on 3");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({3U}, L"Modified Note on 3");
 
         Assert::AreEqual(std::wstring(L"Modified Note on 3"), inspector.GetCurrentAddressNote());
     }
@@ -222,7 +222,7 @@ public:
         memory.at(4) = 12;
 
         inspector.SetCurrentAddress({4U});
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+4: [32-bit] Current HP\r\n"
             L"+8: [32-bit] Max HP");
@@ -250,7 +250,7 @@ public:
         memory.at(4) = 12;
 
         inspector.SetCurrentAddress({4U});
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+4: [32-bit] Class\r\n"
             "1=Wizard\r\n"
@@ -290,17 +290,17 @@ public:
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({1U}, L"Simple note");
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({1U}, L"Simple note");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+4: [32-bit] Current HP\r\n"
             L"+8: [32-bit] Max HP");
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({8U}, L"Something here");
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({16U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({8U}, L"Something here");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({16U},
             L"[32-bit pointer] Level data\r\n"
             L"+4: [32-bit] Current world\r\n"
             L"+8: [32-bit] Current stage");
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({20U}, L"Read this");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({20U}, L"Read this");
 
         inspector.mockGameContext.NotifyGameLoad();
 
@@ -313,23 +313,23 @@ public:
         Assert::AreEqual(std::wstring(L"0x0010 | Level data"), inspector.KnownPointers().GetItemAt(1)->GetLabel());
     }
 
-    TEST_METHOD(TestKnownPointersUpdateOnCodeNoteChange)
+    TEST_METHOD(TestKnownPointersUpdateOnMemoryNoteChange)
     {
         PointerInspectorViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({1U}, L"Simple note");
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({1U}, L"Simple note");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+4: [32-bit] Current HP\r\n"
             L"+8: [32-bit] Max HP");
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({8U}, L"Something here");
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({16U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({8U}, L"Something here");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({16U},
             L"[32-bit pointer] Level data\r\n"
             L"+4: [32-bit] Current world\r\n"
             L"+8: [32-bit] Current stage");
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({20U}, L"Read this");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({20U}, L"Read this");
 
         inspector.mockGameContext.NotifyGameLoad();
 
@@ -341,7 +341,7 @@ public:
         Assert::AreEqual(16, inspector.KnownPointers().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"0x0010 | Level data"), inspector.KnownPointers().GetItemAt(1)->GetLabel());
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({12U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({12U},
             L"[32-bit pointer] New pointer");
 
         Assert::AreEqual({3U}, inspector.KnownPointers().Count());
@@ -352,19 +352,19 @@ public:
         Assert::AreEqual(16, inspector.KnownPointers().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"0x0010 | Level data"), inspector.KnownPointers().GetItemAt(2)->GetLabel());
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U}, L"Normal note");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U}, L"Normal note");
         Assert::AreEqual({2U}, inspector.KnownPointers().Count());
         Assert::AreEqual(12, inspector.KnownPointers().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"0x000c | New pointer"), inspector.KnownPointers().GetItemAt(0)->GetLabel());
         Assert::AreEqual(16, inspector.KnownPointers().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"0x0010 | Level data"), inspector.KnownPointers().GetItemAt(1)->GetLabel());
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({16U}, L"Wrong again");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({16U}, L"Wrong again");
         Assert::AreEqual({1U}, inspector.KnownPointers().Count());
         Assert::AreEqual(12, inspector.KnownPointers().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"0x000c | New pointer"), inspector.KnownPointers().GetItemAt(0)->GetLabel());
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({20U}, L"[32-bit pointer] Should be here instead");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({20U}, L"[32-bit pointer] Should be here instead");
         Assert::AreEqual({2U}, inspector.KnownPointers().Count());
         Assert::AreEqual(12, inspector.KnownPointers().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"0x000c | New pointer"), inspector.KnownPointers().GetItemAt(0)->GetLabel());
@@ -384,7 +384,7 @@ public:
         inspector.mockEmulatorContext.MockMemory(memory);
 
         inspector.SetCurrentAddress({4U});
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[8-bit pointer] Player data\r\n"
             L"+0x00: [8-bit pointer] Row 1\r\n"
             L".+0x00: [8-bit] Column 1a\r\n"
@@ -458,7 +458,7 @@ public:
         memory.at(4) = 12;
 
         inspector.SetCurrentAddress({4U});
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+4: [32-bit] Class\r\n"
             "1=Wizard\r\n"
@@ -525,7 +525,7 @@ public:
         memory.at(4) = 12;
 
         inspector.SetCurrentAddress({4U});
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+8: [32-bit] Max HP");
 
@@ -555,7 +555,7 @@ public:
         memory.at(4) = 12;
 
         inspector.SetCurrentAddress({4U});
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+4: [32-bit] Class\r\n"
             "1=Wizard\r\n"
@@ -587,7 +587,7 @@ public:
         inspector.mockEmulatorContext.MockMemory(memory);
         memory.at(4) = 12;
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+8: [32-bit] Max HP\r\n"//\r\n"
             L"+12: [32-bit pointer] Inventory\r\n"
@@ -623,7 +623,7 @@ public:
         memory.at(4) = 12;
 
         inspector.SetCurrentAddress({ 4U });
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
             L"[32-bit pointer] Player data\r\n"
             L"+8: [32-bit] Max HP\r\n"
             L"+12: [32-bit] Current HP");
@@ -687,7 +687,7 @@ public:
         memory.at(17) = 0;
 
         inspector.SetCurrentAddress({ 4U });
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
             L"[32-bit pointer] Player data\r\n"
             L"+0: [8-byte ASCII] Name\r\n"
             L"+12: [32-bit] Current HP");
@@ -723,7 +723,7 @@ public:
         memory.at(4) = 12;
 
         inspector.SetCurrentAddress({ 4U });
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
             L"[32-bit pointer] Player data\r\n"
             L"+8: [32-bit] Max HP");
 
@@ -779,7 +779,7 @@ public:
         memory.at(4) = 12;
 
         inspector.SetCurrentAddress({4U});
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+8: [32-bit] Max HP");
 
@@ -808,7 +808,7 @@ public:
         inspector.mockEmulatorContext.MockMemory(memory);
         memory.at(4) = 12;
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+8: [32-bit] Max HP\r\n" //\r\n"
             L"+12: [32-bit pointer] Inventory\r\n"
@@ -863,7 +863,7 @@ public:
         inspector.mockEmulatorContext.MockMemory(memory);
 
         inspector.SetCurrentAddress({4U});
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[8-bit pointer] Player data\r\n"
             L"+0x00: [8-bit pointer] Row 1\r\n"
             L".+0x00: [8-bit] Column 1a\r\n"
@@ -913,7 +913,7 @@ public:
         memory.at(4) = 12;
 
         inspector.SetCurrentAddress({4U});
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+4: [32-bit] Current HP\r\n"
             L"+8: [32-bit] Max HP");
@@ -956,10 +956,10 @@ public:
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
         std::array<uint8_t, 64> memory = {};
-        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::MemoryRegion::Type::SystemRAM);
         inspector.mockEmulatorContext.MockMemory(memory);
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({4U},
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({4U},
             L"[32-bit pointer] Player data\r\n"
             L"+4: [32-bit pointer] 1st player\r\n"
             L"++8: [32-bit pointer] Health\r\n"
@@ -977,7 +977,7 @@ public:
         memory.at(0x0028) = 0x64;
 
         // update pointer values in note
-        inspector.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+        inspector.mockGameContext.Assets().FindMemoryNotes()->DoFrame();
 
         inspector.SetCurrentAddress({4U});
         Assert::AreEqual({4U}, inspector.GetCurrentAddress());
@@ -1041,16 +1041,16 @@ public:
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
         std::array<uint8_t, 64> memory = {};
-        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::MemoryRegion::Type::SystemRAM);
         inspector.mockEmulatorContext.MockMemory(memory);
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
             L"[32-bit pointer] Player data\r\n");
 
         memory.at(0x0004) = 0x0C;
         memory.at(0x000C) = 0x10;
         memory.at(0x0011) = 0x01;
-        inspector.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+        inspector.mockGameContext.Assets().FindMemoryNotes()->DoFrame();
 
         inspector.SetCurrentAddress({ 4U });
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
@@ -1078,16 +1078,16 @@ public:
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
         std::array<uint8_t, 64> memory = {};
-        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::MemoryRegion::Type::SystemRAM);
         inspector.mockEmulatorContext.MockMemory(memory);
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
             L"[32-bit BE pointer] Player data\r\n");
 
         memory.at(0x0007) = 0x0C;
         memory.at(0x000F) = 0x10;
         memory.at(0x0012) = 0x01;
-        inspector.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+        inspector.mockGameContext.Assets().FindMemoryNotes()->DoFrame();
 
         inspector.SetCurrentAddress({ 4U });
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
@@ -1112,17 +1112,17 @@ public:
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
         std::array<uint8_t, 64> memory = {};
-        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        inspector.mockConsoleContext.AddMemoryRegion(0x00, 0x3F, ra::data::MemoryRegion::Type::SystemRAM);
         inspector.mockEmulatorContext.MockMemory(memory);
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
             L"[32-bit pointer] Player data\r\n"
             L"+8: [16-bit] Current HP\r\n");
 
         memory.at(0x0004) = 0x0C;
         memory.at(0x0014) = 0x10;
         memory.at(0x0016) = 0x16;
-        inspector.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+        inspector.mockGameContext.Assets().FindMemoryNotes()->DoFrame();
 
         inspector.SetCurrentAddress({ 4U });
         Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
@@ -1165,7 +1165,7 @@ public:
         inspector.mockEmulatorContext.MockMemory(memory);
         memory.at(4) = 12;
 
-        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({ 4U },
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
             L"[32-bit pointer] Player data\r\n"
             L"+8: [32-bit] Max HP\r\n" //\r\n"
             L"+12: [32-bit pointer] Inventory\r\n"

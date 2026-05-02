@@ -34,8 +34,6 @@ public:
 
     std::unique_ptr<ra::ui::drawing::ISurface> CaptureClientArea(const WindowViewModelBase& vmViewModel) const override;
 
-    bool IsDebuggerPresent() const override;
-
     bool IsOnUIThread() const noexcept override;
     void InvokeOnUIThread(std::function<void()> fAction) const override;
 

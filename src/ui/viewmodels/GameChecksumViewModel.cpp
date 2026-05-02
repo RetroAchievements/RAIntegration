@@ -18,7 +18,7 @@ GameChecksumViewModel::GameChecksumViewModel() noexcept
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto& sGameHash = pGameContext.GameHash();
     if (!sGameHash.empty())
-        SetChecksum(ra::Widen(pGameContext.GameHash()));
+        SetChecksum(ra::util::String::Widen(pGameContext.GameHash()));
 }
 
 void GameChecksumViewModel::CopyChecksumToClipboard() const

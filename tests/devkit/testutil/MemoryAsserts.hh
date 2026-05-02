@@ -4,11 +4,9 @@
 
 #include "CppUnitTest.hh"
 
-#include "data\Memory.hh"
-#include "util\TypeCasts.hh"
+#include "data/Memory.hh"
 
-// The rcheevos nameless struct warning is only affecting the test project, for now we have
-// to disable the warning in the project or pragmatically in rcheevos. Careful not to use nameless structs here.
+#include "util/TypeCasts.hh"
 
 namespace Microsoft {
 namespace VisualStudio {
@@ -92,6 +90,8 @@ std::wstring ToString<ra::data::Memory::Format>(const ra::data::Memory::Format& 
             return L"Hex";
         case ra::data::Memory::Format::Dec:
             return L"Dec";
+        case ra::data::Memory::Format::Unknown:
+            return L"Unknown";
         default:
             return std::to_wstring(ra::etoi(t));
     }

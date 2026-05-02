@@ -4,7 +4,8 @@
 
 #include "TriggerViewModel.hh"
 
-#include "data\Types.hh"
+#include "data\Value.hh"
+#include "data\context\EmulatorContext.hh"
 #include "data\models\AchievementModel.hh"
 #include "data\models\AssetModelBase.hh"
 
@@ -247,12 +248,12 @@ public:
     /// <summary>
     /// Gets the asset value format.
     /// </summary>
-    ra::data::ValueFormat GetValueFormat() const { return ra::itoe<ra::data::ValueFormat>(GetValue(ValueFormatProperty)); }
+    ra::data::Value::Format GetValueFormat() const { return ra::itoe<ra::data::Value::Format>(GetValue(ValueFormatProperty)); }
 
     /// <summary>
     /// Sets the asset value format.
     /// </summary>
-    void SetValueFormat(ra::data::ValueFormat nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
+    void SetValueFormat(ra::data::Value::Format nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
 
     /// <summary>
     /// Gets the list of leaderboard formats.

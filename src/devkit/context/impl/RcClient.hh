@@ -2,9 +2,9 @@
 #define RA_CONTEXT_IMPL_RCCLIENT_H
 #pragma once
 
-#include "context\IRcClient.hh"
+#include "context/IRcClient.hh"
 
-#include "services\Http.hh"
+#include "services/Http.hh"
 
 namespace ra {
 namespace context {
@@ -21,6 +21,8 @@ public:
     RcClient& operator=(RcClient&&) noexcept = delete;
 
     void Shutdown() noexcept override;
+
+    void AddAuthentication(const char** pUsername, const char** pApiToken) const override;
 
     void DispatchRequest(const rc_api_request_t& pRequest, std::function<void(const rc_api_server_response_t&, void*)> fCallback, void* fCallbackData) const override;
 

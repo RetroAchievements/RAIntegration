@@ -5,19 +5,19 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
-#include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -32,11 +32,11 @@ private:
     class MemoryWatchListViewModelHarness : public MemoryWatchListViewModel
     {
     public:
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorContext;
         ra::context::mocks::MockRcClient mockRcClient;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -119,11 +119,11 @@ public:
         Assert::AreEqual(std::wstring(L"Dec"), watchList.Formats().GetItemAt(1)->GetLabel());
     }
     
-    TEST_METHOD(TestCodeNoteChanged)
+    TEST_METHOD(TestMemoryNoteChanged)
     {
         MemoryWatchListViewModelHarness watchList;
         watchList.mockGameContext.SetGameId(3U);
-        watchList.mockGameContext.SetCodeNote(1234U, L"Note description");
+        watchList.mockGameContext.SetNote(1234U, L"Note description");
         watchList.AddItem(1234U);
 
         Assert::AreEqual({ 1U }, watchList.Items().Count());
@@ -136,7 +136,7 @@ public:
         Assert::AreEqual(ra::data::Memory::Format::Hex, pItem->GetFormat());
         Assert::IsFalse(pItem->IsCustomDescription());
 
-        watchList.mockGameContext.SetCodeNote(1234U, L"New description");
+        watchList.mockGameContext.SetNote(1234U, L"New description");
 
         Assert::AreEqual({ 1U }, watchList.Items().Count());
         pItem = watchList.Items().GetItemAt(0);
@@ -149,11 +149,11 @@ public:
         Assert::IsFalse(pItem->IsCustomDescription());
     }
 
-    TEST_METHOD(TestCodeNoteChangedCustomDescription)
+    TEST_METHOD(TestMemoryNoteChangedCustomDescription)
     {
         MemoryWatchListViewModelHarness watchList;
         watchList.mockGameContext.SetGameId(3U);
-        watchList.mockGameContext.SetCodeNote(1234U, L"Note description");
+        watchList.mockGameContext.SetNote(1234U, L"Note description");
         watchList.AddItem(1234U);
         watchList.Items().GetItemAt(0)->SetDescription(L"My Description");
 
@@ -167,7 +167,7 @@ public:
         Assert::AreEqual(ra::data::Memory::Format::Hex, pItem->GetFormat());
         Assert::IsTrue(pItem->IsCustomDescription());
 
-        watchList.mockGameContext.SetCodeNote(1234U, L"New description");
+        watchList.mockGameContext.SetNote(1234U, L"New description");
 
         Assert::AreEqual({ 1U }, watchList.Items().Count());
         pItem = watchList.Items().GetItemAt(0);
@@ -179,7 +179,7 @@ public:
         Assert::AreEqual(ra::data::Memory::Format::Hex, pItem->GetFormat());
         Assert::IsTrue(pItem->IsCustomDescription());
 
-        watchList.mockGameContext.SetCodeNote(1234U, L"My Description");
+        watchList.mockGameContext.SetNote(1234U, L"My Description");
 
         Assert::AreEqual({ 1U }, watchList.Items().Count());
         pItem = watchList.Items().GetItemAt(0);
@@ -191,7 +191,7 @@ public:
         Assert::AreEqual(ra::data::Memory::Format::Hex, pItem->GetFormat());
         Assert::IsFalse(pItem->IsCustomDescription());
 
-        watchList.mockGameContext.SetCodeNote(1234U, L"New description");
+        watchList.mockGameContext.SetNote(1234U, L"New description");
 
         Assert::AreEqual({ 1U }, watchList.Items().Count());
         pItem = watchList.Items().GetItemAt(0);
@@ -431,7 +431,7 @@ public:
 
         watchList.AddItem(4U, ra::data::Memory::Size::Double32);
 
-        // without a code note, assume the user is pIteming the 4 significant bytes
+        // without a memory note, assume the user is pIteming the 4 significant bytes
         Assert::AreEqual({1U}, watchList.Items().Count());
         const auto& pItem = *watchList.Items().GetItemAt(0);
         Assert::AreEqual(std::wstring(L""), pItem.GetRealNote());
@@ -448,8 +448,8 @@ public:
         Assert::AreEqual(std::wstring(L"0.0"), pItem.GetPreviousValue());
         Assert::AreEqual(1U, pItem.GetChanges());
 
-        // with a code note, align the pItem to the 4 significant bytes
-        watchList.mockGameContext.SetCodeNote(8U, L"[double] Note description");
+        // with a memory note, align the pItem to the 4 significant bytes
+        watchList.mockGameContext.SetNote(8U, L"[double] Note description");
 
         watchList.AddItem(8U, ra::data::Memory::Size::Double32);
         Assert::AreEqual({2U}, watchList.Items().Count());
@@ -468,7 +468,7 @@ public:
         Assert::AreEqual(std::wstring(L"0.0"), pItem2.GetPreviousValue());
         Assert::AreEqual(1U, pItem2.GetChanges());
 
-        // does not exactly match code note address, assume the user is pIteming the most significant bytes
+        // does not exactly match memory note address, assume the user is pIteming the most significant bytes
         watchList.AddItem(12U, ra::data::Memory::Size::Double32);
         Assert::AreEqual({3U}, watchList.Items().Count());
         const auto& pItem3 = *watchList.Items().GetItemAt(2);

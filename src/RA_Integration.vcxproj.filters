@@ -52,9 +52,6 @@
     <Filter Include="Services\Search">
       <UniqueIdentifier>{e978c08c-fedb-4ead-af63-0420b26291bb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Data\Search">
-      <UniqueIdentifier>{94064815-198f-4ee6-bdea-3a44f8b79d2d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_md5factory.cpp">
@@ -255,10 +252,10 @@
     <ClCompile Include="ui\viewmodels\MemoryViewerViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="ui\viewmodels\CodeNotesViewModel.cpp">
+    <ClCompile Include="ui\viewmodels\MemoryNotesViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="ui\win32\CodeNotesDialog.cpp">
+    <ClCompile Include="ui\win32\MemoryNotesDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
     <ClCompile Include="ui\win32\bindings\MultiLineGridBinding.cpp">
@@ -318,12 +315,6 @@
     <ClCompile Include="data\context\SessionTracker.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
-    <ClCompile Include="data\context\UserContext.cpp">
-      <Filter>Data\Context</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\AssetModelBase.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="data\models\AchievementModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
@@ -340,9 +331,6 @@
       <Filter>UI\Win32</Filter>
     </ClCompile>
     <ClCompile Include="data\models\LocalBadgesModel.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\CapturedTriggerHits.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\ChallengeIndicatorViewModel.cpp">
@@ -366,9 +354,6 @@
     <ClCompile Include="data\models\RichPresenceModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CodeNotesModel.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\EmulatorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -384,9 +369,6 @@
     <ClCompile Include="services\AchievementRuntimeExports.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CodeNoteModel.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\PointerInspectorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -398,9 +380,6 @@
     </ClCompile>
     <ClCompile Include="services\search\SearchImpl.cpp">
       <Filter>Services\Search</Filter>
-    </ClCompile>
-    <ClCompile Include="data\search\MemBlock.cpp">
-      <Filter>Data\Search</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\MemoryWatchViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
@@ -414,14 +393,14 @@
     <ClCompile Include="ui\win32\MemoryRegionsDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\MemoryRegionsModel.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="services\impl\OfflineRcClient.cpp">
       <Filter>Services\Impl</Filter>
     </ClCompile>
-    <ClCompile Include="data\context\ConsoleContext.cpp">
-      <Filter>Data\Context</Filter>
+    <ClCompile Include="services\impl\LoginService.cpp">
+      <Filter>Services\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="services\impl\WindowsDebuggerDetector.cpp">
+      <Filter>Services\Impl</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\TriggerSummaryViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
@@ -479,16 +458,7 @@
     <ClInclude Include="services\impl\ThreadPool.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
-    <ClInclude Include="services\ILogger.hh">
-      <Filter>Services</Filter>
-    </ClInclude>
     <ClInclude Include="services\impl\FileLogger.hh">
-      <Filter>Services\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="services\IClock.hh">
-      <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="services\impl\Clock.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh">
@@ -529,9 +499,6 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\WindowManager.hh">
       <Filter>UI\ViewModels</Filter>
-    </ClInclude>
-    <ClInclude Include="services\ILocalStorage.hh">
-      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\FileLocalStorage.hh">
       <Filter>Services\Impl</Filter>
@@ -647,12 +614,6 @@
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
-    <ClInclude Include="api\FetchGamesList.hh">
-      <Filter>API</Filter>
-    </ClInclude>
-    <ClInclude Include="api\SubmitNewTitle.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
@@ -706,9 +667,6 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
-    </ClInclude>
-    <ClInclude Include="api\FetchCodeNotes.hh">
-      <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="api\UpdateCodeNote.hh">
       <Filter>API</Filter>
@@ -785,10 +743,10 @@
     <ClInclude Include="ui\viewmodels\MemoryViewerViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
-    <ClInclude Include="ui\viewmodels\CodeNotesViewModel.hh">
+    <ClInclude Include="ui\viewmodels\MemoryNotesViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
-    <ClInclude Include="ui\win32\CodeNotesDialog.hh">
+    <ClInclude Include="ui\win32\MemoryNotesDialog.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\MultiLineGridBinding.hh">
@@ -857,12 +815,6 @@
     <ClInclude Include="data\context\SessionTracker.hh">
       <Filter>Data\Context</Filter>
     </ClInclude>
-    <ClInclude Include="data\context\UserContext.hh">
-      <Filter>Data\Context</Filter>
-    </ClInclude>
-    <ClInclude Include="data\models\AssetModelBase.hh">
-      <Filter>Data\Models</Filter>
-    </ClInclude>
     <ClInclude Include="data\models\AchievementModel.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
@@ -882,9 +834,6 @@
       <Filter>UI\Win32</Filter>
     </ClInclude>
     <ClInclude Include="data\models\LocalBadgesModel.hh">
-      <Filter>Data\Models</Filter>
-    </ClInclude>
-    <ClInclude Include="data\models\CapturedTriggerHits.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\NumericUpDownBinding.hh">
@@ -914,9 +863,6 @@
     <ClInclude Include="data\models\RichPresenceModel.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
-    <ClInclude Include="data\models\CodeNotesModel.hh">
-      <Filter>Data\Models</Filter>
-    </ClInclude>
     <ClInclude Include="ui\viewmodels\PointerFinderViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
@@ -928,9 +874,6 @@
     </ClInclude>
     <ClInclude Include="services\AchievementRuntimeExports.hh">
       <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="data\models\CodeNoteModel.hh">
-      <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\PointerInspectorViewModel.hh">
       <Filter>UI\ViewModels</Filter>
@@ -1019,9 +962,6 @@
     <ClInclude Include="services\Search\SearchImpl_double32_be_aligned.hh">
       <Filter>Services\Search</Filter>
     </ClInclude>
-    <ClInclude Include="data\search\MemBlock.hh">
-      <Filter>Data\Search</Filter>
-    </ClInclude>
     <ClInclude Include="ui\viewmodels\MemoryWatchViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
@@ -1037,14 +977,17 @@
     <ClInclude Include="ui\win32\MemoryRegionsDialog.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
-    <ClInclude Include="data\models\MemoryRegionsModel.hh">
-      <Filter>Data\Models</Filter>
-    </ClInclude>
     <ClInclude Include="services\impl\OfflineRcClient.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
-    <ClInclude Include="data\context\ConsoleContext.hh">
-      <Filter>Data\Context</Filter>
+    <ClInclude Include="services\impl\LoginService.hh">
+      <Filter>Services\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="services\ILoginService.hh">
+      <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\WindowsDebuggerDetector.hh">
+      <Filter>Services\Impl</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\TriggerSummaryViewModel.hh">
       <Filter>UI\ViewModels</Filter>

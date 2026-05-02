@@ -52,7 +52,7 @@ public:
         HandleRequest<TApi>([](const typename TApi::Request&, typename TApi::Response&) -> bool
         {
             Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
-                ra::StringPrintf(L"%s should not have been invoked", TApi::Name()).c_str());
+                ra::util::String::Printf(L"%s should not have been invoked", TApi::Name()).c_str());
         });
     }
 
@@ -68,11 +68,6 @@ public:
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override
     {
         return HandleRequest<ra::api::ResolveHash>(request);
-    }
-
-    FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override
-    {
-        return HandleRequest<ra::api::FetchCodeNotes>(request);
     }
 
     UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) override
@@ -117,16 +112,6 @@ public:
         return HandleRequest<ra::api::LatestClient>(request);
     }
 
-    FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) override
-    {
-        return HandleRequest<ra::api::FetchGamesList>(request);
-    }
-
-    SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) override
-    {
-        return HandleRequest<ra::api::SubmitNewTitle>(request);
-    }
-
     FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override
     {
         return HandleRequest<ra::api::FetchBadgeIds>(request);
@@ -152,7 +137,7 @@ protected:
         }
 
         response.Result = ApiResult::Unsupported;
-        response.ErrorMessage = ra::StringPrintf("%s is not supported by %s", sApiName, Name());
+        response.ErrorMessage = ra::util::String::Printf("%s is not supported by %s", sApiName, Name());
 
         return response;
     }

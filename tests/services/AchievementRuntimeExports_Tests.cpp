@@ -4,13 +4,15 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockUserContext.hh"
+#include "tests\mocks\MockLoginService.hh"
 
 #include <rcheevos\src\rc_client_external.h>
 #include <rcheevos\src\rc_client_internal.h>
@@ -47,7 +49,7 @@ public:
 
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
-        mockUserContext.Initialize("User", "ApiToken");
+        mockLoginService.Login("User", "ApiToken");
         pClient->user.display_name = "UserDisplay";
         pClient->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
     }
@@ -62,10 +64,12 @@ public:
     AchievementRuntimeExportsHarness(AchievementRuntimeExportsHarness&&) noexcept = delete;
     AchievementRuntimeExportsHarness& operator=(AchievementRuntimeExportsHarness&&) noexcept = delete;
 
+    ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
     ra::context::mocks::MockRcClient mockRcClient;
+    ra::context::mocks::MockUserContext mockUserContext;
     ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-    ra::data::context::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockConfiguration mockConfiguration;
+    ra::services::mocks::MockLoginService mockLoginService;
 
     rc_client_t* GetClient() const
     {
@@ -123,7 +127,7 @@ public:
             if (nChangedMenuItemId == nMenuItemId)
                 return;
         }
-        Assert::Fail(ra::StringPrintf(L"MENUITEM check changed event not seen for %d", nMenuItemId).c_str());
+        Assert::Fail(ra::util::String::Printf(L"MENUITEM check changed event not seen for %d", nMenuItemId).c_str());
     }
 
     void ResetSeenEvents() noexcept
@@ -311,14 +315,14 @@ private:
     }
 
     GSL_SUPPRESS_TYPE4
-        static void AssertV2Exports(const rc_client_external_t & pClient)
+    static void AssertV2Exports(const rc_client_external_t & pClient)
     {
         Assert::IsNotNull((void*)pClient.add_game_hash, L"add_game_hash not set");
         Assert::IsNotNull((void*)pClient.load_unknown_game, L"load_unknown_game not set");
     }
 
     GSL_SUPPRESS_TYPE4
-        static void AssertV3Exports(const rc_client_external_t & pClient)
+    static void AssertV3Exports(const rc_client_external_t & pClient)
     {
         Assert::IsNotNull((void*)pClient.get_user_info_v3, L"get_user_info_v3 not set");
         Assert::IsNotNull((void*)pClient.get_game_info_v3, L"get_game_info_v3 not set");
@@ -327,6 +331,34 @@ private:
         Assert::IsNotNull((void*)pClient.create_achievement_list_v3, L"create_achievement_list_v3 not set");
     }
 
+    GSL_SUPPRESS_TYPE4
+    static void AssertV4Exports(const rc_client_external_t& pClient)
+    {
+        Assert::IsNotNull((void*)pClient.get_user_info_v3, L"get_user_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.get_game_info_v3, L"get_game_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.get_subset_info_v3, L"get_subset_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.get_achievement_info_v3, L"get_achievement_info_v3 not set");
+        Assert::IsNotNull((void*)pClient.create_achievement_list_v3, L"create_achievement_list_v3 not set");
+    }
+
+    GSL_SUPPRESS_TYPE4
+    static void AssertV5Exports(const rc_client_external_t& pClient)
+    {
+        Assert::IsNotNull((void*)pClient.get_user_game_summary_v5, L"get_user_game_summary_v5 not set");
+        Assert::IsNotNull((void*)pClient.get_user_subset_summary, L"get_user_subset_summary not set");
+    }
+
+    GSL_SUPPRESS_TYPE4
+    static void AssertV6Exports(const rc_client_external_t& pClient)
+    {
+        Assert::IsNotNull((void*)pClient.create_subset_list, L"create_subset_list not set");
+    }
+
+    GSL_SUPPRESS_TYPE4
+    static void AssertV7Exports(const rc_client_external_t& pClient)
+    {
+        Assert::IsNotNull((void*)pClient.get_next_achievement_info, L"get_next_achievement_info not set");
+    }
 public:
     TEST_METHOD(TestGetExternalClientV1)
     {
@@ -373,10 +405,84 @@ public:
         Assert::IsTrue(IsExternalRcheevosClient());
     }
 
+    TEST_METHOD(TestGetExternalClientV4)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 4);
+
+        AssertV1Exports(pClient);
+        AssertV2Exports(pClient);
+        AssertV3Exports(pClient);
+        AssertV4Exports(pClient);
+
+        Assert::IsTrue(IsExternalRcheevosClient());
+    }
+
+    TEST_METHOD(TestGetExternalClientV5)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 5);
+
+        AssertV1Exports(pClient);
+        AssertV2Exports(pClient);
+        AssertV3Exports(pClient);
+        AssertV4Exports(pClient);
+        AssertV5Exports(pClient);
+
+        Assert::IsTrue(IsExternalRcheevosClient());
+    }
+
+    TEST_METHOD(TestGetExternalClientV6)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 6);
+
+        AssertV1Exports(pClient);
+        AssertV2Exports(pClient);
+        AssertV3Exports(pClient);
+        AssertV4Exports(pClient);
+        AssertV5Exports(pClient);
+        AssertV6Exports(pClient);
+
+        Assert::IsTrue(IsExternalRcheevosClient());
+    }
+
+    TEST_METHOD(TestGetExternalClientV7)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 7);
+
+        AssertV1Exports(pClient);
+        AssertV2Exports(pClient);
+        AssertV3Exports(pClient);
+        AssertV4Exports(pClient);
+        AssertV5Exports(pClient);
+        AssertV6Exports(pClient);
+        AssertV7Exports(pClient);
+
+        Assert::IsTrue(IsExternalRcheevosClient());
+    }
+
     TEST_METHOD(TestRAIntegrationGetMenu)
     {
         AchievementRuntimeExportsHarness runtime;
-        runtime.mockUserContext.Logout();
+        runtime.mockLoginService.Logout();
         runtime.InitializeEventHandler();
 
         const rc_client_raintegration_menu_t* pMenu;
@@ -391,15 +497,13 @@ public:
         AssertMenuItem(pMenu, 5, IDM_RA_FILES_ACHIEVEMENTEDITOR, "Assets &Editor");
         AssertMenuItem(pMenu, 6, IDM_RA_FILES_MEMORYFINDER, "&Memory Inspector");
         AssertMenuItem(pMenu, 7, IDM_RA_FILES_MEMORYBOOKMARKS, "Memory &Bookmarks");
-        AssertMenuItem(pMenu, 8, IDM_RA_FILES_CODENOTES, "Code &Notes");
+        AssertMenuItem(pMenu, 8, IDM_RA_FILES_CODENOTES, "Memory &Notes");
         AssertMenuItem(pMenu, 9, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
         AssertMenuSeparator(pMenu, 10);
         AssertMenuItem(pMenu, 11, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
         AssertMenuItem(pMenu, 12, IDM_RA_FILES_POINTERINSPECTOR, "Pointer &Inspector");
 
-        runtime.mockUserContext.Initialize("User", "ApiToken");
-        runtime.AssertMenuChangedEventSeen();
-        runtime.ResetSeenEvents();
+        runtime.mockLoginService.Login("User", "ApiToken");
 
         pMenu = _Rcheevos_RAIntegrationGetMenu();
         Assert::AreEqual(19U, pMenu->num_items);
@@ -414,7 +518,7 @@ public:
         AssertMenuItem(pMenu, 8, IDM_RA_FILES_ACHIEVEMENTEDITOR, "Assets &Editor");
         AssertMenuItem(pMenu, 9, IDM_RA_FILES_MEMORYFINDER, "&Memory Inspector");
         AssertMenuItem(pMenu, 10, IDM_RA_FILES_MEMORYBOOKMARKS, "Memory &Bookmarks");
-        AssertMenuItem(pMenu, 11, IDM_RA_FILES_CODENOTES, "Code &Notes");
+        AssertMenuItem(pMenu, 11, IDM_RA_FILES_CODENOTES, "Memory &Notes");
         AssertMenuItem(pMenu, 12, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
         AssertMenuSeparator(pMenu, 13);
         AssertMenuItem(pMenu, 14, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
@@ -439,7 +543,7 @@ public:
         AssertMenuItem(pMenu, 8, IDM_RA_FILES_ACHIEVEMENTEDITOR, "Assets &Editor");
         AssertMenuItem(pMenu, 9, IDM_RA_FILES_MEMORYFINDER, "&Memory Inspector");
         AssertMenuItem(pMenu, 10, IDM_RA_FILES_MEMORYBOOKMARKS, "Memory &Bookmarks");
-        AssertMenuItem(pMenu, 11, IDM_RA_FILES_CODENOTES, "Code &Notes");
+        AssertMenuItem(pMenu, 11, IDM_RA_FILES_CODENOTES, "Memory &Notes");
         AssertMenuItem(pMenu, 12, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
         AssertMenuSeparator(pMenu, 13);
         AssertMenuItem(pMenu, 14, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
@@ -472,21 +576,21 @@ public:
     TEST_METHOD(TestReadWriteMemory)
     {
         AchievementRuntimeExportsHarness runtime;
-        ra::data::context::mocks::MockConsoleContext mockConsole(NES, L"NES");
+        ra::context::mocks::MockConsoleContext mockConsole(NES, L"NES");
         runtime.InitializeMemoryFunctions();
 
         Assert::AreEqual({0}, runtime.GetMemoryByte(1));
-        Assert::AreEqual({0}, runtime.mockEmulatorContext.ReadMemoryByte(1));
+        Assert::AreEqual({0}, runtime.mockEmulatorMemoryContext.ReadMemoryByte(1));
 
-        runtime.mockEmulatorContext.WriteMemoryByte(1, 3);
+        runtime.mockEmulatorMemoryContext.WriteMemoryByte(1, 3);
 
         Assert::AreEqual({3}, runtime.GetMemoryByte(1));
-        Assert::AreEqual({3}, runtime.mockEmulatorContext.ReadMemoryByte(1));
+        Assert::AreEqual({3}, runtime.mockEmulatorMemoryContext.ReadMemoryByte(1));
 
-        runtime.mockEmulatorContext.WriteMemoryByte(2, 7);
+        runtime.mockEmulatorMemoryContext.WriteMemoryByte(2, 7);
         Assert::AreEqual({7}, runtime.GetMemoryByte(2));
-        Assert::AreEqual({7}, runtime.mockEmulatorContext.ReadMemoryByte(2));
-        Assert::AreEqual({0x0703}, runtime.mockEmulatorContext.ReadMemory(1, ra::data::Memory::Size::SixteenBit));
+        Assert::AreEqual({7}, runtime.mockEmulatorMemoryContext.ReadMemoryByte(2));
+        Assert::AreEqual({0x0703}, runtime.mockEmulatorMemoryContext.ReadMemory(1, ra::data::Memory::Size::SixteenBit));
     }
 
     TEST_METHOD(TestPauseEvent)
@@ -542,7 +646,7 @@ public:
     {
         AchievementRuntimeExportsHarness runtime;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
 
         rc_client_external_t pClient;
         memset(&pClient, 0, sizeof(pClient));
@@ -564,7 +668,7 @@ public:
     {
         AchievementRuntimeExportsHarness runtime;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
 
         rc_client_external_t pClient;
         memset(&pClient, 0, sizeof(pClient));

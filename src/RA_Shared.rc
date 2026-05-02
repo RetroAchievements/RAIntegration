@@ -55,7 +55,7 @@ BEGIN
     PUSHBUTTON      "&Export",IDC_RA_RESULTS_EXPORT,8,127,35,14
     PUSHBUTTON      "&Import",IDC_RA_RESULTS_IMPORT,43,127,35,14
     CONTROL         "",IDC_RA_RESULTS,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_OWNERDATA | LVS_NOCOLUMNHEADER | WS_BORDER | WS_VSCROLL | WS_TABSTOP,82,55,242,86
-    GROUPBOX        "Code Notes",IDC_RA_GBX_NOTES,4,145,324,55
+    GROUPBOX        "Memory Notes",IDC_RA_GBX_NOTES,4,145,324,55
     LTEXT           "&Address:",IDC_STATIC,8,155,32,9
     EDITTEXT        IDC_RA_ADDRESS,8,166,56,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_RA_VIEW_CODENOTES,65,166,13,12
@@ -176,7 +176,7 @@ BEGIN
     PUSHBUTTON      "OK",IDOK,426,223,50,14
 END
 
-IDD_RA_GAMETITLESEL DIALOGEX 0, 0, 249, 136
+IDD_RA_GAMETITLESEL DIALOGEX 0, 0, 249, 156
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOOLWINDOW
 CAPTION "Unknown Title"
@@ -189,14 +189,18 @@ BEGIN
     LTEXT           "Some System",IDC_RA_SYSTEMNAME,48,24,131,8
     LTEXT           "RA Hash:",IDC_STATIC,8,32,36,8
     LTEXT           "ABCDEF0123456789",IDC_RA_CHECKSUM,48,32,131,8
-    LTEXT           "Select an existing title for the game from the following list of known titles:",IDC_STATIC,4,44,241,10
-    COMBOBOX        IDC_RA_KNOWNGAMES,4,54,241,137,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Or provide an appropriate name to create a new entry:",IDC_STATIC,4,70,219,10
-    EDITTEXT        IDC_RA_GAMETITLE,4,80,241,14,ES_AUTOHSCROLL | ES_WANTRETURN
-    LTEXT           "Then press 'Link' to associate the hash to the game, or 'Test' to load the game without registering the hash.",IDC_STATIC,4,98,241,18
-    PUSHBUTTON      "Link",IDC_RA_LINK,4,118,66,14
-    DEFPUSHBUTTON   "Test",IDOK,113,118,66,14
-    PUSHBUTTON      "Cancel",IDCANCEL,179,118,66,14
+    LTEXT           "Select an existing title for the game from the following list of known titles:",IDC_STATIC,4,46,241,10
+    COMBOBOX        IDC_RA_KNOWNGAMES,4,56,241,137,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Filter:",IDC_STATIC,5,74,32,11
+    EDITTEXT        IDC_RA_FILTER_VALUE,26,72,152,12,ES_AUTOHSCROLL
+    LTEXT           "Results:",IDC_STATIC,182,74,36,8
+    RTEXT           "9999/9999",IDC_RA_RESULT_COUNT,209,74,36,8
+    LTEXT           "Or provide an appropriate name to create a new entry:",IDC_STATIC,4,90,219,10
+    EDITTEXT        IDC_RA_GAMETITLE,4,100,241,12,ES_AUTOHSCROLL | ES_WANTRETURN
+    LTEXT           "Then press 'Link' to associate the hash to the game, or 'Test' to load the game without registering the hash.",IDC_STATIC,4,118,241,18
+    PUSHBUTTON      "Link",IDC_RA_LINK,4,138,66,14
+    DEFPUSHBUTTON   "Test",IDOK,113,138,66,14
+    PUSHBUTTON      "Cancel",IDCANCEL,179,138,66,14
     PUSHBUTTON      "Copy Hash",IDC_RA_COPYCHECKSUMCLIPBOARD,179,26,66,14
 END
 
@@ -297,7 +301,7 @@ END
 
 IDD_RA_CODENOTES DIALOGEX 0, 0, 287, 230
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
-CAPTION "Code Notes"
+CAPTION "Memory Notes"
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
     LTEXT           "Search:",IDC_STATIC,6,6,33,11

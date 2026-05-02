@@ -9,8 +9,9 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockGameContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -204,7 +205,7 @@ public:
 
         std::string sTrigger;
         for (int i = 0; i < 65535/12 - 1; i++)
-            sTrigger.append(ra::StringPrintf("0xH00%04X=0_", i));
+            sTrigger.append(ra::util::String::Printf("0xH00%04X=0_", i));
         sTrigger.append("0xX00FFF0=12345");
         Assert::AreEqual({65535U}, sTrigger.length());
         achievement.SetTrigger(sTrigger);
@@ -232,7 +233,7 @@ public:
 
         achievement.mockRuntime.MockGame();
         auto* achievement_info = achievement.mockRuntime.MockAchievementWithTrigger(achievement.GetID());
-        achievement.ReplaceAttached(*achievement_info);
+        achievement.SetLocalAchievementInfo(*achievement_info);
 
         g_bEventSeen = false;
         achievement.mockRuntime.GetClient()->callbacks.event_handler =
@@ -265,7 +266,7 @@ public:
 
         achievement.mockRuntime.MockGame();
         auto* achievement_info = achievement.mockRuntime.MockAchievementWithTrigger(achievement.GetID());
-        achievement.ReplaceAttached(*achievement_info);
+        achievement.SetLocalAchievementInfo(*achievement_info);
 
         g_bEventSeen = false;
         achievement.mockRuntime.GetClient()->callbacks.event_handler = [](const rc_client_event_t* pEvent,

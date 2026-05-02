@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Analysis|Win32">
@@ -57,7 +57,10 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="context\impl\ConsoleContext.cpp" />
+    <ClCompile Include="context\impl\EmulatorMemoryContext.cpp" />
     <ClCompile Include="context\impl\RcClient.cpp" />
+    <ClCompile Include="data\CapturedMemoryBlock.cpp" />
     <ClCompile Include="data\DataModelBase.cpp" />
     <ClCompile Include="data\DataModelCollection.cpp" />
     <ClCompile Include="data\Memory.cpp" />
@@ -65,25 +68,48 @@
     <ClCompile Include="data\ModelCollectionBase.cpp" />
     <ClCompile Include="data\ModelProperty.cpp" />
     <ClCompile Include="data\ModelPropertyContainer.cpp" />
+    <ClCompile Include="data\models\AssetModelBase.cpp" />
+    <ClCompile Include="data\models\MemoryNoteModel.cpp" />
+    <ClCompile Include="data\models\MemoryNotesModel.cpp" />
+    <ClCompile Include="data\models\MemoryRegionsModel.cpp" />
+    <ClCompile Include="data\Value.cpp" />
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="util\GSL.cpp" />
+    <ClCompile Include="util\StringBuilder.cpp" />
     <ClCompile Include="util\Strings.cpp" />
+    <ClCompile Include="util\Tokenizer.cpp" />
+    <ClInclude Include="context\IConsoleContext.hh" />
+    <ClInclude Include="context\IEmulatorMemoryContext.hh" />
+    <ClInclude Include="context\impl\ConsoleContext.hh" />
+    <ClInclude Include="context\impl\EmulatorMemoryContext.hh" />
     <ClInclude Include="context\impl\RcClient.hh" />
     <ClInclude Include="context\IRcClient.hh" />
+    <ClInclude Include="context\UserContext.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
+    <ClInclude Include="data\CapturedMemoryBlock.hh" />
     <ClInclude Include="data\DataModelBase.hh" />
     <ClInclude Include="data\DataModelCollection.hh" />
     <ClInclude Include="data\Memory.hh" />
+    <ClInclude Include="data\MemoryRegion.hh" />
     <ClInclude Include="data\ModelBase.hh" />
     <ClInclude Include="data\ModelCollectionBase.hh" />
     <ClInclude Include="data\ModelProperty.hh" />
     <ClInclude Include="data\ModelPropertyContainer.hh" />
+    <ClInclude Include="data\models\AssetModelBase.hh" />
+    <ClInclude Include="data\models\MemoryNoteModel.hh" />
+    <ClInclude Include="data\models\MemoryNotesModel.hh" />
+    <ClInclude Include="data\models\MemoryRegionsModel.hh" />
     <ClInclude Include="data\NotifyTargetSet.hh" />
+    <ClInclude Include="data\Value.hh" />
     <ClInclude Include="services\Http.hh" />
+    <ClInclude Include="services\IClock.hh" />
+    <ClInclude Include="services\IDebuggerDetector.hh" />
     <ClInclude Include="services\IFileSystem.hh" />
     <ClInclude Include="services\IHttpRequester.hh" />
+    <ClInclude Include="services\ILocalStorage.hh" />
     <ClInclude Include="services\ILogger.hh" />
     <ClInclude Include="services\IMessageDispatcher.hh" />
+    <ClInclude Include="services\impl\Clock.hh" />
     <ClInclude Include="services\impl\FileTextReader.hh" />
     <ClInclude Include="services\impl\FileTextWriter.hh" />
     <ClInclude Include="services\impl\StringTextReader.hh" />
@@ -96,7 +122,9 @@
     <ClInclude Include="util\EnumOps.hh" />
     <ClInclude Include="util\GSL.hh" />
     <ClInclude Include="util\Log.hh" />
+    <ClInclude Include="util\StringBuilder.hh" />
     <ClInclude Include="util\Strings.hh" />
+    <ClInclude Include="util\Tokenizer.hh" />
     <ClInclude Include="util\TypeCasts.hh" />
     <ClInclude Include="util\TypeTraits.hh" />
   </ItemGroup>

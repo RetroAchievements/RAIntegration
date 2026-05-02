@@ -2,13 +2,12 @@
 #define RA_DATA_LEADERBOARD_MODEL_H
 #pragma once
 
-#include "AssetModelBase.hh"
+#include "data/models/AssetModelBase.hh"
 
-#include "CapturedTriggerHits.hh"
-
-#include "data\Types.hh"
+#include "data/Value.hh"
 
 struct rc_client_leaderboard_info_t;
+struct rc_lboard_t;
 
 namespace ra {
 namespace data {
@@ -131,17 +130,12 @@ public:
     /// <summary>
     /// Gets the value format.
     /// </summary>
-    ValueFormat GetValueFormat() const { return ra::itoe<ValueFormat>(GetValue(ValueFormatProperty)); }
+    Value::Format GetValueFormat() const { return ra::itoe<Value::Format>(GetValue(ValueFormatProperty)); }
 
     /// <summary>
     /// Sets the value format.
     /// </summary>
-    void SetValueFormat(ValueFormat nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
-
-    /// <summary>
-    /// Converts a raw score into a display string.
-    /// </summary>
-    std::string FormatScore(int nValue) const;
+    void SetValueFormat(Value::Format nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not lower values are better.
@@ -189,30 +183,39 @@ public:
     void DoFrame() override;
 
     void Serialize(ra::services::TextWriter& pWriter) const override;
-    bool Deserialize(ra::Tokenizer& pTokenizer) override;
+    bool Deserialize(ra::util::Tokenizer& pTokenizer) override;
 
-    // Attaches an rc_client_leaderboard_info_t and populates the model from it.
-    void Attach(struct rc_client_leaderboard_info_t& pLeaderboard,
-        AssetCategory nCategory, const std::string& sDefinition);
-    // Replaces the attached rc_client_leaderboard_info_t. Does not update model or source.
-    void ReplaceAttached(struct rc_client_leaderboard_info_t& pLeaderboard) noexcept;
-    // Attaches an rc_client_leaderboard_info_t and populates it from the model.
-    void AttachAndInitialize(struct rc_client_leaderboard_info_t& pLeaderboard);
-    // Gets the attached rc_client_achievement_info_t.
-    const struct rc_client_leaderboard_info_t* GetAttached() const noexcept { return m_pLeaderboard; }
+    /// <summary>
+    /// Associates a published leaderboard to the model.
+    /// </summary>
+    /// <param name="pLeaderboard">Reference to the published leaderboard</param>
+    /// <param name="sDefinition">The published leaderboard definition</param>
+    void InitializeFromPublishedLeaderboard(const struct rc_client_leaderboard_info_t& pLeaderboard, const std::string& sDefinition);
 
-    const CapturedTriggerHits& GetStartCapturedHits() const noexcept { return m_pCapturedStartTriggerHits; }
-    const CapturedTriggerHits& GetSubmitCapturedHits() const noexcept { return m_pCapturedSubmitTriggerHits; }
-    const CapturedTriggerHits& GetCancelCapturedHits() const noexcept { return m_pCapturedCancelTriggerHits; }
-    const CapturedTriggerHits& GetValueCapturedHits() const noexcept { return m_pCapturedValueDefinitionHits; }
-    void ResetCapturedHits() noexcept 
-    {
-        m_pCapturedStartTriggerHits.Reset();
-        m_pCapturedSubmitTriggerHits.Reset();
-        m_pCapturedCancelTriggerHits.Reset();
-        m_pCapturedValueDefinitionHits.Reset();
-    }
+    /// <summary>
+    /// Associates a local leaderboard info to the model. Any changes made to the model will be updated in this runtime model
+    /// </summary>
+    void SetLocalLeaderboardInfo(struct rc_client_leaderboard_info_t& pLeaderboard);
 
+    /// <summary>
+    /// Updates all properties on the local leaderboard info from the current state of the model.
+    /// </summary>
+    void SyncToLocalLeaderboardInfo();
+
+    /// <summary>
+    /// Gets the attached rc_client_leaderboard_info_t.
+    /// </summary>
+    const struct rc_client_leaderboard_info_t* GetRuntimeLeaderboardInfo() const noexcept { return m_pLeaderboardInfo; }
+
+    /// <summary>
+    /// Gets the attached rc_lboard_t.
+    /// </summary>
+    const struct rc_lboard_t* GetRuntimeLeaderboard() const;
+    struct rc_lboard_t* GetMutableRuntimeLeaderboard();
+
+    /// <summary>
+    /// Gets the maximum size of the serialized leaderboard definition.
+    /// </summary>
     static constexpr size_t MaxSerializedLength = 65535;
 
 protected:
@@ -223,26 +226,34 @@ protected:
 
 private:
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
-    void SyncTitle();
-    void SyncDescription();
-    void SyncState(AssetState nNewState);
-    void SyncValueFormat();
-    void SyncTracker();
-    void SyncDefinition();
 
+    void SyncIDToRuntime() const;
+    void SyncTitleToRuntime();
+    void SyncDescriptionToRuntime();
+    void SyncStateToRuntime(AssetState nNewState) const;
+    void SyncValueFormatToRuntime() const;
+    void SyncTrackerToRuntime() const;
+    void SyncDefinitionToRuntime();
+
+    void SyncStateFromRuntime(uint8_t nState);
+
+    void ParseDefinition() const;
     AssetDefinition m_pStartTrigger;
     AssetDefinition m_pSubmitTrigger;
     AssetDefinition m_pCancelTrigger;
     AssetDefinition m_pValueDefinition;
 
-    struct rc_client_leaderboard_info_t* m_pLeaderboard = nullptr;
+    // the current leaderboard information
+    struct rc_client_leaderboard_info_t* m_pLeaderboardInfo = nullptr;
+
+    // the original leaderboard information received from the server
+    const struct rc_client_leaderboard_info_t* m_pPublishedLeaderboardInfo = nullptr;
+
+    // temporary buffers for local changes
     std::string m_sTitleBuffer;
     std::string m_sDescriptionBuffer;
+    mutable std::unique_ptr<uint8_t[]> m_pLeaderboardBuffer;
 
-    CapturedTriggerHits m_pCapturedStartTriggerHits;
-    CapturedTriggerHits m_pCapturedSubmitTriggerHits;
-    CapturedTriggerHits m_pCapturedCancelTriggerHits;
-    CapturedTriggerHits m_pCapturedValueDefinitionHits;
 };
 
 } // namespace models

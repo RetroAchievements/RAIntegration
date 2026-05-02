@@ -46,12 +46,12 @@ public:
 
     std::string StoreImage(_UNUSED ImageType nType, _UNUSED const std::wstring& sPath) override
     {
-        return "REPO:" + ra::Narrow(sPath);
+        return "REPO:" + ra::util::String::Narrow(sPath);
     }
 
     std::wstring GetFilename(_UNUSED ImageType nType, const std::string& sName) const override
     {
-        return L"RACache\\Badges\\" + ra::Widen(sName);
+        return L"RACache\\Badges\\" + ra::util::String::Widen(sName);
     }
 
     void AddReference(_UNUSED const ImageReference& pImage) noexcept override

@@ -2,7 +2,7 @@
 #define RA_DATA_LOCAL_BADGES_MODEL_H
 #pragma once
 
-#include "AssetModelBase.hh"
+#include "data/models/AssetModelBase.hh"
 
 namespace ra {
 namespace data {
@@ -27,7 +27,7 @@ public:
 	bool NeedsSerialized() const noexcept { return false; }
 
 	void Serialize(ra::services::TextWriter&) const noexcept override {}
-	bool Deserialize(ra::Tokenizer&) noexcept override { return true; }
+	bool Deserialize(ra::util::Tokenizer&) noexcept override { return true; }
 
 	int GetReferenceCount(const std::wstring& sBadgeName, bool bCommitted) const;
 	void DeleteUncommittedBadges();

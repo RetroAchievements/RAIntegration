@@ -7,15 +7,15 @@
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
+#include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\SessionTracker.hh"
-#include "data\context\UserContext.hh"
 
 #include "data\models\AchievementModel.hh"
-#include "data\models\CodeNotesModel.hh"
+#include "data\models\MemoryNotesModel.hh"
 #include "data\models\LocalBadgesModel.hh"
 #include "data\models\RichPresenceModel.hh"
 
@@ -44,7 +44,7 @@ namespace context {
 
 static bool ValidateConsole(int nServerConsoleId)
 {
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     if (ra::etoi(pConsoleContext.Id()) != nServerConsoleId)
     {
         switch (nServerConsoleId)
@@ -89,7 +89,7 @@ static bool ValidateConsole(int nServerConsoleId)
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
             L"Identified game does not match expected console.",
-            ra::StringPrintf(
+            ra::util::String::Printf(
                 L"The game being loaded is associated to the %s console, but the emulator has initialized "
                 "the %s console. This is not allowed as the memory maps may not be compatible between "
                 "consoles.",
@@ -134,6 +134,10 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
         if (m_nGameId != 0)
         {
             m_nGameId = 0;
+
+            auto* pRichPresence = m_vAssets.FindRichPresence();
+            if (pRichPresence != nullptr)
+                pRichPresence->Deactivate(); // detach custom rich presence
 
             auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
             rc_client_unload_game(pClient);
@@ -192,7 +196,7 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
         m_nGameId = 0;
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to load game data",
-                                                                    ra::Widen(sErrorMessage));
+                                                                    ra::util::String::Widen(sErrorMessage));
     }
     else
     {
@@ -220,14 +224,14 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
 
             // show "game loaded" popup
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-            std::wstring sDescription = ra::StringPrintf(L"%u achievements, %u points",
+            std::wstring sDescription = ra::util::String::Printf(L"%u achievements, %u points",
                                                             pSummary.num_core_achievements, pSummary.points_core);
             if (pSummary.num_unsupported_achievements)
-                sDescription += ra::StringPrintf(L" (%u unsupported)", pSummary.num_unsupported_achievements);
+                sDescription += ra::util::String::Printf(L" (%u unsupported)", pSummary.num_unsupported_achievements);
 
             ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                ra::StringPrintf(L"Loaded %s", pGame->title), sDescription,
-                ra::StringPrintf(L"You have earned %u achievements", pSummary.num_unlocked_achievements),
+                ra::util::String::Printf(L"Loaded %s", pGame->title), sDescription,
+                ra::util::String::Printf(L"You have earned %u achievements", pSummary.num_unlocked_achievements),
                 ra::ui::ImageType::Icon, pGame->badge_name);
         }
     }
@@ -251,20 +255,20 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
         {
             BeginLoad();
 
-            auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
-            pCodeNotes->Refresh(
+            auto pMemoryNotes = std::make_unique<ra::data::models::MemoryNotesModel>();
+            pMemoryNotes->Refresh(
                 m_nGameId,
                 [this](ra::data::ByteAddress nAddress, const std::wstring& sNewNote) {
-                    OnCodeNoteChanged(nAddress, sNewNote);
+                    OnMemoryNoteChanged(nAddress, sNewNote);
                 },
                 [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring sNote) {
-                    OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
+                    OnMemoryNoteMoved(nOldAddress, nNewAddress, sNote);
                 },
                 [this]() {
                     EndLoad();
                 });
 
-            m_vAssets.Append(std::move(pCodeNotes));
+            m_vAssets.Append(std::move(pMemoryNotes));
 
             // the old server value (if different from current server value) will be stored as Local modification.
             // capture it now. ReloadAssets will load the XXX-Rich.txt file and replace it
@@ -395,7 +399,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     const auto* pGame = rc_client_get_game_info(pClient);
     m_nGameId = GetRealGameId(pGame->id);
-    m_sGameTitle = ra::Widen(pGame->title);
+    m_sGameTitle = ra::util::String::Widen(pGame->title);
     m_sGameHash = pGame->hash ? pGame->hash : "";
 
 #ifndef RA_UTEST
@@ -414,12 +418,9 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
             for (; pAchievementData < pAchievementStop; ++pAchievementData)
             {
                 // if the server has provided an unexpected category (usually 0), ignore it.
-                ra::data::models::AssetCategory nCategory = ra::data::models::AssetCategory::None;
                 switch (pAchievementData->public_.category)
                 {
                     case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
-                        nCategory = ra::data::models::AssetCategory::Core;
-
                         // automatically activate all core achievements in compatibility mode
                         if (GetMode() == Mode::CompatibilityTest)
                         {
@@ -431,8 +432,6 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                         break;
 
                     case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:
-                        nCategory = ra::data::models::AssetCategory::Unofficial;
-
                         // all unofficial achievements should start inactive.
                         // rc_client automatically activates them.
                         pAchievementData->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
@@ -449,9 +448,9 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
 
                 const auto sDefinition = mAchievementDefinitions.find(pAchievementData->public_.id);
                 if (sDefinition != mAchievementDefinitions.end())
-                    vmAchievement->Attach(*pAchievementData, nCategory, sDefinition->second);
+                    vmAchievement->InitializeFromPublishedAchievement(*pAchievementData, sDefinition->second);
                 else
-                    vmAchievement->Attach(*pAchievementData, nCategory, "");
+                    vmAchievement->InitializeFromPublishedAchievement(*pAchievementData, "");
 
                 vmAchievement->SetSubsetID(pSubset->public_.id);
 
@@ -481,19 +480,22 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
             {
                 auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
 
-                const auto nCategory = ra::data::models::AssetCategory::Core; // all published leaderboards are core
-
                 const auto sDefinition = mLeaderboardDefinitions.find(pLeaderboardData->public_.id);
                 if (sDefinition != mLeaderboardDefinitions.end())
-                    vmLeaderboard->Attach(*pLeaderboardData, nCategory, sDefinition->second);
+                    vmLeaderboard->InitializeFromPublishedLeaderboard(*pLeaderboardData, sDefinition->second);
                 else
-                    vmLeaderboard->Attach(*pLeaderboardData, nCategory, "");
+                    vmLeaderboard->InitializeFromPublishedLeaderboard(*pLeaderboardData, "");
 
                 vmLeaderboard->SetSubsetID(pSubset->public_.id);
 
                 m_vAssets.Append(std::move(vmLeaderboard));
             }
         }
+
+        // rich presence
+        auto* pRichPresence = m_vAssets.FindRichPresence();
+        if (pRichPresence != nullptr)
+            pRichPresence->InitializeFromPublishedScript(pClient->game->runtime.richpresence, pRichPresence->GetScript());
     }
 }
 
@@ -504,7 +506,7 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
     std::lock_guard<std::mutex> lock(m_mLoadMutex);
     m_vSubsets.clear();
 
-    // GameID dictates which game is loaded for purposes of local achievement storage and code notes
+    // GameID dictates which game is loaded for purposes of local achievement storage and memory notes
     m_nGameId = GetRealGameId(game_data_response->id);
     // ActiveGameID dictates which game is running for purposes of rich presence and pings
     const auto nActiveGameId = GetRealGameId(game_data_response->session_game_id);
@@ -522,7 +524,7 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
             // core subset should always be first
             m_vSubsets.insert(m_vSubsets.begin(),
                               Subset(pSet->id, GetRealGameId(pSet->game_id),
-                                     ra::Widen(pSet->title), SubsetType::Core));
+                                     ra::util::String::Widen(pSet->title), SubsetType::Core));
         }
         else
         {
@@ -540,7 +542,7 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
                     break;
             }
             m_vSubsets.emplace_back(pSet->id, GetRealGameId(pSet->game_id),
-                                    ra::Widen(pSet->title), nType);
+                                    ra::util::String::Widen(pSet->title), nType);
         }
     }
 
@@ -551,7 +553,7 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
     }
     else if (m_nActiveGameId != m_nGameId)
     {
-        m_vSubsets.front().SetTitle(ra::StringPrintf(L"%s (%s)",
+        m_vSubsets.front().SetTitle(ra::util::String::Printf(L"%s (%s)",
             m_vSubsets.front().Title(), game_data_response->title));
     }
 }
@@ -697,28 +699,28 @@ void GameContext::DoFrame()
         pAsset.DoFrame();
 }
 
-void GameContext::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
+void GameContext::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         if (!IsGameLoading())
         {
             for (auto& target : m_vNotifyTargets.Targets())
-                target.OnCodeNoteChanged(nAddress, sNewNote);
+                target.OnMemoryNoteChanged(nAddress, sNewNote);
         }
 
         m_vNotifyTargets.Unlock();
     }
 }
 
-void GameContext::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
+void GameContext::OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     if (m_vNotifyTargets.LockIfNotEmpty())
     {
         if (!IsGameLoading())
         {
             for (auto& target : m_vNotifyTargets.Targets())
-                target.OnCodeNoteMoved(nOldAddress, nNewAddress, sNote);
+                target.OnMemoryNoteMoved(nOldAddress, nNewAddress, sNote);
         }
 
         m_vNotifyTargets.Unlock();

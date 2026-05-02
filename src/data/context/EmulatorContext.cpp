@@ -9,9 +9,9 @@
 #include "api\LatestClient.hh"
 
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
 
 #include "data\context\GameContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\AchievementRuntimeExports.hh"
@@ -19,6 +19,7 @@
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\IHttpRequester.hh"
+#include "services\ILoginService.hh"
 
 #include "ui\IDesktop.hh"
 
@@ -34,40 +35,9 @@ namespace ra {
 namespace data {
 namespace context {
 
-static std::string FormatAddressLarge(ra::data::ByteAddress nAddress)
-{
-    std::string sAddress;
-    sAddress.resize(10);
-    sprintf_s(sAddress.data(), 11, "0x%08x", nAddress);
-    return sAddress;
-}
-
-static std::string FormatAddressMedium(ra::data::ByteAddress nAddress)
-{
-    if (nAddress & 0xFF000000)
-        return FormatAddressLarge(nAddress);
-
-    std::string sAddress;
-    sAddress.resize(8);
-    sprintf_s(sAddress.data(), 9, "0x%06x", nAddress);
-    return sAddress;
-}
-
-static std::string FormatAddressSmall(ra::data::ByteAddress nAddress)
-{
-    if (nAddress & 0xFFFF0000)
-        return FormatAddressMedium(nAddress);
-
-    std::string sAddress;
-    sAddress.resize(6);
-    sprintf_s(sAddress.data(), 7, "0x%04x", nAddress);
-    return sAddress;
-}
-
 void EmulatorContext::Initialize(EmulatorID nEmulatorId, const char* sClientName)
 {
     m_nEmulatorId = nEmulatorId;
-    m_fFormatAddress = FormatAddressSmall;
 
     switch (nEmulatorId)
     {
@@ -144,7 +114,7 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId, const char* sClientName
                 const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
                 const auto sFileName = pDesktop.GetRunningExecutable();
                 const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-                m_sClientName = ra::Narrow(pFileSystem.RemoveExtension(pFileSystem.GetFileName(sFileName)));
+                m_sClientName = ra::util::String::Narrow(pFileSystem.RemoveExtension(pFileSystem.GetFileName(sFileName)));
             }
             m_nEmulatorId = EmulatorID::UnknownEmulator;
             break;
@@ -153,7 +123,7 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId, const char* sClientName
 
 static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
 {
-    sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
+    sUserAgent.append(ra::util::String::Printf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
         RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_PATCH,
         RA_INTEGRATION_VERSION_REVISION));
 
@@ -277,12 +247,12 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         auto response = request.Call();
         if (!response.Succeeded())
         {
-            if (ra::StringStartsWith(response.ErrorMessage, "Unknown client"))
+            if (ra::util::String::StartsWith(response.ErrorMessage, "Unknown client"))
             {
                 // if m_nEmulatorID is not recognized by the server, let it through regardless of version.
                 // assume it's a new emulator that hasn't been released yet.
                 m_sLatestVersion = "0.0.0.0";
-                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Could not retrieve latest client version.", ra::Widen(response.ErrorMessage));
+                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Could not retrieve latest client version.", ra::util::String::Widen(response.ErrorMessage));
             }
             else
             {
@@ -318,26 +288,26 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         if (bHardcore)
         {
             sError = L"The latest client is required for hardcore mode.";
-            auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-            if (pUserContext.IsLoggedIn())
+            auto& pLoginContext = ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>();
+            if (pLoginContext.IsLoggedIn())
             {
                 sError += L" You will be logged out.";
-                pUserContext.Logout();
+                pLoginContext.Logout();
             }
             else
             {
-                if (!pUserContext.IsLoginDisabled() && !pConfiguration.GetApiToken().empty())
+                if (!pLoginContext.IsLoginDisabled() && !pConfiguration.GetApiToken().empty())
                     sError += L" Login canceled.";
             }
 
-            pUserContext.DisableLogin();
+            pLoginContext.DisableLogin();
         }
 
         if (!m_sLatestVersionError.empty())
         {
             if (!sError.empty())
                 sError += L"\n";
-            sError += ra::Widen(m_sLatestVersionError);
+            sError += ra::util::String::Widen(m_sLatestVersionError);
         }
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not retrieve latest client version.", sError);
@@ -355,13 +325,13 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
     std::string sClientVersion = m_sVersion;
     while (!sClientVersion.empty() && (isalpha(sClientVersion.at(0)) || isspace(sClientVersion.at(0))))
         sClientVersion.erase(0, 1);
-    while (ra::StringEndsWith(sClientVersion, ".0"))
+    while (ra::util::String::EndsWith(sClientVersion, ".0"))
         sClientVersion.resize(sClientVersion.length() - 2);
     if (sClientVersion.find('.') == std::string::npos)
         sClientVersion.append(".0");
 
     std::string sNewVersion = m_sLatestVersion;
-    while (ra::StringEndsWith(sNewVersion, ".0"))
+    while (ra::util::String::EndsWith(sNewVersion, ".0"))
         sNewVersion.resize(sNewVersion.length() - 2);
     if (sNewVersion.find('.') == std::string::npos)
         sNewVersion.append(".0");
@@ -377,7 +347,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         // enforce minimum version required for hardcore
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetHeader(L"A newer client is required for hardcore mode.");
-        vmMessageBox.SetMessage(ra::StringPrintf(
+        vmMessageBox.SetMessage(ra::util::String::Printf(
             L"A new version of %s is available to download at %s.\n\n- Current version: %s\n- New version: %s\n\n"
             L"Press OK to logout and download the new version, or Cancel to disable hardcore mode and proceed.",
             m_sClientName,
@@ -403,7 +373,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         // allow any version in non-hardcore, but inform the user a new version is available
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetHeader(L"Would you like to update?");
-        vmMessageBox.SetMessage(ra::StringPrintf(
+        vmMessageBox.SetMessage(ra::util::String::Printf(
             L"A new version of %s is available to download at %s.\n\n- Current version: %s\n- New version: %s",
             m_sClientName,
             pConfiguration.GetHostName(),
@@ -418,7 +388,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
     if (bUpdate)
     {
         ra::services::ServiceLocator::Get<ra::ui::IDesktop>().OpenUrl(
-            ra::StringPrintf("%s/download.php", pConfiguration.GetHostUrl()));
+            ra::util::String::Printf("%s/download.php", pConfiguration.GetHostUrl()));
     }
 
     return bResult;
@@ -436,7 +406,7 @@ bool EmulatorContext::WarnDisableHardcoreMode(const std::string& sActivity)
         // prompt. if user doesn't consent, return failure - caller should not continue
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetHeader(L"Disable Hardcore mode?");
-        vmMessageBox.SetMessage(ra::StringPrintf(L"You cannot %s while Hardcore mode is active.", sActivity));
+        vmMessageBox.SetMessage(ra::util::String::Printf(L"You cannot %s while Hardcore mode is active.", sActivity));
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
         if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
@@ -491,8 +461,8 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     if (!ValidateClientVersion(bHardcore))
     {
         // The version could not be validated, or the user has chosen to update. Log them out.
-        auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-        pUserContext.Logout();
+        auto& pLoginContext = ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>();
+        pLoginContext.Logout();
         return false;
     }
 
@@ -536,8 +506,8 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     if (pWindowManager.AssetEditor.IsVisible())
         pDesktop.CloseWindow(pWindowManager.AssetEditor);
 
-    if (pWindowManager.CodeNotes.IsVisible())
-        pDesktop.CloseWindow(pWindowManager.CodeNotes);
+    if (pWindowManager.MemoryNotes.IsVisible())
+        pDesktop.CloseWindow(pWindowManager.MemoryNotes);
 
     if (pWindowManager.PointerFinder.IsVisible())
         pDesktop.CloseWindow(pWindowManager.PointerFinder);
@@ -573,7 +543,7 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
 
 std::wstring EmulatorContext::GetAppTitle(const std::string& sMessage) const
 {
-    ra::StringBuilder builder;
+    ra::util::StringBuilder builder;
     builder.Append(m_sClientName);
     builder.Append(" - ");
 
@@ -594,7 +564,7 @@ std::wstring EmulatorContext::GetAppTitle(const std::string& sMessage) const
         builder.Append(sMessage);
     }
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     const auto& sDisplayName = pUserContext.GetDisplayName();
     if (!sDisplayName.empty())
     {
@@ -623,578 +593,6 @@ std::string EmulatorContext::GetGameTitle() const
     std::array<char, 256> buffer{};
     m_fGetGameTitle(buffer.data());
     return std::string(buffer.data());
-}
-
-void EmulatorContext::ClearMemoryBlocks()
-{
-    m_vMemoryBlocks.clear();
-
-    if (m_nTotalMemorySize != 0U)
-    {
-        m_nTotalMemorySize = 0U;
-        OnTotalMemorySizeChanged();
-    }
-}
-
-void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
-    EmulatorContext::MemoryReadFunction pReader, EmulatorContext::MemoryWriteFunction pWriter)
-{
-    while (m_vMemoryBlocks.size() <= ra::to_unsigned(nIndex))
-        m_vMemoryBlocks.emplace_back();
-
-    MemoryBlock& pBlock = m_vMemoryBlocks.at(nIndex);
-    if (pBlock.size == 0)
-    {
-        pBlock.size = nBytes;
-        pBlock.read = pReader;
-        pBlock.write = pWriter;
-        pBlock.readBlock = nullptr;
-
-        m_nTotalMemorySize += nBytes;
-
-        OnTotalMemorySizeChanged();
-    }
-}
-
-void EmulatorContext::AddMemoryBlockReader(gsl::index nIndex,
-    EmulatorContext::MemoryReadBlockFunction pReader)
-{
-    if (nIndex < gsl::narrow_cast<gsl::index>(m_vMemoryBlocks.size()))
-        m_vMemoryBlocks.at(nIndex).readBlock = pReader;
-}
-
-void EmulatorContext::OnTotalMemorySizeChanged()
-{
-    if (m_nTotalMemorySize <= 0x10000)
-        m_fFormatAddress = FormatAddressSmall;
-    else if (m_nTotalMemorySize <= 0x1000000)
-        m_fFormatAddress = FormatAddressMedium;
-    else
-        m_fFormatAddress = FormatAddressLarge;
-
-    if (m_vNotifyTargets.LockIfNotEmpty())
-    {
-        for (auto& target : m_vNotifyTargets.Targets())
-            target.OnTotalMemorySizeChanged();
-
-        m_vNotifyTargets.Unlock();
-    }
-}
-
-bool EmulatorContext::HasInvalidRegions() const noexcept
-{
-    for (const auto& pBlock : m_vMemoryBlocks)
-    {
-        if (!pBlock.read)
-            return true;
-    }
-
-    return false;
-}
-
-bool EmulatorContext::IsValidAddress(ra::data::ByteAddress nAddress) const noexcept
-{
-    for (const auto& pBlock : m_vMemoryBlocks)
-    {
-        if (nAddress < pBlock.size)
-        {
-            if (pBlock.read)
-                return true;
-
-            break;
-        }
-
-        nAddress -= gsl::narrow_cast<ra::data::ByteAddress>(pBlock.size);
-    }
-
-    return false;
-}
-
-void EmulatorContext::AssertIsOnDoFrameThread() const
-{
-#if RA_INTEGRATION_VERSION_REVISION != 0
- #if !defined(RA_UTEST)
-    const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    if (!pClient->state.allow_background_memory_reads &&
-        !pRuntime.IsOnDoFrameThread())
-    {
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        if (pGameContext.GameId() != 0 && !pGameContext.IsGameLoading())
-        {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
-                L"Memory Read on Background Thread",
-                L"Memory is being read on a thread other than the thread that last called rc_client_do_frame and the "
-                L"client has specified that should not be allowed. Please notify a RetroAchievements engineer what you "
-                L"were doing when this occurred.");
-        }
-    }
- #endif
-#endif
-}
-
-uint8_t EmulatorContext::ReadMemoryByte(ra::data::ByteAddress nAddress) const
-{
-    AssertIsOnDoFrameThread();
-
-    for (const auto& pBlock : m_vMemoryBlocks)
-    {
-        if (nAddress < pBlock.size)
-        {
-            if (pBlock.read)
-                return pBlock.read(nAddress);
-
-            break;
-        }
-
-        nAddress -= gsl::narrow_cast<ra::data::ByteAddress>(pBlock.size);
-    }
-
-    return 0;
-}
-
-uint32_t EmulatorContext::ReadMemory(ra::data::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount,
-                                   const EmulatorContext::MemoryBlock& pBlock)
-{
-    Expects(pBuffer != nullptr);
-
-    if (pBlock.readBlock)
-    {
-        const size_t nRead = pBlock.readBlock(nAddress, pBuffer, gsl::narrow_cast<uint32_t>(nCount));
-        if (nRead < nCount)
-            memset(pBuffer + nRead, 0, nCount - nRead);
-
-        return gsl::narrow_cast<uint32_t>(nRead);
-    }
-
-    if (!pBlock.read)
-    {
-        memset(pBuffer, 0, nCount);
-        return 0;
-    }
-
-    auto nRemaining = nCount;
-    while (nRemaining >= 8) // unrolled loop to read 8-byte chunks
-    {
-        *pBuffer++ = pBlock.read(nAddress++);
-        *pBuffer++ = pBlock.read(nAddress++);
-        *pBuffer++ = pBlock.read(nAddress++);
-        *pBuffer++ = pBlock.read(nAddress++);
-        *pBuffer++ = pBlock.read(nAddress++);
-        *pBuffer++ = pBlock.read(nAddress++);
-        *pBuffer++ = pBlock.read(nAddress++);
-        *pBuffer++ = pBlock.read(nAddress++);
-        nRemaining -= 8;
-    }
-
-    switch (nRemaining) // partial Duff's device to read remaining bytes
-    {
-        case 7:
-            *pBuffer++ = pBlock.read(nAddress++);
-            _FALLTHROUGH;
-        case 6:
-            *pBuffer++ = pBlock.read(nAddress++);
-            _FALLTHROUGH;
-        case 5:
-            *pBuffer++ = pBlock.read(nAddress++);
-            _FALLTHROUGH;
-        case 4:
-            *pBuffer++ = pBlock.read(nAddress++);
-            _FALLTHROUGH;
-        case 3:
-            *pBuffer++ = pBlock.read(nAddress++);
-            _FALLTHROUGH;
-        case 2:
-            *pBuffer++ = pBlock.read(nAddress++);
-            _FALLTHROUGH;
-        case 1:
-            *pBuffer++ = pBlock.read(nAddress++);
-            _FALLTHROUGH;
-        default:
-            break;
-    }
-
-    return gsl::narrow_cast<uint32_t>(nCount);
-}
-
-_Use_decl_annotations_
-uint32_t EmulatorContext::ReadMemory(ra::data::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
-{
-    AssertIsOnDoFrameThread();
-
-    uint32_t nBytesRead = 0;
-    Expects(pBuffer != nullptr);
-
-    for (const auto& pBlock : m_vMemoryBlocks)
-    {
-        if (nAddress >= pBlock.size)
-        {
-            nAddress -= gsl::narrow_cast<ra::data::ByteAddress>(pBlock.size);
-            continue;
-        }
-
-        const size_t nBlockRemaining = pBlock.size - nAddress;
-        size_t nToRead = std::min(nCount, nBlockRemaining);
-
-        nBytesRead += ReadMemory(nAddress, pBuffer, nToRead, pBlock);
-
-        pBuffer += nToRead;
-        nCount -= nToRead;
-
-        if (nCount == 0)
-            return nBytesRead;
-
-        nAddress = 0;
-    }
-
-    if (nCount > 0)
-        memset(pBuffer, 0, nCount);
-
-    return nBytesRead;
-}
-
-uint32_t EmulatorContext::ReadMemory(ra::data::ByteAddress nAddress, Memory::Size nSize) const
-{
-    switch (nSize)
-    {
-        case Memory::Size::Bit0:
-            return (ReadMemoryByte(nAddress) & 0x01);
-        case Memory::Size::Bit1:
-            return (ReadMemoryByte(nAddress) & 0x02) ? 1 : 0;
-        case Memory::Size::Bit2:
-            return (ReadMemoryByte(nAddress) & 0x04) ? 1 : 0;
-        case Memory::Size::Bit3:
-            return (ReadMemoryByte(nAddress) & 0x08) ? 1 : 0;
-        case Memory::Size::Bit4:
-            return (ReadMemoryByte(nAddress) & 0x10) ? 1 : 0;
-        case Memory::Size::Bit5:
-            return (ReadMemoryByte(nAddress) & 0x20) ? 1 : 0;
-        case Memory::Size::Bit6:
-            return (ReadMemoryByte(nAddress) & 0x40) ? 1 : 0;
-        case Memory::Size::Bit7:
-            return (ReadMemoryByte(nAddress) & 0x80) ? 1 : 0;
-        case Memory::Size::NibbleLower:
-            return (ReadMemoryByte(nAddress) & 0x0F);
-        case Memory::Size::NibbleUpper:
-            return ((ReadMemoryByte(nAddress) >> 4) & 0x0F);
-        case Memory::Size::EightBit:
-            return ReadMemoryByte(nAddress);
-        default:
-        case Memory::Size::SixteenBit:
-        {
-            uint8_t buffer[2];
-            ReadMemory(nAddress, buffer, 2);
-            return buffer[0] | (buffer[1] << 8);
-        }
-        case Memory::Size::TwentyFourBit:
-        {
-            uint8_t buffer[3];
-            ReadMemory(nAddress, buffer, 3);
-            return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16);
-        }
-        case Memory::Size::Float:
-        case Memory::Size::FloatBigEndian:
-        case Memory::Size::Double32:
-        case Memory::Size::Double32BigEndian:
-        case Memory::Size::MBF32:
-        case Memory::Size::MBF32LE:
-        case Memory::Size::ThirtyTwoBit:
-        {
-            uint8_t buffer[4];
-            ReadMemory(nAddress, buffer, 4);
-            return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
-        }
-        case Memory::Size::SixteenBitBigEndian:
-        {
-            uint8_t buffer[2];
-            ReadMemory(nAddress, buffer, 2);
-            return buffer[1] | (buffer[0] << 8);
-        }
-        case Memory::Size::TwentyFourBitBigEndian:
-        {
-            uint8_t buffer[3];
-            ReadMemory(nAddress, buffer, 3);
-            return buffer[2] | (buffer[1] << 8) | (buffer[0] << 16);
-        }
-        case Memory::Size::ThirtyTwoBitBigEndian:
-        {
-            uint8_t buffer[4];
-            ReadMemory(nAddress, buffer, 4);
-            return buffer[3] | (buffer[2] << 8) | (buffer[1] << 16) | (buffer[0] << 24);
-        }
-        case Memory::Size::BitCount:
-        {
-            const uint8_t nValue = ReadMemoryByte(nAddress);
-            static const std::array<uint8_t, 16> nBitsSet = { 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4 };
-            return nBitsSet.at(nValue & 0x0F) + nBitsSet.at((nValue >> 4) & 0x0F);
-        }
-    }
-}
-
-void EmulatorContext::WriteMemory(ra::data::ByteAddress nAddress, const uint8_t* pBytes, size_t nBytes) const
-{
-    Expects(pBytes != nullptr);
-    size_t nBytesWritten = 0;
-    auto nBlockAddress = nAddress;
-
-    for (const auto& pBlock : m_vMemoryBlocks)
-    {
-        if (nBlockAddress < pBlock.size)
-        {
-            if (!pBlock.write)
-                break;
-
-            m_bMemoryModified = true;
-
-            if (nBytes == 1)
-            {
-                pBlock.write(nBlockAddress, pBytes[0]);
-                nBytesWritten = 1;
-                break;
-            }
-            else
-            {
-                do
-                {
-                    pBlock.write(nBlockAddress++, pBytes[nBytesWritten++]);
-                } while (nBytesWritten < nBytes && nBlockAddress < pBlock.size);
-
-                if (nBytesWritten == nBytes)
-                    break;
-            }
-        }
-
-        nBlockAddress -= gsl::narrow_cast<ra::data::ByteAddress>(pBlock.size);
-    }
-
-    if (nBytesWritten > 0)
-    {
-        if (m_vNotifyTargets.LockIfNotEmpty())
-        {
-            for (auto& target : m_vNotifyTargets.Targets())
-            {
-                for (unsigned nIndex = 0; nIndex < nBytesWritten; ++nIndex)
-                    target.OnByteWritten(nAddress + nIndex, pBytes[nIndex]);
-            }
-
-            m_vNotifyTargets.Unlock();
-        }
-    }
-}
-
-void EmulatorContext::WriteMemoryByte(ra::data::ByteAddress nAddress, uint8_t nValue) const
-{
-    WriteMemory(nAddress, &nValue, 1);
-}
-
-void EmulatorContext::WriteMemory(ra::data::ByteAddress nAddress, Memory::Size nSize, uint32_t nValue) const
-{
-    union
-    {
-        uint32_t u32;
-        uint8_t u8[4];
-    } u;
-    u.u32 = nValue;
-
-    switch (nSize)
-    {
-        case Memory::Size::EightBit:
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-
-        case Memory::Size::SixteenBit:
-            WriteMemory(nAddress, u.u8, 2);
-            break;
-
-        case Memory::Size::TwentyFourBit:
-            WriteMemory(nAddress, u.u8, 3);
-            break;
-
-        case Memory::Size::ThirtyTwoBit:
-            // already little endian
-            WriteMemory(nAddress, u.u8, 4);
-            break;
-
-        case Memory::Size::Float:
-        case Memory::Size::FloatBigEndian:
-        case Memory::Size::Double32:
-        case Memory::Size::Double32BigEndian:
-        case Memory::Size::MBF32:
-        case Memory::Size::MBF32LE:
-            // assume the value has already been encoded into a 32-bit little endian value
-            WriteMemory(nAddress, u.u8, 4);
-            break;
-
-        case Memory::Size::SixteenBitBigEndian:
-            u.u8[3] = u.u8[0];
-            u.u8[2] = u.u8[1];
-            WriteMemory(nAddress, &u.u8[2], 2);
-            break;
-
-        case Memory::Size::TwentyFourBitBigEndian:
-            u.u8[3] = u.u8[0];
-            u.u8[0] = u.u8[2];
-            u.u8[2] = u.u8[3];
-            WriteMemory(nAddress, u.u8, 3);
-            break;
-
-        case Memory::Size::ThirtyTwoBitBigEndian:
-            u.u32 = ra::data::Memory::ReverseBytes(nValue);
-            WriteMemory(nAddress, u.u8, 4);
-            break;
-
-        case Memory::Size::Bit0:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x01) | (nValue & 1);
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-        case Memory::Size::Bit1:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x02) | ((nValue & 1) << 1);
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-        case Memory::Size::Bit2:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x04) | ((nValue & 1) << 2);
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-        case Memory::Size::Bit3:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x08) | ((nValue & 1) << 3);
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-        case Memory::Size::Bit4:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x10) | ((nValue & 1) << 4);
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-        case Memory::Size::Bit5:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x20) | ((nValue & 1) << 5);
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-        case Memory::Size::Bit6:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x40) | ((nValue & 1) << 6);
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-        case Memory::Size::Bit7:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x80) | ((nValue & 1) << 7);
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-
-        case Memory::Size::NibbleLower:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0x0F) | (nValue & 0x0F);
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-        case Memory::Size::NibbleUpper:
-            u.u32 = (ReadMemoryByte(nAddress) & ~0xF0) | ((nValue & 0x0F) << 4);
-            WriteMemory(nAddress, u.u8, 1);
-            break;
-
-        default:
-            break;
-    }
-}
-
-void EmulatorContext::ResetMemoryModified()
-{
-    m_bMemoryModified = false;
-
-    if (m_bMemoryInsecure)
-    {
-        // memory was insecure, immediately do a check
-        const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-        m_bMemoryInsecure = pDesktop.IsDebuggerPresent();
-
-        const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-        m_tLastInsecureCheck = pClock.UpTime();
-    }
-}
-
-bool EmulatorContext::IsMemoryInsecure() const
-{
-    if (m_bMemoryInsecure)
-        return true;
-
-    // limit checks to once every 10 seconds
-    const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-    const auto tNow = pClock.UpTime();
-    const auto tElapsed = tNow - m_tLastInsecureCheck;
-    if (tElapsed > std::chrono::seconds(10))
-    {
-        const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-        m_bMemoryInsecure = pDesktop.IsDebuggerPresent();
-        m_tLastInsecureCheck = tNow;
-    }
-
-    return m_bMemoryInsecure;
-}
-
-_CONSTANT_VAR MAX_BLOCK_SIZE = 256U * 1024; // 256K
-
-void EmulatorContext::CaptureMemory(std::vector<ra::data::search::MemBlock>& vBlocks, ra::data::ByteAddress nAddress, uint32_t nCount, uint32_t nPadding) const
-{
-    ra::data::ByteAddress nAdjustedAddress = nAddress;
-    for (const auto& pMemoryBlock : m_vMemoryBlocks)
-    {
-        if (nAdjustedAddress >= pMemoryBlock.size)
-        {
-            nAdjustedAddress -= gsl::narrow_cast<ra::data::ByteAddress>(pMemoryBlock.size);
-            continue;
-        }
-
-        if (!pMemoryBlock.read && !pMemoryBlock.readBlock)
-        {
-            nCount -= gsl::narrow_cast<uint32_t>(pMemoryBlock.size);
-            nAddress += gsl::narrow_cast<ra::data::ByteAddress>(pMemoryBlock.size);
-            nAdjustedAddress = 0;
-            continue;
-        }
-
-        const uint32_t nBlockRemaining = gsl::narrow_cast<uint32_t>(pMemoryBlock.size) - nAdjustedAddress;
-        uint32_t nToRead = std::min(nCount, nBlockRemaining);
-        nCount -= nToRead;
-
-        while (nToRead > 0)
-        {
-            ra::data::search::MemBlock* pBlock = nullptr;
-
-            const uint32_t nBlockSize = std::min(nToRead, MAX_BLOCK_SIZE);
-            const bool bIsLastBlock = (nCount == 0 && nBlockSize == nToRead);
-            if (!bIsLastBlock)
-            {
-                // capture nPadding overlapping bytes so we don't have to stitch multiple
-                // blocks together if a read occurs at the block boundary
-                pBlock = &vBlocks.emplace_back(nAddress, nBlockSize + nPadding, nBlockSize);
-            }
-            else
-            {
-                pBlock = &vBlocks.emplace_back(nAddress, nBlockSize, nBlockSize);
-            }
-
-            Expects(pBlock != nullptr);
-            ReadMemory(nAdjustedAddress, pBlock->GetBytes(), nBlockSize, pMemoryBlock);
-            pBlock->OptimizeMemory(vBlocks);
-
-            nAddress += nBlockSize;
-            nAdjustedAddress += nBlockSize;
-            nToRead -= nBlockSize;
-        }
-
-        if (nCount == 0)
-            break;
-
-        nAdjustedAddress = 0;
-    }
-
-    if (nPadding)
-    {
-        // copy the first four bytes of each block to the last four bytes of the previous
-        // block to cover the overlap
-        for (size_t i = 1; i < vBlocks.size(); ++i)
-        {
-            auto& pDstBlock = vBlocks.at(i - 1);
-            // ASSERT: pDstBlock->GetBytes() is a size that's a multiple of 4 even if
-            //         pDstBlock->GetBytesSize() is not.
-            auto* pDstBytes = pDstBlock.GetBytes() + (pDstBlock.GetBytesSize() & ~3);
-            const auto* pSrcBytes = vBlocks.at(i).GetBytes();
-            memcpy(pDstBytes, pSrcBytes, 4);
-        }
-    }
 }
 
 void EmulatorContext::UpdateMenuState(int nMenuItemId) const

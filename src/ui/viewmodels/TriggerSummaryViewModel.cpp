@@ -393,7 +393,10 @@ static std::wstring OperandToString(const rc_operand_t& pOperand)
         case RC_OPERAND_ADDRESS:
         case RC_OPERAND_DELTA:
         case RC_OPERAND_PRIOR:
-            return ra::Widen(ra::ByteAddressToString(pOperand.value.memref->address));
+        {
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+            return ra::util::String::Widen(pMemoryContext.FormatAddress(pOperand.value.memref->address));
+        }
 
         default:
             return L"???";
@@ -411,9 +414,9 @@ static void HandleTally(TriggerSummaryViewModel::TriggerClauseViewModel& pClause
     else if (pCondition.required_hits > 1)
     {
         if (IsChangeType(pClause.nType))
-            pClause.SetTally(ra::StringPrintf(L"%u times", pCondition.required_hits));
+            pClause.SetTally(ra::util::String::Printf(L"%u times", pCondition.required_hits));
         else
-            pClause.SetTally(ra::StringPrintf(L"for %u frames", pCondition.required_hits));
+            pClause.SetTally(ra::util::String::Printf(L"for %u frames", pCondition.required_hits));
     }
 }
 
@@ -491,7 +494,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
     uint32_t nFirstIndex = 0;
     uint32_t nLastIndex = 0;
 
-    const auto* pCodeNotes = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets().FindCodeNotes();
+    const auto* pMemoryNotes = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets().FindMemoryNotes();
 
     const auto* pCondition = pCondSet.conditions;
     for (; pCondition; pCondition = pCondition->next)
@@ -514,7 +517,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
                 break;
             }
 
-            pClause.SetIndices(ra::StringPrintf(L"%u-%u", nFirstIndex, nLastIndex));
+            pClause.SetIndices(ra::util::String::Printf(L"%u-%u", nFirstIndex, nLastIndex));
         }
         else
         {
@@ -523,9 +526,9 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
 
         pClause.pCondition = pCondition;
 
-        const ra::data::models::CodeNoteModel* pNote = nullptr;
-        if (pCodeNotes && rc_operand_is_memref(&pCondition->operand1))
-            pNote = pCodeNotes->FindCodeNoteModel(pCondition->operand1.value.memref->address);
+        const ra::data::models::MemoryNoteModel* pNote = nullptr;
+        if (pMemoryNotes && rc_operand_is_memref(&pCondition->operand1))
+            pNote = pMemoryNotes->FindMemoryNoteModel(pCondition->operand1.value.memref->address);
 
         if (pNote)
         {
@@ -583,7 +586,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
 
         if (rc_operand_is_memref(&pCondition->operand1))
         {
-            for (gsl::index nIndex = 0; nIndex < m_vClauses.Count() - 1; ++nIndex)
+            for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vClauses.Count()) - 1; ++nIndex)
             {
                 auto* pOtherClause = m_vClauses.GetItemAt(nIndex);
                 if (pOtherClause && IsSameMemoryReference(pCondition->operand1, pOtherClause->pCondition->operand1))
@@ -614,7 +617,7 @@ void TriggerSummaryViewModel::AddHeaders()
 
     std::vector<std::vector<TriggerClauseViewModel*>> vBuckets(ra::etoi(TriggerClauseBucket::Count));
 
-    for (gsl::index nIndex = 0; nIndex < m_vClauses.Count(); ++nIndex)
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vClauses.Count()); ++nIndex)
     {
         auto* pClause = m_vClauses.GetItemAt(nIndex);
         if (!pClause)
@@ -679,7 +682,7 @@ void TriggerSummaryViewModel::AddHeaders()
 
             for (const auto* pClause : vBucketItems)
             {
-                for (gsl::index nIndex = nInsertIndex; nIndex < m_vClauses.Count(); ++nIndex)
+                for (gsl::index nIndex = nInsertIndex; nIndex < gsl::narrow_cast<gsl::index>(m_vClauses.Count()); ++nIndex)
                 {
                     if (m_vClauses.GetItemAt(nIndex) == pClause)
                     {

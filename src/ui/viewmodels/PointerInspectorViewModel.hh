@@ -2,9 +2,10 @@
 #define RA_UI_POINTERINSPECTORVIEWMODEL_H
 #pragma once
 
-#include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
+
+#include "util\StringBuilder.hh"
 
 #include "ui\WindowViewModelBase.hh"
 #include "ui\viewmodels\MemoryWatchListViewModel.hh"
@@ -13,7 +14,7 @@ namespace ra {
 namespace data {
 namespace models {
 
-class CodeNoteModel;
+class MemoryNoteModel;
 
 } // namespace models
 } // namespace data
@@ -124,7 +125,7 @@ public:
 
         int32_t m_nOffset = 0;
         int32_t m_nIndent = 0;
-        const ra::data::models::CodeNoteModel* m_pNote = nullptr;
+        const ra::data::models::MemoryNoteModel* m_pNote = nullptr;
         bool m_bFormattingOffset = false;
     };
 
@@ -249,7 +250,7 @@ protected:
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
-    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
+    void OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
@@ -260,23 +261,23 @@ private:
     void OnSelectedFieldChanged(int nNode);
     void OnFieldSizeChanged(gsl::index nIndex);
     void OnFieldOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset);
-    void LoadNote(const ra::data::models::CodeNoteModel* pNote);
-    void LoadNodes(const ra::data::models::CodeNoteModel* pNote);
-    const ra::data::models::CodeNoteModel* FindNestedCodeNoteModel(const ra::data::models::CodeNoteModel& pRootNote, int nNewNode);
+    void LoadNote(const ra::data::models::MemoryNoteModel* pNote);
+    void LoadNodes(const ra::data::models::MemoryNoteModel* pNote);
+    const ra::data::models::MemoryNoteModel* FindNestedMemoryNoteModel(const ra::data::models::MemoryNoteModel& pRootNote, int nNewNode);
     void GetPointerChain(gsl::index nIndex, std::stack<const PointerNodeViewModel*>& sChain) const;
-    void SyncField(StructFieldViewModel& pFieldViewModel, const ra::data::models::CodeNoteModel& pOffsetNote);
-    void UpdatePointerVisibility(ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel* pNote);
-    const ra::data::models::CodeNoteModel* UpdatePointerChain(int nNewNode);
+    void SyncField(StructFieldViewModel& pFieldViewModel, const ra::data::models::MemoryNoteModel& pOffsetNote);
+    void UpdatePointerVisibility(ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel* pNote);
+    const ra::data::models::MemoryNoteModel* UpdatePointerChain(int nNewNode);
     void UpdatePointerChainRowColor(StructFieldViewModel& pPointer);
     void UpdatePointerChainValues();
     void UpdateValues();
     std::string GetMemRefChain(bool bMeasured) const;
 
-    void UpdateSourceCodeNote();
-    void BuildNote(ra::StringBuilder& builder,
+    void UpdateSourceMemoryNote();
+    void BuildNote(ra::util::StringBuilder& builder,
                    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
-                   gsl::index nDepth, const ra::data::models::CodeNoteModel& pNote);
-    void BuildNoteForCurrentNode(ra::StringBuilder& builder,
+                   gsl::index nDepth, const ra::data::models::MemoryNoteModel& pNote);
+    void BuildNoteForCurrentNode(ra::util::StringBuilder& builder,
                                  std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
                                  gsl::index nDepth);
 
@@ -288,7 +289,9 @@ private:
     bool m_bSyncingNote = false;
     bool m_bRebuildNodes = false;
 
-    const ra::data::models::CodeNoteModel* m_pCurrentNote = nullptr;
+    std::mutex m_mtxLoadNote;
+
+    const ra::data::models::MemoryNoteModel* m_pCurrentNote = nullptr;
 };
 
 } // namespace viewmodels

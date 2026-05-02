@@ -6,15 +6,15 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -86,13 +86,13 @@ private:
         {
             InitializeNotifyTargets();
 
-            mockGameContext.InitializeCodeNotes();
+            mockGameContext.InitializeNotes();
         }
 
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
@@ -106,7 +106,7 @@ private:
             for (size_t i = 0; i < memory.size(); ++i)
                 memory.at(i) = gsl::narrow_cast<unsigned char>(i);
 
-            mockEmulatorContext.MockMemory(memory);
+            mockEmulatorMemoryContext.MockMemory(memory);
         }
 
         void InitializeAsciiMemory()
@@ -119,7 +119,7 @@ private:
             for (size_t i = 0; i < memory.size(); ++i)
                 memory.at(i) = text.at(i);
 
-            mockEmulatorContext.MockMemory(memory);
+            mockEmulatorMemoryContext.MockMemory(memory);
         }
 
         bool CanBeginNewSearch() const { return GetValue(CanBeginNewSearchProperty); }
@@ -1392,8 +1392,8 @@ public:
     {
         // only system range defined
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
-        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0xFFFFU, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
+        search.mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000U);
 
         Assert::AreEqual({ 2U }, search.PredefinedFilterRanges().Count());
         Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
@@ -1406,9 +1406,9 @@ public:
     {
         // system and game ranges defined
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
-        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM");
-        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0xBFFFU, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::MemoryRegion::Type::SaveRAM, L"Cartridge RAM");
+        search.mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000U);
 
         Assert::AreEqual({ 4U }, search.PredefinedFilterRanges().Count());
         Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
@@ -1425,11 +1425,11 @@ public:
     {
         // multiple similar system and game ranges defined
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
-        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
-        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM");
-        search.mockConsoleContext.AddMemoryRegion(0xF000U, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM");
-        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
+        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0xBFFFU, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::MemoryRegion::Type::SaveRAM, L"Cartridge RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xF000U, 0xFFFFU, ra::data::MemoryRegion::Type::SaveRAM, L"Cartridge RAM");
+        search.mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000U);
 
         Assert::AreEqual({ 4U }, search.PredefinedFilterRanges().Count());
         Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
@@ -1446,11 +1446,11 @@ public:
     {
         // multiple distinct system and game ranges defined
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM 1");
-        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM 2");
-        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM 1");
-        search.mockConsoleContext.AddMemoryRegion(0xF000U, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM 2");
-        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM 1");
+        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0xBFFFU, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM 2");
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::MemoryRegion::Type::SaveRAM, L"Cartridge RAM 1");
+        search.mockConsoleContext.AddMemoryRegion(0xF000U, 0xFFFFU, ra::data::MemoryRegion::Type::SaveRAM, L"Cartridge RAM 2");
+        search.mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000U);
 
         Assert::AreEqual({ 8U }, search.PredefinedFilterRanges().Count());
         Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
@@ -1475,23 +1475,23 @@ public:
     {
         // non-system/cartridge memory regions should be ignored
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0x0000U, 0x00FFU, ra::data::context::ConsoleContext::AddressType::HardwareController, "Interrupt Vector");
-        search.mockConsoleContext.AddMemoryRegion(0x0100U, 0x014FU, ra::data::context::ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge Header");
-        search.mockConsoleContext.AddMemoryRegion(0x0150U, 0x3FFFU, ra::data::context::ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM (fixed)");
-        search.mockConsoleContext.AddMemoryRegion(0x4000U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM (paged)");
-        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0x97FFU, ra::data::context::ConsoleContext::AddressType::VideoRAM, "Title RAM");
-        search.mockConsoleContext.AddMemoryRegion(0x9800U, 0x9BFFU, ra::data::context::ConsoleContext::AddressType::VideoRAM, "BG1 map data");
-        search.mockConsoleContext.AddMemoryRegion(0x9C00U, 0x9FFFU, ra::data::context::ConsoleContext::AddressType::VideoRAM, "MD2 map data");
-        search.mockConsoleContext.AddMemoryRegion(0xA000U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM, "Cartridge RAM (bank 0)");
-        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM (fixed)");
-        search.mockConsoleContext.AddMemoryRegion(0xD000U, 0xDFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM (fixed)");
-        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xFDFFU, ra::data::context::ConsoleContext::AddressType::VirtualRAM, "Echo RAM");
-        search.mockConsoleContext.AddMemoryRegion(0xFE00U, 0xFE9FU, ra::data::context::ConsoleContext::AddressType::VideoRAM, "Sprite RAM");
-        search.mockConsoleContext.AddMemoryRegion(0xFEA0U, 0xFEFFU, ra::data::context::ConsoleContext::AddressType::Unused, "");
-        search.mockConsoleContext.AddMemoryRegion(0xFF00U, 0xFF7FU, ra::data::context::ConsoleContext::AddressType::HardwareController, "Hardware I/O");
-        search.mockConsoleContext.AddMemoryRegion(0xFF80U, 0xFFFEU, ra::data::context::ConsoleContext::AddressType::SystemRAM, "Quick RAM");
-        search.mockConsoleContext.AddMemoryRegion(0xFFFFU, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::HardwareController, "Interrupt Enable");
-        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.mockConsoleContext.AddMemoryRegion(0x0000U, 0x00FFU, ra::data::MemoryRegion::Type::HardwareController, L"Interrupt Vector");
+        search.mockConsoleContext.AddMemoryRegion(0x0100U, 0x014FU, ra::data::MemoryRegion::Type::ReadOnlyMemory, L"Cartridge Header");
+        search.mockConsoleContext.AddMemoryRegion(0x0150U, 0x3FFFU, ra::data::MemoryRegion::Type::ReadOnlyMemory, L"Cartridge ROM (fixed)");
+        search.mockConsoleContext.AddMemoryRegion(0x4000U, 0x7FFFU, ra::data::MemoryRegion::Type::ReadOnlyMemory, L"Cartridge ROM (paged)");
+        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0x97FFU, ra::data::MemoryRegion::Type::VideoRAM, L"Title RAM");
+        search.mockConsoleContext.AddMemoryRegion(0x9800U, 0x9BFFU, ra::data::MemoryRegion::Type::VideoRAM, L"BG1 map data");
+        search.mockConsoleContext.AddMemoryRegion(0x9C00U, 0x9FFFU, ra::data::MemoryRegion::Type::VideoRAM, L"MD2 map data");
+        search.mockConsoleContext.AddMemoryRegion(0xA000U, 0xBFFFU, ra::data::MemoryRegion::Type::SaveRAM, L"Cartridge RAM (bank 0)");
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM (fixed)");
+        search.mockConsoleContext.AddMemoryRegion(0xD000U, 0xDFFFU, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM (fixed)");
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xFDFFU, ra::data::MemoryRegion::Type::VirtualRAM, L"Echo RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xFE00U, 0xFE9FU, ra::data::MemoryRegion::Type::VideoRAM, L"Sprite RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xFEA0U, 0xFEFFU, ra::data::MemoryRegion::Type::Unused, L"");
+        search.mockConsoleContext.AddMemoryRegion(0xFF00U, 0xFF7FU, ra::data::MemoryRegion::Type::HardwareController, L"Hardware I/O");
+        search.mockConsoleContext.AddMemoryRegion(0xFF80U, 0xFFFEU, ra::data::MemoryRegion::Type::SystemRAM, L"Quick RAM");
+        search.mockConsoleContext.AddMemoryRegion(0xFFFFU, 0xFFFFU, ra::data::MemoryRegion::Type::HardwareController, L"Interrupt Enable");
+        search.mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000U);
 
         Assert::AreEqual({ 6U }, search.PredefinedFilterRanges().Count());
         Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
@@ -1511,9 +1511,9 @@ public:
     TEST_METHOD(TestPredefinedFilterRangeAll)
     {
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
-        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::MemoryRegion::Type::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::MemoryRegion::Type::SaveRAM);
+        search.mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000U);
         search.SetFilterRange(L"0x0000-0x1FFF");
 
         search.SetPredefinedFilterRange(0);
@@ -1523,9 +1523,9 @@ public:
     TEST_METHOD(TestPredefinedFilterRangeSystem)
     {
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
-        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::MemoryRegion::Type::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::MemoryRegion::Type::SaveRAM);
+        search.mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000U);
         search.SetFilterRange(L"0x0000-0x1FFF");
 
         search.SetPredefinedFilterRange(1);
@@ -1535,9 +1535,9 @@ public:
     TEST_METHOD(TestPredefinedFilterRangeGame)
     {
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
-        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::MemoryRegion::Type::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::MemoryRegion::Type::SaveRAM);
+        search.mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000U);
         search.SetFilterRange(L"0x0000-0x1FFF");
 
         search.SetPredefinedFilterRange(2);
@@ -1547,9 +1547,9 @@ public:
     TEST_METHOD(TestPredefinedFilterRangeCustom)
     {
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
-        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::MemoryRegion::Type::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::MemoryRegion::Type::SaveRAM);
+        search.mockEmulatorMemoryContext.MockTotalMemorySizeChanged(0x10000U);
         search.SetFilterRange(L"0x0000-0x1FFF");
 
         search.SetPredefinedFilterRange(0);
@@ -1771,12 +1771,11 @@ public:
         Assert::AreEqual(std::wstring(L"Continuous Filter"), search.ContinuousFilterLabel());
     }
 
-
-    TEST_METHOD(TestOnCodeNoteChanged)
+    TEST_METHOD(TestOnMemoryNoteChanged)
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
-        search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
+        search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::Equals);
@@ -1792,19 +1791,75 @@ public:
 
         Assert::AreEqual({ 12U }, pRow->nAddress);
         Assert::AreEqual(std::wstring(L"System RAM"), pRow->GetDescription());
-        Assert::IsFalse(pRow->bHasCodeNote);
+        Assert::IsFalse(pRow->bHasMemoryNote);
 
-        search.mockGameContext.SetCodeNote({ 12U }, L"Note");
+        search.mockGameContext.SetNote({ 12U }, L"Note");
         Assert::AreEqual(std::wstring(L"Note"), pRow->GetDescription());
-        Assert::IsTrue(pRow->bHasCodeNote);
+        Assert::IsTrue(pRow->bHasMemoryNote);
 
-        search.mockGameContext.SetCodeNote({ 12U }, L"Note 2");
+        search.mockGameContext.SetNote({ 12U }, L"Note 2");
         Assert::AreEqual(std::wstring(L"Note 2"), pRow->GetDescription());
-        Assert::IsTrue(pRow->bHasCodeNote);
+        Assert::IsTrue(pRow->bHasMemoryNote);
 
-        search.mockGameContext.SetCodeNote({ 12U }, L"");
+        search.mockGameContext.SetNote({ 12U }, L"");
         Assert::AreEqual(std::wstring(L"System RAM"), pRow->GetDescription());
-        Assert::IsFalse(pRow->bHasCodeNote);
+        Assert::IsFalse(pRow->bHasMemoryNote);
+    }
+
+    TEST_METHOD(TestOnMemoryNoteChangedMultiline)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
+        search.BeginNewSearch();
+        search.mockGameContext.SetNote({ 12U }, L"Summary\n1=A\n2=B");
+
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"12");
+
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        auto* pRow = search.Results().GetItemAt(0);
+        Assert::IsNotNull(pRow);
+        Ensures(pRow != nullptr);
+
+        Assert::AreEqual({ 12U }, pRow->nAddress);
+        Assert::AreEqual(std::wstring(L"Summary"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasMemoryNote);
+
+        search.mockGameContext.SetNote({ 12U }, L"Summary\n1=C\2=D");
+        Assert::AreEqual(std::wstring(L"Summary"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasMemoryNote);
+    }
+
+    TEST_METHOD(TestOnMemoryNoteChangedPartial)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::MemoryRegion::Type::SystemRAM, L"System RAM");
+        search.BeginNewSearch();
+        search.mockGameContext.SetNote({ 10U }, L"[4-byte] Summary");
+
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"12");
+
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        auto* pRow = search.Results().GetItemAt(0);
+        Assert::IsNotNull(pRow);
+        Ensures(pRow != nullptr);
+
+        Assert::AreEqual({ 12U }, pRow->nAddress);
+        Assert::AreEqual(std::wstring(L"[4-byte] Summary [3/4]"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasMemoryNote);
+
+        search.mockGameContext.SetNote({ 10U }, L"[4-byte] Banana");
+        Assert::AreEqual(std::wstring(L"[4-byte] Banana [3/4]"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasMemoryNote);
     }
 
     TEST_METHOD(TestScrollDisplaysCurrentValue)

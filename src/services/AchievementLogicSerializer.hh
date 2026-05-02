@@ -5,7 +5,7 @@
 #include "data\Memory.hh"
 #include "data\Types.hh"
 
-#include "data\models\CodeNoteModel.hh"
+#include "data\models\MemoryNoteModel.hh"
 
 namespace ra {
 namespace services {
@@ -82,8 +82,8 @@ public:
 
     static void AppendHitTarget(std::string& sBuffer, uint32_t nTarget);
 
-    static std::string BuildMemRefChain(const ra::data::models::CodeNoteModel& pRootNote,
-                                        const ra::data::models::CodeNoteModel& pLeafNote);
+    static std::string BuildMemRefChain(const ra::data::models::MemoryNoteModel& pRootNote,
+                                        const ra::data::models::MemoryNoteModel& pLeafNote);
 };
 
 } // namespace services

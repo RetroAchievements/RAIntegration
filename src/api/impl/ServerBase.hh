@@ -29,11 +29,6 @@ public:
         return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
     }
 
-    FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request&) override
-    {
-        return UnsupportedApi<FetchCodeNotes::Response>(FetchCodeNotes::Name());
-    }
-
     UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request&) override
     {
         return UnsupportedApi<UpdateCodeNote::Response>(UpdateCodeNote::Name());
@@ -76,16 +71,6 @@ public:
         return UnsupportedApi<LatestClient::Response>(LatestClient::Name());
     }
 
-    FetchGamesList::Response FetchGamesList(const FetchGamesList::Request&) override
-    {
-        return UnsupportedApi<FetchGamesList::Response>(FetchGamesList::Name());
-    }
-
-    SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request&) override
-    {
-        return UnsupportedApi<SubmitNewTitle::Response>(SubmitNewTitle::Name());
-    }
-
     FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request&) override
     {
         return UnsupportedApi<FetchBadgeIds::Response>(FetchBadgeIds::Name());
@@ -104,7 +89,7 @@ protected:
 
         TResponse response;
         response.Result = ApiResult::Unsupported;
-        response.ErrorMessage = ra::StringPrintf("%s is not supported by %s.", apiName, Name());
+        response.ErrorMessage = ra::util::String::Printf("%s is not supported by %s.", apiName, Name());
         return response;
     }
 };

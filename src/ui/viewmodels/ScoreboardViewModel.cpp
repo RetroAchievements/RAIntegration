@@ -98,7 +98,7 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
         if (m_vEntries.Count() > 0)
         {
             // get width of largest displayed rank so other ranks can be right-aligned with it
-            const auto nRankSize = m_pSurface->MeasureText(nFontText, ra::ToWString(m_vEntries.GetItemAt(m_vEntries.Count() - 1)->GetRank()));
+            const auto nRankSize = m_pSurface->MeasureText(nFontText, std::to_wstring(m_vEntries.GetItemAt(m_vEntries.Count() - 1)->GetRank()));
 
             int nY = 4 + pTheme.FontSizePopupLeaderboardTitle() + 2;
             size_t i = 0;
@@ -111,7 +111,7 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
                 const ra::ui::Color nTextColor = pEntry->IsHighlighted() ? pTheme.ColorLeaderboardPlayer() : pTheme.ColorLeaderboardEntry();
 
                 // rank (right aligned)
-                const auto sRank = pEntry->GetRank() ? ra::ToWString(pEntry->GetRank()) : L"-";
+                const auto sRank = pEntry->GetRank() ? std::to_wstring(pEntry->GetRank()) : L"-";
                 const auto nEntryRankSize = m_pSurface->MeasureText(nFontText, sRank);
                 m_pSurface->WriteText(8 + nRankSize.Width - nEntryRankSize.Width, nY, nFontText, nTextColor, sRank);
 

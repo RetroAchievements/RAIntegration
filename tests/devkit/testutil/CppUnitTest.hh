@@ -2,7 +2,7 @@
 #define RA_CPP_UNIT_TEST_HH
 
 /* completely suppress everything inside the CppUnitTest.h file */
-#include <CodeAnalysis\Warnings.h>
+#include <CodeAnalysis/Warnings.h>
 #pragma warning(push)
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS ALL_CODE_ANALYSIS_WARNINGS)
 #include <CppUnitTest.h>

@@ -4,8 +4,9 @@
 #include "RA_Json.h"
 #include "util\Strings.hh"
 
+#include "context\IEmulatorMemoryContext.hh"
+
 #include "data\Types.hh"
-#include "data\context\EmulatorContext.hh"
 #include "data\models\TriggerValidation.hh"
 
 #include "services\AchievementLogicSerializer.hh"
@@ -84,8 +85,8 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangeValue(uint32_t nNe
     // value changed. if it's frozen, write the frozen value back into memory
     if (nBehavior == BookmarkBehavior::Frozen)
     {
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        pEmulatorContext.WriteMemory(GetAddress(), GetSize(), GetCurrentValueRaw());
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        pMemoryContext.WriteMemory(GetAddress(), GetSize(), GetCurrentValueRaw());
         return false;
     }
 
@@ -111,8 +112,9 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::HandlePauseOnChange()
 {
     SetRowColor(ra::ui::Color(0xFFFFC0C0));
 
-    auto sMessage =
-        ra::StringPrintf(L"%s %s", ra::data::Memory::SizeString(GetSize()), ra::ByteAddressToString(GetAddress()));
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    auto sMessage = ra::util::String::Printf(L"%s %s",
+        ra::data::Memory::SizeString(GetSize()), pMemoryContext.FormatAddress(GetAddress()));
 
     const auto& pDescription = GetRealNote();
     if (!pDescription.empty())
@@ -281,7 +283,7 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
 
                 if (bookmark.HasMember("Description"))
                 {
-                    const auto sDescription = ra::Widen(bookmark["Description"].GetString());
+                    const auto sDescription = ra::util::String::Widen(bookmark["Description"].GetString());
                     vmBookmark->SetDescription(sDescription);
                 }
 
@@ -343,7 +345,7 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
             item.AddMember("Decimal", true, allocator);
 
         if (vmBookmark.IsCustomDescription())
-            item.AddMember("Description", ra::Narrow(vmBookmark.GetDescription()), allocator);
+            item.AddMember("Description", ra::util::String::Narrow(vmBookmark.GetDescription()), allocator);
 
         bookmarks.PushBack(item, allocator);
         vmBookmark.ResetModified();
@@ -426,7 +428,7 @@ void MemoryBookmarksViewModel::InitializeBookmark(MemoryWatchViewModel& vmBookma
         uint8_t size = 0;
         uint32_t address = 0;
         const char* memaddr = sSerialized.c_str();
-        if (ra::StringStartsWith(sSerialized, "M:"))
+        if (ra::util::String::StartsWith(sSerialized, "M:"))
             memaddr += 2;
 
         if (rc_parse_memref(&memaddr, &size, &address) == RC_OK)
@@ -612,7 +614,7 @@ void MemoryBookmarksViewModel::LoadBookmarkFile()
     vmFileDialog.SetDefaultExtension(L"json");
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-Bookmarks.json", pGameContext.GameId()));
+    vmFileDialog.SetFileName(ra::util::String::Printf(L"%u-Bookmarks.json", pGameContext.GameId()));
 
     if (vmFileDialog.ShowOpenFileDialog() == ra::ui::DialogResult::OK)
     {
@@ -621,7 +623,7 @@ void MemoryBookmarksViewModel::LoadBookmarkFile()
         if (pTextReader == nullptr)
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                ra::StringPrintf(L"Could not open %s", vmFileDialog.GetFileName()));
+                ra::util::String::Printf(L"Could not open %s", vmFileDialog.GetFileName()));
         }
         else
         {
@@ -637,7 +639,7 @@ void MemoryBookmarksViewModel::SaveBookmarkFile()
     vmFileDialog.SetDefaultExtension(L"json");
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-Bookmarks.json", pGameContext.GameId()));
+    vmFileDialog.SetFileName(ra::util::String::Printf(L"%u-Bookmarks.json", pGameContext.GameId()));
 
     if (vmFileDialog.ShowSaveFileDialog() == ra::ui::DialogResult::OK)
     {
@@ -646,7 +648,7 @@ void MemoryBookmarksViewModel::SaveBookmarkFile()
         if (pTextWriter == nullptr)
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                ra::StringPrintf(L"Could not create %s", vmFileDialog.GetFileName()));
+                ra::util::String::Printf(L"Could not create %s", vmFileDialog.GetFileName()));
         }
         else
         {

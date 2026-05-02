@@ -293,6 +293,8 @@ protected:
     bool ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly);
     virtual void ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const noexcept(false);
     virtual void ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pAchievement) const noexcept(false);
+    virtual void ValidateRichPresenceForCore(std::wstring& sError, const ra::data::models::RichPresenceModel& pRichPresence) const noexcept(false);
+
     virtual bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const;
 
 private:
@@ -306,7 +308,7 @@ private:
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
-    void OnCodeNoteChanged(ra::data::ByteAddress, const std::wstring&) override;
+    void OnMemoryNoteChanged(ra::data::ByteAddress, const std::wstring&) override;
 
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
@@ -339,6 +341,7 @@ private:
     gsl::index GetFilteredAssetIndex(const ra::data::models::AssetModelBase& pAsset) const;
     void ApplyFilter();
     bool m_bInitializingFilter = false;
+    mutable std::mutex m_mtxFilteredItems;
 
     void RevalidateNoteAssetValidationWarnings();
 

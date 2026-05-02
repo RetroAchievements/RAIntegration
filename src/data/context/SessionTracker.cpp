@@ -5,6 +5,8 @@
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
+#include "context\IEmulatorMemoryContext.hh"
+
 #include "data\context\GameContext.hh"
 
 #include "services\AchievementRuntime.hh"
@@ -24,7 +26,7 @@ constexpr int SERVER_PING_FREQUENCY = 2 * 60; // seconds between server pings
 
 void SessionTracker::Initialize(const std::string& sUsername)
 {
-    m_sUsername = ra::Widen(sUsername);
+    m_sUsername = ra::util::String::Widen(sUsername);
 
     LoadSessions();
     SortSessions();
@@ -43,7 +45,7 @@ void SessionTracker::LoadSessions()
         std::string sLine;
         while (pStatsFile->GetLine(sLine))
         {
-            ra::Tokenizer pTokenizer(sLine);
+            ra::util::Tokenizer pTokenizer(sLine);
 
             const auto nGameId = pTokenizer.ReadNumber();
             if (!pTokenizer.Consume(':'))
@@ -162,8 +164,8 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        pEmulatorContext.IsMemoryInsecure();
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        pMemoryContext.IsMemoryInsecure();
     }
 }
 
@@ -173,7 +175,7 @@ std::streampos SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDu
     auto pStatsFile = pLocalStorage.AppendText(ra::services::StorageItemType::SessionStats, m_sUsername);
 
     auto nSessionDuration = tSessionDuration.count();
-    auto sLine = ra::StringPrintf("%u:%ll:%ll:", m_nCurrentGameId, m_tSessionStart, nSessionDuration);
+    auto sLine = ra::util::String::Printf("%u:%ll:%ll:", m_nCurrentGameId, m_tSessionStart, nSessionDuration);
     const auto sMD5 = RAGenerateMD5(sLine);
     sLine.push_back(sMD5.front());
     sLine.push_back(sMD5.back());

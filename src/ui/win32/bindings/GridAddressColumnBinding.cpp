@@ -38,8 +38,8 @@ unsigned GridAddressColumnBinding::CalculateWidth()
 {
     unsigned nMaxChars = 6; // 0x1234
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto nTotalMemorySize = pEmulatorContext.TotalMemorySize();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    const auto nTotalMemorySize = pMemoryContext.TotalMemorySize();
     if (nTotalMemorySize > 0x1000000)
         nMaxChars = 10; // 0x12345678
     else if (nTotalMemorySize > 0x10000)

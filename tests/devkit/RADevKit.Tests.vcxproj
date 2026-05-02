@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Analysis|Win32">
+      <Configuration>Analysis</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Analysis|x64">
+      <Configuration>Analysis</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(SolutionDir)\src\base.props">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>RADevKit.Tests</ProjectName>
+    <ProjectGuid>{6131C3D1-165E-4F39-A44C-94F01EAA03C5}</ProjectGuid>
+    <RootNamespace>ra.test</RootNamespace>
+    <ProjectSubType>NativeUnitTestProject</ProjectSubType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(SolutionDir)\src\base.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\tests\devkit\;$(MSTest_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\devkit\RADevKit.vcxproj">
+      <Project>{8ae21d54-f905-44e1-90e5-d22e346bff39}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\rcheevos.vcxproj">
+      <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="context\impl\ConsoleContext_Tests.cpp" />
+    <ClCompile Include="context\impl\EmulatorMemoryContext_Tests.cpp" />
+    <ClCompile Include="context\impl\RcClient_Tests.cpp" />
+    <ClCompile Include="context\mocks\MockEmulatorMemoryContext.cpp" />
+    <ClCompile Include="context\mocks\MockRcClient.cpp" />
+    <ClCompile Include="data\DataModelBase_Tests.cpp" />
+    <ClCompile Include="data\Memory_Tests.cpp" />
+    <ClCompile Include="data\ModelPropertyContainer_Tests.cpp" />
+    <ClCompile Include="data\ModelProperty_Tests.cpp" />
+    <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp" />
+    <ClCompile Include="util\Tokenizer_Tests.cpp" />
+    <ClInclude Include="context\mocks\MockConsoleContext.hh" />
+    <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh" />
+    <ClInclude Include="context\mocks\MockRcClient.hh" />
+    <ClInclude Include="context\mocks\MockUserContext.hh" />
+    <ClInclude Include="services\mocks\MockClock.hh" />
+    <ClInclude Include="services\mocks\MockDebuggerDetector.hh" />
+    <ClInclude Include="services\mocks\MockFileSystem.hh" />
+    <ClInclude Include="services\mocks\MockHttpRequester.hh" />
+    <ClInclude Include="services\mocks\MockLocalStorage.hh" />
+    <ClInclude Include="services\mocks\MockLogger.hh" />
+    <ClInclude Include="services\mocks\MockMessageDispatcher.hh" />
+    <ClInclude Include="services\mocks\MockThreadPool.hh" />
+    <ClInclude Include="testutil\AssetAsserts.hh" />
+    <ClInclude Include="testutil\CppUnitTest.hh" />
+    <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
+    <ClCompile Include="data\models\MemoryNoteModel_Tests.cpp" />
+    <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp" />
+    <ClCompile Include="data\NotifyTargetSet_Tests.cpp" />
+    <ClCompile Include="services\Http_Tests.cpp" />
+    <ClCompile Include="services\StringTextReader_Tests.cpp" />
+    <ClCompile Include="services\StringTextWriter_Tests.cpp" />
+    <ClCompile Include="util\StringBuilder_Tests.cpp" />
+    <ClCompile Include="util\Strings_Tests.cpp" />
+    <ClInclude Include="testutil\HttpAsserts.hh" />
+    <ClInclude Include="testutil\MemoryAsserts.hh" />
+    <ClInclude Include="testutil\MemoryRegionAsserts.hh" />
+    <ClInclude Include="testutil\ValueAsserts.hh" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

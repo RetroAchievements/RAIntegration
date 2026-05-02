@@ -1,10 +1,14 @@
 #include "MockRcClient.hh"
 
-#include "tests\devkit\testutil\CppUnitTest.hh"
+#include "context/UserContext.hh"
 
-#include "util\Strings.hh"
+#include "services/ServiceLocator.hh"
 
-#include <rcheevos\src\rc_client_internal.h>
+#include "tests/devkit/testutil/CppUnitTest.hh"
+
+#include "util/Strings.hh"
+
+#include <rcheevos/src/rc_client_internal.h>
 
 namespace ra {
 namespace context {
@@ -14,6 +18,21 @@ MockRcClient::MockRcClient() noexcept : m_Override(this)
 {
     /* disable logging */
     rc_client_enable_logging(GetClient(), RC_CLIENT_LOG_LEVEL_NONE, nullptr);
+}
+
+void MockRcClient::AddAuthentication(const char** pUsername, const char** pApiToken) const
+{
+    if (ra::services::ServiceLocator::Exists<ra::context::UserContext>())
+    {
+        RcClient::AddAuthentication(pUsername, pApiToken);
+    }
+    else
+    {
+        if (pUsername)
+            *pUsername = "USERNAME";
+        if (pApiToken)
+            *pApiToken = "APITOKEN";
+    }
 }
 
 void MockRcClient::DispatchRequest(const rc_api_request_t & pRequest,
@@ -85,6 +104,17 @@ void MockRcClient::MockResponse(const std::string& sRequestParams, const std::st
     pNewResponse.nHttpStatus = 200;
 }
 
+bool MockRcClient::HasMockResponse(const std::string& sRequestParams) const noexcept
+{
+    for (auto& pResponse : m_vResponses)
+    {
+        if (pResponse.sRequestParams == sRequestParams)
+            return true;
+    }
+
+    return false;
+}
+
 void MockRcClient::OnBeforeResponse(const std::string& sRequestParams, const std::function<void()>&& fHandler)
 {
     for (auto& pResponse : m_vResponses)
@@ -96,7 +126,19 @@ void MockRcClient::OnBeforeResponse(const std::string& sRequestParams, const std
         }
     }
 
-    Assert::Fail(ra::StringPrintf(L"No response registered for: %s", sRequestParams).c_str());
+    Assert::Fail(ra::util::String::Printf(L"No response registered for: %s", sRequestParams).c_str());
+}
+
+void MockRcClient::AssertNoUnhandled() const
+{
+    for (auto& pResponse : m_vResponses)
+    {
+        if (pResponse.fAsyncCallback != nullptr)
+        {
+            // pending callback means the request was not handled
+            Assert::Fail(ra::util::String::Printf(L"Unhandled request: %s", pResponse.sRequestParams).c_str());
+        }
+    }
 }
 
 void MockRcClient::AssertCalled(const std::string& sRequestParams) const
@@ -110,7 +152,7 @@ void MockRcClient::AssertCalled(const std::string& sRequestParams) const
         }
     }
 
-    Assert::Fail(ra::StringPrintf(L"Could not find mock response for %s", sRequestParams).c_str());
+    Assert::Fail(ra::util::String::Printf(L"Could not find mock response for %s", sRequestParams).c_str());
 }
 
 void MockRcClient::AssertNoPendingRequests() const
@@ -119,7 +161,7 @@ void MockRcClient::AssertNoPendingRequests() const
     {
         if (pResponse.fAsyncCallback != nullptr && !pResponse.bSeen)
         {
-            Assert::Fail(ra::StringPrintf(L"Unexpected request pending for %s", pResponse.sRequestParams).c_str());
+            Assert::Fail(ra::util::String::Printf(L"Unexpected request pending for %s", pResponse.sRequestParams).c_str());
             return;
         }
     }

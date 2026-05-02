@@ -11,6 +11,8 @@
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
+#include "util\Strings.hh"
+
 namespace ra {
 namespace data {
 namespace context {
@@ -69,7 +71,7 @@ ra::data::models::AssetCategory GameAssets::MostPublishedAssetCategory() const
     {
         // we really only care about published achievements and
         // leaderboards. if a set only has published rich presence
-        // or code notes, don't consider it a published set.
+        // or memory notes, don't consider it a published set.
         switch (pAsset.GetType())
         {
             case ra::data::models::AssetType::Achievement:
@@ -105,14 +107,107 @@ ra::data::models::AssetCategory GameAssets::MostPublishedAssetCategory() const
     return ra::data::models::AssetCategory::None;
 }
 
+void GameAssets::OnModelValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == ra::data::models::AchievementModel::PauseOnResetProperty)
+    {
+        const auto nId = GetItemValue(nIndex, ra::data::models::AssetModelBase::IDProperty);
+
+        if (!args.tNewValue) // no longer PauseOnReset, remove from watch list
+            m_vPauseOnResetAchievementIds.erase(nId);
+        else
+            m_vPauseOnResetAchievementIds.insert(nId);
+    }
+
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnModelValueChanged(nIndex, args);
+}
+
+void GameAssets::OnModelValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == ra::data::models::LeaderboardModel::PauseOnResetProperty)
+    {
+        const auto nId = GetItemValue(nIndex, ra::data::models::AssetModelBase::IDProperty);
+
+        if (args.tNewValue == 0) // no longer PauseOnReset, remove from watch list
+            m_vPauseOnResetLeaderboardIds.erase(nId);
+        else
+            m_vPauseOnResetLeaderboardIds.insert(nId);
+    }
+    else if (args.Property == ra::data::models::LeaderboardModel::PauseOnTriggerProperty)
+    {
+        const auto nId = GetItemValue(nIndex, ra::data::models::AssetModelBase::IDProperty);
+
+        if (args.tNewValue == 0) // no longer PauseOnTrigger, remove from watch list
+            m_vPauseOnTriggerLeaderboardIds.erase(nId);
+        else
+            m_vPauseOnTriggerLeaderboardIds.insert(nId);
+    }
+
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnModelValueChanged(nIndex, args);
+}
+
+bool GameAssets::HasPauseOnXAssets() const noexcept
+{
+    return !m_vPauseOnResetAchievementIds.empty() ||
+        !m_vPauseOnResetLeaderboardIds.empty() ||
+        !m_vPauseOnTriggerLeaderboardIds.empty();
+}
+
+void GameAssets::GetPauseOnResetAchievements(std::vector<const ra::data::models::AchievementModel*>& vAchievements) const
+{
+    for (const auto nId : m_vPauseOnResetAchievementIds)
+    {
+        const auto* vmAchievement = FindAchievement(nId);
+        if (vmAchievement != nullptr)
+            vAchievements.push_back(vmAchievement);
+    }
+}
+
+void GameAssets::GetPauseOnResetLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const
+{
+    for (const auto nId : m_vPauseOnResetLeaderboardIds)
+    {
+        const auto* vmLeaderboard = FindLeaderboard(nId);
+        if (vmLeaderboard != nullptr)
+            vLeaderboards.push_back(vmLeaderboard);
+    }
+}
+
+void GameAssets::GetPauseOnTriggerLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const
+{
+    for (const auto nId : m_vPauseOnTriggerLeaderboardIds)
+    {
+        const auto* vmLeaderboard = FindLeaderboard(nId);
+        if (vmLeaderboard != nullptr)
+            vLeaderboards.push_back(vmLeaderboard);
+    }
+}
+
 void GameAssets::OnBeforeItemRemoved(ModelBase& pModel)
 {
-    auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
-    if (pLocalBadges)
+    const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pModel);
+    if (pAchievement)
     {
-        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pModel);
-        if (pAchievement && ra::StringStartsWith(pAchievement->GetBadge(), L"local\\"))
-            pLocalBadges->RemoveReference(pAchievement->GetBadge(), pAchievement->IsBadgeCommitted());
+        if (ra::util::String::StartsWith(pAchievement->GetBadge(), L"local\\"))
+        {
+            auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
+            if (pLocalBadges)
+                pLocalBadges->RemoveReference(pAchievement->GetBadge(), pAchievement->IsBadgeCommitted());
+        }
+
+        if (pAchievement->IsPauseOnReset())
+            m_vPauseOnResetAchievementIds.erase(pAchievement->GetID());
+    }
+    else
+    {
+        const auto* pLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(&pModel);
+        if (pLeaderboard)
+        {
+            if (pLeaderboard->GetPauseOnReset() != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                m_vPauseOnResetLeaderboardIds.erase(pLeaderboard->GetID());
+            if (pLeaderboard->GetPauseOnTrigger() != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                m_vPauseOnTriggerLeaderboardIds.erase(pLeaderboard->GetID());
+        }
     }
 
     ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnBeforeItemRemoved(pModel);
@@ -146,6 +241,8 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
         return;
     }
 
+    auto* pMemoryRegions = FindMemoryRegions();
+
     std::vector<ra::data::models::AssetModelBase*> vRemainingAssetsToReload(vAssetsToReload);
     const bool bReloadAll = vAssetsToReload.empty();
     if (bReloadAll)
@@ -167,10 +264,9 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     case ra::data::models::AssetType::RichPresence:
                         continue;
 
-                    // ignore CodeNotes model (it's actually a collection of notes)
-                    case ra::data::models::AssetType::CodeNotes:
+                    // ignore MemoryNotes model (it's actually a collection of notes)
+                    case ra::data::models::AssetType::MemoryNotes:
                         continue;
-
 
                     // ignore MemoryRegions model (it's actually a collection of regions)
                     case ra::data::models::AssetType::MemoryRegions:
@@ -180,11 +276,12 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 vRemainingAssetsToReload.push_back(&pAsset);
             }
         }
-    }
 
-    auto* pMemoryRegions = FindMemoryRegions();
-    if (pMemoryRegions)
-        pMemoryRegions->ResetCustomRegions();
+        // memory regions are only refreshed when reloading all.
+        // to prevent duplicate entries, clear out the existing ones.
+        if (pMemoryRegions)
+            pMemoryRegions->ResetCustomRegions();
+    }
 
     std::string sLine;
     pData->GetLine(sLine); // version used to create the file
@@ -199,7 +296,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
         unsigned nId = 0;
         unsigned nSubsetId = 0;
 
-        ra::Tokenizer pTokenizer(sLine);
+        ra::util::Tokenizer pTokenizer(sLine);
         switch (pTokenizer.PeekChar())
         {
             case '0': case '1': case '2': case '3': case '4':
@@ -214,7 +311,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 break;
 
             case 'N':
-                nType = ra::data::models::AssetType::CodeNotes;
+                nType = ra::data::models::AssetType::MemoryNotes;
                 pTokenizer.Consume('N');
                 break;
 
@@ -289,8 +386,8 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     break;
                 }
 
-                case ra::data::models::AssetType::CodeNotes:
-                    pAsset = FindCodeNotes();
+                case ra::data::models::AssetType::MemoryNotes:
+                    pAsset = FindMemoryNotes();
                     if (pAsset)
                         pAsset->Deserialize(pTokenizer);
 
@@ -452,7 +549,7 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
                 pData->Write("L");
                 break;
 
-            case ra::data::models::AssetType::CodeNotes:
+            case ra::data::models::AssetType::MemoryNotes:
                 pData->Write("N");
                 break;
 

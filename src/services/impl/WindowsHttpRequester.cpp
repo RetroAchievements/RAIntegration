@@ -136,7 +136,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
         }
 
         // specify the server
-        auto sHostName = ra::Widen(sUrl);
+        auto sHostName = ra::util::String::Widen(sUrl);
         HINTERNET hConnect = WinHttpConnect(hSession, sHostName.c_str(), nPort, 0);
 
         if (hConnect == nullptr)
@@ -156,7 +156,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
             auto sPostData = pRequest.GetPostData();
 
             // open the connection
-            auto sPathWide = ra::Widen(sPath);
+            auto sPathWide = ra::util::String::Widen(sPath);
             GSL_SUPPRESS_ES47
             HINTERNET hRequest = WinHttpOpenRequest(hConnect,
                 sPostData.empty() ? L"GET" : L"POST",
@@ -174,7 +174,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
             {
                 std::wstring sHeaders;
                 sHeaders += L"Content-Type: ";
-                sHeaders += ra::Widen(pRequest.GetContentType());
+                sHeaders += ra::util::String::Widen(pRequest.GetContentType());
 
                 BOOL bResults{};
                 bool retry;
@@ -325,7 +325,7 @@ std::string WindowsHttpRequester::GetStatusCodeText(unsigned int nStatusCode) co
 
         if (nResult > 0)
         {
-            message = ra::Narrow(szMessageBuffer);
+            message = ra::util::String::Narrow(szMessageBuffer);
 
             // trim trailing whitespace
             while (isspace(message.back()))

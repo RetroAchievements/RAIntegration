@@ -2,7 +2,8 @@
 
 #include "RA_Defs.h"
 
-#include "data\context\ConsoleContext.hh"
+#include "context\IConsoleContext.hh"
+
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
@@ -123,10 +124,10 @@ MemoryViewerViewModel::MemoryViewerViewModel()
 
 void MemoryViewerViewModel::InitializeNotifyTargets()
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.AddNotifyTarget(*this);
+    auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
+    pMemoryContext.AddNotifyTarget(*this);
 
-    m_nTotalMemorySize = gsl::narrow<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    m_nTotalMemorySize = gsl::narrow<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize());
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);
@@ -136,8 +137,8 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
 
 void MemoryViewerViewModel::InitializeFixedViewer(ra::data::ByteAddress nAddress)
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    m_nTotalMemorySize = gsl::narrow<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    m_nTotalMemorySize = gsl::narrow<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize());
 
     m_bReadOnly = true;
     m_bAddressFixed = true;
@@ -197,19 +198,19 @@ static MemoryViewerViewModel::TextColor GetColor(ra::data::ByteAddress nAddress,
 
     if (bCheckNotes)
     {
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        if (pCodeNotes != nullptr)
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+        if (pMemoryNotes != nullptr)
         {
-            const auto nNoteStart = pCodeNotes->FindCodeNoteStart(nAddress);
+            const auto nNoteStart = pMemoryNotes->FindNoteStart(nAddress);
             if (nNoteStart != 0xFFFFFFFF)
             {
-                if (nNoteStart == 0 && pCodeNotes->FindCodeNoteModel(nAddress, false) == nullptr)
+                if (nNoteStart == 0 && pMemoryNotes->FindMemoryNoteModel(nAddress, false) == nullptr)
                     return MemoryViewerViewModel::TextColor::Default;
 
                 if (nNoteStart != nAddress)
                     return MemoryViewerViewModel::TextColor::HasSurrogateNote;
 
-                const auto* pNote = pCodeNotes->FindCodeNote(nAddress);
+                const auto* pNote = pMemoryNotes->FindNote(nAddress);
                 if (pNote != nullptr && !pNote->empty())
                     return MemoryViewerViewModel::TextColor::HasNote;
             }
@@ -231,12 +232,12 @@ void MemoryViewerViewModel::UpdateColors()
     for (int i = 0; i < nVisibleLines * 16; ++i)
         m_pColor[i] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext, false)));
 
-    // apply code notes
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes != nullptr)
+    // apply memory notes
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    if (pMemoryNotes != nullptr)
     {
         const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
-        pCodeNotes->EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::data::ByteAddress nAddress, const ra::data::models::CodeNoteModel& pNote) {
+        pMemoryNotes->EnumerateMemoryNotes([nFirstAddress, nStopAddress, this](ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel& pNote) {
             auto nBytes = pNote.GetBytes();
             if (nAddress + nBytes <= nFirstAddress) // not to viewing window yet
                 return true;
@@ -294,11 +295,11 @@ void MemoryViewerViewModel::UpdateInvalidRegions()
     const auto nFirstAddress = GetFirstAddress();
     const auto nVisibleBytes = std::min(m_nTotalMemorySize - nFirstAddress, nVisibleLines * 16);
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (pEmulatorContext.HasInvalidRegions())
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    if (pMemoryContext.HasInvalidRegions())
     {
         for (unsigned i = 0; i < nVisibleBytes; ++i)
-            m_pInvalid[i] = pEmulatorContext.IsValidAddress(nFirstAddress + i) ? 0 : 1;
+            m_pInvalid[i] = pMemoryContext.IsValidAddress(nFirstAddress + i) ? 0 : 1;
     }
     else
     {
@@ -467,8 +468,8 @@ void MemoryViewerViewModel::ReadMemory(ra::data::ByteAddress nFirstAddress, int 
             return;
         }
 
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(nNumVisibleLines) * 16);
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        pMemoryContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(nNumVisibleLines) * 16);
 
         UpdateInvalidRegions();
         UpdateColors();
@@ -704,8 +705,8 @@ void MemoryViewerViewModel::IncreaseCurrentValue(uint32_t nModifier)
     DispatchMemoryRead([this, nModifier]() {
         const auto nAddress = GetAddress();
         const auto nSize = GetSize();
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        auto nMem = pEmulatorContext.ReadMemory(nAddress, nSize);
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        auto nMem = pMemoryContext.ReadMemory(nAddress, nSize);
 
         auto const nMaxValue = ra::data::Memory::SizeMax(nSize);
         if (nMem >= nMaxValue)
@@ -716,7 +717,7 @@ void MemoryViewerViewModel::IncreaseCurrentValue(uint32_t nModifier)
         else
             nMem += nModifier;
 
-        pEmulatorContext.WriteMemory(nAddress, nSize, nMem);
+        pMemoryContext.WriteMemory(nAddress, nSize, nMem);
     });
 }
 
@@ -728,8 +729,8 @@ void MemoryViewerViewModel::DecreaseCurrentValue(uint32_t nModifier)
     DispatchMemoryRead([this, nModifier]() {
         const auto nAddress = GetAddress();
         const auto nSize = GetSize();
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        auto nMem = pEmulatorContext.ReadMemory(nAddress, nSize);
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        auto nMem = pMemoryContext.ReadMemory(nAddress, nSize);
 
         if (nMem == 0)
             return;
@@ -739,7 +740,7 @@ void MemoryViewerViewModel::DecreaseCurrentValue(uint32_t nModifier)
         else
             nMem -= nModifier;
 
-        pEmulatorContext.WriteMemory(nAddress, nSize, nMem);
+        pMemoryContext.WriteMemory(nAddress, nSize, nMem);
     });
 }
 
@@ -750,7 +751,7 @@ void MemoryViewerViewModel::OnActiveGameChanged()
     UpdateColors();
 }
 
-void MemoryViewerViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
+void MemoryViewerViewModel::OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     const auto nFirstAddress = GetFirstAddress();
     const auto nVisibleLines = GetNumVisibleLines();
@@ -759,17 +760,17 @@ void MemoryViewerViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, r
     if (nOldAddress >= nFirstAddress && nOldAddress < nFirstNonVisibleAddress)
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        Expects(pCodeNotes != nullptr);
-        const auto pNote = pCodeNotes->FindCodeNoteModel(nOldAddress);
-        OnCodeNoteChanged(nOldAddress, pNote ? pNote->GetNote() : std::wstring());
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+        Expects(pMemoryNotes != nullptr);
+        const auto pNote = pMemoryNotes->FindMemoryNoteModel(nOldAddress);
+        OnMemoryNoteChanged(nOldAddress, pNote ? pNote->GetNote() : std::wstring());
     }
 
     if (nNewAddress >= nFirstAddress && nNewAddress < nFirstNonVisibleAddress)
-        OnCodeNoteChanged(nNewAddress, sNote);
+        OnMemoryNoteChanged(nNewAddress, sNote);
 }
 
-void MemoryViewerViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote)
+void MemoryViewerViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote)
 {
     const auto nFirstAddress = GetFirstAddress();
     if (nAddress < nFirstAddress)
@@ -782,13 +783,14 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, co
 
     const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    Expects(pCodeNotes != nullptr);
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    Expects(pMemoryNotes != nullptr);
 
     const auto nSelectedAddress = GetAddress();
+    const auto* pMemoryNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
 
     const auto nMax = nFirstAddress + nVisibleLines * 16 - nAddress;
-    const auto nSize = std::min(std::max(pCodeNotes->GetCodeNoteBytes(nAddress), 1U), nMax);
+    const auto nSize = std::min(pMemoryNote ? pMemoryNote->GetBytes() : 1U, nMax);
     for (unsigned i = 0; i < nSize; ++i)
     {
         auto nNewColor = (nAddress == nSelectedAddress) ?
@@ -814,7 +816,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, co
     }
 
     // if the note size shrunk, clear out the surrogate indicators
-    const auto nNextAddress = pCodeNotes->GetNextNoteAddress(nAddress);
+    const auto nNextAddress = pMemoryNotes->GetNextNoteAddress(nAddress);
     const auto nMaxOffset = ra::to_unsigned(nVisibleLines) * 16;
     while (nAddress < nNextAddress && nOffset < nMaxOffset)
     {
@@ -832,9 +834,9 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, co
 
 void MemoryViewerViewModel::OnTotalMemorySizeChanged()
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     const bool bTotalMemorySizeWasZero = (m_nTotalMemorySize == 0);
-    m_nTotalMemorySize = gsl::narrow_cast<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    m_nTotalMemorySize = gsl::narrow_cast<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize());
 
     if (m_nTotalMemorySize == 0)
     {
@@ -863,15 +865,15 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
         }
         else
         {
-            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
             const auto* pCurrentRegion = pConsoleContext.GetMemoryRegion(nAddress);
-            if (!pCurrentRegion || pCurrentRegion->Type == ra::data::context::ConsoleContext::AddressType::Unused)
+            if (!pCurrentRegion || pCurrentRegion->GetType() == ra::data::MemoryRegion::Type::Unused)
             {
                 for (const auto& pRegion : pConsoleContext.MemoryRegions())
                 {
-                    if (pRegion.Type != ra::data::context::ConsoleContext::AddressType::Unused)
+                    if (pRegion.GetType() != ra::data::MemoryRegion::Type::Unused)
                     {
-                        SetValue(AddressProperty, gsl::narrow_cast<int>(pRegion.StartAddress));
+                        SetValue(AddressProperty, gsl::narrow_cast<int>(pRegion.GetStartAddress()));
                         break;
                     }
                 }
@@ -1114,8 +1116,8 @@ bool MemoryViewerViewModel::OnChar(char c)
     m_nNeedsRedraw |= REDRAW_MEMORY;
 
     // push the updated value to the emulator
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.WriteMemoryByte(nAddress, nByte);
+    auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
+    pMemoryContext.WriteMemoryByte(nAddress, nByte);
 
     // advance the cursor to the next nibble
     AdvanceCursor();
@@ -1146,8 +1148,8 @@ void MemoryViewerViewModel::DoFrame()
     const auto nVisibleLines = GetNumVisibleLines();
     Expects(nVisibleLines < MaxLines);
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    pEmulatorContext.ReadMemory(nAddress, pMemory, gsl::narrow_cast<size_t>(nVisibleLines) * 16);
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    pMemoryContext.ReadMemory(nAddress, pMemory, gsl::narrow_cast<size_t>(nVisibleLines) * 16);
 
     constexpr int nStride = 8;
     for (int nIndex = 0; nIndex < nVisibleLines * 16; nIndex += nStride)
@@ -1409,7 +1411,7 @@ void MemoryViewerViewModel::RenderAddresses()
     for (int i = 0; i < nVisibleLines; ++i)
     {
         const auto nColor = (nCursorAddress == nFirstAddress) ? pEditorTheme.ColorHeaderSelected() : pEditorTheme.ColorHeader();
-        const auto sAddress = ra::StringPrintf(sFormat, nFirstAddress);
+        const auto sAddress = ra::util::String::Printf(sFormat, nFirstAddress);
         nFirstAddress += 16;
 
         m_pSurface->WriteText(0, nY, s_nFont, nColor, sAddress);

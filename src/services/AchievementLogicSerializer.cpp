@@ -1,11 +1,12 @@
 #include "AchievementLogicSerializer.hh"
 
 #include "RA_Defs.h"
-#include "util\Strings.hh"
 
-#include "data\context\ConsoleContext.hh"
+#include "context\IConsoleContext.hh"
 
 #include "services\ServiceLocator.hh"
+
+#include "util\Strings.hh"
 
 namespace ra {
 namespace services {
@@ -189,7 +190,8 @@ void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOper
             break;
     }
 
-    sBuffer.append(ra::ByteAddressToString(nValue), 2);
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    sBuffer.append(ra::util::String::Narrow(pMemoryContext.FormatAddress(nValue)), 2);
 }
 
 void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size, float fValue)
@@ -296,10 +298,10 @@ void AchievementLogicSerializer::AppendHitTarget(std::string& sBuffer, uint32_t 
     }
 }
 
-std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models::CodeNoteModel& pRootNote,
-    const ra::data::models::CodeNoteModel& pLeafNote)
+std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models::MemoryNoteModel& pRootNote,
+    const ra::data::models::MemoryNoteModel& pLeafNote)
 {
-    std::vector<const ra::data::models::CodeNoteModel*> vChain;
+    std::vector<const ra::data::models::MemoryNoteModel*> vChain;
     if (!pLeafNote.GetPointerChain(vChain, pRootNote))
         return std::string();
 
@@ -307,7 +309,7 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
     uint32_t nMask = 0xFFFFFFFF;
     uint32_t nOffset = 0;
 
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     if (!pConsoleContext.GetRealAddressConversion(&nSize, &nMask, &nOffset))
     {
         nSize = pRootNote.GetMemSize();

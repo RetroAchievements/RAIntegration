@@ -14,22 +14,26 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
+#include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
-#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockSurface.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
+
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -160,7 +164,9 @@ private:
     class AssetListViewModelHarness : public AssetListViewModel
     {
     public:
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
@@ -168,7 +174,6 @@ private:
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::mocks::MockOverlayTheme mockTheme;
@@ -433,7 +438,8 @@ private:
             vmAchievement->SetSubsetID(mockGameContext.ActiveGameId());
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->CreateLocalCheckpoint();
-            vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
+            vmAchievement->SetLocalAchievementInfo(*vmAchievement->m_pInfo);
+            vmAchievement->SyncToLocalAchievementInfo();
             vmAchievement->EndUpdate();
             mockGameContext.Assets().Append(std::move(vmAchievement));
 
@@ -455,7 +461,8 @@ private:
             vmAchievement->SetSubsetID(mockGameContext.ActiveGameId());
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->CreateLocalCheckpoint();
-            vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
+            vmAchievement->SetLocalAchievementInfo(*vmAchievement->m_pInfo);
+            vmAchievement->SyncToLocalAchievementInfo();
             vmAchievement->EndUpdate();
             mockGameContext.Assets().Append(std::move(vmAchievement));
 
@@ -478,7 +485,8 @@ private:
             vmAchievement->SetSubsetID(mockGameContext.ActiveGameId());
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->SetNew();
-            vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
+            vmAchievement->SetLocalAchievementInfo(*vmAchievement->m_pInfo);
+            vmAchievement->SyncToLocalAchievementInfo();
             vmAchievement->EndUpdate();
             mockGameContext.Assets().Append(std::move(vmAchievement));
 
@@ -585,7 +593,7 @@ private:
             {
                 const auto pIter = m_mValidationErrors.find(pAchievement.GetID());
                 if (pIter != m_mValidationErrors.end())
-                    sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
+                    sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
             }
         }
 
@@ -3364,13 +3372,11 @@ public:
         GSL_SUPPRESS_TYPE1
         auto* pAch1 = reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, 111000001U));
         Expects(pAch1 != nullptr);
-        Assert::IsNull(pAch1->trigger); // trigger not set until activated
         Assert::AreEqual({0}, pAch1->public_.points);
 
         GSL_SUPPRESS_TYPE1
         auto* pAch2 = reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, 111000002U));
         Expects(pAch2 != nullptr);
-        Assert::IsNull(pAch2->trigger);
         Assert::AreEqual({0}, pAch2->public_.points);
     }
 
@@ -3823,6 +3829,7 @@ public:
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
         vmAssetList.mockGameContext.Assets().FindAchievement(2)->SetAuthor(L"OriginalAuthor");
+        vmAssetList.mockGameContext.Assets().FindAchievement(2)->SetAchievementType(ra::data::models::AchievementType::Progression);
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -3862,6 +3869,7 @@ public:
         Assert::AreEqual(std::wstring(L"11111"), pAchievement->GetBadge());
         Assert::AreEqual(std::string("0xH1111=1"), pAchievement->GetTrigger());
         Assert::AreEqual(std::wstring(L"DisplayName"), pAchievement->GetAuthor());
+        Assert::AreEqual(ra::data::models::AchievementType::Progression, pAchievement->GetAchievementType());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
         Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
@@ -4469,7 +4477,7 @@ public:
         vmLeaderboard->SetSubmitTrigger("0xH1234=1");
         vmLeaderboard->SetCancelTrigger("0xH1234=2");
         vmLeaderboard->SetValueDefinition("0xH5555*2");
-        vmLeaderboard->SetValueFormat(ra::data::ValueFormat::Score);
+        vmLeaderboard->SetValueFormat(ra::data::Value::Format::Score);
         vmLeaderboard->SetLowerIsBetter(true);
         vmLeaderboard->SetAuthor(L"OriginalAuthor");
 
@@ -4510,7 +4518,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=1"), pLeaderboard->GetSubmitTrigger());
         Assert::AreEqual(std::string("0xH1234=2"), pLeaderboard->GetCancelTrigger());
         Assert::AreEqual(std::string("0xH5555*2"), pLeaderboard->GetValueDefinition());
-        Assert::AreEqual(ra::data::ValueFormat::Score, pLeaderboard->GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Score, pLeaderboard->GetValueFormat());
         Assert::IsTrue(pLeaderboard->IsLowerBetter());
         Assert::AreEqual(std::wstring(L"DisplayName"), pLeaderboard->GetAuthor());
 
@@ -4549,14 +4557,14 @@ public:
         Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedAllKeepsModifiedCodeNote)
+    TEST_METHOD(TestResetSelectedAllKeepsModifiedMemoryNote)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
-        vmAssetList.mockGameContext.InitializeCodeNotes();
+        vmAssetList.mockGameContext.InitializeNotes();
 
         bool bDialogShown = false;
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
@@ -4578,7 +4586,7 @@ public:
 
         Assert::IsTrue(vmAssetList.mockWindowManager.MemoryInspector.IsNoteUncommitted());
         Assert::AreEqual(std::wstring(L"foo"), vmAssetList.mockWindowManager.MemoryInspector.GetCurrentAddressNote());
-        const auto* pNote = vmAssetList.mockGameContext.Assets().FindCodeNotes()->FindCodeNote(nAddress);
+        const auto* pNote = vmAssetList.mockGameContext.Assets().FindMemoryNotes()->FindNote(nAddress);
         Assert::IsNotNull(pNote);
         Assert::AreEqual(std::wstring(L"foo"), *pNote);
     }
@@ -5489,17 +5497,17 @@ public:
         AssetListViewModelHarness vmAssetList;
         Assert::IsTrue(vmAssetList.IsProcessingActive());
         Assert::IsFalse(vmAssetList.mockRuntime.IsPaused());
-        Assert::IsFalse(vmAssetList.mockEmulatorContext.WasMemoryModified());
+        Assert::IsFalse(vmAssetList.mockEmulatorMemoryContext.WasMemoryModified());
 
         vmAssetList.SetProcessingActive(false);
         Assert::IsFalse(vmAssetList.IsProcessingActive());
         Assert::IsTrue(vmAssetList.mockRuntime.IsPaused());
-        Assert::IsTrue(vmAssetList.mockEmulatorContext.WasMemoryModified());
+        Assert::IsTrue(vmAssetList.mockEmulatorMemoryContext.WasMemoryModified());
 
         vmAssetList.SetProcessingActive(true);
         Assert::IsTrue(vmAssetList.IsProcessingActive());
         Assert::IsFalse(vmAssetList.mockRuntime.IsPaused());
-        Assert::IsTrue(vmAssetList.mockEmulatorContext.WasMemoryModified());
+        Assert::IsTrue(vmAssetList.mockEmulatorMemoryContext.WasMemoryModified());
     }
 
     TEST_METHOD(TestOpenEditorNonHardcore)
@@ -5771,36 +5779,36 @@ public:
         Assert::AreEqual(AssetState::Waiting, pAchievement1->GetState()); // should still get set to waiting even if not visible
     }
 
-    TEST_METHOD(TestCodeNoteRevalidation)
+    TEST_METHOD(TestMemoryNoteRevalidation)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(1U);
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Ach1");
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
-        vmAssetList.mockGameContext.InitializeCodeNotes();
+        vmAssetList.mockGameContext.InitializeNotes();
 
         auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
         Expects(pAchievement != nullptr);
         pAchievement->SetTrigger("0xH0001=1");
         pAchievement->Validate();
 
-        // initial state - no code note
-        Assert::AreEqual(std::wstring(L"Condition 1: No code note for address 0001"), pAchievement->GetValidationError());
-        Assert::AreEqual(std::wstring(L"Condition 1: No code note for address 0001"), vmAssetList.FilteredAssets().GetItemAt(0)->GetWarning());
+        // initial state - no memory note
+        Assert::AreEqual(std::wstring(L"Condition 1: No memory note for address 0001"), pAchievement->GetValidationError());
+        Assert::AreEqual(std::wstring(L"Condition 1: No memory note for address 0001"), vmAssetList.FilteredAssets().GetItemAt(0)->GetWarning());
 
-        // updated code note updates warning
-        vmAssetList.mockGameContext.SetCodeNote({ 1U }, L"[16-bit] Value");
-        Assert::AreEqual(std::wstring(L"Condition 1: 8-bit read of address 0001 differs from code note size 16-bit"), pAchievement->GetValidationError());
-        Assert::AreEqual(std::wstring(L"Condition 1: 8-bit read of address 0001 differs from code note size 16-bit"), vmAssetList.FilteredAssets().GetItemAt(0)->GetWarning());
+        // updated memory note updates warning
+        vmAssetList.mockGameContext.SetNote({ 1U }, L"[16-bit] Value");
+        Assert::AreEqual(std::wstring(L"Condition 1: 8-bit read of address 0001 differs from memory note size 16-bit"), pAchievement->GetValidationError());
+        Assert::AreEqual(std::wstring(L"Condition 1: 8-bit read of address 0001 differs from memory note size 16-bit"), vmAssetList.FilteredAssets().GetItemAt(0)->GetWarning());
 
-        // updated code note clears warning
-        vmAssetList.mockGameContext.SetCodeNote({ 1U }, L"[8-bit] Value");
+        // updated memory note clears warning
+        vmAssetList.mockGameContext.SetNote({ 1U }, L"[8-bit] Value");
         Assert::AreEqual(std::wstring(), pAchievement->GetValidationError());
         Assert::AreEqual(std::wstring(), vmAssetList.FilteredAssets().GetItemAt(0)->GetWarning());
 
         // no warning - validation not automatically performed
-        vmAssetList.mockGameContext.SetCodeNote({ 1U }, L"[16-bit] Value");
+        vmAssetList.mockGameContext.SetNote({ 1U }, L"[16-bit] Value");
         Assert::AreEqual(std::wstring(), pAchievement->GetValidationError());
         Assert::AreEqual(std::wstring(), vmAssetList.FilteredAssets().GetItemAt(0)->GetWarning());
     }

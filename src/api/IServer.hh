@@ -5,14 +5,10 @@
 #include "api/DeleteCodeNote.hh"
 #include "api/FetchAchievementInfo.hh"
 #include "api/FetchBadgeIds.hh"
-#include "api/FetchCodeNotes.hh"
-#include "api/FetchGamesList.hh"
 #include "api/FetchLeaderboardInfo.hh"
 #include "api/FetchUserFriends.hh"
 #include "api/LatestClient.hh"
 #include "api/ResolveHash.hh"
-#include "api/SubmitNewTitle.hh"
-#include "api/SubmitTicket.hh"
 #include "api/UpdateAchievement.hh"
 #include "api/UpdateCodeNote.hh"
 #include "api/UpdateLeaderboard.hh"
@@ -32,7 +28,6 @@ public:
 
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) = 0;
-    virtual FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) = 0;
     virtual UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) = 0;
     virtual DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) = 0;
     virtual UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request& request) = 0;
@@ -43,8 +38,6 @@ public:
 
     // === other functions ===
     virtual LatestClient::Response LatestClient(const LatestClient::Request& request) = 0;
-    virtual FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) = 0;
-    virtual SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) = 0;
     virtual FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) = 0;
     virtual UploadBadge::Response UploadBadge(const UploadBadge::Request& request) = 0;
 

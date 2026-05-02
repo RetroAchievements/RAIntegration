@@ -156,7 +156,7 @@ bool SearchImpl::GetMatchingAddress(const SearchResults& srResults, gsl::index n
         if (nIndex < gsl::narrow_cast<gsl::index>(pBlock.GetMatchingAddressCount()))
         {
             result.nAddress = pBlock.GetMatchingAddress(nIndex);
-            return GetValueFromMemBlock(pBlock, result);
+            return GetValueFromCapturedMemoryBlock(pBlock, result);
         }
 
         nIndex -= pBlock.GetMatchingAddressCount();
@@ -181,7 +181,7 @@ size_t SearchImpl::GetIndexOfBlockForVirtualAddress(const SearchResults& srResul
         }
 
         const uint32_t nOffset = nAddress - pBlockMid.GetFirstAddress();
-        if (nOffset >= pBlockMid.GetMaxAddresses())
+        if (nOffset >= pBlockMid.GetAddressCount())
         {
             nIndexLow = nIndexMid + 1;
             continue;
@@ -199,7 +199,7 @@ bool SearchImpl::GetValueAtVirtualAddress(const SearchResults& srResults, Search
     const auto nIndex = GetIndexOfBlockForVirtualAddress(srResults, result.nAddress);
     if (nIndex < srResults.m_vBlocks.size())
     {
-        if (GetValueFromMemBlock(srResults.m_vBlocks.at(nIndex), result))
+        if (GetValueFromCapturedMemoryBlock(srResults.m_vBlocks.at(nIndex), result))
             return true;
     }
 
@@ -223,10 +223,10 @@ std::wstring SearchImpl::GetFormattedValue(const SearchResults& pResults, ra::da
 }
 
 bool SearchImpl::UpdateValue(const SearchResults& pResults, SearchResult& pResult,
-    _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const
+    _Out_ std::wstring* sFormattedValue, const ra::context::IEmulatorMemoryContext& pMemoryContext) const
 {
     const uint32_t nPreviousValue = pResult.nValue;
-    pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, pResult.nSize);
+    pResult.nValue = pMemoryContext.ReadMemory(pResult.nAddress, pResult.nSize);
 
     if (sFormattedValue)
         *sFormattedValue = GetFormattedValue(pResults, pResult);
@@ -272,7 +272,7 @@ bool SearchImpl::MatchesFilter(const SearchResults& pResults, const SearchResult
 }
 
 void SearchImpl::ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
-    const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
+    const CapturedMemoryBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
     std::vector<ra::data::ByteAddress>& vMatches) const
 {
     const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
@@ -293,7 +293,7 @@ void SearchImpl::ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pByte
 }
 
 void SearchImpl::ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
-    const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
+    const CapturedMemoryBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
     std::vector<ra::data::ByteAddress>& vMatches) const
 {
     const auto* pBlockBytes = pPreviousBlock.GetBytes();
@@ -315,7 +315,7 @@ void SearchImpl::ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytes
     }
 }
 
-bool SearchImpl::GetValueFromMemBlock(const MemBlock& block, SearchResult& result) const noexcept
+bool SearchImpl::GetValueFromCapturedMemoryBlock(const CapturedMemoryBlock& block, SearchResult& result) const noexcept
 {
     if (result.nAddress < block.GetFirstAddress())
         return false;
@@ -357,7 +357,7 @@ void SearchImpl::AddBlocks(SearchResults& srNew, std::vector<ra::data::ByteAddre
         const auto nFirstAddress = ConvertFromRealAddress(nFirstRealAddress);
 
         // allocate the new block
-        MemBlock& block = AddBlock(srNew, nFirstAddress, nBlockSize, nMaxAddresses);
+        CapturedMemoryBlock& block = AddBlock(srNew, nFirstAddress, nBlockSize, nMaxAddresses);
 
         // capture the subset of data that corresponds to the subset of matches
         const auto nOffset = nFirstRealAddress - ConvertToRealAddress(nPreviousBlockFirstAddress);

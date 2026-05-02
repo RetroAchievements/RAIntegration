@@ -2,13 +2,14 @@
 
 #include "api\impl\DisconnectedServer.hh"
 
+#include "context\UserContext.hh"
+#include "context\impl\ConsoleContext.hh"
+#include "context\impl\EmulatorMemoryContext.hh"
 #include "context\impl\RcClient.hh"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\FrameEventQueue.hh"
@@ -18,11 +19,13 @@
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
 #include "services\impl\JsonFileConfiguration.hh"
+#include "services\impl\LoginService.hh"
 #include "services\impl\MessageDispatcher.hh"
 #include "services\impl\ThreadPool.hh"
 #include "services\impl\WindowsAudioSystem.hh"
 #include "services\impl\WindowsClipboard.hh"
 #include "services\impl\WindowsDebuggerFileLogger.hh"
+#include "services\impl\WindowsDebuggerDetector.hh"
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsHttpRequester.hh"
 
@@ -78,10 +81,10 @@ static void LogHeader(_In_ const ra::services::ILogger& pLogger,
     std::ostringstream oss;
     oss << std::put_time(&tTimeStruct, "%D %T %Z");
 
-    const auto sLine = StringPrintf("Log started at %s", oss.str());
+    const auto sLine = util::String::Printf("Log started at %s", oss.str());
     pLogger.LogMessage(LogLevel::Info, sLine);
 
-    pLogger.LogMessage(LogLevel::Info, StringPrintf("BaseDirectory: %s", ra::Narrow(pFileSystem.BaseDirectory())));
+    pLogger.LogMessage(LogLevel::Info, util::String::Printf("BaseDirectory: %s", pFileSystem.BaseDirectory()));
 }
 
 void Initialization::RegisterCoreServices()
@@ -123,15 +126,15 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
     ra::services::ServiceLocator::Provide<ra::data::context::EmulatorContext>(std::move(pEmulatorContext));
 
     // if EmulatorContext->Initialize doesn't specify the ConsoleContext, initialize a default ConsoleContext
-    if (!ra::services::ServiceLocator::Exists<ra::data::context::ConsoleContext>())
+    if (!ra::services::ServiceLocator::Exists<ra::context::IConsoleContext>())
     {
-        auto pConsoleContext = std::make_unique<ra::data::context::ConsoleContext>(ConsoleID::UnknownConsoleID);
-        ra::services::ServiceLocator::Provide<ra::data::context::ConsoleContext>(std::move(pConsoleContext));
+        auto pConsoleContext = std::make_unique<ra::context::impl::ConsoleContext>(ConsoleID::UnknownConsoleID);
+        ra::services::ServiceLocator::Provide<ra::context::IConsoleContext>(std::move(pConsoleContext));
     }
 
     auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(
         &ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
-    const auto sFilename = ra::StringPrintf(L"%sRAPrefs_%s.cfg", pFileSystem.BaseDirectory(), sClientName);
+    const auto sFilename = ra::util::String::Printf(L"%sRAPrefs_%s.cfg", pFileSystem.BaseDirectory(), sClientName);
     pConfiguration->Load(sFilename);
 
     auto pLocalStorage = std::make_unique<ra::services::impl::FileLocalStorage>(pFileSystem);
@@ -149,8 +152,8 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
     ra::services::ServiceLocator::Provide<ra::services::PerformanceCounter>(std::move(pPerformanceCounter));
 #endif
 
-    auto pUserContext = std::make_unique<ra::data::context::UserContext>();
-    ra::services::ServiceLocator::Provide<ra::data::context::UserContext>(std::move(pUserContext));
+    auto pUserContext = std::make_unique<ra::context::UserContext>();
+    ra::services::ServiceLocator::Provide<ra::context::UserContext>(std::move(pUserContext));
 
     auto pGameContext = std::make_unique<ra::data::context::GameContext>();
     ra::services::ServiceLocator::Provide<ra::data::context::GameContext>(std::move(pGameContext));
@@ -160,6 +163,15 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
 
     auto pRcClient = std::make_unique<ra::context::impl::RcClient>();
     ra::services::ServiceLocator::Provide<ra::context::IRcClient>(std::move(pRcClient));
+
+    auto pLoginService = std::make_unique<ra::services::impl::LoginService>();
+    ra::services::ServiceLocator::Provide<ra::services::ILoginService>(std::move(pLoginService));
+
+    auto pEmulatorMemoryContext = std::make_unique<ra::context::impl::EmulatorMemoryContext>();
+    ra::services::ServiceLocator::Provide<ra::context::IEmulatorMemoryContext>(std::move(pEmulatorMemoryContext));
+
+    auto pDebuggerDetector = std::make_unique<ra::services::impl::WindowsDebuggerDetector>();
+    ra::services::ServiceLocator::Provide<ra::services::IDebuggerDetector>(std::move(pDebuggerDetector));
 
     auto pAchievementRuntime = std::make_unique<ra::services::AchievementRuntime>();
     ra::services::ServiceLocator::Provide<ra::services::AchievementRuntime>(std::move(pAchievementRuntime));
@@ -189,7 +201,7 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
 
     auto pWindowManager = std::make_unique<ra::ui::viewmodels::WindowManager>();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(std::move(pWindowManager));
-    ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
+    ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::util::String::Widen(sClientName));
 
     auto pOverlayWindow = std::make_unique<ra::ui::win32::OverlayWindow>();
     ra::services::ServiceLocator::Provide<ra::ui::win32::OverlayWindow>(std::move(pOverlayWindow));
@@ -235,13 +247,16 @@ void Initialization::Shutdown()
     // explicitly deregister it to prevent exceptions when closing down the application.
     ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(nullptr);
 
-    // GridBinding subclass destructors may try to use the EmulatorContext if they think it still exists.
+    // GridBinding subclass destructors may try to use the EmulatorMemoryContext if they think it still exists.
     // explicitly deregister it to prevent exceptions when closing down the application.
-    ra::services::ServiceLocator::Provide<ra::data::context::EmulatorContext>(nullptr);
+    ra::services::ServiceLocator::Provide<ra::context::IEmulatorMemoryContext>(nullptr);
 
     // clear out the IThreadPool and IConfiguration services to indicate things have been de-initialized
     ra::services::ServiceLocator::Provide<ra::services::IThreadPool>(nullptr);
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(nullptr);
+
+    // prevent exception attempting to log during shutdown
+    ra::services::ServiceLocator::Provide<ra::services::IClock>(nullptr);
 
     s_bIsInitialized = false;
 }

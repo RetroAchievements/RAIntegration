@@ -243,16 +243,13 @@
     <ClCompile Include="..\src\ui\viewmodels\MemoryViewerViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ui\viewmodels\CodeNotesViewModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\MemorySearchViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\MemorySearchViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="ui\viewmodels\CodeNotesViewModel_Tests.cpp">
+    <ClCompile Include="ui\viewmodels\MemoryNotesViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\MemoryInspectorViewModel_Tests.cpp">
@@ -294,12 +291,6 @@
     <ClCompile Include="services\FrameEventQueue_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\data\context\UserContext.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\context\ConsoleContext.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\data\context\EmulatorContext.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -321,13 +312,7 @@
     <ClCompile Include="..\src\data\models\AchievementModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\data\models\AssetModelBase.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="data\models\AchievementModel_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\AssetModelBase_Tests.cpp">
       <Filter>Tests\Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp">
@@ -355,9 +340,6 @@
       <Filter>Tests\Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="..\src\data\models\LocalBadgesModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\models\CapturedTriggerHits.cpp">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\ChallengeIndicatorViewModel.cpp">
@@ -390,17 +372,8 @@
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp">
       <Filter>Tests\Data\Models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CodeNotesModel_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\models\CodeNotesModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\EmulatorViewModel.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\context\ConsoleContext_Tests.cpp">
-      <Filter>Tests\Data\Context</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\PointerFinderViewModel.cpp">
       <Filter>Code</Filter>
@@ -411,9 +384,6 @@
     <ClCompile Include="..\src\ui\viewmodels\ProgressTrackerViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\CapturedTriggerHits_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="mocks\MockAchievementRuntime.cpp">
       <Filter>Mocks</Filter>
     </ClCompile>
@@ -422,12 +392,6 @@
     </ClCompile>
     <ClCompile Include="services\AchievementRuntimeExports_Tests.cpp">
       <Filter>Tests\Services</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\models\CodeNoteModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\CodeNoteModel_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\PointerInspectorViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
@@ -444,9 +408,6 @@
     <ClCompile Include="..\src\services\search\SearchImpl.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\data\search\MemBlock.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\MemoryWatchViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -458,12 +419,6 @@
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\MemoryRegionsViewModel.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\models\MemoryRegionsModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\MemoryRegionsViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
@@ -479,6 +434,18 @@
     </ClCompile>
     <ClCompile Include="ui\viewmodels\TriggerSummaryViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\services\impl\LoginService.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="services\LoginService_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\MemoryNotesViewModel.cpp">
+      <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -530,9 +497,6 @@
     <ClInclude Include="mocks\MockThreadPool.hh">
       <Filter>Mocks</Filter>
     </ClInclude>
-    <ClInclude Include="mocks\MockUserContext.hh">
-      <Filter>Mocks</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\pch.h">
       <Filter>Code</Filter>
     </ClInclude>
@@ -575,9 +539,6 @@
     <ClInclude Include="..\src\ui\viewmodels\PointerFinderViewModel.hh">
       <Filter>Code</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\data\models\CodeNoteModel.hh">
-      <Filter>Code</Filter>
-    </ClInclude>
     <ClInclude Include="mocks\MockGameIdentifier.hh">
       <Filter>Mocks</Filter>
     </ClInclude>
@@ -586,6 +547,9 @@
     </ClInclude>
     <ClInclude Include="..\src\ui\viewmodels\MemoryWatchListViewModel.hh">
       <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockLoginService.hh">
+      <Filter>Mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

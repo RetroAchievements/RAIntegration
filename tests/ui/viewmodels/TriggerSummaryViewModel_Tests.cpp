@@ -2,20 +2,12 @@
 
 #include "ui\viewmodels\TriggerSummaryViewModel.hh"
 
-#include "tests\ui\UIAsserts.hh"
-#include "tests\mocks\MockClipboard.hh"
-#include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
-#include "tests\mocks\MockDesktop.hh"
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockEmulatorContext.hh"
-#include "tests\mocks\MockImageRepository.hh"
-#include "tests\mocks\MockUserContext.hh"
-#include "tests\mocks\MockWindowManager.hh"
 
 #include "ui\EditorTheme.hh"
-
-#include <rcheevos\src\rcheevos\rc_internal.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -30,9 +22,9 @@ private:
     class TriggerSummaryViewModelHarness : public TriggerSummaryViewModel
     {
     public:
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
 
         void InitializeFrom(const std::string& sTrigger)
         {
@@ -51,11 +43,11 @@ private:
         {
             const auto* pClause = Clauses().GetItemAt(nIndex);
             Assert::IsNotNull(pClause);
-            Assert::AreEqual(sIndices, pClause->GetIndices(), ra::StringPrintf(L"Indices on clause %u differ", nIndex).c_str());
-            Assert::AreEqual(sReference, pClause->GetReference(), ra::StringPrintf(L"reference on clause %u differ", nIndex).c_str());
-            Assert::AreEqual(sOperation, pClause->GetOperation(), ra::StringPrintf(L"Operation on clause %u differ", nIndex).c_str());
-            Assert::AreEqual(sTarget, pClause->GetTarget(), ra::StringPrintf(L"Target on clause %u differ", nIndex).c_str());
-            Assert::AreEqual(sTally, pClause->GetTally(), ra::StringPrintf(L"Tally on clause %u differ", nIndex).c_str());
+            Assert::AreEqual(sIndices, pClause->GetIndices(), ra::util::String::Printf(L"Indices on clause %u differ", nIndex).c_str());
+            Assert::AreEqual(sReference, pClause->GetReference(), ra::util::String::Printf(L"reference on clause %u differ", nIndex).c_str());
+            Assert::AreEqual(sOperation, pClause->GetOperation(), ra::util::String::Printf(L"Operation on clause %u differ", nIndex).c_str());
+            Assert::AreEqual(sTarget, pClause->GetTarget(), ra::util::String::Printf(L"Target on clause %u differ", nIndex).c_str());
+            Assert::AreEqual(sTally, pClause->GetTally(), ra::util::String::Printf(L"Tally on clause %u differ", nIndex).c_str());
         }
 
         void AssertHeader(gsl::index nIndex, const std::wstring& sHeader)
@@ -121,8 +113,8 @@ public:
     TEST_METHOD(TestSimpleNote)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
-        summary.mockGameContext.SetCodeNote({ 0x2345U }, L"[16-bit] Level");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
+        summary.mockGameContext.SetNote({ 0x2345U }, L"[16-bit] Level");
         summary.InitializeFrom("0xH1234=5_0x 2345!=0");
 
         Assert::AreEqual({ 2U }, summary.Clauses().Count());
@@ -133,8 +125,8 @@ public:
     TEST_METHOD(TestEnumNote)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"Character (1=Bill, 2=Bob, 3=Betty, 4=Bonnie, 5=Ben)");
-        summary.mockGameContext.SetCodeNote({ 0x2345U }, L"Difficulty\r\n0=Easy\r\n1=Normal\r\n2=Hard\r\n");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Character (1=Bill, 2=Bob, 3=Betty, 4=Bonnie, 5=Ben)");
+        summary.mockGameContext.SetNote({ 0x2345U }, L"Difficulty\r\n0=Easy\r\n1=Normal\r\n2=Hard\r\n");
         summary.InitializeFrom("0xH1234=5_0x 2345!=0");
 
         Assert::AreEqual({ 2U }, summary.Clauses().Count());
@@ -145,8 +137,8 @@ public:
     TEST_METHOD(TestEnumNoteGreaterThanZero)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"Character (1=Bill, 2=Bob, 3=Betty, 4=Bonnie, 5=Ben)");
-        summary.mockGameContext.SetCodeNote({ 0x2345U }, L"Difficulty\r\n0=Easy\r\n1=Normal\r\n2=Hard\r\n");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Character (1=Bill, 2=Bob, 3=Betty, 4=Bonnie, 5=Ben)");
+        summary.mockGameContext.SetNote({ 0x2345U }, L"Difficulty\r\n0=Easy\r\n1=Normal\r\n2=Hard\r\n");
         summary.InitializeFrom("0xH1234>2_0x 2345>0");
 
         Assert::AreEqual({ 2U }, summary.Clauses().Count());
@@ -157,8 +149,8 @@ public:
     TEST_METHOD(TestEnumNoteLessThanOne)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"Character (1=Bill, 2=Bob, 3=Betty, 4=Bonnie, 5=Ben)");
-        summary.mockGameContext.SetCodeNote({ 0x2345U }, L"Difficulty\r\n0=Easy\r\n1=Normal\r\n2=Hard\r\n");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Character (1=Bill, 2=Bob, 3=Betty, 4=Bonnie, 5=Ben)");
+        summary.mockGameContext.SetNote({ 0x2345U }, L"Difficulty\r\n0=Easy\r\n1=Normal\r\n2=Hard\r\n");
         summary.InitializeFrom("0xH1234<1_0x 2345<1");
 
         Assert::AreEqual({ 2U }, summary.Clauses().Count());
@@ -169,7 +161,7 @@ public:
     TEST_METHOD(TestMemoryReferenceDeltaSelf)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x2345U }, L"Difficulty\r\n0=Easy\r\n1=Normal\r\n2=Hard\r\n");
+        summary.mockGameContext.SetNote({ 0x2345U }, L"Difficulty\r\n0=Easy\r\n1=Normal\r\n2=Hard\r\n");
         summary.InitializeFrom("0xH1234!=d0xH1234_0x 2345>d0x 2345_0x 2345<d0x 2345_d0x 2345<0x 2345");
 
         Assert::AreEqual({ 4U }, summary.Clauses().Count());
@@ -182,7 +174,7 @@ public:
     TEST_METHOD(TestChangedTo)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
         summary.InitializeFrom("0xH1234=5_d0xH1234!=5");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
@@ -192,7 +184,7 @@ public:
     TEST_METHOD(TestChangedFrom)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
         summary.InitializeFrom("0xH1234!=5_d0xH1234=5");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
@@ -202,7 +194,7 @@ public:
     TEST_METHOD(TestBitChangedTo)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
         summary.InitializeFrom("0xO1234=1_d0xO1234=0");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
@@ -212,7 +204,7 @@ public:
     TEST_METHOD(TestBitChangedToDeltaFirst)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
         summary.InitializeFrom("d0xO1234=1_0xO1234=0");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
@@ -222,7 +214,7 @@ public:
     TEST_METHOD(TestBitChangedToFromExplicit)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
         summary.InitializeFrom("0xH1234=1_d0xH1234=0");
 
         Assert::AreEqual({ 2U }, summary.Clauses().Count());
@@ -233,7 +225,7 @@ public:
     TEST_METHOD(TestBitChangedToFromExplicitDeltaFirst)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
         summary.InitializeFrom("d0xH1234=1_0xH1234=0");
 
         Assert::AreEqual({ 2U }, summary.Clauses().Count());
@@ -244,7 +236,7 @@ public:
     TEST_METHOD(TestIncreasedTo)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
         summary.InitializeFrom("0xH1234=5_d0xH1234<5");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
@@ -254,7 +246,7 @@ public:
     TEST_METHOD(TestDecreasedTo)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetCodeNote({ 0x1234U }, L"World");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
         summary.InitializeFrom("0xH1234=5_d0xH1234>5");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());

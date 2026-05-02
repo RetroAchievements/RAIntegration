@@ -63,7 +63,7 @@ public:
                     const auto* pszText = static_cast<char*>(GlobalLock(hData));
                     if (pszText != nullptr)
                     {
-                        sText = ra::Widen(pszText);
+                        sText = ra::util::String::Widen(pszText);
                         GlobalUnlock(hData);
                     }
                 }

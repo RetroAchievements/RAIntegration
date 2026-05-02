@@ -41,7 +41,7 @@ void PointerFinderViewModel::StateViewModel::OnValueChanged(const StringModelPro
 {
     if (args.Property == AddressProperty)
     {
-        const auto nAddress = ra::ByteAddressFromString(ra::Narrow(GetAddress()));
+        const auto nAddress = ra::data::Memory::ParseAddress(GetAddress());
         m_pViewer.InitializeFixedViewer(nAddress);
     }
 
@@ -58,14 +58,15 @@ void PointerFinderViewModel::StateViewModel::ToggleCapture()
 
 void PointerFinderViewModel::StateViewModel::Capture()
 {
-    if (ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().TotalMemorySize() == 0)
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    if (pMemoryContext.TotalMemorySize() == 0)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"No game loaded.", L"Cannot capture memory without a loaded game.");
         return;
     }
 
     const auto& sAddress = GetAddress();
-    const auto nAddress = ra::ByteAddressFromString(ra::Narrow(sAddress));
+    const auto nAddress = ra::data::Memory::ParseAddress(sAddress);
     if (nAddress == 0)
     {
         bool bValid = sAddress.size() > 0;
@@ -89,8 +90,8 @@ void PointerFinderViewModel::StateViewModel::Capture()
     }
 
     DispatchMemoryRead([this]() {
-        const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        const auto nMemorySize = gsl::narrow<ra::data::ByteAddress>(pEmulatorContext.TotalMemorySize());
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        const auto nMemorySize = gsl::narrow<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize());
 
         m_pCapture.reset(new ra::services::SearchResults());
         m_pCapture->Initialize(0, nMemorySize, m_pOwner->GetSearchType());
@@ -168,6 +169,7 @@ void PointerFinderViewModel::Find()
     m_vResults.BeginUpdate();
     m_vResults.Clear();
 
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     for (size_t i = 0; i < m_vStates.size(); i++)
     {
         const auto& pStateI = m_vStates.at(i);
@@ -230,9 +232,9 @@ void PointerFinderViewModel::Find()
 
                         pPointer = &m_vResults.Add();
                         pPointer->m_nAddress = pResult.nAddress;
-                        pPointer->SetPointerAddress(ra::Widen(ra::ByteAddressToString(pResult.nAddress)));
+                        pPointer->SetPointerAddress(pMemoryContext.FormatAddress(pResult.nAddress));
                         const auto nOffset = (nAddressJ - pResult.nValue);
-                        pPointer->SetOffset(ra::StringPrintf(L"+0x%02X", nOffset));
+                        pPointer->SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
 
                         pPointer->SetPointerValue(i, FormatValue(*pStateI.CapturedMemory(), pResult.nAddress));
                     }
@@ -318,7 +320,7 @@ void PointerFinderViewModel::ExportResults() const
     vmFileDialog.SetDefaultExtension(L"csv");
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-Pointers.csv", pGameContext.GameId()));
+    vmFileDialog.SetFileName(ra::util::String::Printf(L"%u-Pointers.csv", pGameContext.GameId()));
 
     if (vmFileDialog.ShowSaveFileDialog() != ra::ui::DialogResult::OK)
         return;
@@ -328,7 +330,7 @@ void PointerFinderViewModel::ExportResults() const
     if (pTextWriter == nullptr)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-            ra::StringPrintf(L"Could not create %s", vmFileDialog.GetFileName()));
+            ra::util::String::Printf(L"Could not create %s", vmFileDialog.GetFileName()));
         return;
     }
 

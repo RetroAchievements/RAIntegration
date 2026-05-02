@@ -1,9 +1,9 @@
 #include "Memory.hh"
 
-#include "util\Strings.hh"
+#include "util/Strings.hh"
 
 #include <rc_runtime_types.h>
-#include <rcheevos\src\rcheevos\rc_internal.h>
+#include <rcheevos/src/rcheevos/rc_internal.h>
 
 namespace ra {
 namespace data {
@@ -44,7 +44,7 @@ Memory::Size Memory::SizeFromRcheevosSize(uint8_t nSize) noexcept
 
 static std::wstring U32ToFloatString(uint32_t nValue, uint8_t nFloatType)
 {
-    rc_typed_value_t value;
+    rc_typed_value_t value{};
     value.type = RC_VALUE_TYPE_UNSIGNED;
     value.value.u32 = nValue;
     rc_transform_memref_value(&value, nFloatType);
@@ -52,13 +52,13 @@ static std::wstring U32ToFloatString(uint32_t nValue, uint8_t nFloatType)
     if (value.value.f32 < 0.000001)
     {
         if (value.value.f32 > 0.0)
-            return ra::StringPrintf(L"%e", value.value.f32);
+            return ra::util::String::Printf(L"%e", value.value.f32);
 
         if (value.value.f32 < 0.0 && value.value.f32 > -0.000001)
-            return ra::StringPrintf(L"%e", value.value.f32);
+            return ra::util::String::Printf(L"%e", value.value.f32);
     }
 
-    std::wstring sValue = ra::StringPrintf(L"%f", value.value.f32);
+    std::wstring sValue = ra::util::String::Printf(L"%f", value.value.f32);
     while (sValue.back() == L'0')
         sValue.pop_back();
     if (sValue.back() == L'.')
@@ -96,11 +96,11 @@ std::wstring Memory::FormatValue(uint32_t nValue, Memory::Size nSize, Memory::Fo
             const auto nBits = SizeBits(nSize);
             switch (nBits / 8)
             {
-                default: return ra::StringPrintf(L"%x", nValue);
-                case 1: return ra::StringPrintf(L"%02x", nValue);
-                case 2: return ra::StringPrintf(L"%04x", nValue);
-                case 3: return ra::StringPrintf(L"%06x", nValue);
-                case 4: return ra::StringPrintf(L"%08x", nValue);
+                default: return ra::util::String::Printf(L"%x", nValue);
+                case 1: return ra::util::String::Printf(L"%02x", nValue);
+                case 2: return ra::util::String::Printf(L"%04x", nValue);
+                case 3: return ra::util::String::Printf(L"%06x", nValue);
+                case 4: return ra::util::String::Printf(L"%08x", nValue);
             }
     }
 }
@@ -112,7 +112,7 @@ uint32_t Memory::FloatToU32(float fValue, Memory::Size nFloatType) noexcept
     {
         float fValue;
         uint32_t nValue;
-    } uUnion;
+    } uUnion{};
 
     uUnion.fValue = fValue;
 
@@ -207,6 +207,132 @@ float Memory::U32ToFloat(uint32_t nValue, Memory::Size nFloatType) noexcept
     }
 
     return uUnion.fValue;
+}
+
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>, typename... Ts>
+static uint32_t TryParseAddressInternal(const CharT* sAddress, ra::data::ByteAddress& nAddress) noexcept
+{
+    const CharT* ptr = sAddress;
+    if (ptr == nullptr)
+        return 0;
+
+    if (*ptr == '$')
+        ++ptr;
+    else if (ptr[0] == '0' && ptr[1] == 'x')
+        ptr += 2;
+
+    const CharT* start = ptr;
+    nAddress = 0;
+    while (CharT c = *ptr)
+    {
+        if (c >= '0' && c <= '9')
+        {
+            nAddress <<= 4;
+            nAddress += (c - '0');
+        }
+        else if (c >= 'a' && c <= 'f')
+        {
+            nAddress <<= 4;
+            nAddress += (c - 'a' + 10);
+        }
+        else if (c >= 'A' && c <= 'F')
+        {
+            nAddress <<= 4;
+            nAddress += (c - 'A' + 10);
+        }
+        else
+        {
+            break;
+        }
+
+        ++ptr;
+    }
+
+    if (ptr == start)
+        return 0;
+
+    return gsl::narrow_cast<uint32_t>(ptr - sAddress);
+}
+
+bool Memory::TryParseAddress(const std::string_view sAddress, ra::data::ByteAddress& nAddress) noexcept
+{
+    const uint32_t nUsed = TryParseAddressInternal(sAddress.data(), nAddress);
+    return (nUsed == sAddress.length());
+}
+
+bool Memory::TryParseAddress(const std::wstring_view sAddress, ra::data::ByteAddress& nAddress) noexcept
+{
+    const uint32_t nUsed = TryParseAddressInternal(sAddress.data(), nAddress);
+    return (nUsed == sAddress.length());
+}
+
+ra::data::ByteAddress Memory::ParseAddress(const std::string_view sAddress) noexcept
+{
+    ra::data::ByteAddress nAddress;
+    return TryParseAddress(sAddress, nAddress) ? nAddress : 0;
+}
+
+ra::data::ByteAddress Memory::ParseAddress(const std::wstring_view sAddress) noexcept
+{
+    ra::data::ByteAddress nAddress;
+    return TryParseAddress(sAddress, nAddress) ? nAddress : 0;
+}
+
+bool Memory::TryParseAddressRange(const std::wstring& sRange, ra::data::ByteAddress& nStart, ra::data::ByteAddress& nEnd) noexcept
+{
+    const wchar_t* ptr = sRange.data();
+    if (!ptr || *ptr == '\0')
+    {
+        // no range specified, search all
+        nStart = 0;
+        nEnd = 0xFFFFFFFF;
+        return true;
+    }
+
+    auto nAddressLength = TryParseAddressInternal(ptr, nStart);
+    if (nAddressLength == 0)
+    {
+        nStart = 0;
+        nEnd = 0;
+        return false;
+    }
+
+    ptr += nAddressLength;
+    while (iswspace(*ptr))
+        ++ptr;
+
+    if (*ptr == '\0')
+    {
+        // range is a single address
+        nEnd = nStart;
+        return true;
+    }
+
+    if (*ptr != '-')
+    {
+        nEnd = 0;
+        return false;
+    }
+
+    ++ptr;
+    while (iswspace(*ptr))
+        ++ptr;
+
+    nAddressLength = TryParseAddressInternal(ptr, nEnd);
+    if (nAddressLength == 0)
+    {
+        nEnd = 0;
+        return false;
+    }
+
+    ptr += nAddressLength;
+    if (*ptr != '\0')
+        return false;
+
+    if (nEnd < nStart)
+        std::swap(nStart, nEnd);
+
+    return true;
 }
 
 } // namespace data

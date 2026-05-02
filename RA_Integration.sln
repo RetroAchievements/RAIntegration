@@ -14,7 +14,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rcheevos", "src\rcheevos.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RADevKit", "src\devkit\RADevKit.vcxproj", "{8AE21D54-F905-44E1-90E5-D22E346BFF39}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RADevKit.Tests", "tests\devkit\RADevKit.Tests.vcxproj.vcxproj", "{6131C3D1-165E-4F39-A44C-94F01EAA03C5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RADevKit.Tests", "tests\devkit\RADevKit.Tests.vcxproj", "{6131C3D1-165E-4F39-A44C-94F01EAA03C5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Integration", "src\RA_Integration.vcxproj", "{825CB292-F069-4B27-82CF-3417746ACDF3}"
 EndProject

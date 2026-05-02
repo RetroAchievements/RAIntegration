@@ -14,7 +14,6 @@ static ra::api::IServer& Server()
 
 FetchUserFriends::Response FetchUserFriends::Request::Call() const { return Server().FetchUserFriends(*this); }
 ResolveHash::Response ResolveHash::Request::Call() const { return Server().ResolveHash(*this); }
-FetchCodeNotes::Response FetchCodeNotes::Request::Call() const { return Server().FetchCodeNotes(*this); }
 UpdateCodeNote::Response UpdateCodeNote::Request::Call() const { return Server().UpdateCodeNote(*this); }
 DeleteCodeNote::Response DeleteCodeNote::Request::Call() const { return Server().DeleteCodeNote(*this); }
 UpdateAchievement::Response UpdateAchievement::Request::Call() const { return Server().UpdateAchievement(*this); }
@@ -23,8 +22,6 @@ UpdateLeaderboard::Response UpdateLeaderboard::Request::Call() const { return Se
 FetchLeaderboardInfo::Response FetchLeaderboardInfo::Request::Call() const { return Server().FetchLeaderboardInfo(*this); }
 UpdateRichPresence::Response UpdateRichPresence::Request::Call() const { return Server().UpdateRichPresence(*this); }
 LatestClient::Response LatestClient::Request::Call() const { return Server().LatestClient(*this); }
-FetchGamesList::Response FetchGamesList::Request::Call() const { return Server().FetchGamesList(*this); }
-SubmitNewTitle::Response SubmitNewTitle::Request::Call() const { return Server().SubmitNewTitle(*this); }
 FetchBadgeIds::Response FetchBadgeIds::Request::Call() const { return Server().FetchBadgeIds(*this); }
 UploadBadge::Response UploadBadge::Request::Call() const { return Server().UploadBadge(*this); }
 

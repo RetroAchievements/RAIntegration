@@ -5,9 +5,6 @@
 #include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\models\AchievementModel.hh"
-#include "data\models\LeaderboardModel.hh"
-
-#include "services\TextReader.hh"
 
 #include <string>
 
@@ -48,43 +45,13 @@ public:
     /// </summary>
     void ResetRuntime();
 
-    /// <summary>
-    /// Gets the raw trigger for the achievement.
-    /// </summary>
-    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const;
-    const rc_client_achievement_info_t* GetPublishedAchievementInfo(ra::AchievementID nId) const;
-
     static std::string GetAchievementBadge(const rc_client_achievement_t& pAchievement);
 
+    void InitializeRcClient();
     void RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const;
 
     void UpdateActiveAchievements() noexcept(false);
     void UpdateActiveLeaderboards();
-
-    /// <summary>
-    /// Gets the raw definition for the leaderboard.
-    /// </summary>
-    rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const;
-    const rc_client_leaderboard_info_t* GetPublishedLeaderboardInfo(ra::LeaderboardID nId) const;
-
-    void ReleaseLeaderboardTracker(ra::LeaderboardID nId);
-
-    /// <summary>
-    /// Specifies the rich presence to process each frame.
-    /// </summary>
-    /// <remarks>Only updates the memrefs each frame (for deltas), the script is not processed here.</remarks>
-    /// <returns><c>true</c> if the rich presence was activated, <c>false</c> if there was an error.</returns>
-    bool ActivateRichPresence(const std::string& sScript);
-
-    /// <summary>
-    /// Gets whether or not the loaded game has a rich presence script.
-    /// </summary>
-    bool HasRichPresence() const;
-
-    /// <summary>
-    /// Gets the current rich presence display string.
-    /// </summary>
-    std::wstring GetRichPresenceDisplayString() const;
 
     void InvalidateAddress(ra::data::ByteAddress nAddress);
 
@@ -192,7 +159,6 @@ public:
 
 protected:
     AchievementRuntime(bool bInitializeRcClient);
-    void InitializeRcClient();
 
 private:
     bool m_bPaused = false;

@@ -39,6 +39,7 @@ protected:
 
 private:
     ra::ui::win32::bindings::ComboBoxBinding m_bindExistingTitle;
+    ra::ui::win32::bindings::TextBoxBinding m_bindFilterText;
     ra::ui::win32::bindings::TextBoxBinding m_bindNewTitle;
 };
 

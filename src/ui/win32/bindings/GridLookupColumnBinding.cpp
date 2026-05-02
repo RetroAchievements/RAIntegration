@@ -109,7 +109,11 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, InPlaceEditorInf
             m_vVisibleItems.push_back(nItemValue);
         }
 
-        const auto nIndex = ComboBox_AddString(hInPlaceEditor, NativeStr(pItem.GetLabel()).c_str());
+#ifdef UNICODE
+        const auto nIndex = ComboBox_AddString(hInPlaceEditor, pItem.GetLabel().c_str());
+#else
+        const auto nIndex = ComboBox_AddString(hInPlaceEditor, ra::util::String::Narrow(pItem.GetLabel()).c_str());
+#endif
 
         if (nItemValue == nValue)
             ComboBox_SetCurSel(hInPlaceEditor, nIndex);

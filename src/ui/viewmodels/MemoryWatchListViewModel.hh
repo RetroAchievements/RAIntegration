@@ -2,6 +2,8 @@
 #define RA_UI_MEMORYWATCHLISTVIEWMODEL_H
 #pragma once
 
+#include "context\IEmulatorMemoryContext.hh"
+
 #include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
@@ -18,7 +20,7 @@ namespace viewmodels {
 
 class MemoryWatchListViewModel : public ViewModelBase,
     protected ra::data::context::GameContext::NotifyTarget,
-    protected ra::data::context::EmulatorContext::NotifyTarget,   
+    protected ra::context::IEmulatorMemoryContext::NotifyTarget,
     protected ra::data::context::EmulatorContext::DispatchesReadMemory,
     protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
@@ -84,8 +86,8 @@ public:
 
 protected:
     // ra::data::context::GameContext::NotifyTarget
-    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
-    void OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
+    void OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override;
+    void OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
     // ra::data::context::EmulatorContext::NotifyTarget
     void OnByteWritten(ra::data::ByteAddress, uint8_t) override;

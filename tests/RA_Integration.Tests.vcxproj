@@ -69,7 +69,7 @@
     <ProjectReference Include="..\src\rcheevos.vcxproj">
       <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
     </ProjectReference>
-    <ProjectReference Include="devkit\RADevKit.Tests.vcxproj.vcxproj">
+    <ProjectReference Include="devkit\RADevKit.Tests.vcxproj">
       <Project>{6131c3d1-165e-4f39-a44c-94f01eaa03c5}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -79,22 +79,14 @@
     <ClCompile Include="..\src\api\impl\ConnectedServer.cpp" />
     <ClCompile Include="..\src\api\impl\DisconnectedServer.cpp" />
     <ClCompile Include="..\src\api\impl\OfflineServer.cpp" />
-    <ClCompile Include="..\src\data\context\ConsoleContext.cpp" />
     <ClCompile Include="..\src\data\context\EmulatorContext.cpp" />
     <ClCompile Include="..\src\data\context\GameContext.cpp" />
     <ClCompile Include="..\src\data\context\SessionTracker.cpp" />
-    <ClCompile Include="..\src\data\context\UserContext.cpp" />
     <ClCompile Include="..\src\data\models\AchievementModel.cpp" />
-    <ClCompile Include="..\src\data\models\AssetModelBase.cpp" />
-    <ClCompile Include="..\src\data\models\CapturedTriggerHits.cpp" />
-    <ClCompile Include="..\src\data\models\CodeNoteModel.cpp" />
-    <ClCompile Include="..\src\data\models\CodeNotesModel.cpp" />
     <ClCompile Include="..\src\data\models\LeaderboardModel.cpp" />
     <ClCompile Include="..\src\data\models\LocalBadgesModel.cpp" />
-    <ClCompile Include="..\src\data\models\MemoryRegionsModel.cpp" />
     <ClCompile Include="..\src\data\models\RichPresenceModel.cpp" />
     <ClCompile Include="..\src\data\models\TriggerValidation.cpp" />
-    <ClCompile Include="..\src\data\search\MemBlock.cpp" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -108,6 +100,7 @@
     <ClCompile Include="..\src\services\GameIdentifier.cpp" />
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
+    <ClCompile Include="..\src\services\impl\LoginService.cpp" />
     <ClCompile Include="..\src\services\impl\OfflineRcClient.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
     <ClCompile Include="..\src\services\search\SearchImpl.cpp" />
@@ -119,13 +112,13 @@
     <ClCompile Include="..\src\ui\viewmodels\AssetUploadViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\ChallengeIndicatorViewModel.cpp" />
-    <ClCompile Include="..\src\ui\viewmodels\CodeNotesViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\EmulatorViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\IntegrationMenuViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryBookmarksViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryInspectorViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\MemoryNotesViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryRegionsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemorySearchViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryViewerViewModel.cpp" />
@@ -154,7 +147,6 @@
     <ClCompile Include="..\src\ui\viewmodels\TriggerViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
-    <ClInclude Include="..\src\data\models\CodeNoteModel.hh" />
     <ClInclude Include="..\src\data\models\LeaderboardModel.hh" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClCompile Include="..\src\ui\ViewModelBase.cpp" />
@@ -162,21 +154,16 @@
     <ClCompile Include="..\src\ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
     <ClCompile Include="..\src\ui\WindowViewModelBase.cpp" />
-    <ClCompile Include="data\context\ConsoleContext_Tests.cpp" />
     <ClCompile Include="data\context\EmulatorContext_Tests.cpp" />
     <ClCompile Include="data\context\GameAssets_Tests.cpp" />
     <ClCompile Include="data\context\GameContext_Tests.cpp" />
     <ClCompile Include="data\context\SessionTracker_Tests.cpp" />
     <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
-    <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
-    <ClCompile Include="data\models\CapturedTriggerHits_Tests.cpp" />
-    <ClCompile Include="data\models\CodeNoteModel_Tests.cpp" />
-    <ClCompile Include="data\models\CodeNotesModel_Tests.cpp" />
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
-    <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp" />
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
     <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
+    <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp" />
     <ClCompile Include="devkit\context\mocks\MockRcClient.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="mocks\MockAchievementRuntime.cpp" />
@@ -186,6 +173,7 @@
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
     <ClCompile Include="services\FrameEventQueue_Tests.cpp" />
     <ClCompile Include="services\GameIdentifier_Tests.cpp" />
+    <ClCompile Include="services\LoginService_Tests.cpp" />
     <ClCompile Include="ui\OverlayTheme_Tests.cpp" />
     <ClCompile Include="ui\ViewModelBase_Tests.cpp" />
     <ClCompile Include="services\FileLogger_Tests.cpp" />
@@ -197,7 +185,7 @@
     <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\AssetUploadViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
-    <ClCompile Include="ui\viewmodels\CodeNotesViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\MemoryNotesViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\IntegrationMenuViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel_Tests.cpp" />
@@ -245,13 +233,13 @@
     <ClInclude Include="mocks\MockHttpRequester.hh" />
     <ClInclude Include="mocks\MockImageRepository.hh" />
     <ClInclude Include="mocks\MockLocalStorage.hh" />
+    <ClInclude Include="mocks\MockLoginService.hh" />
     <ClInclude Include="mocks\MockOverlayManager.hh" />
     <ClInclude Include="mocks\MockOverlayTheme.hh" />
     <ClInclude Include="mocks\MockServer.hh" />
     <ClInclude Include="mocks\MockSessionTracker.hh" />
     <ClInclude Include="mocks\MockSurface.hh" />
     <ClInclude Include="mocks\MockThreadPool.hh" />
-    <ClInclude Include="mocks\MockUserContext.hh" />
     <ClInclude Include="mocks\MockWindowManager.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />

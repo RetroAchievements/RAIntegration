@@ -3,7 +3,7 @@
 #include "RA_Defs.h"
 #include "util\Strings.hh"
 
-#include "data\context\ConsoleContext.hh"
+#include "context\IConsoleContext.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -110,12 +110,14 @@ void MemoryRegionsViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& 
 
 void MemoryRegionsViewModel::AddNewRegion()
 {
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+
     auto pItem = std::make_unique<MemoryRegionViewModel>();
     pItem->SetId(gsl::narrow_cast<int>(m_vRegions.Count()));
     pItem->SetLabel(L"New Custom Region");
-    pItem->SetRange(ra::StringPrintf(L"%s-%s",
-        ra::ByteAddressToString(0),
-        ra::ByteAddressToString(0)));
+    pItem->SetRange(ra::util::String::Printf(L"%s-%s",
+        pMemoryContext.FormatAddress(0),
+        pMemoryContext.FormatAddress(0)));
     pItem->SetCustom(true);
 
     m_vRegions.Append(std::move(pItem));
@@ -148,24 +150,26 @@ void MemoryRegionsViewModel::RemoveRegion()
 
 void MemoryRegionsViewModel::InitializeRegions()
 {
-    for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().MemoryRegions())
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+
+    for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::context::IConsoleContext>().MemoryRegions())
     {
-        switch (pRegion.Type)
+        switch (pRegion.GetType())
         {
-            case ra::data::context::ConsoleContext::AddressType::Unused:
-            case ra::data::context::ConsoleContext::AddressType::VirtualRAM:
-            case ra::data::context::ConsoleContext::AddressType::ReadOnlyMemory:
-            case ra::data::context::ConsoleContext::AddressType::HardwareController:
-            case ra::data::context::ConsoleContext::AddressType::VideoRAM:
+            case ra::data::MemoryRegion::Type::Unused:
+            case ra::data::MemoryRegion::Type::VirtualRAM:
+            case ra::data::MemoryRegion::Type::ReadOnlyMemory:
+            case ra::data::MemoryRegion::Type::HardwareController:
+            case ra::data::MemoryRegion::Type::VideoRAM:
                 continue;
         }
 
         auto pItem = std::make_unique<MemoryRegionViewModel>();
         pItem->SetId(gsl::narrow_cast<int>(m_vRegions.Count()));
-        pItem->SetLabel(ra::Widen(pRegion.Description));
-        pItem->SetRange(ra::StringPrintf(L"%s-%s",
-            ra::ByteAddressToString(pRegion.StartAddress),
-            ra::ByteAddressToString(pRegion.EndAddress)));
+        pItem->SetLabel(pRegion.GetDescription());
+        pItem->SetRange(ra::util::String::Printf(L"%s-%s",
+            pMemoryContext.FormatAddress(pRegion.GetStartAddress()),
+            pMemoryContext.FormatAddress(pRegion.GetEndAddress())));
 
         m_vRegions.Append(std::move(pItem));
     }
@@ -177,10 +181,10 @@ void MemoryRegionsViewModel::InitializeRegions()
         {
             auto pItem = std::make_unique<MemoryRegionViewModel>();
             pItem->SetId(gsl::narrow_cast<int>(m_vRegions.Count()));
-            pItem->SetLabel(ra::Widen(pRegion.sLabel));
-            pItem->SetRange(ra::StringPrintf(L"%s-%s",
-                ra::ByteAddressToString(pRegion.nStartAddress),
-                ra::ByteAddressToString(pRegion.nEndAddress)));
+            pItem->SetLabel(pRegion.GetDescription());
+            pItem->SetRange(ra::util::String::Printf(L"%s-%s",
+                pMemoryContext.FormatAddress(pRegion.GetStartAddress()),
+                pMemoryContext.FormatAddress(pRegion.GetEndAddress())));
             pItem->SetCustom(true);
 
             m_vRegions.Append(std::move(pItem));

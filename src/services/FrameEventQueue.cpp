@@ -3,6 +3,7 @@
 #include "RA_Defs.h"
 #include "util\Strings.hh"
 
+#include "ui\IDesktop.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -25,7 +26,7 @@ void FrameEventQueue::DoFrame()
     {
         sPauseMessage.append(L"The following triggers have triggered:");
         for (const auto& pTriggerName : m_vTriggeredTriggers)
-            sPauseMessage.append(ra::StringPrintf(L"\n* %s", pTriggerName));
+            sPauseMessage.append(ra::util::String::Printf(L"\n* %s", pTriggerName));
 
         m_vTriggeredTriggers.clear();
     }
@@ -37,7 +38,7 @@ void FrameEventQueue::DoFrame()
 
         sPauseMessage.append(L"The following triggers have been reset:");
         for (const auto& pTriggerName : m_vResetTriggers)
-            sPauseMessage.append(ra::StringPrintf(L"\n* %s", pTriggerName));
+            sPauseMessage.append(ra::util::String::Printf(L"\n* %s", pTriggerName));
 
         m_vResetTriggers.clear();
     }
@@ -49,7 +50,7 @@ void FrameEventQueue::DoFrame()
 
         sPauseMessage.append(L"The following bookmarks have changed:");
         for (const auto& pChange : m_vMemChanges)
-            sPauseMessage.append(ra::StringPrintf(L"\n* %s", pChange));
+            sPauseMessage.append(ra::util::String::Printf(L"\n* %s", pChange));
 
         m_vMemChanges.clear();
     }
@@ -59,7 +60,9 @@ void FrameEventQueue::DoFrame()
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         pEmulatorContext.Pause();
 
-        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"The emulator has been paused.", sPauseMessage);
+        ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread([sPauseMessage]() {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"The emulator has been paused.", sPauseMessage);
+        });
     }
 }
 

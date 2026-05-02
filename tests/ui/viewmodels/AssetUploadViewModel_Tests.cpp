@@ -7,17 +7,19 @@
 #include "data\models\AchievementModel.hh"
 #include "data\models\LeaderboardModel.hh"
 
-#include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
+#include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
-#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -45,8 +47,9 @@ private:
         static constexpr unsigned GameId = 22U;
 
         ra::api::mocks::MockServer mockServer;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -61,7 +64,7 @@ private:
             SetIsVisible(true);
             Assert::AreEqual(DialogResult::None, GetDialogResult());
 
-            Assert::AreEqual(ra::StringPrintf(L"Uploading %d items...", TaskCount()), GetMessage());
+            Assert::AreEqual(ra::util::String::Printf(L"Uploading %d items...", TaskCount()), GetMessage());
             Assert::AreEqual(0, GetProgress());
 
             // "run" the background thread - all pending tasks will be processed in one worker because the threads are virtual
@@ -120,7 +123,7 @@ private:
 
         LeaderboardModel& AddLeaderboard(AssetCategory nCategory, const std::wstring& sTitle,
             const std::wstring& sDescription, const std::string& sStartTrigger, const std::string& sSubmitTrigger,
-            const std::string& sCancelTrigger, const std::string& sValueDefinition, ra::data::ValueFormat nFormat)
+            const std::string& sCancelTrigger, const std::string& sValueDefinition, ra::data::Value::Format nFormat)
         {
             auto vmLeaderboard = std::make_unique<LeaderboardModel>();
             if (nCategory == AssetCategory::Local)
@@ -166,14 +169,14 @@ private:
             return *pRichPresence;
         }
 
-        ra::data::models::CodeNotesModel& CodeNotes()
+        ra::data::models::MemoryNotesModel& MemoryNotes()
         {
-            auto* pNotes = m_pAssets.FindCodeNotes();
+            auto* pNotes = m_pAssets.FindMemoryNotes();
             if (pNotes == nullptr)
             {
-                auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
-                m_pAssets.Append(std::move(pCodeNotes));
-                pNotes = m_pAssets.FindCodeNotes();
+                auto pMemoryNotes = std::make_unique<ra::data::models::MemoryNotesModel>();
+                m_pAssets.Append(std::move(pMemoryNotes));
+                pNotes = m_pAssets.FindMemoryNotes();
             }
 
             return *pNotes;
@@ -189,7 +192,7 @@ private:
 
                 Assert::AreEqual(std::wstring(L"Publish succeeded."), vmMessageBox.GetHeader());
 
-                const auto sMessage = ra::StringPrintf(L"%d items successfully uploaded.", nItems);
+                const auto sMessage = ra::util::String::Printf(L"%d items successfully uploaded.", nItems);
                 Assert::AreEqual(sMessage, vmMessageBox.GetMessage());
 
                 return DialogResult::OK;
@@ -203,7 +206,7 @@ private:
         void AssertFailed(int nSuccessfulItems, int nFailedItems, const std::wstring& sFailedDetail)
         {
             bool bDialogSeen = false;
-            const auto sMessage = ra::StringPrintf(L"%d items successfully uploaded.\n\n%d items failed:\n%s", nSuccessfulItems, nFailedItems, sFailedDetail);
+            const auto sMessage = ra::util::String::Printf(L"%d items successfully uploaded.\n\n%d items failed:\n%s", nSuccessfulItems, nFailedItems, sFailedDetail);
 
             mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen, &sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
             {
@@ -223,9 +226,9 @@ private:
         void AssertAbort(int nSuccessfulItems, int nFailedItems, const std::wstring& sFailedDetail)
         {
             bool bDialogSeen = false;
-            auto sMessage = ra::StringPrintf(L"%d items successfully uploaded.", nSuccessfulItems);
+            auto sMessage = ra::util::String::Printf(L"%d items successfully uploaded.", nSuccessfulItems);
             if (nFailedItems)
-                sMessage += ra::StringPrintf(L"\n\n%d items failed:\n%s", nFailedItems, sFailedDetail);
+                sMessage += ra::util::String::Printf(L"\n\n%d items failed:\n%s", nFailedItems, sFailedDetail);
 
             mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen, &sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
             {
@@ -1071,7 +1074,7 @@ public:
     TEST_METHOD(TestSingleLocalLeaderboard)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::ValueFormat::Score);
+        auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
         Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
 
         vmUpload.QueueAsset(pLeaderboard);
@@ -1089,7 +1092,7 @@ public:
             Assert::AreEqual(std::string("0xH1234=2"), pRequest.SubmitTrigger);
             Assert::AreEqual(std::string("0xH1234=3"), pRequest.CancelTrigger);
             Assert::AreEqual(std::string("0xH2345"), pRequest.ValueDefinition);
-            Assert::AreEqual(ra::data::ValueFormat::Score, pRequest.Format);
+            Assert::AreEqual(ra::data::Value::Format::Score, pRequest.Format);
             Assert::IsFalse(pRequest.LowerIsBetter);
             Assert::AreEqual(0U, pRequest.LeaderboardId);
 
@@ -1115,7 +1118,7 @@ public:
         AssetUploadViewModelHarness vmUpload;
         vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
         auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1",
-                                                     "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::ValueFormat::Score);
+                                                     "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
         pLeaderboard.SetSubsetID(22U);
         Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
 
@@ -1134,7 +1137,7 @@ public:
                 Assert::AreEqual(std::string("0xH1234=2"), pRequest.SubmitTrigger);
                 Assert::AreEqual(std::string("0xH1234=3"), pRequest.CancelTrigger);
                 Assert::AreEqual(std::string("0xH2345"), pRequest.ValueDefinition);
-                Assert::AreEqual(ra::data::ValueFormat::Score, pRequest.Format);
+                Assert::AreEqual(ra::data::Value::Format::Score, pRequest.Format);
                 Assert::IsFalse(pRequest.LowerIsBetter);
                 Assert::AreEqual(0U, pRequest.LeaderboardId);
 
@@ -1190,13 +1193,13 @@ public:
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestSingleCodeNoteNew)
+    TEST_METHOD(TestSingleMemoryNoteNew)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.CodeNotes().SetCodeNote(0x1234, L"This is a note.");
-        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+        vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
-        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
         Assert::IsFalse(vmUpload.mockDesktop.WasDialogShown());
 
@@ -1216,19 +1219,19 @@ public:
         vmUpload.DoUpload();
 
         Assert::IsTrue(bApiCalled);
-        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+        Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestSingleCodeNoteNewSubset)
+    TEST_METHOD(TestSingleMemoryNoteNewSubset)
     {
         AssetUploadViewModelHarness vmUpload;
         vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
-        vmUpload.CodeNotes().SetCodeNote(0x1234, L"This is a note.");
-        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+        vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
-        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::AreEqual({1U}, vmUpload.TaskCount());
         Assert::IsFalse(vmUpload.mockDesktop.WasDialogShown());
 
@@ -1248,19 +1251,19 @@ public:
         vmUpload.DoUpload();
 
         Assert::IsTrue(bApiCalled);
-        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+        Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestSingleCodeNoteDeleted)
+    TEST_METHOD(TestSingleMemoryNoteDeleted)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.CodeNotes().SetServerCodeNote(0x1234, L"This is a note.");
-        vmUpload.CodeNotes().SetCodeNote(0x1234, L"");
-        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+        vmUpload.MemoryNotes().SetServerNote(0x1234, L"This is a note.");
+        vmUpload.MemoryNotes().SetNote(0x1234, L"");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
-        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
         Assert::IsFalse(vmUpload.mockDesktop.WasDialogShown());
 
@@ -1279,19 +1282,19 @@ public:
         vmUpload.DoUpload();
 
         Assert::IsTrue(bApiCalled);
-        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+        Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestSingleCodeNoteDifferentAuthor)
+    TEST_METHOD(TestSingleMemoryNoteDifferentAuthor)
     {
         AssetUploadViewModelHarness vmUpload;
         vmUpload.mockUserContext.SetUsername("Author");
-        vmUpload.CodeNotes().SetServerCodeNote(0x1234, L"Test");
+        vmUpload.MemoryNotes().SetServerNote(0x1234, L"Test");
         vmUpload.mockUserContext.SetUsername("Me");
-        vmUpload.CodeNotes().SetCodeNote(0x1234, L"Test2");
-        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+        vmUpload.MemoryNotes().SetNote(0x1234, L"Test2");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
         bool bWindowSeen = false;
         vmUpload.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -1304,7 +1307,7 @@ public:
             return ra::ui::DialogResult::Yes;
         });
 
-        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::IsTrue(bWindowSeen);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
@@ -1324,19 +1327,19 @@ public:
         vmUpload.DoUpload();
 
         Assert::IsTrue(bApiCalled);
-        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+        Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestSingleCodeNoteDeletedDifferentAuthor)
+    TEST_METHOD(TestSingleMemoryNoteDeletedDifferentAuthor)
     {
         AssetUploadViewModelHarness vmUpload;
         vmUpload.mockUserContext.SetUsername("Author");
-        vmUpload.CodeNotes().SetServerCodeNote(0x1234, L"Test");
+        vmUpload.MemoryNotes().SetServerNote(0x1234, L"Test");
         vmUpload.mockUserContext.SetUsername("Me");
-        vmUpload.CodeNotes().SetCodeNote(0x1234, L"");
-        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+        vmUpload.MemoryNotes().SetNote(0x1234, L"");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
         bool bWindowSeen = false;
         vmUpload.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -1349,7 +1352,7 @@ public:
             return ra::ui::DialogResult::Yes;
         });
 
-        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::IsTrue(bWindowSeen);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
@@ -1368,19 +1371,19 @@ public:
         vmUpload.DoUpload();
 
         Assert::IsTrue(bApiCalled);
-        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+        Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestSingleCodeNoteDifferentAuthorCancel)
+    TEST_METHOD(TestSingleMemoryNoteDifferentAuthorCancel)
     {
         AssetUploadViewModelHarness vmUpload;
         vmUpload.mockUserContext.SetUsername("Author");
-        vmUpload.CodeNotes().SetServerCodeNote(0x1234, L"Test");
+        vmUpload.MemoryNotes().SetServerNote(0x1234, L"Test");
         vmUpload.mockUserContext.SetUsername("Me");
-        vmUpload.CodeNotes().SetCodeNote(0x1234, L"Test2");
-        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+        vmUpload.MemoryNotes().SetNote(0x1234, L"Test2");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
         bool bWindowSeen = false;
         vmUpload.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -1393,14 +1396,14 @@ public:
             return ra::ui::DialogResult::No;
         });
 
-        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::IsTrue(bWindowSeen);
         Assert::AreEqual({ 0U }, vmUpload.TaskCount());
 
-        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
     }
 
-    TEST_METHOD(TestSingleCodeNoteDifferentLong)
+    TEST_METHOD(TestSingleMemoryNoteDifferentLong)
     {
         std::wstring sLongNote;
         for (int i = 0; i < 48; ++i)
@@ -1408,10 +1411,10 @@ public:
 
         AssetUploadViewModelHarness vmUpload;
         vmUpload.mockUserContext.SetUsername("Author");
-        vmUpload.CodeNotes().SetServerCodeNote(0x1234, sLongNote);
+        vmUpload.MemoryNotes().SetServerNote(0x1234, sLongNote);
         vmUpload.mockUserContext.SetUsername("Me");
-        vmUpload.CodeNotes().SetCodeNote(0x1234, L"Test");
-        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+        vmUpload.MemoryNotes().SetNote(0x1234, L"Test");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
         bool bWindowSeen = false;
         vmUpload.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -1428,7 +1431,7 @@ public:
             return ra::ui::DialogResult::Yes;
         });
 
-        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::IsTrue(bWindowSeen);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
@@ -1448,19 +1451,19 @@ public:
         vmUpload.DoUpload();
 
         Assert::IsTrue(bApiCalled);
-        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+        Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestMultipleCodeNotes)
+    TEST_METHOD(TestMultipleMemoryNotes)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.CodeNotes().SetCodeNote(0x1234, L"This is a note.");
-        vmUpload.CodeNotes().SetCodeNote(0x1235, L"This is another note.");
-        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+        vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
+        vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
-        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::AreEqual({ 2U }, vmUpload.TaskCount());
 
         int nApiCount = 0;
@@ -1487,19 +1490,19 @@ public:
         vmUpload.DoUpload();
 
         Assert::AreEqual(2, nApiCount);
-        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+        Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(2);
     }
 
-    TEST_METHOD(TestMultipleCodeNotes429)
+    TEST_METHOD(TestMultipleMemoryNotes429)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.CodeNotes().SetCodeNote(0x1234, L"This is a note.");
-        vmUpload.CodeNotes().SetCodeNote(0x1235, L"This is another note.");
-        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+        vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
+        vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
-        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::AreEqual({2U}, vmUpload.TaskCount());
 
         int nApiCount = 0;
@@ -1532,7 +1535,7 @@ public:
         // 1 = 1235, delayed
         // 2 = 1235, success
         Assert::AreEqual(3, nApiCount);
-        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+        Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(2);
     }

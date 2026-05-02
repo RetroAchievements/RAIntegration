@@ -2,8 +2,8 @@
 #define RA_SERVICES_IHTTP_REQUESTER_H
 #pragma once
 
-#include "services\Http.hh"
-#include "services\TextWriter.hh"
+#include "services/Http.hh"
+#include "services/TextWriter.hh"
 
 namespace ra {
 namespace services {

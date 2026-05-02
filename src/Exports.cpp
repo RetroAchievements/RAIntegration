@@ -8,13 +8,15 @@
 #include "api\IServer.hh"
 #include "api\impl\OfflineServer.hh"
 
+#include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
+#include "context\UserContext.hh"
+#include "context\impl\ConsoleContext.hh"
+#include "context\impl\EmulatorMemoryContext.hh"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\AchievementRuntimeExports.hh"
@@ -22,11 +24,14 @@
 #include "services\GameIdentifier.hh"
 #include "services\Http.hh"
 #include "services\IAudioSystem.hh"
+#include "services\IDebuggerDetector.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
+#include "services\ILoginService.hh"
 #include "services\Initialization.hh"
 #include "services\PerformanceCounter.hh"
 #include "services\ServiceLocator.hh"
+#include "services\impl\LoginService.hh"
 #include "services\impl\OfflineRcClient.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
@@ -101,7 +106,10 @@ static void InitializeOfflineMode()
     ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<ra::api::impl::OfflineServer>());
     ra::services::ServiceLocator::Provide<ra::context::IRcClient>(std::make_unique<ra::services::impl::OfflineRcClient>());
 
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+    // reattach hooks to new rc_client_t
+    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InitializeRcClient();
+
+    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::context::UserContext>();
     const auto& sUsername = pConfiguration.GetUsername();
     if (sUsername.empty())
     {
@@ -115,13 +123,15 @@ static void InitializeOfflineMode()
         pSessionTracker.Initialize(sUsername);
     }
 
+    RaiseClientExternalMenuChanged();
+
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     pClient->user.username = rc_buffer_strcpy(&pClient->state.buffer, pUserContext.GetUsername().c_str());
     pClient->user.display_name = rc_buffer_strcpy(&pClient->state.buffer, pUserContext.GetDisplayName().c_str());
     pClient->user.token = rc_buffer_strcpy(&pClient->state.buffer, pConfiguration.GetApiToken().c_str());
     pClient->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
 
-    pUserContext.DisableLogin();
+    ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>().DisableLogin();
 }
 
 static bool g_bPulseScheduled = false;
@@ -184,14 +194,14 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
         {
             if (!ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().ValidateClientVersion())
-                ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().Logout();
+                ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>().Logout();
         });
     }
 
     if (_RA_HardcoreModeIsActive())
     {
-        const auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
-        if (pDesktop.IsDebuggerPresent())
+        const auto& pDebuggerDetector = ra::services::ServiceLocator::GetMutable<ra::services::IDebuggerDetector>();
+        if (pDebuggerDetector.IsDebuggerPresent())
         {
             if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Disable Hardcore mode?",
                 L"A debugger or similar tool has been detected. If you do not disable hardcore mode, RetroAchievements functionality will be disabled.",
@@ -313,8 +323,6 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
 {
     if (nResult == RC_OK)
     {
-        ra::ui::viewmodels::LoginViewModel::PostLoginInitialization();
-
         // play the login sound
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\login.wav");
 
@@ -328,19 +336,19 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
         // show the welcome message
         std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(
             new ra::ui::viewmodels::PopupMessageViewModel);
-        vmMessage->SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
+        vmMessage->SetTitle(ra::util::String::Printf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
                                              pUser->display_name));
 
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
         const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
         if (bHardcore)
-            vmMessage->SetDescription(ra::StringPrintf(L"%u points", pUser->score));
+            vmMessage->SetDescription(ra::util::String::Printf(L"%u points", pUser->score));
         else
-            vmMessage->SetDescription(ra::StringPrintf(L"%u points (softcore)", pUser->score_softcore));
+            vmMessage->SetDescription(ra::util::String::Printf(L"%u points (softcore)", pUser->score_softcore));
 
         vmMessage->SetDetail((pUser->num_unread_messages == 1)
             ? L"You have 1 new message"
-            : ra::StringPrintf(L"You have %u new messages", pUser->num_unread_messages));
+            : ra::util::String::Printf(L"You have %u new messages", pUser->num_unread_messages));
 
         vmMessage->SetImage(ra::ui::ImageType::UserPic, pUser->username);
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmMessage);
@@ -348,7 +356,7 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
     else
     {
         if (sErrorMessage && *sErrorMessage)
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", ra::Widen(sErrorMessage));
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", ra::util::String::Widen(sErrorMessage));
         else
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", L"Please login again.");
 
@@ -360,8 +368,8 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
 
 API void CCONV _RA_AttemptLogin(int bBlocking)
 {
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    if (pUserContext.IsLoginDisabled())
+    auto& pLoginContext = ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>();
+    if (pLoginContext.IsLoginDisabled())
         return;
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -405,15 +413,15 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
 
 API const char* CCONV _RA_UserName()
 {
-    auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     return pUserContext.GetDisplayName().c_str();
 }
 
 API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
 {
-    auto pContext = std::make_unique<ra::data::context::ConsoleContext>(ra::itoe<ConsoleID>(nConsoleId));
+    auto pContext = std::make_unique<ra::context::impl::ConsoleContext>(ra::itoe<ConsoleID>(nConsoleId));
     RA_LOG_INFO("Console set to %u (%s)", pContext->Id(), pContext->Name());
-    ra::services::ServiceLocator::Provide<ra::data::context::ConsoleContext>(std::move(pContext));
+    ra::services::ServiceLocator::Provide<ra::context::IConsoleContext>(std::move(pContext));
 
     if (IsExternalRcheevosClient())
         ResetEmulatorMemoryRegionsForRcheevosClient();
@@ -427,20 +435,30 @@ API void CCONV _RA_SetUserAgentDetail(const char* sDetail)
 
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
 {
-    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().AddMemoryBlock(nBankID, nBankSize,
-        static_cast<ra::data::context::EmulatorContext::MemoryReadFunction*>(pReader),
-        static_cast<ra::data::context::EmulatorContext::MemoryWriteFunction*>(pWriter));
+    auto* pEmulatorMemoryContext = dynamic_cast<ra::context::impl::EmulatorMemoryContext*>(&ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>());
+    if (pEmulatorMemoryContext)
+    {
+        pEmulatorMemoryContext->AddMemoryBlock(nBankID, nBankSize,
+            static_cast<ra::context::impl::EmulatorMemoryContext::MemoryReadFunction*>(pReader),
+            static_cast<ra::context::impl::EmulatorMemoryContext::MemoryWriteFunction*>(pWriter));
+    }
 }
 
 API void CCONV _RA_InstallMemoryBankBlockReader(int nBankID, void* pReader)
 {
-    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().AddMemoryBlockReader(
-        nBankID, static_cast<ra::data::context::EmulatorContext::MemoryReadBlockFunction*>(pReader));
+    auto* pEmulatorMemoryContext = dynamic_cast<ra::context::impl::EmulatorMemoryContext*>(&ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>());
+    if (pEmulatorMemoryContext)
+    {
+        pEmulatorMemoryContext->AddMemoryBlockReader(
+            nBankID, static_cast<ra::context::impl::EmulatorMemoryContext::MemoryReadBlockFunction*>(pReader));
+    }
 }
 
 API void CCONV _RA_ClearMemoryBanks()
 {
-    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().ClearMemoryBlocks();
+    auto* pEmulatorMemoryContext = dynamic_cast<ra::context::impl::EmulatorMemoryContext*>(&ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>());
+    if (pEmulatorMemoryContext)
+        pEmulatorMemoryContext->ClearMemoryBlocks();;
 }
 
 API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
@@ -608,7 +626,7 @@ static bool CanRestoreState()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
-    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
+    if (!ra::services::ServiceLocator::Get<ra::services::ILoginService>().IsLoggedIn())
     {
         if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
             return false;
@@ -626,7 +644,7 @@ static bool CanRestoreState()
     return true;
 }
 
-static void OnStateRestored()
+void OnStateRestored()
 {
     auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
     pAssets.BeginUpdate();

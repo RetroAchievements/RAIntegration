@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="data\ModelProperty_Tests.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="util\Strings_Tests.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="data\DataModelBase_Tests.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelPropertyContainer_Tests.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\NotifyTargetSet_Tests.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="services\Http_Tests.cpp">
+      <Filter>services</Filter>
+    </ClCompile>
+    <ClCompile Include="services\StringTextReader_Tests.cpp">
+      <Filter>services</Filter>
+    </ClCompile>
+    <ClCompile Include="services\StringTextWriter_Tests.cpp">
+      <Filter>services</Filter>
+    </ClCompile>
+    <ClCompile Include="context\mocks\MockRcClient.cpp">
+      <Filter>context\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="context\impl\RcClient_Tests.cpp">
+      <Filter>context\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="context\impl\EmulatorMemoryContext_Tests.cpp">
+      <Filter>context\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="context\mocks\MockEmulatorMemoryContext.cpp">
+      <Filter>context\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="context\impl\ConsoleContext_Tests.cpp">
+      <Filter>context\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\AssetModelBase_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\MemoryNoteModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="util\StringBuilder_Tests.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="util\Tokenizer_Tests.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\MemoryRegionsModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\Memory_Tests.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(SolutionDir)\src\base.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="data">
+      <UniqueIdentifier>{0cb6f498-4743-4a0c-b6c2-4fce3894f5ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{55d31de8-4310-47c3-acda-ee70373135ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="testutil">
+      <UniqueIdentifier>{0704504a-6093-4bb9-99a9-f5ea8c402401}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="services">
+      <UniqueIdentifier>{5dfaedb4-60c7-4f8d-9a06-f3735660ae5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="services\mocks">
+      <UniqueIdentifier>{9df95fa0-ef11-4cb2-8d6b-01e2c4c8b482}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="context">
+      <UniqueIdentifier>{19350e49-175f-4616-a497-f66709581251}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="context\mocks">
+      <UniqueIdentifier>{2c9c1d76-8769-478a-8a03-88a2834f3b5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="context\impl">
+      <UniqueIdentifier>{ecc72096-a8e6-4c8e-bd30-2cf087d72df8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data\models">
+      <UniqueIdentifier>{75ed968b-89af-4bce-93ae-29b9393bfdf8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="testutil\CppUnitTest.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockThreadPool.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockFileSystem.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockHttpRequester.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\HttpAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="context\mocks\MockRcClient.hh">
+      <Filter>context\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockLogger.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\MemoryAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\MemoryRegionAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="context\mocks\MockConsoleContext.hh">
+      <Filter>context\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockClock.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh">
+      <Filter>context\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="context\mocks\MockUserContext.hh">
+      <Filter>context\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\AssetAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockDebuggerDetector.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockLocalStorage.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="services\mocks\MockMessageDispatcher.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\ValueAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

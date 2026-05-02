@@ -2,9 +2,11 @@
 #define RA_SERVICES_FILETEXTWRITER
 #pragma once
 
-#include "services\TextWriter.hh"
+#include "services/TextWriter.hh"
 
-#include "util\Strings.hh"
+#include "util/Strings.hh"
+
+#include <fstream>
 
 namespace ra {
 namespace services {
@@ -28,7 +30,7 @@ public:
     {
         if (m_oStream.is_open())
         {
-            std::string sNarrowText = ra::Narrow(sText);
+            std::string sNarrowText = ra::util::String::Narrow(sText);
             m_oStream.write(sNarrowText.c_str(), ra::to_signed(sNarrowText.length()));
         }
     }

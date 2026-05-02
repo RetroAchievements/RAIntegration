@@ -42,7 +42,7 @@ static void PrepareDirectory(const ra::services::IFileSystem& pFileSystem, const
                 if (pFileSystem.GetLastModified(sPath) < tExpire)
                 {
                     // if it's not a user file, it can be refetched from the server, delete it
-                    if (!ra::StringEndsWith(sFile, L"-User.txt"))
+                    if (!ra::util::String::EndsWith(sFile, L"-User.txt"))
                         pFileSystem.DeleteFile(sPath);
                 }
             }
@@ -74,7 +74,7 @@ std::wstring FileLocalStorage::GetPath(StorageItemType nType, const std::wstring
             sPath.append(L".json");
             break;
 
-        case StorageItemType::CodeNotes:
+        case StorageItemType::MemoryNotes:
             sPath.append(RA_DIR_DATA);
             sPath.append(sKey);
             sPath.append(L"-Notes.json");

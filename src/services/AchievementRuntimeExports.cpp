@@ -1,23 +1,31 @@
 #include "AchievementRuntime.hh"
+#include "AchievementRuntimeExports.hh"
 
 #include "Exports.hh"
 #include "util\Log.hh"
 #include "RA_Resource.h"
 
+#include "context\IConsoleContext.hh"
+#include "context\IEmulatorMemoryContext.hh"
 #include "context\IRcClient.hh"
+#include "context\impl\EmulatorMemoryContext.hh"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\GameContext.hh"
 
+#include "services\FrameEventQueue.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
 
 #include "ui\viewmodels\IntegrationMenuViewModel.hh"
 
+#include "util\Strings.hh"
+
 #include <rcheevos\src\rc_client_internal.h>
 #include <rcheevos\src\rc_client_external.h>
 #include <rcheevos\include\rc_client_raintegration.h>
+
+extern void OnStateRestored(); // in Exports.cpp
 
 namespace ra {
 namespace services {
@@ -71,9 +79,9 @@ private:
     typedef struct MemoryBlockWrapper
     {
         ra::data::ByteAddress nOffset;
-        ra::data::context::EmulatorContext::MemoryReadFunction* fReadByte;
-        ra::data::context::EmulatorContext::MemoryWriteFunction* fWriteByte;
-        ra::data::context::EmulatorContext::MemoryReadBlockFunction* fReadBlock;
+        ra::context::impl::EmulatorMemoryContext::MemoryReadFunction* fReadByte;
+        ra::context::impl::EmulatorMemoryContext::MemoryWriteFunction* fWriteByte;
+        ra::context::impl::EmulatorMemoryContext::MemoryReadBlockFunction* fReadBlock;
     } MemoryBlockWrapper;
 
     static std::array<AchievementRuntimeExports::MemoryBlockWrapper, 16> s_memoryBlockWrappers;
@@ -81,36 +89,39 @@ private:
 public:
     static void ResetMemory()
     {
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
 
-        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        pEmulatorContext.ClearMemoryBlocks();
+        auto* pEmulatorMemoryContext = dynamic_cast<ra::context::impl::EmulatorMemoryContext*>(&ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>());
+        if (!pEmulatorMemoryContext)
+            return;
+
+        pEmulatorMemoryContext->ClearMemoryBlocks();
 
         gsl::index nIndex = 0;
         uint32_t nBytes = 0;
         for (const auto& pRegion : pConsoleContext.MemoryRegions())
         {
-            const auto nSize = pRegion.EndAddress - pRegion.StartAddress + 1;
+            const auto nSize = pRegion.GetSize();
 
-            if (pRegion.Type == ra::data::context::ConsoleContext::AddressType::Unused)
+            if (pRegion.GetType() == ra::data::MemoryRegion::Type::Unused)
             {
                 if (nBytes > 0)
                 {
-                    pEmulatorContext.AddMemoryBlock(nIndex, nBytes,
+                    pEmulatorMemoryContext->AddMemoryBlock(nIndex, nBytes,
                         s_memoryBlockWrappers.at(nIndex).fReadByte,
                         s_memoryBlockWrappers.at(nIndex).fWriteByte);
-                    pEmulatorContext.AddMemoryBlockReader(nIndex,
+                    pEmulatorMemoryContext->AddMemoryBlockReader(nIndex,
                         s_memoryBlockWrappers.at(nIndex).fReadBlock);
 
                     nBytes = 0;
                     ++nIndex;
-                    s_memoryBlockWrappers.at(nIndex).nOffset = pRegion.StartAddress;
+                    s_memoryBlockWrappers.at(nIndex).nOffset = pRegion.GetStartAddress();
                 }
 
-                pEmulatorContext.AddMemoryBlock(nIndex++, nSize, nullptr, nullptr);
+                pEmulatorMemoryContext->AddMemoryBlock(nIndex++, nSize, nullptr, nullptr);
 
                 Expects(gsl::narrow_cast<size_t>(nIndex) < s_memoryBlockWrappers.size());
-                s_memoryBlockWrappers.at(nIndex).nOffset = pRegion.EndAddress + 1;
+                s_memoryBlockWrappers.at(nIndex).nOffset = pRegion.GetEndAddress() + 1;
             }
             else
             {
@@ -120,10 +131,10 @@ public:
 
         if (nBytes > 0)
         {
-            pEmulatorContext.AddMemoryBlock(nIndex, nBytes,
+            pEmulatorMemoryContext->AddMemoryBlock(nIndex, nBytes,
                 s_memoryBlockWrappers.at(nIndex).fReadByte,
                 s_memoryBlockWrappers.at(nIndex).fWriteByte);
-            pEmulatorContext.AddMemoryBlockReader(nIndex,
+            pEmulatorMemoryContext->AddMemoryBlockReader(nIndex,
                 s_memoryBlockWrappers.at(nIndex).fReadBlock);
         }
     }
@@ -338,7 +349,7 @@ public:
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.SetGameHash(hash);
 
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
         pClient->game->public_.console_id = ra::etoi(pConsoleContext.Id());
     }
 
@@ -360,6 +371,22 @@ public:
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_subset_info(pClient, subset_id);
+    }
+
+    static rc_client_subset_list_info_t* create_subset_list()
+    {
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        GSL_SUPPRESS_TYPE1
+            auto* list = reinterpret_cast<rc_client_subset_list_info_t*>(
+                rc_client_create_subset_list(pClient));
+        list->destroy_func = destroy_subset_list;
+        return list;
+    }
+
+    static void get_user_subset_summary(uint32_t subset_id, rc_client_user_game_summary_t* summary)
+    {
+        const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        rc_client_get_user_subset_summary(pClient, subset_id, summary);
     }
 
     static void get_user_game_summary(rc_client_user_game_summary_t* summary)
@@ -410,6 +437,13 @@ public:
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_achievement_info(pClient, id);
+    }
+
+    static const rc_client_achievement_t* get_next_achievement_info(uint32_t id, int32_t grouping)
+    {
+        auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+        auto* pAchievement = id ? rc_client_get_achievement_info(pClient, id) : nullptr;
+        return rc_client_get_next_achievement_info(pClient, pAchievement, grouping);
     }
 
     static rc_client_leaderboard_list_info_t* create_leaderboard_list(int grouping)
@@ -554,7 +588,9 @@ public:
     static int deserialize_progress(const uint8_t* buffer, size_t buffer_size)
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-        return rc_client_deserialize_progress_sized(pClient, buffer, buffer_size);
+        const auto nResult = rc_client_deserialize_progress_sized(pClient, buffer, buffer_size);
+        OnStateRestored();
+        return nResult;
     }
 
     static void set_raintegration_write_memory_function(rc_client_t* client, rc_client_raintegration_write_memory_func_t handler) noexcept
@@ -586,11 +622,11 @@ public:
             pAchievement->GetChanges() != ra::data::models::AssetChanges::None) // unpublished changes
             return RC_CLIENT_RAINTEGRATION_ACHIEVEMENT_STATE_MODIFIED;
 
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        if (pEmulatorContext.WasMemoryModified())
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        if (pMemoryContext.WasMemoryModified())
             return RC_CLIENT_RAINTEGRATION_ACHIEVEMENT_STATE_INSECURE;
 
-        if (_RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
+        if (_RA_HardcoreModeIsActive() && pMemoryContext.IsMemoryInsecure())
             return RC_CLIENT_RAINTEGRATION_ACHIEVEMENT_STATE_INSECURE;
 
         return RC_CLIENT_RAINTEGRATION_ACHIEVEMENT_STATE_PUBLISHED;
@@ -668,7 +704,7 @@ public:
                 {
                     if (pMenuItem->label)
                     {
-                        if (ra::Narrow(pItem.GetLabel()) != pMenuItem->label)
+                        if (ra::util::String::Narrow(pItem.GetLabel()) != pMenuItem->label)
                         {
                             bChanged = true;
                             break;
@@ -708,7 +744,7 @@ public:
             }
             else
             {
-                pMenuItem->label = rc_buffer_strcpy(&s_pIntegrationMenuBuffer, ra::Narrow(pItem.GetLabel()).c_str());
+                pMenuItem->label = rc_buffer_strcpy(&s_pIntegrationMenuBuffer, ra::util::String::Narrow(pItem.GetLabel()).c_str());
                 pMenuItem->id = nId;
                 pMenuItem->checked = pItem.IsSelected();
             }
@@ -845,8 +881,13 @@ private:
             s_callbacks.log_callback(sMessage, s_callbacks.log_client);
     }
 
-    static void EventHandlerExternal(const rc_client_event_t* event, rc_client_t*) noexcept(false)
+    static void EventHandlerExternal(const rc_client_event_t* event, rc_client_t*)
     {
+        Expects(event != nullptr);
+
+        if (event->type == RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED)
+            CheckForPauseOnTrigger(*event->achievement);
+
         if (s_callbacks.event_handler)
             s_callbacks.event_handler(event, s_callbacks.event_client);
     }
@@ -971,6 +1012,12 @@ private:
         return 0;
     }
 
+    static void destroy_subset_list(rc_client_subset_list_info_t* list) noexcept
+    {
+        if (list)
+            free(list);
+    }
+
     static void destroy_achievement_list(rc_client_achievement_list_info_t* list) noexcept
     {
         if (list)
@@ -1024,6 +1071,34 @@ std::array<AchievementRuntimeExports::MemoryBlockWrapper, 16> AchievementRuntime
 
 } // namespace services
 } // namespace ra
+
+const ra::data::models::AchievementModel* CheckForPauseOnTrigger(const rc_client_achievement_t& pAchievement)
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
+    if (vmAchievement)
+    {
+        // immediately update the state to Triggered (instead of waiting for AssetListViewModel::DoFrame to do it).
+        // this captures the unlock time and rich presence state, even if KeepActive it selected.
+        vmAchievement->SetState(ra::data::models::AssetState::Triggered);
+
+        if (vmAchievement->IsPauseOnTrigger())
+        {
+            auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+            pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetName());
+        }
+    }
+
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    if (rc_client_has_rich_presence(pClient))
+    {
+        char sRichPresence[256];
+        if (rc_client_get_rich_presence_message(pClient, sRichPresence, sizeof(sRichPresence)) > 0)
+            vmAchievement->SetUnlockRichPresence(ra::util::String::Widen(sRichPresence));
+    }
+
+    return vmAchievement;
+}
 
 void ResetExternalRcheevosClient() noexcept
 {
@@ -1209,6 +1284,31 @@ static void GetExternalClientV4(rc_client_external_t* pClientExternal) noexcept
         ra::services::AchievementRuntimeExports::set_allow_background_memory_reads;
 }
 
+static void GetExternalClientV5(rc_client_external_t* pClientExternal) noexcept
+{
+    // ASSERT: the v5 summary structure is a superset of the v1 summary structures with all
+    //         fields at the same offset, so we can pass pointers to a v5 summary structure to
+    //         the client as either a v5 summary structure or v1 summary structure and the client
+    //         will be able to find the data they're looking for.
+    pClientExternal->get_user_game_summary_v5 =
+        ra::services::AchievementRuntimeExports::get_user_game_summary;
+
+    pClientExternal->get_user_subset_summary =
+        ra::services::AchievementRuntimeExports::get_user_subset_summary;
+}
+
+static void GetExternalClientV6(rc_client_external_t* pClientExternal) noexcept
+{
+    pClientExternal->create_subset_list =
+        ra::services::AchievementRuntimeExports::create_subset_list;
+}
+
+static void GetExternalClientV7(rc_client_external_t* pClientExternal) noexcept
+{
+    pClientExternal->get_next_achievement_info =
+        ra::services::AchievementRuntimeExports::get_next_achievement_info;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1219,6 +1319,18 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal,
     {
         default:
             RA_LOG_WARN("Unknown rc_client_external interface version: %s", nVersion);
+            __fallthrough;
+
+        case 7:
+            GetExternalClientV7(pClientExternal);
+            __fallthrough;
+
+        case 6:
+            GetExternalClientV6(pClientExternal);
+            __fallthrough;
+
+        case 5:
+            GetExternalClientV5(pClientExternal);
             __fallthrough;
 
         case 4:

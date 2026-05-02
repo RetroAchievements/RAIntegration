@@ -7,8 +7,9 @@
 #include "api\UpdateRichPresence.hh"
 #include "api\UploadBadge.hh"
 
+#include "context\UserContext.hh"
+
 #include "data\context\GameContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -43,8 +44,8 @@ void AssetUploadViewModel::QueueAsset(ra::data::models::AssetModelBase& pAsset)
             QueueRichPresence(*(dynamic_cast<ra::data::models::RichPresenceModel*>(&pAsset)));
             break;
 
-        case ra::data::models::AssetType::CodeNotes:
-            QueueCodeNotes(*(dynamic_cast<ra::data::models::CodeNotesModel*>(&pAsset)));
+        case ra::data::models::AssetType::MemoryNotes:
+            QueueMemoryNotes(*(dynamic_cast<ra::data::models::MemoryNotesModel*>(&pAsset)));
             break;
 
         default:
@@ -59,7 +60,7 @@ void AssetUploadViewModel::QueueAchievement(ra::data::models::AchievementModel& 
     pItem.pAsset = &pAchievement;
 
     const auto& sBadge = pAchievement.GetBadge();
-    if (ra::StringStartsWith(sBadge, L"local\\"))
+    if (ra::util::String::StartsWith(sBadge, L"local\\"))
     {
         pItem.nState = UploadState::WaitingForImage;
 
@@ -109,11 +110,11 @@ void AssetUploadViewModel::QueueRichPresence(ra::data::models::RichPresenceModel
     });
 }
 
-void AssetUploadViewModel::QueueCodeNotes(ra::data::models::CodeNotesModel& pNotes)
+void AssetUploadViewModel::QueueMemoryNotes(ra::data::models::MemoryNotesModel& pMemoryNotes)
 {
-    pNotes.EnumerateModifiedCodeNotes([this, pNotes = &pNotes](ra::data::ByteAddress nAddress)
+    pMemoryNotes.EnumerateModifiedNotes([this, pNotes = &pMemoryNotes](ra::data::ByteAddress nAddress)
     {
-        QueueCodeNote(*pNotes, nAddress);
+        QueueMemoryNote(*pNotes, nAddress);
         return true;
     });
 }
@@ -123,21 +124,23 @@ static std::wstring ShortenNote(const std::wstring& sNote)
     return sNote.length() > 256 ? (sNote.substr(0, 253) + L"...") : sNote;
 }
 
-void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::data::ByteAddress nAddress)
+void AssetUploadViewModel::QueueMemoryNote(ra::data::models::MemoryNotesModel& pMemoryNotes, ra::data::ByteAddress nAddress)
 {
-    const auto* pOriginalAuthor = pNotes.GetServerCodeNoteAuthor(nAddress);
+    const auto* pOriginalAuthor = pMemoryNotes.GetServerNoteAuthor(nAddress);
     if (pOriginalAuthor != nullptr && !pOriginalAuthor->empty())
     {
-        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
         if (pUserContext.GetDisplayName() != *pOriginalAuthor)
         {
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+
             // author changed - confirm overwrite
             std::wstring sEmpty;
-            const auto* pOriginalNote = pNotes.GetServerCodeNote(nAddress);
+            const auto* pOriginalNote = pMemoryNotes.GetServerNote(nAddress);
             if (pOriginalNote == nullptr)
                 pOriginalNote = &sEmpty;
 
-            const auto* pNote = pNotes.FindCodeNote(nAddress);
+            const auto* pNote = pMemoryNotes.FindNote(nAddress);
             if (pNote == nullptr)
                 pNote = &sEmpty;
 
@@ -145,28 +148,28 @@ void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNote
             if (!pNote->empty())
             {
                 vmPrompt.SetHeader(
-                    ra::StringPrintf(L"Overwrite note for address %s?", ra::ByteAddressToString(nAddress)));
+                    ra::util::String::Printf(L"Overwrite note for address %s?", pMemoryContext.FormatAddress(nAddress)));
 
                 if (pOriginalNote->length() > 256 || pNote->length() > 256)
                 {
                     const auto sNewNoteShort = ShortenNote(*pNote);
                     const auto sOldNoteShort = ShortenNote(*pOriginalNote);
                     vmPrompt.SetMessage(
-                        ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
+                        ra::util::String::Printf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
                                          *pOriginalAuthor, sOldNoteShort, sNewNoteShort));
                 }
                 else
                 {
                     vmPrompt.SetMessage(
-                        ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
+                        ra::util::String::Printf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
                                          *pOriginalAuthor, *pOriginalNote, *pNote));
                 }
             }
             else
             {
                 const auto pNoteShort = ShortenNote(*pOriginalNote);
-                vmPrompt.SetHeader(ra::StringPrintf(L"Delete note for address %s?", ra::ByteAddressToString(nAddress)));
-                vmPrompt.SetMessage(ra::StringPrintf(L"Are you sure you want to delete %s's note:\n\n%s", *pOriginalAuthor, pNoteShort));
+                vmPrompt.SetHeader(ra::util::String::Printf(L"Delete note for address %s?", pMemoryContext.FormatAddress(nAddress)));
+                vmPrompt.SetMessage(ra::util::String::Printf(L"Are you sure you want to delete %s's note:\n\n%s", *pOriginalAuthor, pNoteShort));
             }
 
             vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
@@ -177,24 +180,24 @@ void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNote
     }
 
     auto& pItem = m_vUploadQueue.emplace_back();
-    pItem.pAsset = &pNotes;
+    pItem.pAsset = &pMemoryNotes;
     pItem.nExtra = ra::to_signed(nAddress);
 
-    QueueTask([this, pNotes = &pNotes, nAddress]()
+    QueueTask([this, pNotes = &pMemoryNotes, nAddress]()
     {
-        UploadCodeNote(*pNotes, nAddress);
+        UploadMemoryNote(*pNotes, nAddress);
     });
 }
 
 void AssetUploadViewModel::OnBegin()
 {
-    SetMessage(ra::StringPrintf(L"Uploading %d items...", TaskCount()));
+    SetMessage(ra::util::String::Printf(L"Uploading %d items...", TaskCount()));
 }
 
 void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
 {
     const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
-    const std::wstring sFilename = pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(sBadge));
+    const std::wstring sFilename = pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::util::String::Narrow(sBadge));
 
     ra::api::UploadBadge::Request request;
     request.ImageFilePath = sFilename;
@@ -227,7 +230,7 @@ void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
                     if (response.Succeeded())
                     {
                         RA_LOG_INFO("Changed badge on achievement %u to %s", pQueuedAchievement->GetID(), response.BadgeId);
-                        pQueuedAchievement->SetBadge(ra::Widen(response.BadgeId));
+                        pQueuedAchievement->SetBadge(ra::util::String::Widen(response.BadgeId));
                         vAffectedAchievements.push_back(pQueuedAchievement);
                     }
                     else
@@ -260,7 +263,7 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
     request.Description = pAchievement.GetDescription();
     request.Trigger = pAchievement.GetTrigger();
     request.Points = pAchievement.GetPoints();
-    request.Badge = ra::Narrow(pAchievement.GetBadge());
+    request.Badge = ra::util::String::Narrow(pAchievement.GetBadge());
 
     switch (pAchievement.GetAchievementType())
     {
@@ -448,12 +451,12 @@ void AssetUploadViewModel::UploadRichPresence(ra::data::models::RichPresenceMode
     }
 }
 
-void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::data::ByteAddress nAddress)
+void AssetUploadViewModel::UploadMemoryNote(ra::data::models::MemoryNotesModel& pNotes, ra::data::ByteAddress nAddress)
 {
     std::string sErrorMessage;
     UploadState nState = UploadState::Failed;
 
-    const auto* pNote = pNotes.FindCodeNote(nAddress);
+    const auto* pNote = pNotes.FindNote(nAddress);
     if (pNote == nullptr || pNote->empty())
     {
         ra::api::DeleteCodeNote::Request request;
@@ -464,13 +467,13 @@ void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNot
 
         if (response.Succeeded())
         {
-            pNotes.SetServerCodeNote(nAddress, L"");
+            pNotes.SetServerNote(nAddress, L"");
             nState = UploadState::Success;
         }
         else if (response.Result == ra::api::ApiResult::Incomplete)
         {
             Rest();
-            UploadCodeNote(pNotes, nAddress);
+            UploadMemoryNote(pNotes, nAddress);
             return;
         }
 
@@ -487,13 +490,13 @@ void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNot
 
         if (response.Succeeded())
         {
-            pNotes.SetServerCodeNote(nAddress, *pNote);
+            pNotes.SetServerNote(nAddress, *pNote);
             nState = UploadState::Success;
         }
         else if (response.Result == ra::api::ApiResult::Incomplete)
         {
             Rest();
-            UploadCodeNote(pNotes, nAddress);
+            UploadMemoryNote(pNotes, nAddress);
             return;
         }
 
@@ -547,15 +550,15 @@ void AssetUploadViewModel::ShowResults() const
         }
     }
 
-    auto sMessage = ra::StringPrintf(L"%d items successfully uploaded.", nSuccessful);
+    auto sMessage = ra::util::String::Printf(L"%d items successfully uploaded.", nSuccessful);
     if (nFailed)
     {
-        sMessage.append(ra::StringPrintf(L"\n\n%d items failed:", nFailed));
+        sMessage.append(ra::util::String::Printf(L"\n\n%d items failed:", nFailed));
 
         for (const auto& pItem : m_vUploadQueue)
         {
             if (pItem.nState == UploadState::Failed)
-                sMessage.append(ra::StringPrintf(L"\n* %s: %s", pItem.pAsset->GetName(), pItem.sErrorMessage));
+                sMessage.append(ra::util::String::Printf(L"\n* %s: %s", pItem.pAsset->GetName(), pItem.sErrorMessage));
         }
     }
 

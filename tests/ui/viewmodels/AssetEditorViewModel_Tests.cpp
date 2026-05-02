@@ -11,12 +11,16 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
+#include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClipboard.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -65,6 +69,7 @@ private:
         AssetEditorViewModelHarness(AssetEditorViewModelHarness&&) noexcept = delete;
         AssetEditorViewModelHarness& operator=(AssetEditorViewModelHarness&&) noexcept = delete;
 
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;
@@ -138,7 +143,7 @@ public:
         Assert::IsFalse(editor.IsLeaderboard());
         Assert::IsFalse(editor.IsTrigger());
         Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Start, (int)editor.GetSelectedLeaderboardPart());
-        Assert::AreEqual(ra::data::ValueFormat::Value, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Value, editor.GetValueFormat());
 
         Assert::AreEqual({ 4U }, editor.AchievementTypes().Count());
         Assert::AreEqual((int)ra::data::models::AchievementType::None, editor.AchievementTypes().GetItemAt(0)->GetId());
@@ -151,33 +156,33 @@ public:
         Assert::AreEqual(std::wstring(L"Win"), editor.AchievementTypes().GetItemAt(3)->GetLabel());
 
         Assert::AreEqual({ 14U }, editor.Formats().Count());
-        Assert::AreEqual((int)ra::data::ValueFormat::Score, editor.Formats().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Score, editor.Formats().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Score"), editor.Formats().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Frames, editor.Formats().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Frames, editor.Formats().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Time (Frames)"), editor.Formats().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Centiseconds, editor.Formats().GetItemAt(2)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Centiseconds, editor.Formats().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"Time (Centiseconds)"), editor.Formats().GetItemAt(2)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Seconds, editor.Formats().GetItemAt(3)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Seconds, editor.Formats().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Time (Seconds)"), editor.Formats().GetItemAt(3)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Minutes, editor.Formats().GetItemAt(4)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Minutes, editor.Formats().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L"Time (Minutes)"), editor.Formats().GetItemAt(4)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::SecondsAsMinutes, editor.Formats().GetItemAt(5)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::SecondsAsMinutes, editor.Formats().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"Time (Seconds as Minutes)"), editor.Formats().GetItemAt(5)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Value, editor.Formats().GetItemAt(6)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Value, editor.Formats().GetItemAt(6)->GetId());
         Assert::AreEqual(std::wstring(L"Value"), editor.Formats().GetItemAt(6)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::UnsignedValue, editor.Formats().GetItemAt(7)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::UnsignedValue, editor.Formats().GetItemAt(7)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Unsigned)"), editor.Formats().GetItemAt(7)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Tens, editor.Formats().GetItemAt(8)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Tens, editor.Formats().GetItemAt(8)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Tens)"), editor.Formats().GetItemAt(8)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Hundreds, editor.Formats().GetItemAt(9)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Hundreds, editor.Formats().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Hundreds)"), editor.Formats().GetItemAt(9)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Thousands, editor.Formats().GetItemAt(10)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Thousands, editor.Formats().GetItemAt(10)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Thousands)"), editor.Formats().GetItemAt(10)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Fixed1, editor.Formats().GetItemAt(11)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Fixed1, editor.Formats().GetItemAt(11)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Fixed1)"), editor.Formats().GetItemAt(11)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Fixed2, editor.Formats().GetItemAt(12)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Fixed2, editor.Formats().GetItemAt(12)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Fixed2)"), editor.Formats().GetItemAt(12)->GetLabel());
-        Assert::AreEqual((int)ra::data::ValueFormat::Fixed3, editor.Formats().GetItemAt(13)->GetId());
+        Assert::AreEqual((int)ra::data::Value::Format::Fixed3, editor.Formats().GetItemAt(13)->GetId());
         Assert::AreEqual(std::wstring(L"Value (Fixed3)"), editor.Formats().GetItemAt(13)->GetLabel());
 
         Assert::AreEqual({ 4U }, editor.LeaderboardParts().Count());
@@ -677,7 +682,7 @@ public:
         leaderboard.SetCancelTrigger("0xH1234=2");
         leaderboard.SetSubmitTrigger("0xH1234=3");
         leaderboard.SetValueDefinition("0xH2345");
-        leaderboard.SetValueFormat(ra::data::ValueFormat::Centiseconds);
+        leaderboard.SetValueFormat(ra::data::Value::Format::Centiseconds);
         leaderboard.SetLowerIsBetter(false);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
@@ -690,7 +695,7 @@ public:
         Assert::AreEqual(std::wstring(L"Do something cool"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
-        Assert::AreEqual(ra::data::ValueFormat::Centiseconds, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Centiseconds, editor.GetValueFormat());
         Assert::IsFalse(editor.IsLowerBetter());
         Assert::IsFalse(editor.IsPauseOnReset());
         Assert::IsFalse(editor.IsPauseOnTrigger());
@@ -755,7 +760,7 @@ public:
         Assert::AreEqual(std::wstring(L""), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Local, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
-        Assert::AreEqual(ra::data::ValueFormat::Value, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Value, editor.GetValueFormat());
         Assert::IsFalse(editor.IsLowerBetter());
         Assert::IsFalse(editor.IsPauseOnReset());
         Assert::IsFalse(editor.IsPauseOnTrigger());
@@ -764,27 +769,20 @@ public:
         Assert::IsTrue(editor.IsLeaderboard());
         Assert::IsTrue(editor.IsTrigger());
         Assert::IsTrue(editor.HasMeasured());
-        Assert::IsFalse(editor.HasAssetValidationError());
-        Assert::IsTrue(editor.HasAssetValidationWarning());
-        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Missing start condition"), editor.GetAssetValidationError());
         Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
 
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager; // to copy address from memory viewer
         editor.Trigger().NewCondition();
-        Assert::IsFalse(editor.HasAssetValidationError());
-        Assert::IsTrue(editor.HasAssetValidationWarning());
-        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
-
-        // warning is only updated when record is saved to prevent spam when constructing a record
-        leaderboard.Validate();
-        Assert::IsFalse(editor.HasAssetValidationError());
-        Assert::IsTrue(editor.HasAssetValidationWarning());
-        Assert::AreEqual(std::wstring(L"No Cancel condition"), editor.GetAssetValidationWarning());
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Missing cancel condition"), editor.GetAssetValidationError());
     }
 
     TEST_METHOD(TestActivateNewLeaderboard)
     {
         AssetEditorViewModelHarness editor;
+        ra::services::mocks::MockThreadPool mockThreadPool;
 
         editor.mockRuntime.MockLocalLeaderboard(111000001U, "Leaderboard");
         editor.mockGameContext.InitializeFromAchievementRuntime();
@@ -793,9 +791,8 @@ public:
 
         editor.LoadAsset(leaderboard);
 
-        Assert::IsFalse(editor.HasAssetValidationError());
-        Assert::IsTrue(editor.HasAssetValidationWarning());
-        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Missing start condition"), editor.GetAssetValidationError());
 
         // attempt to start incomplete leaderboard should fail
         bool bDialogSeen = false;
@@ -808,8 +805,10 @@ public:
         editor.SetState(AssetState::Waiting);
         Assert::IsTrue(bDialogSeen);
 
-        // rely on leaderboard to deactivate itself
-        leaderboard->DoFrame();
+        // to work around a binding issue, changing the state back is done asynchronously.
+        // advance time to ensure the state gets changed back.
+        mockThreadPool.AdvanceTime(std::chrono::milliseconds(200));
+
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
 
         // set additional properties so leaderboard is valid and attempt to activate again
@@ -1107,21 +1106,21 @@ public:
     {
         AssetEditorViewModelHarness editor;
         LeaderboardModel leaderboard;
-        leaderboard.SetValueFormat(ra::data::ValueFormat::Score);
+        leaderboard.SetValueFormat(ra::data::Value::Format::Score);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
 
         editor.LoadAsset(&leaderboard);
-        Assert::AreEqual(ra::data::ValueFormat::Score, editor.GetValueFormat());
-        Assert::AreEqual(ra::data::ValueFormat::Score, leaderboard.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Score, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Score, leaderboard.GetValueFormat());
 
-        editor.SetValueFormat(ra::data::ValueFormat::Frames);
-        Assert::AreEqual(ra::data::ValueFormat::Frames, editor.GetValueFormat());
-        Assert::AreEqual(ra::data::ValueFormat::Frames, leaderboard.GetValueFormat());
+        editor.SetValueFormat(ra::data::Value::Format::Frames);
+        Assert::AreEqual(ra::data::Value::Format::Frames, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Frames, leaderboard.GetValueFormat());
 
-        leaderboard.SetValueFormat(ra::data::ValueFormat::Centiseconds);
-        Assert::AreEqual(ra::data::ValueFormat::Centiseconds, editor.GetValueFormat());
-        Assert::AreEqual(ra::data::ValueFormat::Centiseconds, leaderboard.GetValueFormat());
+        leaderboard.SetValueFormat(ra::data::Value::Format::Centiseconds);
+        Assert::AreEqual(ra::data::Value::Format::Centiseconds, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::Value::Format::Centiseconds, leaderboard.GetValueFormat());
     }
 
     TEST_METHOD(TestSyncLowerIsBetter)
@@ -1349,7 +1348,7 @@ public:
         editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         Assert::AreEqual(1U, pTrigger->requirement->conditions->operand2.value.num);
 
@@ -1370,7 +1369,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=2"), vmAch->GetTrigger());
 
         // make sure the runtime record got updated
-        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         Assert::AreEqual(2U, pTrigger->requirement->conditions->operand2.value.num);
 
@@ -1440,7 +1439,7 @@ public:
         editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         Assert::AreEqual(1U, pTrigger->requirement->conditions->operand2.value.num);
 
@@ -1461,7 +1460,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=2"), vmAch->GetTrigger());
 
         // make sure the runtime record got updated
-        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         Assert::AreEqual(2U, pTrigger->requirement->conditions->operand2.value.num);
 
@@ -1490,7 +1489,7 @@ public:
         editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
 
         Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
@@ -1546,7 +1545,7 @@ public:
         editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
 
         editor.Trigger().SetSelectedGroupIndex(2);
@@ -1664,7 +1663,7 @@ public:
         editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
 
         Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
@@ -1721,7 +1720,7 @@ public:
         editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Value);
 
         // make sure the record got loaded into the runtime
-        const auto* pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        const auto* pLeaderboard = vmLbd->GetRuntimeLeaderboard();
         Expects(pLeaderboard != nullptr);
 
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
@@ -1738,7 +1737,7 @@ public:
         Assert::AreEqual(std::string("M:0xH2222"), vmLbd->GetValueDefinition());
 
         // make sure the runtime record got updated
-        pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        pLeaderboard = vmLbd->GetRuntimeLeaderboard();
         Expects(pLeaderboard != nullptr);
         Assert::AreEqual(0x2222U, pLeaderboard->value.conditions->conditions->operand1.value.memref->address);
 
@@ -1758,7 +1757,7 @@ public:
         Assert::AreEqual(std::string("M:0xH3333"), vmLbd->GetValueDefinition());
 
         // make sure the runtime record got updated
-        pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        pLeaderboard = vmLbd->GetRuntimeLeaderboard();
         Expects(pLeaderboard != nullptr);
         Assert::AreEqual(0x3333U, pLeaderboard->value.conditions->conditions->operand1.value.memref->address);
     }
@@ -1778,7 +1777,7 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(0U, pCondition->GetCurrentHits());
 
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
         Assert::AreEqual(0U, pCondition->GetCurrentHits());
@@ -1803,7 +1802,7 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(0U, pCondition->GetCurrentHits());
 
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
         Assert::AreEqual(0U, pCondition->GetCurrentHits());
@@ -1829,7 +1828,7 @@ public:
 
         editor.LoadAsset(vmAch);
 
-        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        auto* pTrigger = vmAch->GetMutableRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->measured_value = 6U;
         Assert::AreEqual(std::wstring(L"0/99"), editor.GetMeasuredValue());
@@ -1848,7 +1847,7 @@ public:
 
         editor.LoadAsset(vmLbd);
 
-        auto* pDefinition = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        auto* pDefinition = vmLbd->GetMutableRuntimeLeaderboard();
         Expects(pDefinition != nullptr);
         pDefinition->value.value.value = 6U;
         Assert::AreEqual(std::wstring(L"0"), editor.GetMeasuredValue());
@@ -1908,7 +1907,7 @@ public:
         auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
         editor.mockRuntime.SyncAssets();
 
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
 
@@ -1947,7 +1946,7 @@ public:
         auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
         editor.mockRuntime.SyncAssets();
 
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
 
         editor.LoadAsset(vmAch);
@@ -2005,7 +2004,7 @@ public:
         auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
         editor.mockRuntime.SyncAssets();
 
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        const auto* pTrigger = vmAch->GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
 
@@ -2038,7 +2037,7 @@ public:
         auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
         editor.mockRuntime.SyncAssets();
 
-        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        auto* pTrigger = vmAch->GetMutableRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
         pTrigger->has_hits = 1;
@@ -2076,7 +2075,7 @@ public:
         auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
         editor.mockRuntime.SyncAssets();
 
-        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        auto* pTrigger = vmAch->GetMutableRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
         pTrigger->has_hits = 1;
@@ -2407,11 +2406,12 @@ public:
         const auto nDefaultColor = ra::to_unsigned(TriggerConditionViewModel::RowColorProperty.GetDefaultValue());
 
         AchievementModel achievement;
-        achievement.SetTrigger("0=1S0=1S1=1");
-        editor.mockRuntime.ActivateAchievement(achievement.GetID(), achievement.GetTrigger()); // must be in runtime to apply colors
+        auto* info = editor.mockRuntime.ActivateAchievement(1, "0=1S0=1S1=1"); // must be in runtime to apply colors
+        achievement.InitializeFromPublishedAchievement(*info, "0=1S0=1S1=1");
+        achievement.SetLocalAchievementInfo(*info);
         editor.LoadAsset(&achievement);
 
-        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(achievement.GetID());
+        auto* pTrigger = achievement.GetRuntimeTrigger();
         Expects(pTrigger != nullptr);
         pTrigger->alternative->next->conditions->is_true = 1; // simulate evaluation of 1=1 being true
 
@@ -2453,6 +2453,36 @@ public:
         editor.Trigger().SetSelectedGroupIndex(2);
         Assert::AreEqual(2, editor.Trigger().GetSelectedGroupIndex());
         Assert::AreEqual(nDefaultColor, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+    }
+
+    TEST_METHOD(TestClearOutLeaderboardSubmit)
+    {
+        AssetEditorViewModelHarness editor;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [](ra::ui::viewmodels::MessageBoxViewModel&)
+            {
+                return DialogResult::Yes;
+            });
+
+        LeaderboardModel leaderboard;
+        leaderboard.SetDefinition("STA:0x1234=1::CAN:0x1234=2::SUB:0x1234=3::VAL=0x1235");
+        leaderboard.SetValueFormat(ra::data::Value::Format::Score);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Submit);
+
+        Assert::AreEqual({ 1 }, editor.Trigger().Conditions().Count());
+        editor.Trigger().SelectRange(0, 0, true);
+        editor.Trigger().RemoveSelectedConditions();
+        Assert::AreEqual({ 0 }, editor.Trigger().Conditions().Count());
+
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Cancel);
+        Assert::AreEqual({ 1 }, editor.Trigger().Conditions().Count());
+
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Submit);
+        Assert::AreEqual({ 0 }, editor.Trigger().Conditions().Count());
     }
 };
 

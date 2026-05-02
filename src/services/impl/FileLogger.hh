@@ -19,19 +19,19 @@ class FileLogger : public ra::services::ILogger
 public:
     explicit FileLogger(const ra::services::IFileSystem& pFileSystem)
     {
-        const std::wstring sLogFilePath = ra::BuildWString(pFileSystem.BaseDirectory().c_str(), L"RACache\\RALog.txt");
+        const std::wstring sLogFilePath = pFileSystem.BaseDirectory() + L"RACache\\RALog.txt";
 
         // if the file is over 1MB, rename it and start a new one
         const int64_t nLogSize = pFileSystem.GetFileSize(sLogFilePath);
         if (nLogSize > 1024 * 1024)
         {
-            const std::wstring sOldLogFilePath = ra::BuildWString(pFileSystem.BaseDirectory().c_str(), L"RACache\\RALog-old.txt");
+            const std::wstring sOldLogFilePath = pFileSystem.BaseDirectory() + L"RACache\\RALog-old.txt";
             pFileSystem.DeleteFile(sOldLogFilePath);
             pFileSystem.MoveFile(sLogFilePath, sOldLogFilePath);
         }
         else if (nLogSize < 0)
         {
-            const std::wstring sCacheDirectory = ra::BuildWString(pFileSystem.BaseDirectory().c_str(), L"RACache");
+            const std::wstring sCacheDirectory = pFileSystem.BaseDirectory() + L"RACache";
             if (!pFileSystem.DirectoryExists(sCacheDirectory))
                 pFileSystem.CreateDirectory(sCacheDirectory);
         }

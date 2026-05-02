@@ -20,7 +20,7 @@
 
 #include <map>
 #include <array> // algorithm, iterator, tuple
-#include <sstream> // string
+#include <string_view>
 #include <queue> // deque, vector, algorithm
 
 //	Version Information is integrated into tags
@@ -97,7 +97,7 @@ public:
         nAlignType{ newAlignType },
         bResize{ isResize }
     {
-        RARect rect;
+        RARect rect{};
         auto check = ::GetWindowRect(hwnd, &rect);
         assert(check != 0);
 
@@ -122,7 +122,7 @@ public:
         }
     }
 
-    void Resize(_In_ int width, _In_ int height) noexcept
+    void Resize(_In_ int width, _In_ int height) const noexcept
     {
         int xPos = 0, yPos = 0;
 
@@ -161,13 +161,15 @@ public:
 //};
 //using namespace RA;
 
+namespace ra {
+bool ParseUnsignedInt(const std::wstring& sValue, unsigned int nMaximumValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
+bool ParseHex(const std::wstring& sValue, unsigned int nMaximumValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
+bool ParseNumeric(const std::wstring& sValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
+bool ParseFloat(const std::wstring& sValue, _Out_ float& fValue, _Out_ std::wstring& sError);
+}
+
 #ifndef UNUSED
 #define UNUSED( x ) ( x );
 #endif
-
-namespace ra {
-_NODISCARD std::string ByteAddressToString(_In_ ra::data::ByteAddress nAddr);
-_NODISCARD ra::data::ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress);
-} // namespace ra
 
 #endif // !RA_DEFS_H

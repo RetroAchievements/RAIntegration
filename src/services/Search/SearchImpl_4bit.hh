@@ -50,7 +50,7 @@ class FourBitSearchImpl : public SearchImpl
     }
 
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
-        const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
+        const CapturedMemoryBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
         std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
@@ -78,7 +78,7 @@ class FourBitSearchImpl : public SearchImpl
     }
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
-        const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
+        const CapturedMemoryBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
         std::vector<ra::data::ByteAddress>& vMatches) const override
     {
         const auto* pBlockBytes = pPreviousBlock.GetBytes();
@@ -110,7 +110,7 @@ class FourBitSearchImpl : public SearchImpl
     }
 
 protected:
-    bool GetValueFromMemBlock(const MemBlock& block, SearchResult& result) const noexcept override
+    bool GetValueFromCapturedMemoryBlock(const CapturedMemoryBlock& block, SearchResult& result) const noexcept override
     {
         if (result.nAddress & 1)
             result.nSize = ra::data::Memory::Size::NibbleUpper;

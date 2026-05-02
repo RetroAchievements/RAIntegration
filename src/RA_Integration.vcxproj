@@ -73,7 +73,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="data\context\ConsoleContext.cpp" />
     <ClCompile Include="data\context\GameAssets.cpp" />
     <ClCompile Include="api\ApiCall.cpp" />
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
@@ -82,18 +81,11 @@
     <ClCompile Include="data\context\EmulatorContext.cpp" />
     <ClCompile Include="data\context\GameContext.cpp" />
     <ClCompile Include="data\context\SessionTracker.cpp" />
-    <ClCompile Include="data\context\UserContext.cpp" />
     <ClCompile Include="data\models\AchievementModel.cpp" />
-    <ClCompile Include="data\models\AssetModelBase.cpp" />
-    <ClCompile Include="data\models\CapturedTriggerHits.cpp" />
-    <ClCompile Include="data\models\CodeNoteModel.cpp" />
-    <ClCompile Include="data\models\CodeNotesModel.cpp" />
     <ClCompile Include="data\models\LeaderboardModel.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel.cpp" />
-    <ClCompile Include="data\models\MemoryRegionsModel.cpp" />
     <ClCompile Include="data\models\RichPresenceModel.cpp" />
     <ClCompile Include="data\models\TriggerValidation.cpp" />
-    <ClCompile Include="data\search\MemBlock.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -110,8 +102,10 @@
     <ClCompile Include="services\GameIdentifier.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="services\impl\JsonFileConfiguration.cpp" />
+    <ClCompile Include="services\impl\LoginService.cpp" />
     <ClCompile Include="services\impl\OfflineRcClient.cpp" />
     <ClCompile Include="services\impl\ThreadPool.cpp" />
+    <ClCompile Include="services\impl\WindowsDebuggerDetector.cpp" />
     <ClCompile Include="services\impl\WindowsFileSystem.cpp" />
     <ClCompile Include="services\impl\WindowsHttpRequester.cpp" />
     <ClCompile Include="services\Initialization.cpp" />
@@ -130,7 +124,7 @@
     <ClCompile Include="ui\viewmodels\AssetUploadViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\ChallengeIndicatorViewModel.cpp" />
-    <ClCompile Include="ui\viewmodels\CodeNotesViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\MemoryNotesViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\EmulatorViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
@@ -179,7 +173,7 @@
     <ClCompile Include="ui\win32\bindings\MultiLineGridBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
     <ClCompile Include="ui\win32\BrokenAchievementsDialog.cpp" />
-    <ClCompile Include="ui\win32\CodeNotesDialog.cpp" />
+    <ClCompile Include="ui\win32\MemoryNotesDialog.cpp" />
     <ClCompile Include="ui\win32\Desktop.cpp" />
     <ClCompile Include="ui\win32\DialogBase.cpp" />
     <ClCompile Include="ui\win32\FileDialog.cpp" />
@@ -206,8 +200,6 @@
     <ClInclude Include="api\DeleteCodeNote.hh" />
     <ClInclude Include="api\FetchAchievementInfo.hh" />
     <ClInclude Include="api\FetchBadgeIds.hh" />
-    <ClInclude Include="api\FetchCodeNotes.hh" />
-    <ClInclude Include="api\FetchGamesList.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
     <ClInclude Include="api\FetchUserFriends.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
@@ -216,29 +208,20 @@
     <ClInclude Include="api\impl\ServerBase.hh" />
     <ClInclude Include="api\IServer.hh" />
     <ClInclude Include="api\LatestClient.hh" />
-    <ClInclude Include="api\SubmitNewTitle.hh" />
     <ClInclude Include="api\UpdateAchievement.hh" />
     <ClInclude Include="api\UpdateCodeNote.hh" />
     <ClInclude Include="api\UpdateLeaderboard.hh" />
     <ClInclude Include="api\UpdateRichPresence.hh" />
     <ClInclude Include="api\UploadBadge.hh" />
-    <ClInclude Include="data\context\ConsoleContext.hh" />
     <ClInclude Include="data\context\EmulatorContext.hh" />
     <ClInclude Include="data\context\GameAssets.hh" />
     <ClInclude Include="data\context\GameContext.hh" />
     <ClInclude Include="data\context\SessionTracker.hh" />
-    <ClInclude Include="data\context\UserContext.hh" />
     <ClInclude Include="data\models\AchievementModel.hh" />
-    <ClInclude Include="data\models\AssetModelBase.hh" />
-    <ClInclude Include="data\models\CapturedTriggerHits.hh" />
-    <ClInclude Include="data\models\CodeNoteModel.hh" />
-    <ClInclude Include="data\models\CodeNotesModel.hh" />
     <ClInclude Include="data\models\LeaderboardModel.hh" />
     <ClInclude Include="data\models\LocalBadgesModel.hh" />
-    <ClInclude Include="data\models\MemoryRegionsModel.hh" />
     <ClInclude Include="data\models\RichPresenceModel.hh" />
     <ClInclude Include="data\models\TriggerValidation.hh" />
-    <ClInclude Include="data\search\MemBlock.hh" />
     <ClInclude Include="data\Types.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />
@@ -259,18 +242,17 @@
     <ClInclude Include="services\GameIdentifier.hh" />
     <ClInclude Include="services\IAudioSystem.hh" />
     <ClInclude Include="services\IClipboard.hh" />
-    <ClInclude Include="services\IClock.hh" />
     <ClInclude Include="services\IConfiguration.hh" />
-    <ClInclude Include="services\ILocalStorage.hh" />
-    <ClInclude Include="services\ILogger.hh" />
+    <ClInclude Include="services\ILoginService.hh" />
     <ClInclude Include="services\impl\FileLocalStorage.hh" />
     <ClInclude Include="services\impl\FileLogger.hh" />
     <ClInclude Include="services\impl\JsonFileConfiguration.hh" />
+    <ClInclude Include="services\impl\LoginService.hh" />
     <ClInclude Include="services\impl\OfflineRcClient.hh" />
     <ClInclude Include="services\impl\ThreadPool.hh" />
-    <ClInclude Include="services\impl\Clock.hh" />
     <ClInclude Include="services\impl\WindowsAudioSystem.hh" />
     <ClInclude Include="services\impl\WindowsClipboard.hh" />
+    <ClInclude Include="services\impl\WindowsDebuggerDetector.hh" />
     <ClInclude Include="services\impl\WindowsDebuggerFileLogger.hh" />
     <ClInclude Include="services\impl\WindowsFileSystem.hh" />
     <ClInclude Include="services\impl\WindowsHttpRequester.hh" />
@@ -321,7 +303,7 @@
     <ClInclude Include="ui\viewmodels\AssetUploadViewModel.hh" />
     <ClInclude Include="ui\viewmodels\BrokenAchievementsViewModel.hh" />
     <ClInclude Include="ui\viewmodels\ChallengeIndicatorViewModel.hh" />
-    <ClInclude Include="ui\viewmodels\CodeNotesViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\MemoryNotesViewModel.hh" />
     <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\FileDialogViewModel.hh" />
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
@@ -384,7 +366,7 @@
     <ClInclude Include="ui\win32\bindings\TextBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\WindowBinding.hh" />
     <ClInclude Include="ui\win32\BrokenAchievementsDialog.hh" />
-    <ClInclude Include="ui\win32\CodeNotesDialog.hh" />
+    <ClInclude Include="ui\win32\MemoryNotesDialog.hh" />
     <ClInclude Include="ui\win32\Desktop.hh" />
     <ClInclude Include="ui\win32\DialogBase.hh" />
     <ClInclude Include="ui\win32\FileDialog.hh" />

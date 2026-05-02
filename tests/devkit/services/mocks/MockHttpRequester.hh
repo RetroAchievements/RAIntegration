@@ -47,7 +47,7 @@ public:
 
     std::string GetStatusCodeText(unsigned int nStatusCode) const override
     {
-        return ra::StringPrintf("err%u", nStatusCode);
+        return ra::util::String::Printf("err%u", nStatusCode);
     }
 
 private:

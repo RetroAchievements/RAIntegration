@@ -126,7 +126,7 @@ static std::wstring FormatTypedValue(rc_typed_value_t& pValue, TriggerOperandTyp
             if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
                 return std::to_wstring(pValue.value.u32);
 
-            return ra::StringPrintf(L"0x%02x", pValue.value.u32);
+            return ra::util::String::Printf(L"0x%02x", pValue.value.u32);
         }
 
         case TriggerOperandType::Float:
@@ -145,13 +145,14 @@ static std::wstring FormatTypedValue(rc_typed_value_t& pValue, TriggerOperandTyp
 
         default:
             rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
-            return ra::Widen(ra::ByteAddressToString(pValue.value.u32));
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+            return pMemoryContext.FormatAddress(pValue.value.u32);
     }
 }
 
 std::wstring TriggerConditionViewModel::FormatValue(unsigned nValue, TriggerOperandType nType)
 {
-    rc_typed_value_t pValue;
+    rc_typed_value_t pValue{};
     pValue.type = RC_VALUE_TYPE_UNSIGNED;
     pValue.value.u32 = nValue;
     return FormatTypedValue(pValue, nType);
@@ -159,7 +160,7 @@ std::wstring TriggerConditionViewModel::FormatValue(unsigned nValue, TriggerOper
 
 std::wstring TriggerConditionViewModel::FormatValue(float fValue, TriggerOperandType nType)
 {
-    rc_typed_value_t pValue;
+    rc_typed_value_t pValue{};
     pValue.type = RC_VALUE_TYPE_FLOAT;
     pValue.value.f32 = fValue;
     return FormatTypedValue(pValue, nType);
@@ -446,14 +447,14 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
 
         if (IsIndirect())
         {
-            const ra::data::models::CodeNoteModel* pNote = nullptr;
+            const ra::data::models::MemoryNoteModel* pNote = nullptr;
             std::wstring sPointerChain;
             const auto nOffset = GetSourceAddress();
             const auto nIndirectAddress = GetIndirectAddress(nOffset, sPointerChain, &pNote);
-            return GetAddressTooltip(nIndirectAddress, sPointerChain, pNote);
+            return GetAddressTooltip(nIndirectAddress, GetSourceSize(), sPointerChain, pNote);
         }
 
-        return GetAddressTooltip(GetSourceAddress(), L"", nullptr);
+        return GetAddressTooltip(GetSourceAddress(), GetSourceSize(), L"", nullptr);
     }
 
     if (nProperty == TargetValueProperty && GetValue(HasTargetValueProperty))
@@ -475,14 +476,14 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
 
         if (IsIndirect())
         {
-            const ra::data::models::CodeNoteModel* pNote = nullptr;
+            const ra::data::models::MemoryNoteModel* pNote = nullptr;
             std::wstring sPointerChain;
             const auto nOffset = GetTargetAddress();
             const auto nIndirectAddress = GetIndirectAddress(nOffset, sPointerChain, &pNote);
-            return GetAddressTooltip(nIndirectAddress, sPointerChain, pNote);
+            return GetAddressTooltip(nIndirectAddress, GetTargetSize(), sPointerChain, pNote);
         }
 
-        return GetAddressTooltip(GetTargetAddress(), L"", nullptr);
+        return GetAddressTooltip(GetTargetAddress(), GetTargetSize(), L"", nullptr);
     }
 
     return L"";
@@ -509,7 +510,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProp
 
 std::wstring TriggerConditionViewModel::GetPotentialEnumValueTooltip(unsigned int nValue, ra::data::ByteAddress nCompareAddress) const
 {
-    const ra::data::models::CodeNoteModel* pNote = nullptr;
+    const ra::data::models::MemoryNoteModel* pNote = nullptr;
 
     if (IsIndirect())
     {
@@ -519,9 +520,9 @@ std::wstring TriggerConditionViewModel::GetPotentialEnumValueTooltip(unsigned in
     else
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        if (pCodeNotes)
-            pNote = pCodeNotes->FindCodeNoteModel(nCompareAddress);
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+        if (pMemoryNotes)
+            pNote = pMemoryNotes->FindMemoryNoteModel(nCompareAddress);
     }
 
     if (pNote != nullptr)
@@ -553,10 +554,10 @@ static void BuildOperandTooltip(std::wstring& sTooltip, const rc_operand_t& pOpe
             sTooltip += FormatTypedValue(pValue, ra::services::TriggerOperandType::Float);
             break;
         case RC_VALUE_TYPE_SIGNED:
-            sTooltip += ra::StringPrintf(L"%d", pValue.value.i32);
+            sTooltip += ra::util::String::Printf(L"%d", pValue.value.i32);
             break;
         default:
-            sTooltip += ra::StringPrintf(L"0x%08x", pValue.value.u32);
+            sTooltip += ra::util::String::Printf(L"0x%08x", pValue.value.u32);
             break;
     }
 }
@@ -592,7 +593,7 @@ static void BuildOperatorTooltip(std::wstring& sTooltip, uint8_t nOperatorType)
 }
 
 static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* pOperand, std::wstring& sPointerChain,
-    const ra::data::models::CodeNoteModel** pParentNote)
+    const ra::data::models::MemoryNoteModel** pParentNote)
 {
     Expects(pParentNote != nullptr);
 
@@ -605,7 +606,7 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
     {
         *pParentNote = nullptr;
 
-        sPointerChain += ra::StringPrintf(L"{recall:0x%02x}", pValue.value.u32);
+        sPointerChain += ra::util::String::Printf(L"{recall:0x%02x}", pValue.value.u32);
         return pValue.value.u32;
     }
 
@@ -615,7 +616,7 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
         if (*pParentNote)
             *pParentNote = (*pParentNote)->GetPointerNoteAtOffset(pValue.value.u32);
 
-        sPointerChain += ra::StringPrintf(L"0x%02x", pValue.value.u32);
+        sPointerChain += ra::util::String::Printf(L"0x%02x", pValue.value.u32);
         return pValue.value.u32;
     }
 
@@ -624,13 +625,14 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
     {
         const auto nAddress = pOperand->value.memref->address;
 
-        // find the code note associated to the parent
+        // find the memory note associated to the parent
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        *pParentNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+        *pParentNote = pMemoryNotes ? pMemoryNotes->FindMemoryNoteModel(nAddress, false) : nullptr;
 
         sPointerChain.push_back('$');
-        sPointerChain += ra::Widen(ra::ByteAddressToString(nAddress));
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        sPointerChain += pMemoryContext.FormatAddress(nAddress);
         return pValue.value.u32;
     }
 
@@ -658,14 +660,15 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
             // if the parent note is not a pointer, assume it's an index
             Expects(pModifiedMemref->modifier.type == RC_OPERAND_CONST);
             const auto nAddress = pModifier.value.u32;
-            std::wstring sPrefix = ra::StringPrintf(L"%s[", ra::ByteAddressToString(nAddress));
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+            std::wstring sPrefix = ra::util::String::Printf(L"%s[", pMemoryContext.FormatAddress(nAddress));
             sPointerChain.insert(0, sPrefix);
             sPointerChain.push_back(']');
 
-            // find the code note associated to the start of the array
+            // find the memory note associated to the start of the array
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-            const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-            *pParentNote = pCodeNotes ? pCodeNotes->FindCodeNoteModel(nAddress, false) : nullptr;
+            const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+            *pParentNote = pMemoryNotes ? pMemoryNotes->FindMemoryNoteModel(nAddress, false) : nullptr;
 
             // return the address offset into the array
             return pValue.value.u32;
@@ -689,12 +692,13 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
 
         if (pModifiedMemref->modifier.type == RC_OPERAND_RECALL)
         {
-            sPointerChain += ra::StringPrintf(L"{recall:0x%02x}", pModifier.value.u32);
+            sPointerChain += ra::util::String::Printf(L"{recall:0x%02x}", pModifier.value.u32);
         }
         else if (rc_operand_is_memref(&pModifiedMemref->modifier))
         {
             sPointerChain.push_back('$');
-            sPointerChain += ra::Widen(ra::ByteAddressToString(pModifiedMemref->modifier.value.memref->address));
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+            sPointerChain += pMemoryContext.FormatAddress(pModifiedMemref->modifier.value.memref->address);
         }
         else
         {
@@ -704,12 +708,12 @@ static ra::data::ByteAddress GetIndirectAddressFromOperand(const rc_operand_t* p
             {
                 case RC_OPERATOR_AND:
                 case RC_OPERATOR_XOR: // use hex for bitwise combines
-                    sPointerChain += ra::StringPrintf(L"0x%02x", nModifier);
+                    sPointerChain += ra::util::String::Printf(L"0x%02x", nModifier);
                     break;
 
                 default:
                     if (nModifier >= 0x1000 && (nModifier & 0xFF) == 0) // large multiple of 256, use hex
-                        sPointerChain += ra::StringPrintf(L"0x%04x", nModifier);
+                        sPointerChain += ra::util::String::Printf(L"0x%04x", nModifier);
                     else // otherwise use decimal
                         sPointerChain += std::to_wstring(nModifier);
                     break;
@@ -800,7 +804,7 @@ const rc_condition_t* TriggerConditionViewModel::GetCondition() const
 }
 
 ra::data::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::data::ByteAddress nAddress, std::wstring& sPointerChain,
-    const ra::data::models::CodeNoteModel** pLeafNote) const
+    const ra::data::models::MemoryNoteModel** pLeafNote) const
 {
     Expects(pLeafNote != nullptr);
 
@@ -820,42 +824,58 @@ ra::data::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::data::By
     return nAddress;
 }
 
-std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress nAddress,
-    const std::wstring& sPointerChain, const ra::data::models::CodeNoteModel* pNote) const
+std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize,
+    const std::wstring& sPointerChain, const ra::data::models::MemoryNoteModel* pNote) const
 {
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+
     std::wstring sAddress;
     if (sPointerChain.empty())
-        sAddress = ra::Widen(ra::ByteAddressToString(nAddress));
+        sAddress = pMemoryContext.FormatAddress(nAddress);
     else
-        sAddress = ra::StringPrintf(L"%s (indirect %s)", ra::ByteAddressToString(nAddress), sPointerChain);
+        sAddress = ra::util::String::Printf(L"%s (indirect %s)", pMemoryContext.FormatAddress(nAddress), sPointerChain);
 
     if (!pNote)
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-        if (pCodeNotes)
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+        if (pMemoryNotes)
         {
-            pNote = pCodeNotes->FindCodeNoteModel(nAddress);
+            pNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
             if (pNote == nullptr)
             {
-                const auto nNoteStart = pCodeNotes->FindCodeNoteStart(nAddress);
+                const auto nNoteStart = pMemoryNotes->FindNoteStart(nAddress);
                 if (nNoteStart != 0xFFFFFFFF)
                 {
-                    pNote = pCodeNotes->FindCodeNoteModel(nNoteStart);
+                    pNote = pMemoryNotes->FindMemoryNoteModel(nNoteStart);
 
                     if (sPointerChain.empty())
-                        sAddress = ra::StringPrintf(L"%s (%s+%u)", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nNoteStart), nAddress - nNoteStart);
+                    {
+                        const auto nOffset = nAddress - nNoteStart;
+                        const wchar_t* sFormat = nOffset < 10 ? L"%s (%s+%u)" : L"%s (%s+0x%02x)";
+                        sAddress = ra::util::String::Printf(sFormat, pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nNoteStart), nOffset);
+                    }
                 }
             }
         }
         if (!pNote)
-            return ra::StringPrintf(L"%s\r\n[No code note]", sAddress);
+            return ra::util::String::Printf(L"%s\r\n[No memory note]", sAddress);
     }
 
     if (pNote->IsPointer() && GetType() == TriggerConditionType::AddAddress)
-        return ra::StringPrintf(L"%s\r\n%s", sAddress, pNote->GetPointerDescription());
+        return ra::util::String::Printf(L"%s\r\n%s", sAddress, pNote->GetPointerDescription());
 
-    // limit the tooltip to the first 20 lines of the code note
+    const auto svSubNote = pNote->GetSubNote(nSize);
+    if (!svSubNote.empty())
+    {
+        const auto sSummary = pNote->GetSummary();
+        if (sSummary.empty())
+            return ra::util::String::Printf(L"%s\r\n%s", sAddress, svSubNote);
+
+        return ra::util::String::Printf(L"%s\r\n%s\r\n%s", sAddress, sSummary, svSubNote);
+    }
+
+    // limit the tooltip to the first 20 lines of the memory note
     const auto& sNote = pNote->GetNote();
     size_t nLines = 0;
     size_t nIndex = 0;
@@ -871,11 +891,11 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
 
     if (nIndex != std::string::npos && sNote.find('\n', nIndex) != std::string::npos)
     {
-        std::wstring sSubString(sNote, 0, nIndex);
-        return ra::StringPrintf(L"%s\r\n%s...", sAddress, sSubString);
+        const std::wstring_view svNote(sNote);
+        return ra::util::String::Printf(L"%s\r\n%s...", sAddress, svNote.substr(0, nIndex));
     }
 
-    return ra::StringPrintf(L"%s\r\n%s", sAddress, sNote);
+    return ra::util::String::Printf(L"%s\r\n%s", sAddress, sNote);
 }
 
 static void BuildRecallTooltip(std::wstring& sTooltip,
@@ -900,7 +920,7 @@ static void BuildRecallTooltip(std::wstring& sTooltip,
     }
     else if (pOperand.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
     {
-        sTooltip += ra::StringPrintf(L"\r\n%u: ", gsl::narrow_cast<uint32_t>(nConditionIndex + 1));
+        sTooltip += ra::util::String::Printf(L"\r\n%u: ", gsl::narrow_cast<uint32_t>(nConditionIndex + 1));
 
         GSL_SUPPRESS_TYPE1 const rc_modified_memref_t* combining_memref =
             reinterpret_cast<rc_modified_memref_t*>(pOperand.value.memref);
@@ -915,7 +935,8 @@ static void BuildRecallTooltip(std::wstring& sTooltip,
 
             rc_typed_value_combine(&pValue, &pModifier, RC_OPERATOR_ADD);
             sTooltip.push_back('$');
-            sTooltip.append(ra::Widen(ra::ByteAddressToString(pValue.value.u32)));
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+            sTooltip.append(pMemoryContext.FormatAddress(pValue.value.u32));
         }
         else
         {
@@ -958,9 +979,12 @@ std::wstring TriggerConditionViewModel::GetRecallTooltip(bool bOperand2) const
                 break;
         }
 
-        const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
-        if ((pOperand1 && pOperand1->type == RC_OPERAND_RECALL) || pCondition->operand2.type == RC_OPERAND_RECALL)
-            mRememberRef[nConditionIndex] = { nLastRememberIndex, pLastRememberCondition };
+        if (pLastRememberCondition) // if something has been remembered, check for recalls that might map to it.
+        {
+            const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
+            if ((pOperand1 && pOperand1->type == RC_OPERAND_RECALL) || pCondition->operand2.type == RC_OPERAND_RECALL)
+                mRememberRef[nConditionIndex] = { nLastRememberIndex, pLastRememberCondition };
+        }
 
         if (pCondition->type == RC_CONDITION_REMEMBER)
         {

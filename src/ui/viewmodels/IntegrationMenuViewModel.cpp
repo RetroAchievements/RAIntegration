@@ -3,11 +3,13 @@
 #include "util\Log.hh"
 #include "RA_Resource.h"
 
-#include "data/context/ConsoleContext.hh"
+#include "context/IConsoleContext.hh"
+#include "context/UserContext.hh"
+
 #include "data/context/GameContext.hh"
-#include "data/context/UserContext.hh"
 
 #include "services/IConfiguration.hh"
+#include "services/ILoginService.hh"
 #include "services/ServiceLocator.hh"
 
 #include "ui/IDesktop.hh"
@@ -21,18 +23,20 @@
 #include "ui/viewmodels/UnknownGameViewModel.hh"
 #include "ui/viewmodels/WindowManager.hh"
 
+#include "util/Strings.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
 
 void IntegrationMenuViewModel::BuildMenu(LookupItemViewModelCollection& vmMenu)
 {
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    if (pUserContext.IsLoggedIn())
+    const auto& pLoginContext = ra::services::ServiceLocator::Get<ra::services::ILoginService>();
+    if (pLoginContext.IsLoggedIn())
         BuildMenuLoggedIn(vmMenu);
     else if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Offline))
         BuildMenuOffline(vmMenu);
-    else if (!pUserContext.IsLoginDisabled())
+    else if (!pLoginContext.IsLoginDisabled())
         BuildMenuLoggedOut(vmMenu);
     else
         BuildMenuOffline(vmMenu);
@@ -80,7 +84,7 @@ void IntegrationMenuViewModel::AddCommonMenuItems(LookupItemViewModelCollection&
     vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
     vmMenu.Add(IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
     vmMenu.Add(IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-    vmMenu.Add(IDM_RA_FILES_CODENOTES, L"Code &Notes");
+    vmMenu.Add(IDM_RA_FILES_CODENOTES, L"Memory &Notes");
     vmMenu.Add(IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
     vmMenu.Add(0, L"-----");
     vmMenu.Add(IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
@@ -148,7 +152,7 @@ void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
             break;
 
         case IDM_RA_FILES_CODENOTES:
-            ShowCodeNotes();
+            ShowMemoryNotes();
             break;
 
         case IDM_RA_PARSERICHPRESENCE:
@@ -188,17 +192,18 @@ void IntegrationMenuViewModel::Login()
 
 void IntegrationMenuViewModel::Logout()
 {
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    pUserContext.Logout();
+    auto& pLoginContext = ra::services::ServiceLocator::GetMutable<ra::services::ILoginService>();
+    pLoginContext.Logout();
 }
 
 void IntegrationMenuViewModel::OpenUserPage()
 {
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    if (pUserContext.IsLoggedIn())
+    const auto& pLoginContext = ra::services::ServiceLocator::Get<ra::services::ILoginService>();
+    if (pLoginContext.IsLoggedIn())
     {
+        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        const auto sUrl = ra::StringPrintf("%s/user/%s", pConfiguration.GetHostUrl(), pUserContext.GetUsername());
+        const auto sUrl = ra::util::String::Printf("%s/user/%s", pConfiguration.GetHostUrl(), pUserContext.GetDisplayName());
 
         const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
         pDesktop.OpenUrl(sUrl);
@@ -211,7 +216,7 @@ void IntegrationMenuViewModel::OpenGamePage()
     if (pGameContext.GameId() != 0)
     {
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        const auto sUrl = ra::StringPrintf("%s/game/%u", pConfiguration.GetHostUrl(), pGameContext.ActiveGameId());
+        const auto sUrl = ra::util::String::Printf("%s/game/%u", pConfiguration.GetHostUrl(), pGameContext.ActiveGameId());
 
         const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
         pDesktop.OpenUrl(sUrl);
@@ -332,13 +337,13 @@ void IntegrationMenuViewModel::ShowPointerInspector()
     }
 }
 
-void IntegrationMenuViewModel::ShowCodeNotes()
+void IntegrationMenuViewModel::ShowMemoryNotes()
 {
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    if (pEmulatorContext.WarnDisableHardcoreMode("view code notes"))
+    if (pEmulatorContext.WarnDisableHardcoreMode("view memory notes"))
     {
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-        pWindowManager.CodeNotes.Show();
+        pWindowManager.MemoryNotes.Show();
     }
 }
 
@@ -364,7 +369,7 @@ void IntegrationMenuViewModel::ShowAllEditors()
         pWindowManager.AssetEditor.Show();
         pWindowManager.MemoryInspector.Show();
         pWindowManager.MemoryBookmarks.Show();
-        pWindowManager.CodeNotes.Show();
+        pWindowManager.MemoryNotes.Show();
     }
     else
     {
@@ -390,8 +395,8 @@ void IntegrationMenuViewModel::ShowGameHash()
         vmUnknownGame.InitializeTestCompatibilityMode();
 
         auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetGameTitle();
-        vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
-        vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Name());
+        vmUnknownGame.SetEstimatedGameName(ra::util::String::Widen(sEstimatedGameTitle));
+        vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::context::IConsoleContext>().Name());
 
         if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
         {
@@ -405,17 +410,17 @@ void IntegrationMenuViewModel::ShowGameHash()
     {
         if (pGameContext.GameId() == 0 && !pGameContext.GameHash().empty())
         {
-            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
             const auto nConsoleId = pConsoleContext.Id();
             if (nConsoleId != ConsoleID::UnknownConsoleID)
             {
                 const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-                auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+                auto sEstimatedGameTitle = ra::util::String::Widen(pEmulatorContext.GetGameTitle());
 
                 ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
                 vmUnknownGame.InitializeGameTitles(nConsoleId);
                 vmUnknownGame.SetSystemName(pConsoleContext.Name());
-                vmUnknownGame.SetChecksum(ra::Widen(pGameContext.GameHash()));
+                vmUnknownGame.SetChecksum(ra::util::String::Widen(pGameContext.GameHash()));
                 vmUnknownGame.SetEstimatedGameName(sEstimatedGameTitle);
                 vmUnknownGame.SetNewGameName(sEstimatedGameTitle);
 

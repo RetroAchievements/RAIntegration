@@ -4,10 +4,10 @@
 #include "RA_Json.h"
 #include "util\Strings.hh"
 
+#include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
 
 #include "data\Types.hh"
-#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\models\TriggerValidation.hh"
 
@@ -126,7 +126,7 @@ std::wstring MemoryWatchViewModel::ExtractDescriptionHeader(const std::wstring& 
     // extract the first line into DescriptionHeader
     const auto nIndex = sFullNote.find('\n');
     if (nIndex == std::string::npos)
-        return ra::data::models::CodeNoteModel::TrimSize(sFullNote, true);
+        return ra::data::models::MemoryNoteModel::TrimSize(sFullNote, true);
 
     std::wstring sNote = sFullNote;
     sNote.resize(nIndex);
@@ -134,7 +134,7 @@ std::wstring MemoryWatchViewModel::ExtractDescriptionHeader(const std::wstring& 
     if (sNote.back() == '\r')
         sNote.pop_back();
 
-    return ra::data::models::CodeNoteModel::TrimSize(sNote, true);
+    return ra::data::models::MemoryNoteModel::TrimSize(sNote, true);
 }
 
 static rc_condition_t* FindMeasuredCondition(rc_value_t* pValue) noexcept
@@ -247,22 +247,22 @@ uint32_t MemoryWatchViewModel::ReadValue()
         // updated, proceeed to logic below to do the special processing.
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     if (m_nSize == ra::data::Memory::Size::Text)
     {
         // only have 32 bits to store the value in. generate a hash for the string
         std::array<uint8_t, MaxTextBookmarkLength + 1> pBuffer;
-        pEmulatorContext.ReadMemory(m_nAddress, &pBuffer.at(0), pBuffer.size() - 1);
+        pMemoryContext.ReadMemory(m_nAddress, &pBuffer.at(0), pBuffer.size() - 1);
         pBuffer.at(pBuffer.size() - 1) = '\0';
 
         const char* pText;
         GSL_SUPPRESS_TYPE1 pText = reinterpret_cast<char*>(&pBuffer.at(0));
         std::string sText(pText);
 
-        return ra::StringHash(sText);
+        return ra::util::String::Hash(sText);
     }
 
-    return pEmulatorContext.ReadMemory(m_nAddress, m_nSize);
+    return pMemoryContext.ReadMemory(m_nAddress, m_nSize);
 }
 
 void MemoryWatchViewModel::EndInitialization()
@@ -283,7 +283,7 @@ void MemoryWatchViewModel::EndInitialization()
 
 bool MemoryWatchViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std::wstring& sError)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     const auto nAddress = m_nAddress;
     unsigned nValue = 0;
 
@@ -317,7 +317,7 @@ bool MemoryWatchViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std
     // use the IsWritingMemoryProperty to disable the event handler in the list
     // while we write the memory so it doesn't try to sync the value back here
     SetValue(IsWritingMemoryProperty, true);
-    pEmulatorContext.WriteMemory(nAddress, m_nSize, nValue);
+    pMemoryContext.WriteMemory(nAddress, m_nSize, nValue);
     SetValue(IsWritingMemoryProperty, false);
 
     // update the fields dependent on m_nValue
@@ -394,7 +394,7 @@ bool MemoryWatchViewModel::UpdateCurrentAddressFromIndirectAddress()
     if (!m_pValue)
         return true;
 
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
 
     m_bIndirectAddressValid = true;
     for (const auto* pCondition = m_pValue->conditions->conditions; pCondition; pCondition = pCondition->next)
@@ -505,14 +505,14 @@ void MemoryWatchViewModel::UpdateRealNote()
     if (pGameContext.IsGameLoading()) // no notes available
         return;
 
-    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    const ra::data::models::CodeNoteModel* pNote = nullptr;
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    const ra::data::models::MemoryNoteModel* pNote = nullptr;
 
-    if (pCodeNotes)
+    if (pMemoryNotes)
     {
         if (!IsIndirectAddress())
         {
-            pNote = pCodeNotes->FindCodeNoteModel(GetAddress());
+            pNote = pMemoryNotes->FindMemoryNoteModel(GetAddress());
         }
         else
         {
@@ -533,7 +533,7 @@ void MemoryWatchViewModel::UpdateRealNote()
                 if (pNote)
                     pNote = pNote->GetPointerNoteAtOffset(nAddress);
                 else
-                    pNote = pCodeNotes->FindCodeNoteModel(nAddress);
+                    pNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
 
                 if (!pNote)
                     break;

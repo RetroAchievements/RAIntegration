@@ -2,9 +2,9 @@
 #define RA_ENUM_OPS_H
 #pragma once
 
-#include "util\Compat.hh"
-#include "util\TypeCasts.hh"
-#include "util\TypeTraits.hh"
+#include "util/Compat.hh"
+#include "util/TypeCasts.hh"
+#include "util/TypeTraits.hh"
 
 namespace ra {
 

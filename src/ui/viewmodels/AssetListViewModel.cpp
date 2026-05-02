@@ -1,7 +1,9 @@
 #include "AssetListViewModel.hh"
 
+#include "context\IEmulatorMemoryContext.hh"
+#include "context\UserContext.hh"
+
 #include "data\context\GameContext.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
@@ -17,11 +19,13 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
+#include "util\Log.hh"
+#include "util\Strings.hh"
+
 #include "rcheevos\src\rc_client_internal.h"
 
 #include "Exports.hh"
 #include "RA_BuildVer.h"
-#include "util\Log.hh"
 
 namespace ra {
 namespace ui {
@@ -141,7 +145,7 @@ void AssetListViewModel::OnActiveGameChanged()
     ApplyFilter();
 }
 
-void AssetListViewModel::OnCodeNoteChanged(ra::data::ByteAddress, const std::wstring&)
+void AssetListViewModel::OnMemoryNoteChanged(ra::data::ByteAddress, const std::wstring&)
 {
     RevalidateNoteAssetValidationWarnings();
 }
@@ -152,7 +156,7 @@ void AssetListViewModel::RevalidateNoteAssetValidationWarnings()
     for (auto& pAsset : pGameContext.Assets())
     {
         const auto& sValidationError = pAsset.GetValidationError();
-        if (sValidationError.find(L"code note") != std::wstring::npos)
+        if (sValidationError.find(L"memory note") != std::wstring::npos)
             pAsset.Validate();
     }
 }
@@ -166,6 +170,8 @@ void AssetListViewModel::OnDataModelStringValueChanged(gsl::index nIndex, const 
         const auto* pItem = pGameContext.Assets().GetItemAt(nIndex);
         if (pItem != nullptr)
         {
+            std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
             const auto nFilteredIndex = GetFilteredAssetIndex(*pItem);
             if (nFilteredIndex != -1)
                 m_vFilteredAssets.SetItemValue(nFilteredIndex, AssetSummaryViewModel::LabelProperty, args.tNewValue);
@@ -177,6 +183,8 @@ void AssetListViewModel::OnDataModelStringValueChanged(gsl::index nIndex, const 
         const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
         if (pAsset != nullptr)
         {
+            std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
             const auto nFilteredIndex = GetFilteredAssetIndex(*pAsset);
             if (nFilteredIndex != -1)
                 m_vFilteredAssets.SetItemValue(nFilteredIndex, args.Property, args.tNewValue);
@@ -192,11 +200,16 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
         Expects(pAsset != nullptr);
         const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
-        if (pAchievement != nullptr && GetFilteredAssetIndex(*pAsset) >= 0)
+        if (pAchievement != nullptr)
         {
-            auto nPoints = GetTotalPoints();
-            nPoints += args.tNewValue - args.tOldValue;
-            SetValue(TotalPointsProperty, nPoints);
+            std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
+            if (GetFilteredAssetIndex(*pAsset) >= 0)
+            {
+                auto nPoints = GetTotalPoints();
+                nPoints += args.tNewValue - args.tOldValue;
+                SetValue(TotalPointsProperty, nPoints);
+            }
         }
     }
     else if (args.Property == ra::data::models::AssetModelBase::StateProperty)
@@ -278,6 +291,8 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
         if (pAsset != nullptr)
         {
+            std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
             const auto nFilteredIndex = GetFilteredAssetIndex(*pAsset);
             if (nFilteredIndex != -1)
             {
@@ -299,21 +314,25 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
 
             RA_LOG_INFO("%s %u ID changed from %d to %d", ra::data::models::AssetModelBase::GetAssetTypeString(pAsset->GetType()), pAsset->GetID(), args.tOldValue, args.tNewValue);
 
-            // have to find the filtered item using the old ID
-            for (gsl::index nScanIndex = 0; nScanIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nScanIndex)
             {
-                auto* pItem = m_vFilteredAssets.GetItemAt(nScanIndex);
-                if (pItem != nullptr && pItem->GetId() == args.tOldValue && pItem->GetType() == nType)
+                std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
+                // have to find the filtered item using the old ID
+                for (gsl::index nScanIndex = 0; nScanIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nScanIndex)
                 {
-                    nFilteredIndex = nScanIndex;
-                    break;
+                    auto* pItem = m_vFilteredAssets.GetItemAt(nScanIndex);
+                    if (pItem != nullptr && pItem->GetId() == args.tOldValue && pItem->GetType() == nType)
+                    {
+                        nFilteredIndex = nScanIndex;
+                        break;
+                    }
                 }
+
+                if (nFilteredIndex != -1)
+                    m_vFilteredAssets.SetItemValue(nFilteredIndex, AssetSummaryViewModel::IdProperty, args.tNewValue);
+
+                AddOrRemoveFilteredItem(*pAsset);
             }
-
-            if (nFilteredIndex != -1)
-                m_vFilteredAssets.SetItemValue(nFilteredIndex, AssetSummaryViewModel::IdProperty, args.tNewValue);
-
-            AddOrRemoveFilteredItem(*pAsset);
         }
     }
 }
@@ -330,19 +349,23 @@ void AssetListViewModel::OnDataModelRemoved(_UNUSED gsl::index nIndex)
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (!pGameContext.Assets().IsUpdating())
     {
-        // the item has already been removed from the vAssets collection, and all we know about it
-        // is the index where it was located. scan through the vFilteredAssets collection and remove 
-        // any that no longer exist in the vAssets collection.
-        for (gsl::index nFilteredIndex = 0; nFilteredIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nFilteredIndex)
         {
-            auto* pItem = m_vFilteredAssets.GetItemAt(nFilteredIndex);
-            if (pItem != nullptr)
+            std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
+            // the item has already been removed from the vAssets collection, and all we know about it
+            // is the index where it was located. scan through the vFilteredAssets collection and remove 
+            // any that no longer exist in the vAssets collection.
+            for (gsl::index nFilteredIndex = 0; nFilteredIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nFilteredIndex)
             {
-                if (!pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId()))
+                auto* pItem = m_vFilteredAssets.GetItemAt(nFilteredIndex);
+                if (pItem != nullptr)
                 {
-                    m_vFilteredAssets.RemoveAt(nFilteredIndex);
-                    UpdateButtons();
-                    break;
+                    if (!pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId()))
+                    {
+                        m_vFilteredAssets.RemoveAt(nFilteredIndex);
+                        UpdateButtons();
+                        break;
+                    }
                 }
             }
         }
@@ -374,12 +397,16 @@ void AssetListViewModel::UpdateTotals()
     int nAchievementCount = 0;
     int nTotalPoints = 0;
 
-    for (const auto& pAsset : m_vFilteredAssets)
     {
-        if (pAsset.GetType() == ra::data::models::AssetType::Achievement)
+        std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
+        for (const auto& pAsset : m_vFilteredAssets)
         {
-            ++nAchievementCount;
-            nTotalPoints += pAsset.GetPoints();
+            if (pAsset.GetType() == ra::data::models::AssetType::Achievement)
+            {
+                ++nAchievementCount;
+                nTotalPoints += pAsset.GetPoints();
+            }
         }
     }
 
@@ -411,8 +438,8 @@ void AssetListViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& arg
         auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         pRuntime.SetPaused(!args.tNewValue);
 
-        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        pEmulatorContext.SetMemoryModified();
+        auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
+        pMemoryContext.SetMemoryModified();
     }
 
     WindowViewModelBase::OnValueChanged(args);
@@ -423,23 +450,27 @@ void AssetListViewModel::ApplyFilter()
     if (m_bInitializingFilter)
         return;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    m_vFilteredAssets.BeginUpdate();
-
-    // first pass: remove any filtered items no longer in the source collection
-    for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()) -1; nIndex >= 0; --nIndex)
     {
-        auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
-        if (pItem != nullptr)
-        {
-            if (!pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId()))
-                m_vFilteredAssets.RemoveAt(nIndex);
-        }
-    }
+        std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
 
-    // second pass: update visibility of each item in the source collection
-    for (const auto& pAsset : pGameContext.Assets())
-        AddOrRemoveFilteredItem(pAsset);
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        m_vFilteredAssets.BeginUpdate();
+
+        // first pass: remove any filtered items no longer in the source collection
+        for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()) - 1; nIndex >= 0; --nIndex)
+        {
+            auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
+            if (pItem != nullptr)
+            {
+                if (!pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId()))
+                    m_vFilteredAssets.RemoveAt(nIndex);
+            }
+        }
+
+        // second pass: update visibility of each item in the source collection
+        for (const auto& pAsset : pGameContext.Assets())
+            AddOrRemoveFilteredItem(pAsset);
+    }
 
     m_vFilteredAssets.EndUpdate();
 
@@ -512,7 +543,7 @@ bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& p
             break;
 
         case SpecialFilter::Authored:
-            if (pAsset.GetAuthor() != ra::Widen(ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName()))
+            if (pAsset.GetAuthor() != ra::util::String::Widen(ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName()))
                 return false;
             break;
     }
@@ -526,7 +557,13 @@ void AssetListViewModel::AddOrRemoveFilteredItem(gsl::index nAssetIndex)
     const auto* pAsset = pGameContext.Assets().GetItemAt(nAssetIndex);
     if (pAsset != nullptr)
     {
-        if (AddOrRemoveFilteredItem(*pAsset))
+        bool bUpdated = false;
+        {
+            std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+            bUpdated = AddOrRemoveFilteredItem(*pAsset);
+        }
+
+        if (bUpdated)
         {
             UpdateTotals();
             UpdateButtons();
@@ -616,7 +653,7 @@ void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
         const auto& pLocalStorage = dynamic_cast<const ra::services::impl::FileLocalStorage&>(ra::services::ServiceLocator::Get<ra::services::ILocalStorage>());
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         const auto sFilePath = pLocalStorage.GetPath(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.ActiveGameId()));
-        auto sUrl = ra::StringPrintf("file://%s", sFilePath);
+        auto sUrl = ra::util::String::Printf("file://%s", sFilePath);
         std::replace(sUrl.begin(), sUrl.end(), '\\', '/');
         ra::services::ServiceLocator::Get<ra::ui::IDesktop>().OpenUrl(sUrl);
         return;
@@ -631,6 +668,8 @@ void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
 
 bool AssetListViewModel::HasSelection(ra::data::models::AssetType nAssetType) const
 {
+    std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
     for (const auto& pItem : m_vFilteredAssets)
     {
         if (pItem.IsSelected())
@@ -719,6 +758,8 @@ void AssetListViewModel::DoUpdateButtons()
     else
     {
         SetValue(CanCreateProperty, true);
+
+        std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
 
         for (const auto& pItem : m_vFilteredAssets)
         {
@@ -935,6 +976,8 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 
+    std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
     for (const auto& pItem : m_vFilteredAssets)
     {
         if (pItem.IsSelected())
@@ -990,7 +1033,7 @@ bool AssetListViewModel::SelectionContainsInvalidAsset(const std::vector<ra::dat
 
         if (bInvalidAssetInSelection)
         {
-            sErrorMessage = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+            sErrorMessage = ra::util::String::Printf(L"The following errors must be corrected:\n* %s",
                                              pWindowManager.AssetEditor.GetAssetValidationError());
 
             return true;
@@ -1092,13 +1135,17 @@ void AssetListViewModel::SaveSelected()
     if (sSaveButtonText.at(0) == '&') // "&Save" / "&Save All"
     {
         // save - find the selected items (allow empty to mean all)
-        for (const auto& pItem : m_vFilteredAssets)
         {
-            if (pItem.IsSelected())
+            std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
+            for (const auto& pItem : m_vFilteredAssets)
             {
-                auto* pAsset = pGameContext.Assets().FindAsset(pItem.GetType(), pItem.GetId());
-                if (pAsset != nullptr)
-                    vSelectedAssets.push_back(pAsset);
+                if (pItem.IsSelected())
+                {
+                    auto* pAsset = pGameContext.Assets().FindAsset(pItem.GetType(), pItem.GetId());
+                    if (pAsset != nullptr)
+                        vSelectedAssets.push_back(pAsset);
+                }
             }
         }
 
@@ -1146,7 +1193,7 @@ void AssetListViewModel::SaveSelected()
             return;
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetMessage(ra::StringPrintf(L"Are you sure you want to publish %d items?", vSelectedAssets.size()));
+        vmMessageBox.SetMessage(ra::util::String::Printf(L"Are you sure you want to publish %d items?", vSelectedAssets.size()));
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
             return;
@@ -1170,7 +1217,7 @@ void AssetListViewModel::SaveSelected()
             return;
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to promote %d items to core?", vSelectedAssets.size()));
+        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to promote %d items to core?", vSelectedAssets.size()));
         vmMessageBox.SetMessage(L"Items in core are officially available for players to earn.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
@@ -1215,7 +1262,7 @@ void AssetListViewModel::SaveSelected()
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
-        vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to demote %d items to unofficial?", vSelectedAssets.size()));
+        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to demote %d items to unofficial?", vSelectedAssets.size()));
         vmMessageBox.SetMessage(L"Items in unofficial can no longer be earned by players.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
@@ -1262,7 +1309,7 @@ static std::wstring ValidateTriggerLogic(const std::string& sTrigger)
 {
     const auto nSize = rc_trigger_size(sTrigger.c_str());
     if (nSize < 0)
-        return ra::StringPrintf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
+        return ra::util::String::Printf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
 
 #ifdef VALIDATE_PRERELEASE_FUNCTIONALITY
     std::string sBuffer;
@@ -1293,7 +1340,7 @@ static std::wstring ValidateValueLogic(const std::string& sValue)
 {
     const auto nSize = rc_value_size(sValue.c_str());
     if (nSize < 0)
-        return ra::StringPrintf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
+        return ra::util::String::Printf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
 
 #ifdef VALIDATE_PRERELEASE_FUNCTIONALITY
     std::string sBuffer;
@@ -1321,26 +1368,34 @@ void AssetListViewModel::ValidateAchievementForCore(std::wstring& sError, const 
 {
     const std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
 }
 
 void AssetListViewModel::ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pLeaderboard) const
 {
     std::wstring sTriggerError = ValidateTriggerLogic(pLeaderboard.GetStartTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
 
     sTriggerError = ValidateTriggerLogic(pLeaderboard.GetSubmitTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
 
     sTriggerError = ValidateTriggerLogic(pLeaderboard.GetCancelTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
 
     const std::wstring sValueError = ValidateValueLogic(pLeaderboard.GetValueDefinition());
     if (!sValueError.empty())
-        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
+}
+
+
+void AssetListViewModel::ValidateRichPresenceForCore(std::wstring& sError, const ra::data::models::RichPresenceModel& pRichPresence) const
+{
+    const auto& sScript = pRichPresence.GetScript();
+    if (sScript.length() > ra::data::models::RichPresenceModel::MaxScriptLength)
+        sError.append(ra::util::String::Printf(L"\n* %s: %s", L"Rich Presence", pRichPresence.GetValidationError()));
 }
 
 bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly)
@@ -1360,15 +1415,23 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
             if (pLeaderboard != nullptr)
             {
                 if (pLeaderboard->GetStartTrigger().empty())
-                    sError.append(ra::StringPrintf(L"\n* %s: No Start condition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Start condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetCancelTrigger().empty())
-                    sError.append(ra::StringPrintf(L"\n* %s: No Cancel condition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Cancel condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetSubmitTrigger().empty())
-                    sError.append(ra::StringPrintf(L"\n* %s: No Submit condition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Submit condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetValueDefinition().empty())
-                    sError.append(ra::StringPrintf(L"\n* %s: No Value definition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Value definition", pLeaderboard->GetName()));
 
                 ValidateLeaderboardForCore(sError, *pLeaderboard);
+            }
+            else
+            {
+                const auto* pRichPresence = dynamic_cast<const ra::data::models::RichPresenceModel*>(pAsset);
+                if (pRichPresence != nullptr)
+                {
+                    ValidateRichPresenceForCore(sError, *pRichPresence);
+                }
             }
         }
     }
@@ -1413,13 +1476,17 @@ void AssetListViewModel::ResetSelected()
 
     bool bCoreAssetSelected = false;
     std::vector<const AssetSummaryViewModel*> vSelectedAssets;
-    for (const auto& pItem : m_vFilteredAssets)
     {
-        if (pItem.IsSelected())
-        {
-            vSelectedAssets.push_back(&pItem);
+        std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
 
-            bCoreAssetSelected |= (pItem.GetCategory() == ra::data::models::AssetCategory::Core);
+        for (const auto& pItem : m_vFilteredAssets)
+        {
+            if (pItem.IsSelected())
+            {
+                vSelectedAssets.push_back(&pItem);
+
+                bCoreAssetSelected |= (pItem.GetCategory() == ra::data::models::AssetCategory::Core);
+            }
         }
     }
 
@@ -1739,8 +1806,8 @@ void AssetListViewModel::CreateNew()
         nType = vmNewAsset.GetSelectedType();
     }
 
-    FilteredAssets().BeginUpdate();
     bool bUpdateAsset = true;
+    gsl::index nIndex = -1;
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     ra::data::models::AssetModelBase* pNewAsset = nullptr;
@@ -1777,12 +1844,13 @@ void AssetListViewModel::CreateNew()
     }
 
     Expects(pNewAsset != nullptr);
+
     pNewAsset->SetSubsetID(GetSubsetFilter());
 
     if (bUpdateAsset)
     {
-        const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-        pNewAsset->SetAuthor(ra::Widen(pUserContext.GetDisplayName()));
+        const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::context::UserContext>();
+        pNewAsset->SetAuthor(ra::util::String::Widen(pUserContext.GetDisplayName()));
         pNewAsset->SetCategory(ra::data::models::AssetCategory::Local);
         pNewAsset->UpdateServerCheckpoint();
         pNewAsset->SetNew();
@@ -1790,23 +1858,28 @@ void AssetListViewModel::CreateNew()
 
     EnsureAppearsInFilteredList(*pNewAsset);
 
-    const auto nId = ra::to_signed(pNewAsset->GetID());
-
-    // select the new viewmodel, and deselect everything else
-    gsl::index nIndex = -1;
-    for (gsl::index i = 0; i < ra::to_signed(m_vFilteredAssets.Count()); ++i)
     {
-        auto* pItem = m_vFilteredAssets.GetItemAt(i);
-        if (pItem != nullptr)
+        std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
+
+        FilteredAssets().BeginUpdate();
+
+        const auto nId = ra::to_signed(pNewAsset->GetID());
+
+        // select the new viewmodel, and deselect everything else
+        for (gsl::index i = 0; i < ra::to_signed(m_vFilteredAssets.Count()); ++i)
         {
-            if (pItem->GetId() == nId && pItem->GetType() == nType)
+            auto* pItem = m_vFilteredAssets.GetItemAt(i);
+            if (pItem != nullptr)
             {
-                pItem->SetSelected(true);
-                nIndex = i;
-            }
-            else
-            {
-                pItem->SetSelected(false);
+                if (pItem->GetId() == nId && pItem->GetType() == nType)
+                {
+                    pItem->SetSelected(true);
+                    nIndex = i;
+                }
+                else
+                {
+                    pItem->SetSelected(false);
+                }
             }
         }
     }
@@ -1863,8 +1936,8 @@ void AssetListViewModel::CloneSelected()
     }
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    const auto pAuthor = ra::Widen(pUserContext.GetDisplayName());
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
+    const auto pAuthor = ra::util::String::Widen(pUserContext.GetDisplayName());
 
     FilteredAssets().BeginUpdate();
 
@@ -1887,6 +1960,7 @@ void AssetListViewModel::CloneSelected()
             vmAchievement.SetBadge(pSourceAchievement->GetBadge());
             vmAchievement.SetPoints(pSourceAchievement->GetPoints());
             vmAchievement.SetTrigger(pSourceAchievement->GetTrigger());
+            vmAchievement.SetAchievementType(pSourceAchievement->GetAchievementType());
             vmAchievement.SetNew();
 
             EnsureAppearsInFilteredList(vmAchievement);

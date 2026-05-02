@@ -57,16 +57,16 @@ void MemoryBookmarksDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); 
 MemoryBookmarksDialog::BookmarksGridBinding::BookmarksGridBinding(ViewModelBase& vmViewModel)
     : ra::ui::win32::bindings::GridBinding(vmViewModel)
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.AddNotifyTarget(*this);
+    auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
+    pMemoryContext.AddNotifyTarget(*this);
 }
 
 MemoryBookmarksDialog::BookmarksGridBinding::~BookmarksGridBinding()
 {
-    if (ra::services::ServiceLocator::Exists<ra::data::context::EmulatorContext>())
+    if (ra::services::ServiceLocator::Exists<ra::context::IEmulatorMemoryContext>())
     {
-        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        pEmulatorContext.RemoveNotifyTarget(*this);
+        auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
+        pMemoryContext.RemoveNotifyTarget(*this);
     }
 }
 
@@ -102,10 +102,11 @@ public:
             return ra::ui::win32::bindings::GridAddressColumnBinding::GetText(vmItems, nIndex);
 
         const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
         if (pItem->IsIndirectAddress())
-            return ra::StringPrintf(L"(%s)", ra::ByteAddressToString(nValue).substr(2));
+            return ra::util::String::Printf(L"(%s)", pMemoryContext.FormatAddress(nValue).substr(2));
 
-        return ra::Widen(ra::ByteAddressToString(nValue));
+        return pMemoryContext.FormatAddress(nValue);
     }
 };
 

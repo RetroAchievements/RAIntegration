@@ -31,12 +31,6 @@ public:
         return ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     }
 
-    bool IsAchievementSupported(ra::AchievementID nAchievement)
-    {
-        const auto* pAchievement = GetAchievementTrigger(nAchievement);
-        return (pAchievement != nullptr && pAchievement->state != RC_TRIGGER_STATE_DISABLED);
-    }
-
     void MockUser(const std::string& sUsername, const std::string& sApiToken);
 
     void MockGame();

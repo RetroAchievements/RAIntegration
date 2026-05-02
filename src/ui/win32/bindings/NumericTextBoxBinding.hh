@@ -82,11 +82,11 @@ protected:
                 if (m_nMinimum == 0)
                     sError = L"Negative values are not allowed";
                 else
-                    sError = ra::StringPrintf(L"Value must be at least %d", m_nMinimum);
+                    sError = ra::util::String::Printf(L"Value must be at least %d", m_nMinimum);
             }
             else if (nVal > m_nMaximum)
             {
-                sError = ra::StringPrintf(L"Value cannot exceed %d", m_nMaximum);
+                sError = ra::util::String::Printf(L"Value cannot exceed %d", m_nMaximum);
             }
             else
             {
@@ -100,7 +100,7 @@ protected:
         }
         catch (const std::out_of_range&)
         {
-            sError = ra::StringPrintf(L"Value cannot exceed %d", m_nMaximum);
+            sError = ra::util::String::Printf(L"Value cannot exceed %d", m_nMaximum);
         }
 
         return 0;

@@ -1,6 +1,7 @@
 #include "MemorySearchViewModel.hh"
 
-#include "data\context\ConsoleContext.hh"
+#include "context\IConsoleContext.hh"
+
 #include "data\context\EmulatorContext.hh"
 
 #include "services\IClock.hh"
@@ -77,9 +78,9 @@ void MemorySearchViewModel::SearchResultViewModel::UpdateRowColor()
         // green if bookmark found
         SetRowColor(ra::ui::Color(0xFFE0FFE0));
     }
-    else if (bHasCodeNote)
+    else if (bHasMemoryNote)
     {
-        // blue if code note found
+        // blue if memory note found
         SetRowColor(ra::ui::Color(0xFFE0F0FF));
     }
     else if (bHasBeenModified)
@@ -94,23 +95,23 @@ void MemorySearchViewModel::SearchResultViewModel::UpdateRowColor()
     }
 }
 
-void MemorySearchViewModel::SearchResultViewModel::UpdateCodeNote(const std::wstring& sNote)
+void MemorySearchViewModel::SearchResultViewModel::UpdateMemoryNote(const std::wstring& sNote)
 {
     if (!sNote.empty())
     {
-        bHasCodeNote = true;
+        bHasMemoryNote = true;
         SetDescription(sNote);
         SetDescriptionColor(ra::ui::Color(ra::to_unsigned(DescriptionColorProperty.GetDefaultValue())));
     }
     else
     {
-        bHasCodeNote = false;
+        bHasMemoryNote = false;
 
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
         const auto* pRegion = pConsoleContext.GetMemoryRegion(nAddress);
         if (pRegion)
         {
-            SetDescription(ra::Widen(pRegion->Description));
+            SetDescription(pRegion->GetDescription());
             SetDescriptionColor(ra::ui::Color(0xFFA0A0A0));
         }
         else
@@ -167,8 +168,8 @@ MemorySearchViewModel::MemorySearchViewModel()
 
 void MemorySearchViewModel::InitializeNotifyTargets()
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.AddNotifyTarget(*this);
+    auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
+    pMemoryContext.AddNotifyTarget(*this);
     OnTotalMemorySizeChanged();
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -185,16 +186,15 @@ void MemorySearchViewModel::OnBeforeActiveGameChanged()
 void MemorySearchViewModel::OnActiveGameChanged()
 {
     // rebuild list with custom filters once the game has loaded
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    if (pGameContext.Assets().FindMemoryRegions() != nullptr)
-        RebuildPredefinedFilterRanges();
+    RebuildPredefinedFilterRanges();
 }
 
 void MemorySearchViewModel::OnTotalMemorySizeChanged()
 {
     RebuildPredefinedFilterRanges();
 
-    const auto nTotalBankSize = gsl::narrow_cast<ra::data::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().TotalMemorySize());
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    const auto nTotalBankSize = gsl::narrow_cast<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize());
     SetValue(CanBeginNewSearchProperty, (nTotalBankSize > 0U));
     SetValue(TotalMemorySizeProperty, nTotalBankSize);
 }
@@ -207,59 +207,56 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
     ra::data::ByteAddress nSystemRamEnd = 0U;
     ra::data::ByteAddress nAllRamEnd = 0U;
 
-    std::vector<ra::data::context::ConsoleContext::MemoryRegion> vmRanges;
-    auto nPreviousAddressType = ra::data::context::ConsoleContext::AddressType::Unused;
+    std::vector<ra::data::MemoryRegion> vmRanges;
+    auto nPreviousAddressType = ra::data::MemoryRegion::Type::Unused;
 
-    for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().MemoryRegions())
+    for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::context::IConsoleContext>().MemoryRegions())
     {
-        nAllRamEnd = pRegion.EndAddress;
+        nAllRamEnd = pRegion.GetEndAddress();
 
-        switch (pRegion.Type)
+        switch (pRegion.GetType())
         {
-            case ra::data::context::ConsoleContext::AddressType::Unused:
-            case ra::data::context::ConsoleContext::AddressType::VirtualRAM:
-            case ra::data::context::ConsoleContext::AddressType::ReadOnlyMemory:
-            case ra::data::context::ConsoleContext::AddressType::HardwareController:
-            case ra::data::context::ConsoleContext::AddressType::VideoRAM:
+            case ra::data::MemoryRegion::Type::Unused:
+            case ra::data::MemoryRegion::Type::VirtualRAM:
+            case ra::data::MemoryRegion::Type::ReadOnlyMemory:
+            case ra::data::MemoryRegion::Type::HardwareController:
+            case ra::data::MemoryRegion::Type::VideoRAM:
                 // don't create filter regions for these.
                 // reset the previous type to ensure the next block doesn't get merged to the last one.
-                nPreviousAddressType = ra::data::context::ConsoleContext::AddressType::Unused;
+                nPreviousAddressType = ra::data::MemoryRegion::Type::Unused;
                 continue;
 
-            case ra::data::context::ConsoleContext::AddressType::SystemRAM:
+            case ra::data::MemoryRegion::Type::SystemRAM:
                 if (nSystemRamEnd == 0)
-                    nSystemRamStart = pRegion.StartAddress;
-                nSystemRamEnd = pRegion.EndAddress;
+                    nSystemRamStart = pRegion.GetStartAddress();
+                nSystemRamEnd = pRegion.GetEndAddress();
                 break;
 
-            case ra::data::context::ConsoleContext::AddressType::SaveRAM:
+            case ra::data::MemoryRegion::Type::SaveRAM:
                 if (nExtraRamEnd == 0)
-                    nExtraRamStart = pRegion.StartAddress;
-                nExtraRamEnd = pRegion.EndAddress;
+                    nExtraRamStart = pRegion.GetStartAddress();
+                nExtraRamEnd = pRegion.GetEndAddress();
                 break;
         }
 
-        if (pRegion.Type == nPreviousAddressType && vmRanges.back().Description == pRegion.Description)
+        if (pRegion.GetType() == nPreviousAddressType && vmRanges.back().GetDescription() == pRegion.GetDescription())
         {
-            vmRanges.back().EndAddress = pRegion.EndAddress;
+            vmRanges.back().SetEndAddress(pRegion.GetEndAddress());
             continue;
         }
 
-        nPreviousAddressType = pRegion.Type;
-        auto& vmRange = vmRanges.emplace_back();
-        vmRange.Description = pRegion.Description;
-        vmRange.StartAddress = pRegion.StartAddress;
-        vmRange.EndAddress = pRegion.EndAddress;
+        nPreviousAddressType = pRegion.GetType();
+        vmRanges.emplace_back(pRegion.GetStartAddress(), pRegion.GetEndAddress(), pRegion.GetDescription());
     }
 
     for (const auto& vmRange : vmRanges)
     {
-        if (vmRange.EndAddress == nSystemRamEnd && vmRange.StartAddress == nSystemRamStart)
+        if (vmRange.GetEndAddress() == nSystemRamEnd && vmRange.GetStartAddress() == nSystemRamStart)
         {
             // system defined range already exists for "All System RAM"
             nSystemRamEnd = 0U;
         }
-        else if (vmRange.EndAddress == nExtraRamEnd && vmRange.StartAddress == nExtraRamStart)
+        else if (vmRange.GetEndAddress() == nExtraRamEnd && vmRange.GetStartAddress() == nExtraRamStart)
         {
             // system defined range already exists for "All Game RAM"
             nExtraRamEnd = 0U;
@@ -272,8 +269,8 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
     DefinePredefinedFilterRange(nIndex++, MEMORY_RANGE_ALL, L"All", 0U, nAllRamEnd, false);
 
     if (vmRanges.size() == 1 &&
-        vmRanges.front().EndAddress == nAllRamEnd &&
-        vmRanges.front().StartAddress == 0)
+        vmRanges.front().GetEndAddress() == nAllRamEnd &&
+        vmRanges.front().GetStartAddress() == 0)
     {
         // single defined range is "All Memory". don't list it separately.
     }
@@ -288,7 +285,7 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
         for (const auto& vmRange : vmRanges)
         {
             DefinePredefinedFilterRange(nIndex, gsl::narrow_cast<int>(nIndex),
-                ra::Widen(vmRange.Description), vmRange.StartAddress, vmRange.EndAddress, true);
+                vmRange.GetDescription(), vmRange.GetStartAddress(), vmRange.GetEndAddress(), true);
             ++nIndex;
         }
     }
@@ -300,7 +297,7 @@ void MemorySearchViewModel::RebuildPredefinedFilterRanges()
         for (const auto& pRegion : pMemoryRegions->CustomRegions())
         {
             DefinePredefinedFilterRange(nIndex, gsl::narrow_cast<int>(nIndex),
-                pRegion.sLabel, pRegion.nStartAddress, pRegion.nEndAddress, true);
+                pRegion.GetDescription(), pRegion.GetStartAddress(), pRegion.GetEndAddress(), true);
             ++nIndex;
         }
     }
@@ -331,8 +328,9 @@ void MemorySearchViewModel::DefinePredefinedFilterRange(gsl::index nIndex, int n
 
     if (bIncludeRangeInLabel)
     {
-        pItem->SetLabel(ra::StringPrintf(L"%s (%s-%s)", sLabel,
-            ra::ByteAddressToString(nStartAddress), ra::ByteAddressToString(nEndAddress)));
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        pItem->SetLabel(ra::util::String::Printf(L"%s (%s-%s)", sLabel,
+            pMemoryContext.FormatAddress(nStartAddress), pMemoryContext.FormatAddress(nEndAddress)));
     }
     else
     {
@@ -384,8 +382,9 @@ void MemorySearchViewModel::OnPredefinedFilterRangeChanged(const IntModelPropert
     Ensures(pEntry != nullptr);
 
     m_bSelectingFilter = true;
-    SetFilterRange(ra::StringPrintf(L"%s-%s",
-        ra::ByteAddressToString(pEntry->GetStartAddress()), ra::ByteAddressToString(pEntry->GetEndAddress())));
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    SetFilterRange(ra::util::String::Printf(L"%s-%s",
+        pMemoryContext.FormatAddress(pEntry->GetStartAddress()), pMemoryContext.FormatAddress(pEntry->GetEndAddress())));
     m_bSelectingFilter = false;
 }
 
@@ -413,7 +412,9 @@ void MemorySearchViewModel::OnFilterRangeChanged()
 
     pEntry->SetStartAddress(nStart);
     pEntry->SetEndAddress(nEnd);
-    pEntry->SetLabel(ra::StringPrintf(L"Custom (%s-%s)", ra::ByteAddressToString(nStart), ra::ByteAddressToString(nEnd)));
+
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    pEntry->SetLabel(ra::util::String::Printf(L"Custom (%s-%s)", pMemoryContext.FormatAddress(nStart), pMemoryContext.FormatAddress(nEnd)));
 
     SetPredefinedFilterRange(MEMORY_RANGE_CUSTOM);
 }
@@ -429,7 +430,7 @@ void MemorySearchViewModel::DoFrame()
         return;
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
 
     {
         std::lock_guard lock(m_oMutex);
@@ -447,7 +448,7 @@ void MemorySearchViewModel::DoFrame()
             pCurrentResults.pResults.GetMatchingAddress(nIndex++, pResult);
 
             const auto nPreviousValue = pResult.nValue;
-            UpdateResult(pRow, pCurrentResults.pResults, pResult, false, pEmulatorContext);
+            UpdateResult(pRow, pCurrentResults.pResults, pResult, false, pMemoryContext);
 
             // when updating an existing result, check to see if it's been modified and update the tracker
             if (!pRow.bHasBeenModified && pResult.nValue != nPreviousValue)
@@ -518,7 +519,7 @@ void MemorySearchViewModel::BeginNewSearch(ra::data::ByteAddress nStart, ra::dat
     std::unique_ptr<SearchResult> pResult;
     pResult.reset(new SearchResult());
     pResult->pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, nSearchType);
-    pResult->sSummary = ra::StringPrintf(L"New %s%s Search",
+    pResult->sSummary = ra::util::String::Printf(L"New %s%s Search",
         SearchTypes().GetLabelForId(ra::etoi(GetSearchType())),
         bIsAligned ? L" (aligned)" : L"");
 
@@ -605,7 +606,7 @@ void MemorySearchViewModel::DoApplyFilter()
         }
     }
 
-    ra::StringBuilder builder;
+    ra::util::StringBuilder builder;
     builder.Append(ComparisonTypes().GetLabelForId(ra::etoi(GetComparisonType())));
     builder.Append(L" ");
     switch (GetValueType())
@@ -744,7 +745,7 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
         std::lock_guard lock(m_oMutex);
         m_nSelectedSearchResult = nNewPage;
     }
-    SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
+    SetValue(SelectedPageProperty, ra::util::String::Printf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
 
     const auto& pResult = *m_vSearchResults.at(nNewPage).get();
     const auto nMatches = pResult.pResults.MatchingAddressCount();
@@ -854,8 +855,8 @@ void MemorySearchViewModel::UpdateResults()
 
         const auto& vmBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
 
         m_vResults.RemoveNotifyTarget(*this);
         m_vResults.BeginUpdate();
@@ -875,7 +876,7 @@ void MemorySearchViewModel::UpdateResults()
 
             pRow->nAddress = pResult.nAddress;
 
-            auto sAddress = ra::ByteAddressToString(pResult.nAddress);
+            auto sAddress = pMemoryContext.FormatAddress(pResult.nAddress);
             switch (pResult.nSize)
             {
                 case ra::data::Memory::Size::NibbleLower:
@@ -889,13 +890,13 @@ void MemorySearchViewModel::UpdateResults()
                     break;
             }
 
-            pRow->SetAddress(ra::Widen(sAddress));
+            pRow->SetAddress(ra::util::String::Widen(sAddress));
 
-            UpdateResult(*pRow, pCurrentResults.pResults, pResult, true, pEmulatorContext);
+            UpdateResult(*pRow, pCurrentResults.pResults, pResult, true, pMemoryContext);
 
-            const auto pCodeNote = (pCodeNotes != nullptr) ?
-                pCodeNotes->FindCodeNote(pResult.nAddress, pResult.nSize) : std::wstring(L"");
-            pRow->UpdateCodeNote(pCodeNote);
+            const auto pMemoryNote = (pMemoryNotes != nullptr) ?
+                pMemoryNotes->FindNote(pResult.nAddress, pResult.nSize) : std::wstring(L"");
+            pRow->UpdateMemoryNote(pMemoryNote);
 
             pRow->SetSelected(m_vSelectedAddresses.find(pRow->nAddress) != m_vSelectedAddresses.end());
 
@@ -915,12 +916,12 @@ void MemorySearchViewModel::UpdateResults()
 
 void MemorySearchViewModel::UpdateResult(SearchResultViewModel& vmResult,
     const ra::services::SearchResults& pResults, ra::services::SearchResult& pResult,
-    bool bForceFilterCheck, const ra::data::context::EmulatorContext& pEmulatorContext)
+    bool bForceFilterCheck, const ra::context::IEmulatorMemoryContext& pMemoryContext)
 {
     std::wstring sFormattedValue;
     pResult.nValue = vmResult.nCurrentValue;
 
-    if (pResults.UpdateValue(pResult, &sFormattedValue, pEmulatorContext) || bForceFilterCheck)
+    if (pResults.UpdateValue(pResult, &sFormattedValue, pMemoryContext) || bForceFilterCheck)
     {
         if (pResults.GetFilterType() == ra::services::SearchFilterType::InitialValue)
             vmResult.bMatchesFilter = pResults.MatchesFilter(m_vSearchResults.front()->pResults, pResult);
@@ -948,7 +949,7 @@ bool MemorySearchViewModel::GetResult(gsl::index nIndex, ra::services::SearchRes
 
 std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmResult) const
 {
-    std::wstring sTooltip = ra::StringPrintf(L"%s\n%s | Current\n",
+    std::wstring sTooltip = ra::util::String::Printf(L"%s\n%s | Current\n",
         vmResult.GetAddress(), vmResult.GetCurrentValue());
 
     const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult)->pResults;
@@ -972,26 +973,46 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
     return sTooltip;
 }
 
-void MemorySearchViewModel::OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote)
+void MemorySearchViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring&)
 {
+    if (m_vResults.Count() == 0 || m_vSearchResults.empty())
+        return;
+
+    const auto nSize = m_vSearchResults.front()->pResults.GetSize();
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
+    if (!pMemoryNotes)
+        return;
+
+    const auto* pNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
+    if (pNote != nullptr)
+    {
+        // if updated note is before first visible result, ignore
+        if (pNote->GetAddress() + pNote->GetBytes() <= nAddress)
+            return;
+
+        // if updated note is after last visible result, ignore
+        const auto nBytesForSize = ra::data::Memory::SizeBytes(nSize);
+        if (pNote->GetAddress() > m_vResults.GetItemAt(m_vResults.Count() - 1)->nAddress + nBytesForSize)
+            return;
+    }
+
     for (auto& pRow : m_vResults)
     {
-        if (pRow.nAddress == nAddress)
-        {
-            pRow.UpdateCodeNote(sNote);
-            break;
-        }
+        const auto sProcessedNote = pMemoryNotes->FindNote(pRow.nAddress, nSize);
+        pRow.UpdateMemoryNote(sProcessedNote);
     }
 }
 
-void MemorySearchViewModel::OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
+void MemorySearchViewModel::OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote)
 {
     for (auto& pRow : m_vResults)
     {
         if (pRow.nAddress == nOldAddress)
-            pRow.UpdateCodeNote(L"");
+            pRow.UpdateMemoryNote(L"");
         else if (pRow.nAddress == nNewAddress)
-            pRow.UpdateCodeNote(sNote);
+            pRow.UpdateMemoryNote(sNote);
     }
 }
 
@@ -1273,7 +1294,7 @@ void MemorySearchViewModel::ExportResults() const
     vmFileDialog.SetDefaultExtension(L"csv");
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-SearchResults.csv", pGameContext.GameId()));
+    vmFileDialog.SetFileName(ra::util::String::Printf(L"%u-SearchResults.csv", pGameContext.GameId()));
 
     if (vmFileDialog.ShowSaveFileDialog() == ra::ui::DialogResult::OK)
     {
@@ -1282,7 +1303,7 @@ void MemorySearchViewModel::ExportResults() const
         if (pTextWriter == nullptr)
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                ra::StringPrintf(L"Could not create %s", vmFileDialog.GetFileName()));
+                ra::util::String::Printf(L"Could not create %s", vmFileDialog.GetFileName()));
         }
         else
         {
@@ -1291,7 +1312,7 @@ void MemorySearchViewModel::ExportResults() const
             if (pResults.MatchingAddressCount() > 500)
             {
                 ra::ui::viewmodels::ProgressViewModel vmProgress;
-                vmProgress.SetMessage(ra::StringPrintf(L"Exporting %d search results", nResults));
+                vmProgress.SetMessage(ra::util::String::Printf(L"Exporting %d search results", nResults));
                 vmProgress.QueueTask([this, &pTextWriter, &vmProgress]() {
                     SaveResults(*pTextWriter, [&vmProgress](int nProgress) {
                         vmProgress.SetProgress(nProgress);
@@ -1322,6 +1343,7 @@ void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::fu
 
     sFile.WriteLine("Address,Value,PreviousValue,InitialValue");
 
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     if (pCompareResults.GetSize() == ra::data::Memory::Size::NibbleLower)
     {
         for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < pResults.MatchingAddressCount(); ++nIndex)
@@ -1332,8 +1354,8 @@ void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::fu
             const auto nSize = (pResult.nAddress & 1) ? ra::data::Memory::Size::NibbleUpper : ra::data::Memory::Size::NibbleLower;
             const auto nAddress = pResult.nAddress >> 1;
 
-            sFile.WriteLine(ra::StringPrintf(L"%s%s,%s,%s,%s",
-                ra::ByteAddressToString(nAddress), (pResult.nAddress & 1) ? "U" : "L",
+            sFile.WriteLine(ra::util::String::Printf(L"%s%s,%s,%s,%s",
+                pMemoryContext.FormatAddress(nAddress), (pResult.nAddress & 1) ? "U" : "L",
                 pResults.GetFormattedValue(nAddress, nSize),
                 pCompareResults.GetFormattedValue(nAddress, nSize),
                 pInitialResults.GetFormattedValue(nAddress, nSize)));
@@ -1355,8 +1377,8 @@ void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::fu
                 continue;
 
             const auto nAddress = pResult.nAddress;
-            sFile.WriteLine(ra::StringPrintf(L"%s,%s,%s,%s",
-                ra::ByteAddressToString(nAddress),
+            sFile.WriteLine(ra::util::String::Printf(L"%s,%s,%s,%s",
+                pMemoryContext.FormatAddress(nAddress),
                 pResults.GetFormattedValue(nAddress, nSize),
                 pCompareResults.GetFormattedValue(nAddress, nSize),
                 pInitialResults.GetFormattedValue(nAddress, nSize)));
@@ -1378,7 +1400,7 @@ void MemorySearchViewModel::ImportResults()
         case ra::services::SearchType::BitCount:
         case ra::services::SearchType::FourBit:
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                ra::StringPrintf(L"Cannot import %s search results",
+                ra::util::String::Printf(L"Cannot import %s search results",
                     m_vSearchTypes.GetLabelForId(ra::etoi(GetSearchType()))));
             return;
     }
@@ -1399,7 +1421,7 @@ void MemorySearchViewModel::ImportResults()
     vmFileDialog.SetDefaultExtension(L"csv");
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-SearchResults.csv", pGameContext.GameId()));
+    vmFileDialog.SetFileName(ra::util::String::Printf(L"%u-SearchResults.csv", pGameContext.GameId()));
 
     if (vmFileDialog.ShowOpenFileDialog() == ra::ui::DialogResult::OK)
     {
@@ -1408,7 +1430,7 @@ void MemorySearchViewModel::ImportResults()
         if (pTextReader == nullptr)
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                ra::StringPrintf(L"Could not open %s", vmFileDialog.GetFileName()));
+                ra::util::String::Printf(L"Could not open %s", vmFileDialog.GetFileName()));
         }
         else
         {
@@ -1426,7 +1448,7 @@ void MemorySearchViewModel::ImportResults()
                 std::unique_ptr<SearchResult> pResult;
                 pResult.reset(new SearchResult());
                 pResult->sSummary =
-                    ra::StringPrintf(L"Imported Search", SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
+                    ra::util::String::Printf(L"Imported Search", SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
 
                 LoadResults(*pTextReader, *pResult);
 
@@ -1483,7 +1505,7 @@ void MemorySearchViewModel::LoadResults(ra::services::TextReader& pTextReader,
         if (index2 == std::string::npos)
             continue;
 
-        pResult.nAddress = ra::ByteAddressFromString(sLine.substr(0, index));
+        pResult.nAddress = ra::data::Memory::ParseAddress(sLine.substr(0, index));
 
         const auto sValue = sLine.substr(index + 1, index2 - index - 1);
         if (bIsFloat)

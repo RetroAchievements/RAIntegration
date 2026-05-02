@@ -17,18 +17,20 @@
 
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -45,14 +47,16 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockLoginService mockLoginService;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
@@ -150,7 +154,7 @@ public:
         menu.AssertMenuItem(10, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         menu.AssertMenuItem(11, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         menu.AssertMenuItem(12, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        menu.AssertMenuItem(13, IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        menu.AssertMenuItem(13, IDM_RA_FILES_CODENOTES, L"Memory &Notes");
         menu.AssertMenuItem(14, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         menu.AssertMenuSeparator(15);
         menu.AssertMenuItem(16, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
@@ -160,7 +164,7 @@ public:
     TEST_METHOD(TestBuildMenuLoggedIn)
     {
         IntegrationMenuViewModelHarness menu;
-        menu.mockUserContext.Initialize("User", "TOKEN");
+        menu.mockLoginService.Login("User", "TOKEN");
 
         menu.BuildMenu();
 
@@ -181,7 +185,7 @@ public:
         menu.AssertMenuItem(13, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         menu.AssertMenuItem(14, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         menu.AssertMenuItem(15, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        menu.AssertMenuItem(16, IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        menu.AssertMenuItem(16, IDM_RA_FILES_CODENOTES, L"Memory &Notes");
         menu.AssertMenuItem(17, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         menu.AssertMenuSeparator(18);
         menu.AssertMenuItem(19, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
@@ -210,7 +214,7 @@ public:
         menu.AssertMenuItem(8, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         menu.AssertMenuItem(9, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         menu.AssertMenuItem(10, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        menu.AssertMenuItem(11, IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        menu.AssertMenuItem(11, IDM_RA_FILES_CODENOTES, L"Memory &Notes");
         menu.AssertMenuItem(12, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         menu.AssertMenuSeparator(13);
         menu.AssertMenuItem(14, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
@@ -276,31 +280,31 @@ public:
     TEST_METHOD(TestLogout)
     {
         IntegrationMenuViewModelHarness menu;
-        menu.mockUserContext.Initialize("User", "TOKEN");
-        Assert::IsTrue(menu.mockUserContext.IsLoggedIn());
+        menu.mockLoginService.Login("User", "TOKEN");
+        Assert::IsTrue(menu.mockLoginService.IsLoggedIn());
 
         menu.ActivateMenuItem(IDM_RA_FILES_LOGOUT);
 
-        Assert::IsFalse(menu.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(menu.mockLoginService.IsLoggedIn());
     }
 
     TEST_METHOD(TestOpenUserPage)
     {
         IntegrationMenuViewModelHarness menu;
         menu.mockConfiguration.SetHostName("host");
-        menu.mockUserContext.Initialize("User", "TOKEN");
-        Assert::IsTrue(menu.mockUserContext.IsLoggedIn());
+        menu.mockLoginService.Login("User", "TOKEN");
+        Assert::IsTrue(menu.mockLoginService.IsLoggedIn());
 
         menu.ActivateMenuItem(IDM_RA_OPENUSERPAGE);
 
-        Assert::AreEqual(std::string("http://host/user/User"), menu.mockDesktop.LastOpenedUrl());
+        Assert::AreEqual(std::string("http://host/user/User_"), menu.mockDesktop.LastOpenedUrl());
     }
 
     TEST_METHOD(TestOpenUserPageNotLoggedIn)
     {
         IntegrationMenuViewModelHarness menu;
         menu.mockConfiguration.SetHostName("host");
-        Assert::IsFalse(menu.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(menu.mockLoginService.IsLoggedIn());
 
         menu.ActivateMenuItem(IDM_RA_OPENUSERPAGE);
 
@@ -549,22 +553,22 @@ public:
         menu.AssertShowWindow<ra::ui::viewmodels::MemoryBookmarksViewModel>(IDM_RA_FILES_MEMORYBOOKMARKS, false, "view memory bookmarks", DialogResult::None);
     }
 
-    TEST_METHOD(TestShowCodeNotesHardcore)
+    TEST_METHOD(TestShowMemoryNotesHardcore)
     {
         IntegrationMenuViewModelHarness menu;
-        menu.AssertShowWindow<ra::ui::viewmodels::CodeNotesViewModel>(IDM_RA_FILES_CODENOTES, true, "view code notes", DialogResult::Yes);
+        menu.AssertShowWindow<ra::ui::viewmodels::MemoryNotesViewModel>(IDM_RA_FILES_CODENOTES, true, "view memory notes", DialogResult::Yes);
     }
 
-    TEST_METHOD(TestShowCodeNotesHardcoreAbort)
+    TEST_METHOD(TestShowMemoryNotesHardcoreAbort)
     {
         IntegrationMenuViewModelHarness menu;
-        menu.AssertShowWindow<ra::ui::viewmodels::CodeNotesViewModel>(IDM_RA_FILES_CODENOTES, true, "view code notes", DialogResult::No);
+        menu.AssertShowWindow<ra::ui::viewmodels::MemoryNotesViewModel>(IDM_RA_FILES_CODENOTES, true, "view memory notes", DialogResult::No);
     }
 
-    TEST_METHOD(TestShowCodeNotesNonHardcore)
+    TEST_METHOD(TestShowMemoryNotesNonHardcore)
     {
         IntegrationMenuViewModelHarness menu;
-        menu.AssertShowWindow<ra::ui::viewmodels::CodeNotesViewModel>(IDM_RA_FILES_CODENOTES, false, "view code notes", DialogResult::None);
+        menu.AssertShowWindow<ra::ui::viewmodels::MemoryNotesViewModel>(IDM_RA_FILES_CODENOTES, false, "view memory notes", DialogResult::None);
     }
 
     TEST_METHOD(TestShowRichPresenceMonitorHardcore)
@@ -643,7 +647,7 @@ public:
         });
 
         bool bNotesShown = false;
-        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::CodeNotesViewModel>([&bNotesShown](ra::ui::viewmodels::CodeNotesViewModel&)
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MemoryNotesViewModel>([&bNotesShown](ra::ui::viewmodels::MemoryNotesViewModel&)
         {
             bNotesShown = true;
             return DialogResult::None;
@@ -705,7 +709,7 @@ public:
         });
 
         bool bNotesShown = false;
-        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::CodeNotesViewModel>([&bNotesShown](ra::ui::viewmodels::CodeNotesViewModel&)
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MemoryNotesViewModel>([&bNotesShown](ra::ui::viewmodels::MemoryNotesViewModel&)
         {
             bNotesShown = true;
             return DialogResult::None;
@@ -767,7 +771,7 @@ public:
         });
 
         bool bNotesShown = false;
-        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::CodeNotesViewModel>([&bNotesShown](ra::ui::viewmodels::CodeNotesViewModel&)
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MemoryNotesViewModel>([&bNotesShown](ra::ui::viewmodels::MemoryNotesViewModel&)
         {
             bNotesShown = true;
             return DialogResult::None;

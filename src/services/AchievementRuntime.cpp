@@ -11,13 +11,16 @@
 
 #include "RA_md5factory.h"
 
-#include "context\IRcClient.hh"
+#include "api\impl\ConnectedServer.hh"
 
-#include "data\context\ConsoleContext.hh"
+#include "context\IConsoleContext.hh"
+#include "context\IEmulatorMemoryContext.hh"
+#include "context\IRcClient.hh"
+#include "context\UserContext.hh"
+
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 #include "data\context\SessionTracker.hh"
-#include "data\context\UserContext.hh"
 
 #include "services\FrameEventQueue.hh"
 #include "services\GameIdentifier.hh"
@@ -27,9 +30,11 @@
 #include "services\IFileSystem.hh"
 #include "services\IHttpRequester.hh"
 #include "services\ILocalStorage.hh"
+#include "services\ILoginService.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
+#include "services\impl\LoginService.hh"
 
 #include "ui\viewmodels\IntegrationMenuViewModel.hh"
 #include "ui\viewmodels\LoginViewModel.hh"
@@ -61,11 +66,11 @@ static int CanSubmit()
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
         return 0;
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (pEmulatorContext.WasMemoryModified())
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    if (pMemoryContext.WasMemoryModified())
         return 0;
 
-    if (_RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
+    if (_RA_HardcoreModeIsActive() && pMemoryContext.IsMemoryInsecure())
         return 0;
 
     return 1;
@@ -147,7 +152,7 @@ static int RichPresenceOverride(rc_client_t*, char buffer[], size_t buffer_size)
     // don't send text from modified rich presence to server
     const auto* pRichPresence = pGameContext.Assets().FindRichPresence();
     if (pRichPresence && pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
-        return snprintf(buffer, buffer_size, "Playing %s", ra::Narrow(pGameContext.GameTitle()).c_str());
+        return snprintf(buffer, buffer_size, "Playing %s", ra::util::String::Narrow(pGameContext.GameTitle()).c_str());
 
     // allow default behavior
     return 0;
@@ -159,15 +164,15 @@ static uint32_t IdentifyUnknownHash(uint32_t console_id, const char* hash, rc_cl
     RA_LOG_INFO("Could not identify game with hash %s", hash);
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+    auto sEstimatedGameTitle = ra::util::String::Widen(pEmulatorContext.GetGameTitle());
 
     if (console_id == RC_CONSOLE_UNKNOWN)
-        console_id = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Id();
+        console_id = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>().Id();
 
     ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
     vmUnknownGame.InitializeGameTitles(ra::itoe<ConsoleID>(console_id));
-    vmUnknownGame.SetSystemName(ra::Widen(rc_console_name(console_id)));
-    vmUnknownGame.SetChecksum(ra::Widen(hash));
+    vmUnknownGame.SetSystemName(ra::util::String::Widen(rc_console_name(console_id)));
+    vmUnknownGame.SetChecksum(ra::util::String::Widen(hash));
     vmUnknownGame.SetEstimatedGameName(sEstimatedGameTitle);
     vmUnknownGame.SetNewGameName(sEstimatedGameTitle);
 
@@ -223,20 +228,27 @@ void AchievementRuntime::InitializeRcClient()
     rc_client_set_event_handler(pClient, EventHandler);
 }
 
+GSL_SUPPRESS_F6
 AchievementRuntime::~AchievementRuntime()
 {
     if (!ra::services::ServiceLocator::IsShuttingDown() &&
         ra::services::ServiceLocator::Exists<ra::context::IRcClient>())
     {
-        GSL_SUPPRESS_F6
+        if (ra::services::ServiceLocator::Exists<ra::data::context::GameContext>())
+        {
+            auto* pRichPrecense = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets().FindRichPresence();
+            if (pRichPrecense)
+                pRichPrecense->Deactivate(); // prevents runtime from trying to free memory owned by RichPresence
+        }
+
         ra::services::ServiceLocator::GetMutable<ra::context::IRcClient>().Shutdown();
     }
 }
 
 uint32_t AchievementRuntime::ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes, rc_client_t*)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    return pEmulatorContext.ReadMemory(nAddress, pBuffer, nBytes);
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    return pMemoryContext.ReadMemory(nAddress, pBuffer, nBytes);
 }
 
 typedef struct QueueMemoryReadData
@@ -393,7 +405,7 @@ private:
                         if (pSrcAchievement != nullptr)
                         {
                             memcpy(pAchievement, pSrcAchievement, sizeof(*pAchievement));
-                            vmAchievement->ReplaceAttached(*pAchievement++);
+                            vmAchievement->SetLocalAchievementInfo(*pAchievement++);
                             break;
                         }
                     }
@@ -423,14 +435,14 @@ private:
                         }
                     }
 
-                    if (pSrcAchievement != nullptr && pSrcAchievement == vmAchievement->GetAttached())
+                    if (pSrcAchievement != nullptr && pSrcAchievement == vmAchievement->GetRuntimeAchievementInfo())
                     {
                         // transfer the trigger ownership to the new SubsetWrapper
                         if (pSrcAchievement->trigger && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pSrcAchievement->trigger))
                             pSubsetWrapper->vAllocatedMemory.push_back(pSrcAchievement->trigger);
 
                         memcpy(pAchievement, pSrcAchievement, sizeof(*pAchievement));
-                        vmAchievement->ReplaceAttached(*pAchievement);
+                        vmAchievement->SetLocalAchievementInfo(*pAchievement);
                     }
                     else
                     {
@@ -450,16 +462,36 @@ private:
                             }
                         }
 
-                        // no rc_client_achievement_t found for this achievement, populate from the model
-                        vmAchievement->AttachAndInitialize(*pAchievement);
+                        // no rc_client_achievement_t found for this achievement, completely populate from the model
+                        vmAchievement->SetLocalAchievementInfo(*pAchievement);
+                        vmAchievement->SyncToLocalAchievementInfo();
+
+                        if (pAchievement->public_.badge_name[0] != 'L' && strcmp(pAchievement->public_.badge_name, "00000") != 0)
+                        {
+                            auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+                            std::string sBadgeName = pAchievement->public_.badge_name;
+                            char buffer[256];
+
+                            if (rc_client_achievement_get_image_url(&pAchievement->public_, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, buffer, sizeof(buffer)) == RC_OK)
+                            {
+                                pAchievement->public_.badge_url = rc_buffer_strcpy(&pSubsetWrapper->pBuffer, buffer);
+                                pImageRepository.FetchImage(ra::ui::ImageType::Badge, sBadgeName, pAchievement->public_.badge_url);
+                            }
+
+                            if (rc_client_achievement_get_image_url(&pAchievement->public_, RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE, buffer, sizeof(buffer)) == RC_OK)
+                            {
+                                pAchievement->public_.badge_locked_url = rc_buffer_strcpy(&pSubsetWrapper->pBuffer, buffer);
+                                pImageRepository.FetchImage(ra::ui::ImageType::Badge, sBadgeName + "_lock", pAchievement->public_.badge_locked_url);
+                            }
+                        }
                     }
 
                     // have to generate local urls for local images
                     if (pAchievement->public_.badge_name[0] == 'L')
                     {
                         const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
-                        auto sUrl = ra::StringPrintf("file://%s",
-                            pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement->GetBadge())));
+                        auto sUrl = ra::util::String::Printf("file://%s",
+                            pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::util::String::Narrow(vmAchievement->GetBadge())));
                         std::replace(sUrl.begin(), sUrl.end(), '\\', '/');
                         pAchievement->public_.badge_url = pAchievement->public_.badge_locked_url =
                             rc_buffer_strncpy(&pSubsetWrapper->pBuffer, sUrl.c_str(), sUrl.length());
@@ -519,7 +551,7 @@ private:
                                 }
                             }
 
-                            vmLeaderboard->ReplaceAttached(*pLeaderboard++);
+                            vmLeaderboard->SetLocalLeaderboardInfo(*pLeaderboard++);
                             break;
                         }
                     }
@@ -527,7 +559,7 @@ private:
                 else
                 {
                     pSrcLeaderboard = nullptr;
-                    if (m_pSubsetWrapper != nullptr && vmLeaderboard->GetAttached() != nullptr)
+                    if (m_pSubsetWrapper != nullptr && vmLeaderboard->GetRuntimeLeaderboard() != nullptr)
                     {
                         if (vmLeaderboard->GetCategory() == ra::data::models::AssetCategory::Local)
                         {
@@ -549,14 +581,14 @@ private:
                         }
                     }
 
-                    if (pSrcLeaderboard != nullptr && pSrcLeaderboard == vmLeaderboard->GetAttached())
+                    if (pSrcLeaderboard != nullptr && pSrcLeaderboard == vmLeaderboard->GetRuntimeLeaderboardInfo())
                     {
                         // transfer the lboard ownership to the new SubsetWrapper
                         if (pSrcLeaderboard->lboard && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pSrcLeaderboard->lboard))
                             pSubsetWrapper->vAllocatedMemory.push_back(pSrcLeaderboard->lboard);
 
                         memcpy(pLeaderboard, pSrcLeaderboard, sizeof(*pLeaderboard));
-                        vmLeaderboard->ReplaceAttached(*pLeaderboard++);
+                        vmLeaderboard->SetLocalLeaderboardInfo(*pLeaderboard++);
                     }
                     else
                     {
@@ -577,7 +609,8 @@ private:
                         }
 
                         // no rc_client_leaderboard_t found for this leaderboard, populate from the model
-                        vmLeaderboard->AttachAndInitialize(*pLeaderboard++);
+                        vmLeaderboard->SetLocalLeaderboardInfo(*pLeaderboard++);
+                        vmLeaderboard->SyncToLocalLeaderboardInfo();
                     }
                 }
             }
@@ -785,30 +818,6 @@ static rc_client_achievement_info_t* GetAchievementInfo(rc_client_t* pClient, ra
     return nullptr;
 }
 
-rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId) const
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-
-    rc_client_achievement_info_t* achievement = GetAchievementInfo(pClient, nId);
-    return (achievement != nullptr) ? achievement->trigger : nullptr;
-}
-
-const rc_client_achievement_info_t* AchievementRuntime::GetPublishedAchievementInfo(ra::AchievementID nId) const
-{
-    if (m_pClientSynchronizer != nullptr)
-        return m_pClientSynchronizer->GetPublishedAchievementInfo(nId);
-
-    return nullptr;
-}
-
-const rc_client_leaderboard_info_t* AchievementRuntime::GetPublishedLeaderboardInfo(ra::LeaderboardID nId) const
-{
-    if (m_pClientSynchronizer != nullptr)
-        return m_pClientSynchronizer->GetPublishedLeaderboardInfo(nId);
-
-    return nullptr;
-}
-
 std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_t& pAchievement)
 {
     std::string sBadgeName = pAchievement.badge_name;
@@ -819,7 +828,7 @@ std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         auto* vmLocalAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
         if (vmLocalAchievement != nullptr)
-            sBadgeName = ra::Narrow(vmLocalAchievement->GetBadge());
+            sBadgeName = ra::util::String::Narrow(vmLocalAchievement->GetBadge());
     }
 
     return sBadgeName;
@@ -885,119 +894,6 @@ void AchievementRuntime::UpdateActiveLeaderboards()
     }
 }
 
-static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra::LeaderboardID nId) noexcept
-{
-    if (!pClient || !pClient->game)
-        return nullptr;
-
-    rc_client_subset_info_t* subset = pClient->game->subsets;
-    for (; subset; subset = subset->next)
-    {
-        rc_client_leaderboard_info_t* leaderboard = subset->leaderboards;
-        const rc_client_leaderboard_info_t* stop = leaderboard + subset->public_.num_leaderboards;
-
-        for (; leaderboard < stop; ++leaderboard)
-        {
-            if (leaderboard->public_.id == nId)
-                return leaderboard;
-        }
-    }
-
-    return nullptr;
-}
-
-rc_lboard_t* AchievementRuntime::GetLeaderboardDefinition(ra::LeaderboardID nId) const
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-
-    rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(pClient, nId);
-    return (leaderboard != nullptr) ? leaderboard->lboard : nullptr;
-}
-
-void AchievementRuntime::ReleaseLeaderboardTracker(ra::LeaderboardID nId)
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-    rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(pClient, nId);
-    if (leaderboard)
-    {
-        rc_client_leaderboard_tracker_info_t* tracker = leaderboard->tracker;
-        if (tracker)
-        {
-            rc_client_release_leaderboard_tracker(pClient->game, leaderboard);
-
-            if (tracker->pending_events & RC_CLIENT_LEADERBOARD_TRACKER_PENDING_EVENT_HIDE)
-            {
-                rc_client_event_t pEvent;
-                memset(&pEvent, 0, sizeof(pEvent));
-                pEvent.leaderboard_tracker = &tracker->public_;
-                pEvent.type = RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE;
-                pClient->callbacks.event_handler(&pEvent, pClient);
-
-                tracker->pending_events = RC_CLIENT_LEADERBOARD_TRACKER_PENDING_EVENT_NONE;
-            }
-        }
-    }
-}
-
-bool AchievementRuntime::HasRichPresence() const
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-
-    return m_nRichPresenceParseResult != RC_OK || rc_client_has_rich_presence(pClient);
-}
-
-std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
-{
-    if (m_nRichPresenceParseResult != RC_OK)
-    {
-        return ra::StringPrintf(L"Parse error %d (line %d): %s", m_nRichPresenceParseResult,
-            m_nRichPresenceErrorLine, rc_error_str(m_nRichPresenceParseResult));
-    }
-
-    if (!HasRichPresence())
-        return L"No Rich Presence defined.";
-
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-
-    char sRichPresence[256];
-    if (rc_client_get_rich_presence_message(pClient, sRichPresence, sizeof(sRichPresence)) > 0)
-        return ra::Widen(sRichPresence);
-
-    return L"";
-}
-
-bool AchievementRuntime::ActivateRichPresence(const std::string& sScript)
-{
-    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-    auto* game = pClient->game;
-    if (!game)
-    {
-        // game still loading - assume success
-        return true;
-    }
-    auto* runtime = &game->runtime;
-    Expects(runtime != nullptr);
-
-    rc_mutex_lock(&pClient->state.mutex);
-
-    if (sScript.empty())
-    {
-        m_nRichPresenceParseResult = RC_OK;
-        if (runtime->richpresence != nullptr)
-            runtime->richpresence->richpresence = nullptr;
-    }
-    else
-    {
-        m_nRichPresenceParseResult = rc_runtime_activate_richpresence(runtime, sScript.c_str(), nullptr, 0);
-        if (m_nRichPresenceParseResult != RC_OK)
-            m_nRichPresenceParseResult = rc_richpresence_size_lines(sScript.c_str(), &m_nRichPresenceErrorLine);
-    }
-
-    rc_mutex_unlock(&pClient->state.mutex);
-
-    return (m_nRichPresenceParseResult == RC_OK);
-}
-
 /* ---- Login ----- */
 
 void AchievementRuntime::BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
@@ -1052,18 +948,32 @@ void AchievementRuntime::LoginCallback(int nResult, const char* sErrorMessage, r
         else
         {
             // initialize the user context
-            auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-            if (pUserContext.IsLoginDisabled())
+            if (ra::services::ServiceLocator::Get<ra::services::ILoginService>().IsLoginDisabled())
             {
                 nResult = RC_INVALID_STATE;
                 sErrorMessage = "Login has been disabled.";
             }
             else
             {
+                auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::context::UserContext>();
                 pUserContext.Initialize(user->username, user->display_name, user->token);
                 pUserContext.SetScore(user->score);
 
-                ra::ui::viewmodels::LoginViewModel::PostLoginInitialization();
+                // load the session information
+                auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
+                pSessionTracker.Initialize(pUserContext.GetUsername());
+
+                // notify the client to update the RetroAchievements menu
+                ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
+                RaiseClientExternalMenuChanged();
+
+                // update the client title-bar to include the user name
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
+
+                // update the global IServer instance to the connected API
+                const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                auto serverApi = std::make_unique<ra::api::impl::ConnectedServer>(pConfiguration.GetHostUrl());
+                ra::services::ServiceLocator::Provide<ra::api::IServer>(std::move(serverApi));
             }
         }
     }
@@ -1131,7 +1041,7 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 
     auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
-    pRichPresence->SetScript(game_data_response->rich_presence_script);
+    pRichPresence->InitializeFromPublishedScript(nullptr, game_data_response->rich_presence_script);
     pRichPresence->CreateServerCheckpoint();
     pRichPresence->CreateLocalCheckpoint();
     pGameContext.Assets().Append(std::move(pRichPresence));
@@ -1232,12 +1142,12 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
 
             // we don't have the actual game title, so we can't just call InitializeTestCompatibilityMode
             vmUnknownGame.InitializeGameTitles(ra::itoe<ConsoleID>(pClient->game->public_.console_id));
-            vmUnknownGame.SetSystemName(ra::Widen(rc_console_name(pClient->game->public_.console_id)));
-            vmUnknownGame.SetChecksum(ra::Widen(pClient->game->public_.hash));
+            vmUnknownGame.SetSystemName(ra::util::String::Widen(rc_console_name(pClient->game->public_.console_id)));
+            vmUnknownGame.SetChecksum(ra::util::String::Widen(pClient->game->public_.hash));
             vmUnknownGame.SetSelectedGameId(nGameId);
 
             const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-            auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+            auto sEstimatedGameTitle = ra::util::String::Widen(pEmulatorContext.GetGameTitle());
             vmUnknownGame.SetEstimatedGameName(sEstimatedGameTitle);
 
             if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
@@ -1264,7 +1174,7 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
         // doesn't flag every achievement as invalid.
         if (IsExternalRcheevosClient() && pClient->game)
         {
-            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
             if (pConsoleContext.Id() != ra::itoe<ConsoleID>(pClient->game->public_.console_id) &&
                 pClient->game->public_.console_id != 0)
             {
@@ -1324,88 +1234,105 @@ void AchievementRuntime::UnloadGame()
 
 /* ---- DoFrame ----- */
 
-static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
-    std::vector<rc_client_achievement_info_t*>& vAchievementsWithHits,
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits,
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
+static void PrepareForPauseOnReset(const ra::data::context::GameAssets& pAssets,
+    std::vector<const rc_client_achievement_info_t*>& vAchievementsWithHits)
 {
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    for (auto& vmAsset : pGameContext.Assets())
+    std::vector<const ra::data::models::AchievementModel*> vAchievements;
+    pAssets.GetPauseOnResetAchievements(vAchievements);
+
+    for (const auto* vmAchievement : vAchievements)
     {
-        const auto* vmAchievement = dynamic_cast<ra::data::models::AchievementModel*>(&vmAsset);
-        if (vmAchievement != nullptr)
+        if (vmAchievement && vmAchievement->IsActive())
         {
-            if (vmAchievement->IsPauseOnReset())
-            {
-                auto* pAchievement = GetAchievementInfo(pClient, vmAchievement->GetID());
-                if (pAchievement && pAchievement->trigger && pAchievement->trigger->has_hits)
-                    vAchievementsWithHits.push_back(pAchievement);
-            }
-
-            continue;
+            const auto* pAchievement = vmAchievement->GetRuntimeTrigger();
+            if (pAchievement != nullptr && pAchievement->has_hits)
+                vAchievementsWithHits.push_back(vmAchievement->GetRuntimeAchievementInfo());
         }
+    }
+}
 
-        const auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(&vmAsset);
-        if (vmLeaderboard != nullptr)
+static void PrepareForPauseOnReset(const ra::data::context::GameAssets& pAssets,
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits)
+{
+    std::vector<const ra::data::models::LeaderboardModel*> vLeaderboards;
+    pAssets.GetPauseOnResetLeaderboards(vLeaderboards);
+
+    for (const auto* vmLeaderboard : vLeaderboards)
+    {
+        if (vmLeaderboard && vmLeaderboard->IsActive())
         {
-            using namespace ra::bitwise_ops;
-
-            auto nPauseOnReset = vmLeaderboard->GetPauseOnReset();
-            if (nPauseOnReset != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+            const auto* pLeaderboard = vmLeaderboard->GetRuntimeLeaderboard();
+            if (pLeaderboard != nullptr)
             {
-                auto* pLeaderboard = GetLeaderboardInfo(pClient, vmLeaderboard->GetID());
-                if (pLeaderboard && pLeaderboard->lboard)
+                auto nPauseOnReset = vmLeaderboard->GetPauseOnReset();
+                if (nPauseOnReset != ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    if (!pLeaderboard->lboard->start.has_hits)
+                    using namespace ra::bitwise_ops;
+
+                    if (!pLeaderboard->start.has_hits)
                         nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Start;
-                    if (!pLeaderboard->lboard->cancel.has_hits)
+                    if (!pLeaderboard->cancel.has_hits)
                         nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
-                    if (!pLeaderboard->lboard->submit.has_hits)
+                    if (!pLeaderboard->submit.has_hits)
                         nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
-                    if (!pLeaderboard->lboard->value.value.value)
+                    if (!pLeaderboard->value.value.value)
                         nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Value;
 
                     if (nPauseOnReset != ra::data::models::LeaderboardModel::LeaderboardParts::None)
-                        mLeaderboardsWithHits[pLeaderboard] = nPauseOnReset;
-                }
-            }
-
-            auto nPauseOnTrigger = vmLeaderboard->GetPauseOnTrigger();
-            if (nPauseOnTrigger != ra::data::models::LeaderboardModel::LeaderboardParts::None)
-            {
-                auto* pLeaderboard = GetLeaderboardInfo(pClient, vmLeaderboard->GetID());
-                if (pLeaderboard && pLeaderboard->lboard)
-                {
-                    if (pLeaderboard->lboard->start.state == RC_TRIGGER_STATE_TRIGGERED)
-                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Start;
-                    if (pLeaderboard->lboard->cancel.state == RC_TRIGGER_STATE_TRIGGERED)
-                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
-                    if (pLeaderboard->lboard->submit.state == RC_TRIGGER_STATE_TRIGGERED)
-                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
-
-                    if (nPauseOnTrigger != ra::data::models::LeaderboardModel::LeaderboardParts::None)
-                        mActiveLeaderboards[pLeaderboard] = nPauseOnTrigger;
+                        mLeaderboardsWithHits[vmLeaderboard->GetRuntimeLeaderboardInfo()] = nPauseOnReset;
                 }
             }
         }
     }
 }
 
-static void RaisePauseOnChangeEvents(std::vector<rc_client_achievement_info_t*>& vAchievementsWithHits)
+static void PrepareForPauseOnTrigger(const ra::data::context::GameAssets& pAssets,
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
+{
+    std::vector<const ra::data::models::LeaderboardModel*> vLeaderboards;
+    pAssets.GetPauseOnTriggerLeaderboards(vLeaderboards);
+
+    for (const auto* vmLeaderboard : vLeaderboards)
+    {
+        if (vmLeaderboard && vmLeaderboard->IsActive())
+        {
+            const auto* pLeaderboard = vmLeaderboard->GetRuntimeLeaderboard();
+            if (pLeaderboard != nullptr)
+            {
+                auto nPauseOnTrigger = vmLeaderboard->GetPauseOnTrigger();
+                if (nPauseOnTrigger != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                {
+                    using namespace ra::bitwise_ops;
+
+                    if (pLeaderboard->start.state == RC_TRIGGER_STATE_TRIGGERED)
+                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Start;
+                    if (pLeaderboard->cancel.state == RC_TRIGGER_STATE_TRIGGERED)
+                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
+                    if (pLeaderboard->submit.state == RC_TRIGGER_STATE_TRIGGERED)
+                        nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
+
+                    if (nPauseOnTrigger != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                        mActiveLeaderboards[vmLeaderboard->GetRuntimeLeaderboardInfo()] = nPauseOnTrigger;
+                }
+            }
+        }
+    }
+}
+
+static void RaisePauseOnChangeEvents(std::vector<const rc_client_achievement_info_t*>& vAchievementsWithHits)
 {
     for (const auto* pAchievement : vAchievementsWithHits)
     {
         if (pAchievement != nullptr && pAchievement->trigger && !pAchievement->trigger->has_hits)
         {
             auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-            pFrameEventQueue.QueuePauseOnReset(ra::Widen(pAchievement->public_.title));
+            pFrameEventQueue.QueuePauseOnReset(ra::util::String::Widen(pAchievement->public_.title));
         }
     }
 }
 
 static void RaisePauseOnChangeEvents(
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits,
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits)
 {
     for (auto pair : mLeaderboardsWithHits)
     {
@@ -1431,30 +1358,34 @@ static void RaisePauseOnChangeEvents(
                 if ((nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Start) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnReset(ra::StringPrintf(L"Start: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnReset(ra::util::String::Printf(L"Start: %s", pair.first->public_.title));
                 }
 
                 if ((nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Cancel) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnReset(ra::StringPrintf(L"Cancel: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnReset(ra::util::String::Printf(L"Cancel: %s", pair.first->public_.title));
                 }
 
                 if ((nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Submit) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnReset(ra::StringPrintf(L"Submit: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnReset(ra::util::String::Printf(L"Submit: %s", pair.first->public_.title));
                 }
 
                 if ((nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Value) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnReset(ra::StringPrintf(L"Value: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnReset(ra::util::String::Printf(L"Value: %s", pair.first->public_.title));
                 }
             }
         }
     }
+}
 
+static void RaisePauseOnTriggerEvents(
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
+{
     for (auto pair : mActiveLeaderboards)
     {
         if (pair.first && pair.first->lboard)
@@ -1477,19 +1408,19 @@ static void RaisePauseOnChangeEvents(
                 if ((nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Start) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnTrigger(ra::StringPrintf(L"Start: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnTrigger(ra::util::String::Printf(L"Start: %s", pair.first->public_.title));
                 }
 
                 if ((nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Cancel) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnTrigger(ra::StringPrintf(L"Cancel: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnTrigger(ra::util::String::Printf(L"Cancel: %s", pair.first->public_.title));
                 }
 
                 if ((nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Submit) !=
                     ra::data::models::LeaderboardModel::LeaderboardParts::None)
                 {
-                    pFrameEventQueue.QueuePauseOnTrigger(ra::StringPrintf(L"Submit: %s", pair.first->public_.title));
+                    pFrameEventQueue.QueuePauseOnTrigger(ra::util::String::Printf(L"Submit: %s", pair.first->public_.title));
                 }
             }
         }
@@ -1508,18 +1439,30 @@ void AchievementRuntime::DoFrame()
         return;
     }
 
-    std::vector<rc_client_achievement_info_t*> vAchievementsWithHits;
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mLeaderboardsWithHits;
-    std::map<rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mActiveLeaderboards;
+    const auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
+    if (!pAssets.HasPauseOnXAssets())
+    {
+        rc_client_do_frame(pClient);
+        return;
+    }
 
-    PrepareForPauseOnChangeEvents(pClient, vAchievementsWithHits, mLeaderboardsWithHits, mActiveLeaderboards);
+    std::vector<const rc_client_achievement_info_t*> vAchievementsWithHits;
+    PrepareForPauseOnReset(pAssets, vAchievementsWithHits);
+
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mLeaderboardsWithHits;
+    PrepareForPauseOnReset(pAssets, mLeaderboardsWithHits);
+
+    std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts> mActiveLeaderboards;
+    PrepareForPauseOnTrigger(pAssets, mActiveLeaderboards);
 
     rc_client_do_frame(pClient);
 
     if (!vAchievementsWithHits.empty())
         RaisePauseOnChangeEvents(vAchievementsWithHits);
-    if (!mLeaderboardsWithHits.empty() || !mActiveLeaderboards.empty())
-        RaisePauseOnChangeEvents(mLeaderboardsWithHits, mActiveLeaderboards);
+    if (!mLeaderboardsWithHits.empty())
+        RaisePauseOnChangeEvents(mLeaderboardsWithHits);
+    if (!mActiveLeaderboards.empty())
+        RaisePauseOnTriggerEvents(mActiveLeaderboards);
 }
 
 void AchievementRuntime::Idle() const
@@ -1565,22 +1508,11 @@ void AchievementRuntime::InvalidateAddress(ra::data::ByteAddress nAddress)
 
 static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchievement)
 {
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
+    const auto* vmAchievement = CheckForPauseOnTrigger(pAchievement);
     if (!vmAchievement)
     {
         RA_LOG_ERR("Received achievement triggered event for unknown achievement %u", pAchievement.id);
         return;
-    }
-
-    // immediately update the state to Triggered (instead of waiting for AssetListViewModel::DoFrame to do it).
-    // this captures the unlock time and rich presence state, even if KeepActive it selected.
-    vmAchievement->SetState(ra::data::models::AssetState::Triggered);
-
-    if (vmAchievement->IsPauseOnTrigger())
-    {
-        auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-        pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetName());
     }
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -1589,8 +1521,8 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
     bool bIsError = false;
 
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement.title, pAchievement.points));
-    vmPopup->SetDetail(ra::Widen(pAchievement.description));
+    vmPopup->SetDescription(ra::util::String::Printf(L"%s (%u)", pAchievement.title, pAchievement.points));
+    vmPopup->SetDetail(ra::util::String::Widen(pAchievement.description));
     vmPopup->SetImage(ra::ui::ImageType::Badge, AchievementRuntime::GetAchievementBadge(pAchievement));
     vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
 
@@ -1616,7 +1548,7 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
     if (vmAchievement->IsModified() ||                                                    // actual modifications
         (bSubmit && vmAchievement->GetChanges() != ra::data::models::AssetChanges::None)) // unpublished changes
     {
-        auto sHeader = vmPopup->GetTitle();
+        std::wstring sHeader = vmPopup->GetTitle();
         sHeader.insert(0, L"Modified ");
         if (vmAchievement->GetCategory() != ra::data::models::AssetCategory::Local)
             sHeader.append(L" LOCALLY");
@@ -1629,9 +1561,9 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
         bTakeScreenshot = false;
     }
 
-    if (bSubmit && pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
+    if (bSubmit && ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
     {
-        auto sHeader = vmPopup->GetTitle();
+        std::wstring sHeader = vmPopup->GetTitle();
         sHeader.insert(0, L"Test ");
         vmPopup->SetTitle(sHeader);
 
@@ -1639,8 +1571,8 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
         bSubmit = false;
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (bSubmit && pEmulatorContext.WasMemoryModified())
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    if (bSubmit && pMemoryContext.WasMemoryModified())
     {
         vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
         vmPopup->SetErrorDetail(L"Error: RAM tampered with");
@@ -1650,7 +1582,7 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
         bSubmit = false;
     }
 
-    if (bSubmit && _RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
+    if (bSubmit && _RA_HardcoreModeIsActive() && pMemoryContext.IsMemoryInsecure())
     {
         vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
         vmPopup->SetErrorDetail(L"Error: RAM insecure");
@@ -1684,11 +1616,11 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
 
         if (nRarity >= 10.0)
         {
-            vmPopup->SetTitle(ra::StringPrintf(L"Achievement Unlocked - %0.2f%%", nRarity));
+            vmPopup->SetTitle(ra::util::String::Printf(L"Achievement Unlocked - %0.2f%%", nRarity));
         }
         else if (nRarity > 0.0)
         {
-            vmPopup->SetTitle(ra::StringPrintf(L"Rare Achievement Unlocked - %0.2f%%", nRarity));
+            vmPopup->SetTitle(ra::util::String::Printf(L"Rare Achievement Unlocked - %0.2f%%", nRarity));
 
             const wchar_t* sPath = L"Overlay\\rareunlock.wav";
             const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
@@ -1713,7 +1645,7 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
         if (bTakeScreenshot)
         {
             std::wstring sPath =
-                ra::StringPrintf(L"%s%u.png", pConfiguration.GetScreenshotDirectory(), pAchievement.id);
+                ra::util::String::Printf(L"%s%u.png", pConfiguration.GetScreenshotDirectory(), pAchievement.id);
             pOverlayManager.CaptureScreenshot(nPopupId, sPath);
         }
 
@@ -1737,7 +1669,7 @@ static void HandleChallengeIndicatorShowEvent(const rc_client_achievement_t& pAc
     {
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.AddChallengeIndicator(vmAchievement->GetID(), ra::ui::ImageType::Badge,
-                                              ra::Narrow(vmAchievement->GetBadge()));
+                                              ra::util::String::Narrow(vmAchievement->GetBadge()));
     }
 }
 
@@ -1763,12 +1695,12 @@ static void HandleProgressIndicatorUpdateEvent(const rc_client_achievement_t& pA
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
 
         // use locked badge if available
-        auto sBadgeName = ra::Narrow(vmAchievement->GetBadge());
-        if (!ra::StringStartsWith(sBadgeName, "local\\"))
+        auto sBadgeName = ra::util::String::Narrow(vmAchievement->GetBadge());
+        if (!ra::util::String::StartsWith(sBadgeName, "local\\"))
             sBadgeName += "_lock";
 
         pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, sBadgeName,
-                                              ra::Widen(pAchievement.measured_progress));
+                                              ra::util::String::Widen(pAchievement.measured_progress));
     }
 }
 
@@ -1792,16 +1724,16 @@ static void ShowCompletionPopup(uint32_t nGameId, const std::wstring& sTitle, ui
     const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
 
     const auto nPlayTimeSeconds =
         ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(pGameContext.ActiveGameId());
     const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
 
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmMessage->SetTitle(ra::StringPrintf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", sTitle));
-    vmMessage->SetDescription(ra::StringPrintf(L"%u achievements, %u points", nAchievements, nPoints));
-    vmMessage->SetDetail(ra::StringPrintf(L"%s | Play time: %dh%02dm", pUserContext.GetDisplayName(),
+    vmMessage->SetTitle(ra::util::String::Printf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", sTitle));
+    vmMessage->SetDescription(ra::util::String::Printf(L"%u achievements, %u points", nAchievements, nPoints));
+    vmMessage->SetDetail(ra::util::String::Printf(L"%s | Play time: %dh%02dm", pUserContext.GetDisplayName(),
         nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
     vmMessage->SetImage(ra::ui::ImageType::Icon, sBadgeName);
     vmMessage->SetPopupType(ra::ui::viewmodels::Popup::Mastery);
@@ -1812,7 +1744,7 @@ static void ShowCompletionPopup(uint32_t nGameId, const std::wstring& sTitle, ui
 
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot))
     {
-        std::wstring sPath = ra::StringPrintf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), nGameId);
+        std::wstring sPath = ra::util::String::Printf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), nGameId);
         pOverlayManager.CaptureScreenshot(nPopupId, sPath);
     }
 }
@@ -1832,7 +1764,7 @@ static void HandleSubsetCompletedEvent(const rc_client_subset_t& pSubset)
                     nPoints += pAchievement->GetPoints();
             }
 
-            const auto sTitle = ra::StringPrintf(L"%s (%s)", pGameSubset.Title(), pGameContext.GameTitle());
+            const auto sTitle = ra::util::String::Printf(L"%s (%s)", pGameSubset.Title(), pGameContext.GameTitle());
             ShowCompletionPopup(pGameSubset.GameID(), sTitle, pSubset.num_achievements, nPoints, pSubset.badge_name);
             break;
         }
@@ -1847,7 +1779,7 @@ static void HandleGameCompletedEvent(const rc_client_t& pClient)
     rc_client_user_game_summary_t summary;
     rc_client_get_user_game_summary(&pClient, &summary);
 
-    ShowCompletionPopup(pGame->id, ra::Widen(pGame->title), summary.num_core_achievements, summary.points_core, pGame->badge_name);
+    ShowCompletionPopup(pGame->id, ra::util::String::Widen(pGame->title), summary.num_core_achievements, summary.points_core, pGame->badge_name);
 }
 
 static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeaderboard)
@@ -1868,7 +1800,7 @@ static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeader
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardStarted, L"Leaderboard attempt started",
-                                     ra::Widen(pLeaderboard.title), ra::Widen(pLeaderboard.description));
+                                     ra::util::String::Widen(pLeaderboard.title), ra::util::String::Widen(pLeaderboard.description));
     }
 }
 
@@ -1890,7 +1822,7 @@ static void HandleLeaderboardFailedEvent(const rc_client_leaderboard_t& pLeaderb
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardCanceled, L"Leaderboard attempt failed",
-                                     ra::Widen(pLeaderboard.title), ra::Widen(pLeaderboard.description));
+                                     ra::util::String::Widen(pLeaderboard.title), ra::util::String::Widen(pLeaderboard.description));
     }
 }
 
@@ -1905,13 +1837,13 @@ static void ShowSimplifiedScoreboard(const rc_client_leaderboard_t& pLeaderboard
     }
 
     auto vmScoreboard = std::make_unique<ra::ui::viewmodels::ScoreboardViewModel>();
-    vmScoreboard->SetHeaderText(ra::Widen(pLeaderboard.title));
+    vmScoreboard->SetHeaderText(ra::util::String::Widen(pLeaderboard.title));
 
-    const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
+    const auto& pUserName = ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName();
     auto& pEntryViewModel = vmScoreboard->Entries().Add();
     pEntryViewModel.SetRank(0);
-    pEntryViewModel.SetScore(ra::Widen(pLeaderboard.tracker_value));
-    pEntryViewModel.SetUserName(ra::Widen(pUserName));
+    pEntryViewModel.SetScore(ra::util::String::Widen(pLeaderboard.tracker_value));
+    pEntryViewModel.SetUserName(ra::util::String::Widen(pUserName));
     pEntryViewModel.SetHighlighted(true);
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
@@ -1933,7 +1865,7 @@ static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLead
         return;
 
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmPopup->SetDescription(ra::Widen(pLeaderboard.title));
+    vmPopup->SetDescription(ra::util::String::Widen(pLeaderboard.title));
     std::wstring sTitle = L"Leaderboard Submitted";
     bool bSubmit = true;
 
@@ -1969,8 +1901,8 @@ static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLead
         bSubmit = false;
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (bSubmit && pEmulatorContext.WasMemoryModified())
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    if (bSubmit && pMemoryContext.WasMemoryModified())
     {
         vmPopup->SetErrorDetail(L"Error: RAM tampered with");
         bSubmit = false;
@@ -1983,7 +1915,7 @@ static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLead
             vmPopup->SetErrorDetail(L"Submission requires Hardcore mode");
             bSubmit = false;
         }
-        else if (pEmulatorContext.IsMemoryInsecure())
+        else if (pMemoryContext.IsMemoryInsecure())
         {
             vmPopup->SetErrorDetail(L"Error: RAM insecure");
             bSubmit = false;
@@ -2017,7 +1949,7 @@ static void HandleLeaderboardTrackerUpdateEvent(const rc_client_leaderboard_trac
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     auto* pScoreTracker = pOverlayManager.GetScoreTracker(pTracker.id);
     if (pScoreTracker)
-        pScoreTracker->SetDisplayText(ra::Widen(pTracker.display));
+        pScoreTracker->SetDisplayText(ra::util::String::Widen(pTracker.display));
 }
 
 static void HandleLeaderboardTrackerShowEvent(const rc_client_leaderboard_tracker_t& pTracker)
@@ -2029,7 +1961,7 @@ static void HandleLeaderboardTrackerShowEvent(const rc_client_leaderboard_tracke
     {
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         auto& pScoreTracker = pOverlayManager.AddScoreTracker(pTracker.id);
-        pScoreTracker.SetDisplayText(ra::Widen(pTracker.display));
+        pScoreTracker.SetDisplayText(ra::util::String::Widen(pTracker.display));
     }
 }
 
@@ -2051,9 +1983,9 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
     }
 
     auto vmScoreboard = std::make_unique<ra::ui::viewmodels::ScoreboardViewModel>();
-    vmScoreboard->SetHeaderText(ra::Widen(pLeaderboard.title));
+    vmScoreboard->SetHeaderText(ra::util::String::Widen(pLeaderboard.title));
 
-    const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
+    const auto& pUserName = ra::services::ServiceLocator::Get<ra::context::UserContext>().GetDisplayName();
     constexpr uint32_t nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
     bool bSeenPlayer = false;
 
@@ -2063,8 +1995,8 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
     {
         auto& pEntryViewModel = vmScoreboard->Entries().Add();
         pEntryViewModel.SetRank(pEntry->rank);
-        pEntryViewModel.SetScore(ra::Widen(pEntry->score));
-        pEntryViewModel.SetUserName(ra::Widen(pEntry->username));
+        pEntryViewModel.SetScore(ra::util::String::Widen(pEntry->score));
+        pEntryViewModel.SetUserName(ra::util::String::Widen(pEntry->username));
 
         if (pEntry->username == pUserName)
         {
@@ -2072,7 +2004,7 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
             pEntryViewModel.SetHighlighted(true);
 
             if (strcmp(pScoreboard.best_score, pScoreboard.submitted_score) != 0)
-                pEntryViewModel.SetScore(ra::StringPrintf(L"(%s) %s", pScoreboard.submitted_score, pScoreboard.best_score));
+                pEntryViewModel.SetScore(ra::util::String::Printf(L"(%s) %s", pScoreboard.submitted_score, pScoreboard.best_score));
         }
     }
 
@@ -2085,11 +2017,11 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
 
             if (strcmp(pScoreboard.best_score, pScoreboard.submitted_score) != 0)
                 pEntryViewModel->SetScore(
-                    ra::StringPrintf(L"(%s) %s", pScoreboard.submitted_score, pScoreboard.best_score));
+                    ra::util::String::Printf(L"(%s) %s", pScoreboard.submitted_score, pScoreboard.best_score));
             else
-                pEntryViewModel->SetScore(ra::Widen(pScoreboard.best_score));
+                pEntryViewModel->SetScore(ra::util::String::Widen(pScoreboard.best_score));
 
-            pEntryViewModel->SetUserName(ra::Widen(pUserName));
+            pEntryViewModel->SetUserName(ra::util::String::Widen(pUserName));
             pEntryViewModel->SetHighlighted(true);
         }
     }
@@ -2106,7 +2038,7 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
         const auto nPopupId = s_mAchievementPopups[nAchievementId];
 
         const auto sErrorMessage =
-            pServerError.error_message ? ra::Widen(pServerError.error_message) : L"Error submitting unlock";
+            pServerError.error_message ? ra::util::String::Widen(pServerError.error_message) : L"Error submitting unlock";
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         auto pPopup = pOverlayManager.GetMessage(nPopupId);
         if (pPopup != nullptr)
@@ -2128,12 +2060,12 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
             if (pAchievement != nullptr)
             {
                 vmPopup->SetDescription(
-                    ra::StringPrintf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
-                vmPopup->SetImage(ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()));
+                    ra::util::String::Printf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
+                vmPopup->SetImage(ra::ui::ImageType::Badge, ra::util::String::Narrow(pAchievement->GetBadge()));
             }
             else
             {
-                vmPopup->SetDescription(ra::StringPrintf(L"Achievement %u", nAchievementId));
+                vmPopup->SetDescription(ra::util::String::Printf(L"Achievement %u", nAchievementId));
             }
 
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
@@ -2153,9 +2085,9 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nLeaderboardId);
         std::wstring sLeaderboardName = (pLeaderboard != nullptr) ?
-            pLeaderboard->GetName() : ra::StringPrintf(L"Leaderboard %u", nLeaderboardId);
+            pLeaderboard->GetName() : ra::util::String::Printf(L"Leaderboard %u", nLeaderboardId);
         const auto sErrorMessage = pServerError.error_message ?
-            ra::Widen(pServerError.error_message) : L"Error submitting leaderboard entry";
+            ra::util::String::Widen(pServerError.error_message) : L"Error submitting leaderboard entry";
 
         std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
         vmMessage->SetTitle(L"Leaderboard Submit FAILED");
@@ -2171,7 +2103,7 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
     }
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-        ra::StringPrintf(L"%s:%u %s", pServerError.api, pServerError.related_id, pServerError.error_message));
+        ra::util::String::Printf(L"%s:%u %s", pServerError.api, pServerError.related_id, pServerError.error_message));
 }
 
 static void HandleResetEvent()
@@ -2269,7 +2201,7 @@ void AchievementRuntime::ResetRuntime()
     rc_client_reset(pClient);
 }
 
-static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigger_t* pTrigger,
+static void ProcessStateString(ra::util::Tokenizer& pTokenizer, unsigned int nId, rc_trigger_t* pTrigger,
                                const std::string& sSalt, const std::string& sMemString)
 {
     struct ConditionState
@@ -2320,9 +2252,9 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
     const size_t nEnd = pTokenizer.CurrentPosition();
 
     // read the given md5s
-    std::string sGivenMD5Progress = pTokenizer.ReadTo(':');
+    const auto sGivenMD5Progress = pTokenizer.ReadTo(':');
     pTokenizer.Advance();
-    std::string sGivenMD5Achievement = pTokenizer.ReadTo(':');
+    const auto sGivenMD5Achievement = pTokenizer.ReadTo(':');
     pTokenizer.Advance();
 
     if (!pTrigger)
@@ -2343,7 +2275,7 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
             // regenerate the md5 and see if it sticks
             const char* pStart = pTokenizer.GetPointer(nStart);
             std::string sModifiedProgressString =
-                ra::StringPrintf("%s%.*s%s%u", sSalt, nEnd - nStart, pStart, sSalt, nId);
+                ra::util::String::Printf("%s%.*s%s%u", sSalt, nEnd - nStart, pStart, sSalt, nId);
             std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
             if (sMD5Progress != sGivenMD5Progress)
             {
@@ -2392,9 +2324,9 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
 static bool LoadProgressV1(rc_client_t* pClient, const std::string& sProgress)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
 
-    Tokenizer pTokenizer(sProgress);
+    ra::util::Tokenizer pTokenizer(sProgress);
 
     while (!pTokenizer.EndOfString())
     {
@@ -2445,7 +2377,7 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
         if (sLine.empty())
             continue;
 
-        Tokenizer tokenizer(sLine);
+        ra::util::Tokenizer tokenizer(sLine);
         const auto c = tokenizer.PeekChar();
         tokenizer.Advance();
 
@@ -2458,7 +2390,7 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
             pMemRef.value.size = ComparisonSizeFromPrefix(cPrefix);
 
             const auto sAddr = tokenizer.ReadTo(':');
-            pMemRef.address = ra::ByteAddressFromString(sAddr);
+            pMemRef.address = ra::data::Memory::ParseAddress(sAddr);
 
             unsigned delta = 0;
             while (tokenizer.PeekChar() != '#' && !tokenizer.EndOfString())
@@ -2604,7 +2536,7 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
 
     std::string sContents;
 
-    std::wstring sAchievementStateFile = ra::Widen(sLoadStateFilename) + L".rap";
+    std::wstring sAchievementStateFile = ra::util::String::Widen(sLoadStateFilename) + L".rap";
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     auto pFile = pFileSystem.OpenTextFile(sAchievementStateFile);
     if (pFile == nullptr || !pFile->GetLine(sContents))
@@ -2661,7 +2593,7 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
     if (sSaveStateFilename == nullptr)
         return;
 
-    std::wstring sAchievementStateFile = ra::Widen(sSaveStateFilename) + L".rap";
+    std::wstring sAchievementStateFile = ra::util::String::Widen(sSaveStateFilename) + L".rap";
     auto pFile = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().CreateTextFile(sAchievementStateFile);
     if (pFile == nullptr)
     {
@@ -2702,15 +2634,15 @@ int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) 
 
 extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, _UNUSED void* pData)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     switch (nBytes)
     {
         case 1:
-            return pEmulatorContext.ReadMemoryByte(nAddress);
+            return pMemoryContext.ReadMemoryByte(nAddress);
         case 2:
-            return pEmulatorContext.ReadMemory(nAddress, ra::data::Memory::Size::SixteenBit);
+            return pMemoryContext.ReadMemory(nAddress, ra::data::Memory::Size::SixteenBit);
         case 4:
-            return pEmulatorContext.ReadMemory(nAddress, ra::data::Memory::Size::ThirtyTwoBit);
+            return pMemoryContext.ReadMemory(nAddress, ra::data::Memory::Size::ThirtyTwoBit);
         default:
             return 0U;
     }

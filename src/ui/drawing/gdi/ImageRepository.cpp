@@ -89,7 +89,7 @@ static void RemoveRedundantFileExtension(std::wstring& sFilename, const std::str
         return;
 
     auto sExtension = sName.substr(nIndex);
-    ra::StringMakeLowercase(sExtension);
+    ra::util::String::MakeLowercase(sExtension);
 
     if (sExtension == ".jpg" || sExtension == ".gif" || sExtension == ".jpeg" || sExtension == ".png")
     {
@@ -109,18 +109,18 @@ std::wstring ImageRepository::GetFilename(ImageType nType, const std::string& sN
     switch (nType)
     {
         case ImageType::Badge:
-            sFilename += RA_DIR_BADGE + ra::Widen(sName) + L".png";
+            sFilename += RA_DIR_BADGE + ra::util::String::Widen(sName) + L".png";
             // if sName contains a supported file format extension, remove the ".png"
             RemoveRedundantFileExtension(sFilename, sName);
             break;
         case ImageType::Icon:
-            sFilename += RA_DIR_BADGE + std::wstring(L"i") + ra::Widen(sName) + L".png";
+            sFilename += RA_DIR_BADGE + std::wstring(L"i") + ra::util::String::Widen(sName) + L".png";
             break;
         case ImageType::UserPic:
-            sFilename += RA_DIR_USERPIC + ra::Widen(sName) + L".png";
+            sFilename += RA_DIR_USERPIC + ra::util::String::Widen(sName) + L".png";
             break;
         case ImageType::Local:
-            sFilename += ra::Widen(sName);
+            sFilename += ra::util::String::Widen(sName);
             break;
         default:
             Expects(!"Unsupported image type");
@@ -213,7 +213,7 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName, cons
         if (response.StatusCode() == ra::services::Http::StatusCode::OK)
         {
             auto nFileSize = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().GetFileSize(sFilename);
-            RA_LOG_INFO("Wrote %lu bytes to %s", nFileSize, ra::Narrow(sFilename).c_str());
+            RA_LOG_INFO("Wrote %lu bytes to %s", nFileSize, ra::util::String::Narrow(sFilename).c_str());
 
             // only remove the image from the request queue if successful. prevents repeated requests
             {
@@ -243,10 +243,10 @@ std::string ImageRepository::StoreImage(ImageType nType, const std::wstring& sPa
         pFileSystem.CreateDirectory(sDirectory);
 
     auto sExtension = pFileSystem.GetExtension(sPath);
-    ra::StringMakeLowercase(sExtension);
+    ra::util::String::MakeLowercase(sExtension);
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    sFileMD5 = ra::StringPrintf("local\\%u-%s.%s", pGameContext.GameId(), sFileMD5, sExtension);
+    sFileMD5 = ra::util::String::Printf("local\\%u-%s.%s", pGameContext.GameId(), sFileMD5, sExtension);
 
     std::wstring sFilename = GetFilename(nType, sFileMD5);
 
@@ -415,7 +415,7 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, unsigned in
 
     // Decode the source image to IWICBitmapSource
     IWICBitmapDecoder* pDecoder = nullptr;
-    HRESULT hr = g_pIWICFactory->CreateDecoderFromFilename(ra::Widen(sFilename).c_str(), // Image to be decoded
+    HRESULT hr = g_pIWICFactory->CreateDecoderFromFilename(ra::util::String::Widen(sFilename).c_str(), // Image to be decoded
                                                            nullptr,      // Do not prefer a particular vendor
                                                            GENERIC_READ, // Desired read access to the file
                                                            WICDecodeMetadataCacheOnDemand, // Cache metadata when needed

@@ -15,21 +15,25 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
+#include "tests\devkit\services\mocks\MockMessageDispatcher.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockAudioSystem.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
-#include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -63,7 +67,9 @@ public:
         }
 
         ra::api::mocks::MockServer mockServer;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
+        ra::context::mocks::MockUserContext mockUser;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockStorage;
@@ -71,11 +77,12 @@ public:
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
+        ra::services::mocks::MockMessageDispatcher mockMessageDispatcher;
+        ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulator;
         ra::data::context::mocks::MockSessionTracker mockSessionTracker;
-        ra::data::context::mocks::MockUserContext mockUser;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
@@ -102,11 +109,6 @@ public:
         bool HasRichPresence() const
         {
             return Assets().FindRichPresence() != nullptr;
-        }
-
-        std::wstring GetRichPresenceDisplayString() const
-        {
-            return mockAchievementRuntime.GetRichPresenceDisplayString();
         }
 
         bool IsRichPresenceFromFile() const
@@ -155,7 +157,7 @@ public:
             ConsoleID nConsoleID = ConsoleID::MegaDrive)
         {
             mockConsoleContext.SetId(nConsoleID);
-            mockConsoleContext.SetName(ra::Widen(rc_console_name(static_cast<int>(nConsoleID))));
+            mockConsoleContext.SetName(ra::util::String::Widen(rc_console_name(static_cast<int>(nConsoleID))));
 
             mockAchievementRuntime.MockUser("Username", "ApiToken");
             mockRcClient.MockResponse(
@@ -217,10 +219,10 @@ public:
     public:
         bool GetActiveGameChanged() const noexcept { return m_bActiveGameChanged; }
 
-        const std::wstring* GetNewCodeNote(ra::data::ByteAddress nAddress)
+        const std::wstring* GetNewMemoryNote(ra::data::ByteAddress nAddress)
         {
-            const auto pIter = m_vCodeNotesChanged.find(nAddress);
-            if (pIter != m_vCodeNotesChanged.end())
+            const auto pIter = m_vNotesChanged.find(nAddress);
+            if (pIter != m_vNotesChanged.end())
                 return &pIter->second;
 
             return nullptr;
@@ -230,17 +232,17 @@ public:
         void OnActiveGameChanged() noexcept override
         {
             m_bActiveGameChanged = true;
-            m_vCodeNotesChanged.clear();
+            m_vNotesChanged.clear();
         }
 
-        void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override
+        void OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNewNote) override
         {
-            m_vCodeNotesChanged.insert_or_assign(nAddress, sNewNote);
+            m_vNotesChanged.insert_or_assign(nAddress, sNewNote);
         }
 
     private:
         bool m_bActiveGameChanged = false;
-        std::map<ra::data::ByteAddress, std::wstring> m_vCodeNotesChanged;
+        std::map<ra::data::ByteAddress, std::wstring> m_vNotesChanged;
     };
 
     TEST_METHOD(TestLoadGameTitle)
@@ -770,6 +772,9 @@ public:
                "\"Created\":1234567890,\"Modified\":123459999},"
              "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
                "\"Points\":15,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999},"
+             "{\"ID\":9,\"Title\":\"Ach3\",\"Description\":\"Desc3\",\"Flags\":3,"
+               "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth3\",\"BadgeName\":\"12345\","
                "\"Created\":1234567890,\"Modified\":123459999}"
         );
 
@@ -777,6 +782,7 @@ public:
             "Version\n"
             "Game\n"
             "7:1=2:Ach2b:Desc2b::::Auth2b:25:1234554321:1234555555:::54321\n"
+            "9:1=2:Ach3b:Desc3b::::Auth3b:25:1234554321:1234555555:::54321\n"
             "0:\"1=1\":\"Ach3\":\"Desc3\"::::Auth3:20:1234511111:1234500000:::555\n"
             "0:R:1=1:Ach4:Desc4::::Auth4:10:1234511111:1234500000:::556\n"
         );
@@ -805,6 +811,24 @@ public:
         Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, pAch->GetCategory()); // category not merged
         Assert::AreEqual(25, pAch->GetPoints());
         Assert::AreEqual(std::string("1=2"), pAch->GetTrigger());
+
+        const auto* pTrigger = pAch->GetRuntimeTrigger();
+        Assert::AreEqual(2U, pTrigger->requirement->conditions->operand2.value.num); // runtime trigger updated
+
+        // local achievement data for 9 should be merged with server achievement data
+        pAch = game.Assets().FindAchievement(9U);
+        Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
+        Assert::AreEqual(std::wstring(L"Ach3b"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Desc3b"), pAch->GetDescription());
+        Assert::AreEqual(std::wstring(L"Auth3"), pAch->GetAuthor()); // author not merged
+        Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
+        Assert::AreEqual(ra::data::models::AssetCategory::Core, pAch->GetCategory()); // category not merged
+        Assert::AreEqual(25, pAch->GetPoints());
+        Assert::AreEqual(std::string("1=2"), pAch->GetTrigger());
+
+        pTrigger = pAch->GetRuntimeTrigger();
+        Assert::AreEqual(2U, pTrigger->requirement->conditions->operand2.value.num); // runtime trigger updated
 
         // no server achievement, assign FirstLocalId
         pAch = game.Assets().FindAchievement(GameAssets::FirstLocalId);
@@ -1331,104 +1355,6 @@ public:
 
         Assert::IsTrue(bBeforeResponseCalled); // paused during load
         Assert::IsTrue(game.mockAchievementRuntime.IsPaused()); // paused after load
-    }
-
-    TEST_METHOD(TestReloadRichPresenceScriptNoFile)
-    {
-        GameContextHarness game;
-        const std::string sRichPresence = "Display:\nHello, World";
-        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
-
-        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-
-        /* load game will write the server RP to storage */
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"Hello, World"), game.GetRichPresenceDisplayString());
-        Assert::IsFalse(game.IsRichPresenceFromFile());
-
-        /* replace written server RP with empty file */
-        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "");
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), game.GetRichPresenceDisplayString());
-        Assert::IsTrue(game.IsRichPresenceFromFile());
-    }
-
-    TEST_METHOD(TestReloadRichPresenceScriptWindowsLineEndings)
-    {
-        GameContextHarness game;
-        const std::string sRichPresence = "Display:\nHello, World";
-        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
-
-        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-
-        /* load game will write the server RP to storage */
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"Hello, World"), game.GetRichPresenceDisplayString());
-        Assert::IsFalse(game.IsRichPresenceFromFile());
-
-        /* replace written server RP with a different file */
-        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\r\nFrom File\r\n");
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"From File"), game.GetRichPresenceDisplayString());
-        Assert::IsTrue(game.IsRichPresenceFromFile());
-    }
-
-    TEST_METHOD(TestReloadRichPresenceScript)
-    {
-        GameContextHarness game;
-        const std::string sRichPresence = "Display:\nHello, World";
-        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
-
-        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-
-        /* load game will write the server RP to storage, so overwrite it now */
-        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom File");
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"From File"), game.GetRichPresenceDisplayString());
-        Assert::IsTrue(game.IsRichPresenceFromFile());
-    }
-
-    TEST_METHOD(TestReloadRichPresenceScriptBOM)
-    {
-        GameContextHarness game;
-        const std::string sRichPresence = "Display:\nHello, World";
-        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
-        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-
-        /* load game will write the server RP to storage, so overwrite it now */
-        std::string sFileContents = "\xEF\xBB\xBF" "Display:\nFrom File";
-        sFileContents.at(0) = gsl::narrow_cast<char>(0xef);
-        sFileContents.at(1) = gsl::narrow_cast<char>(0xbb);
-        sFileContents.at(2) = gsl::narrow_cast<char>(0xbf);
-
-        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", sFileContents);
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"From File"), game.GetRichPresenceDisplayString());
-        Assert::IsTrue(game.IsRichPresenceFromFile());
-
-        /* hash should ignore BOM and convert windows newlines to unix newlines */
-        sFileContents = "\xEF\xBB\xBF" "Display:\r\nHello, World";
-        sFileContents.at(0) = gsl::narrow_cast<char>(0xef);
-        sFileContents.at(1) = gsl::narrow_cast<char>(0xbb);
-        sFileContents.at(2) = gsl::narrow_cast<char>(0xbf);
-        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", sFileContents);
-        game.ReloadRichPresenceScript();
-
-        Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::wstring(L"Hello, World"), game.GetRichPresenceDisplayString());
-        Assert::IsFalse(game.IsRichPresenceFromFile());
     }
 
     TEST_METHOD(TestSetModeNotify)

@@ -6,12 +6,12 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockLocalStorage.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -29,7 +29,7 @@ public:
     {
     public:
         GSL_SUPPRESS_F6 SessionTrackerHarness(const char* sUsername = "User") noexcept
-            : m_sUsername(sUsername), m_sUsernameWide(ra::Widen(sUsername))
+            : m_sUsername(sUsername), m_sUsernameWide(ra::util::String::Widen(sUsername))
         {
             mockRuntime.MockGame();
         }

@@ -3,13 +3,13 @@
 #include "ui\viewmodels\OverlayLeaderboardsPageViewModel.hh"
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
@@ -28,8 +28,8 @@ private:
     public:
         ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockRcClient mockRcClient;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
@@ -84,8 +84,8 @@ private:
             Assert::IsFalse(pItem->IsHeader());
             Assert::AreEqual(pLeaderboard->public_.id, static_cast<uint32_t>(pItem->GetId()));
 
-            Assert::AreEqual(ra::Widen(pLeaderboard->public_.title), pItem->GetLabel());
-            Assert::AreEqual(ra::Widen(pLeaderboard->public_.description), pItem->GetDetail());
+            Assert::AreEqual(ra::util::String::Widen(pLeaderboard->public_.title), pItem->GetLabel());
+            Assert::AreEqual(ra::util::String::Widen(pLeaderboard->public_.description), pItem->GetDetail());
             Assert::AreEqual(sTrackerValue, pItem->GetProgressString());
             if (sTrackerValue.empty())
                 Assert::AreEqual(0.0f, pItem->GetProgressPercentage());

@@ -7,22 +7,23 @@
 #include "RA_Resource.h"
 
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockAudioSystem.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
+#include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockSurface.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 #include "tests\ui\UIAsserts.hh"
 
@@ -36,15 +37,16 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::api::mocks::MockServer;
 using ra::context::mocks::MockRcClient;
+using ra::context::mocks::MockUserContext;
 using ra::data::context::mocks::MockEmulatorContext;
 using ra::data::context::mocks::MockGameContext;
 using ra::data::context::mocks::MockSessionTracker;
-using ra::data::context::mocks::MockUserContext;
 using ra::services::mocks::MockAchievementRuntime;
 using ra::services::mocks::MockAudioSystem;
 using ra::services::mocks::MockClock;
 using ra::services::mocks::MockConfiguration;
 using ra::services::mocks::MockFrameEventQueue;
+using ra::services::mocks::MockLoginService;
 using ra::services::mocks::MockThreadPool;
 using ra::ui::mocks::MockDesktop;
 using ra::ui::mocks::MockImageRepository;
@@ -115,6 +117,7 @@ private:
         MockThreadPool mockThreadPool;
         MockWindowManager mockWindowManager;
         MockImageRepository mockImageRepository;
+        MockLoginService mockLoginService;
     };
 
 public:
@@ -130,11 +133,11 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(harness.mockLoginService.IsLoggedIn());
 
         _RA_AttemptLogin(true);
 
-        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(harness.mockLoginService.IsLoggedIn());
         Assert::AreEqual(std::string(""), harness.mockUserContext.GetUsername());
         Assert::AreEqual(std::wstring(L""), harness.mockSessionTracker.GetUsername());
         Assert::IsTrue(bLoginDialogShown);
@@ -159,12 +162,11 @@ public:
         harness.mockConfiguration.SetUsername("User");
         harness.mockConfiguration.SetApiToken("ApiToken");
 
-        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string(""), harness.mockUserContext.GetApiToken());
 
         _RA_AttemptLogin(true);
 
         // user context
-        Assert::IsTrue(harness.mockUserContext.IsLoggedIn());
         Assert::AreEqual(std::string("User"), harness.mockUserContext.GetUsername());
         Assert::AreEqual(std::string("User"), harness.mockUserContext.GetDisplayName());
         Assert::AreEqual(std::string("ApiToken"), harness.mockUserContext.GetApiToken());
@@ -208,13 +210,12 @@ public:
         harness.mockConfiguration.SetUsername("User");
         harness.mockConfiguration.SetApiToken("ApiToken");
 
-        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string(""), harness.mockUserContext.GetApiToken());
 
         _RA_UpdateAppTitle(""); // enable automatic update of titlebar
         _RA_AttemptLogin(true);
 
         // user context
-        Assert::IsTrue(harness.mockUserContext.IsLoggedIn());
         Assert::AreEqual(std::string("User"), harness.mockUserContext.GetUsername());
         Assert::AreEqual(std::string("User"), harness.mockUserContext.GetDisplayName());
         Assert::AreEqual(std::string("ApiToken"), harness.mockUserContext.GetApiToken());
@@ -353,7 +354,7 @@ public:
         _RA_AttemptLogin(true);
 
         Assert::IsTrue(harness.mockDesktop.WasDialogShown());
-        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(harness.mockLoginService.IsLoggedIn());
         Assert::AreEqual(std::string(""), harness.mockUserContext.GetUsername());
         Assert::AreEqual(std::string(""), harness.mockUserContext.GetApiToken());
         Assert::AreEqual(0U, harness.mockUserContext.GetScore());
@@ -372,11 +373,11 @@ public:
         harness.mockConfiguration.SetUsername("User");
         harness.mockConfiguration.SetApiToken("ApiToken");
 
-        harness.mockUserContext.DisableLogin();
+        harness.mockLoginService.DisableLogin();
         _RA_AttemptLogin(true);
 
         Assert::IsFalse(harness.mockDesktop.WasDialogShown());
-        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(harness.mockLoginService.IsLoggedIn());
         Assert::AreEqual(std::string(""), harness.mockUserContext.GetUsername());
         Assert::AreEqual(std::string(""), harness.mockUserContext.GetApiToken());
         Assert::AreEqual(0U, harness.mockUserContext.GetScore());
@@ -397,11 +398,11 @@ public:
 
         _RA_AttemptLogin(false);
 
-        harness.mockUserContext.DisableLogin();
+        harness.mockLoginService.DisableLogin();
         harness.mockThreadPool.ExecuteNextTask();
 
         Assert::IsFalse(harness.mockDesktop.WasDialogShown());
-        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(harness.mockLoginService.IsLoggedIn());
         Assert::AreEqual(std::string(""), harness.mockUserContext.GetUsername());
         Assert::AreEqual(std::string(""), harness.mockUserContext.GetApiToken());
         Assert::AreEqual(0U, harness.mockUserContext.GetScore());
@@ -472,7 +473,7 @@ private:
     TEST_METHOD(TestGetPopupMenuItemsNotLoggedIn)
     {
         ra::services::mocks::MockConfiguration mockConfiguration;
-        ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::services::mocks::MockLoginService mockLoginService;
 
         RA_MenuItem menu[32];
         Assert::AreEqual(18, _RA_GetPopupMenuItems(menu));
@@ -489,7 +490,7 @@ private:
         AssertMenuItem(&menu[10], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         AssertMenuItem(&menu[11], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         AssertMenuItem(&menu[12], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        AssertMenuItem(&menu[13], IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        AssertMenuItem(&menu[13], IDM_RA_FILES_CODENOTES, L"Memory &Notes");
         AssertMenuItem(&menu[14], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         AssertMenuItem(&menu[15], 0, nullptr);
         AssertMenuItem(&menu[16], IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
@@ -499,8 +500,8 @@ private:
     TEST_METHOD(TestGetPopupMenuItemsLoggedIn)
     {
         ra::services::mocks::MockConfiguration mockConfiguration;
-        ra::data::context::mocks::MockUserContext mockUserContext;
-        mockUserContext.Initialize("User", "TOKEN");
+        ra::services::mocks::MockLoginService mockLoginService;
+        mockLoginService.Login("User", "TOKEN");
 
         RA_MenuItem menu[32];
         Assert::AreEqual(24, _RA_GetPopupMenuItems(menu));
@@ -520,7 +521,7 @@ private:
         AssertMenuItem(&menu[13], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         AssertMenuItem(&menu[14], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         AssertMenuItem(&menu[15], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        AssertMenuItem(&menu[16], IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        AssertMenuItem(&menu[16], IDM_RA_FILES_CODENOTES, L"Memory &Notes");
         AssertMenuItem(&menu[17], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         AssertMenuItem(&menu[18], 0, nullptr);
         AssertMenuItem(&menu[19], IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
@@ -533,8 +534,8 @@ private:
     TEST_METHOD(TestGetPopupMenuItemsChecked)
     {
         ra::services::mocks::MockConfiguration mockConfiguration;
-        ra::data::context::mocks::MockUserContext mockUserContext;
-        mockUserContext.Initialize("User", "TOKEN");
+        ra::services::mocks::MockLoginService mockLoginService;
+        mockLoginService.Login("User", "TOKEN");
         mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
         mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
@@ -557,7 +558,7 @@ private:
         AssertMenuItem(&menu[13], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
         AssertMenuItem(&menu[14], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         AssertMenuItem(&menu[15], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        AssertMenuItem(&menu[16], IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        AssertMenuItem(&menu[16], IDM_RA_FILES_CODENOTES, L"Memory &Notes");
         AssertMenuItem(&menu[17], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         AssertMenuItem(&menu[18], 0, nullptr);
         AssertMenuItem(&menu[19], IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
@@ -571,7 +572,7 @@ private:
     {
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-        ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
 
         mockUserContext.Initialize("User", "TOKEN");

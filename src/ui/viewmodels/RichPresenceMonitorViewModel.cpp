@@ -2,6 +2,8 @@
 
 #include "util\Strings.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\GameContext.hh"
 
 #include "services\AchievementRuntime.hh"
@@ -85,14 +87,13 @@ void RichPresenceMonitorViewModel::UpdateDisplayString()
 
     switch (pRichPresence->GetState())
     {
+        case ra::data::models::AssetState::Disabled:
+            SetDisplayString(pRichPresence->GetValidationError());
+            break;
+
         case ra::data::models::AssetState::Active:
-        case ra::data::models::AssetState::Disabled: // parse error, still display it
-        {
-            auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-            const std::wstring sDisplayString = ra::Widen(pRuntime.GetRichPresenceDisplayString());
-            SetDisplayString(sDisplayString);
-            return;
-        }
+            SetDisplayString(pRichPresence->GetMessage());
+            break;
 
         default:
             SetDisplayString(L"Rich Presence not active.");

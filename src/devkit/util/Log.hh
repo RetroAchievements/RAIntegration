@@ -2,7 +2,7 @@
 #define RA_LOG_HH
 #pragma once
 
-#include "services\ILogger.hh"
+#include "services/ILogger.hh"
 
 #ifdef RA_UTEST
 
@@ -10,14 +10,14 @@
 
 #else
 
-#include "services\ServiceLocator.hh"
-#include "util\Strings.hh"
+#include "services/ServiceLocator.hh"
+#include "util/Strings.hh"
 
 #define RA_LOG_LEVEL(lvl, ...) \
 { \
     const auto& __pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>(); \
     if (__pLogger.IsEnabled(lvl)) \
-        __pLogger.LogMessage(lvl, ra::StringPrintf(__VA_ARGS__)); \
+        __pLogger.LogMessage(lvl, ra::util::String::Printf(__VA_ARGS__)); \
 }
 
 #endif

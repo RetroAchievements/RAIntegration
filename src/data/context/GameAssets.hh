@@ -6,7 +6,7 @@
 #include "data\Types.hh"
 
 #include "data\models\AchievementModel.hh"
-#include "data\models\CodeNotesModel.hh"
+#include "data\models\MemoryNotesModel.hh"
 #include "data\models\LeaderboardModel.hh"
 #include "data\models\MemoryRegionsModel.hh"
 #include "data\models\RichPresenceModel.hh"
@@ -94,19 +94,19 @@ public:
     }
 
     /// <summary>
-    /// Finds the code notes asset.
+    /// Finds the memory notes asset.
     /// </summary>
-    ra::data::models::CodeNotesModel* FindCodeNotes()
+    ra::data::models::MemoryNotesModel* FindMemoryNotes()
     {
-        return dynamic_cast<ra::data::models::CodeNotesModel*>(FindAsset(ra::data::models::AssetType::CodeNotes, 0));
+        return dynamic_cast<ra::data::models::MemoryNotesModel*>(FindAsset(ra::data::models::AssetType::MemoryNotes, 0));
     }
 
     /// <summary>
-    /// Finds the code notes asset.
+    /// Finds the memory notes asset.
     /// </summary>
-    const ra::data::models::CodeNotesModel* FindCodeNotes() const
+    const ra::data::models::MemoryNotesModel* FindMemoryNotes() const
     {
-        return dynamic_cast<const ra::data::models::CodeNotesModel*>(FindAsset(ra::data::models::AssetType::CodeNotes, 0));
+        return dynamic_cast<const ra::data::models::MemoryNotesModel*>(FindAsset(ra::data::models::AssetType::MemoryNotes, 0));
     }
 
     /// <summary>
@@ -156,10 +156,24 @@ public:
 
     static constexpr uint32_t LocalSubsetId = 0xFFFFFFFF;
 
+    bool HasPauseOnXAssets() const noexcept;
+    void GetPauseOnResetAchievements(std::vector<const ra::data::models::AchievementModel*>& vAchievements) const;
+    void GetPauseOnResetLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const;
+    void GetPauseOnTriggerLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const;
+
 protected:
+    bool IsWatching() const noexcept override { return true; }
+
+    void OnModelValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
+    void OnModelValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
+
     void OnBeforeItemRemoved(ModelBase& pModel) override;
 
     uint32_t m_nNextLocalId = FirstLocalId;
+
+    std::set<ra::AchievementID> m_vPauseOnResetAchievementIds;
+    std::set<ra::LeaderboardID> m_vPauseOnResetLeaderboardIds;
+    std::set<ra::LeaderboardID> m_vPauseOnTriggerLeaderboardIds;
 };
 
 } // namespace context

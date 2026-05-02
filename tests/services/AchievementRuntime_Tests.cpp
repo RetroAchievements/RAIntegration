@@ -2,26 +2,28 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
+#include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
-#include "tests\devkit\services\mocks\MockHttpRequester.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\mocks\MockAudioSystem.hh"
-#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockGameIdentifier.hh"
 #include "tests\mocks\MockImageRepository.hh"
-#include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockSurface.hh"
-#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 #include "tests\ui\UIAsserts.hh"
@@ -29,7 +31,6 @@
 #include "context\IRcClient.hh"
 #include "services\impl\OfflineRcClient.hh"
 
-#include <rcheevos\src\rapi\rc_api_common.h>
 #include <rcheevos\src\rc_client_internal.h>
 #include <rcheevos\src\rcheevos\rc_internal.h>
 
@@ -58,16 +59,18 @@ public:
         rc_client_set_userdata(GetClient(), this);
     }
 
+    ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
     ra::context::mocks::MockRcClient mockRcClient;
+    ra::context::mocks::MockUserContext mockUserContext;
     ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
     ra::data::context::mocks::MockGameContext mockGameContext;
     ra::data::context::mocks::MockSessionTracker mockSessionTracker;
-    ra::data::context::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockAudioSystem mockAudioSystem;
     ra::services::mocks::MockClock mockClock;
     ra::services::mocks::MockConfiguration mockConfiguration;
     ra::services::mocks::MockFileSystem mockFileSystem;
     ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
+    ra::services::mocks::MockLoginService mockLoginService;
     ra::services::mocks::MockThreadPool mockThreadPool;
     ra::ui::drawing::mocks::MockSurfaceFactory mockSurfaceFactory;
     ra::ui::mocks::MockDesktop mockDesktop;
@@ -76,7 +79,7 @@ public:
     ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
     ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-    rc_client_t* GetClient()
+    rc_client_t* GetClient() const
     {
         return ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     }
@@ -150,9 +153,9 @@ public:
         }
 
         if (nRecordId != 0)
-            Assert::Fail(ra::StringPrintf(L"Event %u not found for record %u.", nType, nRecordId).c_str());
+            Assert::Fail(ra::util::String::Printf(L"Event %u not found for record %u.", nType, nRecordId).c_str());
         else
-            Assert::Fail(ra::StringPrintf(L"Event %u not found.", nType).c_str());
+            Assert::Fail(ra::util::String::Printf(L"Event %u not found.", nType).c_str());
     }
 
     void RaiseEvent(const rc_client_event_t& event)
@@ -189,7 +192,7 @@ public:
     rc_client_achievement_info_t* MockSubsetAchievement(uint32_t nId, const std::string& sTrigger, rc_client_subset_info_t* pSubset)
     {
         auto* game = GetClient()->game;
-        auto* ach = AddAchievement(game, pSubset, nId, ra::StringPrintf("Ach%u", nId).c_str());
+        auto* ach = AddAchievement(game, pSubset, nId, ra::util::String::Printf("Ach%u", nId).c_str());
 
         const auto nSize = rc_trigger_size(sTrigger.c_str());
         void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
@@ -239,16 +242,34 @@ public:
             }
         }
 
-        vmAchievement->Attach(*pAchievement, nCategory, "");
+        vmAchievement->InitializeFromPublishedAchievement(*pAchievement, "");
+        vmAchievement->SetLocalAchievementInfo(*pAchievement);
+        vmAchievement->SetCategory(nCategory);
+        vmAchievement->UpdateServerCheckpoint();
 
         mockGameContext.Assets().Append(std::move(vmAchievement));
         return mockGameContext.Assets().FindAchievement(pAchievement->public_.id);
     }
 
+    rc_trigger_t* GetAchievementTrigger(uint32_t nId) const
+    {
+        const auto* pSubset = GetClient()->game->subsets;
+        for (; pSubset; pSubset = pSubset->next)
+        {
+            for (uint32_t i = 0; i < pSubset->public_.num_achievements; ++i)
+            {
+                if (pSubset->achievements[i].public_.id == nId)
+                    return pSubset->achievements[i].trigger;
+            }
+        }
+
+        return nullptr;
+    }
+
     rc_client_leaderboard_info_t* MockLeaderboard(uint32_t nId, const std::string& sDefinition)
     {
         rc_client_game_info_t* game = GetClient()->game;
-        auto* lboard = AddLeaderboard(game, GetCoreSubset(game), nId, ra::StringPrintf("Leaderboard%u", nId).c_str());
+        auto* lboard = AddLeaderboard(game, GetCoreSubset(game), nId, ra::util::String::Printf("Leaderboard%u", nId).c_str());
 
         const auto nSize = rc_lboard_size(sDefinition.c_str());
         void* lboard_buffer = rc_buffer_alloc(&game->buffer, nSize);
@@ -261,7 +282,7 @@ public:
     rc_client_leaderboard_info_t* MockLocalLeaderboard(uint32_t nId, const std::string& sDefinition)
     {
         rc_client_game_info_t* game = GetClient()->game;
-        auto* lboard = AddLeaderboard(game, GetLocalSubset(game), nId, ra::StringPrintf("Leaderboard%u", nId).c_str());
+        auto* lboard = AddLeaderboard(game, GetLocalSubset(game), nId, ra::util::String::Printf("Leaderboard%u", nId).c_str());
 
         const auto nSize = rc_lboard_size(sDefinition.c_str());
         void* lboard_buffer = rc_buffer_alloc(&game->buffer, nSize);
@@ -302,7 +323,11 @@ public:
         }
 
         auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
-        vmLeaderboard->Attach(*pLeaderboard, nCategory, "");
+        vmLeaderboard->InitializeFromPublishedLeaderboard(*pLeaderboard, "");
+        vmLeaderboard->SetLocalLeaderboardInfo(*pLeaderboard);
+        vmLeaderboard->SetCategory(nCategory);
+        vmLeaderboard->UpdateServerCheckpoint();
+
         pLeaderboard->lboard->state = RC_LBOARD_STATE_ACTIVE; // syncing State sets this back to waiting
 
         mockGameContext.Assets().Append(std::move(vmLeaderboard));
@@ -451,11 +476,11 @@ private:
         }
         else
         {
-            const std::string sGeneratedTitle = ra::StringPrintf("Achievement %u", nId);
+            const std::string sGeneratedTitle = ra::util::String::Printf("Achievement %u", nId);
             achievement->public_.title = rc_buffer_strcpy(&game->buffer, sGeneratedTitle.c_str());
         }
 
-        const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
+        const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
         achievement->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
         achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
@@ -493,11 +518,11 @@ private:
         }
         else
         {
-            const std::string sGeneratedTitle = ra::StringPrintf("Leaderboard %u", nId);
+            const std::string sGeneratedTitle = ra::util::String::Printf("Leaderboard %u", nId);
             leaderboard->public_.title = rc_buffer_strcpy(&game->buffer, sGeneratedTitle.c_str());
         }
 
-        const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
+        const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
         leaderboard->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
         leaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
@@ -615,7 +640,7 @@ public:
         pAchievement = runtime.GetClient()->game->subsets->next->achievements;
         Expects(pAchievement != nullptr);
         const auto* pNewestTrigger = pAchievement->trigger;
-        Assert::AreNotEqual(static_cast<const void*>(pNewerTrigger), static_cast<const void*>(pNewestTrigger));
+        Assert::IsNotNull(pNewestTrigger); // cannot compare pointer as the freed memory may get reallocated and the pointer won't appear to have changed
     }
 
     TEST_METHOD(TestSyncAssetsModifiedCoreAchievement)
@@ -635,7 +660,8 @@ public:
         pSubset->public_.num_achievements = 1;
 
         auto vmNewAchievement = std::make_unique<ra::data::models::AchievementModel>();
-        vmNewAchievement->Attach(*pAchievement, ra::data::models::AssetCategory::Core, "0xH0000=1");
+        vmNewAchievement->InitializeFromPublishedAchievement(*pAchievement, "0xH0000=1");
+        vmNewAchievement->SetLocalAchievementInfo(*pAchievement);
         vmNewAchievement->SetSubsetID(1U);
         const auto& vmAchievement = reinterpret_cast<ra::data::models::AchievementModel&>(runtime.mockGameContext.Assets().Append(std::move(vmNewAchievement)));
 
@@ -665,6 +691,8 @@ public:
         const auto* pNewTrigger = pSubset->achievements->trigger;
         Assert::AreNotEqual(static_cast<const void*>(pOriginalTrigger), static_cast<const void*>(pNewTrigger));
 
+        Assert::AreEqual(2U, pNewTrigger->requirement->conditions->operand2.value.num);
+
         runtime.SyncAssets();
 
         pSubset = runtime.GetClient()->game->subsets;
@@ -688,7 +716,7 @@ public:
         std::array<unsigned char, 1> memory{ 0x00 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         runtime.MockAchievement(6U, "0xH0000=1");
 
         // expect no events for untriggered achievement
@@ -712,7 +740,7 @@ public:
         std::array<unsigned char, 1> memory{ 0x00 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         runtime.MockAchievement(6U, "0xH0000=1");
 
         runtime.SetPaused(true);
@@ -761,7 +789,7 @@ public:
         std::array<unsigned char, 1> memory{0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pAchievement = runtime.MockAchievement(6U, "0xH0000=1");
 
         // expect no events for untriggered achievement
@@ -811,7 +839,7 @@ public:
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         runtime.MockAchievement(4U, "M:0xH0002=100");
 
         // value did not change, expect no event from initialization
@@ -848,7 +876,7 @@ public:
         std::array<unsigned char, 1> memory{ 0x00 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* sTrigger = "0xH0000=1";
 
         // achievement not active, should not raise events
@@ -1112,7 +1140,7 @@ public:
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U, "STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02");
 
         // expect no events for inactive leaderboard
@@ -1194,85 +1222,12 @@ public:
         Assert::AreEqual({0U}, runtime.GetEventCount());
     }
 
-    TEST_METHOD(TestActivateRichPresence)
-    {
-        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-        Assert::IsFalse(runtime.HasRichPresence());
-
-        const char* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0xH01) @Num(d0xH01)\n";
-        runtime.ActivateRichPresence(pRichPresence);
-        Assert::IsTrue(runtime.HasRichPresence());
-
-        // string is evaluated with current memrefs (which will be 0)
-        Assert::AreEqual(std::wstring(L"0 0"), runtime.GetRichPresenceDisplayString());
-
-        // do_frame should immediately process the rich presence
-        runtime.DoFrame();
-        Assert::AreEqual(std::wstring(L"18 0"), runtime.GetRichPresenceDisplayString());
-
-        // first update - updates value and delta
-        runtime.DoFrame();
-        Assert::AreEqual(std::wstring(L"18 18"), runtime.GetRichPresenceDisplayString());
-
-        // second update - updates delta
-        runtime.DoFrame();
-        Assert::AreEqual(std::wstring(L"18 18"), runtime.GetRichPresenceDisplayString());
-
-        // third update - updates value after change
-        memory.at(1) = 11;
-        runtime.DoFrame();
-        Assert::AreEqual(std::wstring(L"11 18"), runtime.GetRichPresenceDisplayString());
-
-        // fourth update - updates delta and value after change
-        memory.at(1) = 13;
-        runtime.DoFrame();
-        Assert::AreEqual(std::wstring(L"13 11"), runtime.GetRichPresenceDisplayString());
-    }
-
-    TEST_METHOD(TestActivateRichPresenceChange)
-    {
-        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-        Assert::IsFalse(runtime.HasRichPresence());
-
-        runtime.ActivateRichPresence("Display:\nHello, World\n");
-        Assert::AreEqual(std::wstring(L"Hello, World"), runtime.GetRichPresenceDisplayString());
-        Assert::IsTrue(runtime.HasRichPresence());
-
-        runtime.ActivateRichPresence("Display:\nNew String\n");
-        Assert::AreEqual(std::wstring(L"New String"), runtime.GetRichPresenceDisplayString());
-        Assert::IsTrue(runtime.HasRichPresence());
-
-        runtime.ActivateRichPresence("");
-        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), runtime.GetRichPresenceDisplayString());
-        Assert::IsFalse(runtime.HasRichPresence());
-    }
-
-    TEST_METHOD(TestActivateRichPresenceWithError)
-    {
-        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-
-        const char* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0H01) @Num(d0xH01)\n";
-        runtime.ActivateRichPresence(pRichPresence);
-        Assert::IsTrue(runtime.HasRichPresence());
-
-        Assert::AreEqual(std::wstring(L"Parse error -6 (line 5): Invalid operator"), runtime.GetRichPresenceDisplayString());
-    }
-
     TEST_METHOD(TestMonitorAchievementPauseOnTrigger)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pAchievement = runtime.MockAchievement(6U, "0xH0000=1");
         auto* vmAchievement = runtime.WrapAchievement(pAchievement);
 
@@ -1315,7 +1270,7 @@ public:
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pAchievement = runtime.MockAchievement(4U, "1=1.3._R:0xH0000=1");
         auto* vmAchievement = runtime.WrapAchievement(pAchievement);
 
@@ -1361,7 +1316,7 @@ public:
         std::array<unsigned char, 2> memory{ 0x00, 0x00 };
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=0_0xH0000=9_R:0xH0001=1::SUB:0xH0000=1::CAN:0xH0000=2::VAL:0xH0000");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1407,7 +1362,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=0_0xH0000=9_R:0xH0001=1::CAN:0xH0000=2::VAL:0xH0000");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1453,7 +1408,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=0_0xH0000=9_R:0xH0001=1::VAL:0xH0000");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1499,7 +1454,7 @@ public:
         std::array<unsigned char, 3> memory{0x00, 0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=0::SUB:0xH0000=2::CAN:0xH0000=3::VAL:R:0xH0001=1_M:0xH0002=0");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1549,7 +1504,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1591,7 +1546,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U,
             "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
@@ -1638,7 +1593,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pLeaderboard = runtime.MockLeaderboard(6U, "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
         auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
 
@@ -1684,7 +1639,7 @@ public:
         std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockEmulatorMemoryContext.MockMemory(memory);
         auto* pAch6 = runtime.MockAchievement(6U, "0xH0004=1");
         runtime.SyncToRuntime();
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
@@ -2011,7 +1966,7 @@ public:
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockEmulatorContext.SetMemoryModified();
+        runtime.mockEmulatorMemoryContext.SetMemoryModified();
         runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
@@ -2046,7 +2001,7 @@ public:
         runtime.GetClient()->state.hardcore = 1;
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockEmulatorContext.MockMemoryInsecure(true);
+        runtime.mockEmulatorMemoryContext.MockMemoryInsecure(true);
         runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
@@ -2083,7 +2038,7 @@ public:
         runtime.GetClient()->state.hardcore = 0;
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockEmulatorContext.MockMemoryInsecure(true);
+        runtime.mockEmulatorMemoryContext.MockMemoryInsecure(true);
         runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
@@ -2837,7 +2792,7 @@ public:
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
         pLbd4->public_.tracker_value = "1:23.45";
         runtime.WrapLeaderboard(pLbd4);
-        runtime.mockEmulatorContext.MockMemoryModified(true);
+        runtime.mockEmulatorMemoryContext.MockMemoryModified(true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
         runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
@@ -2898,7 +2853,7 @@ public:
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
         pLbd4->public_.tracker_value = "1:23.45";
         runtime.WrapLeaderboard(pLbd4);
-        runtime.mockEmulatorContext.MockMemoryInsecure(true);
+        runtime.mockEmulatorMemoryContext.MockMemoryInsecure(true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
         runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
@@ -3673,7 +3628,7 @@ public:
     TEST_METHOD(TestServerCallOfflineAchievementSetsExists)
     {
         AchievementRuntimeHarness runtime;
-        runtime.mockUserContext.Logout();
+        runtime.mockLoginService.Logout();
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::mocks::MockGameIdentifier mockGameIdentifier;
         mockLocalStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1234", "{\"Title\":\"GameName\",\"Sets\":[{\"a\":1}]}");
@@ -3709,7 +3664,7 @@ public:
     TEST_METHOD(TestServerCallOfflineAchievementSetsPatchExists)
     {
         AchievementRuntimeHarness runtime;
-        runtime.mockUserContext.Logout();
+        runtime.mockLoginService.Logout();
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::mocks::MockGameIdentifier mockGameIdentifier;
         // cached file exists, but is old format and should be ignored

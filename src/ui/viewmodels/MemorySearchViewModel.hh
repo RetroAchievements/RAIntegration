@@ -2,6 +2,8 @@
 #define RA_UI_MEMORYSEARCHVIEWMODEL_H
 #pragma once
 
+#include "context\IEmulatorMemoryContext.hh"
+
 #include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
@@ -20,7 +22,7 @@ namespace viewmodels {
 
 class MemorySearchViewModel : public ViewModelBase,
     protected ViewModelCollectionBase::NotifyTarget,
-    protected ra::data::context::EmulatorContext::NotifyTarget,
+    protected ra::context::IEmulatorMemoryContext::NotifyTarget,
     protected ra::data::context::EmulatorContext::DispatchesReadMemory,
     protected ra::data::context::GameContext::NotifyTarget
 {
@@ -346,11 +348,11 @@ public:
         unsigned nCurrentValue = 0;
         bool bMatchesFilter = false;
         bool bHasBookmark = false;
-        bool bHasCodeNote = false;
+        bool bHasMemoryNote = false;
         bool bHasBeenModified = false;
 
         void UpdateRowColor();
-        void UpdateCodeNote(const std::wstring& sNote);
+        void UpdateMemoryNote(const std::wstring& sNote);
     };
 
     /// <summary>
@@ -505,8 +507,8 @@ protected:
     // GameContext::NotifyTarget
     void OnBeforeActiveGameChanged() override;
     void OnActiveGameChanged() override;
-    void OnCodeNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote) override;
-    void OnCodeNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
+    void OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring& sNote) override;
+    void OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const std::wstring& sNote) override;
 
     void SaveResults(ra::services::TextWriter& sFile, std::function<bool(int)> pProgressCallback) const;
 
@@ -520,7 +522,7 @@ private:
     void DoApplyFilter();
     void UpdateResult(SearchResultViewModel& pRow, const ra::services::SearchResults& pResults,
         ra::services::SearchResult& pResult, bool bForceFilterCheck,
-        const ra::data::context::EmulatorContext& pEmulatorContext);
+        const ra::context::IEmulatorMemoryContext& pMemoryContext);
 
     void OnPredefinedFilterRangeChanged(const IntModelProperty::ChangeArgs& args);
     void OnFilterRangeChanged();

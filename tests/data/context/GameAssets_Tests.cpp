@@ -6,11 +6,12 @@
 #include "data\models\LocalBadgesModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
-#include "tests\data\DataAsserts.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
+#include "tests\devkit\testutil\AssetAsserts.hh"
+#include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockLocalStorage.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -113,7 +114,7 @@ public:
 
         ra::data::models::LeaderboardModel& AddLeaderboard(AssetCategory nCategory,
             const std::wstring& sTitle, const std::wstring& sDescription, const std::string& sStart,
-            const std::string& sCancel, const std::string& sSubmit, const std::string& sValue, ValueFormat nFormat)
+            const std::string& sCancel, const std::string& sSubmit, const std::string& sValue, Value::Format nFormat)
         {
             auto& pLeaderboard = NewLeaderboard();
             pLeaderboard.SetCategory(nCategory);
@@ -178,6 +179,19 @@ public:
         {
             return *(dynamic_cast<ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0)));
         }
+
+        void AddMemoryRegionsModel()
+        {
+            auto pMemoryRegions = std::make_unique<ra::data::models::MemoryRegionsModel>();
+            pMemoryRegions->CreateServerCheckpoint();
+            pMemoryRegions->CreateLocalCheckpoint();
+            Append(std::move(pMemoryRegions));
+        }
+
+        ra::data::models::MemoryRegionsModel& GetMemoryRegions()
+        {
+            return *(dynamic_cast<ra::data::models::MemoryRegionsModel*>(FindAsset(ra::data::models::AssetType::MemoryRegions, 0)));
+        }
     };
 
     TEST_METHOD(TestSaveLocalEmpty)
@@ -197,7 +211,7 @@ public:
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGame Title\n%u:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId + 1);
+        const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\n%u:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId + 1);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -208,7 +222,7 @@ public:
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGame Title\n%u:\"2=2\":\"Ach:2\":\"Desc \\\"2\\\"\"::::Auth5:15:::::54321\n", GameAssets::FirstLocalId);
+        const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\n%u:\"2=2\":\"Ach:2\":\"Desc \\\"2\\\"\"::::Auth5:15:::::54321\n", GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -220,7 +234,7 @@ public:
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGame Title\n%u|77:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId);
+        const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\n%u|77:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -243,7 +257,7 @@ public:
 
         gameAssets.ReloadAsset(AssetType::Achievement, GameAssets::FirstLocalId);
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGame Title\n"
+        const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\n"
             "%u:\"1=1\":Temp:Temp::::Authl:10:::::\"local\\\\22-ABCDE.png\"\n", GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
@@ -673,15 +687,73 @@ public:
         Assert::IsNull(gameAssets.FindAchievement(GameAssets::FirstLocalId));
     }
 
+    TEST_METHOD(TestReloadIgnoresMemoryRegions)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.AddThreeAchievements();
+        gameAssets.AddMemoryRegionsModel();
+
+        auto& pMemoryRegions = gameAssets.GetMemoryRegions();
+        pMemoryRegions.AddCustomRegion(0x1000, 0x10FF, L"Custom");
+        Assert::AreEqual({ 1U }, pMemoryRegions.CustomRegions().size());
+
+        gameAssets.MockUserFileContents(
+            "1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n"
+            "3:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n"
+        );
+
+        gameAssets.ReloadAsset(AssetType::Achievement, 1);
+
+        // item 1 should have been updated from file
+        const auto* pAsset = gameAssets.FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
+        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        // memory regions should not have been modified
+        Assert::AreEqual({ 1U }, pMemoryRegions.CustomRegions().size());
+    }
+
+    TEST_METHOD(TestReloadAllPicksUpMemoryRegions)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.AddThreeAchievements();
+        gameAssets.AddMemoryRegionsModel();
+
+        const auto& pMemoryRegions = gameAssets.GetMemoryRegions();
+        Assert::AreEqual({ 0U }, pMemoryRegions.CustomRegions().size());
+
+        gameAssets.MockUserFileContents(
+            "1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n"
+            "3:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n"
+            "M0:0x1000-0x10FF:\"Custom\"\n"
+        );
+
+        gameAssets.ReloadAllAssets();
+
+        // item 1 should have been updated from file
+        const auto* pAsset = gameAssets.FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
+        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        // memory regions should have been modified
+        Assert::AreEqual({ 1U }, pMemoryRegions.CustomRegions().size());
+    }
+
     TEST_METHOD(TestSaveLocalLeaderboard)
     {
         GameAssetsHarness gameAssets;
-        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", ValueFormat::Seconds);
-        gameAssets.AddLeaderboard(AssetCategory::Local, L"LB2", L"Desc2", "0xH2234=1", "0xH2234=2", "0xH2234=3", "M:0xH2235", ValueFormat::Minutes);
+        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", Value::Format::Seconds);
+        gameAssets.AddLeaderboard(AssetCategory::Local, L"LB2", L"Desc2", "0xH2234=1", "0xH2234=2", "0xH2234=3", "M:0xH2235", Value::Format::Minutes);
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGame Title\nL%u:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2:0\n", GameAssets::FirstLocalId + 1);
+        const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\nL%u:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2:0\n", GameAssets::FirstLocalId + 1);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -689,7 +761,7 @@ public:
     {
         GameAssetsHarness gameAssets;
         gameAssets.AddThreeAchievements();
-        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", ValueFormat::Seconds);
+        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", Value::Format::Seconds);
         gameAssets.MockUserFileContents(
             "111000001:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n"
             "L111000002:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2\n");
@@ -712,7 +784,7 @@ public:
         Assert::AreEqual(std::string("0xH2234=2"), pAsset2->GetCancelTrigger());
         Assert::AreEqual(std::string("0xH2234=3"), pAsset2->GetSubmitTrigger());
         Assert::AreEqual(std::string("M:0xH2235"), pAsset2->GetValueDefinition());
-        Assert::AreEqual(ValueFormat::Minutes, pAsset2->GetValueFormat());
+        Assert::AreEqual(Value::Format::Minutes, pAsset2->GetValueFormat());
         Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset2->GetChanges());
     }
@@ -730,7 +802,7 @@ public:
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::StringPrintf(
+        const auto& sExpected = ra::util::String::Printf(
             "0.0.0.0\nGame Title\n%u:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n",
             GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());

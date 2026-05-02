@@ -1092,6 +1092,10 @@ BOOL AssetEditorDialog::OnInitDialog()
     SendMessage(::GetDlgItem(GetHWND(), IDC_RA_TYPE), CB_SETDROPPEDWIDTH, 70, 0);
     SendMessage(::GetDlgItem(GetHWND(), IDC_RA_FORMAT), CB_SETDROPPEDWIDTH, 136, 0);
 
+#ifndef _DEBUG
+    ShowWindow(::GetDlgItem(GetHWND(), IDC_RA_VIEW_DETAIL), SW_HIDE);
+#endif
+
     return DialogBase::OnInitDialog();
 }
 

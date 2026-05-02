@@ -7,6 +7,8 @@
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
+#include "services\ServiceLocator.hh"
+
 #include "ui\EditorTheme.hh"
 #include "ui\viewmodels\WindowManager.hh"
 

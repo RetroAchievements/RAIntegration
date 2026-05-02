@@ -1,6 +1,9 @@
 #include "FrameEventQueue.hh"
 
 #include "RA_Defs.h"
+
+#include "services\ServiceLocator.hh"
+
 #include "util\Strings.hh"
 
 #include "ui\IDesktop.hh"

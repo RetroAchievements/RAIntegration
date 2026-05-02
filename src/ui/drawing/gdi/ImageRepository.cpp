@@ -531,7 +531,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
 HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
 {
     HBITMAP hBitmap{};
-    GSL_SUPPRESS_TYPE1 hBitmap = reinterpret_cast<HBITMAP>(pImage.m_nData);
+    GSL_SUPPRESS_TYPE1 hBitmap = reinterpret_cast<HBITMAP>(pImage.GetData());
 
     if (hBitmap == nullptr)
     {
@@ -542,7 +542,7 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
             if (hBitmap == nullptr)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
-            GSL_SUPPRESS_TYPE1 pImage.m_nData = reinterpret_cast<unsigned long long>(hBitmap);
+            GSL_SUPPRESS_TYPE1 const_cast<ImageReference*>(&pImage)->SetData(reinterpret_cast<unsigned long long>(hBitmap));
 
             // ImageReference will release the reference
             pImageRepository->AddReference(pImage);
@@ -574,7 +574,7 @@ void ImageRepository::AddReference(const ImageReference& pImage)
 void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
 {
     // if data isn't set, we don't have a reference to release.
-    if (pImage.m_nData == 0)
+    if (pImage.GetData() == 0)
         return;
 
     HBitmapMap* mMap = GetBitmapMap(pImage.Type());
@@ -596,7 +596,7 @@ void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
         }
     }
 
-    pImage.m_nData = {};
+    pImage.SetData(0);
 }
 
 bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
@@ -604,9 +604,9 @@ bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
     if (pImage.Type() == ra::ui::ImageType::None)
         return false;
 
-    const auto hBitmapBefore = pImage.m_nData;
+    const auto hBitmapBefore = pImage.GetData();
     GetHBitmap(pImage); // TBD: Is the return value supposed to be discarded?
-    return (pImage.m_nData != hBitmapBefore);
+    return (pImage.GetData() != hBitmapBefore);
 }
 
 GSL_SUPPRESS_F23

@@ -13,7 +13,9 @@
 #include "data\Types.hh"
 #include "data\context\GameContext.hh"
 
-#include "ui\ImageReference.hh"
+#include "services\ServiceLocator.hh"
+
+#include "ui\IImageRepository.hh"
 
 namespace ra {
 namespace ui {

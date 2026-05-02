@@ -4,7 +4,7 @@
 
 #include "ControlBinding.hh"
 
-#include "ui\ImageReference.hh"
+#include "ui\IImageRepository.hh"
 #include "ui\drawing\gdi\ImageRepository.hh"
 
 namespace ra {

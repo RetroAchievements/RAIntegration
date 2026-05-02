@@ -2,7 +2,7 @@
 
 #include "ui\viewmodels\OverlayListPageViewModel.hh"
 
-#include "tests\mocks\MockImageRepository.hh"
+#include "tests\devkit\ui\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\RA_UnitTestHelpers.h"
 

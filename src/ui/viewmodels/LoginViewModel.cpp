@@ -11,6 +11,7 @@
 
 #include "services\IConfiguration.hh"
 #include "services\ILoginService.hh"
+#include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"

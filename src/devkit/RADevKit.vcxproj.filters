@@ -165,9 +165,20 @@
     <ClInclude Include="data\models\MemoryRegionsModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
-    <ClInclude Include="services\ILocalStorage.hh" />
-    <ClInclude Include="data\models\MemoryNotesModel.hh" />
-    <ClInclude Include="data\Value.hh" />
+    <ClInclude Include="services\ILocalStorage.hh">
+      <Filter>services</Filter>
+    </ClInclude>
+    <ClInclude Include="data\Value.hh">
+      <Filter>data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\LocalBadgesModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\MemoryNotesModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\IImageRepository.hh" />
+    <ClInclude Include="ui\ImageReference.hh" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -227,7 +238,15 @@
     <ClCompile Include="data\models\MemoryRegionsModel.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\MemoryNotesModel.cpp" />
-    <ClCompile Include="data\Value.cpp" />
+    <ClCompile Include="data\Value.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\LocalBadgesModel.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\MemoryNotesModel.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ImageReference.cpp" />
   </ItemGroup>
 </Project>

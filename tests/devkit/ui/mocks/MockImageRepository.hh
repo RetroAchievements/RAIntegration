@@ -2,9 +2,13 @@
 #define RA_UI_MOCK_IMAGEREPOSITORY_HH
 #pragma once
 
-#include "ui\ImageReference.hh"
+#include "services/ServiceLocator.hh"
 
-#include "util\Strings.hh"
+#include "ui/IImageRepository.hh"
+
+#include <map>
+#include <set>
+#include <string>
 
 namespace ra {
 namespace ui {

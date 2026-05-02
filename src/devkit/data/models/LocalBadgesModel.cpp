@@ -1,11 +1,9 @@
 #include "LocalBadgesModel.hh"
 
-#include "services\IFileSystem.hh"
-#include "services\ServiceLocator.hh"
+#include "services/IFileSystem.hh"
+#include "services/ServiceLocator.hh"
 
-#include "ui\ImageReference.hh"
-
-#include "util\Strings.hh"
+#include "ui/IImageRepository.hh"
 
 namespace ra {
 namespace data {

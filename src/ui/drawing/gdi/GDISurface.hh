@@ -5,6 +5,8 @@
 #include "ui\drawing\ISurface.hh"
 #include "ui\drawing\gdi\ResourceRepository.hh"
 
+#include "util\GSL.hh"
+
 namespace ra {
 namespace ui {
 namespace drawing {

@@ -6,6 +6,8 @@
 
 #include "ui/IImageRepository.hh"
 
+#include "util/Strings.hh"
+
 #include <map>
 #include <set>
 #include <string>

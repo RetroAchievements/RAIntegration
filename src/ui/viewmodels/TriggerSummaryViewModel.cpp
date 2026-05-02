@@ -532,8 +532,11 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
 
         if (pNote)
         {
-            // TODO: handle subnotes (bit3=x)
-            pClause.SetReference(pNote->GetSummary());
+            const auto pSubNote = pNote->GetSubNote(ra::data::Memory::SizeFromRcheevosSize(pCondition->operand1.size));
+            if (!pSubNote.empty())
+                pClause.SetReference(EnumValueFromText(pSubNote));
+            else
+                pClause.SetReference(pNote->GetSummary());
         }
         else
         {
@@ -695,32 +698,32 @@ void TriggerSummaryViewModel::AddHeaders()
             }
         };
 
-    fBuildGroup(TriggerClauseBucket::Conflicting, L"--- CONFLICTING ---", pTheme.ColorTriggerPauseTrue());
+    fBuildGroup(TriggerClauseBucket::Conflicting, L"--- CONFLICTING ---", pTheme.ColorExplainConflicting());
 
     if (!vBuckets.at(ra::etoi(TriggerClauseBucket::Trigger)).empty())
     {
-        fBuildGroup(TriggerClauseBucket::Trigger, L"--- TRIGGER WHEN ---", pTheme.ColorTriggerBecomingTrue());
-        fBuildGroup(TriggerClauseBucket::Ongoing, L"--- WHILE ---", pTheme.ColorTriggerIsTrue());
+        fBuildGroup(TriggerClauseBucket::Trigger, L"--- TRIGGER WHEN ---", pTheme.ColorExplainTriggerWhen());
+        fBuildGroup(TriggerClauseBucket::Ongoing, L"--- WHILE ---", pTheme.ColorExplainWhile());
     }
     else
     {
         // No trigger clauses. Promote the Ongoing clauses to trigger clauses
-        fBuildGroup(TriggerClauseBucket::Ongoing, L"--- TRIGGER WHEN ---", pTheme.ColorTriggerBecomingTrue());
+        fBuildGroup(TriggerClauseBucket::Ongoing, L"--- TRIGGER WHEN ---", pTheme.ColorExplainTriggerWhen());
     }
 
     const auto vUnlessItems = vBuckets.at(ra::etoi(TriggerClauseBucket::Unless));
     if (!vUnlessItems.empty()) {
-        fBuildGroup(TriggerClauseBucket::Unless, vUnlessItems.size() > 1 ? L"--- UNLESS ANY ---" : L"--- UNLESS ---", pTheme.ColorTriggerPauseTrue());
+        fBuildGroup(TriggerClauseBucket::Unless, vUnlessItems.size() > 1 ? L"--- UNLESS ANY ---" : L"--- UNLESS ---", pTheme.ColorExplainUnless());
     }
 
-    fBuildGroup(TriggerClauseBucket::Start, L"--- STARTING WHEN ---", pTheme.ColorTriggerWasTrue());
+    fBuildGroup(TriggerClauseBucket::Start, L"--- STARTING WHEN ---", pTheme.ColorExplainStartingWhen());
 
     const auto vRestartItems = vBuckets.at(ra::etoi(TriggerClauseBucket::Restart));
     if (!vRestartItems.empty()) {
-        fBuildGroup(TriggerClauseBucket::Restart, vRestartItems.size() > 1 ? L"--- FAILING WHEN ANY ---" : L"--- FAILING WHEN ---", pTheme.ColorTriggerResetTrue());
+        fBuildGroup(TriggerClauseBucket::Restart, vRestartItems.size() > 1 ? L"--- FAILING WHEN ANY ---" : L"--- FAILING WHEN ---", pTheme.ColorExplainFailingWhen());
     }
 
-    fBuildGroup(TriggerClauseBucket::Unimportant, L"--- IMPOTENT ---", pTheme.ColorTriggerIsTrue());
+    fBuildGroup(TriggerClauseBucket::Unimportant, L"--- IMPOTENT ---", pTheme.ColorExplainImpotent());
 }
 
 } // namespace viewmodels

@@ -194,7 +194,7 @@ public:
     TEST_METHOD(TestBitChangedTo)
     {
         TriggerSummaryViewModelHarness summary;
-        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
+        summary.mockGameContext.SetNote({ 0x1234U }, L"b1:Town\r\nb2:World");
         summary.InitializeFrom("0xO1234=1_d0xO1234=0");
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());

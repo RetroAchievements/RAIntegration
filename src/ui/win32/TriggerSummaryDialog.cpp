@@ -68,7 +68,7 @@ TriggerSummaryDialog::TriggerSummaryDialog(TriggerSummaryViewModel& vmTriggerSum
     auto pOperationColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         TriggerSummaryViewModel::TriggerClauseViewModel::OperationProperty);
     pOperationColumn->SetHeader(L"Operation");
-    pOperationColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 120);
+    pOperationColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 140);
     m_bindClauses.BindColumn(2, std::move(pOperationColumn));
 
     auto pTargetColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
@@ -81,7 +81,7 @@ TriggerSummaryDialog::TriggerSummaryDialog(TriggerSummaryViewModel& vmTriggerSum
     auto pTallyColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         TriggerSummaryViewModel::TriggerClauseViewModel::TallyProperty);
     pTallyColumn->SetHeader(L"Tally");
-    pTallyColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
+    pTallyColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
     m_bindClauses.BindColumn(4, std::move(pTallyColumn));
 
     m_bindClauses.BindRowColor(TriggerSummaryViewModel::TriggerClauseViewModel::ColorProperty);

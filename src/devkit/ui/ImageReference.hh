@@ -61,17 +61,21 @@ public:
     void Release() noexcept;
 
     /// <summary>
-    /// Gets 
+    /// Gets custom data associated with a loaded image (as defined by the IImageRepository implementation).
     /// </summary>
-    /// <returns></returns>
     unsigned long long GetData() const noexcept { return m_nData; }
-    void SetData(unsigned long long nData) noexcept { m_nData = nData; }
+
+    /// <summary>
+    /// Sets custom data associated with a loaded image (as defined by the IImageRepository implementation).
+    /// </summary>
+    /// <remarks>Allows setting the data on a const ImageReference so the IImageRepository can lazy-load the data.</remarks>
+    void SetData(unsigned long long nData) const noexcept { m_nData = nData; }
 
 private:
     ImageType m_nType{};
     std::string m_sName;
 
-    unsigned long long m_nData{};
+    mutable unsigned long long m_nData{};
 };
 
 } // namespace ui

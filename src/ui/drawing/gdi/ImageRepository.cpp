@@ -542,7 +542,7 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
             if (hBitmap == nullptr)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
-            GSL_SUPPRESS_TYPE1 const_cast<ImageReference*>(&pImage)->SetData(reinterpret_cast<unsigned long long>(hBitmap));
+            GSL_SUPPRESS_TYPE1 pImage.SetData(reinterpret_cast<unsigned long long>(hBitmap));
 
             // ImageReference will release the reference
             pImageRepository->AddReference(pImage);

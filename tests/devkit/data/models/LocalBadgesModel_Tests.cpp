@@ -1,16 +1,12 @@
-#include "CppUnitTest.h"
+#include "data/models/LocalBadgesModel.hh"
 
-#include "data\models\LocalBadgesModel.hh"
+#include "services/impl/StringTextWriter.hh"
+#include "services/mocks/MockFileSystem.hh"
 
-#include "services\impl\StringTextWriter.hh"
+#include "testutil/AssetAsserts.hh"
+#include "testutil/CppUnitTest.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
-#include "tests\data\DataAsserts.hh"
-
-#include "tests\devkit\services\mocks\MockFileSystem.hh"
-#include "tests\devkit\testutil\AssetAsserts.hh"
-#include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockImageRepository.hh"
+#include "ui/mocks/MockImageRepository.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -27,7 +23,6 @@ private:
     public:
         ra::services::impl::StringTextWriter textWriter;
 
-        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockFileSystem mockFileSystem;
         ra::ui::mocks::MockImageRepository mockImageRepository;
     };
@@ -44,13 +39,11 @@ public:
         Assert::AreEqual(AssetCategory::Local, badges.GetCategory());
         Assert::AreEqual(AssetState::Inactive, badges.GetState());
         Assert::AreEqual(AssetChanges::None, badges.GetChanges());
-        Assert::IsFalse(badges.NeedsSerialized());
     }
 
     TEST_METHOD(TestDeleteUncommittedBadges)
     {
         LocalBadgesModelHarness badges;
-        badges.mockGameContext.SetGameId(123U);
         badges.mockFileSystem.MockFileSize(L"local\\123-A.png", 1234);
         badges.AddReference(L"local\\123-A.png", true);
         badges.mockFileSystem.MockFileSize(L"local\\123-B.png", 2345);

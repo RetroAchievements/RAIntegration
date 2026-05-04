@@ -61,6 +61,7 @@
     <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -149,5 +150,6 @@
     <ClInclude Include="testutil\ValueAsserts.hh">
       <Filter>testutil</Filter>
     </ClInclude>
+    <ClInclude Include="ui\mocks\MockImageRepository.hh" />
   </ItemGroup>
 </Project>

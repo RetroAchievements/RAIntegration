@@ -15,6 +15,7 @@
 #include "services\IFileSystem.hh"
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
+#include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\WindowManager.hh"
 

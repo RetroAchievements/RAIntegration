@@ -330,9 +330,6 @@
     <ClCompile Include="ui\win32\ProgressDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\LocalBadgesModel.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\ChallengeIndicatorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -350,9 +347,6 @@
     </ClCompile>
     <ClCompile Include="ui\viewmodels\NewAssetViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\RichPresenceModel.cpp">
-      <Filter>Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\EmulatorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
@@ -407,6 +401,9 @@
     </ClCompile>
     <ClCompile Include="ui\win32\TriggerSummaryDialog.cpp">
       <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\RichPresenceModel.cpp">
+      <Filter>Data\Models</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -833,9 +830,6 @@
     <ClInclude Include="ui\win32\ProgressDialog.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
-    <ClInclude Include="data\models\LocalBadgesModel.hh">
-      <Filter>Data\Models</Filter>
-    </ClInclude>
     <ClInclude Include="ui\win32\bindings\NumericUpDownBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
@@ -859,9 +853,6 @@
     </ClInclude>
     <ClInclude Include="api\UpdateLeaderboard.hh">
       <Filter>API</Filter>
-    </ClInclude>
-    <ClInclude Include="data\models\RichPresenceModel.hh">
-      <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\PointerFinderViewModel.hh">
       <Filter>UI\ViewModels</Filter>
@@ -994,6 +985,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\TriggerSummaryDialog.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\RichPresenceModel.hh">
+      <Filter>Data\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

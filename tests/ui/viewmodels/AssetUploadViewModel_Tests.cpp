@@ -15,10 +15,10 @@
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\testutil\ValueAsserts.hh"
+#include "tests\devkit\ui\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockServer.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

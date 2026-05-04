@@ -83,7 +83,6 @@
     <ClCompile Include="data\context\SessionTracker.cpp" />
     <ClCompile Include="data\models\AchievementModel.cpp" />
     <ClCompile Include="data\models\LeaderboardModel.cpp" />
-    <ClCompile Include="data\models\LocalBadgesModel.cpp" />
     <ClCompile Include="data\models\RichPresenceModel.cpp" />
     <ClCompile Include="data\models\TriggerValidation.cpp" />
     <ClCompile Include="pch.cpp">
@@ -219,7 +218,6 @@
     <ClInclude Include="data\context\SessionTracker.hh" />
     <ClInclude Include="data\models\AchievementModel.hh" />
     <ClInclude Include="data\models\LeaderboardModel.hh" />
-    <ClInclude Include="data\models\LocalBadgesModel.hh" />
     <ClInclude Include="data\models\RichPresenceModel.hh" />
     <ClInclude Include="data\models\TriggerValidation.hh" />
     <ClInclude Include="data\Types.hh" />

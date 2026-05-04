@@ -1,5 +1,8 @@
 #include "PopupMessageViewModel.hh"
 
+#include "services\ServiceLocator.hh"
+
+#include "ui\IImageRepository.hh"
 #include "ui\OverlayTheme.hh"
 
 namespace ra {

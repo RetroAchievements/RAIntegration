@@ -7,6 +7,7 @@
 #include "data/context/GameContext.hh"
 
 #include "services/IFileSystem.hh"
+#include "services/ServiceLocator.hh"
 
 #include "ui/viewmodels/FileDialogViewModel.hh"
 #include "ui/viewmodels/MessageBoxViewModel.hh"

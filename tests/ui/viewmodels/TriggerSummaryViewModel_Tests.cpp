@@ -26,6 +26,8 @@ private:
         ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
 
+        using TriggerSummaryViewModel::InitializeFrom;
+
         void InitializeFrom(const std::string& sTrigger)
         {
             const auto nSize = rc_trigger_size(sTrigger.c_str());

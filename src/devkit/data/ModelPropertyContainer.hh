@@ -14,7 +14,7 @@ class ModelPropertyContainer
 public:
     GSL_SUPPRESS_F6 ModelPropertyContainer() = default;
 
-#ifdef DEBUG
+#ifndef NDEBUG
     virtual ~ModelPropertyContainer() noexcept {
         m_bDestructed = true;
     }

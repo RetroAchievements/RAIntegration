@@ -842,6 +842,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindEnabled(IDC_RA_ADD_GROUP, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_DELETE_GROUP, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_VIEW_DETAIL, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_LBX_CONDITIONS, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADD_COND, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_DELETE_COND, AssetEditorViewModel::IsAssetLoadedProperty);
@@ -1025,6 +1026,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     SetAnchor(IDC_RA_DELETE_GROUP, Anchor::Bottom | Anchor::Left);
     SetAnchor(IDC_RA_COPY_ALL, Anchor::Bottom | Anchor::Left);
     SetAnchor(IDC_RA_ERROR_INDICATOR, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_VIEW_DETAIL, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_CHK_HIGHLIGHTS, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_CHK_PAUSE_ON_RESET, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_CHK_PAUSE_ON_TRIGGER, Anchor::Top | Anchor::Right);
@@ -1089,6 +1091,10 @@ BOOL AssetEditorDialog::OnInitDialog()
 
     SendMessage(::GetDlgItem(GetHWND(), IDC_RA_TYPE), CB_SETDROPPEDWIDTH, 70, 0);
     SendMessage(::GetDlgItem(GetHWND(), IDC_RA_FORMAT), CB_SETDROPPEDWIDTH, 136, 0);
+
+#ifndef _DEBUG
+    ShowWindow(::GetDlgItem(GetHWND(), IDC_RA_VIEW_DETAIL), SW_HIDE);
+#endif
 
     return DialogBase::OnInitDialog();
 }
@@ -1232,6 +1238,15 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)
                 vmAssetEditor->Trigger().CopyToClipboard();
+
+            return TRUE;
+        }
+
+        case IDC_RA_VIEW_DETAIL:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().Summarize();
 
             return TRUE;
         }

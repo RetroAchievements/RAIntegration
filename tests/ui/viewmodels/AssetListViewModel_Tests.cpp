@@ -2606,11 +2606,12 @@ public:
     TEST_METHOD(TestSaveSelectedValidationWarning)
     {
         AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockGameContext.SetNote(0x1234, L"[16-bit] a");
         vmAssetList.MockGameId(22U);
-        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0x1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
 
-        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        auto* pItem = vmAssetList.mockGameContext.Assets().FindAchievement(2);
         Expects(pItem != nullptr);
         pItem->SetName(L"Test1b");
         pItem->SetTrigger("A:0x1234");
@@ -2624,7 +2625,7 @@ public:
 
         // invalid item can still be saved
         const auto& sText = vmAssetList.GetUserFile(L"22");
-        AssertContains(sText, "1:\"A:0x1234\":Test1b:Desc1:::::5:::::12345");
+        AssertContains(sText, "2:\"A:0x1234\":Test1b:Desc1:::::5:::::12345");
 
         Assert::AreEqual(std::wstring(L"Condition 1: AddSource condition type expects another condition to follow"), pItem->GetValidationError());
 
@@ -2633,7 +2634,7 @@ public:
 
         // invalid item can still be saved
         const auto& sText2 = vmAssetList.GetUserFile(L"22");
-        AssertContains(sText2, "1:\"A:0x1234\":Test1c:Desc1:::::5:::::12345");
+        AssertContains(sText2, "2:\"A:0x1234\":Test1c:Desc1:::::5:::::12345");
     }
 
     TEST_METHOD(TestSaveSelectedPublishCoreModified)

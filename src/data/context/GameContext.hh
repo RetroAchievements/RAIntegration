@@ -2,6 +2,10 @@
 #define RA_DATA_GAMECONTEXT_HH
 #pragma once
 
+#include "context/IGameContext.hh"
+
+#include "services/ServiceLocator.hh"
+
 #include "GameAssets.hh"
 
 #include <string>
@@ -15,10 +19,13 @@ namespace ra {
 namespace data {
 namespace context {
 
-class GameContext
+class GameContext : public ra::context::IGameContext
 {
 public:
-    GSL_SUPPRESS_F6 GameContext() = default;
+    GSL_SUPPRESS_F6 GameContext()
+        : m_IGameContextOverride(this)
+    {
+    }
     virtual ~GameContext() noexcept = default;
     GameContext(const GameContext&) noexcept = delete;
     GameContext& operator=(const GameContext&) noexcept = delete;
@@ -46,11 +53,6 @@ public:
     /// Determines whether a game is being loaded.
     /// </summary>
     bool IsGameLoading() const noexcept { return m_nLoadCount != 0; }
-
-    /// <summary>
-    /// Gets the unique identifier of the currently loaded game.
-    /// </summary>
-    unsigned int GameId() const noexcept { return m_nGameId; }
 
     /// <summary>
     /// Gets the unique identifier of the currently loaded subset game.
@@ -135,27 +137,6 @@ public:
     GameAssets& Assets() noexcept { return m_vAssets; }
     const GameAssets& Assets() const noexcept { return m_vAssets; }
 
-    class NotifyTarget
-    {
-    public:
-        NotifyTarget() noexcept = default;
-        virtual ~NotifyTarget() noexcept = default;
-        NotifyTarget(const NotifyTarget&) noexcept = delete;
-        NotifyTarget& operator=(const NotifyTarget&) noexcept = delete;
-        NotifyTarget(NotifyTarget&&) noexcept = default;
-        NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
-
-        virtual void OnBeforeActiveGameChanged() noexcept(false) {}
-        virtual void OnActiveGameChanged() noexcept(false) {}
-        virtual void OnBeginGameLoad() noexcept(false) {}
-        virtual void OnEndGameLoad() noexcept(false) {}
-        virtual void OnMemoryNoteChanged(ra::data::ByteAddress, const std::wstring&) noexcept(false) {}
-        virtual void OnMemoryNoteMoved(ra::data::ByteAddress, ra::data::ByteAddress, const std::wstring&) noexcept(false) {}
-    };
-
-    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Add(pTarget); }
-    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Remove(pTarget); }
-
     void DoFrame();
 
     enum SubsetType
@@ -194,6 +175,17 @@ public:
     void InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response);
     uint32_t GetGameId(uint32_t nSubsetId) const noexcept;
 
+    ra::data::models::MemoryNotesModel& MemoryNotes() noexcept override 
+    {
+        auto* pNotes = m_vAssets.FindMemoryNotes();
+        return pNotes ? *pNotes : m_oDefaultNotes;
+    }
+    const ra::data::models::MemoryNotesModel& MemoryNotes() const noexcept override
+    {
+        auto* pNotes = m_vAssets.FindMemoryNotes();
+        return pNotes ? *pNotes : m_oDefaultNotes;
+    }
+
 private:
     void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused);
     void MigrateSubsetUserFiles();
@@ -210,7 +202,6 @@ protected:
     void BeginLoad();
     void EndLoad();
 
-    unsigned int m_nGameId = 0;
     unsigned int m_nActiveGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
@@ -219,14 +210,16 @@ protected:
     std::vector<Subset> m_vSubsets;
 
 private:
-    NotifyTargetSet<NotifyTarget> m_vNotifyTargets;
-
     GameAssets m_vAssets;
 
     std::atomic<int> m_nLoadCount = 0;
     int m_nMasteryPopupId = 0;
 
     std::mutex m_mLoadMutex;
+
+    // use the mock helper to register as both GameContext and IGameContext
+    ra::services::ServiceLocator::ServiceOverride<ra::context::IGameContext> m_IGameContextOverride;
+    ra::data::models::MemoryNotesModel m_oDefaultNotes;
 };
 
 } // namespace context

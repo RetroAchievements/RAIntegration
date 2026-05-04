@@ -179,6 +179,8 @@
     </ClInclude>
     <ClInclude Include="ui\IImageRepository.hh" />
     <ClInclude Include="ui\ImageReference.hh" />
+    <ClInclude Include="context\IGameContext.hh" />
+    <ClInclude Include="data\models\TriggerValidation.hh" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -248,5 +250,6 @@
       <Filter>data\models</Filter>
     </ClCompile>
     <ClCompile Include="ui\ImageReference.cpp" />
+    <ClCompile Include="data\models\TriggerValidation.cpp" />
   </ItemGroup>
 </Project>

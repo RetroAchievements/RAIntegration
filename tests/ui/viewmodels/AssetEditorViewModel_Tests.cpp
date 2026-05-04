@@ -13,6 +13,7 @@
 
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
@@ -71,6 +72,7 @@ private:
 
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
@@ -526,6 +528,7 @@ public:
     TEST_METHOD(TestLoadAchievementValidationError)
     {
         AssetEditorViewModelHarness editor;
+        editor.mockGameContext.SetNote(0x1234, L"a");
         AchievementModel achievement;
         achievement.SetName(L"Test Achievement");
         achievement.SetID(1234U);
@@ -534,7 +537,7 @@ public:
         achievement.SetCategory(AssetCategory::Unofficial);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
-        achievement.SetTrigger("M:0x1234=10");
+        achievement.SetTrigger("M:0xH1234=10");
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
 
@@ -565,6 +568,7 @@ public:
     TEST_METHOD(TestLoadAchievementValidationErrorCancel)
     {
         AssetEditorViewModelHarness editor;
+        editor.mockGameContext.SetNote(0x1234, L"a");
         AchievementModel achievement;
         achievement.SetName(L"Test Achievement");
         achievement.SetID(1234U);
@@ -573,7 +577,7 @@ public:
         achievement.SetCategory(AssetCategory::Unofficial);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
-        achievement.SetTrigger("M:0x1234=10");
+        achievement.SetTrigger("M:0xH1234=10");
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
 
@@ -606,6 +610,7 @@ public:
     TEST_METHOD(TestLoadAchievementValidationErrorDeleted)
     {
         AssetEditorViewModelHarness editor;
+        editor.mockGameContext.SetNote(0x1234, L"a");
         AchievementModel achievement;
         achievement.SetName(L"Test Achievement");
         achievement.SetID(1234U);
@@ -614,7 +619,7 @@ public:
         achievement.SetCategory(AssetCategory::Unofficial);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
-        achievement.SetTrigger("M:0x1234=10");
+        achievement.SetTrigger("M:0xH1234=10");
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
 
@@ -640,6 +645,7 @@ public:
     TEST_METHOD(TestLoadAchievementForcedValidationError)
     {
         AssetEditorViewModelHarness editor;
+        editor.mockGameContext.SetNote(0x1234, L"a");
         AchievementModel achievement;
         achievement.SetName(L"Test Achievement");
         achievement.SetID(1234U);
@@ -648,7 +654,7 @@ public:
         achievement.SetCategory(AssetCategory::Unofficial);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
-        achievement.SetTrigger("M:0x1234=10");
+        achievement.SetTrigger("M:0xH1234=10");
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
 
@@ -672,6 +678,8 @@ public:
     TEST_METHOD(TestLoadLeaderboard)
     {
         AssetEditorViewModelHarness editor;
+        editor.mockGameContext.SetNote(0x1234, L"a");
+        editor.mockGameContext.SetNote(0x2345, L"a");
         LeaderboardModel leaderboard;
         leaderboard.SetName(L"Test Leaderboard");
         leaderboard.SetID(1234U);

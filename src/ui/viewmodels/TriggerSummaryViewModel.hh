@@ -53,15 +53,13 @@ public:
         Color GetColor() const { return Color(ra::to_unsigned(GetValue(ColorProperty))); }
         void SetColor(Color value) { SetValue(ColorProperty, ra::to_signed(value.ARGB)); }
 
-        std::wstring GetTooltip(const StringModelProperty& nProperty) const;
-
         const rc_condition_t* pCondition = nullptr;
         enum TriggerClauseType : int;
         TriggerClauseType nType = ra::itoe<TriggerClauseType>(0);
     };
 
-    ViewModelCollection<TriggerClauseViewModel>& Clauses() { return m_vClauses; }
-    const ViewModelCollection<TriggerClauseViewModel>& Clauses() const { return m_vClauses; }
+    ViewModelCollection<TriggerClauseViewModel>& Clauses() noexcept { return m_vClauses; }
+    const ViewModelCollection<TriggerClauseViewModel>& Clauses() const noexcept { return m_vClauses; }
 
 private:
     bool MergeClauses(

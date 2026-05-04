@@ -56,7 +56,7 @@ static constexpr bool IsChangeType(TriggerClauseType nType)
     }
 }
 
-static bool IsSameMemoryReference(const rc_operand_t& pOperand1, const rc_operand_t& pOperand2)
+static bool IsSameMemoryReference(const rc_operand_t& pOperand1, const rc_operand_t& pOperand2) noexcept
 {
     switch (pOperand1.type) {
         case RC_OPERAND_CONST:
@@ -89,7 +89,7 @@ static constexpr uint32_t ParseUInt32(std::wstring_view sValue)
 
 static void ParseRanges(std::vector<std::pair<uint32_t, uint32_t>>& vRanges, const std::wstring& sIndices)
 {
-    std::wstring_view sRemaining = sIndices;
+    const std::wstring_view sRemaining = sIndices;
     size_t nIndex;
     do
     {
@@ -111,7 +111,7 @@ static void ParseRanges(std::vector<std::pair<uint32_t, uint32_t>>& vRanges, con
     } while (nIndex < sRemaining.length());
 }
 
-static void MergeIndices(TriggerSummaryViewModel::TriggerClauseViewModel& pClause1, TriggerSummaryViewModel::TriggerClauseViewModel& pClause2)
+static void MergeIndices(TriggerSummaryViewModel::TriggerClauseViewModel& pClause1, const TriggerSummaryViewModel::TriggerClauseViewModel& pClause2)
 {
     std::vector<std::pair<uint32_t, uint32_t>> vRanges;
     ParseRanges(vRanges, pClause1.GetIndices());

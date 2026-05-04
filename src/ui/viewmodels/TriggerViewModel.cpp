@@ -945,7 +945,7 @@ void TriggerViewModel::Summarize()
     if (!pGroup)
         return;
 
-    auto* pCondSet = pGroup->GetConditionSet(IsValue());
+    const auto* pCondSet = pGroup->GetConditionSet(IsValue());
     if (!pCondSet)
         return;
 

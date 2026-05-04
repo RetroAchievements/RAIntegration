@@ -2,7 +2,7 @@
 #define RA_UI_DRAWING_GDI_IMAGEREPOSITORY_HH
 #pragma once
 
-#include "ui\ImageReference.hh"
+#include "ui\IImageRepository.hh"
 
 namespace ra {
 namespace ui {

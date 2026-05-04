@@ -12,6 +12,7 @@
 #include "data\context\GameContext.hh"
 
 #include "ui\ImageReference.hh"
+#include "ui\IImageRepository.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "RA_Defs.h"

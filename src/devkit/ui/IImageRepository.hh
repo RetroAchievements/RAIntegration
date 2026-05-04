@@ -2,27 +2,12 @@
 #define RA_UI_IMAGEREPOSITORY_H
 #pragma once
 
-#include "data\NotifyTargetSet.hh"
-#include "services\ServiceLocator.hh"
+#include "ImageReference.hh"
+
+#include "data/NotifyTargetSet.hh"
 
 namespace ra {
 namespace ui {
-namespace drawing::gdi {
-
-class ImageRepository;
-
-} // namespace drawing::gdi
-
-enum class ImageType
-{
-    None,
-    Badge,
-    UserPic,
-    Local,
-    Icon,
-};
-
-class ImageReference;
 
 class IImageRepository
 {
@@ -111,69 +96,6 @@ protected:
 
 private:
     ra::data::NotifyTargetSet<NotifyTarget> m_vNotifyTargets;
-};
-
-class ImageReference
-{
-public:
-    ImageReference() noexcept = default;
-    ~ImageReference() noexcept
-    {
-        if (ra::services::ServiceLocator::Exists<IImageRepository>())
-            Release();
-    }
-
-    explicit ImageReference(ImageType nType, const std::string& sName) : m_nType(nType), m_sName(sName) {}
-
-    ImageReference(const ImageReference& source) = default;
-    ImageReference& operator=(const ImageReference&) noexcept = delete;
-    ImageReference(ImageReference&& source) noexcept = default;
-    ImageReference& operator=(ImageReference&& source) noexcept = delete;
-
-    /// <summary>
-    /// Get the image type.
-    /// </summary>
-    inline constexpr ImageType Type() const noexcept { return m_nType; }
-
-    /// <summary>
-    /// Get the image name.
-    /// </summary>
-    const std::string& Name() const noexcept { return m_sName; }
-
-    /// <summary>
-    /// Updates the referenced image.
-    /// </summary>
-    /// <param name="nType">Type of the image.</param>
-    /// <param name="sName">Name of the image.</param>
-    void ChangeReference(ImageType nType, const std::string& sName)
-    {
-        if (nType != m_nType || sName != m_sName)
-        {
-            Release();
-
-            m_nType = nType;
-            m_sName = sName;
-        }
-    }
-
-    /// <summary>
-    /// Releases this reference image.
-    /// </summary>
-    GSL_SUPPRESS_F6 void Release() noexcept
-    {
-        if (m_nType != ImageType::None)
-        {
-            // Suppress not working inline, but should
-            GSL_SUPPRESS_F6 auto& pRepository = ra::services::ServiceLocator::GetMutable<IImageRepository>();
-            pRepository.ReleaseReference(*this);
-        }
-    }
-
-private:
-    ImageType m_nType{};
-    std::string m_sName;
-    mutable unsigned long long m_nData{};
-    friend class drawing::gdi::ImageRepository;
 };
 
 } // namespace ui

@@ -6,11 +6,11 @@
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\ui\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

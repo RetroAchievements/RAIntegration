@@ -4,7 +4,7 @@
 
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
-#include "tests\mocks\MockImageRepository.hh"
+#include "tests\devkit\ui\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\RA_UnitTestHelpers.h"

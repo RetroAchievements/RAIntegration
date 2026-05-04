@@ -11,6 +11,7 @@
 
 #include "ui\EditorTheme.hh"
 #include "ui\ImageReference.hh"
+#include "ui\IImageRepository.hh"
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 

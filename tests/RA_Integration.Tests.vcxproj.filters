@@ -336,12 +336,6 @@
     <ClCompile Include="ui\viewmodels\AssetUploadViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\models\LocalBadgesModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\ChallengeIndicatorViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -493,9 +487,6 @@
     </ClInclude>
     <ClInclude Include="..\src\pch.h">
       <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="mocks\MockImageRepository.hh">
-      <Filter>Mocks</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockSurface.hh">
       <Filter>Mocks</Filter>

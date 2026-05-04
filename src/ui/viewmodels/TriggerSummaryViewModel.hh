@@ -71,7 +71,7 @@ private:
         TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
         gsl::index nIndex1, gsl::index nIndex2);
     bool MergeClauses(TriggerSummaryViewModel::TriggerClauseViewModel& pClause,
-        TriggerSummaryViewModel::TriggerClauseViewModel& pDiscardClause,
+        const TriggerSummaryViewModel::TriggerClauseViewModel& pDiscardClause,
         gsl::index nDiscardIndex, TriggerClauseViewModel::TriggerClauseType nNewType, const std::wstring& sNewOperation);
 
     ViewModelCollection<TriggerClauseViewModel> m_vClauses;

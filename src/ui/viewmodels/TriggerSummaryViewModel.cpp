@@ -161,7 +161,7 @@ static void MergeIndices(TriggerSummaryViewModel::TriggerClauseViewModel& pClaus
 }
 
 bool TriggerSummaryViewModel::MergeClauses(TriggerSummaryViewModel::TriggerClauseViewModel& pClause,
-    TriggerSummaryViewModel::TriggerClauseViewModel& pDiscardClause,
+    const TriggerSummaryViewModel::TriggerClauseViewModel& pDiscardClause,
     gsl::index nDiscardIndex, TriggerClauseType nNewType, const std::wstring& sNewOperation)
 {
     pClause.SetOperation(sNewOperation);

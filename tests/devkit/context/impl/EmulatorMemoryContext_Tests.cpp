@@ -60,6 +60,11 @@ private:
         return nBytes;
     }
 
+    static uint32_t ReadMemoryBlockNull(uint32_t, uint8_t*, uint32_t) noexcept
+    {
+        return 0;
+    }
+
     static void WriteMemory0(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(nAddress) = nValue; }
     static void WriteMemory1(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(gsl::narrow_cast<size_t>(nAddress) + 10) = nValue; }
     static void WriteMemory2(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(gsl::narrow_cast<size_t>(nAddress) + 20) = nValue; }
@@ -757,6 +762,33 @@ public:
 
         Assert::AreEqual(10U, vBlocks.at(0).GetBytesSize());
         const auto* pBytes = vBlocks.at(0).GetBytes();
+        Expects(pBytes != nullptr);
+        for (size_t i = 0; i < 10; i++)
+            Assert::AreEqual(memory.at(i + 20), pBytes[i]);
+    }
+
+    TEST_METHOD(TestCaptureMemoryGapReadFailure)
+    {
+        EmulatorMemoryContextHarness emulator;
+
+        InitializeMemory();
+        emulator.AddMemoryBlock(0, 10, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, nullptr, nullptr);
+        emulator.AddMemoryBlockReader(1, &ReadMemoryBlockNull);
+        emulator.AddMemoryBlock(2, 10, &ReadMemory2, &WriteMemory2);
+
+        std::vector<ra::data::CapturedMemoryBlock> vBlocks;
+        emulator.CaptureMemory(vBlocks, 0, 30, 0);
+        Assert::AreEqual({ 2 }, vBlocks.size());
+
+        Assert::AreEqual(10U, vBlocks.at(0).GetBytesSize());
+        const auto* pBytes = vBlocks.at(0).GetBytes();
+        Expects(pBytes != nullptr);
+        for (size_t i = 0; i < 10; i++)
+            Assert::AreEqual(memory.at(i), pBytes[i]);
+
+        Assert::AreEqual(10U, vBlocks.at(1).GetBytesSize());
+        pBytes = vBlocks.at(1).GetBytes();
         Expects(pBytes != nullptr);
         for (size_t i = 0; i < 10; i++)
             Assert::AreEqual(memory.at(i + 20), pBytes[i]);

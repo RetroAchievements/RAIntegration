@@ -471,10 +471,18 @@ void MemoryViewerViewModel::ReadMemory(ra::data::ByteAddress nFirstAddress, int 
         }
 
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-        pMemoryContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(nNumVisibleLines) * 16);
+        const auto nToRead = gsl::narrow_cast<size_t>(nNumVisibleLines) * 16;
+        const auto nRead = pMemoryContext.ReadMemory(nFirstAddress, m_pMemory, nToRead);
 
-        UpdateInvalidRegions();
         UpdateColors();
+
+        // if a portion of memory couldn't be captured, read lines (16-bytes) and mark each failure.
+        if (nRead < nToRead) {
+            for (auto nOffset = 0; nOffset < nToRead; nOffset += 16) {
+                if (pMemoryContext.ReadMemory(nFirstAddress + nOffset, &m_pMemory[nOffset], 16) == 0)
+                    memset(&m_pInvalid[nOffset], 1, 16);
+            }
+        }
 
         Redraw();
     });
@@ -1151,7 +1159,13 @@ void MemoryViewerViewModel::DoFrame()
     Expects(nVisibleLines < MaxLines);
 
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-    pMemoryContext.ReadMemory(nAddress, pMemory, gsl::narrow_cast<size_t>(nVisibleLines) * 16);
+    const auto nToRead = gsl::narrow_cast<size_t>(nVisibleLines) * 16;
+    const auto nRead = m_pInvalid[0] ? 0 : pMemoryContext.ReadMemory(nAddress, pMemory, nToRead);
+    for (auto nOffset = nRead; nOffset < nToRead; nOffset += 16)
+    {
+        if (!m_pInvalid[nOffset])
+            pMemoryContext.ReadMemory(nAddress + nOffset, &pMemory[nOffset], 16);
+    }
 
     constexpr int nStride = 8;
     for (int nIndex = 0; nIndex < nVisibleLines * 16; nIndex += nStride)

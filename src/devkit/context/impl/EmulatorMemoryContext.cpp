@@ -176,14 +176,14 @@ uint8_t EmulatorMemoryContext::ReadMemoryByte(ra::data::ByteAddress nAddress) co
 }
 
 uint32_t EmulatorMemoryContext::ReadMemory(ra::data::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount,
-                                   const EmulatorMemoryContext::MemoryBlock& pBlock)
+                                   const EmulatorMemoryContext::MemoryBlock& pBlock, bool bFill)
 {
     Expects(pBuffer != nullptr);
 
     if (pBlock.readBlock)
     {
         const size_t nRead = pBlock.readBlock(nAddress, pBuffer, gsl::narrow_cast<uint32_t>(nCount));
-        if (nRead < nCount)
+        if (nRead < nCount && bFill)
             memset(pBuffer + nRead, 0, nCount - nRead);
 
         return gsl::narrow_cast<uint32_t>(nRead);
@@ -191,7 +191,8 @@ uint32_t EmulatorMemoryContext::ReadMemory(ra::data::ByteAddress nAddress, uint8
 
     if (!pBlock.read)
     {
-        memset(pBuffer, 0, nCount);
+        if (bFill)
+            memset(pBuffer, 0, nCount);
         return 0;
     }
 
@@ -588,8 +589,11 @@ void EmulatorMemoryContext::CaptureMemory(std::vector<ra::data::CapturedMemoryBl
             }
 
             Expects(pBlock != nullptr);
-            ReadMemory(nAdjustedAddress, pBlock->GetBytes(), nBlockSize, pMemoryBlock);
-            pBlock->OptimizeMemory(vBlocks);
+            const auto nRead = ReadMemory(nAdjustedAddress, pBlock->GetBytes(), nBlockSize, pMemoryBlock, false);
+            if (nRead == 0)
+                vBlocks.pop_back();
+            else
+                pBlock->OptimizeMemory(vBlocks);
 
             nAddress += nBlockSize;
             nAdjustedAddress += nBlockSize;

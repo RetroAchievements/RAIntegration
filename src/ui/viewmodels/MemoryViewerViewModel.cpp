@@ -1160,11 +1160,15 @@ void MemoryViewerViewModel::DoFrame()
 
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     const auto nToRead = gsl::narrow_cast<size_t>(nVisibleLines) * 16;
-    const auto nRead = m_pInvalid[0] ? 0 : pMemoryContext.ReadMemory(nAddress, pMemory, nToRead);
-    for (auto nOffset = nRead; nOffset < nToRead; nOffset += 16)
+    if (m_pInvalid[0] || pMemoryContext.ReadMemory(nAddress, pMemory, nToRead) != nToRead)
     {
-        if (!m_pInvalid[nOffset])
-            pMemoryContext.ReadMemory(nAddress + nOffset, &pMemory[nOffset], 16);
+        memset(&pMemory, 0, sizeof(pMemory));
+
+        for (auto nOffset = 0; nOffset < nToRead; nOffset += 16)
+        {
+            if (!m_pInvalid[nOffset])
+                pMemoryContext.ReadMemory(nAddress + nOffset, &pMemory[nOffset], 16);
+        }
     }
 
     constexpr int nStride = 8;

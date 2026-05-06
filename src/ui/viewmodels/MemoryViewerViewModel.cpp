@@ -478,7 +478,7 @@ void MemoryViewerViewModel::ReadMemory(ra::data::ByteAddress nFirstAddress, int 
 
         // if a portion of memory couldn't be captured, read lines (16-bytes) and mark each failure.
         if (nRead < nToRead) {
-            for (auto nOffset = 0; nOffset < nToRead; nOffset += 16) {
+            for (size_t nOffset = 0; nOffset < nToRead; nOffset += 16) {
                 if (pMemoryContext.ReadMemory(nFirstAddress + nOffset, &m_pMemory[nOffset], 16) == 0)
                     memset(&m_pInvalid[nOffset], 1, 16);
             }
@@ -1164,7 +1164,7 @@ void MemoryViewerViewModel::DoFrame()
     {
         memset(&pMemory, 0, sizeof(pMemory));
 
-        for (auto nOffset = 0; nOffset < nToRead; nOffset += 16)
+        for (size_t nOffset = 0; nOffset < nToRead; nOffset += 16)
         {
             if (!m_pInvalid[nOffset])
                 pMemoryContext.ReadMemory(nAddress + nOffset, &pMemory[nOffset], 16);

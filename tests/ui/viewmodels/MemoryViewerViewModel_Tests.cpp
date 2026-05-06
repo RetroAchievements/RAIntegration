@@ -67,6 +67,11 @@ private:
             return m_pMemory[nAddress - GetFirstAddress()];
         }
 
+        bool GetInvalid(ra::data::ByteAddress nAddress) const
+        {
+            return m_pInvalid[nAddress - GetFirstAddress()];
+        }
+
         unsigned char GetColor(ra::data::ByteAddress nAddress) const
         {
             return gsl::narrow_cast<unsigned char>(ra::itoe<TextColor>(m_pColor[nAddress - GetFirstAddress()]));
@@ -2114,6 +2119,63 @@ public:
         Assert::IsTrue(viewer.IsReadOnly());
         viewer.DecreaseCurrentValue(16);
         Assert::AreEqual({ 0xFFEFU }, viewer.mockEmulatorContext.ReadMemory(0U, ra::data::Memory::Size::SixteenBit));
+    }
+
+    TEST_METHOD(TestReadMemoryInvalidBlock)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.mockEmulatorContext.AddMemoryBlock(0, 256, [](uint32_t nAddress) -> unsigned char { return nAddress & 0xFF; }, nullptr);
+        viewer.mockEmulatorContext.AddMemoryBlock(1, 256, nullptr, nullptr);
+        viewer.mockEmulatorContext.AddMemoryBlock(2, 256, [](uint32_t nAddress) -> unsigned char { return nAddress & 0xFF; }, nullptr);
+        viewer.SetNumVisibleLines(16);
+
+        // 0x00E0 -> 0x00FF valid, 0x0100-0x01DF invalid
+        viewer.SetFirstAddress(0x00E0);
+        for (uint32_t i = 0x00E0; i < 0x0100; ++i)
+            Assert::IsFalse(viewer.GetInvalid(i), viewer.mockEmulatorContext.FormatAddress(i).c_str());
+        for (uint32_t i = 0x0100; i < 0x01E0; ++i)
+            Assert::IsTrue(viewer.GetInvalid(i), viewer.mockEmulatorContext.FormatAddress(i).c_str());
+
+        // 0x0100 -> 0x01FF invalid
+        viewer.SetFirstAddress(0x0100);
+        for (uint32_t i = 0x0100; i < 0x0200; ++i)
+            Assert::IsTrue(viewer.GetInvalid(i), viewer.mockEmulatorContext.FormatAddress(i).c_str());
+
+        // 0x01C0 -> 0x01FF invalid, 0x0200-0x02BF valid
+        viewer.SetFirstAddress(0x01C0);
+        for (uint32_t i = 0x01C0; i < 0x0200; ++i)
+            Assert::IsTrue(viewer.GetInvalid(i), viewer.mockEmulatorContext.FormatAddress(i).c_str());
+        for (uint32_t i = 0x0200; i < 0x02C0; ++i)
+            Assert::IsFalse(viewer.GetInvalid(i), viewer.mockEmulatorContext.FormatAddress(i).c_str());
+    }
+
+    TEST_METHOD(TestReadMemoryFail)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.mockEmulatorContext.AddMemoryBlock(0, 256, [](uint32_t nAddress) -> unsigned char { return nAddress & 0xFF; }, nullptr);
+        viewer.mockEmulatorContext.AddMemoryBlock(1, 256, [](uint32_t) -> unsigned char { return 0; }, nullptr);
+        viewer.mockEmulatorContext.AddMemoryBlockReader(1, [](uint32_t, uint8_t*, uint32_t) -> unsigned { return 0; });
+        viewer.mockEmulatorContext.AddMemoryBlock(2, 256, [](uint32_t nAddress) -> unsigned char { return nAddress & 0xFF; }, nullptr);
+        viewer.SetNumVisibleLines(16);
+
+        // 0x00E0 -> 0x00FF valid, 0x0100-0x01DF invalid
+        viewer.SetFirstAddress(0x00E0);
+        for (uint32_t i = 0x00E0; i < 0x0100; ++i)
+            Assert::IsFalse(viewer.GetInvalid(i), viewer.mockEmulatorContext.FormatAddress(i).c_str());
+        for (uint32_t i = 0x0100; i < 0x01E0; ++i)
+            Assert::IsTrue(viewer.GetInvalid(i), viewer.mockEmulatorContext.FormatAddress(i).c_str());
+
+        // 0x0100 -> 0x01FF invalid
+        viewer.SetFirstAddress(0x0100);
+        for (uint32_t i = 0x0100; i < 0x0200; ++i)
+            Assert::IsTrue(viewer.GetInvalid(i), viewer.mockEmulatorContext.FormatAddress(i).c_str());
+
+        // 0x01C0 -> 0x01FF invalid, 0x0200-0x02BF valid
+        viewer.SetFirstAddress(0x01C0);
+        for (uint32_t i = 0x01C0; i < 0x0200; ++i)
+            Assert::IsTrue(viewer.GetInvalid(i), viewer.mockEmulatorContext.FormatAddress(i).c_str());
+        for (uint32_t i = 0x0200; i < 0x02C0; ++i)
+            Assert::IsFalse(viewer.GetInvalid(i), viewer.mockEmulatorContext.FormatAddress(i).c_str());
     }
 };
 

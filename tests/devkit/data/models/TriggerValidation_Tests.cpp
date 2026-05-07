@@ -1,13 +1,12 @@
-#include "CppUnitTest.h"
 
-#include "data\models\TriggerValidation.hh"
+#include "data/models/TriggerValidation.hh"
 
-#include "tests\devkit\context\mocks\MockConsoleContext.hh"
-#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
-#include "tests\devkit\context\mocks\MockUserContext.hh"
-#include "tests\mocks\MockGameContext.hh"
+#include "tests/devkit/context/mocks/MockConsoleContext.hh"
+#include "tests/devkit/context/mocks/MockEmulatorMemoryContext.hh"
+#include "tests/devkit/context/mocks/MockGameContext.hh"
+#include "tests/devkit/context/mocks/MockUserContext.hh"
+#include "tests/devkit/testutil/AssetAsserts.hh"
 
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
 namespace data {
@@ -195,7 +194,7 @@ public:
     TEST_METHOD(TestMemoryNoteSizeComparisons)
     {
         ra::context::mocks::MockUserContext mockUserContext;
-        ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::context::mocks::MockGameContext mockGameContext;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         mockGameContext.SetNote(0x0008, L"[8-bit] Byte address");
         mockGameContext.SetNote(0x0010, L"[16-bit] Word address");

@@ -6,6 +6,7 @@
 #include "data\models\LocalBadgesModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
@@ -30,6 +31,7 @@ public:
     class GameAssetsHarness : public GameAssets
     {
     public:
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockAchievementRuntime mockRuntime;

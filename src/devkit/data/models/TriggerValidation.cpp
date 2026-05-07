@@ -1,12 +1,14 @@
 #include "TriggerValidation.hh"
 
 #include "context/IConsoleContext.hh"
+#include "context/IEmulatorMemoryContext.hh"
+#include "context/IGameContext.hh"
+
+#include "data/models/MemoryNotesModel.hh"
 
 #include "services/ServiceLocator.hh"
 
 #include "util/Strings.hh"
-
-#include "data/context/GameContext.hh"
 
 #include <rcheevos/src/rcheevos/rc_validate.h>
 #include <rcheevos/src/rcheevos/rc_internal.h>
@@ -115,7 +117,7 @@ static bool ValidateMemoryNotesOperand(const rc_operand_t& pOperand, const ra::d
     if (nStartAddress != nAddress)
     {
         sError.append(L" at ");
-        sError.append(ra::util::String::Widen(pMemoryContext.FormatAddress(nStartAddress).substr(2)));
+        sError.append(pMemoryContext.FormatAddress(nStartAddress).substr(2));
     }
 
     return false;
@@ -166,14 +168,12 @@ static bool ValidateMemoryNotesCondSet(const rc_condset_t* pCondSet, const ra::d
 
 static bool ValidateMemoryNotes(const rc_trigger_t* pTrigger, std::wstring& sError)
 {
-    if (!ra::services::ServiceLocator::Exists<ra::data::context::GameContext>())
+    if (!ra::services::ServiceLocator::Exists<ra::context::IGameContext>())
         return true;
 
-    const auto* pNotes = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets().FindMemoryNotes();
-    if (!pNotes)
-        return true;
+    const auto& pNotes = ra::services::ServiceLocator::Get<ra::context::IGameContext>().MemoryNotes();
 
-    if (!ValidateMemoryNotesCondSet(pTrigger->requirement, *pNotes, sError))
+    if (!ValidateMemoryNotesCondSet(pTrigger->requirement, pNotes, sError))
     {
         if (pTrigger->alternative)
             sError = L"Core " + sError;
@@ -185,7 +185,7 @@ static bool ValidateMemoryNotes(const rc_trigger_t* pTrigger, std::wstring& sErr
     for (; pCondSet; pCondSet = pCondSet->next)
     {
         nIndex++;
-        if (!ValidateMemoryNotesCondSet(pCondSet, *pNotes, sError))
+        if (!ValidateMemoryNotesCondSet(pCondSet, pNotes, sError))
         {
             sError = ra::util::String::Printf(L"Alt%u %s", nIndex, sError);
             return false;

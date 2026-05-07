@@ -6,7 +6,9 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -27,7 +29,9 @@ private:
     class LeaderboardModelHarness : public LeaderboardModel
     {
     public:
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::impl::StringTextWriter textWriter;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
@@ -205,6 +209,8 @@ public:
     TEST_METHOD(TestValidateMissingField)
     {
         LeaderboardModelHarness leaderboard;
+        leaderboard.mockGameContext.SetNote(0x1234, L"a");
+        leaderboard.mockGameContext.SetNote(0x2345, L"a");
         leaderboard.SetID(1U);
         leaderboard.SetName(L"Title");
         leaderboard.SetDescription(L"Desc");
@@ -236,6 +242,7 @@ public:
     TEST_METHOD(TestValidateInvalidField)
     {
         LeaderboardModelHarness leaderboard;
+        leaderboard.mockGameContext.SetNote(0x1234, L"a");
         leaderboard.SetID(1U);
         leaderboard.SetName(L"Title");
         leaderboard.SetDescription(L"Desc");

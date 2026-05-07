@@ -8,7 +8,9 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -34,7 +36,9 @@ private:
             GSL_SUPPRESS_F6 mockRuntime.MockGame();
         }
 
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::impl::StringTextWriter textWriter;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
@@ -127,6 +131,7 @@ public:
     {
         AchievementModelHarness achievement;
         achievement.mockGameContext.SetGameId(22);
+        achievement.mockGameContext.SetNote(0x1234, L"Note");
         achievement.AddLocalBadgesModel();
         achievement.SetBadge(L"12345.png");
         achievement.CreateServerCheckpoint();
@@ -204,8 +209,12 @@ public:
         achievement.CreateLocalCheckpoint();
 
         std::string sTrigger;
-        for (int i = 0; i < 65535/12 - 1; i++)
+        for (int i = 0; i < 65535 / 12 - 1; i++)
+        {
+            achievement.mockGameContext.SetNote(i, L"a");
             sTrigger.append(ra::util::String::Printf("0xH00%04X=0_", i));
+        }   
+        achievement.mockGameContext.SetNote(0xfff0, L"[32-bit] a");
         sTrigger.append("0xX00FFF0=12345");
         Assert::AreEqual({65535U}, sTrigger.length());
         achievement.SetTrigger(sTrigger);
@@ -222,7 +231,6 @@ public:
 
     TEST_METHOD(TestDeactivateHidesIndicator)
     {
-
         AchievementModelHarness achievement;
         achievement.mockGameContext.SetGameId(22);
         achievement.SetID(53U);

@@ -53,8 +53,8 @@ public:
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Add(pTarget); }
     void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Remove(pTarget); }
 
-    virtual ra::data::models::MemoryNotesModel& MemoryNotes() noexcept = 0;
-    virtual const ra::data::models::MemoryNotesModel& MemoryNotes() const noexcept = 0;
+    virtual ra::data::models::MemoryNotesModel& MemoryNotes() noexcept(false) = 0;
+    virtual const ra::data::models::MemoryNotesModel& MemoryNotes() const noexcept(false) = 0;
 
 protected:
     unsigned int m_nGameId = 0;

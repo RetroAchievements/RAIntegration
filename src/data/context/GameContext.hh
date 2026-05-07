@@ -175,12 +175,12 @@ public:
     void InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response);
     uint32_t GetGameId(uint32_t nSubsetId) const noexcept;
 
-    ra::data::models::MemoryNotesModel& MemoryNotes() noexcept override 
+    ra::data::models::MemoryNotesModel& MemoryNotes() override
     {
         auto* pNotes = m_vAssets.FindMemoryNotes();
         return pNotes ? *pNotes : m_oDefaultNotes;
     }
-    const ra::data::models::MemoryNotesModel& MemoryNotes() const noexcept override
+    const ra::data::models::MemoryNotesModel& MemoryNotes() const override
     {
         auto* pNotes = m_vAssets.FindMemoryNotes();
         return pNotes ? *pNotes : m_oDefaultNotes;

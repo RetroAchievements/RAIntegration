@@ -123,7 +123,7 @@ protected:
         MemoryWriteFunction* write;
         MemoryReadBlockFunction* readBlock;
     };
-    static uint32_t ReadMemory(ra::data::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount, const MemoryBlock& pBlock);
+    static uint32_t ReadMemory(ra::data::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount, const MemoryBlock& pBlock, bool bFill = true);
 
     std::vector<MemoryBlock> m_vMemoryBlocks;
     size_t m_nTotalMemorySize = 0U;

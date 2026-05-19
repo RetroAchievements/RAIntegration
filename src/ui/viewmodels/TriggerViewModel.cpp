@@ -20,6 +20,7 @@
 #include "ui\EditorTheme.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
+#include "ui\viewmodels\TriggerSummaryViewModel.hh"
 
 namespace ra {
 namespace ui {
@@ -936,6 +937,30 @@ void TriggerViewModel::UpdateFrom(const rc_value_t& pValue)
     }
 
     UpdateGroups(*m_pTrigger);
+}
+
+void TriggerViewModel::Summarize()
+{
+    auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+    if (!pGroup)
+        return;
+
+    const auto* pCondSet = pGroup->GetConditionSet(IsValue());
+    if (!pCondSet)
+        return;
+
+    const auto& pAssetEditor = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetEditor;
+    TriggerSummaryViewModel vmSummary;
+
+    if (m_vGroups.Count() == 1)
+        vmSummary.SetWindowTitle(L"Trigger Summary - " + pAssetEditor.GetAsset()->GetName());
+    else
+        vmSummary.SetWindowTitle(pGroup->GetLabel() + L" Summary - " + pAssetEditor.GetAsset()->GetName());
+
+    vmSummary.InitializeFrom(*pCondSet);
+    vmSummary.AddHeaders();
+
+    vmSummary.ShowModal(pAssetEditor);
 }
 
 void TriggerViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue)

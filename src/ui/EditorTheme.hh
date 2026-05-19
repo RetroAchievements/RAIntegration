@@ -48,6 +48,16 @@ public:
     Color ColorTriggerResetTrue() const noexcept { return m_colorTriggerResetTrue; }
     Color ColorTriggerPauseTrue() const noexcept { return m_colorTriggerPauseTrue; }
 
+    // ===== explain =====
+
+    Color ColorExplainConflicting() const noexcept { return m_colorExplainConflicting; }
+    Color ColorExplainTriggerWhen() const noexcept { return m_colorExplainTriggerWhen; }
+    Color ColorExplainWhile() const noexcept { return m_colorExplainWhile; }
+    Color ColorExplainUnless() const noexcept { return m_colorExplainUnless; }
+    Color ColorExplainStartingWhen() const noexcept { return m_colorExplainStartingWhen; }
+    Color ColorExplainFailingWhen() const noexcept { return m_colorExplainFailingWhen; }
+    Color ColorExplainImpotent() const noexcept { return m_colorExplainImpotent; }
+
     // ===== methods =====
 
     void LoadFromFile();
@@ -76,6 +86,14 @@ private:
     Color m_colorTriggerBecomingTrue{ 255, 192, 255, 255 };
     Color m_colorTriggerResetTrue{ 255, 255, 255, 192 };
     Color m_colorTriggerPauseTrue{ 255, 255, 192, 192 };
+
+    Color m_colorExplainConflicting{ 255, 255, 192, 192 }; // red
+    Color m_colorExplainTriggerWhen{ 255, 192, 255, 192 }; // green
+    Color m_colorExplainWhile{ 255, 192, 192, 255 }; // blue
+    Color m_colorExplainUnless{ 255, 255, 192, 100 }; // orange
+    Color m_colorExplainStartingWhen{ 255, 255, 232, 128 }; // yellow
+    Color m_colorExplainFailingWhen{ 255, 255, 192, 192 }; // red
+    Color m_colorExplainImpotent{ 255, 192, 192, 192 }; // gray
 };
 
 } // namespace ui

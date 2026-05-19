@@ -72,9 +72,11 @@
     <ClCompile Include="data\ModelProperty_Tests.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
     <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp" />
+    <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
     <ClCompile Include="util\Tokenizer_Tests.cpp" />
     <ClInclude Include="context\mocks\MockConsoleContext.hh" />
     <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh" />
+    <ClInclude Include="context\mocks\MockGameContext.hh" />
     <ClInclude Include="context\mocks\MockRcClient.hh" />
     <ClInclude Include="context\mocks\MockUserContext.hh" />
     <ClInclude Include="services\mocks\MockClock.hh" />

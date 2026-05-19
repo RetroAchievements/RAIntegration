@@ -1,5 +1,5 @@
-#ifndef RA_DATA_TRIGGER_VALIDATION_H
-#define RA_DATA_TRIGGER_VALIDATION_H
+#ifndef RA_DATA_MODELS_TRIGGERVALIDATION_H
+#define RA_DATA_MODELS_TRIGGERVALIDATION_H
 #pragma once
 
 #include "data\models\AssetModelBase.hh"
@@ -18,4 +18,4 @@ public:
 } // namespace data
 } // namespace ra
 
-#endif RA_DATA_TRIGGER_VALIDATION_H
+#endif RA_DATA_MODELS_TRIGGERVALIDATION_H

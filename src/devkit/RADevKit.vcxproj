@@ -73,6 +73,7 @@
     <ClCompile Include="data\models\MemoryNoteModel.cpp" />
     <ClCompile Include="data\models\MemoryNotesModel.cpp" />
     <ClCompile Include="data\models\MemoryRegionsModel.cpp" />
+    <ClCompile Include="data\models\TriggerValidation.cpp" />
     <ClCompile Include="data\Value.cpp" />
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="ui\ImageReference.cpp" />
@@ -82,6 +83,7 @@
     <ClCompile Include="util\Tokenizer.cpp" />
     <ClInclude Include="context\IConsoleContext.hh" />
     <ClInclude Include="context\IEmulatorMemoryContext.hh" />
+    <ClInclude Include="context\IGameContext.hh" />
     <ClInclude Include="context\impl\ConsoleContext.hh" />
     <ClInclude Include="context\impl\EmulatorMemoryContext.hh" />
     <ClInclude Include="context\impl\RcClient.hh" />
@@ -102,6 +104,7 @@
     <ClInclude Include="data\models\MemoryNoteModel.hh" />
     <ClInclude Include="data\models\MemoryNotesModel.hh" />
     <ClInclude Include="data\models\MemoryRegionsModel.hh" />
+    <ClInclude Include="data\models\TriggerValidation.hh" />
     <ClInclude Include="data\NotifyTargetSet.hh" />
     <ClInclude Include="data\Value.hh" />
     <ClInclude Include="services\Http.hh" />

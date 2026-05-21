@@ -176,8 +176,9 @@ void MockRcClient::SetHardcoreEnabled(bool bValue) noexcept
 
 void MockRcClient::MockGame(uint32_t nGameId, const char* title, uint32_t nConsoleId)
 {
-    rc_client_game_info_t* pGame = (rc_client_game_info_t*)calloc(1, sizeof(*pGame));
+    rc_client_game_info_t* pGame = static_cast<rc_client_game_info_t*>(calloc(1, sizeof(*pGame)));
     Assert::IsNotNull(pGame);
+    Ensures(pGame != nullptr);
 
     rc_buffer_init(&pGame->buffer);
     rc_runtime_init(&pGame->runtime);

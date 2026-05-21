@@ -61,8 +61,15 @@
     <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
-    <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
+    <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\TriggerValidation_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\RichPresenceModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -94,6 +101,12 @@
     </Filter>
     <Filter Include="data\models">
       <UniqueIdentifier>{75ed968b-89af-4bce-93ae-29b9393bfdf8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ui">
+      <UniqueIdentifier>{b980dfb5-273e-4391-acc7-2257eeae8392}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ui\mocks">
+      <UniqueIdentifier>{03e69a47-e3f3-4444-a7f7-718e67212211}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -151,7 +164,11 @@
     <ClInclude Include="testutil\ValueAsserts.hh">
       <Filter>testutil</Filter>
     </ClInclude>
-    <ClInclude Include="ui\mocks\MockImageRepository.hh" />
-    <ClInclude Include="context\mocks\MockGameContext.hh" />
+    <ClInclude Include="context\mocks\MockGameContext.hh">
+      <Filter>context\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\mocks\MockImageRepository.hh">
+      <Filter>ui\mocks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

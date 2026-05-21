@@ -49,7 +49,6 @@
   </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>RC_CLIENT_SUPPORTS_HASH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir);$(RapidJSON_IncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -73,6 +72,7 @@
     <ClCompile Include="data\models\MemoryNoteModel.cpp" />
     <ClCompile Include="data\models\MemoryNotesModel.cpp" />
     <ClCompile Include="data\models\MemoryRegionsModel.cpp" />
+    <ClCompile Include="data\models\RichPresenceModel.cpp" />
     <ClCompile Include="data\models\TriggerValidation.cpp" />
     <ClCompile Include="data\Value.cpp" />
     <ClCompile Include="services\Http.cpp" />
@@ -104,6 +104,7 @@
     <ClInclude Include="data\models\MemoryNoteModel.hh" />
     <ClInclude Include="data\models\MemoryNotesModel.hh" />
     <ClInclude Include="data\models\MemoryRegionsModel.hh" />
+    <ClInclude Include="data\models\RichPresenceModel.hh" />
     <ClInclude Include="data\models\TriggerValidation.hh" />
     <ClInclude Include="data\NotifyTargetSet.hh" />
     <ClInclude Include="data\Value.hh" />

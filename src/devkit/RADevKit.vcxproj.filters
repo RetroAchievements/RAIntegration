@@ -25,6 +25,9 @@
     <Filter Include="data\models">
       <UniqueIdentifier>{0257fa92-4751-42dc-8c9b-2ea7110ed5b2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ui">
+      <UniqueIdentifier>{3d6b142b-5f11-4326-a76e-1044b0d23859}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="services\ServiceLocator.hh">
@@ -177,10 +180,21 @@
     <ClInclude Include="data\models\MemoryNotesModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
-    <ClInclude Include="ui\IImageRepository.hh" />
-    <ClInclude Include="ui\ImageReference.hh" />
-    <ClInclude Include="context\IGameContext.hh" />
-    <ClInclude Include="data\models\TriggerValidation.hh" />
+    <ClInclude Include="data\models\TriggerValidation.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\IImageRepository.hh">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ImageReference.hh">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="context\IGameContext.hh">
+      <Filter>context</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\RichPresenceModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -249,7 +263,14 @@
     <ClCompile Include="data\models\MemoryNotesModel.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ImageReference.cpp" />
-    <ClCompile Include="data\models\TriggerValidation.cpp" />
+    <ClCompile Include="data\models\TriggerValidation.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\ImageReference.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\RichPresenceModel.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -92,7 +92,7 @@ void RichPresenceMonitorViewModel::UpdateDisplayString()
             break;
 
         case ra::data::models::AssetState::Active:
-            SetDisplayString(pRichPresence->GetMessage());
+            SetDisplayString(pRichPresence->GetDisplayMessage());
             break;
 
         default:

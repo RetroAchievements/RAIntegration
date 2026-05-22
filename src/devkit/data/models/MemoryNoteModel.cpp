@@ -1565,7 +1565,7 @@ std::wstring MemoryNoteModel::GetSummary() const
     return TrimSize(std::wstring(svNote), false);
 }
 
-static ra::data::Memory::Format GetNumberFormat(std::wstring_view svValue)
+static constexpr ra::data::Memory::Format GetNumberFormat(std::wstring_view svValue)
 {
     auto nFormat = ra::data::Memory::Format::Dec;
 

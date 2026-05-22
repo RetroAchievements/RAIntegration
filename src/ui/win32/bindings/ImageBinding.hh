@@ -17,11 +17,16 @@ class ImageBinding : public ControlBinding, protected IImageRepository::NotifyTa
 public:
     explicit ImageBinding(ViewModelBase& vmViewModel) noexcept : ControlBinding(vmViewModel) {}
 
-    ~ImageBinding()
+    ~ImageBinding() noexcept
     {
-        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+        GSL_SUPPRESS_F6 auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
         pImageRepository.RemoveNotifyTarget(*this);
     }
+
+    ImageBinding(const ImageBinding&) noexcept = delete;
+    ImageBinding& operator=(const ImageBinding&) noexcept = delete;
+    ImageBinding(ImageBinding&&) noexcept = delete;
+    ImageBinding& operator=(ImageBinding&&) noexcept = delete;
 
     void SetHWND(DialogBase& pDialog, HWND hControl) override
     {

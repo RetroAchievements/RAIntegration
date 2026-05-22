@@ -286,13 +286,9 @@ bool TriggerSummaryViewModel::MergeClauses(
 
 static constexpr bool IsValueCharacter(wchar_t c)
 {
-    if (c >= '0' && c <= '9')
+    if (ra::util::String::IsHexDigit(c))
         return true;
-    if (c >= 'a' && c <= 'f')
-        return true;
-    if (c >= 'A' && c <= 'F')
-        return true;
-    if (isspace(c))
+    if (ra::util::String::IsSpace(c))
         return true;
     if (c == 'h' || c == 'H' || c == 'x' || c == '-')
         return true;

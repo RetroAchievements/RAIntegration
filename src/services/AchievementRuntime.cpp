@@ -2521,6 +2521,8 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
         }
     }
 
+    rc_destroy_preparse_state(&pParseState);
+
     return true;
 }
 

@@ -88,6 +88,8 @@ void MemoryNotesModel::Refresh(unsigned int nGameId,
             }
         }
 
+        rc_api_destroy_fetch_code_notes_response(&response);
+
         std::map<ra::data::ByteAddress, std::wstring> mPendingNotes;
         {
             std::unique_lock<std::mutex> lock(m_oMutex);

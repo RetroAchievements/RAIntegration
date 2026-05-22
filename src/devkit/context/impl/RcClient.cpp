@@ -100,13 +100,18 @@ static void ConvertHttpResponseToApiServerResponse(rc_api_server_response_t& pRe
 static std::string_view FindParameter(const std::string& sInput, const std::string& sParameter)
 {
     auto nIndex = sInput.find(sParameter);
-    if (nIndex != std::string::npos)
+    while (nIndex != std::string::npos)
     {
-        nIndex += 3;
-        auto nIndex2 = sInput.find('&', nIndex);
-        if (nIndex2 == std::string::npos)
-            nIndex2 = sInput.length();
-        return std::string_view(&sInput.at(nIndex), nIndex2 - nIndex);
+        if (nIndex == 0 || sInput.at(nIndex - 1) == '&')
+        {
+            nIndex += sParameter.length();
+            auto nIndex2 = sInput.find('&', nIndex);
+            if (nIndex2 == std::string::npos)
+                nIndex2 = sInput.length();
+            return std::string_view(&sInput.at(nIndex), nIndex2 - nIndex);
+        }
+
+        nIndex = sInput.find(sParameter, nIndex + sParameter.length());
     }
 
     return {};
@@ -120,30 +125,23 @@ void RcClient::DispatchRequest(const rc_api_request_t& pRequest,
     httpRequest.SetPostData(pRequest.post_data);
     httpRequest.SetContentType(pRequest.content_type);
 
-    std::string sApi;
-    auto nIndex = httpRequest.GetPostData().find("r=", 0, 2);
-    if (nIndex != std::string::npos)
-    {
-        nIndex += 2;
-        for (; nIndex < httpRequest.GetPostData().length(); ++nIndex)
-        {
-            const char c = httpRequest.GetPostData().at(nIndex);
-            if (c == '&')
-                break;
+    std::string sParams = httpRequest.GetPostData();
 
-            sApi.push_back(c);
-        }
+    std::string sApi;
+    const auto svApi = FindParameter(sParams, "r=");
+    if (!svApi.empty())
+    {
+        sApi = svApi;
 
         if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
         {
-            std::string sParams = httpRequest.GetPostData();
-            const auto svToken = FindParameter(sParams, "&t=");
+            const auto svToken = FindParameter(sParams, "t=");
             if (!svToken.empty())
                 sParams.replace(svToken.data() - sParams.data(), svToken.length(), "[redacted]");
 
             if (ra::util::String::StartsWith(sApi, "login"))
             {
-                const auto svPassword = FindParameter(sParams, "&p=");
+                const auto svPassword = FindParameter(sParams, "p=");
                 if (!svPassword.empty())
                     sParams.replace(svPassword.data() - sParams.data(), svPassword.length(), "[redacted]");
             }
@@ -177,7 +175,7 @@ void RcClient::CallApi(const std::string& sApi, const ra::services::Http::Reques
 {
     std::wstring sParameter;
     if (sApi == "codenotes2") {
-        const auto svGameId = FindParameter(pRequest.GetPostData(), "&g=");
+        const auto svGameId = FindParameter(pRequest.GetPostData(), "g=");
         if (!svGameId.empty())
             sParameter = ra::util::String::Widen(svGameId);
     }

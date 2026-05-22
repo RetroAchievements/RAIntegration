@@ -593,7 +593,7 @@ void GameContext::MigrateSubsetUserFiles()
             {
                 if (!sLine.empty())
                 {
-                    if (isdigit(sLine.at(0)) || sLine.at(0) == 'L')
+                    if (ra::util::String::IsDigit(sLine.at(0)) || sLine.at(0) == 'L')
                     {
                         // found a local achievement or leaderboard. inject subset id
                         const auto nIndex = sLine.find(':');

@@ -17,6 +17,12 @@ class ImageBinding : public ControlBinding, protected IImageRepository::NotifyTa
 public:
     explicit ImageBinding(ViewModelBase& vmViewModel) noexcept : ControlBinding(vmViewModel) {}
 
+    ~ImageBinding()
+    {
+        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+        pImageRepository.RemoveNotifyTarget(*this);
+    }
+
     void SetHWND(DialogBase& pDialog, HWND hControl) override
     {
         ControlBinding::SetHWND(pDialog, hControl);

@@ -1,10 +1,10 @@
 #include "MemoryNoteModel.hh"
 
-#include "context\IConsoleContext.hh"
+#include "context/IConsoleContext.hh"
 
-#include "services\ServiceLocator.hh"
+#include "services/ServiceLocator.hh"
 
-#include "util\Strings.hh"
+#include "util/Strings.hh"
 
 namespace ra {
 namespace data {
@@ -376,7 +376,7 @@ void MemoryNoteModel::SetNote(const std::wstring& sNote, bool bImpliedPointer)
                 // "pointer" not found
                 ExtractSize(sLine, false);
             }
-            else if (sLine.length() > nPointerIndex + 8 && iswalpha(sLine.at(nPointerIndex + 7)))
+            else if (sLine.length() > nPointerIndex + 8 && ra::util::String::IsAlpha(sLine.at(nPointerIndex + 7)))
             {
                 // extra trailing letters - assume "pointers"
                 ExtractSize(sLine, false);
@@ -441,17 +441,6 @@ Memory::Size MemoryNoteModel::GetImpliedPointerSize()
     return Memory::Size::ThirtyTwoBit;
 }
 
-static constexpr bool IsHexDigit(wchar_t c)
-{
-    if (c >= '0' && c <= '9')
-        return true;
-    if (c >= 'a' && c <= 'f')
-        return true;
-    if (c >= 'A' && c <= 'F')
-        return true;
-    return false;
-}
-
 MemoryNoteModel::Parser::TokenType MemoryNoteModel::Parser::NextToken(std::wstring& sWord) const
 {
     wchar_t cFirstLetter = '\0';
@@ -466,14 +455,12 @@ MemoryNoteModel::Parser::TokenType MemoryNoteModel::Parser::NextToken(std::wstri
         // find the next word
         if (c > 255)
         {
-            // ignore unicode characters - isalpha with the default locale would return false,
-            // but it also likes to pop up asserts in a debug build.
-
+            // ignore unicode characters
             // if we've found any alphanumeric characters, process them.
             if (!sWord.empty())
                 break;
         }
-        else if (isalpha(c))
+        else if (ra::util::String::IsAlpha(c))
         {
             if (sWord.empty())
             {
@@ -484,7 +471,7 @@ MemoryNoteModel::Parser::TokenType MemoryNoteModel::Parser::NextToken(std::wstri
             }
             else if (bWordIsHexNumber)
             {
-                if (IsHexDigit(c))
+                if (ra::util::String::IsHexDigit(c))
                 {
                     // continue hex number
                     sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
@@ -506,7 +493,7 @@ MemoryNoteModel::Parser::TokenType MemoryNoteModel::Parser::NextToken(std::wstri
                 break;
             }
         }
-        else if (isdigit(c))
+        else if (ra::util::String::IsDigit(c))
         {
             if (sWord.empty())
             {
@@ -515,7 +502,7 @@ MemoryNoteModel::Parser::TokenType MemoryNoteModel::Parser::NextToken(std::wstri
 
                 if (c == '0' && m_nIndex < m_sNote.size() - 2 &&
                     m_sNote.at(m_nIndex + 1) == 'x' &&
-                    IsHexDigit(m_sNote.at(m_nIndex + 2)))
+                    ra::util::String::IsHexDigit(m_sNote.at(m_nIndex + 2)))
                 {
                     sWord.push_back(m_sNote.at(++m_nIndex));
                     sWord.push_back(m_sNote.at(++m_nIndex));
@@ -791,7 +778,7 @@ void MemoryNoteModel::ExtractSize(const std::wstring& sNote, bool bIsPointer)
         nLastTokenType = nTokenType;
 
         const wchar_t c = parser.Peek();
-        if (c < 256 && isalnum(c))
+        if (ra::util::String::IsAlNum(c))
         {
             // number next to word [32bit]
             std::swap(sPreviousWord, sWord);
@@ -831,7 +818,7 @@ static void RemoveIndentPrefix(std::wstring& sNote)
         }
 
         c = sNote.at(nIndent + 1);
-        if (isdigit(c)) // found +N
+        if (ra::util::String::IsDigit(c)) // found +N
         {
             if (nIndent > nLineIndex + 1)
             {
@@ -871,7 +858,7 @@ void MemoryNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nIn
             //   +0x20 [32-bit pointer] user data
             //   ++0x08 [16-bit] points
             //
-            while (nNextIndex + 2 < sNote.length() && !isdigit(sNote.at(nNextIndex + 2)))
+            while (nNextIndex + 2 < sNote.length() && !ra::util::String::IsDigit(sNote.at(nNextIndex + 2)))
             {
                 nNextIndex = nStopIndex = sNote.find(L"\n+", nNextIndex + 2);
                 if (nNextIndex == std::wstring::npos)
@@ -884,7 +871,7 @@ void MemoryNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nIn
                 while (nStopIndex > 0)
                 {
                     const wchar_t c = sNote.at(nStopIndex - 1);
-                    if (c >= 256 || !isspace(c))
+                    if (!ra::util::String::IsSpace(c))
                         break;
                     --nStopIndex;
                 }
@@ -910,12 +897,12 @@ void MemoryNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nIn
         }
 
         // if there are any error processing offsets, don't treat this as a pointer note
-        if (!pEnd || iswalnum(*pEnd))
+        if (!pEnd || ra::util::String::IsAlNum(*pEnd))
             return;
 
         // skip over [whitespace] [optional separator] [whitespace]
         const wchar_t* pStop = sNextNote.c_str() + sNextNote.length();
-        while (pEnd < pStop && *pEnd < 256 && isspace(*pEnd) && *pEnd != '\n')
+        while (pEnd < pStop && ra::util::String::IsSpace(*pEnd) && *pEnd != '\n')
             ++pEnd;
 
         if (pEnd < pStop)
@@ -925,12 +912,12 @@ void MemoryNoteModel::ProcessIndirectNotes(const std::wstring& sNote, size_t nIn
                 // no separator. found an unannotated note
                 ++pEnd;
             }
-            else if (!iswalnum(*pEnd) && *pEnd != '[' && *pEnd != '(') // assume brackets are not a separator
+            else if (!ra::util::String::IsAlNum(*pEnd) && *pEnd != '[' && *pEnd != '(') // assume brackets are not a separator
             {
                 // found a separator. skip it and any following whitespace
                 ++pEnd;
 
-                while (pEnd < pStop && *pEnd < 256 && isspace(*pEnd))
+                while (pEnd < pStop && ra::util::String::IsSpace(*pEnd))
                     ++pEnd;
             }
         }
@@ -1040,7 +1027,7 @@ std::wstring MemoryNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPoin
     while (nStartIndex > 0)
     {
         const wchar_t c = sNote.at(nStartIndex - 1);
-        if (c >= 256 || !isspace(c))
+        if (!ra::util::String::IsSpace(c))
             break;
         --nStartIndex;
     }
@@ -1048,16 +1035,16 @@ std::wstring MemoryNoteModel::TrimSize(const std::wstring& sNote, bool bKeepPoin
     while (nEndIndex < sNote.length() - 1)
     {
         const wchar_t c = sNote.at(nEndIndex + 1);
-        if (c >= 256 || !isspace(c))
+        if (!ra::util::String::IsSpace(c))
             break;
         ++nEndIndex;
     }
 
     if (nStartIndex > 0 && nEndIndex < sNote.length() - 1)
     {
-        if (isspace(sNote.at(nStartIndex)))
+        if (ra::util::String::IsSpace(sNote.at(nStartIndex)))
             ++nStartIndex;
-        else if (isspace(sNote.at(nEndIndex - 1)))
+        else if (!ra::util::String::IsSpace(sNote.at(nEndIndex - 1)))
             --nEndIndex;
     }
 
@@ -1131,7 +1118,7 @@ static size_t MatchBitPrefix(std::wstring_view svRange)
     if (svRange.at(0) != 'b' && svRange.at(0) != 'B')
         return std::wstring::npos;
 
-    if (isdigit(svRange.at(1)))
+    if (ra::util::String::IsDigit(svRange.at(1)))
         return 1;
 
     if (svRange.size() < 4)
@@ -1143,13 +1130,13 @@ static size_t MatchBitPrefix(std::wstring_view svRange)
     if (svRange.at(2) != 't' && svRange.at(2) != 'T')
         return std::wstring::npos;
 
-    if (isdigit(svRange.at(3)))
+    if (ra::util::String::IsDigit(svRange.at(3)))
         return 3;
 
     if (svRange.size() < 5 || (svRange.at(3) != 's' && svRange.at(3) != 'S'))
         return std::wstring::npos;
 
-    if (isdigit(svRange.at(4)))
+    if (ra::util::String::IsDigit(svRange.at(4)))
         return 4;
 
     return std::wstring::npos;
@@ -1176,13 +1163,13 @@ static bool ParseBitRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& n
     }
 
     size_t nStart = nIndex;
-    while (nIndex < svRange.size() && isdigit(svRange.at(nIndex)))
+    while (nIndex < svRange.size() && ra::util::String::IsDigit(svRange.at(nIndex)))
         ++nIndex;
 
     const auto svLow = svRange.substr(nStart, nIndex - nStart);
     std::wstring_view svHigh;
 
-    while (nIndex < svRange.size() && isspace(svRange.at(nIndex)))
+    while (nIndex < svRange.size() && ra::util::String::IsSpace(svRange.at(nIndex)))
         ++nIndex;
 
     if (nIndex < svRange.size())
@@ -1199,10 +1186,10 @@ static bool ParseBitRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& n
         }
 
         ++nIndex;
-        while (nIndex < svRange.size() && isspace(svRange.at(nIndex)))
+        while (nIndex < svRange.size() && ra::util::String::IsSpace(svRange.at(nIndex)))
             ++nIndex;
 
-        if (nIndex < svRange.size() && !isdigit(svRange.at(nIndex)))
+        if (nIndex < svRange.size() && !ra::util::String::IsDigit(svRange.at(nIndex)))
         {
             nStart = nIndex;
             nIndex = MatchBitPrefix(svRange.substr(nIndex));
@@ -1212,7 +1199,7 @@ static bool ParseBitRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& n
         }
 
         nStart = nIndex;
-        while (nIndex < svRange.size() && isdigit(svRange.at(nIndex)))
+        while (nIndex < svRange.size() && ra::util::String::IsDigit(svRange.at(nIndex)))
             ++nIndex;
 
         svHigh = svRange.substr(nStart, nIndex - nStart);
@@ -1234,7 +1221,7 @@ static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHig
         svRange = svRange.substr(0, svRange.size() - 1);
 
     size_t nIndex = 0;
-    while (nIndex < svRange.size() && IsHexDigit(svRange.at(nIndex)))
+    while (nIndex < svRange.size() && ra::util::String::IsHexDigit(svRange.at(nIndex)))
         ++nIndex;
 
     if (nIndex == 0)
@@ -1243,7 +1230,7 @@ static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHig
     const auto svLow = svRange.substr(0, nIndex);
     std::wstring_view svHigh;
 
-    while (nIndex < svRange.size() && isspace(svRange.at(nIndex)))
+    while (nIndex < svRange.size() && ra::util::String::IsSpace(svRange.at(nIndex)))
         ++nIndex;
 
     if (nIndex < svRange.size())
@@ -1251,11 +1238,11 @@ static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHig
         if (svRange.at(nIndex++) != '-')
             return false;
 
-        while (nIndex < svRange.size() && isspace(svRange.at(nIndex)))
+        while (nIndex < svRange.size() && ra::util::String::IsSpace(svRange.at(nIndex)))
             ++nIndex;
 
         const auto nStart = nIndex;
-        while (nIndex < svRange.size() && IsHexDigit(svRange.at(nIndex)))
+        while (nIndex < svRange.size() && ra::util::String::IsHexDigit(svRange.at(nIndex)))
             ++nIndex;
 
         if (nIndex == nStart)
@@ -1311,11 +1298,11 @@ static std::wstring_view GetValues(const std::wstring_view svLine)
     }
 
     // skip over any leading non-alphanumeric characters
-    if (!isalnum(svLine.at(0)))
+    if (!ra::util::String::IsAlNum(svLine.at(0)))
     {
         for (size_t nScan = 1; nScan < nSplit; ++nScan)
         {
-            if (isalnum(svLine.at(nScan)))
+            if (ra::util::String::IsAlNum(svLine.at(nScan)))
                 return GetValues(svLine.substr(nScan));
         }
 
@@ -1331,7 +1318,7 @@ static std::wstring_view GetValues(const std::wstring_view svLine)
 
     // scan backwards from the splitter to find the first non-alphanumeric non-whitespace character
     auto nIndex = nSplit;
-    while (nIndex > 0 && (isalnum(svLine.at(nIndex - 1)) || isspace(svLine.at(nIndex - 1))))
+    while (nIndex > 0 && (ra::util::String::IsAlNum(svLine.at(nIndex - 1)) || ra::util::String::IsSpace(svLine.at(nIndex - 1))))
         --nIndex;
 
     // if nIndex is 0, we should have matched mapped values earlier. must be invalid. ignore.
@@ -1339,7 +1326,7 @@ static std::wstring_view GetValues(const std::wstring_view svLine)
         return {};
 
     // ignore leading whitespace
-    while (isspace(svLine.at(nIndex)))
+    while (ra::util::String::IsSpace(svLine.at(nIndex)))
         ++nIndex;
 
     // return remainder of line
@@ -1371,7 +1358,7 @@ static std::wstring_view MatchSubNote(std::wstring_view svNote, std::function<bo
                         break;
 
                     nFront = nComma + 1;
-                    while (nFront < svValues.size() && isspace(svValues.at(nFront)))
+                    while (nFront < svValues.size() && ra::util::String::IsSpace(svValues.at(nFront)))
                         ++nFront;
                 } while (nFront < svValues.size());
             }
@@ -1440,7 +1427,7 @@ static bool MatchEnumText(const std::wstring_view svValue, uint32_t nValue, bool
     else if (svValue.at(nSplit) == L'=')
     {
         auto svRight = svValue.substr(nSplit + 1);
-        while (!svRight.empty() && isspace(svRight.at(0)))
+        while (!svRight.empty() && ra::util::String::IsSpace(svRight.at(0)))
             svRight.remove_prefix(1);
 
         if (ParseRange(svRight, nLow, nHigh, isHex))
@@ -1560,13 +1547,13 @@ std::wstring MemoryNoteModel::GetSummary() const
             {
                 // ignore bracket and whitespace between summary and enum values
                 --nIndex;
-                while (nIndex > 0 && isspace(svNote.at(nIndex - 1)))
+                while (nIndex > 0 && ra::util::String::IsSpace(svNote.at(nIndex - 1)))
                     --nIndex;
 
-                if (nIndex > 0 && !isalnum(svNote.at(nIndex - 1)))
+                if (nIndex > 0 && !ra::util::String::IsAlNum(svNote.at(nIndex - 1)))
                 {
                     --nIndex;
-                    while (nIndex > 0 && isspace(svNote.at(nIndex - 1)))
+                    while (nIndex > 0 && ra::util::String::IsSpace(svNote.at(nIndex - 1)))
                         --nIndex;
                 }
             }
@@ -1617,7 +1604,7 @@ static ra::data::Memory::Format GetNumberFormat(std::wstring_view svValue)
         // did not match any digits
         nFormat = ra::data::Memory::Format::Unknown;
     }
-    else if (nIndex < svValue.size() && isalpha(svValue.at(nIndex)))
+    else if (nIndex < svValue.size() && ra::util::String::IsAlpha(svValue.at(nIndex)))
     {
         // trailing alphabetic characters after matching digits
         nFormat = ra::data::Memory::Format::Unknown;

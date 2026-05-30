@@ -53,6 +53,14 @@ public:
     /// </summary>
     static const std::wstring GetErrorMessage(int nResult, const rc_api_response_t& pResponse);
 
+    /// <summary>
+    /// Gets whether or not hardcore is enabled.
+    /// </summary>
+    bool IsHardcodeEnabled() const noexcept
+    {
+        return rc_client_get_hardcore_enabled(GetClient());
+    }
+
 protected:
     IRcClient() noexcept = default;
 

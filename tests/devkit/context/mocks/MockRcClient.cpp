@@ -167,6 +167,33 @@ void MockRcClient::AssertNoPendingRequests() const
     }
 }
 
+void MockRcClient::SetHardcoreEnabled(bool bValue) noexcept
+{
+    // just set the state; don't worry about all the management stuff rc_client_set_hardcore_enabled does
+    auto* pClient = GetClient();
+    pClient->state.hardcore = bValue ? 1 : 0;
+}
+
+void MockRcClient::MockGame(uint32_t nGameId, const char* title, uint32_t nConsoleId)
+{
+    rc_client_game_info_t* pGame = static_cast<rc_client_game_info_t*>(calloc(1, sizeof(*pGame)));
+    Assert::IsNotNull(pGame);
+    Ensures(pGame != nullptr);
+
+    rc_buffer_init(&pGame->buffer);
+    rc_runtime_init(&pGame->runtime);
+
+    pGame->public_.id = nGameId;
+    pGame->public_.console_id = nConsoleId;
+    pGame->public_.title = title;
+
+    auto* pClient = GetClient();
+    rc_client_unload_game(pClient);
+
+    pClient->game = pGame;
+    pClient->state.frames_processed = pClient->state.frames_at_last_ping = 0;
+}
+
 } // namespace mocks
 } // namespace context
 } // namespace ra

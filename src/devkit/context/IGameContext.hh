@@ -30,7 +30,15 @@ public:
     /// <summary>
     /// Gets the unique identifier of the currently loaded game.
     /// </summary>
-    unsigned int GameId() const noexcept { return m_nGameId; }
+    uint32_t GameId() const noexcept { return m_nGameId; }
+
+    /// <summary>
+    /// Gets the unique identifier of the base game for the currently loaded subset.
+    /// </summary>
+    /// <remarks>
+    /// Will match <see cref="GameId"/> unless an exclusive or specialty subset is loaded.
+    /// </remarks>
+    uint32_t ActiveGameId() const noexcept { return m_nActiveGameId; }
 
     class NotifyTarget
     {
@@ -53,11 +61,20 @@ public:
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Add(pTarget); }
     void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { m_vNotifyTargets.Remove(pTarget); }
 
+    /// <summary>
+    /// Gets the <see cref="MemoryNote"/>s for the currently loaded game.
+    /// </summary>
     virtual ra::data::models::MemoryNotesModel& MemoryNotes() noexcept(false) = 0;
+
+    /// <summary>
+    /// Gets the <see cref="MemoryNote"/>s for the currently loaded game.
+    /// </summary>
     virtual const ra::data::models::MemoryNotesModel& MemoryNotes() const noexcept(false) = 0;
 
 protected:
-    unsigned int m_nGameId = 0;
+    uint32_t m_nGameId = 0;
+    uint32_t m_nActiveGameId = 0;
+
     ra::data::NotifyTargetSet<NotifyTarget> m_vNotifyTargets;
 };
 

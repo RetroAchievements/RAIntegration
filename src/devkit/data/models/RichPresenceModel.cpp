@@ -1,17 +1,15 @@
 #include "RichPresenceModel.hh"
 
-#include "context\IRcClient.hh"
+#include "context/IGameContext.hh"
+#include "context/IRcClient.hh"
 
-#include "data\context\GameContext.hh"
+#include "services/ILocalStorage.hh"
+#include "services/ServiceLocator.hh"
 
-#include "services\IConfiguration.hh"
-#include "services\ILocalStorage.hh"
-#include "services\ServiceLocator.hh"
+#include "util/Strings.hh"
 
-#include "util\Strings.hh"
-
-#include <rcheevos\src\rcheevos\rc_internal.h>
-#include <rcheevos\src\rc_client_internal.h>
+#include <rcheevos/src/rcheevos/rc_internal.h>
+#include <rcheevos/src/rc_client_internal.h>
 
 namespace ra {
 namespace data {
@@ -152,13 +150,11 @@ void RichPresenceModel::SetScript(const std::string& sScript)
         sNormalizedScript.push_back('\n');
 
     SetAssetDefinition(m_pScript, sNormalizedScript);
-
-    // TODO: parse and load into runtime
 }
 
 void RichPresenceModel::ReloadRichPresenceScript()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::context::IGameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.ActiveGameId()));
 
@@ -200,7 +196,7 @@ void RichPresenceModel::ReloadRichPresenceScript()
     }
 
     if (GetChanges() != ra::data::models::AssetChanges::None && IsActive() &&
-        ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Hardcore))
+        ra::services::ServiceLocator::Get<ra::context::IRcClient>().IsHardcodeEnabled())
     {
         // ignore modified rich presence in hardcore
         Deactivate();
@@ -211,7 +207,7 @@ void RichPresenceModel::ReloadRichPresenceScript()
 
 void RichPresenceModel::WriteRichPresenceScript()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::context::IGameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
 
     auto pWriter = pLocalStorage.WriteText(ra::services::StorageItemType::RichPresence,
@@ -236,11 +232,14 @@ void RichPresenceModel::SyncScriptToRuntime()
 
 void RichPresenceModel::DetachRuntimeLeaderboard(struct rc_client_game_info_t* pGame) noexcept
 {
-    if (m_pRichPresenceInfo)
-        free(m_pRichPresenceInfo);
-
     if (pGame)
-        pGame->runtime.richpresence = m_pRichPresenceInfo = nullptr;
+        pGame->runtime.richpresence = nullptr;
+
+    if (m_pRichPresenceInfo)
+    {
+        free(m_pRichPresenceInfo);
+        m_pRichPresenceInfo = nullptr;
+    }
 
     m_pDefinitionBuffer.reset();
 }
@@ -260,7 +259,7 @@ void RichPresenceModel::ParseScript()
 
     if (!pGame || sScript.empty())
     {
-        // empty script - clear out previous one
+        // empty script or no game loaded - clear out previous one
         DetachRuntimeLeaderboard(pGame);
 
         rc_mutex_unlock(&pClient->state.mutex);
@@ -380,7 +379,7 @@ struct rc_richpresence_t* RichPresenceModel::GetMutableRuntimeDefinition()
     return nullptr;
 }
 
-std::wstring RichPresenceModel::GetMessage() const
+std::wstring RichPresenceModel::GetDisplayMessage() const
 {
     if (!m_sParseError.empty())
         return m_sParseError;

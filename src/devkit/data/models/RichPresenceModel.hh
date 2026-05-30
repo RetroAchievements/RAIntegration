@@ -1,5 +1,5 @@
-#ifndef RA_DATA_RICHPRESENCE_MODEL_H
-#define RA_DATA_RICHPRESENCE_MODEL_H
+#ifndef RA_DATA_MODELS_RICHPRESENCE_MODEL_H
+#define RA_DATA_MODELS_RICHPRESENCE_MODEL_H
 #pragma once
 
 #include "data/models/AssetModelBase.hh"
@@ -35,10 +35,18 @@ public:
     /// <summary>
     /// Gets the current evaluation of the rich presence script.
     /// </summary>
-    std::wstring GetMessage() const;
+    std::wstring GetDisplayMessage() const;
 
+    /// <summary>
+    /// Initializes from a published script.
+    /// </summary>
+    /// <param name="pDefinition">Pre-parsed script already loaded in the runtime.</param>
+    /// <param name="sScript">Unparsed script. Ignored unless <paramref name="pDefinition"/> is <c>nullptr</c>.</param>
     void InitializeFromPublishedScript(const rc_runtime_richpresence_t* pDefinition, const std::string& sScript);
 
+    /// <summary>
+    /// Revert to file state (if available) or server state if not.
+    /// </summary>
     void ReloadRichPresenceScript();
 
     void Activate() override;

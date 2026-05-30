@@ -49,6 +49,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <CharacterSet>Unicode</CharacterSet>
       <UseOfMfc>false</UseOfMfc>
+      <PreprocessorDefinitions>RC_CLIENT_SUPPORTS_HASH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>

@@ -1,18 +1,11 @@
-#include "CppUnitTest.h"
+#include "data/models/RichPresenceModel.hh"
 
-#include "data\models\RichPresenceModel.hh"
+#include "services/impl/StringTextWriter.hh"
 
-#include "services\impl\StringTextWriter.hh"
-
-#include "tests\RA_UnitTestHelpers.h"
-#include "tests\data\DataAsserts.hh"
-
-#include "tests\devkit\context\mocks\MockRcClient.hh"
-#include "tests\devkit\services\mocks\MockLocalStorage.hh"
-#include "tests\devkit\testutil\AssetAsserts.hh"
-#include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockGameContext.hh"
+#include "tests/devkit/context/mocks/MockGameContext.hh"
+#include "tests/devkit/context/mocks/MockRcClient.hh"
+#include "tests/devkit/services/mocks/MockLocalStorage.hh"
+#include "tests/devkit/testutil/AssetAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -29,15 +22,13 @@ private:
     public:
         RichPresenceModelHarness() noexcept
         {
-            GSL_SUPPRESS_F6 mockRuntime.MockGame();
+            GSL_SUPPRESS_F6 mockRcClient.MockGame(1, "Game Name");
         }
 
         ra::context::mocks::MockRcClient mockRcClient;
-        ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::impl::StringTextWriter textWriter;
-        ra::services::mocks::MockAchievementRuntime mockRuntime;
     };
 
 public:
@@ -207,7 +198,7 @@ public:
     TEST_METHOD(TestReloadDeactivatesInHardcore)
     {
         RichPresenceModelHarness richPresence;
-        richPresence.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        richPresence.mockRcClient.SetHardcoreEnabled(true);
         richPresence.mockGameContext.SetGameId(1);
         richPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom file\n");
         richPresence.SetScript("Display:\nTest\n");
@@ -228,7 +219,7 @@ public:
     TEST_METHOD(TestReloadRemainsActiveNotInHardcore)
     {
         RichPresenceModelHarness richPresence;
-        richPresence.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        richPresence.mockRcClient.SetHardcoreEnabled(false);
         richPresence.mockGameContext.SetGameId(1);
         richPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom file\n");
         richPresence.SetScript("Display:\nTest\n");
@@ -356,13 +347,13 @@ public:
         richPresence.CreateLocalCheckpoint();
         richPresence.Activate();
 
-        Assert::AreEqual(std::wstring(L"Test"), richPresence.GetMessage());
+        Assert::AreEqual(std::wstring(L"Test"), richPresence.GetDisplayMessage());
 
         richPresence.SetScript("Display:\nNew String\n");
-        Assert::AreEqual(std::wstring(L"New String"), richPresence.GetMessage());
+        Assert::AreEqual(std::wstring(L"New String"), richPresence.GetDisplayMessage());
 
         richPresence.SetScript("");
-        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), richPresence.GetMessage());
+        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), richPresence.GetDisplayMessage());
     }
 
 
@@ -374,19 +365,19 @@ public:
         richPresence.CreateLocalCheckpoint();
         richPresence.Activate();
 
-        Assert::AreEqual(std::wstring(L"Test"), richPresence.GetMessage());
+        Assert::AreEqual(std::wstring(L"Test"), richPresence.GetDisplayMessage());
         Assert::AreEqual(AssetState::Active, richPresence.GetState());
 
         richPresence.SetScript("Display:\n@Number(0H01)\n");
-        Assert::AreEqual(std::wstring(L"Parse error -6 (line 2): Invalid operator"), richPresence.GetMessage());
+        Assert::AreEqual(std::wstring(L"Parse error -6 (line 2): Invalid operator"), richPresence.GetDisplayMessage());
         Assert::AreEqual(AssetState::Disabled, richPresence.GetState());
 
         richPresence.Activate();
-        Assert::AreEqual(std::wstring(L"Parse error -6 (line 2): Invalid operator"), richPresence.GetMessage());
+        Assert::AreEqual(std::wstring(L"Parse error -6 (line 2): Invalid operator"), richPresence.GetDisplayMessage());
         Assert::AreEqual(AssetState::Disabled, richPresence.GetState());
 
         richPresence.SetScript("Display:\nNew String\n");
-        Assert::AreEqual(std::wstring(L"New String"), richPresence.GetMessage());
+        Assert::AreEqual(std::wstring(L"New String"), richPresence.GetDisplayMessage());
         Assert::AreEqual(AssetState::Active, richPresence.GetState());
     }
 };

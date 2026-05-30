@@ -28,6 +28,10 @@ public:
     void AssertCalled(const std::string& sRequestParams) const;
     void AssertNoPendingRequests() const;
 
+    void SetHardcoreEnabled(bool bValue) noexcept;
+
+    void MockGame(uint32_t nGameId, const char* title, uint32_t nConsoleId = 1);
+
 private:
     typedef struct MockApiResponse
     {

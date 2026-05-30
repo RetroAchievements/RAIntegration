@@ -49,7 +49,7 @@
   </ImportGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>RC_CLIENT_SUPPORTS_HASH;RA_UTEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RA_UTEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir);$(RapidJSON_IncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -84,7 +84,6 @@
     <ClCompile Include="..\src\data\context\SessionTracker.cpp" />
     <ClCompile Include="..\src\data\models\AchievementModel.cpp" />
     <ClCompile Include="..\src\data\models\LeaderboardModel.cpp" />
-    <ClCompile Include="..\src\data\models\RichPresenceModel.cpp" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -158,7 +157,6 @@
     <ClCompile Include="data\context\SessionTracker_Tests.cpp" />
     <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
-    <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
     <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp" />
     <ClCompile Include="devkit\context\mocks\MockRcClient.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />

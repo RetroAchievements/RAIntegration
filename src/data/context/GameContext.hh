@@ -55,14 +55,6 @@ public:
     bool IsGameLoading() const noexcept { return m_nLoadCount != 0; }
 
     /// <summary>
-    /// Gets the unique identifier of the currently loaded subset game.
-    /// </summary>
-    /// <remarks>
-    /// Will match <see cref="GameId"/> unless an exclusive or specialty subset is loaded.
-    /// </remarks>
-    unsigned int ActiveGameId() const noexcept { return m_nActiveGameId; }
-
-    /// <summary>
     /// Gets the title of the currently loaded game.
     /// </summary>
     const std::wstring& GameTitle() const noexcept { return m_sGameTitle; }
@@ -202,7 +194,6 @@ protected:
     void BeginLoad();
     void EndLoad();
 
-    unsigned int m_nActiveGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
     Mode m_nMode{};

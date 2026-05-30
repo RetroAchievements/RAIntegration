@@ -93,8 +93,11 @@ public:
         Assert::IsFalse(vmUnknownGame.IsSelectedGameEnabled());
 
         // trigger the response
-        vmUnknownGame.mockRcClient.MockResponse("r=gameslist&c=30",
-            "{\"Success\":true,\"Response\":{\"33\":\"Game 33\",\"37\":\"Game 37\"}}");
+        vmUnknownGame.mockRcClient.MockResponse("r=systemgames&s=30",
+            "{\"Success\":true,\"Response\":["
+                "{\"ID\":33,\"Title\":\"Game 33\",\"NumAchievements\":0,\"NumLeaderboards\":0,\"Points\":0,\"ImageIcon\":\"/Images/001122.png\",\"ImageUrl\":\"http://host/Images/001122.png\",\"SupportedHashes\":[]},"
+                "{\"ID\":37,\"Title\":\"Game 37\",\"NumAchievements\":8,\"NumLeaderboards\":0,\"Points\":40,\"ImageIcon\":\"/Images/001122.png\",\"ImageUrl\":\"http://host/Images/001122.png\",\"SupportedHashes\":[]}"
+            "]}");
         vmUnknownGame.mockRcClient.AssertNoUnhandled();
 
         // after server response, collection should have three items and be frozen. linking should be enabled
@@ -572,15 +575,15 @@ public:
         UnknownGameViewModelHarness vmUnknownGame;
         vmUnknownGame.mockConsoleContext.SetId(ConsoleID::C64);
 
-        vmUnknownGame.mockRcClient.MockResponse("r=gameslist&c=30",
-            "{\"Success\":true,\"Response\":{"
-                "\"6\":\"Another Game\","
-                "\"2\":\"Game the First\","
-                "\"1\":\"My First Game\","
-                "\"3\":\"Not This Game\","
-                "\"5\":\"Only That Game\","
-                "\"4\":\"Play This\""
-            "}}");
+        vmUnknownGame.mockRcClient.MockResponse("r=systemgames&s=30",
+            "{\"Success\":true,\"Response\":["
+                "{\"ID\":6,\"Title\":\"Another Game\",\"NumAchievements\":8,\"NumLeaderboards\":0,\"Points\":40,\"ImageIcon\":\"/Images/001122.png\",\"ImageUrl\":\"http://host/Images/001122.png\",\"SupportedHashes\":[]},"
+                "{\"ID\":2,\"Title\":\"Game the First\",\"NumAchievements\":0,\"NumLeaderboards\":0,\"Points\":0,\"ImageIcon\":\"/Images/001123.png\",\"ImageUrl\":\"http://host/Images/001123.png\",\"SupportedHashes\":[]},"
+                "{\"ID\":1,\"Title\":\"My First Game\",\"NumAchievements\":12,\"NumLeaderboards\":4,\"Points\":100,\"ImageIcon\":\"/Images/001124.png\",\"ImageUrl\":\"http://host/Images/001124.png\",\"SupportedHashes\":[]},"
+                "{\"ID\":3,\"Title\":\"Not This Game\",\"NumAchievements\":46,\"NumLeaderboards\":2,\"Points\":510,\"ImageIcon\":\"/Images/001125.png\",\"ImageUrl\":\"http://host/Images/001125.png\",\"SupportedHashes\":[]},"
+                "{\"ID\":5,\"Title\":\"Only That Game\",\"NumAchievements\":27,\"NumLeaderboards\":0,\"Points\":243,\"ImageIcon\":\"/Images/001126.png\",\"ImageUrl\":\"http://host/Images/001126.png\",\"SupportedHashes\":[]},"
+                "{\"ID\":4,\"Title\":\"Play This\",\"NumAchievements\":0,\"NumLeaderboards\":0,\"Points\":0,\"ImageIcon\":\"/Images/001127.png\",\"ImageUrl\":\"http://host/Images/001127.png\",\"SupportedHashes\":[]}"
+            "]}");
 
         vmUnknownGame.InitializeGameTitles();
         vmUnknownGame.SetSelectedGameId(4);

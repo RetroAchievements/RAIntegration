@@ -98,10 +98,10 @@ public:
 
         Assert::AreEqual(41, (int)context.Id());
         Assert::AreEqual(std::wstring(L"PlayStation Portable"), context.Name());
-        Assert::AreEqual(0x01FFFFFFU, context.MaxAddress());
+        Assert::AreEqual(0x03FFFFFFU, context.MaxAddress());
 
         const auto& vRegions = context.MemoryRegions();
-        Assert::AreEqual({2}, vRegions.size());
+        Assert::AreEqual({3}, vRegions.size());
         Assert::AreEqual(0x00000000U, vRegions.at(0).GetStartAddress());
         Assert::AreEqual(0x007FFFFFU, vRegions.at(0).GetEndAddress());
         Assert::AreEqual(0x08000000U, vRegions.at(0).GetRealStartAddress());
@@ -112,12 +112,19 @@ public:
         Assert::AreEqual(0x08800000U, vRegions.at(1).GetRealStartAddress());
         Assert::AreEqual(ra::data::MemoryRegion::Type::SystemRAM, vRegions.at(1).GetType());
         Assert::AreEqual(std::wstring(L"System RAM"), vRegions.at(1).GetDescription());
+        Assert::AreEqual(0x02000000U, vRegions.at(2).GetStartAddress());
+        Assert::AreEqual(0x03FFFFFFU, vRegions.at(2).GetEndAddress());
+        Assert::AreEqual(0x0A000000U, vRegions.at(2).GetRealStartAddress());
+        Assert::AreEqual(ra::data::MemoryRegion::Type::SystemRAM, vRegions.at(2).GetType());
+        Assert::AreEqual(std::wstring(L"Extended RAM"), vRegions.at(2).GetDescription());
 
         AssertRegion(context, 0x00000000U, &vRegions.at(0));
         AssertRegion(context, 0x007FFFFFU, &vRegions.at(0));
         AssertRegion(context, 0x00800000U, &vRegions.at(1));
         AssertRegion(context, 0x01FFFFFFU, &vRegions.at(1));
-        AssertRegion(context, 0x02000000U, nullptr);
+        AssertRegion(context, 0x02000000U, &vRegions.at(2));
+        AssertRegion(context, 0x03FFFFFFU, &vRegions.at(2));
+        AssertRegion(context, 0x04000000U, nullptr);
 
         Assert::AreEqual(0x01123456U, context.ByteAddressFromRealAddress(0x09123456U));
     }

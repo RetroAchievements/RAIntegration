@@ -695,6 +695,7 @@ public:
                 }
 
                 pMenuItem->checked = pItem.IsSelected() ? 1 : 0;
+                ++pMenuItem;
             }
 
             if (!bChanged)

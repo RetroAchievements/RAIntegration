@@ -328,7 +328,7 @@ std::string WindowsHttpRequester::GetStatusCodeText(unsigned int nStatusCode) co
             message = ra::util::String::Narrow(szMessageBuffer);
 
             // trim trailing whitespace
-            while (isspace(message.back()))
+            while (ra::util::String::IsSpace(message.back()))
                 message.pop_back();
         }
     }

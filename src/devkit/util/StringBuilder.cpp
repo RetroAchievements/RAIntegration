@@ -278,7 +278,7 @@ std::wstring StringBuilder::Widen(std::string_view str)
         {
             *pOut++ = 0xFFFD;
         }
-        else if (nAccumulator < 0xFFFF)
+        else if (nAccumulator < 0x10000)
         {
             *pOut++ = gsl::narrow_cast<uint16_t>(nAccumulator & 0xFFFF);
         }

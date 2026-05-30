@@ -298,7 +298,7 @@ bool Memory::TryParseAddressRange(const std::wstring& sRange, ra::data::ByteAddr
     }
 
     ptr += nAddressLength;
-    while (iswspace(*ptr))
+    while (ra::util::String::IsSpace(*ptr))
         ++ptr;
 
     if (*ptr == '\0')
@@ -315,7 +315,7 @@ bool Memory::TryParseAddressRange(const std::wstring& sRange, ra::data::ByteAddr
     }
 
     ++ptr;
-    while (iswspace(*ptr))
+    while (ra::util::String::IsSpace(*ptr))
         ++ptr;
 
     nAddressLength = TryParseAddressInternal(ptr, nEnd);

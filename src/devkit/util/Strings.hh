@@ -212,6 +212,58 @@ public:
     /// Encodes a string to Base64.
     /// </summary>
     static std::string EncodeBase64(const std::string& sString);
+
+    /// <summary>
+    /// Determines if a given character is considered whitespace.
+    /// </summary>
+    template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+    static constexpr bool IsSpace(CharT c)
+    {
+        // 9=tab (\t), 10=newline (\n), 11=vertical tab (\v), 12=form feed (\f), 13=carriage return (\r)
+        return c == ' ' || (c >= 9 && c <= 13);
+    }
+
+    /// <summary>
+    /// Determines if a given character is considered alphabetic.
+    /// </summary>
+    template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+    static constexpr bool IsAlpha(CharT c)
+    {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    }
+
+    /// <summary>
+    /// Determines if a given character is considered alphabetic or numeric.
+    /// </summary>
+    template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+    static constexpr bool IsAlNum(CharT c)
+    {
+        return IsAlpha(c) || IsDigit(c);
+    }
+
+    /// <summary>
+    /// Determines if a given character is considered numeric.
+    /// </summary>
+    template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+    static constexpr bool IsDigit(CharT c)
+    {
+        return c >= '0' && c <= '9';
+    }
+
+    /// <summary>
+    /// Determines if a given character is considered a hexadecimal digit.
+    /// </summary>
+    template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+    static constexpr bool IsHexDigit(CharT c)
+    {
+        if (c >= '0' && c <= '9')
+            return true;
+        if (c >= 'a' && c <= 'f')
+            return true;
+        if (c >= 'A' && c <= 'F')
+            return true;
+        return false;
+    }
 };
 
 } // namespace util

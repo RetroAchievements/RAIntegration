@@ -158,7 +158,7 @@ public:
                 oss << arg;
             else
             {
-                if (std::isdigit(ra::to_unsigned(sFormat.front())))
+                if (sFormat.front() >= '0' && sFormat.front() <= '9')
                 {
                     if (sFormat.front() == '0')
                         oss << std::setfill('0');
@@ -305,7 +305,7 @@ public:
                 {
                     const char c = gsl::narrow<char>(*pScan);
                     sFormat.push_back(c);
-                    if (isalpha(to_unsigned(c)))
+                    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
                         break;
 
                     ++pScan;

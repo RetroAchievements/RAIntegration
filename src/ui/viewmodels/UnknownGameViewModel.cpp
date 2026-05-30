@@ -99,6 +99,8 @@ void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
             m_vGameTitles.EndUpdate();
         }
 
+        rc_api_destroy_fetch_games_list_response(&response);
+
         SetValue(FilterResultsProperty, ra::util::String::Printf(L"%u/%u",
             gsl::narrow_cast<uint32_t>(m_vAllGameTitles.size()),
             gsl::narrow_cast<uint32_t>(m_vAllGameTitles.size())));

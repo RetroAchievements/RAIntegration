@@ -124,7 +124,7 @@ void RichPresenceModel::SetScript(const std::string& sScript)
     bool bIsOnlyWhitespace = true;
     for (const char c : sScript)
     {
-        if (!isspace(static_cast<int>(c)))
+        if (!ra::util::String::IsSpace(c))
         {
             bIsOnlyWhitespace = false;
             break;

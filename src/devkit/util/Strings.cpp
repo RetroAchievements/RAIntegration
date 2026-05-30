@@ -22,11 +22,11 @@ std::string& String::TrimLineEnding(std::string& str) noexcept
 _Use_decl_annotations_
 std::wstring& String::Trim(std::wstring& str)
 {
-    while (!str.empty() && iswspace(str.back()))
+    while (!str.empty() && IsSpace(str.back()))
         str.pop_back();
 
     size_t nIndex = 0;
-    while (nIndex < str.length() && iswspace(str.at(nIndex)))
+    while (nIndex < str.length() && IsSpace(str.at(nIndex)))
         ++nIndex;
 
     if (nIndex > 0)

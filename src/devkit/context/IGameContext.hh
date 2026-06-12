@@ -12,6 +12,7 @@ namespace ra {
 namespace data {
 namespace models {
     class MemoryNotesModel;
+    class LocalBadgesModel;
 } // namespace models
 } // namespace data
 
@@ -70,6 +71,16 @@ public:
     /// Gets the <see cref="MemoryNote"/>s for the currently loaded game.
     /// </summary>
     virtual const ra::data::models::MemoryNotesModel& MemoryNotes() const noexcept(false) = 0;
+
+    /// <summary>
+    /// Gets the <see cref="MemoryNote"/>s for the currently loaded game.
+    /// </summary>
+    virtual ra::data::models::LocalBadgesModel& LocalBadges() noexcept(false) = 0;
+
+    /// <summary>
+    /// Gets the <see cref="MemoryNote"/>s for the currently loaded game.
+    /// </summary>
+    virtual const ra::data::models::LocalBadgesModel& LocalBadges() const noexcept(false) = 0;
 
 protected:
     uint32_t m_nGameId = 0;

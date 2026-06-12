@@ -224,6 +224,61 @@ static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game)
     return GetSubset(game, game->public_.id, game->public_.title);
 }
 
+static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
+    rc_client_subset_info_t* subset, uint32_t nId, const char* sTitle)
+{
+    if (subset->public_.num_achievements % 8 == 0)
+    {
+        const uint32_t new_count = subset->public_.num_achievements + 8;
+        rc_client_achievement_info_t* new_achievements = static_cast<rc_client_achievement_info_t*>(rc_buffer_alloc(
+            &game->buffer, sizeof(rc_client_achievement_info_t) * new_count));
+
+        if (subset->public_.num_achievements > 0)
+        {
+            memcpy(new_achievements, subset->achievements,
+                sizeof(rc_client_achievement_info_t) * subset->public_.num_achievements);
+        }
+
+        subset->achievements = new_achievements;
+    }
+
+    rc_client_achievement_info_t* achievement = &subset->achievements[subset->public_.num_achievements++];
+    memset(achievement, 0, sizeof(*achievement));
+    achievement->public_.id = nId;
+
+    if (sTitle)
+    {
+        achievement->public_.title = rc_buffer_strcpy(&game->buffer, sTitle);
+    }
+    else
+    {
+        const std::string sGeneratedTitle = ra::util::String::Printf("Achievement %u", nId);
+        achievement->public_.title = rc_buffer_strcpy(&game->buffer, sGeneratedTitle.c_str());
+    }
+
+    const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
+    achievement->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
+
+    achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+    achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+    achievement->public_.points = 5;
+    achievement->author = "Author";
+
+    return achievement;
+}
+
+rc_client_achievement_info_t* MockRcClient::MockAchievement(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    rc_client_achievement_info_t* achievement = AddAchievement(game, GetCoreSubset(game), nId, sTitle);
+
+    achievement->trigger = static_cast<rc_trigger_t*>(rc_buffer_alloc(&game->buffer, sizeof(rc_trigger_t)));
+    memset(achievement->trigger, 0, sizeof(*achievement->trigger));
+    achievement->trigger->state = RC_TRIGGER_STATE_ACTIVE;
+
+    return achievement;
+}
+
 static rc_client_leaderboard_info_t* AddLeaderboard(const rc_client_t* client, rc_client_game_info_t* game,
     rc_client_subset_info_t* subset, uint32_t nId, const char* sTitle)
 {

@@ -71,6 +71,7 @@
       <Filter>data\models</Filter>
     </ClCompile>
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
+    <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

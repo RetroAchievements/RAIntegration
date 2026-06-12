@@ -196,6 +196,7 @@
       <Filter>data\models</Filter>
     </ClInclude>
     <ClInclude Include="data\models\LeaderboardModel.hh" />
+    <ClInclude Include="data\models\AchievementModel.hh" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -274,5 +275,6 @@
       <Filter>data\models</Filter>
     </ClCompile>
     <ClCompile Include="data\models\LeaderboardModel.cpp" />
+    <ClCompile Include="data\models\AchievementModel.cpp" />
   </ItemGroup>
 </Project>

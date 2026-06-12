@@ -70,6 +70,7 @@
     <ClCompile Include="data\Memory_Tests.cpp" />
     <ClCompile Include="data\ModelPropertyContainer_Tests.cpp" />
     <ClCompile Include="data\ModelProperty_Tests.cpp" />
+    <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
     <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp" />

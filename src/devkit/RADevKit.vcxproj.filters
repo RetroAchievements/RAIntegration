@@ -195,8 +195,12 @@
     <ClInclude Include="data\models\RichPresenceModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
-    <ClInclude Include="data\models\LeaderboardModel.hh" />
-    <ClInclude Include="data\models\AchievementModel.hh" />
+    <ClInclude Include="data\models\AchievementModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\LeaderboardModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -274,7 +278,11 @@
     <ClCompile Include="data\models\RichPresenceModel.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\LeaderboardModel.cpp" />
-    <ClCompile Include="data\models\AchievementModel.cpp" />
+    <ClCompile Include="data\models\AchievementModel.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\LeaderboardModel.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

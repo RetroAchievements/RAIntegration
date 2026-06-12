@@ -195,6 +195,7 @@
     <ClInclude Include="data\models\RichPresenceModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
+    <ClInclude Include="data\models\LeaderboardModel.hh" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -272,5 +273,6 @@
     <ClCompile Include="data\models\RichPresenceModel.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\LeaderboardModel.cpp" />
   </ItemGroup>
 </Project>

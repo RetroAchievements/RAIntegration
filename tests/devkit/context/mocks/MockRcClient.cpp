@@ -186,12 +186,96 @@ void MockRcClient::MockGame(uint32_t nGameId, const char* title, uint32_t nConso
     pGame->public_.id = nGameId;
     pGame->public_.console_id = nConsoleId;
     pGame->public_.title = title;
+    pGame->public_.badge_name = "55443";
 
     auto* pClient = GetClient();
     rc_client_unload_game(pClient);
 
     pClient->game = pGame;
     pClient->state.frames_processed = pClient->state.frames_at_last_ping = 0;
+}
+
+static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name) noexcept
+{
+    rc_client_subset_info_t* subset = game->subsets, ** next = &game->subsets;
+    for (; subset; subset = subset->next)
+    {
+        if (subset->public_.id == subset_id)
+            return subset;
+
+        next = &subset->next;
+    }
+
+    subset = static_cast<rc_client_subset_info_t*>(rc_buffer_alloc(&game->buffer, sizeof(rc_client_subset_info_t)));
+    memset(subset, 0, sizeof(*subset));
+    subset->public_.id = subset_id;
+    strcpy_s(subset->public_.badge_name, sizeof(subset->public_.badge_name), game->public_.badge_name);
+    subset->public_.title = name;
+    subset->active = 1;
+
+    *next = subset;
+
+    return subset;
+}
+
+static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game)
+{
+    Assert::IsNotNull(game, L"MockGame must be called first");
+    return GetSubset(game, game->public_.id, game->public_.title);
+}
+
+static rc_client_leaderboard_info_t* AddLeaderboard(const rc_client_t* client, rc_client_game_info_t* game,
+    rc_client_subset_info_t* subset, uint32_t nId, const char* sTitle)
+{
+    if (subset->public_.num_leaderboards % 8 == 0)
+    {
+        const uint32_t new_count = subset->public_.num_leaderboards + 8;
+        rc_client_leaderboard_info_t* new_leaderboards = static_cast<rc_client_leaderboard_info_t*>(rc_buffer_alloc(
+            &game->buffer, sizeof(rc_client_leaderboard_info_t) * new_count));
+
+        if (subset->public_.num_leaderboards > 0)
+        {
+            memcpy(new_leaderboards, subset->leaderboards,
+                sizeof(rc_client_leaderboard_info_t) * subset->public_.num_leaderboards);
+        }
+
+        subset->leaderboards = new_leaderboards;
+    }
+
+    rc_client_leaderboard_info_t* leaderboard = &subset->leaderboards[subset->public_.num_leaderboards++];
+    memset(leaderboard, 0, sizeof(*leaderboard));
+    leaderboard->public_.id = nId;
+
+    if (sTitle)
+    {
+        leaderboard->public_.title = rc_buffer_strcpy(&game->buffer, sTitle);
+    }
+    else
+    {
+        const std::string sGeneratedTitle = ra::util::String::Printf("Leaderboard %u", nId);
+        leaderboard->public_.title = rc_buffer_strcpy(&game->buffer, sGeneratedTitle.c_str());
+    }
+
+    const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
+    leaderboard->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
+
+    leaderboard->public_.state = static_cast<uint8_t>(rc_client_get_hardcore_enabled(client) ?
+        RC_CLIENT_LEADERBOARD_STATE_ACTIVE : RC_CLIENT_LEADERBOARD_STATE_INACTIVE);
+
+    return leaderboard;
+}
+
+rc_client_leaderboard_info_t* MockRcClient::MockLeaderboard(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    rc_client_leaderboard_info_t* leaderboard = AddLeaderboard(GetClient(), game, GetCoreSubset(game), nId, sTitle);
+
+    leaderboard->lboard = static_cast<rc_lboard_t*>(rc_buffer_alloc(&game->buffer, sizeof(rc_lboard_t)));
+    memset(leaderboard->lboard, 0, sizeof(*leaderboard->lboard));
+    leaderboard->lboard->state = static_cast<uint8_t>(
+        rc_client_get_hardcore_enabled(GetClient()) ? RC_LBOARD_STATE_ACTIVE : RC_LBOARD_STATE_INACTIVE);
+
+    return leaderboard;
 }
 
 } // namespace mocks

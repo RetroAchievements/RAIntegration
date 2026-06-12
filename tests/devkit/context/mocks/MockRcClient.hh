@@ -6,6 +6,8 @@
 
 #include "services\ServiceLocator.hh"
 
+typedef struct rc_client_leaderboard_info_t rc_client_leaderboard_info_t;
+
 namespace ra {
 namespace context {
 namespace mocks {
@@ -31,6 +33,7 @@ public:
     void SetHardcoreEnabled(bool bValue) noexcept;
 
     void MockGame(uint32_t nGameId, const char* title, uint32_t nConsoleId = 1);
+    rc_client_leaderboard_info_t* MockLeaderboard(uint32_t nId, const char* sTitle = "Leaderboard Title");
 
 private:
     typedef struct MockApiResponse

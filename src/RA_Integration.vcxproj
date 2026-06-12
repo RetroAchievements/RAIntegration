@@ -81,7 +81,6 @@
     <ClCompile Include="data\context\GameContext.cpp" />
     <ClCompile Include="data\context\SessionTracker.cpp" />
     <ClCompile Include="data\models\AchievementModel.cpp" />
-    <ClCompile Include="data\models\LeaderboardModel.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -214,7 +213,6 @@
     <ClInclude Include="data\context\GameContext.hh" />
     <ClInclude Include="data\context\SessionTracker.hh" />
     <ClInclude Include="data\models\AchievementModel.hh" />
-    <ClInclude Include="data\models\LeaderboardModel.hh" />
     <ClInclude Include="data\Types.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />

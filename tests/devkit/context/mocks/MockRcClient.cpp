@@ -195,7 +195,7 @@ void MockRcClient::MockGame(uint32_t nGameId, const char* title, uint32_t nConso
     pClient->state.frames_processed = pClient->state.frames_at_last_ping = 0;
 }
 
-static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name) noexcept
+static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name)
 {
     rc_client_subset_info_t* subset = game->subsets;
     gsl::not_null<rc_client_subset_info_t**> next = gsl::make_not_null(&game->subsets);

@@ -1,5 +1,5 @@
-#ifndef RA_DATA_ACHIEVEMENT_MODEL_H
-#define RA_DATA_ACHIEVEMENT_MODEL_H
+#ifndef RA_DATA_MODELS_ACHIEVEMENTMODEL_H
+#define RA_DATA_MODELS_ACHIEVEMENTMODEL_H
 #pragma once
 
 #include "data/models/AssetModelBase.hh"
@@ -237,4 +237,4 @@ private:
 } // namespace data
 } // namespace ra
 
-#endif RA_DATA_ACHIEVEMENT_MODEL_H
+#endif RA_DATA_MODELS_ACHIEVEMENTMODEL_H

@@ -4,6 +4,8 @@
 
 #include "context/IGameContext.hh"
 
+#include "data/models/LocalBadgesModel.hh"
+
 #include "services/ServiceLocator.hh"
 
 #include "GameAssets.hh"
@@ -178,6 +180,17 @@ public:
         return pNotes ? *pNotes : m_oDefaultNotes;
     }
 
+    ra::data::models::LocalBadgesModel& LocalBadges() override
+    {
+        auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(m_vAssets.FindAsset(ra::data::models::AssetType::LocalBadges, 0));
+        return pLocalBadges ? *pLocalBadges : m_oDefaultLocalBadges;
+    }
+    const ra::data::models::LocalBadgesModel& LocalBadges() const override
+    {
+        auto* pLocalBadges = dynamic_cast<const ra::data::models::LocalBadgesModel*>(m_vAssets.FindAsset(ra::data::models::AssetType::LocalBadges, 0));
+        return pLocalBadges ? *pLocalBadges : m_oDefaultLocalBadges;
+    }
+
 private:
     void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused);
     void MigrateSubsetUserFiles();
@@ -211,6 +224,7 @@ private:
     // use the mock helper to register as both GameContext and IGameContext
     ra::services::ServiceLocator::ServiceOverride<ra::context::IGameContext> m_IGameContextOverride;
     ra::data::models::MemoryNotesModel m_oDefaultNotes;
+    ra::data::models::LocalBadgesModel m_oDefaultLocalBadges;
 };
 
 } // namespace context

@@ -4,6 +4,7 @@
 
 #include "context/IGameContext.hh"
 
+#include "data/models/LocalBadgesModel.hh"
 #include "data/models/MemoryNotesModel.hh"
 
 #include "services/ServiceLocator.hh"
@@ -25,6 +26,9 @@ public:
 
     ra::data::models::MemoryNotesModel& MemoryNotes() noexcept override { return m_oMemoryNotes; }
     const ra::data::models::MemoryNotesModel& MemoryNotes() const noexcept override { return m_oMemoryNotes; }
+
+    ra::data::models::LocalBadgesModel& LocalBadges() noexcept override { return m_oLocalBadges; }
+    const ra::data::models::LocalBadgesModel& LocalBadges() const noexcept override { return m_oLocalBadges; }
 
     bool SetNote(ra::data::ByteAddress nAddress, const std::wstring& sNote)
     {
@@ -88,6 +92,7 @@ private:
     };
 
     MockMemoryNotesModel m_oMemoryNotes;
+    ra::data::models::LocalBadgesModel m_oLocalBadges;
 
     ra::services::ServiceLocator::ServiceOverride<ra::context::IGameContext> m_Override;
 };

@@ -1,18 +1,17 @@
-#include "CppUnitTest.h"
+#include "data/models/LeaderboardModel.hh"
 
-#include "data\models\LeaderboardModel.hh"
+#include "context/mocks/MockEmulatorMemoryContext.hh"
+#include "context/mocks/MockGameContext.hh"
+#include "context/mocks/MockRcClient.hh"
+#include "context/mocks/MockUserContext.hh"
 
-#include "services\impl\StringTextWriter.hh"
+#include "services/impl/StringTextWriter.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
+#include "testutil/AssetAsserts.hh"
+#include "testutil/CppUnitTest.hh"
+#include "testutil/ValueAsserts.hh"
 
-#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
-#include "tests\devkit\context\mocks\MockRcClient.hh"
-#include "tests\devkit\context\mocks\MockUserContext.hh"
-#include "tests\devkit\testutil\AssetAsserts.hh"
-#include "tests\devkit\testutil\ValueAsserts.hh"
-#include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockGameContext.hh"
+#include <rcheevos/src/rc_client_internal.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -30,11 +29,10 @@ private:
     {
     public:
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockGameContext mockGameContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockUserContext mockUserContext;
-        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::impl::StringTextWriter textWriter;
-        ra::services::mocks::MockAchievementRuntime mockRuntime;
     };
 
 public:
@@ -280,14 +278,15 @@ public:
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
 
-        leaderboard.mockRuntime.MockGame();
-        auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboardWithLboard(leaderboard.GetID());
+        leaderboard.mockRcClient.MockGame(1, "Game");
+        auto* leaderboard_info = leaderboard.mockRcClient.MockLeaderboard(leaderboard.GetID());
+        Expects(leaderboard_info != nullptr);
         leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
-        rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
+        rc_client_allocate_leaderboard_tracker(leaderboard.mockRcClient.GetClient()->game, leaderboard_info);
 
         g_bEventSeen = false;
-        leaderboard.mockRuntime.GetClient()->callbacks.event_handler =
+        leaderboard.mockRcClient.GetClient()->callbacks.event_handler =
             [](const rc_client_event_t* pEvent, rc_client_t*) {
                 Assert::AreEqual({RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE}, pEvent->type);
                 Assert::AreEqual({1}, pEvent->leaderboard_tracker->id);
@@ -316,16 +315,17 @@ public:
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
 
-        leaderboard.mockRuntime.MockGame();
-        auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboardWithLboard(leaderboard.GetID());
+        leaderboard.mockRcClient.MockGame(1, "Game");
+        auto* leaderboard_info = leaderboard.mockRcClient.MockLeaderboard(leaderboard.GetID());
+        Expects(leaderboard_info != nullptr);
         leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
-        rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
-        auto* leaderboard_info2 = leaderboard.mockRuntime.MockLeaderboardWithLboard(99);
-        rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info2);
+        rc_client_allocate_leaderboard_tracker(leaderboard.mockRcClient.GetClient()->game, leaderboard_info);
+        auto* leaderboard_info2 = leaderboard.mockRcClient.MockLeaderboard(99);
+        rc_client_allocate_leaderboard_tracker(leaderboard.mockRcClient.GetClient()->game, leaderboard_info2);
 
         g_bEventSeen = false;
-        leaderboard.mockRuntime.GetClient()->callbacks.event_handler =
+        leaderboard.mockRcClient.GetClient()->callbacks.event_handler =
             [](const rc_client_event_t*, rc_client_t*) {
                 g_bEventSeen = true;
             };
@@ -352,14 +352,15 @@ public:
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
 
-        leaderboard.mockRuntime.MockGame();
-        auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboardWithLboard(leaderboard.GetID());
+        leaderboard.mockRcClient.MockGame(1, "Game");
+        auto* leaderboard_info = leaderboard.mockRcClient.MockLeaderboard(leaderboard.GetID());
+        Expects(leaderboard_info != nullptr);
         leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
-        rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
+        rc_client_allocate_leaderboard_tracker(leaderboard.mockRcClient.GetClient()->game, leaderboard_info);
 
         g_bEventSeen = false;
-        leaderboard.mockRuntime.GetClient()->callbacks.event_handler =
+        leaderboard.mockRcClient.GetClient()->callbacks.event_handler =
             [](const rc_client_event_t* pEvent, rc_client_t*) {
                 Assert::AreEqual({RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE}, pEvent->type);
                 Assert::AreEqual({1}, pEvent->leaderboard_tracker->id);
@@ -391,15 +392,16 @@ public:
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
 
-        leaderboard.mockRuntime.MockGame();
-        auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboard(leaderboard.GetID());
+        leaderboard.mockRcClient.MockGame(1, "Game");
+        auto* leaderboard_info = leaderboard.mockRcClient.MockLeaderboard(leaderboard.GetID());
+        Expects(leaderboard_info != nullptr);
         leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
         // forcefully start the leaderboard
         leaderboard.SetState(AssetState::Primed);
         const auto* pLboard = leaderboard_info->lboard;
         Assert::IsNotNull(pLboard);
-        rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
+        rc_client_allocate_leaderboard_tracker(leaderboard.mockRcClient.GetClient()->game, leaderboard_info);
 
         Assert::IsTrue(leaderboard.IsActive());
         Assert::AreEqual({ RC_LBOARD_STATE_STARTED }, leaderboard_info->lboard->state);

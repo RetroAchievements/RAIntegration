@@ -1,20 +1,21 @@
 #include "AchievementModel.hh"
 
-#include "context\IRcClient.hh"
+#include "context/IGameContext.hh"
+#include "context/IRcClient.hh"
 
-#include "util\Log.hh"
+#include "data/context/GameAssets.hh" // TODO: this is a reference outside of the devkit code for FirstLocalID
 
-#include "data\context\GameContext.hh"
+#include "util/Log.hh"
 
-#include "data\models\LocalBadgesModel.hh"
-#include "data\models\TriggerValidation.hh"
+#include "data/models/LocalBadgesModel.hh"
+#include "data/models/TriggerValidation.hh"
 
-#include "services\ServiceLocator.hh"
+#include "services/ServiceLocator.hh"
 
-#include "util\Strings.hh"
+#include "util/Strings.hh"
 
-#include <rcheevos\src\rcheevos\rc_internal.h>
-#include <rcheevos\src\rc_client_internal.h>
+#include <rcheevos/src/rcheevos/rc_internal.h>
+#include <rcheevos/src/rc_client_internal.h>
 
 namespace ra {
 namespace data {
@@ -109,24 +110,16 @@ void AchievementModel::OnValueChanged(const StringModelProperty::ChangeArgs& arg
     {
         if (ra::util::String::StartsWith(args.tOldValue, L"local\\"))
         {
-            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-            auto* pLocalBadges = dynamic_cast<LocalBadgesModel*>(pGameContext.Assets().FindAsset(ra::data::models::AssetType::LocalBadges, 0));
-            if (pLocalBadges)
-            {
-                const bool bCommitted = (GetLocalValue(BadgeProperty) == args.tOldValue);
-                pLocalBadges->RemoveReference(args.tOldValue, bCommitted);
-            }
+            const bool bCommitted = (GetLocalValue(BadgeProperty) == args.tOldValue);
+            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::context::IGameContext>();
+            pGameContext.LocalBadges().RemoveReference(args.tOldValue, bCommitted);
         }
 
         if (ra::util::String::StartsWith(args.tNewValue, L"local\\"))
         {
-            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-            auto* pLocalBadges = dynamic_cast<LocalBadgesModel*>(pGameContext.Assets().FindAsset(ra::data::models::AssetType::LocalBadges, 0));
-            if (pLocalBadges)
-            {
-                const bool bCommitted = (GetLocalValue(BadgeProperty) == args.tNewValue);
-                pLocalBadges->AddReference(args.tNewValue, bCommitted);
-            }
+            const bool bCommitted = (GetLocalValue(BadgeProperty) == args.tNewValue);
+            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::context::IGameContext>();
+            pGameContext.LocalBadges().AddReference(args.tNewValue, bCommitted);
         }
 
         if (m_pAchievementInfo)
@@ -143,10 +136,8 @@ void AchievementModel::CommitTransaction()
         const auto& pBadgeName = GetBadge();
         if (*pPreviousBadgeName != pBadgeName)
         {
-            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-            auto* pLocalBadges = dynamic_cast<LocalBadgesModel*>(pGameContext.Assets().FindAsset(ra::data::models::AssetType::LocalBadges, 0));
-            if (pLocalBadges)
-                pLocalBadges->Commit(*pPreviousBadgeName, pBadgeName);
+            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::context::IGameContext>();
+            pGameContext.LocalBadges().Commit(*pPreviousBadgeName, pBadgeName);
         }
     }
 

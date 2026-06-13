@@ -90,6 +90,7 @@
     <ClInclude Include="services\mocks\MockLogger.hh" />
     <ClInclude Include="services\mocks\MockMessageDispatcher.hh" />
     <ClInclude Include="services\mocks\MockThreadPool.hh" />
+    <ClInclude Include="testutil\AchievementAsserts.hh" />
     <ClInclude Include="testutil\AssetAsserts.hh" />
     <ClInclude Include="testutil\CppUnitTest.hh" />
     <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />

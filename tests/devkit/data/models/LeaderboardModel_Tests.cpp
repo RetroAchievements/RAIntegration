@@ -1,17 +1,15 @@
-#include "CppUnitTest.h"
-
 #include "data/models/LeaderboardModel.hh"
+
+#include "context/mocks/MockEmulatorMemoryContext.hh"
+#include "context/mocks/MockGameContext.hh"
+#include "context/mocks/MockRcClient.hh"
+#include "context/mocks/MockUserContext.hh"
 
 #include "services/impl/StringTextWriter.hh"
 
-#include "tests/RA_UnitTestHelpers.h"
-
-#include "tests/devkit/context/mocks/MockEmulatorMemoryContext.hh"
-#include "tests/devkit/context/mocks/MockGameContext.hh"
-#include "tests/devkit/context/mocks/MockRcClient.hh"
-#include "tests/devkit/context/mocks/MockUserContext.hh"
-#include "tests/devkit/testutil/AssetAsserts.hh"
-#include "tests/devkit/testutil/ValueAsserts.hh"
+#include "testutil/AssetAsserts.hh"
+#include "testutil/CppUnitTest.hh"
+#include "testutil/ValueAsserts.hh"
 
 #include <rcheevos/src/rc_client_internal.h>
 
@@ -282,6 +280,7 @@ public:
 
         leaderboard.mockRcClient.MockGame(1, "Game");
         auto* leaderboard_info = leaderboard.mockRcClient.MockLeaderboard(leaderboard.GetID());
+        Expects(leaderboard_info != nullptr);
         leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
         rc_client_allocate_leaderboard_tracker(leaderboard.mockRcClient.GetClient()->game, leaderboard_info);
@@ -318,6 +317,7 @@ public:
 
         leaderboard.mockRcClient.MockGame(1, "Game");
         auto* leaderboard_info = leaderboard.mockRcClient.MockLeaderboard(leaderboard.GetID());
+        Expects(leaderboard_info != nullptr);
         leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
         rc_client_allocate_leaderboard_tracker(leaderboard.mockRcClient.GetClient()->game, leaderboard_info);
@@ -354,6 +354,7 @@ public:
 
         leaderboard.mockRcClient.MockGame(1, "Game");
         auto* leaderboard_info = leaderboard.mockRcClient.MockLeaderboard(leaderboard.GetID());
+        Expects(leaderboard_info != nullptr);
         leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
         rc_client_allocate_leaderboard_tracker(leaderboard.mockRcClient.GetClient()->game, leaderboard_info);
@@ -393,6 +394,7 @@ public:
 
         leaderboard.mockRcClient.MockGame(1, "Game");
         auto* leaderboard_info = leaderboard.mockRcClient.MockLeaderboard(leaderboard.GetID());
+        Expects(leaderboard_info != nullptr);
         leaderboard.SetLocalLeaderboardInfo(*leaderboard_info);
 
         // forcefully start the leaderboard

@@ -197,13 +197,14 @@ void MockRcClient::MockGame(uint32_t nGameId, const char* title, uint32_t nConso
 
 static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name) noexcept
 {
-    rc_client_subset_info_t* subset = game->subsets, ** next = &game->subsets;
+    rc_client_subset_info_t* subset = game->subsets;
+    gsl::not_null<rc_client_subset_info_t**> next = gsl::make_not_null(&game->subsets);
     for (; subset; subset = subset->next)
     {
         if (subset->public_.id == subset_id)
             return subset;
 
-        next = &subset->next;
+        next = gsl::make_not_null(&subset->next);
     }
 
     subset = static_cast<rc_client_subset_info_t*>(rc_buffer_alloc(&game->buffer, sizeof(rc_client_subset_info_t)));
@@ -227,6 +228,7 @@ static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game)
 static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
     rc_client_subset_info_t* subset, uint32_t nId, const char* sTitle)
 {
+    Expects(subset != nullptr);
     if (subset->public_.num_achievements % 8 == 0)
     {
         const uint32_t new_count = subset->public_.num_achievements + 8;
@@ -282,6 +284,7 @@ rc_client_achievement_info_t* MockRcClient::MockAchievement(uint32_t nId, const 
 static rc_client_leaderboard_info_t* AddLeaderboard(const rc_client_t* client, rc_client_game_info_t* game,
     rc_client_subset_info_t* subset, uint32_t nId, const char* sTitle)
 {
+    Expects(subset != nullptr);
     if (subset->public_.num_leaderboards % 8 == 0)
     {
         const uint32_t new_count = subset->public_.num_leaderboards + 8;

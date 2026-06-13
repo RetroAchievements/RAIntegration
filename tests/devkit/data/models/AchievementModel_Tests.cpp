@@ -1,19 +1,18 @@
-#include "CppUnitTest.h"
-
 #include "data/models/AchievementModel.hh"
+
+#include "context/mocks/MockEmulatorMemoryContext.hh"
+#include "context/mocks/MockGameContext.hh"
+#include "context/mocks/MockRcClient.hh"
+#include "context/mocks/MockUserContext.hh"
+
 #include "data/models/LocalBadgesModel.hh"
 
 #include "services/impl/StringTextWriter.hh"
+#include "services/mocks/MockClock.hh"
 
-#include "tests/RA_UnitTestHelpers.h"
-#include "tests/data/DataAsserts.hh"
-
-#include "tests/devkit/context/mocks/MockEmulatorMemoryContext.hh"
-#include "tests/devkit/context/mocks/MockGameContext.hh"
-#include "tests/devkit/context/mocks/MockRcClient.hh"
-#include "tests/devkit/context/mocks/MockUserContext.hh"
-#include "tests/devkit/services/mocks/MockClock.hh"
-#include "tests/devkit/testutil/AssetAsserts.hh"
+#include "testutil/AchievementAsserts.hh"
+#include "testutil/AssetAsserts.hh"
+#include "testutil/CppUnitTest.hh"
 
 #include <rcheevos/src/rc_client_internal.h>
 
@@ -222,6 +221,7 @@ public:
         achievement.CreateLocalCheckpoint();
 
         auto* achievement_info = achievement.mockRcClient.MockAchievement(achievement.GetID());
+        Expects(achievement_info != nullptr);
         achievement.SetLocalAchievementInfo(*achievement_info);
 
         g_bEventSeen = false;
@@ -254,6 +254,7 @@ public:
         achievement.CreateLocalCheckpoint();
 
         auto* achievement_info = achievement.mockRcClient.MockAchievement(achievement.GetID());
+        Expects(achievement_info != nullptr);
         achievement.SetLocalAchievementInfo(*achievement_info);
 
         g_bEventSeen = false;

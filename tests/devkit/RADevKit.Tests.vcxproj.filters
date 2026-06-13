@@ -176,5 +176,8 @@
     <ClInclude Include="ui\mocks\MockImageRepository.hh">
       <Filter>ui\mocks</Filter>
     </ClInclude>
+    <ClInclude Include="testutil\AchievementAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

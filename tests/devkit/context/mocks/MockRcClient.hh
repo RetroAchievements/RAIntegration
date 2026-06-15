@@ -21,8 +21,9 @@ public:
     void AddAuthentication(const char** username, const char** api_token) const override;
 
     void DispatchRequest(const rc_api_request_t& pRequest, std::function<void(const rc_api_server_response_t&, void*)> fCallback, void* fCallbackData) const override;
+    void SendRequest(const rc_api_request_t& pRequest, rc_api_server_response_t& pResponse, std::string& sResponseBuffer) const override;
 
-    void MockResponse(const std::string& sRequestParams, const std::string& sResponseBody);
+    void MockResponse(const std::string& sRequestParams, const std::string& sResponseBody, int nHttpStatusCode = 200);
     bool HasMockResponse(const std::string& sRequestParams) const noexcept;
 
     void OnBeforeResponse(const std::string& sRequestParams, const std::function<void()>&& fHandler);

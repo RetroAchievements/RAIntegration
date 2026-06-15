@@ -1,4 +1,5 @@
 #include "Strings.hh"
+#include "Strings.hh"
 
 #include "TypeCasts.hh"
 
@@ -120,6 +121,17 @@ const std::wstring String::FormatDateRecent(time_t when)
 }
 
 _Use_decl_annotations_
+void String::ReplaceAll(std::string& sString, const std::string_view sMatch, const std::string_view sReplace) noexcept
+{
+    size_t nIndex = 0;
+    size_t nMatch;
+    while ((nMatch = sString.find(sMatch, nIndex)) != std::string::npos)
+    {
+        sString.replace(nMatch, sMatch.size(), sReplace);
+        nIndex = nMatch + sReplace.size();
+    }
+}
+
 void String::MakeLowercase(std::wstring& sString)
 {
     std::transform(sString.begin(), sString.end(), sString.begin(), [](wchar_t c) noexcept {

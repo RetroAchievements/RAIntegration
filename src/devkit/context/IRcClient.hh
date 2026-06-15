@@ -49,6 +49,14 @@ public:
     virtual void DispatchRequest(const rc_api_request_t& pRequest, std::function<void(const rc_api_server_response_t&, void*)> fCallback, void* fCallbackData) const = 0;
 
     /// <summary>
+    /// Makes an API call to the server synchronously.
+    /// </summary>
+    /// <param name="pRequest">Information about the API call to make.</param>
+    /// <param name="pResponse">[out] The response from the server.</param>
+    /// <param name="sResponseBuffer">A buffer to hold the raw response content from the server.</param>
+    virtual void SendRequest(const rc_api_request_t& pRequest, rc_api_server_response_t& pResponse, std::string& sResponseBuffer) const = 0;
+
+    /// <summary>
     /// Extracts an error message from a response.
     /// </summary>
     static const std::wstring GetErrorMessage(int nResult, const rc_api_response_t& pResponse);

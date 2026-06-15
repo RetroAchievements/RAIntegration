@@ -11,6 +11,8 @@
 
 #include <rcheevos/src/rc_client_internal.h>
 
+#include <mutex>
+
 namespace ra {
 namespace context {
 
@@ -117,17 +119,10 @@ static std::string_view FindParameter(const std::string& sInput, const std::stri
     return {};
 }
 
-void RcClient::DispatchRequest(const rc_api_request_t& pRequest,
-    std::function<void(const rc_api_server_response_t&, void*)> fCallback,
-    void* pCallbackData) const
+static std::string LogRequest(std::string sParams)
 {
-    ra::services::Http::Request httpRequest(pRequest.url);
-    httpRequest.SetPostData(pRequest.post_data);
-    httpRequest.SetContentType(pRequest.content_type);
-
-    std::string sParams = httpRequest.GetPostData();
-
     std::string sApi;
+
     const auto svApi = FindParameter(sParams, "r=");
     if (!svApi.empty())
     {
@@ -150,6 +145,41 @@ void RcClient::DispatchRequest(const rc_api_request_t& pRequest,
         }
     }
 
+    return sApi;
+}
+
+void RcClient::SendRequest(const rc_api_request_t& pRequest, rc_api_server_response_t& pResponse, std::string& sResponseBuffer) const
+{
+    ra::services::Http::Request httpRequest(pRequest.url);
+    httpRequest.SetPostData(pRequest.post_data);
+    httpRequest.SetContentType(pRequest.content_type);
+
+    std::string sApi = LogRequest(httpRequest.GetPostData());
+    const auto httpResponse = httpRequest.Call();
+
+    if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
+    {
+        RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
+    }
+
+    ConvertHttpResponseToApiServerResponse(pResponse, httpResponse, sResponseBuffer);
+    if (pResponse.body != sResponseBuffer.c_str())
+    {
+        sResponseBuffer = httpResponse.Content();
+        pResponse.body = sResponseBuffer.c_str();
+        pResponse.body_length = sResponseBuffer.length();
+    }
+}
+
+void RcClient::DispatchRequest(const rc_api_request_t& pRequest,
+    std::function<void(const rc_api_server_response_t&, void*)> fCallback,
+    void* pCallbackData) const
+{
+    ra::services::Http::Request httpRequest(pRequest.url);
+    httpRequest.SetPostData(pRequest.post_data);
+    httpRequest.SetContentType(pRequest.content_type);
+
+    std::string sApi = LogRequest(httpRequest.GetPostData());
     CallApi(sApi, httpRequest, fCallback, pCallbackData);
 }
 

@@ -61,7 +61,7 @@ private:
     void UploadAchievement(ra::data::models::AchievementModel& pAchievement);
     void UploadLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard);
     void UploadRichPresence(ra::data::models::RichPresenceModel& pRichPresence);
-    void UploadMemoryNote(ra::data::models::MemoryNotesModel& pNotes, ra::data::ByteAddress nAddress);
+    void UploadMemoryNotes(ra::data::models::MemoryNotesModel& pNotes);
 
     std::vector<UploadItem> m_vUploadQueue;
     std::mutex m_pMutex;

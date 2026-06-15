@@ -67,7 +67,35 @@ void MockRcClient::DispatchRequest(const rc_api_request_t & pRequest,
     pResponse.pAsyncCallbackData = pCallbackData;
 }
 
-void MockRcClient::MockResponse(const std::string& sRequestParams, const std::string& sResponseBody)
+void MockRcClient::SendRequest(const rc_api_request_t& pRequest, rc_api_server_response_t& pServerResponse, std::string& sResponseBuffer) const
+{
+    std::string sRequestParams = pRequest.post_data;
+    memset(&pServerResponse, 0, sizeof(pServerResponse));
+
+    for (auto& pResponse : m_vResponses)
+    {
+        if (pResponse.sRequestParams == sRequestParams)
+        {
+            pResponse.bSeen = true;
+
+            if (pResponse.fBeforeResponse)
+                pResponse.fBeforeResponse();
+
+            sResponseBuffer = pResponse.sResponseBody;
+            pServerResponse.http_status_code = pResponse.nHttpStatus;
+            pServerResponse.body = sResponseBuffer.c_str();
+            pServerResponse.body_length = pResponse.sResponseBody.length();
+
+            return;
+        }
+    }
+
+    pServerResponse.http_status_code = 504; // Gateway Timeout (upstream server took too long to response to intermediary proxy)
+    pServerResponse.body = "";
+    pServerResponse.body_length = 0;
+}
+
+void MockRcClient::MockResponse(const std::string& sRequestParams, const std::string& sResponseBody, int nHttpStatusCode)
 {
     for (auto& pResponse : m_vResponses)
     {
@@ -75,7 +103,7 @@ void MockRcClient::MockResponse(const std::string& sRequestParams, const std::st
         if (pResponse.sRequestParams == sRequestParams)
         {
             pResponse.sResponseBody = sResponseBody;
-            pResponse.nHttpStatus = 200;
+            pResponse.nHttpStatus = nHttpStatusCode;
 
             // if a callback was captured for these params, the request has already been
             // made. call the callback now (simulates async responses).
@@ -101,7 +129,7 @@ void MockRcClient::MockResponse(const std::string& sRequestParams, const std::st
     auto& pNewResponse = m_vResponses.emplace_back();
     pNewResponse.sRequestParams = sRequestParams;
     pNewResponse.sResponseBody = sResponseBody;
-    pNewResponse.nHttpStatus = 200;
+    pNewResponse.nHttpStatus = nHttpStatusCode;
 }
 
 bool MockRcClient::HasMockResponse(const std::string& sRequestParams) const noexcept

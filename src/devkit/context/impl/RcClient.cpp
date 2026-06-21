@@ -148,6 +148,31 @@ static std::string LogRequest(std::string sParams)
     return sApi;
 }
 
+static void LogResponse(const std::string& sApi, const ra::services::Http::Response& httpResponse)
+{
+    if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
+    {
+        if (httpResponse.StatusCode() == ra::services::Http::StatusCode::OK &&
+            ra::util::String::StartsWith(sApi, "login"))
+        {
+            auto sResponse = httpResponse.Content();
+            auto nIndex = sResponse.find("\"Token\":\"");
+            if (nIndex != std::string::npos)
+            {
+                nIndex += 9;
+                const auto nIndex2 = sResponse.find('"', nIndex);
+                if (nIndex2 != std::string::npos)
+                    sResponse.replace(nIndex, nIndex2 - nIndex, "[redacted]");
+            }
+            RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), sResponse.c_str());
+        }
+        else
+        {
+            RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
+        }
+    }
+}
+
 void RcClient::SendRequest(const rc_api_request_t& pRequest, rc_api_server_response_t& pResponse, std::string& sResponseBuffer) const
 {
     ra::services::Http::Request httpRequest(pRequest.url);
@@ -157,10 +182,7 @@ void RcClient::SendRequest(const rc_api_request_t& pRequest, rc_api_server_respo
     std::string sApi = LogRequest(httpRequest.GetPostData());
     const auto httpResponse = httpRequest.Call();
 
-    if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
-    {
-        RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
-    }
+    LogResponse(sApi, httpResponse);
 
     ConvertHttpResponseToApiServerResponse(pResponse, httpResponse, sResponseBuffer);
     if (pResponse.body != sResponseBuffer.c_str())
@@ -216,27 +238,7 @@ void RcClient::CallApi(const std::string& sApi, const ra::services::Http::Reques
             std::string sErrorBuffer;
             ConvertHttpResponseToApiServerResponse(pResponse, httpResponse, sErrorBuffer);
 
-            if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
-            {
-                if (httpResponse.StatusCode() == ra::services::Http::StatusCode::OK &&
-                    ra::util::String::StartsWith(sApi, "login"))
-                {
-                    auto sResponse = httpResponse.Content();
-                    auto nIndex = sResponse.find("\"Token\":\"");
-                    if (nIndex != std::string::npos)
-                    {
-                        nIndex += 9;
-                        const auto nIndex2 = sResponse.find('"', nIndex);
-                        if (nIndex2 != std::string::npos)
-                            sResponse.replace(nIndex, nIndex2 - nIndex, "[redacted]");
-                    }
-                    RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), sResponse.c_str());
-                }
-                else
-                {
-                    RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
-                }
-            }
+            LogResponse(sApi, httpResponse);
 
             if (sApi == "codenotes2") {
                 CacheCodeNotesResponse(pResponse, sParameter);

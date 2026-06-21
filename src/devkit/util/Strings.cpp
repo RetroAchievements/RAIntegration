@@ -1,7 +1,4 @@
 #include "Strings.hh"
-#include "Strings.hh"
-
-#include "TypeCasts.hh"
 
 namespace ra {
 namespace util {
@@ -132,6 +129,7 @@ void String::ReplaceAll(std::string& sString, const std::string_view sMatch, con
     }
 }
 
+_Use_decl_annotations_
 void String::MakeLowercase(std::wstring& sString)
 {
     std::transform(sString.begin(), sString.end(), sString.begin(), [](wchar_t c) noexcept {

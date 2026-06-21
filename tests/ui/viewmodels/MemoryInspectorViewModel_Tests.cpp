@@ -62,6 +62,7 @@ private:
 
             mockUserContext.SetUsername("Author");
 
+            mockGameContext.SetGameId(22);
             mockGameContext.InitializeNotes();
 
             Viewer().DoFrame(); // load memory into viewer so CurrentAddress value can be read
@@ -88,23 +89,9 @@ private:
 
         void PreparePublish(ra::data::ByteAddress nAddress, std::wstring sNote)
         {
-            mockServer.HandleRequest<ra::api::UpdateCodeNote>([this]
-                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
-            {
-                m_nPublishedAddress = pRequest.Address;
-
-                pResponse.Result = ra::api::ApiResult::Success;
-                return true;
-            });
-
-            mockServer.HandleRequest<ra::api::DeleteCodeNote>([this]
-                (const ra::api::DeleteCodeNote::Request& pRequest, ra::api::DeleteCodeNote::Response& pResponse)
-            {
-                m_nPublishedAddress = pRequest.Address;
-
-                pResponse.Result = ra::api::ApiResult::Success;
-                return true;
-            });
+            std::string sApiParams = ra::util::String::Printf("r=submitcodenotes&u=Author&t=APITOKEN&g=22&n=%d:%s%s", nAddress, sNote, "%0a");
+            mockRcClient.MockResponse(sApiParams, ra::util::String::Printf("{\"Success\":true,\"SuccessfulAddresses\":[%d]}", nAddress));
+            mockRcClient.OnBeforeResponse(sApiParams, [this, nAddress]() { m_nPublishedAddress = nAddress; });
 
             mockThreadPool.SetSynchronous(true);
 
@@ -118,21 +105,9 @@ private:
 
         void PreparePublishFailure(ra::data::ByteAddress nAddress, std::wstring sNote)
         {
-            mockServer.HandleRequest<ra::api::UpdateCodeNote>(
-                [this](const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse) {
-                    m_nPublishedAddress = pRequest.Address;
-
-                    pResponse.Result = ra::api::ApiResult::Failed;
-                    return true;
-                });
-
-            mockServer.HandleRequest<ra::api::DeleteCodeNote>(
-                [this](const ra::api::DeleteCodeNote::Request& pRequest, ra::api::DeleteCodeNote::Response& pResponse) {
-                    m_nPublishedAddress = pRequest.Address;
-
-                    pResponse.Result = ra::api::ApiResult::Failed;
-                    return true;
-                });
+            std::string sApiParams = ra::util::String::Printf("r=submitcodenotes&u=Author&t=APITOKEN&g=22&n=%d:%s%s", nAddress, sNote, "%0a");
+            mockRcClient.MockResponse(sApiParams, ra::util::String::Printf("{\"Success\":false,\"Code\":\"access_denied\",\"Error\":\"Access denied.\",\"SuccessfulAddresses\":[],\"AccessDeniedAddresses\":[%d]}", nAddress), 403);
+            mockRcClient.OnBeforeResponse(sApiParams, [this, nAddress]() { m_nPublishedAddress = nAddress; });
 
             mockThreadPool.SetSynchronous(true);
 
@@ -558,7 +533,7 @@ public:
         bool bWindowSeen = false;
         inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
             Assert::AreEqual(std::wstring(L"Publish failed."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"0 items successfully uploaded.\n\n1 items failed:\n* Memory Notes: "), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"0 items successfully uploaded.\n\n1 items failed:\n* Memory Note 0x0012: Access denied."), vmMessageBox.GetMessage());
             Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::OK, vmMessageBox.GetButtons());
 
             bWindowSeen = true;

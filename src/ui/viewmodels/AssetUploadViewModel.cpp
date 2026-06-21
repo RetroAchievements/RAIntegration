@@ -515,7 +515,7 @@ void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel&
 
             rc_api_update_code_notes_response_t response;
             nResult = rc_api_process_update_code_notes_server_response(&response, &api_response);
-            if (nResult == RC_OK) // TODO: check for response array entries regardless of result code
+            if (nResult == RC_OK || nResult == RC_ACCESS_DENIED)
             {
                 std::lock_guard<std::mutex> pLock(m_pMutex);
                 for (auto& pScan : m_vUploadQueue)
@@ -528,14 +528,27 @@ void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel&
                             {
                                 pScan.nState = UploadState::Success;
 
-                                if (pEntry.note)
+                                for (uint32_t i = 0; i < response.num_access_denied_addresses; i++)
                                 {
-                                    const auto* pNote = pNotes.FindNote(pEntry.address);
-                                    if (pNote)
-                                        pNotes.SetServerNote(pEntry.address, *pNote);
+                                    if (response.access_denied_addresses[i] == ra::to_unsigned(pScan.nExtra))
+                                    {
+                                        pScan.nState = UploadState::Failed;
+                                        pScan.sErrorMessage = response.response.error_message;
+                                        break;
+                                    }
                                 }
-                                else
-                                    pNotes.SetServerNote(pEntry.address, L"");
+
+                                if (pScan.nState == UploadState::Success)
+                                {
+                                    if (pEntry.note)
+                                    {
+                                        const auto* pNote = pNotes.FindNote(pEntry.address);
+                                        if (pNote)
+                                            pNotes.SetServerNote(pEntry.address, *pNote);
+                                    }
+                                    else
+                                        pNotes.SetServerNote(pEntry.address, L"");
+                                }
 
                                 break;
                             }
@@ -627,10 +640,26 @@ void AssetUploadViewModel::ShowResults() const
     {
         sMessage.append(ra::util::String::Printf(L"\n\n%d items failed:", nFailed));
 
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
         for (const auto& pItem : m_vUploadQueue)
         {
             if (pItem.nState == UploadState::Failed)
-                sMessage.append(ra::util::String::Printf(L"\n* %s: %s", pItem.pAsset->GetName(), pItem.sErrorMessage));
+            {
+                switch (pItem.pAsset->GetType())
+                {
+                    case ra::data::models::AssetType::MemoryNotes:
+                        sMessage.append(ra::util::String::Printf(L"\n* Memory Note %s: %s",
+                            pMemoryContext.FormatAddress(ra::to_unsigned(pItem.nExtra)),
+                            pItem.sErrorMessage));
+                        break;
+
+                    default:
+                        sMessage.append(ra::util::String::Printf(L"\n* %s: %s",
+                            pItem.pAsset->GetName(),
+                            pItem.sErrorMessage));
+                        break;
+                }
+            }
         }
     }
 

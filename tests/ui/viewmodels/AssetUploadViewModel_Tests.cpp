@@ -1206,7 +1206,7 @@ public:
 
         vmUpload.mockRcClient.MockResponse(
             "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a",
-            "{\"Success\":true}"
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
         );
 
         vmUpload.DoUpload();
@@ -1231,7 +1231,7 @@ public:
 
         vmUpload.mockRcClient.MockResponse(
             "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a",
-            "{\"Success\":true}"
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
         );
 
         vmUpload.DoUpload();
@@ -1256,7 +1256,7 @@ public:
 
         vmUpload.mockRcClient.MockResponse(
             "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:%0a",
-            "{\"Success\":true}"
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
         );
 
         vmUpload.DoUpload();
@@ -1293,7 +1293,7 @@ public:
 
         vmUpload.mockRcClient.MockResponse(
             "r=submitcodenotes&u=Me&t=APITOKEN&g=22&n=4660:Test2%0a",
-            "{\"Success\":true}"
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
         );
 
         vmUpload.DoUpload();
@@ -1330,7 +1330,7 @@ public:
 
         vmUpload.mockRcClient.MockResponse(
             "r=submitcodenotes&u=Me&t=APITOKEN&g=22&n=4660:%0a",
-            "{\"Success\":true}"
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
         );
 
         vmUpload.DoUpload();
@@ -1402,7 +1402,7 @@ public:
 
         vmUpload.mockRcClient.MockResponse(
             "r=submitcodenotes&u=Me&t=APITOKEN&g=22&n=4660:Test%0a",
-            "{\"Success\":true}"
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
         );
 
         vmUpload.DoUpload();
@@ -1426,10 +1426,10 @@ public:
 
         vmUpload.mockRcClient.MockResponse(
             "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a4661:This+is+another+note.%0a",
-            "{\"Success\":\"true\"}"
+            "{\"Success\":\"true\",\"SuccessfulAddresses\":[4660,4661]}"
         );
-
         vmUpload.DoUpload();
+        vmUpload.mockRcClient.AssertNoPendingRequests();
 
         Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
@@ -1448,8 +1448,8 @@ public:
         Assert::AreEqual({ 2U }, vmUpload.TaskCount());
 
         vmUpload.mockRcClient.MockResponse(
-            "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:%5b8-bit%5d%5cn0%3dTrue%5cn1%3dFalse%0a4661:This+is+another+note.%0a",
-            "{\"Success\":\"true\"}"
+            "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:%5b8-bit%5d%5cr%5cn0%3dTrue%5cr%5cn1%3dFalse%0a4661:This+is+another+note.%0a",
+            "{\"Success\":\"true\",\"SuccessfulAddresses\":[4660,4661]}"
         );
 
         vmUpload.DoUpload();
@@ -1480,7 +1480,7 @@ public:
         vmUpload.mockRcClient.OnBeforeResponse(sApiParams, [&apiCount, &vmUpload, &sApiParams]()
             {
                 if (++apiCount == 2)
-                    vmUpload.mockRcClient.MockResponse(sApiParams, "{\"Success\":\"true\"}");
+                    vmUpload.mockRcClient.MockResponse(sApiParams, "{\"Success\":\"true\",\"SuccessfulAddresses\":[4660,4661]}");
             });
 
         vmUpload.DoUpload();
@@ -1488,6 +1488,44 @@ public:
         Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(2);
+    }
+
+    TEST_METHOD(TestMultipleMemoryNotesCompleteFailure)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
+        vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
+        vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
+
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
+        Assert::AreEqual({ 2U }, vmUpload.TaskCount());
+
+        const std::string sApiParams = "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a4661:This+is+another+note.%0a";
+        vmUpload.mockRcClient.MockResponse(sApiParams, "{\"Success\":\"false\",\"Code\":\"invalid_parameter\",\"Error\":\"Improperly encoded notes list.\"}", 422);
+
+        vmUpload.DoUpload();
+
+        vmUpload.AssertFailed(0, 2, L"* Memory Note 0x1234: Improperly encoded notes list.\n* Memory Note 0x1235: Improperly encoded notes list.");
+    }
+
+    TEST_METHOD(TestMultipleMemoryNotesPartialFailure)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
+        vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
+        vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
+
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
+        Assert::AreEqual({ 2U }, vmUpload.TaskCount());
+
+        const std::string sApiParams = "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a4661:This+is+another+note.%0a";
+        vmUpload.mockRcClient.MockResponse(sApiParams, "{\"Success\":\"false\",\"Code\":\"access_denied\",\"Error\":\"Access denied.\",\"SuccessfulAddresses\":[4661],\"AccessDeniedAddresses\":[4660]}", 403);
+
+        vmUpload.DoUpload();
+
+        vmUpload.AssertFailed(1, 1, L"* Memory Note 0x1234: Access denied.");
     }
 };
 

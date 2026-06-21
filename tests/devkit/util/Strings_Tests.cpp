@@ -167,6 +167,26 @@ public:
 
         Assert::IsTrue(String::ContainsCaseInsensitive(input, std::wstring(L"E E")));
     }
+
+    TEST_METHOD(TestReplaceAll)
+    {
+        std::string input("One\nTwo\n\Three\nFour\n");
+
+        String::ReplaceAll(input, "\n", "\r\n");
+        Assert::AreEqual(std::string("One\r\nTwo\r\nThree\r\nFour\r\n"), input);
+
+        String::ReplaceAll(input, "\r\n", " ");
+        Assert::AreEqual(std::string("One Two Three Four "), input);
+
+        String::ReplaceAll(input, " T", " t");
+        Assert::AreEqual(std::string("One two three Four "), input);
+
+        String::ReplaceAll(input, "X", "Y");
+        Assert::AreEqual(std::string("One two three Four "), input);
+
+        String::ReplaceAll(input, "h", "");
+        Assert::AreEqual(std::string("One two tree Four "), input);
+    }
 };
 
 

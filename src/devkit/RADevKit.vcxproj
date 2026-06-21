@@ -76,6 +76,7 @@
     <ClCompile Include="data\models\MemoryRegionsModel.cpp" />
     <ClCompile Include="data\models\RichPresenceModel.cpp" />
     <ClCompile Include="data\models\TriggerValidation.cpp" />
+    <ClCompile Include="data\util\IndirectNoteResolver.cpp" />
     <ClCompile Include="data\Value.cpp" />
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="ui\ImageReference.cpp" />
@@ -111,6 +112,7 @@
     <ClInclude Include="data\models\RichPresenceModel.hh" />
     <ClInclude Include="data\models\TriggerValidation.hh" />
     <ClInclude Include="data\NotifyTargetSet.hh" />
+    <ClInclude Include="data\util\IndirectNoteResolver.hh" />
     <ClInclude Include="data\Value.hh" />
     <ClInclude Include="services\Http.hh" />
     <ClInclude Include="services\IClock.hh" />

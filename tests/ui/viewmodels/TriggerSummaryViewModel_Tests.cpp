@@ -160,6 +160,22 @@ public:
         summary.AssertClause(1, L"2", L"Difficulty", L"is", L"Easy"); // <1 converted to ==0
     }
 
+    TEST_METHOD(TestIndirectNote)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U },
+            L"[32-bit pointer] Player data\r\n"
+            L"+0: [32-bit pointer] Class info\r\n"
+            L"++4: [32-bit] ID\r\n"
+            L"+4: [32-bit] Current HP\r\n"
+            L"+8: [32-bit] Max HP");
+        summary.InitializeFrom("I:0xX1234_0xX0004=0xX0008_I:0xX1234_I:0xX0000_0xX0004=3");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"Current HP", L"equals", L"Max HP");
+        summary.AssertClause(1, L"3-5", L"ID", L"is", L"3");
+    }
+
     TEST_METHOD(TestMemoryReferenceDeltaSelf)
     {
         TriggerSummaryViewModelHarness summary;

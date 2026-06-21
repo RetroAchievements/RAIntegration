@@ -1,13 +1,14 @@
 #include "data/models/RichPresenceModel.hh"
 
+#include "context/mocks/MockGameContext.hh"
+#include "context/mocks/MockRcClient.hh"
+
 #include "services/impl/StringTextWriter.hh"
+#include "services/mocks/MockLocalStorage.hh"
 
-#include "tests/devkit/context/mocks/MockGameContext.hh"
-#include "tests/devkit/context/mocks/MockRcClient.hh"
-#include "tests/devkit/services/mocks/MockLocalStorage.hh"
-#include "tests/devkit/testutil/AssetAsserts.hh"
+#include "testutil/AssetAsserts.hh"
+#include "testutil/CppUnitTest.hh"
 
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
 namespace data {

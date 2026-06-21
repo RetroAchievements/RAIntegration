@@ -11,8 +11,6 @@
 
 #include <rcheevos/src/rc_client_internal.h>
 
-#include <mutex>
-
 namespace ra {
 namespace context {
 

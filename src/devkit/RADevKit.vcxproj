@@ -67,7 +67,9 @@
     <ClCompile Include="data\ModelCollectionBase.cpp" />
     <ClCompile Include="data\ModelProperty.cpp" />
     <ClCompile Include="data\ModelPropertyContainer.cpp" />
+    <ClCompile Include="data\models\AchievementModel.cpp" />
     <ClCompile Include="data\models\AssetModelBase.cpp" />
+    <ClCompile Include="data\models\LeaderboardModel.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel.cpp" />
     <ClCompile Include="data\models\MemoryNoteModel.cpp" />
     <ClCompile Include="data\models\MemoryNotesModel.cpp" />
@@ -99,7 +101,9 @@
     <ClInclude Include="data\ModelCollectionBase.hh" />
     <ClInclude Include="data\ModelProperty.hh" />
     <ClInclude Include="data\ModelPropertyContainer.hh" />
+    <ClInclude Include="data\models\AchievementModel.hh" />
     <ClInclude Include="data\models\AssetModelBase.hh" />
+    <ClInclude Include="data\models\LeaderboardModel.hh" />
     <ClInclude Include="data\models\LocalBadgesModel.hh" />
     <ClInclude Include="data\models\MemoryNoteModel.hh" />
     <ClInclude Include="data\models\MemoryNotesModel.hh" />

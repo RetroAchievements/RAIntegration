@@ -19,8 +19,11 @@ public:
 
     ~ImageBinding() noexcept
     {
-        GSL_SUPPRESS_F6 auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-        pImageRepository.RemoveNotifyTarget(*this);
+        if (ra::services::ServiceLocator::Exists<ra::ui::IImageRepository>())
+        {
+            GSL_SUPPRESS_F6 auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+            pImageRepository.RemoveNotifyTarget(*this);
+        }
     }
 
     ImageBinding(const ImageBinding&) noexcept = delete;

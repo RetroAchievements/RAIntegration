@@ -1,20 +1,20 @@
-#include "CppUnitTest.h"
+#include "data/models/AchievementModel.hh"
 
-#include "data\models\AchievementModel.hh"
-#include "data\models\LocalBadgesModel.hh"
+#include "context/mocks/MockEmulatorMemoryContext.hh"
+#include "context/mocks/MockGameContext.hh"
+#include "context/mocks/MockRcClient.hh"
+#include "context/mocks/MockUserContext.hh"
 
-#include "services\impl\StringTextWriter.hh"
+#include "data/models/LocalBadgesModel.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
-#include "tests\data\DataAsserts.hh"
+#include "services/impl/StringTextWriter.hh"
+#include "services/mocks/MockClock.hh"
 
-#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
-#include "tests\devkit\context\mocks\MockRcClient.hh"
-#include "tests\devkit\context\mocks\MockUserContext.hh"
-#include "tests\devkit\services\mocks\MockClock.hh"
-#include "tests\devkit\testutil\AssetAsserts.hh"
-#include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockGameContext.hh"
+#include "testutil/AchievementAsserts.hh"
+#include "testutil/AssetAsserts.hh"
+#include "testutil/CppUnitTest.hh"
+
+#include <rcheevos/src/rc_client_internal.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -33,29 +33,15 @@ private:
     public:
         AchievementModelHarness() noexcept
         {
-            GSL_SUPPRESS_F6 mockRuntime.MockGame();
+            GSL_SUPPRESS_F6 mockRcClient.MockGame(1, "Game Title");
         }
 
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockGameContext mockGameContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockUserContext mockUserContext;
-        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::impl::StringTextWriter textWriter;
-        ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;
-
-        void AddLocalBadgesModel()
-        {
-            auto pLocalBadges = std::make_unique<LocalBadgesModel>();
-            pLocalBadges->CreateServerCheckpoint();
-            pLocalBadges->CreateLocalCheckpoint();
-            mockGameContext.Assets().Append(std::move(pLocalBadges));
-        }
-
-        ra::data::models::LocalBadgesModel& GetLocalBadgesModel()
-        {
-            return *(dynamic_cast<LocalBadgesModel*>(mockGameContext.Assets().FindAsset(AssetType::LocalBadges, 0)));
-        }
     };
 
 public:
@@ -82,7 +68,6 @@ public:
     {
         AchievementModelHarness achievement;
         achievement.mockGameContext.SetGameId(22);
-        achievement.AddLocalBadgesModel();
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
 
@@ -90,7 +75,7 @@ public:
         achievement.SetTrigger("0xH1234=1");
         achievement.SetBadge(L"local\\22-ABC.png");
 
-        const auto& pLocalBadges = achievement.GetLocalBadgesModel();
+        const auto& pLocalBadges = achievement.mockGameContext.LocalBadges();
         Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", false));
         Assert::AreEqual(0, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", true));
 
@@ -105,7 +90,6 @@ public:
     {
         AchievementModelHarness achievement;
         achievement.mockGameContext.SetGameId(22);
-        achievement.AddLocalBadgesModel();
         achievement.SetBadge(L"12345.png");
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
@@ -114,7 +98,7 @@ public:
         achievement.SetTrigger("0xH1234=1");
         achievement.SetBadge(L"local\\22-ABC.png");
 
-        const auto& pLocalBadges = achievement.GetLocalBadgesModel();
+        const auto& pLocalBadges = achievement.mockGameContext.LocalBadges();
         Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", false));
         Assert::AreEqual(0, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", true));
 
@@ -132,7 +116,6 @@ public:
         AchievementModelHarness achievement;
         achievement.mockGameContext.SetGameId(22);
         achievement.mockGameContext.SetNote(0x1234, L"Note");
-        achievement.AddLocalBadgesModel();
         achievement.SetBadge(L"12345.png");
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
@@ -171,7 +154,6 @@ public:
     {
         AchievementModelHarness achievement;
         achievement.mockGameContext.SetGameId(22);
-        achievement.AddLocalBadgesModel();
         achievement.SetBadge(L"12345.png");
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
@@ -203,7 +185,6 @@ public:
     {
         AchievementModelHarness achievement;
         achievement.mockGameContext.SetGameId(22);
-        achievement.AddLocalBadgesModel();
         achievement.SetBadge(L"12345.png");
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
@@ -239,12 +220,12 @@ public:
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
 
-        achievement.mockRuntime.MockGame();
-        auto* achievement_info = achievement.mockRuntime.MockAchievementWithTrigger(achievement.GetID());
+        auto* achievement_info = achievement.mockRcClient.MockAchievement(achievement.GetID());
+        Expects(achievement_info != nullptr);
         achievement.SetLocalAchievementInfo(*achievement_info);
 
         g_bEventSeen = false;
-        achievement.mockRuntime.GetClient()->callbacks.event_handler =
+        achievement.mockRcClient.GetClient()->callbacks.event_handler =
             [](const rc_client_event_t* pEvent, rc_client_t*)
             {
                 Assert::AreEqual({RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE}, pEvent->type);
@@ -272,12 +253,12 @@ public:
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
 
-        achievement.mockRuntime.MockGame();
-        auto* achievement_info = achievement.mockRuntime.MockAchievementWithTrigger(achievement.GetID());
+        auto* achievement_info = achievement.mockRcClient.MockAchievement(achievement.GetID());
+        Expects(achievement_info != nullptr);
         achievement.SetLocalAchievementInfo(*achievement_info);
 
         g_bEventSeen = false;
-        achievement.mockRuntime.GetClient()->callbacks.event_handler = [](const rc_client_event_t* pEvent,
+        achievement.mockRcClient.GetClient()->callbacks.event_handler = [](const rc_client_event_t* pEvent,
                                                                           rc_client_t*) {
             Assert::AreEqual({RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE}, pEvent->type);
             Assert::AreEqual({53}, pEvent->achievement->id);

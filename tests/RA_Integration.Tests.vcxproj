@@ -82,8 +82,6 @@
     <ClCompile Include="..\src\data\context\EmulatorContext.cpp" />
     <ClCompile Include="..\src\data\context\GameContext.cpp" />
     <ClCompile Include="..\src\data\context\SessionTracker.cpp" />
-    <ClCompile Include="..\src\data\models\AchievementModel.cpp" />
-    <ClCompile Include="..\src\data\models\LeaderboardModel.cpp" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -144,7 +142,6 @@
     <ClCompile Include="..\src\ui\viewmodels\TriggerViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
-    <ClInclude Include="..\src\data\models\LeaderboardModel.hh" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClCompile Include="..\src\ui\ViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\GameChecksumViewModel.cpp" />
@@ -155,8 +152,6 @@
     <ClCompile Include="data\context\GameAssets_Tests.cpp" />
     <ClCompile Include="data\context\GameContext_Tests.cpp" />
     <ClCompile Include="data\context\SessionTracker_Tests.cpp" />
-    <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
-    <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
     <ClCompile Include="devkit\context\mocks\MockEmulatorMemoryContext.cpp" />
     <ClCompile Include="devkit\context\mocks\MockRcClient.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />

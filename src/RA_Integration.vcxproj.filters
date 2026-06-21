@@ -46,9 +46,6 @@
     <Filter Include="Data\Context">
       <UniqueIdentifier>{d29ae560-83b6-496b-b1ba-bc0b0c5978af}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Data\Models">
-      <UniqueIdentifier>{c9c038f9-c4bb-436c-8416-12f91df44904}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Services\Search">
       <UniqueIdentifier>{e978c08c-fedb-4ead-af63-0420b26291bb}</UniqueIdentifier>
     </Filter>
@@ -315,9 +312,6 @@
     <ClCompile Include="data\context\SessionTracker.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\AchievementModel.cpp">
-      <Filter>Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="data\context\GameAssets.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
@@ -332,9 +326,6 @@
     </ClCompile>
     <ClCompile Include="ui\viewmodels\ChallengeIndicatorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\LeaderboardModel.cpp">
-      <Filter>Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\IntegrationMenuViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
@@ -806,9 +797,6 @@
     <ClInclude Include="data\context\SessionTracker.hh">
       <Filter>Data\Context</Filter>
     </ClInclude>
-    <ClInclude Include="data\models\AchievementModel.hh">
-      <Filter>Data\Models</Filter>
-    </ClInclude>
     <ClInclude Include="data\context\GameAssets.hh">
       <Filter>Data\Context</Filter>
     </ClInclude>
@@ -829,9 +817,6 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\ChallengeIndicatorViewModel.hh">
       <Filter>UI\ViewModels</Filter>
-    </ClInclude>
-    <ClInclude Include="data\models\LeaderboardModel.hh">
-      <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\IntegrationMenuViewModel.hh">
       <Filter>UI\ViewModels</Filter>

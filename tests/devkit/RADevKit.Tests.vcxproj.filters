@@ -70,6 +70,12 @@
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\AchievementModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\LeaderboardModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -169,6 +175,9 @@
     </ClInclude>
     <ClInclude Include="ui\mocks\MockImageRepository.hh">
       <Filter>ui\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\AchievementAsserts.hh">
+      <Filter>testutil</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -31,9 +31,6 @@
     <Filter Include="Tests\Data\Context">
       <UniqueIdentifier>{da241f86-5f80-4b36-b3d8-f8a0ecc1a4ee}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Tests\Data\Models">
-      <UniqueIdentifier>{a0f14c97-e5dd-4827-9864-ca54f0c9177e}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\RA_Defs.cpp">
@@ -309,12 +306,6 @@
     <ClCompile Include="data\context\GameContext_Tests.cpp">
       <Filter>Tests\Data\Context</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\data\models\AchievementModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\AchievementModel_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
@@ -338,12 +329,6 @@
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\ChallengeIndicatorViewModel.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\models\LeaderboardModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\models\LeaderboardModel_Tests.cpp">
-      <Filter>Tests\Data\Models</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\IntegrationMenuViewModel.cpp">
       <Filter>Code</Filter>
@@ -511,9 +496,6 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\TriggerConditionAsserts.hh">
       <Filter>Tests\UI\ViewModels</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\data\models\LeaderboardModel.hh">
-      <Filter>Code</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ui\viewmodels\PointerFinderViewModel.hh">
       <Filter>Code</Filter>

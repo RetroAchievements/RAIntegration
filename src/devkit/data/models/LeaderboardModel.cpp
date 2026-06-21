@@ -1,15 +1,15 @@
 #include "LeaderboardModel.hh"
 
-#include "context\IRcClient.hh"
+#include "context/IRcClient.hh"
 
-#include "data\models\TriggerValidation.hh"
+#include "data/models/TriggerValidation.hh"
 
-#include "services\ServiceLocator.hh"
+#include "services/ServiceLocator.hh"
 
-#include "util\Strings.hh"
+#include "util/Strings.hh"
 
-#include <rcheevos\src\rc_client_internal.h>
-#include <rcheevos\src\rcheevos\rc_internal.h>
+#include <rcheevos/src/rc_client_internal.h>
+#include <rcheevos/src/rcheevos/rc_internal.h>
 
 namespace ra {
 namespace data {

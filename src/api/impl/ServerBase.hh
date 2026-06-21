@@ -29,16 +29,6 @@ public:
         return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
     }
 
-    UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request&) override
-    {
-        return UnsupportedApi<UpdateCodeNote::Response>(UpdateCodeNote::Name());
-    }
-
-    DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request&) override
-    {
-        return UnsupportedApi<DeleteCodeNote::Response>(DeleteCodeNote::Name());
-    }
-
     UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request&) override
     {
         return UnsupportedApi<UpdateAchievement::Response>(UpdateAchievement::Name());

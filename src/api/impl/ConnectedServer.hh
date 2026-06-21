@@ -17,8 +17,6 @@ public:
 
     FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) override;
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override;
-    UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) override;
-    DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) override;
     UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request& request) override;
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) override;
     UpdateLeaderboard::Response UpdateLeaderboard(const UpdateLeaderboard::Request& request) override;

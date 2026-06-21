@@ -2,7 +2,6 @@
 #define RA_API_ISERVER_HH
 #pragma once
 
-#include "api/DeleteCodeNote.hh"
 #include "api/FetchAchievementInfo.hh"
 #include "api/FetchBadgeIds.hh"
 #include "api/FetchLeaderboardInfo.hh"
@@ -10,7 +9,6 @@
 #include "api/LatestClient.hh"
 #include "api/ResolveHash.hh"
 #include "api/UpdateAchievement.hh"
-#include "api/UpdateCodeNote.hh"
 #include "api/UpdateLeaderboard.hh"
 #include "api/UpdateRichPresence.hh"
 #include "api/UploadBadge.hh"
@@ -28,8 +26,6 @@ public:
 
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) = 0;
-    virtual UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) = 0;
-    virtual DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) = 0;
     virtual UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request& request) = 0;
     virtual FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) = 0;
     virtual UpdateLeaderboard::Response UpdateLeaderboard(const UpdateLeaderboard::Request& request) = 0;

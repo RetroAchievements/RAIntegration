@@ -191,7 +191,6 @@
     <ClInclude Include="..\RAInterface\RA_Emulators.h" />
     <ClInclude Include="..\RAInterface\RA_Interface.h" />
     <ClInclude Include="api\ApiCall.hh" />
-    <ClInclude Include="api\DeleteCodeNote.hh" />
     <ClInclude Include="api\FetchAchievementInfo.hh" />
     <ClInclude Include="api\FetchBadgeIds.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
@@ -203,7 +202,6 @@
     <ClInclude Include="api\IServer.hh" />
     <ClInclude Include="api\LatestClient.hh" />
     <ClInclude Include="api\UpdateAchievement.hh" />
-    <ClInclude Include="api\UpdateCodeNote.hh" />
     <ClInclude Include="api\UpdateLeaderboard.hh" />
     <ClInclude Include="api\UpdateRichPresence.hh" />
     <ClInclude Include="api\UploadBadge.hh" />

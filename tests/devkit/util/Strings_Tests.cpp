@@ -170,7 +170,7 @@ public:
 
     TEST_METHOD(TestReplaceAll)
     {
-        std::string input("One\nTwo\n\Three\nFour\n");
+        std::string input("One\nTwo\nThree\nFour\n");
 
         String::ReplaceAll(input, "\n", "\r\n");
         Assert::AreEqual(std::string("One\r\nTwo\r\nThree\r\nFour\r\n"), input);

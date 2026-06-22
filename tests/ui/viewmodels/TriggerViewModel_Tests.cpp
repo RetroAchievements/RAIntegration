@@ -574,6 +574,23 @@ public:
         Assert::IsTrue(bDialogShown);
     }
 
+    TEST_METHOD(TestPasteFromClipboardValueWithComparison)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "");
+        vmTrigger.SetIsValue(true);
+
+        vmTrigger.mockClipboard.SetText(L"0xH1234<100");
+        vmTrigger.PasteFromClipboard();
+
+        // the parser will see "0xH1234<100" as a legacy value and truncate it to "0xH1234" for display.
+        // but the serialized value will still have the "<100" as it was part of the pasted text.
+        // expect the paste operation to convert it to a non-legacy value
+
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("M:0xH1234<100"), vmTrigger.Serialize());
+    }
+
     TEST_METHOD(TestPasteFromClipboardInvalidSyntax)
     {
         TriggerViewModelHarness vmTrigger;

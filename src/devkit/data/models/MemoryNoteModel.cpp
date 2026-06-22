@@ -1248,7 +1248,10 @@ static bool ParseRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHig
         if (nIndex == nStart)
             return false;
 
-        svHigh = svRange.substr(nStart, nIndex);
+        if (nIndex < svRange.size() && ra::util::String::IsAlpha(svRange.at(nIndex)))
+            return false;
+
+        svHigh = svRange.substr(nStart, nIndex - nStart);
     }
 
     nLow = Convert(svLow, isHex);
@@ -1292,7 +1295,7 @@ static std::wstring_view GetValues(const std::wstring_view svLine)
 
         // no right bracket found. take the rest of the line
         if (nRightBracket == std::wstring::npos)
-            nRightBracket = svLine.size();
+            return {};
 
         return svLine.substr(nLeftBracket + 1, nRightBracket - nLeftBracket - 1);
     }
@@ -1561,6 +1564,9 @@ std::wstring MemoryNoteModel::GetSummary() const
             svNote = svNote.substr(0, nIndex);
         }
     }
+
+    while (!svNote.empty() && ra::util::String::IsSpace(svNote.back()))
+        svNote = svNote.substr(0, svNote.size() - 1);
 
     return TrimSize(std::wstring(svNote), false);
 }

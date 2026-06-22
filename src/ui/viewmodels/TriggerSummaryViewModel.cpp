@@ -231,6 +231,9 @@ bool TriggerSummaryViewModel::MergeClauses(
     TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
     gsl::index nIndex1, gsl::index nIndex2)
 {
+    if (pClause1.pCondition->type != pClause2.pCondition->type)
+        return false;
+
     if (pClause1.nType == TriggerClauseType::Is)
     {
         if (pClause2.nType == TriggerClauseType::IsNot)

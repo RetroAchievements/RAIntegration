@@ -271,6 +271,39 @@ public:
         summary.AssertClause(0, L"1-2", L"World", L"decreased to", L"5");
     }
 
+    TEST_METHOD(TestNotEqualTwoValues)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xH1234!=4_0xH1234!=8");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"is not", L"4");
+        summary.AssertClause(1, L"2", L"World", L"is not", L"8");
+    }
+
+    TEST_METHOD(TestNotEqualTwoEnumValues)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World\r\n4=A\r\n8=B");
+        summary.InitializeFrom("0xH1234!=4_0xH1234!=8");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"is not", L"A");
+        summary.AssertClause(1, L"2", L"World", L"is not", L"B");
+    }
+
+    TEST_METHOD(TestNotEqualOrReset)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xH1234!=4_R:0xH1234=8");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"is not", L"4");
+        summary.AssertClause(1, L"2", L"World", L"is", L"8"); // Reset will become a header
+    }
+
     TEST_METHOD(TestMemoryReferenceEqualsOtherMemory)
     {
         TriggerSummaryViewModelHarness summary;

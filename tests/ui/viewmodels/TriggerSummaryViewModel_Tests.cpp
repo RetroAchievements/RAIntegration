@@ -271,6 +271,61 @@ public:
         summary.AssertClause(0, L"1-2", L"World", L"decreased to", L"5");
     }
 
+    TEST_METHOD(TestMemoryReferenceEqualsOtherMemory)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Current HP");
+        summary.mockGameContext.SetNote({ 0x1238U }, L"Max HP");
+        summary.InitializeFrom("0xH1234=0xH1238");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Current HP", L"equals", L"Max HP");
+    }
+
+    TEST_METHOD(TestMemoryReferenceNotEqualsOtherMemory)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Current HP");
+        summary.mockGameContext.SetNote({ 0x1238U }, L"Max HP");
+        summary.InitializeFrom("0xH1234!=0xH1238");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Current HP", L"does not equal", L"Max HP");
+    }
+
+    TEST_METHOD(TestMemoryReferenceLessThanOtherMemory)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Current HP");
+        summary.mockGameContext.SetNote({ 0x1238U }, L"Max HP");
+        summary.InitializeFrom("0xH1234<0xH1238");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Current HP", L"is less than", L"Max HP");
+    }
+
+    TEST_METHOD(TestMemoryReferenceLessThanOrEqualOtherMemory)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Current HP");
+        summary.mockGameContext.SetNote({ 0x1238U }, L"Max HP");
+        summary.InitializeFrom("0xH1234<=0xH1238");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Current HP", L"is at most", L"Max HP");
+    }
+
+    TEST_METHOD(TestMemoryReferenceEqualsDeltaOtherMemory)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Current HP");
+        summary.mockGameContext.SetNote({ 0x1238U }, L"Max HP");
+        summary.InitializeFrom("0xH1234=d0xH1238");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Current HP", L"equals last frame of", L"Max HP");
+    }
+
     TEST_METHOD(TestAddHeadersSimple)
     {
         ra::ui::EditorTheme pTheme;

@@ -4,6 +4,7 @@
 
 #include "data\Memory.hh"
 #include "data\context\GameContext.hh"
+#include "data\util\IndirectNoteResolver.hh"
 
 #include "services\ServiceLocator.hh"
 
@@ -497,6 +498,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
     {
         auto& pClause = m_vClauses.Add();
 
+        // group AddAddress chain together
         nFirstIndex = nLastIndex + 1;
         nLastIndex = nFirstIndex;
         if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
@@ -522,9 +524,22 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
 
         pClause.pCondition = pCondition;
 
+        // get note for let operand
         const ra::data::models::MemoryNoteModel* pNote = nullptr;
         if (pMemoryNotes && rc_operand_is_memref(&pCondition->operand1))
-            pNote = pMemoryNotes->FindMemoryNoteModel(pCondition->operand1.value.memref->address);
+        {
+            if (nFirstIndex != nLastIndex)
+            {
+                std::vector<ra::data::util::IndirectNoteResolver::Node> vParentChain;
+                ra::data::util::IndirectNoteResolver pResolver(*pMemoryNotes);
+                pResolver.ResolveOperand(*pCondition, true, vParentChain);
+                if (!vParentChain.empty())
+                    pNote = vParentChain.back().pNote;
+            }
+
+            if (!pNote)
+                pNote = pMemoryNotes->FindMemoryNoteModel(pCondition->operand1.value.memref->address);
+        }
 
         if (pNote)
         {
@@ -539,6 +554,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             pClause.SetReference(OperandToString(pCondition->operand1));
         }
 
+        // set operation string
         HandleOperation(pClause, pCondition->oper);
 
         if (rc_operand_is_memref(&pCondition->operand2))
@@ -550,39 +566,89 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
                 HandleTally(pClause, *pCondition);
                 continue;
             }
+            else
+            {
+                // get note for right operand
+                const ra::data::models::MemoryNoteModel* pNote2 = nullptr;
+                if (pMemoryNotes && rc_operand_is_memref(&pCondition->operand2))
+                {
+                    if (nFirstIndex != nLastIndex)
+                    {
+                        std::vector<ra::data::util::IndirectNoteResolver::Node> vParentChain;
+                        ra::data::util::IndirectNoteResolver pResolver(*pMemoryNotes);
+                        pResolver.ResolveOperand(*pCondition, false, vParentChain);
+                        if (!vParentChain.empty())
+                            pNote2 = vParentChain.back().pNote;
+                    }
+
+                    if (!pNote2)
+                        pNote2 = pMemoryNotes->FindMemoryNoteModel(pCondition->operand2.value.memref->address);
+                }
+
+                if (pNote2)
+                {
+                    const auto pSubNote = pNote2->GetSubNote(ra::data::Memory::SizeFromRcheevosSize(pCondition->operand2.size));
+                    if (!pSubNote.empty())
+                        pClause.SetTarget(EnumValueFromText(pSubNote));
+                    else
+                        pClause.SetTarget(pNote2->GetSummary());
+
+                    if (pNote)
+                    {
+                        auto sOperation = pClause.GetOperation();
+                        if (sOperation == L"is")
+                            sOperation = L"equals";
+                        else if (sOperation == L"is not")
+                            sOperation = L"does not equal";
+
+                        if (pCondition->operand2.type == RC_OPERAND_DELTA)
+                            sOperation += L" last frame of";
+                        else if (pCondition->operand2.type == RC_OPERAND_PRIOR)
+                            sOperation += L" previous value of";
+
+                        pClause.SetOperation(sOperation);
+                    }
+                }
+                else
+                {
+                    pClause.SetTarget(OperandToString(pCondition->operand2));
+                }
+            }
         }
         else if (pNote)
         {
+            // right is a constant
             auto nTarget = pCondition->operand2.value.num;
 
-            // a < 1  ~>  a == 0
+            // better to match equality than bounds
             if (nTarget == 1 && pCondition->oper == RC_OPERATOR_LT)
             {
+                // a < 1  ~>  a == 0
                 nTarget = 0;
                 HandleOperation(pClause, RC_OPERATOR_EQ);
             }
+            else if (nTarget == 0 && pCondition->oper == RC_OPERATOR_GT)
+            {
+                // a > 0  ~>  a != 0
+                HandleOperation(pClause, RC_OPERATOR_NE);
+            }
 
+            // look for enum value in note
             const auto pEnumText = pNote->GetEnumText(nTarget);
             if (!pEnumText.empty())
-            {
                 pClause.SetTarget(EnumValueFromText(pEnumText));
-
-                // a > 0  ~>  a != 0
-                if (nTarget == 0 && pCondition->oper == RC_OPERATOR_GT)
-                    HandleOperation(pClause, RC_OPERATOR_NE);
-            }
             else
-            {
                 pClause.SetTarget(std::to_wstring(nTarget));
-            }
         }
         else
         {
             pClause.SetTarget(OperandToString(pCondition->operand2));
         }
 
+        // handle hit targets
         HandleTally(pClause, *pCondition);
 
+        // attempt to merge any other conditions comparing the same address (i.e. A>4 && A<6 => A between 4 and 6)
         if (rc_operand_is_memref(&pCondition->operand1))
         {
             for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vClauses.Count()) - 1; ++nIndex)

@@ -31,6 +31,7 @@ public:
     void AssertNoUnhandled() const;
     void AssertCalled(const std::string& sRequestParams) const;
     void AssertNoPendingRequests() const;
+    void AssertNumRequestsHandled(uint32_t nExpected);
 
     void SetHardcoreEnabled(bool bValue) noexcept;
 
@@ -51,6 +52,7 @@ private:
     } MockApiResponse;
 
     mutable std::vector<MockApiResponse> m_vResponses;
+    mutable uint32_t m_nNumResponsesProcessed = 0;
 
     ra::services::ServiceLocator::ServiceOverride<IRcClient> m_Override;
 };

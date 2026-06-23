@@ -186,9 +186,9 @@ void AssetUploadViewModel::QueueMemoryNote(ra::data::models::MemoryNotesModel& p
     pItem.pAsset = &pMemoryNotes;
     pItem.nExtra = ra::to_signed(nAddress);
 
-    QueueTask([this, pNotes = &pMemoryNotes]()
+    QueueTask([this, pNotes = &pMemoryNotes, nAddress]()
     {
-        UploadMemoryNotes(*pNotes);
+        UploadMemoryNotes(*pNotes, nAddress);
     });
 }
 
@@ -454,14 +454,33 @@ void AssetUploadViewModel::UploadRichPresence(ra::data::models::RichPresenceMode
     }
 }
 
-void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel& pNotes)
+void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel& pNotes, ra::data::ByteAddress nAddress)
 {
-    rc_api_update_code_notes_request_t api_params;
-
     std::unordered_map<ra::data::ByteAddress, std::string> vUtf8Notes;
     std::vector<rc_api_update_code_note_entry_t> vEntries;
     {
         std::lock_guard<std::mutex> pLock(m_pMutex);
+        for (auto& pScan : m_vUploadQueue)
+        {
+            if (pScan.pAsset == &pNotes && ra::to_unsigned(pScan.nExtra) == nAddress)
+            {
+                if (pScan.nState != UploadState::None) // this item has already been processed
+                    return;
+
+                // queue the requested item
+                auto& pEntry = vEntries.emplace_back();
+                pEntry.address = ra::to_unsigned(pScan.nExtra);
+
+                const auto* pNote = pNotes.FindMemoryNoteModel(pEntry.address);
+                if (pNote != nullptr && !pNote->GetNote().empty())
+                    vUtf8Notes[pEntry.address] = ra::util::String::Narrow(pNote->GetNote());
+
+                pScan.nState = UploadState::Uploading;
+                break;
+            }
+        }
+
+        // queue up to 99 more
         for (auto& pScan : m_vUploadQueue)
         {
             if (pScan.pAsset == &pNotes && pScan.nState == UploadState::None)
@@ -474,27 +493,35 @@ void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel&
                     vUtf8Notes[pEntry.address] = ra::util::String::Narrow(pNote->GetNote());
 
                 pScan.nState = UploadState::Uploading;
+
+                // the server has a limit of 500 notes per request. let's be a bit more cautious than that.
+                if (vEntries.size() >= 100)
+                    break;
             }
         }
-
-        if (vEntries.empty())
-            return;
-
-        for (auto& pEntry : vEntries)
-        {
-            const auto pIter = vUtf8Notes.find(pEntry.address);
-            if (pIter != vUtf8Notes.end())
-                pEntry.note = pIter->second.c_str();
-        }
-
-        memset(&api_params, 0, sizeof(api_params));
-        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
-        api_params.username = pUserContext.GetUsername().c_str();
-        api_params.api_token = pUserContext.GetApiToken().c_str();
-        api_params.game_id = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
-        api_params.num_entries = gsl::narrow_cast<uint32_t>(vEntries.size());
-        api_params.entries = vEntries.data();
     }
+
+    // nothing was queued, abort
+    if (vEntries.empty())
+        return;
+
+    // point each entry at the UTF-8 version of the note
+    for (auto& pEntry : vEntries)
+    {
+        const auto pIter = vUtf8Notes.find(pEntry.address);
+        if (pIter != vUtf8Notes.end())
+            pEntry.note = pIter->second.c_str();
+    }
+
+    // construct the API request
+    rc_api_update_code_notes_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+    api_params.game_id = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
+    api_params.num_entries = gsl::narrow_cast<uint32_t>(vEntries.size());
+    api_params.entries = vEntries.data();
 
     auto& pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>();
     rc_api_request_t api_request;
@@ -510,9 +537,11 @@ void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel&
         {
             bRetry = false;
 
+            // send the API request
             rc_api_server_response_t api_response;
             pClient.SendRequest(api_request, api_response, sResponseBuffer);
 
+            // process the response
             rc_api_update_code_notes_response_t response;
             nResult = rc_api_process_update_code_notes_server_response(&response, &api_response);
             if (nResult == RC_OK || nResult == RC_ACCESS_DENIED)

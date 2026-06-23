@@ -39,6 +39,8 @@ void MockRcClient::DispatchRequest(const rc_api_request_t & pRequest,
     std::function<void(const rc_api_server_response_t&, void*)> fCallback,
     void* pCallbackData) const
 {
+    m_nNumResponsesProcessed++;
+
     std::string sRequestParams = pRequest.post_data;
 
     for (auto& pResponse : m_vResponses)
@@ -69,6 +71,8 @@ void MockRcClient::DispatchRequest(const rc_api_request_t & pRequest,
 
 void MockRcClient::SendRequest(const rc_api_request_t& pRequest, rc_api_server_response_t& pServerResponse, std::string& sResponseBuffer) const
 {
+    m_nNumResponsesProcessed++;
+
     std::string sRequestParams = pRequest.post_data;
     memset(&pServerResponse, 0, sizeof(pServerResponse));
 
@@ -194,6 +198,12 @@ void MockRcClient::AssertNoPendingRequests() const
         }
     }
 }
+
+void MockRcClient::AssertNumRequestsHandled(uint32_t nExpected)
+{
+    Assert::AreEqual(nExpected, m_nNumResponsesProcessed);
+}
+
 
 void MockRcClient::SetHardcoreEnabled(bool bValue) noexcept
 {

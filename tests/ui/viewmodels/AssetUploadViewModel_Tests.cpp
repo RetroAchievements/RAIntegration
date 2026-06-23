@@ -1436,6 +1436,33 @@ public:
         vmUpload.AssertSuccess(2);
     }
 
+    TEST_METHOD(TestMultipleMemoryNotesBatching)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
+
+        const std::string sLastRequest = "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=5296:Note+5296%0a5298:Note+5298%0a5300:Note+5300%0a5302:Note+5302%0a5304:Note+5304%0a5306:Note+5306%0a5308:Note+5308%0a5310:Note+5310%0a5312:Note+5312%0a5314:Note+5314%0a5316:Note+5316%0a5318:Note+5318%0a5320:Note+5320%0a5322:Note+5322%0a";
+        vmUpload.mockRcClient.MockResponse(sLastRequest, "", 504); // dummy timeout response, but allows us to see if the request got called
+
+        constexpr size_t NumNotes = 614;
+        for (uint32_t nAddress = 0x1000; nAddress < 0x1000 + NumNotes * 2; nAddress += 2)
+            vmUpload.MemoryNotes().SetNote(nAddress, ra::util::String::Printf(L"Note %u", nAddress));
+
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
+        Assert::AreEqual(NumNotes, vmUpload.TaskCount());
+
+        // setting visible starts the workers
+        vmUpload.SetIsVisible(true);
+
+        // this one task should run through all of the note requests
+        vmUpload.mockThreadPool.ExecuteNextTask();
+
+        Assert::AreEqual({ 100 }, vmUpload.GetProgress()); // 100%
+
+        vmUpload.mockRcClient.AssertNumRequestsHandled(7); // 6 * 100 + 1 * 14
+        vmUpload.mockRcClient.AssertCalled(sLastRequest);
+    }
+
     TEST_METHOD(TestMultipleMemoryNotesWithNewlines)
     {
         AssetUploadViewModelHarness vmUpload;

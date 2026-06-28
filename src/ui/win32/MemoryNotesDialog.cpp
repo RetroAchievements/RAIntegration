@@ -180,6 +180,8 @@ BOOL MemoryNotesDialog::OnInitDialog()
         }
     }
 
+    SetFixedWidthFont(IDC_RA_LBX_ADDRESSES);
+
     return DialogBase::OnInitDialog();
 }
 

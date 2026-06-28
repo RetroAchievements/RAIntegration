@@ -32,23 +32,14 @@ namespace ui {
 namespace win32 {
 
 static constexpr int COLUMN_WIDTH_ID = 30;
-static constexpr int COLUMN_WIDTH_FLAG = 78;
-static constexpr int COLUMN_WIDTH_TYPE = 42;
-static constexpr int COLUMN_WIDTH_SIZE = 72;
-static constexpr int COLUMN_WIDTH_VALUE = 72;
-static constexpr int COLUMN_WIDTH_OPERATOR = 35;
+static constexpr int COLUMN_WIDTH_FLAG = 80;
+static constexpr int COLUMN_WIDTH_TYPE = 46;
+static constexpr int COLUMN_WIDTH_SIZE = 78;
+static constexpr int COLUMN_WIDTH_VALUE = 74;
+static constexpr int COLUMN_WIDTH_OPERATOR = 38;
 static constexpr int COLUMN_WIDTH_HITS = 84;
 
 using fnGetStockIconInfo = std::add_pointer_t<HRESULT WINAPI(SHSTOCKICONID, UINT, SHSTOCKICONINFO*)>;
-static fnGetStockIconInfo pGetStockIconInfo = nullptr;
-
-AssetEditorDialog::Presenter::Presenter() noexcept
-{
-    // SHGetStockIconInfo isn't supported on WinXP, so we have to dynamically find it.
-    auto hDll = LoadLibraryA("Shell32");
-    if (hDll)
-        GSL_SUPPRESS_TYPE1 pGetStockIconInfo = reinterpret_cast<fnGetStockIconInfo>(GetProcAddress(hDll, "SHGetStockIconInfo"));
-}
 
 bool AssetEditorDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
 {
@@ -667,23 +658,14 @@ void AssetEditorDialog::ErrorIconBinding::OnViewModelBoolValueChanged(const Bool
         UpdateImage();
 }
 
-static HICON GetIcon(SHSTOCKICONID nStockIconId, LPCWSTR nOicIconId) noexcept
+static HICON GetIcon(SHSTOCKICONID nStockIconId, LPCWSTR) noexcept
 {
-    if (pGetStockIconInfo != nullptr)
-    {
-        SHSTOCKICONINFO sii{};
-        sii.cbSize = sizeof(sii);
-        if (SUCCEEDED(pGetStockIconInfo(nStockIconId, SHGSI_ICON | SHGSI_SMALLICON, &sii)))
-            return sii.hIcon;
+    SHSTOCKICONINFO sii{};
+    sii.cbSize = sizeof(sii);
+    if (SUCCEEDED(SHGetStockIconInfo(nStockIconId, SHGSI_ICON | SHGSI_SMALLICON, &sii)))
+        return sii.hIcon;
 
-        return nullptr;
-    }
-
-    // despite requesting a 16x16 icon, this returns a 32x32 one, which looks awkward in the space
-    // provided. GetStockIconInfo is prefered because it returns an appropriately sized icon. this
-    // is fallback logic for WinXP.
-    GSL_SUPPRESS_TYPE1
-    return reinterpret_cast<HICON>(LoadImage(nullptr, nOicIconId, IMAGE_ICON, 16, 16, LR_SHARED));
+    return nullptr;
 }
 
 void AssetEditorDialog::ErrorIconBinding::SetErrorIcon() noexcept

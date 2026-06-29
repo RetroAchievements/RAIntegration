@@ -711,7 +711,7 @@ public:
             CLIP_DEFAULT_PRECIS,     // iClipPrecision
             DEFAULT_QUALITY,         // iQuality
             FIXED_PITCH | FF_MODERN, // iPitchAndFamily (Forces fixed-width)
-            L"Courier New"           // pszFaceName
+            L"Consolas"              // pszFaceName
         );
     }
 

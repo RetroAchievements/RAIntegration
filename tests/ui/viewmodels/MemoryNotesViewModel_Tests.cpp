@@ -8,6 +8,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
@@ -34,6 +35,7 @@ private:
         ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockConsoleContext mockConsoleContext;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
@@ -48,6 +50,8 @@ private:
 
         void PopulateNotes()
         {
+            mockUserContext.Initialize("User", "APITOKEN");
+
             mockGameContext.SetGameId(1U);
 
             mockGameContext.SetNote(0x0010, L"Score X000");
@@ -78,34 +82,8 @@ private:
             mockEmulatorMemoryContext.MockMemory(memory);
         }
 
-        void PreparePublish()
-        {
-            mockServer.HandleRequest<ra::api::UpdateCodeNote>([this]
-                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
-            {
-                m_nPublishedAddresses.push_back(pRequest.Address);
-
-                pResponse.Result = ra::api::ApiResult::Success;
-                return true;
-            });
-
-            mockServer.HandleRequest<ra::api::DeleteCodeNote>([this]
-                (const ra::api::DeleteCodeNote::Request& pRequest, ra::api::DeleteCodeNote::Response& pResponse)
-            {
-                m_nPublishedAddresses.push_back(pRequest.Address);
-
-                pResponse.Result = ra::api::ApiResult::Success;
-                return true;
-            });
-
-            mockThreadPool.SetSynchronous(true);
-        }
-
-        const std::vector<ra::data::ByteAddress>& GetPublishedAddresses() const noexcept { return m_nPublishedAddresses; }
-
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> m_themeOverride;
-        std::vector<ra::data::ByteAddress> m_nPublishedAddresses;
     };
 
     void AssertRow(MemoryNotesViewModelHarness& notes, gsl::index nRow, ra::data::ByteAddress nAddress,
@@ -812,8 +790,13 @@ public:
     {
         MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
-        notes.PreparePublish();
+        notes.mockThreadPool.SetSynchronous(true);
         notes.SetIsVisible(true);
+
+        notes.mockRcClient.MockResponse(
+            "r=submitcodenotes&u=User&t=APITOKEN&g=1&n=22:Changed+20%0a",
+            "{\"Success\":true,\"SuccessfulAddresses\":[22]}"
+        );
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -839,13 +822,11 @@ public:
 
         notes.PublishSelected();
         Assert::IsFalse(bWindowSeen);
+        notes.mockRcClient.AssertNoPendingRequests();
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
         Assert::IsFalse(notes.CanPublishCurrentAddressNote());
         Assert::IsFalse(notes.CanRevertCurrentAddressNote());
-
-        Assert::AreEqual({1}, notes.GetPublishedAddresses().size());
-        Assert::AreEqual({0x0016}, notes.GetPublishedAddresses().at(0));
     }
 
     TEST_METHOD(TestPublishSingleOffline)
@@ -853,7 +834,7 @@ public:
         MemoryNotesViewModelHarness notes;
         notes.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
         notes.PopulateNotes();
-        notes.PreparePublish();
+        notes.mockThreadPool.SetSynchronous(true);
         notes.SetIsVisible(true);
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
@@ -880,6 +861,7 @@ public:
 
         notes.PublishSelected();
         Assert::IsFalse(bWindowSeen);
+        notes.mockRcClient.AssertNoPendingRequests();
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
         Assert::IsFalse(notes.CanPublishCurrentAddressNote());
@@ -890,8 +872,13 @@ public:
     {
         MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
-        notes.PreparePublish();
+        notes.mockThreadPool.SetSynchronous(true);
         notes.SetIsVisible(true);
+
+        notes.mockRcClient.MockResponse(
+            "r=submitcodenotes&u=User&t=APITOKEN&g=1&n=22:Changed+20%0a64:Changed+64%0a",
+            "{\"Success\":true,\"SuccessfulAddresses\":[22,64]}"
+        );
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -933,22 +920,19 @@ public:
 
         notes.PublishSelected();
         Assert::AreEqual(nWindowsSeen, 2);
+        notes.mockRcClient.AssertNoPendingRequests();
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
         AssertRow(notes, 13, 0x0040, L"0x0040", L"Changed 64");
         Assert::IsFalse(notes.CanPublishCurrentAddressNote());
         Assert::IsFalse(notes.CanRevertCurrentAddressNote());
-
-        Assert::AreEqual({2}, notes.GetPublishedAddresses().size());
-        Assert::AreEqual({0x0016}, notes.GetPublishedAddresses().at(0));
-        Assert::AreEqual({0x0040}, notes.GetPublishedAddresses().at(1));
     }
 
     TEST_METHOD(TestPublishMultipleReject)
     {
         MemoryNotesViewModelHarness notes;
         notes.PopulateNotes();
-        notes.PreparePublish();
+        notes.mockThreadPool.SetSynchronous(true);
         notes.SetIsVisible(true);
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
@@ -979,13 +963,12 @@ public:
 
         notes.PublishSelected();
         Assert::IsTrue(bWindowSeen);
+        notes.mockRcClient.AssertNoPendingRequests();
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
         AssertRow(notes, 13, 0x0040, L"0x0040", L"Changed 64");
         Assert::IsTrue(notes.CanPublishCurrentAddressNote());
         Assert::IsTrue(notes.CanRevertCurrentAddressNote());
-
-        Assert::AreEqual({0}, notes.GetPublishedAddresses().size());
     }
 };
 

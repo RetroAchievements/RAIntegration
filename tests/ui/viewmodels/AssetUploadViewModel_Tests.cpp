@@ -48,6 +48,7 @@ private:
 
         ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
@@ -1161,7 +1162,6 @@ public:
     TEST_METHOD(TestRichPresence)
     {
         AssetUploadViewModelHarness vmUpload;
-        ra::context::mocks::MockRcClient mockRcClient;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockLocalStorage mockStorage;
         mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, std::to_wstring(vmUpload.GameId), "Display:\nThis is a test.");
@@ -1196,6 +1196,7 @@ public:
     TEST_METHOD(TestSingleMemoryNoteNew)
     {
         AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
@@ -1203,22 +1204,14 @@ public:
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
         Assert::IsFalse(vmUpload.mockDesktop.WasDialogShown());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&bApiCalled]
-                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
-        {
-            bApiCalled = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(0x1234U, pRequest.Address);
-            Assert::AreEqual(std::wstring(L"This is a note."), pRequest.Note);
-
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a",
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
         Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
@@ -1227,6 +1220,7 @@ public:
     TEST_METHOD(TestSingleMemoryNoteNewSubset)
     {
         AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
@@ -1235,22 +1229,14 @@ public:
         Assert::AreEqual({1U}, vmUpload.TaskCount());
         Assert::IsFalse(vmUpload.mockDesktop.WasDialogShown());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>(
-            [&bApiCalled](const ra::api::UpdateCodeNote::Request& pRequest,
-                          ra::api::UpdateCodeNote::Response& pResponse) {
-                bApiCalled = true;
-                Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-                Assert::AreEqual(0x1234U, pRequest.Address);
-                Assert::AreEqual(std::wstring(L"This is a note."), pRequest.Note);
-
-                pResponse.Result = ra::api::ApiResult::Success;
-                return true;
-            });
+        vmUpload.mockRcClient.MockResponse(
+            "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a",
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
         Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
@@ -1259,6 +1245,7 @@ public:
     TEST_METHOD(TestSingleMemoryNoteDeleted)
     {
         AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetServerNote(0x1234, L"This is a note.");
         vmUpload.MemoryNotes().SetNote(0x1234, L"");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
@@ -1267,21 +1254,14 @@ public:
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
         Assert::IsFalse(vmUpload.mockDesktop.WasDialogShown());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::DeleteCodeNote>([&bApiCalled]
-                (const ra::api::DeleteCodeNote::Request& pRequest, ra::api::DeleteCodeNote::Response& pResponse)
-        {
-            bApiCalled = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(0x1234U, pRequest.Address);
-
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:%0a",
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
         Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
@@ -1311,22 +1291,14 @@ public:
         Assert::IsTrue(bWindowSeen);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&bApiCalled]
-                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
-        {
-            bApiCalled = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(0x1234U, pRequest.Address);
-            Assert::AreEqual(std::wstring(L"Test2"), pRequest.Note);
-
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=submitcodenotes&u=Me&t=APITOKEN&g=22&n=4660:Test2%0a",
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
         Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
@@ -1356,21 +1328,14 @@ public:
         Assert::IsTrue(bWindowSeen);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::DeleteCodeNote>([&bApiCalled]
-                (const ra::api::DeleteCodeNote::Request& pRequest, ra::api::DeleteCodeNote::Response& pResponse)
-        {
-            bApiCalled = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(0x1234U, pRequest.Address);
-
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=submitcodenotes&u=Me&t=APITOKEN&g=22&n=4660:%0a",
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
         Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
@@ -1435,22 +1400,14 @@ public:
         Assert::IsTrue(bWindowSeen);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&bApiCalled]
-                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
-        {
-            bApiCalled = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(0x1234U, pRequest.Address);
-            Assert::AreEqual(std::wstring(L"Test"), pRequest.Note);
-
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=submitcodenotes&u=Me&t=APITOKEN&g=22&n=4660:Test%0a",
+            "{\"Success\":true,\"SuccessfulAddresses\":[4660]}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
         Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(1);
@@ -1459,6 +1416,7 @@ public:
     TEST_METHOD(TestMultipleMemoryNotes)
     {
         AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
@@ -1466,30 +1424,64 @@ public:
         vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::AreEqual({ 2U }, vmUpload.TaskCount());
 
-        int nApiCount = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&nApiCount]
-                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
-        {
-            nApiCount++;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            if (pRequest.Address == 0x1234U)
-            {
-                Assert::AreEqual(0x1234U, pRequest.Address);
-                Assert::AreEqual(std::wstring(L"This is a note."), pRequest.Note);
-            }
-            else
-            {
-                Assert::AreEqual(0x1235U, pRequest.Address);
-                Assert::AreEqual(std::wstring(L"This is another note."), pRequest.Note);
-            }
+        vmUpload.mockRcClient.MockResponse(
+            "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a4661:This+is+another+note.%0a",
+            "{\"Success\":\"true\",\"SuccessfulAddresses\":[4660,4661]}"
+        );
+        vmUpload.DoUpload();
+        vmUpload.mockRcClient.AssertNoPendingRequests();
 
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
+
+        vmUpload.AssertSuccess(2);
+    }
+
+    TEST_METHOD(TestMultipleMemoryNotesBatching)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
+
+        const std::string sLastRequest = "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=5296:Note+5296%0a5298:Note+5298%0a5300:Note+5300%0a5302:Note+5302%0a5304:Note+5304%0a5306:Note+5306%0a5308:Note+5308%0a5310:Note+5310%0a5312:Note+5312%0a5314:Note+5314%0a5316:Note+5316%0a5318:Note+5318%0a5320:Note+5320%0a5322:Note+5322%0a";
+        vmUpload.mockRcClient.MockResponse(sLastRequest, "", 504); // dummy timeout response, but allows us to see if the request got called
+
+        constexpr size_t NumNotes = 614;
+        for (uint32_t nAddress = 0x1000; nAddress < 0x1000 + NumNotes * 2; nAddress += 2)
+            vmUpload.MemoryNotes().SetNote(nAddress, ra::util::String::Printf(L"Note %u", nAddress));
+
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
+        Assert::AreEqual(NumNotes, vmUpload.TaskCount());
+
+        // setting visible starts the workers
+        vmUpload.SetIsVisible(true);
+
+        // this one task should run through all of the note requests
+        vmUpload.mockThreadPool.ExecuteNextTask();
+
+        Assert::AreEqual({ 100 }, vmUpload.GetProgress()); // 100%
+
+        vmUpload.mockRcClient.AssertNumRequestsHandled(7); // 6 * 100 + 1 * 14
+        vmUpload.mockRcClient.AssertCalled(sLastRequest);
+    }
+
+    TEST_METHOD(TestMultipleMemoryNotesWithNewlines)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
+        vmUpload.MemoryNotes().SetNote(0x1234, L"[8-bit]\r\n0=True\r\n1=False");
+        vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
+
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
+        Assert::AreEqual({ 2U }, vmUpload.TaskCount());
+
+        vmUpload.mockRcClient.MockResponse(
+            "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:%5b8-bit%5d%5cr%5cn0%3dTrue%5cr%5cn1%3dFalse%0a4661:This+is+another+note.%0a",
+            "{\"Success\":\"true\",\"SuccessfulAddresses\":[4660,4661]}"
+        );
 
         vmUpload.DoUpload();
+        vmUpload.mockRcClient.AssertNoPendingRequests();
 
-        Assert::AreEqual(2, nApiCount);
         Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(2);
@@ -1498,6 +1490,7 @@ public:
     TEST_METHOD(TestMultipleMemoryNotes429)
     {
         AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
@@ -1505,39 +1498,61 @@ public:
         vmUpload.QueueAsset(vmUpload.MemoryNotes());
         Assert::AreEqual({2U}, vmUpload.TaskCount());
 
-        int nApiCount = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>(
-            [&nApiCount](const ra::api::UpdateCodeNote::Request& pRequest,
-                         ra::api::UpdateCodeNote::Response& pResponse) {
-                nApiCount++;
-                Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-                if (pRequest.Address == 0x1234U)
-                {
-                    Assert::AreEqual(0x1234U, pRequest.Address);
-                    Assert::AreEqual(std::wstring(L"This is a note."), pRequest.Note);
-                }
-                else
-                {
-                    Assert::AreEqual(0x1235U, pRequest.Address);
-                    Assert::AreEqual(std::wstring(L"This is another note."), pRequest.Note);
-                }
+        // first response returns 429
+        const std::string sApiParams = "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a4661:This+is+another+note.%0a";
+        vmUpload.mockRcClient.MockResponse(sApiParams, "{\"Success\":\"true\"}", 429);
 
-                if (nApiCount % 2 == 0)
-                    pResponse.Result = ra::api::ApiResult::Incomplete;
-                else
-                    pResponse.Result = ra::api::ApiResult::Success;
-                return true;
+        // second response returns success
+        int apiCount = 0;
+        vmUpload.mockRcClient.OnBeforeResponse(sApiParams, [&apiCount, &vmUpload, &sApiParams]()
+            {
+                if (++apiCount == 2)
+                    vmUpload.mockRcClient.MockResponse(sApiParams, "{\"Success\":\"true\",\"SuccessfulAddresses\":[4660,4661]}");
             });
 
         vmUpload.DoUpload();
 
-        // 0 = 1234, success
-        // 1 = 1235, delayed
-        // 2 = 1235, success
-        Assert::AreEqual(3, nApiCount);
         Assert::AreEqual(AssetChanges::None, vmUpload.MemoryNotes().GetChanges());
 
         vmUpload.AssertSuccess(2);
+    }
+
+    TEST_METHOD(TestMultipleMemoryNotesCompleteFailure)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
+        vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
+        vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
+
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
+        Assert::AreEqual({ 2U }, vmUpload.TaskCount());
+
+        const std::string sApiParams = "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a4661:This+is+another+note.%0a";
+        vmUpload.mockRcClient.MockResponse(sApiParams, "{\"Success\":\"false\",\"Code\":\"invalid_parameter\",\"Error\":\"Improperly encoded notes list.\"}", 422);
+
+        vmUpload.DoUpload();
+
+        vmUpload.AssertFailed(0, 2, L"* Memory Note 0x1234: Improperly encoded notes list.\n* Memory Note 0x1235: Improperly encoded notes list.");
+    }
+
+    TEST_METHOD(TestMultipleMemoryNotesPartialFailure)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
+        vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
+        vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
+
+        vmUpload.QueueAsset(vmUpload.MemoryNotes());
+        Assert::AreEqual({ 2U }, vmUpload.TaskCount());
+
+        const std::string sApiParams = "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=4660:This+is+a+note.%0a4661:This+is+another+note.%0a";
+        vmUpload.mockRcClient.MockResponse(sApiParams, "{\"Success\":\"false\",\"Code\":\"access_denied\",\"Error\":\"Access denied.\",\"SuccessfulAddresses\":[4661],\"AccessDeniedAddresses\":[4660]}", 403);
+
+        vmUpload.DoUpload();
+
+        vmUpload.AssertFailed(1, 1, L"* Memory Note 0x1234: Access denied.");
     }
 };
 

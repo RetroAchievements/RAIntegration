@@ -70,16 +70,6 @@ public:
         return HandleRequest<ra::api::ResolveHash>(request);
     }
 
-    UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) override
-    {
-        return HandleRequest<ra::api::UpdateCodeNote>(request);
-    }
-
-    DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) override
-    {
-        return HandleRequest<ra::api::DeleteCodeNote>(request);
-    }
-
     UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request& request) override
     {
         return HandleRequest<ra::api::UpdateAchievement>(request);

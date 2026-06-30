@@ -180,6 +180,13 @@ public:
     }
 
     /// <summary>
+    /// Replaces all occurrances of <paramref name="sMatch" /> with <paramref name="sReplace" /> in <paramref name="sString" />.
+    /// </summary>
+    GSL_SUPPRESS_F6 static void ReplaceAll(_Inout_ std::string& sString,
+                                           _In_ const std::string_view sMatch,
+                                           _In_ const std::string_view sReplace) noexcept;
+
+    /// <summary>
     /// Converts a string to lowercase.
     /// </summary>
     static void MakeLowercase(_Inout_ std::wstring& sString);

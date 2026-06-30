@@ -1,15 +1,16 @@
 #include "AssetUploadViewModel.hh"
 
-#include "api\DeleteCodeNote.hh"
 #include "api\UpdateAchievement.hh"
-#include "api\UpdateCodeNote.hh"
 #include "api\UpdateLeaderboard.hh"
 #include "api\UpdateRichPresence.hh"
 #include "api\UploadBadge.hh"
 
 #include "context\UserContext.hh"
+#include "context\IRcClient.hh"
 
 #include "data\context\GameContext.hh"
+
+#include "services\Http.hh"
 
 #include "ui\ImageReference.hh"
 #include "ui\IImageRepository.hh"
@@ -19,6 +20,7 @@
 #include "util\Log.hh"
 
 #include <rcheevos/include/rc_api_runtime.h>
+#include <rcheevos/include/rc_api_editor.h>
 
 namespace ra {
 namespace ui {
@@ -186,7 +188,7 @@ void AssetUploadViewModel::QueueMemoryNote(ra::data::models::MemoryNotesModel& p
 
     QueueTask([this, pNotes = &pMemoryNotes, nAddress]()
     {
-        UploadMemoryNote(*pNotes, nAddress);
+        UploadMemoryNotes(*pNotes, nAddress);
     });
 }
 
@@ -452,67 +454,178 @@ void AssetUploadViewModel::UploadRichPresence(ra::data::models::RichPresenceMode
     }
 }
 
-void AssetUploadViewModel::UploadMemoryNote(ra::data::models::MemoryNotesModel& pNotes, ra::data::ByteAddress nAddress)
+void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel& pNotes, ra::data::ByteAddress nAddress)
 {
-    std::string sErrorMessage;
-    UploadState nState = UploadState::Failed;
-
-    const auto* pNote = pNotes.FindNote(nAddress);
-    if (pNote == nullptr || pNote->empty())
+    std::unordered_map<ra::data::ByteAddress, std::string> vUtf8Notes;
+    std::vector<rc_api_update_code_note_entry_t> vEntries;
     {
-        ra::api::DeleteCodeNote::Request request;
-        request.GameId = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
-        request.Address = nAddress;
-
-        const auto& response = request.Call();
-
-        if (response.Succeeded())
+        std::lock_guard<std::mutex> pLock(m_pMutex);
+        for (auto& pScan : m_vUploadQueue)
         {
-            pNotes.SetServerNote(nAddress, L"");
-            nState = UploadState::Success;
-        }
-        else if (response.Result == ra::api::ApiResult::Incomplete)
-        {
-            Rest();
-            UploadMemoryNote(pNotes, nAddress);
-            return;
-        }
+            if (pScan.pAsset == &pNotes && ra::to_unsigned(pScan.nExtra) == nAddress)
+            {
+                if (pScan.nState != UploadState::None) // this item has already been processed
+                    return;
 
-        sErrorMessage = response.ErrorMessage;
-    }
-    else
-    {
-        ra::api::UpdateCodeNote::Request request;
-        request.GameId = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
-        request.Address = nAddress;
-        request.Note = *pNote;
+                // queue the requested item
+                auto& pEntry = vEntries.emplace_back();
+                pEntry.address = ra::to_unsigned(pScan.nExtra);
 
-        const auto& response = request.Call();
+                const auto* pNote = pNotes.FindMemoryNoteModel(pEntry.address);
+                if (pNote != nullptr && !pNote->GetNote().empty())
+                    vUtf8Notes[pEntry.address] = ra::util::String::Narrow(pNote->GetNote());
 
-        if (response.Succeeded())
-        {
-            pNotes.SetServerNote(nAddress, *pNote);
-            nState = UploadState::Success;
-        }
-        else if (response.Result == ra::api::ApiResult::Incomplete)
-        {
-            Rest();
-            UploadMemoryNote(pNotes, nAddress);
-            return;
+                pScan.nState = UploadState::Uploading;
+                break;
+            }
         }
 
-        sErrorMessage = response.ErrorMessage;
+        // queue up to 99 more
+        for (auto& pScan : m_vUploadQueue)
+        {
+            if (pScan.pAsset == &pNotes && pScan.nState == UploadState::None)
+            {
+                auto& pEntry = vEntries.emplace_back();
+                pEntry.address = ra::to_unsigned(pScan.nExtra);
+
+                const auto* pNote = pNotes.FindMemoryNoteModel(pEntry.address);
+                if (pNote != nullptr && !pNote->GetNote().empty())
+                    vUtf8Notes[pEntry.address] = ra::util::String::Narrow(pNote->GetNote());
+
+                pScan.nState = UploadState::Uploading;
+
+                // the server has a limit of 500 notes per request. let's be a bit more cautious than that.
+                if (vEntries.size() >= 100)
+                    break;
+            }
+        }
     }
 
-    // update the queue
-    std::lock_guard<std::mutex> pLock(m_pMutex);
-    for (auto& pScan : m_vUploadQueue)
+    // nothing was queued, abort
+    if (vEntries.empty())
+        return;
+
+    // point each entry at the UTF-8 version of the note
+    for (auto& pEntry : vEntries)
     {
-        if (pScan.pAsset == &pNotes && pScan.nExtra == gsl::narrow_cast<int>(nAddress))
+        const auto pIter = vUtf8Notes.find(pEntry.address);
+        if (pIter != vUtf8Notes.end())
+            pEntry.note = pIter->second.c_str();
+    }
+
+    // construct the API request
+    rc_api_update_code_notes_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+    api_params.game_id = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
+    api_params.num_entries = gsl::narrow_cast<uint32_t>(vEntries.size());
+    api_params.entries = vEntries.data();
+
+    auto& pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>();
+    rc_api_request_t api_request;
+    auto nResult = rc_api_init_update_code_notes_request_hosted(&api_request, &api_params, pClient.GetHost());
+    std::string sErrorMessage = rc_error_str(nResult);
+
+    if (nResult == RC_OK)
+    {
+        bool bRetry = false;
+        std::string sResponseBuffer;
+
+        do
         {
-            pScan.sErrorMessage = sErrorMessage;
-            pScan.nState = nState;
-            break;
+            bRetry = false;
+
+            // send the API request
+            rc_api_server_response_t api_response;
+            pClient.SendRequest(api_request, api_response, sResponseBuffer);
+
+            // process the response
+            rc_api_update_code_notes_response_t response;
+            nResult = rc_api_process_update_code_notes_server_response(&response, &api_response);
+            if (nResult == RC_OK || nResult == RC_ACCESS_DENIED)
+            {
+                std::lock_guard<std::mutex> pLock(m_pMutex);
+                for (auto& pScan : m_vUploadQueue)
+                {
+                    if (pScan.pAsset == &pNotes && pScan.nState == UploadState::Uploading)
+                    {
+                        for (auto& pEntry : vEntries)
+                        {
+                            if (pEntry.address == ra::to_unsigned(pScan.nExtra))
+                            {
+                                pScan.nState = UploadState::Success;
+
+                                for (uint32_t i = 0; i < response.num_access_denied_addresses; i++)
+                                {
+                                    if (response.access_denied_addresses[i] == ra::to_unsigned(pScan.nExtra))
+                                    {
+                                        pScan.nState = UploadState::Failed;
+                                        pScan.sErrorMessage = response.response.error_message;
+                                        break;
+                                    }
+                                }
+
+                                if (pScan.nState == UploadState::Success)
+                                {
+                                    if (pEntry.note)
+                                    {
+                                        const auto* pNote = pNotes.FindNote(pEntry.address);
+                                        if (pNote)
+                                            pNotes.SetServerNote(pEntry.address, *pNote);
+                                    }
+                                    else
+                                        pNotes.SetServerNote(pEntry.address, L"");
+                                }
+
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                bRetry = api_response.http_status_code == ra::etoi(ra::services::Http::StatusCode::TooManyRequests)
+                    || api_response.http_status_code == RC_API_SERVER_RESPONSE_RETRYABLE_CLIENT_ERROR;
+                if (!bRetry)
+                {
+                    if (response.response.error_message)
+                        sErrorMessage = response.response.error_message;
+                    else
+                        sErrorMessage = rc_error_str(nResult);
+                }
+            }
+
+            rc_api_destroy_update_code_notes_response(&response);
+
+            if (!bRetry)
+                break;
+
+            Rest();
+        } while (true);
+    }
+
+    rc_api_destroy_request(&api_request);
+
+    if (nResult != RC_OK)
+    {
+        std::lock_guard<std::mutex> pLock(m_pMutex);
+        for (auto& pScan : m_vUploadQueue)
+        {
+            if (pScan.pAsset == &pNotes && pScan.nState == UploadState::Uploading)
+            {
+                for (auto& pEntry : vEntries)
+                {
+                    if (pEntry.address == ra::to_unsigned(pScan.nExtra))
+                    {
+                        pScan.nState = UploadState::Failed;
+                        pScan.sErrorMessage = sErrorMessage;
+                        break;
+                    }
+                }
+            }
         }
     }
 }
@@ -556,10 +669,26 @@ void AssetUploadViewModel::ShowResults() const
     {
         sMessage.append(ra::util::String::Printf(L"\n\n%d items failed:", nFailed));
 
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
         for (const auto& pItem : m_vUploadQueue)
         {
             if (pItem.nState == UploadState::Failed)
-                sMessage.append(ra::util::String::Printf(L"\n* %s: %s", pItem.pAsset->GetName(), pItem.sErrorMessage));
+            {
+                switch (pItem.pAsset->GetType())
+                {
+                    case ra::data::models::AssetType::MemoryNotes:
+                        sMessage.append(ra::util::String::Printf(L"\n* Memory Note %s: %s",
+                            pMemoryContext.FormatAddress(ra::to_unsigned(pItem.nExtra)),
+                            pItem.sErrorMessage));
+                        break;
+
+                    default:
+                        sMessage.append(ra::util::String::Printf(L"\n* %s: %s",
+                            pItem.pAsset->GetName(),
+                            pItem.sErrorMessage));
+                        break;
+                }
+            }
         }
     }
 

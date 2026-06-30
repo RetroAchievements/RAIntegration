@@ -534,66 +534,6 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
     return response;
 }
 
-static void SetNote(ApiResponseBase& response, const char* sApiName,
-    unsigned nGameId, ra::data::ByteAddress nAddress, const char* sNote)
-{
-    rc_api_update_code_note_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
-    api_params.username = pUserContext.GetUsername().c_str();
-    api_params.api_token = pUserContext.GetApiToken().c_str();
-
-    api_params.game_id = nGameId;
-    api_params.address = nAddress;
-    api_params.note = sNote;
-
-    rc_api_request_t api_request;
-    const int result = rc_api_init_update_code_note_request(&api_request, &api_params);
-    if (result == RC_OK)
-    {
-        ra::services::Http::Response httpResponse;
-        if (DoRequest(api_request, sApiName, httpResponse, response))
-        {
-            rc_api_update_code_note_response_t api_response;
-            const auto nResult = rc_api_process_update_code_note_response(&api_response, httpResponse.Content().c_str());
-
-            if (ValidateResponse(nResult, api_response.response, sApiName, httpResponse.StatusCode(), response))
-            {
-                response.Result = ApiResult::Success;
-            }
-
-            rc_api_destroy_update_code_note_response(&api_response);
-        }
-    }
-    else
-    {
-        response.Result = ApiResult::Failed;
-        response.ErrorMessage = rc_error_str(result);
-    }
-
-    rc_api_destroy_request(&api_request);
-}
-
-UpdateCodeNote::Response ConnectedServer::UpdateCodeNote(const UpdateCodeNote::Request& request)
-{
-    UpdateCodeNote::Response response;
-
-    const std::string sNote = ra::util::String::Narrow(request.Note);
-    SetNote(response, UpdateCodeNote::Name(), request.GameId, request.Address, sNote.c_str());
-
-    return response;
-}
-
-DeleteCodeNote::Response ConnectedServer::DeleteCodeNote(const DeleteCodeNote::Request& request)
-{
-    DeleteCodeNote::Response response;
-
-    SetNote(response, DeleteCodeNote::Name(), request.GameId, request.Address, nullptr);
-
-    return response;
-}
-
 UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchievement::Request& request)
 {
     UpdateAchievement::Response response;

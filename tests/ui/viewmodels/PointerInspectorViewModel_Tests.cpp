@@ -1,8 +1,5 @@
 #include "CppUnitTest.h"
 
-#include "api\DeleteCodeNote.hh"
-#include "api\UpdateCodeNote.hh"
-
 #include "ui\viewmodels\PointerInspectorViewModel.hh"
 
 #include "tests\ui\UIAsserts.hh"

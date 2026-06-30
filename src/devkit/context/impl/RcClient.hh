@@ -25,6 +25,7 @@ public:
     void AddAuthentication(const char** pUsername, const char** pApiToken) const override;
 
     void DispatchRequest(const rc_api_request_t& pRequest, std::function<void(const rc_api_server_response_t&, void*)> fCallback, void* fCallbackData) const override;
+    void SendRequest(const rc_api_request_t& pRequest, rc_api_server_response_t& pResponse, std::string& sResponseBuffer) const override;
 
 protected:
     virtual void CallApi(const std::string& sApi, const ra::services::Http::Request& pRequest,

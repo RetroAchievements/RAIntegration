@@ -1,7 +1,5 @@
 #include "Strings.hh"
 
-#include "TypeCasts.hh"
-
 namespace ra {
 namespace util {
 
@@ -117,6 +115,18 @@ const std::wstring String::FormatDateRecent(time_t when)
         return L"Last year";
 
     return Printf(L"%u years ago", years);
+}
+
+_Use_decl_annotations_
+void String::ReplaceAll(std::string& sString, const std::string_view sMatch, const std::string_view sReplace) noexcept
+{
+    size_t nIndex = 0;
+    size_t nMatch;
+    while ((nMatch = sString.find(sMatch, nIndex)) != std::string::npos)
+    {
+        sString.replace(nMatch, sMatch.size(), sReplace);
+        nIndex = nMatch + sReplace.size();
+    }
 }
 
 _Use_decl_annotations_

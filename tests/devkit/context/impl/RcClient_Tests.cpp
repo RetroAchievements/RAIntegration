@@ -118,6 +118,37 @@ public:
         Assert::AreEqual(sPatchData, client.mockLocalStorage.GetStoredData(ra::services::StorageItemType::MemoryNotes, L"1234"));
     }
 
+    TEST_METHOD(TestSendRequest)
+    {
+        RcClientHarness client;
+
+        rc_api_request_t pRequest;
+        memset(&pRequest, 0, sizeof(pRequest));
+        pRequest.url = "https://retroachievements.org/dorequest.php";
+        pRequest.post_data = "r=patch&u=User&t=APITOKEN&g=1234";
+        pRequest.content_type = "application/x-www-form-urlencoded";
+
+        client.mockRequester.SetHandler([&pRequest](const ra::services::Http::Request& pHttpRequest)
+            {
+                Assert::AreEqual(std::string(pRequest.url), pHttpRequest.GetUrl());
+                Assert::AreEqual(std::string(pRequest.post_data), pHttpRequest.GetPostData());
+                Assert::AreEqual(std::string(pRequest.content_type), pHttpRequest.GetContentType());
+
+                return ra::services::Http::Response(ra::services::Http::StatusCode::OK, "{\"Success\":true}");
+            });
+
+        rc_api_server_response_t pResponse;
+        std::string sResponseBuffer;
+        client.SendRequest(pRequest, pResponse, sResponseBuffer);
+
+        Assert::AreEqual("{\"Success\":true}", pResponse.body);
+        Assert::AreEqual({ 16 }, pResponse.body_length);
+        Assert::AreEqual(200, pResponse.http_status_code);
+
+        client.mockLogger.AssertContains(">> patch request: r=patch&u=User&t=[redacted]&g=1234");
+        client.mockLogger.AssertContains("<< patch response (200): {\"Success\":true}");
+    }
+
     TEST_METHOD(TestLoggingRedactToken)
     {
         RcClientHarness client;
@@ -155,6 +186,37 @@ public:
         client.mockThreadPool.ExecuteNextTask();
 
         Assert::IsTrue(bCallbackCalled);
+
+        client.mockLogger.AssertContains(">> login2 request: r=login2&u=User&p=[redacted]");
+        client.mockLogger.AssertContains("<< login2 response (200): {\"Success\":true,\"User\":\"User\",\"Token\":\"[redacted]\",\"Score\":1234}");
+    }
+
+    TEST_METHOD(TestLoggingRedactTokenSynchronous)
+    {
+        RcClientHarness client;
+
+        rc_api_request_t pRequest;
+        memset(&pRequest, 0, sizeof(pRequest));
+        pRequest.url = "https://retroachievements.org/dorequest.php";
+        pRequest.post_data = "r=login2&u=User&p=PASSWORD";
+        pRequest.content_type = "application/x-www-form-urlencoded";
+
+        client.mockRequester.SetHandler([&pRequest](const ra::services::Http::Request& pHttpRequest)
+            {
+                Assert::AreEqual(std::string(pRequest.url), pHttpRequest.GetUrl());
+                Assert::AreEqual(std::string(pRequest.post_data), pHttpRequest.GetPostData());
+                Assert::AreEqual(std::string(pRequest.content_type), pHttpRequest.GetContentType());
+
+                return ra::services::Http::Response(ra::services::Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"APITOKEN\",\"Score\":1234}");
+            });
+
+        rc_api_server_response_t pResponse;
+        std::string sResponseBuffer;
+        client.SendRequest(pRequest, pResponse, sResponseBuffer);
+
+        Assert::AreEqual("{\"Success\":true,\"User\":\"User\",\"Token\":\"APITOKEN\",\"Score\":1234}", pResponse.body);
+        Assert::AreEqual({ 62 }, pResponse.body_length);
+        Assert::AreEqual(200, pResponse.http_status_code);
 
         client.mockLogger.AssertContains(">> login2 request: r=login2&u=User&p=[redacted]");
         client.mockLogger.AssertContains("<< login2 response (200): {\"Success\":true,\"User\":\"User\",\"Token\":\"[redacted]\",\"Score\":1234}");

@@ -330,7 +330,17 @@ void TriggerViewModel::PasteFromClipboard()
         return;
     }
 
-    const auto nResult = AppendMemRefChain(ra::util::String::Narrow(sClipboardText));
+    std::string sNarrowText = ra::util::String::Narrow(sClipboardText);
+    if (IsValue() && Conditions().Count() == 0 && sNarrowText.find(':') == std::string::npos)
+    {
+        // if pasting something that looks like a legacy-formatted value into the value editor,
+        // and the value editor is empty, explicitly add a "M:" so it doesn't get parse as a
+        // legacy value. this prevents pushing a legacy value with a comparison to the server,
+        // which can prevent the leaderboard from functioning in rcheevos 12.0 and 12.1.
+        sNarrowText.insert(0, "M:");
+    }
+
+    const auto nResult = AppendMemRefChain(sNarrowText);
     if (nResult != RC_OK)
     {
         if (nResult == RC_MULTIPLE_GROUPS)

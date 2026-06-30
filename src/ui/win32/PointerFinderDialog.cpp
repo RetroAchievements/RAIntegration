@@ -191,7 +191,7 @@ PointerFinderDialog::PointerFinderDialog(PointerFinderViewModel& vmPointerFinder
     SetAnchor(IDC_RA_CAPTURE_4, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_MEMVIEWER_4, Anchor::Left | Anchor::Bottom | Anchor::Right);
 
-    SetMinimumSize(616, 583);
+    SetMinimumSize(636, 630);
 }
 
 BOOL PointerFinderDialog::OnInitDialog()
@@ -203,6 +203,12 @@ BOOL PointerFinderDialog::OnInitDialog()
     m_bindViewer2.OnInitDialog(*this, IDC_RA_MEMVIEWER_2);
     m_bindViewer3.OnInitDialog(*this, IDC_RA_MEMVIEWER_3);
     m_bindViewer4.OnInitDialog(*this, IDC_RA_MEMVIEWER_4);
+
+    SetFixedWidthFont(IDC_RA_RESULTS);
+    SetFixedWidthFont(IDC_RA_ADDRESS_1);
+    SetFixedWidthFont(IDC_RA_ADDRESS_2);
+    SetFixedWidthFont(IDC_RA_ADDRESS_3);
+    SetFixedWidthFont(IDC_RA_ADDRESS_4);
 
     return DialogBase::OnInitDialog();
 }

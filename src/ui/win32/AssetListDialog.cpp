@@ -246,7 +246,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     auto pChangesColumn = std::make_unique<ChangesColumnBinding>(
         AssetModelBase::ChangesProperty, vmAssetList.Changes());
     pChangesColumn->SetHeader(L"Changes");
-    pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 82);
+    pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 92);
     m_bindAssets.BindColumn(5 + nOffset, std::move(pChangesColumn));
 
     m_bindAssets.SetDoubleClickHandler([this](gsl::index nIndex)

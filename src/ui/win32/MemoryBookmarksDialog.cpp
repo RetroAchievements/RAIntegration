@@ -148,7 +148,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty, vmMemoryBookmarks.Bookmarks().Sizes());
     pSizeColumn->SetHeader(L"Size");
-    pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 76);
+    pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 90);
     pSizeColumn->SetAlignment(ra::ui::RelativePosition::Far);
     pSizeColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(2, std::move(pSizeColumn));
@@ -156,7 +156,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchFormatColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty, vmMemoryBookmarks.Bookmarks().Formats());
     pFormatColumn->SetHeader(L"Format");
-    pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 32);
+    pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 34);
     pFormatColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(3, std::move(pFormatColumn));
 
@@ -178,7 +178,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     auto pChangesColumn = std::make_unique<ra::ui::win32::bindings::GridNumberColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty);
     pChangesColumn->SetHeader(L"Changes");
-    pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 56);
+    pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 58);
     pChangesColumn->SetAlignment(ra::ui::RelativePosition::Far);
     m_bindBookmarks.BindColumn(6, std::move(pChangesColumn));
 
@@ -209,6 +209,8 @@ BOOL MemoryBookmarksDialog::OnInitDialog()
 {
     m_bindBookmarks.SetControl(*this, IDC_RA_LBX_ADDRESSES);
     m_bindBookmarks.InitializeTooltips(std::chrono::seconds(30));
+
+    SetFixedWidthFont(IDC_RA_LBX_ADDRESSES);
 
     return DialogBase::OnInitDialog();
 }

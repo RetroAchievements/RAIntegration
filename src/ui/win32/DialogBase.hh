@@ -152,6 +152,8 @@ protected:
         m_oMinimumSize.Height = nMinimumHeight;
     }
 
+    void SetFixedWidthFont(int nIDDlgItem) const noexcept;
+
 private:
     HWND m_hWnd = nullptr;
     IDialogPresenter* m_pDialogPresenter = nullptr; // nullable reference, not allocated

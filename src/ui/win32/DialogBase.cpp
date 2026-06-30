@@ -692,6 +692,47 @@ void DialogBase::UpdateAnchoredControls()
     }
 }
 
+class FixedWidthFontHolder
+{
+public:
+    FixedWidthFontHolder()
+    {
+        m_hFont = CreateFontW(
+            15,                      // cHeight
+            0,                       // cWidth (0 lets font mapper choose best average width)
+            0,                       // cEscapement (0 for normal text)
+            0,                       // cOrientation (0 for normal text)
+            FW_NORMAL,               // cWeight
+            FALSE,                   // bItalic
+            FALSE,                   // bUnderline
+            FALSE,                   // bStrikeOut
+            ANSI_CHARSET,            // iCharSet
+            OUT_DEFAULT_PRECIS,      // iOutPrecision
+            CLIP_DEFAULT_PRECIS,     // iClipPrecision
+            DEFAULT_QUALITY,         // iQuality
+            FIXED_PITCH | FF_MODERN, // iPitchAndFamily (Forces fixed-width)
+            L"Consolas"              // pszFaceName
+        );
+    }
+
+    ~FixedWidthFontHolder()
+    {
+        DeleteObject(m_hFont);
+    }
+
+    HFONT GetFont() const noexcept { return m_hFont; }
+
+private:
+    HFONT m_hFont;
+};
+
+static FixedWidthFontHolder s_pFixedWidthFont;
+
+void DialogBase::SetFixedWidthFont(int nIDDlgItem) const noexcept
+{
+    SetWindowFont(GetDlgItem(GetHWND(), nIDDlgItem), s_pFixedWidthFont.GetFont(), TRUE);
+}
+
 } // namespace win32
 } // namespace ui
 } // namespace ra

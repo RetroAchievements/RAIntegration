@@ -45,7 +45,7 @@ unsigned GridAddressColumnBinding::CalculateWidth()
     else if (nTotalMemorySize > 0x10000)
         nMaxChars = 8; // 0x123456
 
-    constexpr int nCharWidth = 6;
+    constexpr int nCharWidth = 7;
     constexpr int nPadding = 6;
     return (nCharWidth * nMaxChars) + nPadding * 2;
 }

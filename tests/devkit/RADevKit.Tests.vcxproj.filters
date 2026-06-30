@@ -76,6 +76,9 @@
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
+    <ClCompile Include="data\util\IndirectNoteResolver_Tests.cpp">
+      <Filter>data\util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -113,6 +116,9 @@
     </Filter>
     <Filter Include="ui\mocks">
       <UniqueIdentifier>{03e69a47-e3f3-4444-a7f7-718e67212211}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data\util">
+      <UniqueIdentifier>{f5339023-3443-4db7-81ca-7ba219585abf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

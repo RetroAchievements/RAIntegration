@@ -160,6 +160,22 @@ public:
         summary.AssertClause(1, L"2", L"Difficulty", L"is", L"Easy"); // <1 converted to ==0
     }
 
+    TEST_METHOD(TestIndirectNote)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U },
+            L"[32-bit pointer] Player data\r\n"
+            L"+0: [32-bit pointer] Class info\r\n"
+            L"++4: [32-bit] ID\r\n"
+            L"+4: [32-bit] Current HP\r\n"
+            L"+8: [32-bit] Max HP");
+        summary.InitializeFrom("I:0xX1234_0xX0004=0xX0008_I:0xX1234_I:0xX0000_0xX0004=3");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"Current HP", L"equals", L"Max HP");
+        summary.AssertClause(1, L"3-5", L"ID", L"is", L"3");
+    }
+
     TEST_METHOD(TestMemoryReferenceDeltaSelf)
     {
         TriggerSummaryViewModelHarness summary;
@@ -253,6 +269,94 @@ public:
 
         Assert::AreEqual({ 1U }, summary.Clauses().Count());
         summary.AssertClause(0, L"1-2", L"World", L"decreased to", L"5");
+    }
+
+    TEST_METHOD(TestNotEqualTwoValues)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xH1234!=4_0xH1234!=8");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"is not", L"4");
+        summary.AssertClause(1, L"2", L"World", L"is not", L"8");
+    }
+
+    TEST_METHOD(TestNotEqualTwoEnumValues)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World\r\n4=A\r\n8=B");
+        summary.InitializeFrom("0xH1234!=4_0xH1234!=8");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"is not", L"A");
+        summary.AssertClause(1, L"2", L"World", L"is not", L"B");
+    }
+
+    TEST_METHOD(TestNotEqualOrReset)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xH1234!=4_R:0xH1234=8");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"World", L"is not", L"4");
+        summary.AssertClause(1, L"2", L"World", L"is", L"8"); // Reset will become a header
+    }
+
+    TEST_METHOD(TestMemoryReferenceEqualsOtherMemory)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Current HP");
+        summary.mockGameContext.SetNote({ 0x1238U }, L"Max HP");
+        summary.InitializeFrom("0xH1234=0xH1238");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Current HP", L"equals", L"Max HP");
+    }
+
+    TEST_METHOD(TestMemoryReferenceNotEqualsOtherMemory)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Current HP");
+        summary.mockGameContext.SetNote({ 0x1238U }, L"Max HP");
+        summary.InitializeFrom("0xH1234!=0xH1238");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Current HP", L"does not equal", L"Max HP");
+    }
+
+    TEST_METHOD(TestMemoryReferenceLessThanOtherMemory)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Current HP");
+        summary.mockGameContext.SetNote({ 0x1238U }, L"Max HP");
+        summary.InitializeFrom("0xH1234<0xH1238");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Current HP", L"is less than", L"Max HP");
+    }
+
+    TEST_METHOD(TestMemoryReferenceLessThanOrEqualOtherMemory)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Current HP");
+        summary.mockGameContext.SetNote({ 0x1238U }, L"Max HP");
+        summary.InitializeFrom("0xH1234<=0xH1238");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Current HP", L"is at most", L"Max HP");
+    }
+
+    TEST_METHOD(TestMemoryReferenceEqualsDeltaOtherMemory)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Current HP");
+        summary.mockGameContext.SetNote({ 0x1238U }, L"Max HP");
+        summary.InitializeFrom("0xH1234=d0xH1238");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Current HP", L"equals last frame of", L"Max HP");
     }
 
     TEST_METHOD(TestAddHeadersSimple)

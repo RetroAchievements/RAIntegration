@@ -76,6 +76,7 @@
     <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp" />
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
     <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
+    <ClCompile Include="data\util\IndirectNoteResolver_Tests.cpp" />
     <ClCompile Include="util\Tokenizer_Tests.cpp" />
     <ClInclude Include="context\mocks\MockConsoleContext.hh" />
     <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh" />

@@ -28,6 +28,9 @@
     <Filter Include="ui">
       <UniqueIdentifier>{3d6b142b-5f11-4326-a76e-1044b0d23859}</UniqueIdentifier>
     </Filter>
+    <Filter Include="data\util">
+      <UniqueIdentifier>{8d4e6f6e-e2a2-4798-9c67-691fd63d9d47}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="services\ServiceLocator.hh">
@@ -201,6 +204,9 @@
     <ClInclude Include="data\models\LeaderboardModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
+    <ClInclude Include="data\util\IndirectNoteResolver.hh">
+      <Filter>data\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -283,6 +289,9 @@
     </ClCompile>
     <ClCompile Include="data\models\LeaderboardModel.cpp">
       <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\util\IndirectNoteResolver.cpp">
+      <Filter>data\util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

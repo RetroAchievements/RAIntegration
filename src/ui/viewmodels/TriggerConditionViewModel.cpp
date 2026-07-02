@@ -434,7 +434,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
         if (nType == TriggerOperandType::Value)
         {
             if (IsAddressType(GetTargetType()) && ra::data::Memory::SizeBits(GetTargetSize()) >= 8)
-                return GetPotentialEnumValueTooltip(GetSourceAddress(), GetTargetAddress());
+                return GetPotentialEnumValueTooltip(GetSourceValue(), GetTargetAddress());
 
             return GetValueTooltip(GetSourceAddress());
         }
@@ -463,7 +463,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
         if (nType == TriggerOperandType::Value)
         {
             if (IsAddressType(GetSourceType()) && ra::data::Memory::SizeBits(GetSourceSize()) >= 8)
-                return GetPotentialEnumValueTooltip(GetTargetAddress(), GetSourceAddress());
+                return GetPotentialEnumValueTooltip(GetTargetValue(), GetSourceAddress());
 
             return GetValueTooltip(GetTargetAddress());
         }
@@ -508,9 +508,18 @@ std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProp
     return L"";
 }
 
-std::wstring TriggerConditionViewModel::GetPotentialEnumValueTooltip(unsigned int nValue, ra::data::ByteAddress nCompareAddress) const
+std::wstring TriggerConditionViewModel::GetPotentialEnumValueTooltip(const std::wstring& sValue, ra::data::ByteAddress nCompareAddress) const
 {
     const ra::data::models::MemoryNoteModel* pNote = nullptr;
+
+    uint32_t nValue;
+    std::wstring sError;
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+        ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, nValue, sError);
+    else
+        ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError);
 
     if (IsIndirect())
     {

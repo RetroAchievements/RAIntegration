@@ -119,7 +119,7 @@ private:
 
     void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size nSize, const std::wstring& nValue) const;
 
-    std::wstring GetPotentialEnumValueTooltip(unsigned int nValue, ra::data::ByteAddress nCompareAddress) const;
+    std::wstring GetPotentialEnumValueTooltip(const std::wstring& sValue, ra::data::ByteAddress nCompareAddress) const;
     static std::wstring GetValueTooltip(unsigned int nValue);
     std::wstring GetAddressTooltip(ra::data::ByteAddress nAddress, ra::data::Memory::Size nSize, const std::wstring& sPointerChain, const ra::data::models::MemoryNoteModel* pNote) const;
     std::wstring GetRecallTooltip(bool bOperand2) const;

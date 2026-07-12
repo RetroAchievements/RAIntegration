@@ -62,7 +62,7 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
     auto pAchievedColumn = std::make_unique<ra::ui::win32::bindings::GridBooleanColumnBinding>(
         BrokenAchievementsViewModel::BrokenAchievementViewModel::IsAchievedProperty, L"Yes", L"No");
     pAchievedColumn->SetHeader(L"Achieved");
-    pAchievedColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
+    pAchievedColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 64);
     m_bindAchievements.BindColumn(3, std::move(pAchievedColumn));
 
     m_bindAchievements.BindItems(vmBrokenAchievements.Achievements());

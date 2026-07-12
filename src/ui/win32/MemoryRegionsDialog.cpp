@@ -152,6 +152,8 @@ BOOL MemoryRegionsDialog::OnInitDialog()
 {
     m_bindRegions.SetControl(*this, IDC_RA_LBX_REGIONS);
 
+    SetFixedWidthFont(IDC_RA_LBX_REGIONS);
+
     return DialogBase::OnInitDialog();
 }
 

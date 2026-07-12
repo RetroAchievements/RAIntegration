@@ -32,23 +32,14 @@ namespace ui {
 namespace win32 {
 
 static constexpr int COLUMN_WIDTH_ID = 30;
-static constexpr int COLUMN_WIDTH_FLAG = 78;
-static constexpr int COLUMN_WIDTH_TYPE = 42;
-static constexpr int COLUMN_WIDTH_SIZE = 72;
-static constexpr int COLUMN_WIDTH_VALUE = 72;
-static constexpr int COLUMN_WIDTH_OPERATOR = 35;
+static constexpr int COLUMN_WIDTH_FLAG = 110;
+static constexpr int COLUMN_WIDTH_TYPE = 60;
+static constexpr int COLUMN_WIDTH_SIZE = 90;
+static constexpr int COLUMN_WIDTH_VALUE = 90;
+static constexpr int COLUMN_WIDTH_OPERATOR = 38;
 static constexpr int COLUMN_WIDTH_HITS = 84;
 
 using fnGetStockIconInfo = std::add_pointer_t<HRESULT WINAPI(SHSTOCKICONID, UINT, SHSTOCKICONINFO*)>;
-static fnGetStockIconInfo pGetStockIconInfo = nullptr;
-
-AssetEditorDialog::Presenter::Presenter() noexcept
-{
-    // SHGetStockIconInfo isn't supported on WinXP, so we have to dynamically find it.
-    auto hDll = LoadLibraryA("Shell32");
-    if (hDll)
-        GSL_SUPPRESS_TYPE1 pGetStockIconInfo = reinterpret_cast<fnGetStockIconInfo>(GetProcAddress(hDll, "SHGetStockIconInfo"));
-}
 
 bool AssetEditorDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
 {
@@ -667,23 +658,14 @@ void AssetEditorDialog::ErrorIconBinding::OnViewModelBoolValueChanged(const Bool
         UpdateImage();
 }
 
-static HICON GetIcon(SHSTOCKICONID nStockIconId, LPCWSTR nOicIconId) noexcept
+static HICON GetIcon(SHSTOCKICONID nStockIconId, LPCWSTR) noexcept
 {
-    if (pGetStockIconInfo != nullptr)
-    {
-        SHSTOCKICONINFO sii{};
-        sii.cbSize = sizeof(sii);
-        if (SUCCEEDED(pGetStockIconInfo(nStockIconId, SHGSI_ICON | SHGSI_SMALLICON, &sii)))
-            return sii.hIcon;
+    SHSTOCKICONINFO sii{};
+    sii.cbSize = sizeof(sii);
+    if (SUCCEEDED(SHGetStockIconInfo(nStockIconId, SHGSI_ICON | SHGSI_SMALLICON, &sii)))
+        return sii.hIcon;
 
-        return nullptr;
-    }
-
-    // despite requesting a 16x16 icon, this returns a 32x32 one, which looks awkward in the space
-    // provided. GetStockIconInfo is prefered because it returns an appropriately sized icon. this
-    // is fallback logic for WinXP.
-    GSL_SUPPRESS_TYPE1
-    return reinterpret_cast<HICON>(LoadImage(nullptr, nOicIconId, IMAGE_ICON, 16, 16, LR_SHARED));
+    return nullptr;
 }
 
 void AssetEditorDialog::ErrorIconBinding::SetErrorIcon() noexcept
@@ -874,6 +856,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindAchievementTypes.BindSelectedItem(AssetEditorViewModel::AchievementTypeProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_TYPE, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_TYPE, AssetEditorViewModel::IsAchievementProperty);
+    m_bindWindow.BindVisible(IDC_RA_LBL_MEASURED, AssetEditorViewModel::IsAchievementProperty);
 
     // leaderboard only fields
     m_bindFormats.BindItems(vmAssetEditor.Formats());
@@ -883,6 +866,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindVisible(IDC_RA_LBL_FORMAT, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_FORMAT, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_CHK_LOWER_IS_BETTER, AssetEditorViewModel::IsLeaderboardProperty);
+    m_bindWindow.BindVisible(IDC_RA_LBL_VALUE, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_DISPLAY, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_DISPLAY, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_LBX_LBOARD_PARTS, AssetEditorViewModel::IsLeaderboardProperty);
@@ -1003,15 +987,16 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     SetAnchor(IDC_RA_ID, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_CHK_ACTIVE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_DESCRIPTION, Anchor::Top | Anchor::Left | Anchor::Right);
-    SetAnchor(IDC_RA_LBL_TYPE, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_TYPE, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_TYPE, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_TYPE, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_LBL_POINTS, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_POINTS, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_LBL_FORMAT, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_FORMAT, Anchor::Top | Anchor::Left);
-    SetAnchor(IDC_RA_LBL_DISPLAY, Anchor::Top | Anchor::Left);
-    SetAnchor(IDC_RA_DISPLAY, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_CHK_LOWER_IS_BETTER, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_LBL_DISPLAY, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_DISPLAY, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_VALUE, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_LBL_MEASURED, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_MEASURED, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_CHK_AS_PERCENT, Anchor::Top | Anchor::Left);
@@ -1039,7 +1024,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     SetAnchor(IDC_RA_MOVE_COND_DOWN, Anchor::Bottom | Anchor::Left);
     SetAnchor(IDC_RA_CHK_SHOW_DECIMALS, Anchor::Bottom | Anchor::Right);
 
-    SetMinimumSize(665, 348);
+    SetMinimumSize(840, 348);
 }
 
 BOOL AssetEditorDialog::OnInitDialog()
@@ -1067,6 +1052,8 @@ BOOL AssetEditorDialog::OnInitDialog()
     m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_PAUSE_ON_TRIGGER);
     m_bindActive.SetControl(*this, IDC_RA_CHK_ACTIVE);
     m_bindDecimalPreferred.SetControl(*this, IDC_RA_CHK_SHOW_DECIMALS);
+
+    SetFixedWidthFont(IDC_RA_LBX_CONDITIONS);
 
     m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
         WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,

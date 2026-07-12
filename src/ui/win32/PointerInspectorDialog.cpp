@@ -110,7 +110,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         PointerInspectorViewModel::StructFieldViewModel::SizeProperty, vmPointerFinder.Fields().Sizes());
     pSizeColumn->SetHeader(L"Size");
-    pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 76);
+    pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 90);
     pSizeColumn->SetAlignment(ra::ui::RelativePosition::Far);
     pSizeColumn->SetReadOnly(false);
     m_bindFields.BindColumn(2, std::move(pSizeColumn));
@@ -118,7 +118,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchFormatColumnBinding>(
         PointerInspectorViewModel::StructFieldViewModel::FormatProperty, vmPointerFinder.Fields().Formats());
     pFormatColumn->SetHeader(L"Format");
-    pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 32);
+    pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 34);
     pFormatColumn->SetReadOnly(false);
     m_bindFields.BindColumn(3, std::move(pFormatColumn));
 
@@ -189,6 +189,10 @@ BOOL PointerInspectorDialog::OnInitDialog()
     m_bindPointerChain.SetControl(*this, IDC_RA_LBX_GROUPS);
     m_bindFields.SetControl(*this, IDC_RA_LBX_ADDRESSES);
     m_bindFieldNote.SetControl(*this, IDC_RA_NOTE_TEXT);
+
+    SetFixedWidthFont(IDC_RA_LBX_GROUPS);
+    SetFixedWidthFont(IDC_RA_LBX_ADDRESSES);
+    SetFixedWidthFont(IDC_RA_NOTE_TEXT);
 
     return DialogBase::OnInitDialog();
 }

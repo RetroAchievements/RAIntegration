@@ -88,7 +88,7 @@ void MemoryInspectorDialog::SearchResultsGridBinding::UpdateColumnWidths()
     int nWidth = 0;
     const auto& vmMemory = GetViewModel<MemorySearchViewModel>();
     const auto nSize = vmMemory.ResultMemSize();
-    constexpr int nCharWidth = 6;
+    constexpr int nCharWidth = 7;
     constexpr int nPadding = 6;
 
     // value column
@@ -198,13 +198,13 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         MemorySearchViewModel::SearchResultViewModel::AddressProperty);
     pAddressColumn->SetHeader(L"Address");
-    pAddressColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 60);
+    pAddressColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 64);
     m_bindSearchResults.BindColumn(0, std::move(pAddressColumn));
 
     auto pValueColumn = std::make_unique<SearchResultValueColumnBinding>(
         MemorySearchViewModel::SearchResultViewModel::CurrentValueProperty);
     pValueColumn->SetHeader(L"Value");
-    pValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 50);
+    pValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 52);
     m_bindSearchResults.BindColumn(1, std::move(pValueColumn));
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
@@ -333,8 +333,12 @@ BOOL MemoryInspectorDialog::OnInitDialog()
     m_bindViewer32BitBE.SetControl(*this, IDC_RA_MEMVIEW_32BITBE);
     m_bindViewer.SetControl(*this, IDC_RA_MEMVIEWER);
 
-    SetWindowFont(GetDlgItem(GetHWND(), IDC_RA_MEMBITS), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
-    SetWindowFont(GetDlgItem(GetHWND(), IDC_RA_MEMBITS_TITLE), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
+    SetFixedWidthFont(IDC_RA_SEARCHRANGE);
+    SetFixedWidthFont(IDC_RA_ADDRESS);
+    SetFixedWidthFont(IDC_RA_NOTE_TEXT);
+    SetFixedWidthFont(IDC_RA_RESULTS);
+    SetFixedWidthFont(IDC_RA_MEMBITS);
+    SetFixedWidthFont(IDC_RA_MEMBITS_TITLE);
 
     // NOTE: This is the number of Unicode characters allowed. The database stores data
     //       in UTF-8, so this is the upper bound and less will actually be allowed if

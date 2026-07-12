@@ -15,13 +15,6 @@ namespace impl {
 class ServerBase : public IServer
 {
 public:
-    // === user functions ===
-
-    FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request&) override
-    {
-        return UnsupportedApi<FetchUserFriends::Response>(FetchUserFriends::Name());
-    }
-
     // === game functions ===
 
     ResolveHash::Response ResolveHash(const ResolveHash::Request&) override

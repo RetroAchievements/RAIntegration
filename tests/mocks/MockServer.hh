@@ -56,13 +56,6 @@ public:
         });
     }
 
-    // === user functions ===
-
-    FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) override
-    {
-        return HandleRequest<ra::api::FetchUserFriends>(request);
-    }
-
     // === game functions ===
 
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override

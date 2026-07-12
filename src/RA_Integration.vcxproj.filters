@@ -674,9 +674,6 @@
     <ClInclude Include="ui\win32\bindings\GridCheckBoxColumnBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
-    <ClInclude Include="api\FetchUserFriends.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="ui\viewmodels\OverlayFriendsPageViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>

@@ -432,67 +432,6 @@ static void HttpResponseToServerResponse(const ra::services::Http::Response& htt
     server_response->http_status_code = ra::etoi(httpResponse.StatusCode());
 }
 
-FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFriends::Request&)
-{
-    FetchUserFriends::Response response;
-
-    rc_api_fetch_followed_users_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
-    api_params.username = pUserContext.GetUsername().c_str();
-    api_params.api_token = pUserContext.GetApiToken().c_str();
-
-    rc_api_request_t api_request;
-    const int result = rc_api_init_fetch_followed_users_request(&api_request, &api_params);
-    if (result == RC_OK)
-    {
-        ra::services::Http::Response httpResponse;
-        if (DoRequest(api_request, FetchUserFriends::Name(), httpResponse, response))
-        {
-            rc_api_fetch_followed_users_response_t api_response;
-            rc_api_server_response_t server_response;
-            HttpResponseToServerResponse(httpResponse, &server_response);
-
-            const auto nResult = rc_api_process_fetch_followed_users_server_response(&api_response, &server_response);
-            if (ValidateResponse(nResult, api_response.response, ResolveHash::Name(), httpResponse.StatusCode(),
-                                 response))
-            {
-                response.Friends.resize(api_response.num_users);
-                for (uint32_t i = 0; i < api_response.num_users; ++i)
-                {
-                    auto& pFriend = response.Friends.at(i);
-                    const auto& pUser = api_response.users[i];
-                    pFriend.User = pUser.display_name;
-                    if (pUser.avatar_url)
-                        pFriend.AvatarUrl = pUser.avatar_url;
-                    pFriend.Score = pUser.score;
-                    if (pUser.recent_activity.description)
-                        pFriend.LastActivity = ra::util::String::Widen(pUser.recent_activity.description);
-                    pFriend.LastActivityContextId = pUser.recent_activity.context_id;
-                    if (pUser.recent_activity.context)
-                        pFriend.LastActivityContext = ra::util::String::Widen(pUser.recent_activity.context);
-                    if (pUser.recent_activity.context_image_url)
-                        pFriend.LastActivityImageUrl = pUser.recent_activity.context_image_url;
-                    pFriend.LastActivityTime = pUser.recent_activity.when;
-                }
-
-                response.Result = ApiResult::Success;
-            }
-
-            rc_api_destroy_fetch_followed_users_response(&api_response);
-        }
-    }
-    else
-    {
-        response.Result = ApiResult::Failed;
-        response.ErrorMessage = rc_error_str(result);
-    }
-
-    rc_api_destroy_request(&api_request);
-    return response;
-}
-
 ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request)
 {
     ResolveHash::Response response;

@@ -156,15 +156,17 @@ bool ImageRepository::IsImageAvailable(ImageType nType, const std::string& sName
     return (pFileSystem.GetFileSize(sFilename) > 0);
 }
 
-void ImageRepository::FetchImage(ImageType nType, const std::string& sName, const std::string& sSourceUrl)
+void ImageRepository::FetchImage(ImageType nType, const std::string& sName, const std::string& sSourceUrl, time_t tLastUpdated)
 {
     if (sName.empty())
         return;
 
     std::wstring sFilename = GetFilename(nType, sName);
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-    if (pFileSystem.GetFileSize(sFilename) > 0)
-        return;
+    if (pFileSystem.GetFileSize(sFilename) > 0) {
+        if (tLastUpdated == 0 || tLastUpdated < std::chrono::system_clock::to_time_t(pFileSystem.GetLastModified(sFilename)))
+            return;
+    }
 
     // check to see if it's already queued
     {

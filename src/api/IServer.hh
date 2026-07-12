@@ -5,7 +5,6 @@
 #include "api/FetchAchievementInfo.hh"
 #include "api/FetchBadgeIds.hh"
 #include "api/FetchLeaderboardInfo.hh"
-#include "api/FetchUserFriends.hh"
 #include "api/LatestClient.hh"
 #include "api/ResolveHash.hh"
 #include "api/UpdateAchievement.hh"
@@ -20,9 +19,6 @@ class IServer
 {
 public:
     virtual const char* Name() const noexcept = 0;
-
-    // === user functions ===
-    virtual FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) = 0;
 
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) = 0;

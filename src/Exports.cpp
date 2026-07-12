@@ -331,7 +331,7 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
 
         // start fetching the avatar image
         ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>().FetchImage(
-            ra::ui::ImageType::UserPic, pUser->username, pUser->avatar_url);
+            ra::ui::ImageType::UserPic, pUser->username, pUser->avatar_url, pUser->avatar_last_updated);
 
         // show the welcome message
         std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(

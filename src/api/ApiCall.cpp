@@ -12,7 +12,6 @@ static ra::api::IServer& Server()
     return ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
 }
 
-FetchUserFriends::Response FetchUserFriends::Request::Call() const { return Server().FetchUserFriends(*this); }
 ResolveHash::Response ResolveHash::Request::Call() const { return Server().ResolveHash(*this); }
 UpdateAchievement::Response UpdateAchievement::Request::Call() const { return Server().UpdateAchievement(*this); }
 FetchAchievementInfo::Response FetchAchievementInfo::Request::Call() const { return Server().FetchAchievementInfo(*this); }

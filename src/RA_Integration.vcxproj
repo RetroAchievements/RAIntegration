@@ -194,7 +194,6 @@
     <ClInclude Include="api\FetchAchievementInfo.hh" />
     <ClInclude Include="api\FetchBadgeIds.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
-    <ClInclude Include="api\FetchUserFriends.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
     <ClInclude Include="api\impl\DisconnectedServer.hh" />
     <ClInclude Include="api\impl\OfflineServer.hh" />

@@ -45,7 +45,7 @@ public:
         pIter->second.insert(sName);
     }
 
-    void FetchImage(_UNUSED ImageType nType, _UNUSED const std::string& sName, _UNUSED const std::string& sSourceUrl) noexcept override
+    void FetchImage(_UNUSED ImageType nType, _UNUSED const std::string& sName, _UNUSED const std::string& sSourceUrl, _UNUSED time_t tLastModified = 0) noexcept override
     {
 
     }

@@ -772,17 +772,6 @@ public:
         Assert::AreEqual(std::wstring(L""), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 
-    TEST_METHOD(TestTooltipValueEnum)
-    {
-        TriggerConditionViewModelHarness condition;
-        condition.mockGameContext.SetNote({ 0x0099U }, L"Color {02=Red, 06=Brown}");
-        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
-        condition.Parse("0xH0099=2");
-
-        Assert::AreEqual(std::wstring(L"0x0099\r\nColor {02=Red, 06=Brown}"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"02=Red"), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
-    }
-
     TEST_METHOD(TestTooltipValueHex)
     {
         TriggerConditionViewModelHarness condition;
@@ -793,6 +782,54 @@ public:
         // in hex mode, the fields will show "0xFF" and "0x63", so display the decimal value in the tooltip
         Assert::AreEqual(std::wstring(L"255"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L"99"), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipValueEnumPreferDecimal)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetNote({ 0x0099U }, L"Color {20=Red, 24=Brown}");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        condition.Parse("0xH0099=20");
+
+        Assert::AreEqual(std::wstring(L"20"), condition.GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x0099\r\nColor {20=Red, 24=Brown}"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"20=Red"), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipValueEnumPreferHex)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetNote({ 0x0099U }, L"Color {20=Red, 24=Brown}");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
+        condition.Parse("0xH0099=20");
+
+        Assert::AreEqual(std::wstring(L"0x14"), condition.GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x0099\r\nColor {20=Red, 24=Brown}"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"20=Red"), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipValueEnumPreferDecimalHexNote)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetNote({ 0x0099U }, L"Color {0x14=Red, 0x18=Brown}");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        condition.Parse("0xH0099=20");
+
+        Assert::AreEqual(std::wstring(L"20"), condition.GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x0099\r\nColor {0x14=Red, 0x18=Brown}"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x14=Red"), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipValueEnumPreferHexHexNote)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetNote({ 0x0099U }, L"Color {0x14=Red, 0x18=Brown}");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
+        condition.Parse("0xH0099=20");
+
+        Assert::AreEqual(std::wstring(L"0x14"), condition.GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x0099\r\nColor {0x14=Red, 0x18=Brown}"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x14=Red"), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 
 private:

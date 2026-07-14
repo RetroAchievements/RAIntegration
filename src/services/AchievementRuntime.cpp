@@ -623,7 +623,7 @@ private:
                             rc_client_subset_info_t& pCoreSubsetWrapper,
                             rc_client_subset_info_t& pLocalSubsetWrapper,
                             const rc_client_subset_info_t* pSubset, uint32_t nSubsetId,
-                            ra::data::context::GameAssets& vAssets)
+                            ra::data::models::GameAssets& vAssets)
     {
         std::vector<ra::data::models::AchievementModel*> vCoreAchievements;
         std::vector<ra::data::models::AchievementModel*> vLocalAchievements;
@@ -671,7 +671,7 @@ private:
 
         SyncSubset(&pCoreSubsetWrapper, &pSubsetWrapper, vCoreAchievements, vCoreLeaderboards);
 
-        pLocalSubsetWrapper.public_.id = ra::data::context::GameAssets::LocalSubsetId;
+        pLocalSubsetWrapper.public_.id = ra::data::models::AchievementSetModel::LocalId;
         pLocalSubsetWrapper.public_.title = "Local";
         snprintf(pLocalSubsetWrapper.public_.badge_name, sizeof(pLocalSubsetWrapper.public_.badge_name), "%s",
                  pSubset->public_.badge_name);
@@ -1234,7 +1234,7 @@ void AchievementRuntime::UnloadGame()
 
 /* ---- DoFrame ----- */
 
-static void PrepareForPauseOnReset(const ra::data::context::GameAssets& pAssets,
+static void PrepareForPauseOnReset(const ra::data::models::GameAssets& pAssets,
     std::vector<const rc_client_achievement_info_t*>& vAchievementsWithHits)
 {
     std::vector<const ra::data::models::AchievementModel*> vAchievements;
@@ -1251,7 +1251,7 @@ static void PrepareForPauseOnReset(const ra::data::context::GameAssets& pAssets,
     }
 }
 
-static void PrepareForPauseOnReset(const ra::data::context::GameAssets& pAssets,
+static void PrepareForPauseOnReset(const ra::data::models::GameAssets& pAssets,
     std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mLeaderboardsWithHits)
 {
     std::vector<const ra::data::models::LeaderboardModel*> vLeaderboards;
@@ -1286,7 +1286,7 @@ static void PrepareForPauseOnReset(const ra::data::context::GameAssets& pAssets,
     }
 }
 
-static void PrepareForPauseOnTrigger(const ra::data::context::GameAssets& pAssets,
+static void PrepareForPauseOnTrigger(const ra::data::models::GameAssets& pAssets,
     std::map<const rc_client_leaderboard_info_t*, ra::data::models::LeaderboardModel::LeaderboardParts>& mActiveLeaderboards)
 {
     std::vector<const ra::data::models::LeaderboardModel*> vLeaderboards;
@@ -1752,9 +1752,9 @@ static void ShowCompletionPopup(uint32_t nGameId, const std::wstring& sTitle, ui
 static void HandleSubsetCompletedEvent(const rc_client_subset_t& pSubset)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    for (const auto& pGameSubset : pGameContext.Subsets())
+    for (const auto& pGameSubset : pGameContext.Assets().AchievementSets())
     {
-        if (pGameSubset.AchievementSetID() == pSubset.id)
+        if (pGameSubset.GetID() == pSubset.id)
         {
             uint32_t nPoints = 0;
             for (const auto& pAsset : pGameContext.Assets())
@@ -1764,8 +1764,8 @@ static void HandleSubsetCompletedEvent(const rc_client_subset_t& pSubset)
                     nPoints += pAchievement->GetPoints();
             }
 
-            const auto sTitle = ra::util::String::Printf(L"%s (%s)", pGameSubset.Title(), pGameContext.GameTitle());
-            ShowCompletionPopup(pGameSubset.GameID(), sTitle, pSubset.num_achievements, nPoints, pSubset.badge_name);
+            const auto sTitle = ra::util::String::Printf(L"%s (%s)", pGameSubset.GetTitle(), pGameContext.GameTitle());
+            ShowCompletionPopup(pGameSubset.GetBackingGameID(), sTitle, pSubset.num_achievements, nPoints, pSubset.badge_name);
             break;
         }
     }
@@ -2060,7 +2060,7 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
             if (pAchievement != nullptr)
             {
                 vmPopup->SetDescription(
-                    ra::util::String::Printf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
+                    ra::util::String::Printf(L"%s (%u)", pAchievement->GetTitle(), pAchievement->GetPoints()));
                 vmPopup->SetImage(ra::ui::ImageType::Badge, ra::util::String::Narrow(pAchievement->GetBadge()));
             }
             else
@@ -2085,7 +2085,7 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nLeaderboardId);
         std::wstring sLeaderboardName = (pLeaderboard != nullptr) ?
-            pLeaderboard->GetName() : ra::util::String::Printf(L"Leaderboard %u", nLeaderboardId);
+            pLeaderboard->GetTitle() : ra::util::String::Printf(L"Leaderboard %u", nLeaderboardId);
         const auto sErrorMessage = pServerError.error_message ?
             ra::util::String::Widen(pServerError.error_message) : L"Error submitting leaderboard entry";
 

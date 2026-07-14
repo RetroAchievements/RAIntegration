@@ -99,8 +99,8 @@ public:
     /// <summary>
     /// Gets the list of asset subsets.
     /// </summary>
-    const LookupItemViewModelCollection& Subsets() const noexcept { return m_vSubsets; }
-    LookupItemViewModelCollection& Subsets() noexcept { return m_vSubsets; }
+    const LookupItemViewModelCollection& AchievementSets() const noexcept { return m_vSubsets; }
+    LookupItemViewModelCollection& AchievementSets() noexcept { return m_vSubsets; }
 
     /// <summary>
     /// Gets the list of asset states.

@@ -130,15 +130,15 @@ void AssetListViewModel::OnActiveGameChanged()
     m_vSubsets.BeginUpdate();
     m_vSubsets.Clear();
 
-    for (const auto& pSubset : pGameContext.Subsets())
-        m_vSubsets.Add(pSubset.AchievementSetID(), pSubset.Title());
+    for (const auto& pSubset : pGameContext.Assets().AchievementSets())
+        m_vSubsets.Add(pSubset.GetID(), pSubset.GetTitle());
 
     m_vSubsets.EndUpdate();
 
-    if (pGameContext.Subsets().empty())
+    if (pGameContext.Assets().AchievementSets().Count() == 0)
         SetSubsetFilter(0);
     else
-        SetSubsetFilter(pGameContext.Subsets().front().AchievementSetID());
+        SetSubsetFilter(pGameContext.Assets().AchievementSets().GetItemAt(0)->GetID());
 
     m_bInitializingFilter = false;
 
@@ -573,7 +573,7 @@ void AssetListViewModel::AddOrRemoveFilteredItem(gsl::index nAssetIndex)
 
 void AssetListViewModel::SyncAsset(AssetSummaryViewModel& vmSummary, const ra::data::models::AssetModelBase& pAsset)
 {
-    vmSummary.SetLabel(pAsset.GetName());
+    vmSummary.SetLabel(pAsset.GetTitle());
     vmSummary.SetType(pAsset.GetType());
     vmSummary.SetCategory(pAsset.GetCategory());
     vmSummary.SetChanges(pAsset.GetChanges());
@@ -1368,26 +1368,26 @@ void AssetListViewModel::ValidateAchievementForCore(std::wstring& sError, const 
 {
     const std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetTitle(), sTriggerError));
 }
 
 void AssetListViewModel::ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pLeaderboard) const
 {
     std::wstring sTriggerError = ValidateTriggerLogic(pLeaderboard.GetStartTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Start", sTriggerError));
 
     sTriggerError = ValidateTriggerLogic(pLeaderboard.GetSubmitTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Submit", sTriggerError));
 
     sTriggerError = ValidateTriggerLogic(pLeaderboard.GetCancelTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Cancel", sTriggerError));
 
     const std::wstring sValueError = ValidateValueLogic(pLeaderboard.GetValueDefinition());
     if (!sValueError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Value", sValueError));
 }
 
 
@@ -1415,13 +1415,13 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
             if (pLeaderboard != nullptr)
             {
                 if (pLeaderboard->GetStartTrigger().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Start condition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Start condition", pLeaderboard->GetTitle()));
                 if (pLeaderboard->GetCancelTrigger().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Cancel condition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Cancel condition", pLeaderboard->GetTitle()));
                 if (pLeaderboard->GetSubmitTrigger().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Submit condition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Submit condition", pLeaderboard->GetTitle()));
                 if (pLeaderboard->GetValueDefinition().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Value definition", pLeaderboard->GetName()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Value definition", pLeaderboard->GetTitle()));
 
                 ValidateLeaderboardForCore(sError, *pLeaderboard);
             }
@@ -1955,7 +1955,7 @@ void AssetListViewModel::CloneSelected()
             vmAchievement.SetAuthor(pAuthor);
             vmAchievement.UpdateServerCheckpoint();
 
-            vmAchievement.SetName(pSourceAchievement->GetName() + L" (copy)");
+            vmAchievement.SetName(pSourceAchievement->GetTitle() + L" (copy)");
             vmAchievement.SetDescription(pSourceAchievement->GetDescription());
             vmAchievement.SetBadge(pSourceAchievement->GetBadge());
             vmAchievement.SetPoints(pSourceAchievement->GetPoints());
@@ -1977,7 +1977,7 @@ void AssetListViewModel::CloneSelected()
             vmLeaderboard.SetAuthor(pAuthor);
             vmLeaderboard.UpdateServerCheckpoint();
 
-            vmLeaderboard.SetName(pSourceLeaderboard->GetName() + L" (copy)");
+            vmLeaderboard.SetName(pSourceLeaderboard->GetTitle() + L" (copy)");
             vmLeaderboard.SetDescription(pSourceLeaderboard->GetDescription());
             vmLeaderboard.SetStartTrigger(pSourceLeaderboard->GetStartTrigger());
             vmLeaderboard.SetSubmitTrigger(pSourceLeaderboard->GetSubmitTrigger());

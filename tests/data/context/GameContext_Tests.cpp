@@ -16,6 +16,7 @@
 #include "tests\ui\UIAsserts.hh"
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockDevKitContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
@@ -23,6 +24,7 @@
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockMessageDispatcher.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AchievementSetAsserts.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\ui\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -68,6 +70,7 @@ public:
 
         ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockDevKitContext mockDevKitContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockUserContext mockUser;
         ra::services::mocks::MockClock mockClock;
@@ -693,7 +696,7 @@ public:
         Assert::IsNotNull(vmAch1);
         Ensures(vmAch1 != nullptr);
         Assert::AreEqual(5U, vmAch1->GetID());
-        Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetName());
+        Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc1"), vmAch1->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth1"), vmAch1->GetAuthor());
         Assert::AreEqual(ra::data::models::AssetCategory::Core, vmAch1->GetCategory());
@@ -706,7 +709,7 @@ public:
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(7U, vmAch2->GetID());
-        Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetName());
+        Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc2"), vmAch2->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth2"), vmAch2->GetAuthor());
         Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, vmAch2->GetCategory());
@@ -741,7 +744,7 @@ public:
         Assert::IsNotNull(vmAch1);
         Ensures(vmAch1 != nullptr);
         Assert::AreEqual(5U, vmAch1->GetID());
-        Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetName());
+        Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc1"), vmAch1->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth1"), vmAch1->GetAuthor());
         Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, vmAch1->GetCategory());
@@ -754,7 +757,7 @@ public:
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(7U, vmAch2->GetID());
-        Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetName());
+        Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc2"), vmAch2->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, vmAch2->GetCategory());
         Assert::AreEqual(15, vmAch2->GetPoints());
@@ -792,7 +795,7 @@ public:
         auto* pAch = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach1"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach1"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc1"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth1"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"12345"), pAch->GetBadge());
@@ -804,7 +807,7 @@ public:
         pAch = game.Assets().FindAchievement(7U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach2b"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach2b"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc2b"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth2"), pAch->GetAuthor()); // author not merged
         Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
@@ -819,7 +822,7 @@ public:
         pAch = game.Assets().FindAchievement(9U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach3b"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach3b"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc3b"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth3"), pAch->GetAuthor()); // author not merged
         Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
@@ -831,10 +834,10 @@ public:
         Assert::AreEqual(2U, pTrigger->requirement->conditions->operand2.value.num); // runtime trigger updated
 
         // no server achievement, assign FirstLocalId
-        pAch = game.Assets().FindAchievement(GameAssets::FirstLocalId);
+        pAch = game.Assets().FindAchievement(ra::data::models::GameAssets::FirstLocalId);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach3"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach3"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc3"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth3"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00555"), pAch->GetBadge());
@@ -843,10 +846,10 @@ public:
         Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
 
         // no server achievement, assign next local id
-        pAch = game.Assets().FindAchievement(GameAssets::FirstLocalId + 1);
+        pAch = game.Assets().FindAchievement(ra::data::models::GameAssets::FirstLocalId + 1);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach4"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach4"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc4"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth4"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00556"), pAch->GetBadge());
@@ -878,7 +881,7 @@ public:
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(7U, vmAch->GetID());
-        Assert::AreEqual(std::wstring(L"Ach2b"), vmAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach2b"), vmAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc2b"), vmAch->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Local, vmAch->GetCategory());
         Assert::AreEqual(25, vmAch->GetPoints());
@@ -892,7 +895,7 @@ public:
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(999000001U, vmAch->GetID()); // non-vms get first id and first id + 1
-        Assert::AreEqual(std::wstring(L"Ach3"), vmAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach3"), vmAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc3"), vmAch->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Local, vmAch->GetCategory());
         Assert::AreEqual(20, vmAch->GetPoints());
@@ -906,7 +909,7 @@ public:
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(999000003U, vmAch->GetID()); // non-vms get first id and first id + 1
-        Assert::AreEqual(std::wstring(L"Ach4"), vmAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach4"), vmAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc4"), vmAch->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Local, vmAch->GetCategory());
         Assert::AreEqual(10, vmAch->GetPoints());
@@ -966,14 +969,14 @@ public:
                                         "111000002:\"R:1=1\":Ach6:Desc6::::Auth6:10:1234511111:1234500000:::556\n");
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-        Assert::AreEqual({2U}, game.Subsets().size());
+        Assert::AreEqual({2U}, game.Assets().AchievementSets().Count());
         Assert::AreEqual(2U, game.GetGameId(3U));
 
         // local achievement data for 5 should be merged with server achievement data
         auto* pAch = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach1b"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach1b"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc1b"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth1"), pAch->GetAuthor()); // author not merged
         Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
@@ -985,7 +988,7 @@ public:
         pAch = game.Assets().FindAchievement(7U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach2b"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach2b"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc2b"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth2"), pAch->GetAuthor()); // author not merged
         Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
@@ -997,7 +1000,7 @@ public:
         pAch = game.Assets().FindAchievement(111000002U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach3"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach3"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc3"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth3"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00555"), pAch->GetBadge());
@@ -1009,7 +1012,7 @@ public:
         pAch = game.Assets().FindAchievement(111000003U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach4"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach4"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc4"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth4"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00556"), pAch->GetBadge());
@@ -1021,7 +1024,7 @@ public:
         pAch = game.Assets().FindAchievement(111000004U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach5"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach5"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc5"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth5"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00555"), pAch->GetBadge());
@@ -1033,7 +1036,7 @@ public:
         pAch = game.Assets().FindAchievement(111000005U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach6"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Ach6"), pAch->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc6"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth6"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00556"), pAch->GetBadge());
@@ -1070,13 +1073,13 @@ public:
         const auto* pLb1 = game.Assets().FindLeaderboard(7U);
         Assert::IsNotNull(pLb1);
         Ensures(pLb1 != nullptr);
-        Assert::AreEqual(std::wstring(L"LB1"), pLb1->GetName());
+        Assert::AreEqual(std::wstring(L"LB1"), pLb1->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc1"), pLb1->GetDescription());
 
         const auto* pLb2 = game.Assets().FindLeaderboard(8U);
         Assert::IsNotNull(pLb2);
         Ensures(pLb2 != nullptr);
-        Assert::AreEqual(std::wstring(L"LB2"), pLb2->GetName());
+        Assert::AreEqual(std::wstring(L"LB2"), pLb2->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc2"), pLb2->GetDescription());
     }
 
@@ -1116,7 +1119,7 @@ public:
         Assert::IsNotNull(vmAch1);
         Ensures(vmAch1 != nullptr);
         Assert::AreEqual(9U, vmAch1->GetID());
-        Assert::AreEqual(std::wstring(L"Ach9"), vmAch1->GetName());
+        Assert::AreEqual(std::wstring(L"Ach9"), vmAch1->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc9"), vmAch1->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Core, vmAch1->GetCategory());
         Assert::AreEqual(9, vmAch1->GetPoints());
@@ -1128,7 +1131,7 @@ public:
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(11U, vmAch2->GetID());
-        Assert::AreEqual(std::wstring(L"Ach11"), vmAch2->GetName());
+        Assert::AreEqual(std::wstring(L"Ach11"), vmAch2->GetTitle());
         Assert::AreEqual(std::wstring(L"Desc11"), vmAch2->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, vmAch2->GetCategory());
         Assert::AreEqual(11, vmAch2->GetPoints());
@@ -1598,14 +1601,13 @@ public:
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
 
-        Assert::AreEqual({1}, game.Subsets().size());
+        Assert::AreEqual({1}, game.Assets().AchievementSets().Count());
 
-        const auto& pSubset = game.Subsets().front();
-        Assert::AreEqual(0U, pSubset.ID());
-        Assert::AreEqual(11111U, pSubset.AchievementSetID());
-        Assert::AreEqual(2222U, pSubset.GameID());
-        Assert::AreEqual(GameContext::SubsetType::Core, pSubset.Type());
-        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.Title());
+        const auto& pSubset = *game.Assets().AchievementSets().GetItemAt(0);
+        Assert::AreEqual(11111U, pSubset.GetID());
+        Assert::AreEqual(2222U, pSubset.GetBackingGameID());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Core, pSubset.GetType());
+        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.GetTitle());
     }
 
     TEST_METHOD(TestInitializeSubsetsCoreWithBonus)
@@ -1641,28 +1643,25 @@ public:
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
 
-        Assert::AreEqual({3}, game.Subsets().size());
+        Assert::AreEqual({3}, game.Assets().AchievementSets().Count());
 
-        const auto& pSubset = game.Subsets().at(0);
-        Assert::AreEqual(0U, pSubset.ID());
-        Assert::AreEqual(11111U, pSubset.AchievementSetID());
-        Assert::AreEqual(2222U, pSubset.GameID());
-        Assert::AreEqual(GameContext::SubsetType::Core, pSubset.Type());
-        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.Title());
+        const auto& pSubset = *game.Assets().AchievementSets().GetItemAt(0);
+        Assert::AreEqual(11111U, pSubset.GetID());
+        Assert::AreEqual(2222U, pSubset.GetBackingGameID());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Core, pSubset.GetType());
+        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.GetTitle());
 
-        const auto& pSubset2 = game.Subsets().at(1);
-        Assert::AreEqual(4444U, pSubset2.ID());
-        Assert::AreEqual(4444U, pSubset2.AchievementSetID());
-        Assert::AreEqual(3333U, pSubset2.GameID());
-        Assert::AreEqual(GameContext::SubsetType::Bonus, pSubset2.Type());
-        Assert::AreEqual(std::wstring(L"Bonus"), pSubset2.Title());
+        const auto& pSubset2 = *game.Assets().AchievementSets().GetItemAt(1);
+        Assert::AreEqual(4444U, pSubset2.GetID());
+        Assert::AreEqual(3333U, pSubset2.GetBackingGameID());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Bonus, pSubset2.GetType());
+        Assert::AreEqual(std::wstring(L"Bonus"), pSubset2.GetTitle());
 
-        const auto& pSubset3 = game.Subsets().at(2);
-        Assert::AreEqual(6666U, pSubset3.ID());
-        Assert::AreEqual(6666U, pSubset3.AchievementSetID());
-        Assert::AreEqual(5555U, pSubset3.GameID());
-        Assert::AreEqual(GameContext::SubsetType::Bonus, pSubset3.Type());
-        Assert::AreEqual(std::wstring(L"Perfect Play"), pSubset3.Title());
+        const auto& pSubset3 = *game.Assets().AchievementSets().GetItemAt(2);
+        Assert::AreEqual(6666U, pSubset3.GetID());
+        Assert::AreEqual(5555U, pSubset3.GetBackingGameID());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Bonus, pSubset3.GetType());
+        Assert::AreEqual(std::wstring(L"Perfect Play"), pSubset3.GetTitle());
     }
 
     TEST_METHOD(TestInitializeSubsetsExclusive)
@@ -1690,14 +1689,13 @@ public:
         Assert::AreEqual(3333U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
 
-        Assert::AreEqual({1}, game.Subsets().size());
+        Assert::AreEqual({1}, game.Assets().AchievementSets().Count());
 
-        const auto& pSubset = game.Subsets().at(0);
-        Assert::AreEqual(1111U, pSubset.ID());
-        Assert::AreEqual(1111U, pSubset.AchievementSetID());
-        Assert::AreEqual(2222U, pSubset.GameID());
-        Assert::AreEqual(GameContext::SubsetType::Exclusive, pSubset.Type());
-        Assert::AreEqual(std::wstring(L"Subset Title (Game Title)"), pSubset.Title());
+        const auto& pSubset = *game.Assets().AchievementSets().GetItemAt(0);
+        Assert::AreEqual(1111U, pSubset.GetID());
+        Assert::AreEqual(2222U, pSubset.GetBackingGameID());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Exclusive, pSubset.GetType());
+        Assert::AreEqual(std::wstring(L"Subset Title (Game Title)"), pSubset.GetTitle());
     }
 
     TEST_METHOD(TestInitializeSubsetsSpecialtyWithBonus)
@@ -1734,28 +1732,25 @@ public:
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(5555U, game.ActiveGameId());
 
-        Assert::AreEqual({3}, game.Subsets().size());
+        Assert::AreEqual({3}, game.Assets().AchievementSets().Count());
 
-        const auto& pSubset = game.Subsets().at(0);
-        Assert::AreEqual(0U, pSubset.ID());
-        Assert::AreEqual(6666U, pSubset.AchievementSetID());
-        Assert::AreEqual(2222U, pSubset.GameID());
-        Assert::AreEqual(GameContext::SubsetType::Core, pSubset.Type());
-        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.Title());
+        const auto& pSubset = *game.Assets().AchievementSets().GetItemAt(0);
+        Assert::AreEqual(6666U, pSubset.GetID());
+        Assert::AreEqual(2222U, pSubset.GetBackingGameID());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Core, pSubset.GetType());
+        Assert::AreEqual(std::wstring(L"Game Title"), pSubset.GetTitle());
 
-        const auto& pSubset2 = game.Subsets().at(1);
-        Assert::AreEqual(7777U, pSubset2.ID());
-        Assert::AreEqual(7777U, pSubset2.AchievementSetID());
-        Assert::AreEqual(5555U, pSubset2.GameID());
-        Assert::AreEqual(GameContext::SubsetType::Specialty, pSubset2.Type());
-        Assert::AreEqual(std::wstring(L"Perfect Play"), pSubset2.Title());
+        const auto& pSubset2 = *game.Assets().AchievementSets().GetItemAt(1);
+        Assert::AreEqual(7777U, pSubset2.GetID());
+        Assert::AreEqual(5555U, pSubset2.GetBackingGameID());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Specialty, pSubset2.GetType());
+        Assert::AreEqual(std::wstring(L"Perfect Play"), pSubset2.GetTitle());
 
-        const auto& pSubset3 = game.Subsets().at(2);
-        Assert::AreEqual(4444U, pSubset3.ID());
-        Assert::AreEqual(4444U, pSubset3.AchievementSetID());
-        Assert::AreEqual(3333U, pSubset3.GameID());
-        Assert::AreEqual(GameContext::SubsetType::Bonus, pSubset3.Type());
-        Assert::AreEqual(std::wstring(L"Bonus"), pSubset3.Title());
+        const auto& pSubset3 = *game.Assets().AchievementSets().GetItemAt(2);
+        Assert::AreEqual(4444U, pSubset3.GetID());
+        Assert::AreEqual(3333U, pSubset3.GetBackingGameID());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Bonus, pSubset3.GetType());
+        Assert::AreEqual(std::wstring(L"Bonus"), pSubset3.GetTitle());
     }
 
     TEST_METHOD(TestInitializeSubsetsVirtual)
@@ -1781,14 +1776,13 @@ public:
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
 
-        Assert::AreEqual({1}, game.Subsets().size());
+        Assert::AreEqual({1}, game.Assets().AchievementSets().Count());
 
-        const auto& pSubset = game.Subsets().front();
-        Assert::AreEqual(0U, pSubset.ID());
-        Assert::AreEqual(11111U, pSubset.AchievementSetID());
-        Assert::AreEqual(2222U, pSubset.GameID());
-        Assert::AreEqual(GameContext::SubsetType::Core, pSubset.Type());
-        Assert::AreEqual(std::wstring(L"Unsupported Game Version"), pSubset.Title());
+        const auto& pSubset = *game.Assets().AchievementSets().GetItemAt(0);
+        Assert::AreEqual(11111U, pSubset.GetID());
+        Assert::AreEqual(2222U, pSubset.GetBackingGameID());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Core, pSubset.GetType());
+        Assert::AreEqual(std::wstring(L"Unsupported Game Version"), pSubset.GetTitle());
     }
 };
 

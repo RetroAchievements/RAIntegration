@@ -7,7 +7,7 @@
 #include "CppUnitTest.h"
 #include "util\Strings.hh"
 
-#include "data\context\GameAssets.hh"
+#include "data\models\GameAssets.hh"
 
 #include <rcheevos\src\rapi\rc_api_common.h>
 #include <rcheevos\src\rc_client_internal.h>
@@ -46,7 +46,7 @@ void MockAchievementRuntime::MockGame()
         auto* mockGameContext = dynamic_cast<ra::data::context::mocks::MockGameContext*>(
             &ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>());
         if (mockGameContext != nullptr)
-            mockGameContext->MockSubset(0, game->public_.title, ra::data::context::GameContext::SubsetType::Core);
+            mockGameContext->MockSubset(game->public_.id, game->public_.title, ra::data::models::AchievementSetType::Core);
     }
 }
 
@@ -82,7 +82,7 @@ static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game)
 static rc_client_subset_info_t* GetLocalSubset(rc_client_game_info_t* game)
 {
     Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsNotNull(game, L"MockGame must be called first");
-    return GetSubset(game, ra::data::context::GameAssets::LocalSubsetId, "Local");
+    return GetSubset(game, ra::data::models::AchievementSetModel::LocalId, "Local");
 }
 
 static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,

@@ -80,7 +80,7 @@ void OverlayLeaderboardsPageViewModel::Refresh()
             if (!pSubset->active)
                 continue;
 
-            if (pSubset->public_.id == ra::data::context::GameAssets::LocalSubsetId)
+            if (pSubset->public_.id == ra::data::models::AchievementSetModel::LocalId)
             {
                 vDeactivatedSubsets.push_back(pSubset);
                 pSubset->active = 0;

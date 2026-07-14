@@ -23,6 +23,7 @@ public:
 
     void SetGameId(uint32_t nId) noexcept { m_nGameId = m_nActiveGameId = nId; }
     void SetActiveGameId(uint32_t nId) noexcept { m_nActiveGameId = nId; }
+    void SetGameTitle(const std::wstring& sTitle) noexcept { m_sGameTitle = sTitle; }
 
     ra::data::models::MemoryNotesModel& MemoryNotes() noexcept override { return m_oMemoryNotes; }
     const ra::data::models::MemoryNotesModel& MemoryNotes() const noexcept override { return m_oMemoryNotes; }

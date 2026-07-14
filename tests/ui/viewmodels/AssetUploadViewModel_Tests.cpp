@@ -3,8 +3,8 @@
 #include "ui\viewmodels\AssetUploadViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-#include "data\context\GameAssets.hh"
 #include "data\models\AchievementModel.hh"
+#include "data\models\GameAssets.hh"
 #include "data\models\LeaderboardModel.hh"
 
 #include "tests\ui\UIAsserts.hh"
@@ -97,7 +97,7 @@ private:
             auto vmAchievement = std::make_unique<AchievementModel>();
             if (nCategory == AssetCategory::Local)
             {
-                vmAchievement->SetID(gsl::narrow_cast<unsigned>(m_pAssets.Count()) + ra::data::context::GameAssets::FirstLocalId);
+                vmAchievement->SetID(gsl::narrow_cast<unsigned>(m_pAssets.Count()) + ra::data::models::GameAssets::FirstLocalId);
                 vmAchievement->CreateServerCheckpoint();
             }
             else
@@ -129,7 +129,7 @@ private:
             auto vmLeaderboard = std::make_unique<LeaderboardModel>();
             if (nCategory == AssetCategory::Local)
             {
-                vmLeaderboard->SetID(gsl::narrow_cast<unsigned>(m_pAssets.Count()) + ra::data::context::GameAssets::FirstLocalId);
+                vmLeaderboard->SetID(gsl::narrow_cast<unsigned>(m_pAssets.Count()) + ra::data::models::GameAssets::FirstLocalId);
                 vmLeaderboard->CreateServerCheckpoint();
             }
             else
@@ -250,7 +250,7 @@ private:
         void Rest() const noexcept override {}
 
     private:
-        ra::data::context::GameAssets m_pAssets;
+        ra::data::models::GameAssets m_pAssets;
     };
 
 public:

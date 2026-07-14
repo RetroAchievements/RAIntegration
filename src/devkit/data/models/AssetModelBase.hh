@@ -90,7 +90,7 @@ public:
     /// <summary>
     /// Gets the name to display.
     /// </summary>
-    const std::wstring& GetName() const { return GetValue(NameProperty); }
+    const std::wstring& GetTitle() const { return GetValue(NameProperty); }
 
     /// <summary>
     /// Sets the name to display.

@@ -288,7 +288,7 @@ void LeaderboardModel::SyncIDToRuntime() const
 
 void LeaderboardModel::SyncTitleToRuntime()
 {
-    m_sTitleBuffer = ra::util::String::Narrow(GetName());
+    m_sTitleBuffer = ra::util::String::Narrow(GetTitle());
     m_pLeaderboardInfo->public_.title = m_sTitleBuffer.c_str();
 }
 

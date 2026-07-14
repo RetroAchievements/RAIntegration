@@ -63,7 +63,7 @@ public:
     {
         const auto nId = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
 
-        if (nId >= ra::data::context::GameAssets::FirstLocalId)
+        if (nId >= ra::data::models::GameAssets::FirstLocalId)
             return L"0";
 
         const auto nType = vmItems.GetItemValue(nIndex, ra::data::models::AssetModelBase::TypeProperty);
@@ -190,7 +190,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Near, RelativePosition::After, "Achievements");
 
-    m_bindSubsets.BindItems(vmAssetList.Subsets(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
+    m_bindSubsets.BindItems(vmAssetList.AchievementSets(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
         ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
     m_bindSubsets.BindSelectedItem(AssetListViewModel::SubsetFilterProperty);
 

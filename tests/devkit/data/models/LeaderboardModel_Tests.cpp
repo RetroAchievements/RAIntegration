@@ -42,7 +42,7 @@ public:
 
         Assert::AreEqual(AssetType::Leaderboard, leaderboard.GetType());
         Assert::AreEqual(0U, leaderboard.GetID());
-        Assert::AreEqual(std::wstring(L""), leaderboard.GetName());
+        Assert::AreEqual(std::wstring(L""), leaderboard.GetTitle());
         Assert::AreEqual(std::wstring(L""), leaderboard.GetDescription());
         Assert::AreEqual(AssetCategory::Core, leaderboard.GetCategory());
         Assert::AreEqual(AssetState::Inactive, leaderboard.GetState());
@@ -68,7 +68,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=3"), leaderboard.GetSubmitTrigger());
         Assert::AreEqual(std::string("0xH1234"), leaderboard.GetValueDefinition());
         Assert::AreEqual(Value::Format::Frames, leaderboard.GetValueFormat());
-        Assert::AreEqual(std::wstring(L"Title"), leaderboard.GetName());
+        Assert::AreEqual(std::wstring(L"Title"), leaderboard.GetTitle());
         Assert::AreEqual(std::wstring(L"Desc"), leaderboard.GetDescription());
         Assert::IsFalse(leaderboard.IsLowerBetter());
     }
@@ -88,7 +88,7 @@ public:
         Assert::AreEqual(std::string("0xH1234>3"), leaderboard.GetSubmitTrigger());
         Assert::AreEqual(std::string("M:0xH1234"), leaderboard.GetValueDefinition());
         Assert::AreEqual(Value::Format::Centiseconds, leaderboard.GetValueFormat());
-        Assert::AreEqual(std::wstring(L"My Title"), leaderboard.GetName());
+        Assert::AreEqual(std::wstring(L"My Title"), leaderboard.GetTitle());
         Assert::AreEqual(std::wstring(L"My Desc"), leaderboard.GetDescription());
         Assert::IsTrue(leaderboard.IsLowerBetter());
     }
@@ -108,7 +108,7 @@ public:
         Assert::AreEqual(std::string("0xH1234=3"), leaderboard.GetSubmitTrigger());
         Assert::AreEqual(std::string("0xH1234"), leaderboard.GetValueDefinition());
         Assert::AreEqual(Value::Format::Frames, leaderboard.GetValueFormat());
-        Assert::AreEqual(std::wstring(L"Title"), leaderboard.GetName());
+        Assert::AreEqual(std::wstring(L"Title"), leaderboard.GetTitle());
         Assert::AreEqual(std::wstring(L"Desc"), leaderboard.GetDescription());
         Assert::IsFalse(leaderboard.IsLowerBetter());
     }
@@ -128,7 +128,7 @@ public:
         Assert::AreEqual(std::string(), leaderboard.GetSubmitTrigger());
         Assert::AreEqual(std::string(), leaderboard.GetValueDefinition());
         Assert::AreEqual(Value::Format::Value, leaderboard.GetValueFormat());
-        Assert::AreEqual(std::wstring(), leaderboard.GetName());
+        Assert::AreEqual(std::wstring(), leaderboard.GetTitle());
         Assert::AreEqual(std::wstring(), leaderboard.GetDescription());
         Assert::IsFalse(leaderboard.IsLowerBetter());
     }

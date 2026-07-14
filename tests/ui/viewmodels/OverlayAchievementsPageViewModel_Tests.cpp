@@ -774,7 +774,7 @@ public:
         OverlayAchievementsPageViewModelHarness achievementsPage;
         achievementsPage.mockWindowManager.AssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         achievementsPage.mockAchievementRuntime.MockGame();
-        const auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(ra::data::context::GameAssets::FirstLocalId);
+        const auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(ra::data::models::GameAssets::FirstLocalId);
 
         achievementsPage.mockServer.ExpectUncalled<ra::api::FetchAchievementInfo>();
 

@@ -232,7 +232,7 @@ public:
                 {
                     if (&pSubset->achievements[i] == pAchievement)
                     {
-                        if (pSubset->public_.id == ra::data::context::GameAssets::LocalSubsetId)
+                        if (pSubset->public_.id == ra::data::models::AchievementSetModel::LocalId)
                             nCategory = ra::data::models::AssetCategory::Local;
 
                         vmAchievement->SetSubsetID(pSubset->public_.id);
@@ -315,7 +315,7 @@ public:
             {
                 if (&pSubset->leaderboards[i] == pLeaderboard)
                 {
-                    if (pSubset->public_.id == ra::data::context::GameAssets::LocalSubsetId)
+                    if (pSubset->public_.id == ra::data::models::AchievementSetModel::LocalId)
                         nCategory = ra::data::models::AssetCategory::Local;
                     break;
                 }
@@ -445,7 +445,7 @@ private:
 
     static rc_client_subset_info_t* GetLocalSubset(rc_client_game_info_t* game) noexcept
     {
-        return GetSubset(game, ra::data::context::GameAssets::LocalSubsetId, "Local");
+        return GetSubset(game, ra::data::models::AchievementSetModel::LocalId, "Local");
     }
 
     static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game, rc_client_subset_info_t* subset,
@@ -549,7 +549,7 @@ public:
         vmAchievement->SetDescription(L"Do something cool");
         vmAchievement->SetPoints(25);
         vmAchievement->SetTrigger("0xH0000=1");
-        vmAchievement->SetID(ra::data::context::GameAssets::FirstLocalId);
+        vmAchievement->SetID(ra::data::models::GameAssets::FirstLocalId);
         vmAchievement->SetBadge(L"local\\ABCDEF0123456789.png");
         vmAchievement->CreateLocalCheckpoint();
         vmAchievement->SetState(ra::data::models::AssetState::Active);
@@ -570,7 +570,7 @@ public:
         pSubset = pSubset->next;
         Expects(pSubset != nullptr);
         Assert::AreEqual("Local", pSubset->public_.title);
-        Assert::AreEqual(ra::data::context::GameAssets::LocalSubsetId, pSubset->public_.id);
+        Assert::AreEqual(ra::data::models::AchievementSetModel::LocalId, pSubset->public_.id);
         Assert::AreEqual("012345", pSubset->public_.badge_name);
         Assert::AreEqual(1U, pSubset->public_.num_achievements);
         Assert::IsTrue(pSubset->active);
@@ -580,7 +580,7 @@ public:
         Assert::AreEqual("Achievement Name", pAchievement->public_.title);
         Assert::AreEqual("Do something cool", pAchievement->public_.description);
         Assert::AreEqual(25U, pAchievement->public_.points);
-        Assert::AreEqual(ra::data::context::GameAssets::FirstLocalId, pAchievement->public_.id);
+        Assert::AreEqual(ra::data::models::GameAssets::FirstLocalId, pAchievement->public_.id);
         Assert::AreEqual("L69db9c", pAchievement->public_.badge_name); // FirstLocalId as hex
         Assert::AreEqual("file://RACache/Badges/local/ABCDEF0123456789.png", pAchievement->public_.badge_url);
         Assert::AreEqual("file://RACache/Badges/local/ABCDEF0123456789.png", pAchievement->public_.badge_locked_url);
@@ -588,7 +588,7 @@ public:
         const auto* pOldTrigger = pAchievement->trigger;
 
         // directly modifying the achievement trigger should rebuild the underlying trigger
-        runtime.mockGameContext.Assets().FindAchievement(ra::data::context::GameAssets::FirstLocalId)
+        runtime.mockGameContext.Assets().FindAchievement(ra::data::models::GameAssets::FirstLocalId)
             ->SetTrigger("0xH0000=2");
         Assert::IsNotNull(pAchievement->trigger);
         const auto* pNewTrigger = pAchievement->trigger;
@@ -605,7 +605,7 @@ public:
         vmAchievement2->SetDescription(L"Do something cool");
         vmAchievement2->SetPoints(25);
         vmAchievement2->SetTrigger("0xH0000=2");
-        vmAchievement2->SetID(ra::data::context::GameAssets::FirstLocalId);
+        vmAchievement2->SetID(ra::data::models::GameAssets::FirstLocalId);
         vmAchievement2->CreateLocalCheckpoint();
         vmAchievement2->SetState(ra::data::models::AssetState::Active);
         vmAchievement2->SetSubsetID(1U);
@@ -629,7 +629,7 @@ public:
         vmAchievement3->SetDescription(L"Do something cool");
         vmAchievement3->SetPoints(25);
         vmAchievement3->SetTrigger("0xH0000=1");
-        vmAchievement3->SetID(ra::data::context::GameAssets::FirstLocalId);
+        vmAchievement3->SetID(ra::data::models::GameAssets::FirstLocalId);
         vmAchievement3->CreateLocalCheckpoint();
         vmAchievement3->SetState(ra::data::models::AssetState::Active);
         vmAchievement3->SetSubsetID(1U);
@@ -678,7 +678,7 @@ public:
         Assert::IsNotNull(pSubset->next); // there will be an inactive local subset
         const auto* pOriginalTrigger = pSubset->achievements->trigger;
 
-        Assert::AreEqual(std::wstring(L"Achievement Name"), vmAchievement.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement Name"), vmAchievement.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something cool"), vmAchievement.GetDescription());
         Assert::AreEqual(25, vmAchievement.GetPoints());
         Assert::AreEqual(12345U, vmAchievement.GetID());

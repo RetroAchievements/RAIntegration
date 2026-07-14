@@ -38,10 +38,12 @@ public:
     {
         m_nGameId = m_nActiveGameId = nGameId;
 
-        if (!m_vSubsets.empty())
+        // MockRuntime may have populated an AchievementSet. Update it too
+        auto* pPrimarySet = const_cast<ra::data::models::AchievementSetModel*>(Assets().AchievementSets().GetItemAt(0));
+        if (pPrimarySet)
         {
-            const auto& pSubset = m_vSubsets.front();
-            m_vSubsets.front() = Subset(nGameId, nGameId, pSubset.Title(), pSubset.Type());
+            pPrimarySet->SetID(nGameId);
+            pPrimarySet->SetBackingGameID(nGameId);
         }
     }
     void SetActiveGameId(unsigned int nGameId) noexcept { m_nActiveGameId = nGameId; }
@@ -149,14 +151,17 @@ public:
     GSL_SUPPRESS_C128
     void InitializeFromAchievementRuntime();
 
-    void MockSubset(uint32_t nSubsetId, const std::string& sName, SubsetType nType = SubsetType::Bonus)
+    void MockSubset(uint32_t nSubsetId, const std::string& sName, ra::data::models::AchievementSetType nType = ra::data::models::AchievementSetType::Bonus)
     {
         MockSubset(nSubsetId, nSubsetId, sName, nType);
     }
 
-    void MockSubset(uint32_t nGameId, uint32_t nAchievementSetId, const std::string& sName, SubsetType nType = SubsetType::Bonus)
+    void MockSubset(uint32_t nGameId, uint32_t nAchievementSetId, const std::string& sName, ra::data::models::AchievementSetType nType = ra::data::models::AchievementSetType::Bonus)
     {
-        m_vSubsets.emplace_back(nAchievementSetId, nGameId, ra::util::String::Widen(sName), nType);
+        auto& vAchievementSets = const_cast<ra::data::DataModelCollection<ra::data::models::AchievementSetModel>&>(Assets().AchievementSets());
+        auto vmAchievementSet = std::make_unique<ra::data::models::AchievementSetModel>();
+        vmAchievementSet->Initialize(nAchievementSetId, nGameId, ra::util::String::Widen(sName), nType);
+        vAchievementSets.Append(std::move(vmAchievementSet));
     }
 
 private:

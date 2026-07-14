@@ -207,6 +207,18 @@
     <ClInclude Include="data\util\TriggerValidation.hh">
       <Filter>data\util</Filter>
     </ClInclude>
+    <ClInclude Include="context\impl\DevKitContext.hh">
+      <Filter>context\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="context\IDevKitContext.hh">
+      <Filter>context</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\GameAssets.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\AchievementSetModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -292,6 +304,15 @@
     </ClCompile>
     <ClCompile Include="data\util\TriggerValidation.cpp">
       <Filter>data\util</Filter>
+    </ClCompile>
+    <ClCompile Include="context\impl\DevKitContext.cpp">
+      <Filter>context\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\GameAssets.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\AchievementSetModel.cpp">
+      <Filter>data\models</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,21 +1,25 @@
-#ifndef RA_DATA_GAMEASSETS_HH
-#define RA_DATA_GAMEASSETS_HH
+#ifndef RA_DATA_MODELS_GAMEASSETS_HH
+#define RA_DATA_MODELS_GAMEASSETS_HH
 #pragma once
 
-#include "data\DataModelCollection.hh"
-#include "data\Types.hh"
+#include "data/DataModelCollection.hh"
 
-#include "data\models\AchievementModel.hh"
-#include "data\models\MemoryNotesModel.hh"
-#include "data\models\LeaderboardModel.hh"
-#include "data\models\MemoryRegionsModel.hh"
-#include "data\models\RichPresenceModel.hh"
+#include "data/models/AchievementModel.hh"
+#include "data/models/AchievementSetModel.hh"
+#include "data/models/MemoryNotesModel.hh"
+#include "data/models/LeaderboardModel.hh"
+#include "data/models/MemoryRegionsModel.hh"
+#include "data/models/RichPresenceModel.hh"
+
+#include <set>
+
+struct rc_api_fetch_game_sets_response_t;
 
 namespace ra {
 namespace data {
-namespace context {
+namespace models {
 
-class GameAssets : public ra::data::DataModelCollection<ra::data::models::AssetModelBase>
+class GameAssets : public DataModelCollection<AssetModelBase>
 {
 public:
     GSL_SUPPRESS_F6 GameAssets() = default;
@@ -38,7 +42,7 @@ public:
     /// <summary>
     /// Finds the achievement asset for the specified ID.
     /// </summary>
-    ra::data::models::AchievementModel* FindAchievement(ra::AchievementID nId)
+    ra::data::models::AchievementModel* FindAchievement(uint32_t nId)
     {
         return dynamic_cast<ra::data::models::AchievementModel*>(FindAsset(ra::data::models::AssetType::Achievement, nId));
     }
@@ -46,7 +50,7 @@ public:
     /// <summary>
     /// Finds the achievement asset for the specified ID.
     /// </summary>
-    const ra::data::models::AchievementModel* FindAchievement(ra::AchievementID nId) const
+    const ra::data::models::AchievementModel* FindAchievement(uint32_t nId) const
     {
         return dynamic_cast<const ra::data::models::AchievementModel*>(FindAsset(ra::data::models::AssetType::Achievement, nId));
     }
@@ -59,7 +63,7 @@ public:
     /// <summary>
     /// Finds the leaderboard asset for the specified ID.
     /// </summary>
-    ra::data::models::LeaderboardModel* FindLeaderboard(ra::LeaderboardID nId)
+    ra::data::models::LeaderboardModel* FindLeaderboard(uint32_t nId)
     {
         return dynamic_cast<ra::data::models::LeaderboardModel*>(FindAsset(ra::data::models::AssetType::Leaderboard, nId));
     }
@@ -67,7 +71,7 @@ public:
     /// <summary>
     /// Finds the leaderboard asset for the specified ID.
     /// </summary>
-    const ra::data::models::LeaderboardModel* FindLeaderboard(ra::AchievementID nId) const
+    const ra::data::models::LeaderboardModel* FindLeaderboard(uint32_t nId) const
     {
         return dynamic_cast<const ra::data::models::LeaderboardModel*>(FindAsset(ra::data::models::AssetType::Leaderboard, nId));
     }
@@ -151,14 +155,50 @@ public:
     /// <param name="vAssetsToReload">List of assets to reload, empty to reload all assets.</param>
     void ReloadAssets(const std::vector<ra::data::models::AssetModelBase*>& vAssetsToReload);
 
+    /// <summary>
+    /// Gets the achievements sets for the loaded game.
+    /// </summary>
+    const DataModelCollection<AchievementSetModel>& AchievementSets() const noexcept { return m_vAchievementSets; }
+
+    /// <summary>
+    /// Initializes the achievement sets collection.
+    /// </summary>
+    void InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response, bool bSubsetWithoutBase);
+
+    /// <summary>
+    /// Resets the achievement sets collection.
+    /// </summary>
+    void ClearAchievementSets() { m_vAchievementSets.Clear(); }
+
+    /// <summary>
+    /// The unique identifier of the first local asset.
+    /// Anything of this value or higher has not been committed to the server.
+    /// </summary>
     static constexpr uint32_t FirstLocalId = 111000001;
+
+    /// <summary>
+    /// Resets the counter for new local assets.
+    /// </summary>
     void ResetLocalId() noexcept { m_nNextLocalId = FirstLocalId; }
 
-    static constexpr uint32_t LocalSubsetId = 0xFFFFFFFF;
-
+    /// <summary>
+    /// Returns <c>true</c> if any assets have their PauseOnX attributes set.
+    /// </summary>
     bool HasPauseOnXAssets() const noexcept;
+
+    /// <summary>
+    /// Gets the achievements where PauseOnReset is set.
+    /// </summary>
     void GetPauseOnResetAchievements(std::vector<const ra::data::models::AchievementModel*>& vAchievements) const;
+
+    /// <summary>
+    /// Gets the leaderboards where PauseOnReset is set.
+    /// </summary>
     void GetPauseOnResetLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const;
+
+    /// <summary>
+    /// Gets the leaderboards where PauseOnTrigger is set.
+    /// </summary>
     void GetPauseOnTriggerLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const;
 
 protected:
@@ -171,13 +211,14 @@ protected:
 
     uint32_t m_nNextLocalId = FirstLocalId;
 
-    std::set<ra::AchievementID> m_vPauseOnResetAchievementIds;
-    std::set<ra::LeaderboardID> m_vPauseOnResetLeaderboardIds;
-    std::set<ra::LeaderboardID> m_vPauseOnTriggerLeaderboardIds;
+    DataModelCollection<AchievementSetModel> m_vAchievementSets;
+    std::set<uint32_t> m_vPauseOnResetAchievementIds;
+    std::set<uint32_t> m_vPauseOnResetLeaderboardIds;
+    std::set<uint32_t> m_vPauseOnTriggerLeaderboardIds;
 };
 
-} // namespace context
+} // namespace models
 } // namespace data
 } // namespace ra
 
-#endif // !RA_DATA_GAMEASSETS_HH
+#endif // !RA_DATA_MODELS_GAMEASSETS_HH

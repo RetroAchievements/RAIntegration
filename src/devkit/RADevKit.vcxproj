@@ -57,6 +57,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="context\impl\ConsoleContext.cpp" />
+    <ClCompile Include="context\impl\DevKitContext.cpp" />
     <ClCompile Include="context\impl\EmulatorMemoryContext.cpp" />
     <ClCompile Include="context\impl\RcClient.cpp" />
     <ClCompile Include="data\CapturedMemoryBlock.cpp" />
@@ -68,7 +69,9 @@
     <ClCompile Include="data\ModelProperty.cpp" />
     <ClCompile Include="data\ModelPropertyContainer.cpp" />
     <ClCompile Include="data\models\AchievementModel.cpp" />
+    <ClCompile Include="data\models\AchievementSetModel.cpp" />
     <ClCompile Include="data\models\AssetModelBase.cpp" />
+    <ClCompile Include="data\models\GameAssets.cpp" />
     <ClCompile Include="data\models\LeaderboardModel.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel.cpp" />
     <ClCompile Include="data\models\MemoryNoteModel.cpp" />
@@ -85,9 +88,11 @@
     <ClCompile Include="util\Strings.cpp" />
     <ClCompile Include="util\Tokenizer.cpp" />
     <ClInclude Include="context\IConsoleContext.hh" />
+    <ClInclude Include="context\IDevKitContext.hh" />
     <ClInclude Include="context\IEmulatorMemoryContext.hh" />
     <ClInclude Include="context\IGameContext.hh" />
     <ClInclude Include="context\impl\ConsoleContext.hh" />
+    <ClInclude Include="context\impl\DevKitContext.hh" />
     <ClInclude Include="context\impl\EmulatorMemoryContext.hh" />
     <ClInclude Include="context\impl\RcClient.hh" />
     <ClInclude Include="context\IRcClient.hh" />
@@ -103,7 +108,9 @@
     <ClInclude Include="data\ModelProperty.hh" />
     <ClInclude Include="data\ModelPropertyContainer.hh" />
     <ClInclude Include="data\models\AchievementModel.hh" />
+    <ClInclude Include="data\models\AchievementSetModel.hh" />
     <ClInclude Include="data\models\AssetModelBase.hh" />
+    <ClInclude Include="data\models\GameAssets.hh" />
     <ClInclude Include="data\models\LeaderboardModel.hh" />
     <ClInclude Include="data\models\LocalBadgesModel.hh" />
     <ClInclude Include="data\models\MemoryNoteModel.hh" />

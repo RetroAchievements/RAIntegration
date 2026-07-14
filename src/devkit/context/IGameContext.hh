@@ -34,12 +34,31 @@ public:
     uint32_t GameId() const noexcept { return m_nGameId; }
 
     /// <summary>
+    /// Gets the title of the currently loaded game.
+    /// </summary>
+    const std::wstring& GameTitle() const noexcept { return m_sGameTitle; }
+
+    /// <summary>
     /// Gets the unique identifier of the base game for the currently loaded subset.
     /// </summary>
     /// <remarks>
     /// Will match <see cref="GameId"/> unless an exclusive or specialty subset is loaded.
     /// </remarks>
     uint32_t ActiveGameId() const noexcept { return m_nActiveGameId; }
+
+    /// <summary>
+    /// Determines if the provided game identifier is virtual
+    /// </summary>
+    /// <remarks>
+    /// IDs above 1 billion are incompatible. The 100 millions place indicates how.
+    /// Mask off the part above 100 million to get the actual game id.
+    /// </remarks>
+    static constexpr bool IsVirtualGameId(uint32_t nGameId) noexcept { return nGameId > 1000000000; }
+
+    /// <summary>
+    /// Gets the real game identifier from a virtual one
+    /// </summary>
+    static constexpr uint32_t GetRealGameId(uint32_t nGameId) noexcept { return nGameId % 100000000; }
 
     class NotifyTarget
     {
@@ -85,6 +104,7 @@ public:
 protected:
     uint32_t m_nGameId = 0;
     uint32_t m_nActiveGameId = 0;
+    std::wstring m_sGameTitle;
 
     ra::data::NotifyTargetSet<NotifyTarget> m_vNotifyTargets;
 };

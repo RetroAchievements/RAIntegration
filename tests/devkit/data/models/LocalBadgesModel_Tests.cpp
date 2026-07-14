@@ -34,7 +34,7 @@ public:
 
         Assert::AreEqual(AssetType::LocalBadges, badges.GetType());
         Assert::AreEqual(0U, badges.GetID());
-        Assert::AreEqual(std::wstring(L"Local Badges"), badges.GetName());
+        Assert::AreEqual(std::wstring(L"Local Badges"), badges.GetTitle());
         Assert::AreEqual(std::wstring(L""), badges.GetDescription());
         Assert::AreEqual(AssetCategory::Local, badges.GetCategory());
         Assert::AreEqual(AssetState::Inactive, badges.GetState());

@@ -39,7 +39,7 @@ public:
 
         Assert::AreEqual(AssetType::RichPresence, richPresence.GetType());
         Assert::AreEqual(0U, richPresence.GetID());
-        Assert::AreEqual(std::wstring(L"Rich Presence"), richPresence.GetName());
+        Assert::AreEqual(std::wstring(L"Rich Presence"), richPresence.GetTitle());
         Assert::AreEqual(std::wstring(L""), richPresence.GetDescription());
         Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
         Assert::AreEqual(AssetState::Inactive, richPresence.GetState());

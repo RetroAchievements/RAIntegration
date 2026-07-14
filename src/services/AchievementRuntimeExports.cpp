@@ -1086,7 +1086,7 @@ const ra::data::models::AchievementModel* CheckForPauseOnTrigger(const rc_client
         if (vmAchievement->IsPauseOnTrigger())
         {
             auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-            pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetName());
+            pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetTitle());
         }
     }
 

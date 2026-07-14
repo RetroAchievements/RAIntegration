@@ -79,6 +79,9 @@
     <ClCompile Include="data\util\TriggerValidation_Tests.cpp">
       <Filter>data\util</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\GameAssets_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -184,6 +187,15 @@
     </ClInclude>
     <ClInclude Include="testutil\AchievementAsserts.hh">
       <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\AchievementSetAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\LeaderboardAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="context\mocks\MockDevKitContext.hh">
+      <Filter>context\mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -14,13 +14,16 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockDevKitContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
+#include "tests\devkit\services\mocks\MockLogger.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AchievementAsserts.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\devkit\ui\mocks\MockImageRepository.hh"
@@ -164,6 +167,7 @@ private:
     class AssetListViewModelHarness : public AssetListViewModel
     {
     public:
+        ra::context::mocks::MockDevKitContext mockDevKitContext;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockUserContext mockUserContext;
@@ -172,6 +176,7 @@ private:
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockLogger mockLogger;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -593,7 +598,7 @@ private:
             {
                 const auto pIter = m_mValidationErrors.find(pAchievement.GetID());
                 if (pIter != m_mValidationErrors.end())
-                    sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
+                    sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetTitle(), pIter->second));
             }
         }
 
@@ -1277,11 +1282,11 @@ public:
         vmAssetList.mockRuntime.SyncAssets();
         vmAssetList.mockGameContext.NotifyActiveGameChanged();
 
-        Assert::AreEqual({2U}, vmAssetList.Subsets().Count());
-        Assert::AreEqual({22U}, vmAssetList.Subsets().GetItemAt(0)->GetId());
-        Assert::AreEqual(std::wstring(L"Game Title"), vmAssetList.Subsets().GetItemAt(0)->GetLabel());
-        Assert::AreEqual({555U}, vmAssetList.Subsets().GetItemAt(1)->GetId());
-        Assert::AreEqual(std::wstring(L"Bonus"), vmAssetList.Subsets().GetItemAt(1)->GetLabel());
+        Assert::AreEqual({2U}, vmAssetList.AchievementSets().Count());
+        Assert::AreEqual({22U}, vmAssetList.AchievementSets().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"Game Title"), vmAssetList.AchievementSets().GetItemAt(0)->GetLabel());
+        Assert::AreEqual({555U}, vmAssetList.AchievementSets().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Bonus"), vmAssetList.AchievementSets().GetItemAt(1)->GetLabel());
 
         Assert::AreEqual({2U}, vmAssetList.FilteredAssets().Count());
         Assert::AreEqual({1U}, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());

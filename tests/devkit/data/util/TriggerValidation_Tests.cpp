@@ -1,5 +1,5 @@
 
-#include "data/models/TriggerValidation.hh"
+#include "data/util/TriggerValidation.hh"
 
 #include "tests/devkit/context/mocks/MockConsoleContext.hh"
 #include "tests/devkit/context/mocks/MockEmulatorMemoryContext.hh"
@@ -10,7 +10,7 @@
 
 namespace ra {
 namespace data {
-namespace models {
+namespace util {
 namespace tests {
 
 TEST_CLASS(TriggerValidation_Tests)
@@ -19,7 +19,7 @@ private:
     void AssertValidation(const std::string& sTrigger, const std::wstring& sExpectedError)
     {
         std::wstring sError;
-        const bool bResult = TriggerValidation::Validate(sTrigger, sError, AssetType::Achievement);
+        const bool bResult = TriggerValidation::Validate(sTrigger, sError, ra::data::models::AssetType::Achievement);
         Assert::AreEqual(sExpectedError, sError);
         Assert::AreEqual(bResult, sExpectedError.empty());
     }
@@ -27,7 +27,7 @@ private:
     void AssertLeaderboardValidation(const std::string& sTrigger, const std::wstring& sExpectedError)
     {
         std::wstring sError;
-        const bool bResult = TriggerValidation::Validate(sTrigger, sError, AssetType::Leaderboard);
+        const bool bResult = TriggerValidation::Validate(sTrigger, sError, ra::data::models::AssetType::Leaderboard);
         Assert::AreEqual(sExpectedError, sError);
         Assert::AreEqual(bResult, sExpectedError.empty());
     }
@@ -239,6 +239,6 @@ public:
 };
 
 } // namespace tests
-} // namespace models
+} // namespace util
 } // namespace data
 } // namespace ra

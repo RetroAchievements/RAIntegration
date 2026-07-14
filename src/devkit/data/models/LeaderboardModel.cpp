@@ -2,7 +2,7 @@
 
 #include "context/IRcClient.hh"
 
-#include "data/models/TriggerValidation.hh"
+#include "data/util/TriggerValidation.hh"
 
 #include "services/ServiceLocator.hh"
 
@@ -133,19 +133,19 @@ bool LeaderboardModel::ValidateAsset(std::wstring& sError)
         return false;
     }
 
-    if (!TriggerValidation::Validate(sStartTrigger, sError, AssetType::Leaderboard))
+    if (!ra::data::util::TriggerValidation::Validate(sStartTrigger, sError, AssetType::Leaderboard))
     {
         sError.insert(0, L"Start: ");
         return false;
     }
 
-    if (!TriggerValidation::Validate(sCancelTrigger, sError, AssetType::Leaderboard))
+    if (!ra::data::util::TriggerValidation::Validate(sCancelTrigger, sError, AssetType::Leaderboard))
     {
         sError.insert(0, L"Cancel: ");
         return false;
     }
 
-    if (!TriggerValidation::Validate(sSubmitTrigger, sError, AssetType::Leaderboard))
+    if (!ra::data::util::TriggerValidation::Validate(sSubmitTrigger, sError, AssetType::Leaderboard))
     {
         sError.insert(0, L"Submit: ");
         return false;

@@ -8,7 +8,7 @@
 #include "util/Log.hh"
 
 #include "data/models/LocalBadgesModel.hh"
-#include "data/models/TriggerValidation.hh"
+#include "data/util/TriggerValidation.hh"
 
 #include "services/ServiceLocator.hh"
 
@@ -169,7 +169,7 @@ bool AchievementModel::ValidateAsset(std::wstring& sError)
         return false;
     }
 
-    return TriggerValidation::Validate(sTrigger, sError, AssetType::Achievement);
+    return ra::data::util::TriggerValidation::TriggerValidation::Validate(sTrigger, sError, AssetType::Achievement);
 }
 
 void AchievementModel::DoFrame()

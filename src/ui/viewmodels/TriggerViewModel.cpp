@@ -10,8 +10,6 @@
 
 #include "util\Strings.hh"
 
-#include "data\models\TriggerValidation.hh"
-
 #include "services\AchievementLogicSerializer.hh"
 #include "services\AchievementRuntime.hh"
 #include "services\IClipboard.hh"

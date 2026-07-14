@@ -183,9 +183,6 @@
     <ClInclude Include="data\models\MemoryNotesModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
-    <ClInclude Include="data\models\TriggerValidation.hh">
-      <Filter>data\models</Filter>
-    </ClInclude>
     <ClInclude Include="ui\IImageRepository.hh">
       <Filter>ui</Filter>
     </ClInclude>
@@ -205,6 +202,9 @@
       <Filter>data\models</Filter>
     </ClInclude>
     <ClInclude Include="data\util\IndirectNoteResolver.hh">
+      <Filter>data\util</Filter>
+    </ClInclude>
+    <ClInclude Include="data\util\TriggerValidation.hh">
       <Filter>data\util</Filter>
     </ClInclude>
   </ItemGroup>
@@ -275,9 +275,6 @@
     <ClCompile Include="data\models\MemoryNotesModel.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\TriggerValidation.cpp">
-      <Filter>data\models</Filter>
-    </ClCompile>
     <ClCompile Include="ui\ImageReference.cpp">
       <Filter>ui</Filter>
     </ClCompile>
@@ -291,6 +288,9 @@
       <Filter>data\models</Filter>
     </ClCompile>
     <ClCompile Include="data\util\IndirectNoteResolver.cpp">
+      <Filter>data\util</Filter>
+    </ClCompile>
+    <ClCompile Include="data\util\TriggerValidation.cpp">
       <Filter>data\util</Filter>
     </ClCompile>
   </ItemGroup>

@@ -18,7 +18,7 @@ public:
     {
     }
 
-    const std::string& Version() const noexcept { return m_sVersion; }
+    const std::string& Version() const noexcept override { return m_sVersion; }
     void SetVersion(const std::string& sValue) { m_sVersion = sValue; }
 
 private:

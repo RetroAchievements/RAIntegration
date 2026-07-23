@@ -2,6 +2,8 @@
 
 #include "ui\viewmodels\OverlayFriendsPageViewModel.hh"
 
+#include "tests\devkit\context\mocks\MockRcClient.hh"
+#include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\ui\mocks\MockImageRepository.hh"
@@ -22,7 +24,8 @@ private:
     class OverlayFriendsPageViewModelHarness : public OverlayFriendsPageViewModel
     {
     public:
-        ra::api::mocks::MockServer mockServer;
+        ra::context::mocks::MockRcClient mockRcClient;
+        ra::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockThreadPool mockTheadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
@@ -53,12 +56,11 @@ public:
     TEST_METHOD(TestRefreshNoFriends)
     {
         OverlayFriendsPageViewModelHarness friendsPage;
-        friendsPage.mockServer.HandleRequest<ra::api::FetchUserFriends>(
-            [](const ra::api::FetchUserFriends::Request&, ra::api::FetchUserFriends::Response& response)
-        {
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        friendsPage.mockUserContext.Initialize("Username", "ApiToken");
+        friendsPage.mockRcClient.MockResponse(
+            "r=getfriendlist&u=Username&t=ApiToken",
+            "{\"Success\":true,\"Friends\":[]}"
+        );
 
         friendsPage.Refresh();
 
@@ -76,15 +78,15 @@ public:
     TEST_METHOD(TestRefreshSeveralFriends)
     {
         OverlayFriendsPageViewModelHarness friendsPage;
-        friendsPage.mockServer.HandleRequest<ra::api::FetchUserFriends>(
-            [](const ra::api::FetchUserFriends::Request&, ra::api::FetchUserFriends::Response& response)
-        {
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User1", "", 20, L"Activity1" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User2", "", 60, L"Activity2" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User3", "", 40, L"Activity3" });
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        friendsPage.mockUserContext.Initialize("Username", "ApiToken");
+        friendsPage.mockRcClient.MockResponse(
+            "r=getfriendlist&u=Username&t=ApiToken",
+            "{\"Success\":true,\"Friends\":["
+             "{\"Friend\":\"User1\",\"AvatarUrl\":\"\",\"RAPoints\":20,\"LastSeen\":\"Activity1\"},"
+             "{\"Friend\":\"User2\",\"AvatarUrl\":\"\",\"RAPoints\":60,\"LastSeen\":\"Activity2\"},"
+             "{\"Friend\":\"User3\",\"AvatarUrl\":\"\",\"RAPoints\":40,\"LastSeen\":\"Activity3\"}"
+            "]}"
+        );
 
         friendsPage.Refresh();
 
@@ -122,21 +124,18 @@ public:
     TEST_METHOD(TestRefreshError)
     {
         OverlayFriendsPageViewModelHarness friendsPage;
-        friendsPage.mockServer.HandleRequest<ra::api::FetchUserFriends>(
-            [](const ra::api::FetchUserFriends::Request&, ra::api::FetchUserFriends::Response& response)
-        {
-            response.Result = ra::api::ApiResult::Error;
-            response.ErrorMessage = "Failed to find friends";
-            return true;
-        });
-
+        friendsPage.mockUserContext.Initialize("Username", "ApiToken");
         friendsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Following"), friendsPage.GetTitle());
         Assert::AreEqual(std::wstring(), friendsPage.GetSubTitle());
         Assert::AreEqual(std::wstring(), friendsPage.GetTitleDetail());
 
-        friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
+        // process response asynchronously by sending it after Refresh()
+        friendsPage.mockRcClient.MockResponse(
+            "r=getfriendlist&u=Username&t=ApiToken",
+            "{\"Success\":false,\"Error\":\"Failed to find friends\",\"Code\":\"internal_error\"}"
+        );
 
         Assert::AreEqual(std::wstring(L"Failed to find friends"), friendsPage.GetSubTitle());
         Assert::AreEqual(std::wstring(), friendsPage.GetTitleDetail());
@@ -146,15 +145,15 @@ public:
     TEST_METHOD(TestRefreshTimer)
     {
         OverlayFriendsPageViewModelHarness friendsPage;
-        friendsPage.mockServer.HandleRequest<ra::api::FetchUserFriends>(
-            [](const ra::api::FetchUserFriends::Request&, ra::api::FetchUserFriends::Response& response)
-        {
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User1", "", 20, L"Activity1" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User2", "", 60, L"Activity2" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User3", "", 40, L"Activity3" });
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        friendsPage.mockUserContext.Initialize("Username", "ApiToken");
+        friendsPage.mockRcClient.MockResponse(
+            "r=getfriendlist&u=Username&t=ApiToken",
+            "{\"Success\":true,\"Friends\":["
+             "{\"Friend\":\"User1\",\"AvatarUrl\":\"\",\"RAPoints\":20,\"LastSeen\":\"Activity1\"},"
+             "{\"Friend\":\"User2\",\"AvatarUrl\":\"\",\"RAPoints\":60,\"LastSeen\":\"Activity2\"},"
+             "{\"Friend\":\"User3\",\"AvatarUrl\":\"\",\"RAPoints\":40,\"LastSeen\":\"Activity3\"}"
+            "]}"
+        );
 
         friendsPage.Refresh();
 
@@ -166,16 +165,15 @@ public:
         Assert::AreEqual({ 3U }, friendsPage.GetItemCount());
 
         // two friends updated, one added
-        friendsPage.mockServer.HandleRequest<ra::api::FetchUserFriends>(
-            [](const ra::api::FetchUserFriends::Request&, ra::api::FetchUserFriends::Response& response)
-        {
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User1", "", 30, L"Activity1b" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User2", "", 60, L"Activity2" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User3", "", 45, L"Activity3b" });
-            response.Friends.push_back(ra::api::FetchUserFriends::Response::Friend{ "User4", "", 90, L"Activity4" });
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        friendsPage.mockRcClient.MockResponse(
+            "r=getfriendlist&u=Username&t=ApiToken",
+            "{\"Success\":true,\"Friends\":["
+             "{\"Friend\":\"User1\",\"AvatarUrl\":\"\",\"RAPoints\":30,\"LastSeen\":\"Activity1b\"},"
+             "{\"Friend\":\"User2\",\"AvatarUrl\":\"\",\"RAPoints\":60,\"LastSeen\":\"Activity2\"},"
+             "{\"Friend\":\"User3\",\"AvatarUrl\":\"\",\"RAPoints\":45,\"LastSeen\":\"Activity3b\"},"
+             "{\"Friend\":\"User4\",\"AvatarUrl\":\"\",\"RAPoints\":90,\"LastSeen\":\"Activity4\"}"
+            "]}"
+        );
 
         friendsPage.Refresh();
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async

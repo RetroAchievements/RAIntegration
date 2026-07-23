@@ -32,7 +32,7 @@ public:
     /// <param name="nType">Type of the image.</param>
     /// <param name="sName">Name of the image.</param>
     /// <param name="sSourceUrl">The url of the image to download (empty string to generate a URL).</param>
-    virtual void FetchImage(ImageType nType, const std::string& sName, const std::string& sSourceUrl) = 0;
+    virtual void FetchImage(ImageType nType, const std::string& sName, const std::string& sSourceUrl, time_t tLastUpdated = 0) = 0;
 
     /// <summary>
     /// Store an image locally.

@@ -1,18 +1,16 @@
-#include "CppUnitTest.h"
+#include "data/models/GameAssets.hh"
 
-#include "data\context\GameAssets.hh"
+#include "context/mocks/MockDevKitContext.hh"
+#include "context/mocks/MockEmulatorMemoryContext.hh"
+#include "context/mocks/MockGameContext.hh"
+#include "context/mocks/MockRcClient.hh"
 
-#include "data\models\AchievementModel.hh"
-#include "data\models\LocalBadgesModel.hh"
+#include "services/mocks/MockLocalStorage.hh"
+#include "services/mocks/MockLogger.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
-#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
-#include "tests\devkit\context\mocks\MockRcClient.hh"
-#include "tests\devkit\services\mocks\MockLocalStorage.hh"
-#include "tests\devkit\testutil\AssetAsserts.hh"
-#include "tests\devkit\testutil\ValueAsserts.hh"
-#include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockGameContext.hh"
+#include "testutil/AssetAsserts.hh"
+#include "testutil/CppUnitTest.hh"
+#include "testutil/ValueAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -22,7 +20,7 @@ using ra::data::models::AssetType;
 
 namespace ra {
 namespace data {
-namespace context {
+namespace models {
 namespace tests {
 
 TEST_CLASS(GameAssets_Tests)
@@ -31,16 +29,21 @@ public:
     class GameAssetsHarness : public GameAssets
     {
     public:
+        ra::context::mocks::MockDevKitContext mockDevKitContext;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockGameContext mockGameContext;
         ra::context::mocks::MockRcClient mockRcClient;
-        ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockLogger mockLogger;
 
         GameAssetsHarness() noexcept
         {
-            GSL_SUPPRESS_F6 mockGameContext.SetGameTitle(L"GameName");
-            GSL_SUPPRESS_F6 mockRuntime.MockGame();
+            mockGameContext.SetGameTitle(L"Game Title");
+            mockGameContext.SetGameId(2U);
+
+            auto vmAchievementSet = std::make_unique<ra::data::models::AchievementSetModel>();
+            vmAchievementSet->Initialize(2U, 3U, L"Game Title", ra::data::models::AchievementSetType::Core);
+            m_vAchievementSets.Append(std::move(vmAchievementSet));
         }
 
         void SaveAllAssets()
@@ -156,19 +159,6 @@ public:
             return mockLocalStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, std::to_wstring(mockGameContext.GameId()));
         }
 
-        void AddLocalBadgesModel()
-        {
-            auto pLocalBadges = std::make_unique<ra::data::models::LocalBadgesModel>();
-            pLocalBadges->CreateServerCheckpoint();
-            pLocalBadges->CreateLocalCheckpoint();
-            mockGameContext.Assets().Append(std::move(pLocalBadges));
-        }
-
-        ra::data::models::LocalBadgesModel& GetLocalBadgesModel()
-        {
-            return *(dynamic_cast<ra::data::models::LocalBadgesModel*>(mockGameContext.Assets().FindAsset(ra::data::models::AssetType::LocalBadges, 0)));
-        }
-
         void AddRichPresenceModel()
         {
             auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
@@ -244,11 +234,10 @@ public:
     {
         GameAssetsHarness gameAssets;
         gameAssets.mockGameContext.SetGameId(22);
-        gameAssets.AddLocalBadgesModel();
         gameAssets.AddNewAchievement(10, L"Temp", L"Temp", L"local\\22-ABCDE.png", "1=1");
 
         // gameAssets is not the same instance as mockGameContext.Assets, so manually update the badge reference count
-        auto& pLocalBadges = gameAssets.GetLocalBadgesModel();
+        auto& pLocalBadges = gameAssets.mockGameContext.LocalBadges();
         pLocalBadges.AddReference(L"local\\22-ABCDE.png", false);
 
         // simulate the pre-commit of the achievement by converting the reference from uncommitted to committed
@@ -453,7 +442,6 @@ public:
     {
         GameAssetsHarness gameAssets;
         gameAssets.mockGameContext.SetGameId(22);
-        gameAssets.AddLocalBadgesModel();
         gameAssets.MockUserFileContents(
             "111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::local\\22-A.png\n");
 
@@ -464,7 +452,7 @@ public:
         Ensures(pAsset != nullptr);
         Assert::AreEqual(std::wstring(L"local\\22-A.png"), pAsset->GetBadge());
 
-        const auto& pLocalBadges = gameAssets.GetLocalBadgesModel();
+        const auto& pLocalBadges = gameAssets.mockGameContext.LocalBadges();
         Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-A.png", true));
     }
 
@@ -485,7 +473,7 @@ public:
         Ensures(pAsset != nullptr);
         Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
         Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
-        Assert::AreEqual(0U, pAsset->GetSubsetID());
+        Assert::AreEqual(2U, pAsset->GetSubsetID());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
 
         const auto* pAsset2 = gameAssets.FindAchievement({111000002U});
@@ -619,7 +607,7 @@ public:
         const auto* pAsset2 = gameAssets.FindAchievement({ 1U });
         Assert::IsNotNull(pAsset2);
         Ensures(pAsset2 != nullptr);
-        Assert::AreEqual(std::wstring(L"Server"), pAsset2->GetName());
+        Assert::AreEqual(std::wstring(L"Server"), pAsset2->GetTitle());
         Assert::AreEqual(AssetCategory::Core, pAsset2->GetCategory());
         Assert::AreEqual(AssetChanges::None, pAsset2->GetChanges());
     }
@@ -646,7 +634,7 @@ public:
         const auto* pAsset2 = gameAssets.FindAchievement({ 1U });
         Assert::IsNotNull(pAsset2);
         Ensures(pAsset2 != nullptr);
-        Assert::AreEqual(std::wstring(L"Server"), pAsset2->GetName());
+        Assert::AreEqual(std::wstring(L"Server"), pAsset2->GetTitle());
         Assert::AreEqual(AssetCategory::Core, pAsset2->GetCategory());
         Assert::AreEqual(AssetChanges::None, pAsset2->GetChanges());
     }
@@ -812,6 +800,6 @@ public:
 };
 
 } // namespace tests
-} // namespace context
+} // namespace models
 } // namespace data
 } // namespace ra

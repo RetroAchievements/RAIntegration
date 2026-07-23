@@ -3,7 +3,7 @@
 #include "util\Strings.hh"
 
 #include "data\context\GameContext.hh"
-#include "data\context\GameAssets.hh"
+#include "data\models\GameAssets.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -54,7 +54,7 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
                 {
                     auto& vmAchievement = m_vAchievements.Add();
                     vmAchievement.SetId(pAchievement->GetID());
-                    vmAchievement.SetLabel(pAchievement->GetName());
+                    vmAchievement.SetLabel(pAchievement->GetTitle());
                     vmAchievement.SetDescription(pAchievement->GetDescription());
                     vmAchievement.SetAchieved(!pAchievement->IsActive());
                 }

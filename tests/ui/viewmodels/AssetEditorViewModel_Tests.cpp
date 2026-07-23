@@ -17,7 +17,9 @@
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
+#include "tests\devkit\testutil\AchievementAsserts.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
+#include "tests\devkit\testutil\LeaderboardAsserts.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\devkit\ui\mocks\MockImageRepository.hh"
@@ -127,7 +129,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
         Assert::AreEqual(0U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
@@ -216,7 +218,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
         Assert::AreEqual(1234U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something cool"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
@@ -237,7 +239,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
         Assert::AreEqual(0U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
@@ -321,7 +323,7 @@ public:
         bMessageSeen = false;
 
         Assert::AreEqual(1234U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something modified"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
@@ -337,7 +339,7 @@ public:
         bMessageSeen = false;
 
         Assert::AreEqual(1234U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something modified"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
@@ -359,7 +361,7 @@ public:
         Assert::IsTrue(bMessageSeen);
 
         Assert::AreEqual(2345U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"Test Achievement 2"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Test Achievement 2"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something else"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
         Assert::AreEqual(AssetState::Waiting, editor.GetState());
@@ -441,7 +443,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
         Assert::AreEqual(1234U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something cool"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
@@ -457,7 +459,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
         Assert::AreEqual(0U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
@@ -699,7 +701,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Leaderboard Editor"), editor.GetWindowTitle());
         Assert::AreEqual(1234U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"Test Leaderboard"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Test Leaderboard"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something cool"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
@@ -720,7 +722,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
         Assert::AreEqual(0U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
@@ -764,7 +766,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Leaderboard Editor"), editor.GetWindowTitle());
         Assert::AreEqual(0U, editor.GetID());
-        Assert::AreEqual(std::wstring(L""), editor.GetName());
+        Assert::AreEqual(std::wstring(L""), editor.GetTitle());
         Assert::AreEqual(std::wstring(L""), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Local, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
@@ -880,20 +882,20 @@ public:
         achievement.CreateLocalCheckpoint();
 
         editor.LoadAsset(&achievement);
-        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"Test Achievement"), achievement.GetName());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), achievement.GetTitle());
 
         editor.SetName(L"New Name");
-        Assert::AreEqual(std::wstring(L"New Name"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement.GetName());
+        Assert::AreEqual(std::wstring(L"New Name"), editor.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement.GetTitle());
 
         editor.SetName(L"New Name 2");
-        Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"New Name 2"), achievement.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement.GetTitle());
 
         achievement.SetName(L"New Name 3");
-        Assert::AreEqual(std::wstring(L"New Name 3"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"New Name 3"), achievement.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 3"), editor.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 3"), achievement.GetTitle());
     }
 
     TEST_METHOD(TestSyncDescription)
@@ -1319,29 +1321,29 @@ public:
         achievement2.CreateLocalCheckpoint();
 
         editor.LoadAsset(&achievement1);
-        Assert::AreEqual(std::wstring(L"Achievement1"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"Achievement1"), achievement1.GetName());
-        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement1"), editor.GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement1"), achievement1.GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetTitle());
 
         editor.SetName(L"New Name");
-        Assert::AreEqual(std::wstring(L"New Name"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
-        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
+        Assert::AreEqual(std::wstring(L"New Name"), editor.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetTitle());
 
         editor.LoadAsset(&achievement2);
-        Assert::AreEqual(std::wstring(L"Achievement2"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
-        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement2"), editor.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetTitle());
 
         editor.SetName(L"New Name 2");
-        Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
-        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetTitle());
 
         achievement1.SetName(L"New Name 3");
-        Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"New Name 3"), achievement1.GetName());
-        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 3"), achievement1.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetTitle());
     }
 
     TEST_METHOD(TestUpdateActiveTrigger)

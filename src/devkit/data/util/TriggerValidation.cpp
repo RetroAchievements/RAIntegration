@@ -15,7 +15,7 @@
 
 namespace ra {
 namespace data {
-namespace models {
+namespace util {
 
 static bool ValidateLeaderboardCondSet(const rc_condset_t* pCondSet, std::wstring& sError)
 {
@@ -195,7 +195,7 @@ static bool ValidateMemoryNotes(const rc_trigger_t* pTrigger, std::wstring& sErr
     return true;
 }
 
-bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sError, AssetType nType)
+bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sError, ra::data::models::AssetType nType)
 {
     rc_preparse_state_t preparse;
     rc_init_preparse_state(&preparse);
@@ -254,7 +254,7 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
 
     if (nResult)
     {
-        if (nType == AssetType::Leaderboard)
+        if (nType == ra::data::models::AssetType::Leaderboard)
         {
             if (!ValidateLeaderboardTrigger(&trigger->trigger, sError))
                 return false;
@@ -273,6 +273,6 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     }
 }
 
-} // namespace models
+} // namespace util
 } // namespace data
 } // namespace ra

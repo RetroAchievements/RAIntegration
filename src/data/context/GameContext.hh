@@ -4,11 +4,10 @@
 
 #include "context/IGameContext.hh"
 
+#include "data/models/GameAssets.hh"
 #include "data/models/LocalBadgesModel.hh"
 
 #include "services/ServiceLocator.hh"
-
-#include "GameAssets.hh"
 
 #include <string>
 #include <atomic>
@@ -57,11 +56,6 @@ public:
     bool IsGameLoading() const noexcept { return m_nLoadCount != 0; }
 
     /// <summary>
-    /// Gets the title of the currently loaded game.
-    /// </summary>
-    const std::wstring& GameTitle() const noexcept { return m_sGameTitle; }
-
-    /// <summary>
     /// Sets the game title.
     /// </summary>
     void SetGameTitle(const std::wstring& sGameTitle) { m_sGameTitle = sGameTitle; }
@@ -95,20 +89,6 @@ public:
         }
     }
 
-    /// <summary>
-    /// Determines if the provided game identifier is virtual
-    /// </summary>
-    /// <remarks>
-    /// IDs above 1 billion are incompatible. The 100 millions place indicates how.
-    /// Mask off the part above 100 million to get the actual game id.
-    /// </remarks>
-    static constexpr bool IsVirtualGameId(uint32_t nGameId) noexcept { return nGameId > 1000000000; }
-
-    /// <summary>
-    /// Gets the real game identifier from a virtual one
-    /// </summary>
-    static constexpr uint32_t GetRealGameId(uint32_t nGameId) noexcept { return nGameId % 100000000; }
-
     enum HashCompatibility
     {
         Compatible = 0,
@@ -128,44 +108,11 @@ public:
     /// <summary>
     /// Gets the assets for the current game.
     /// </summary>
-    GameAssets& Assets() noexcept { return m_vAssets; }
-    const GameAssets& Assets() const noexcept { return m_vAssets; }
+    ra::data::models::GameAssets& Assets() noexcept { return m_vAssets; }
+    const ra::data::models::GameAssets& Assets() const noexcept { return m_vAssets; }
 
     void DoFrame();
 
-    enum SubsetType
-    {
-        Core,
-        Bonus,
-        Specialty,
-        Exclusive,
-    };
-
-    class Subset
-    {
-    public:
-        Subset(uint32_t nAchievementSetId, uint32_t nGameId, const std::wstring& sTitle, SubsetType nType) :
-            m_sTitle(sTitle), m_nType(nType), m_nAchievementSetId(nAchievementSetId), m_nGameId(nGameId)
-        {
-        }
-
-        const std::wstring& Title() const noexcept { return m_sTitle; }
-        SubsetType Type() const noexcept { return m_nType; }
-        uint32_t AchievementSetID() const noexcept { return m_nAchievementSetId; }
-        uint32_t GameID() const noexcept { return m_nGameId; }
-
-        // Core assets have SubsetId of 0
-        uint32_t ID() const noexcept { return (m_nType == SubsetType::Core) ? 0 : m_nAchievementSetId; }
-
-        void SetTitle(const std::wstring& sTitle) { m_sTitle = sTitle; }
-
-    private:
-        std::wstring m_sTitle;
-        SubsetType m_nType;
-        uint32_t m_nAchievementSetId;
-        uint32_t m_nGameId;
-    };
-    const std::vector<Subset>& Subsets() const noexcept { return m_vSubsets; }
     void InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response);
     uint32_t GetGameId(uint32_t nSubsetId) const noexcept;
 
@@ -207,14 +154,11 @@ protected:
     void BeginLoad();
     void EndLoad();
 
-    std::wstring m_sGameTitle;
     std::string m_sGameHash;
     Mode m_nMode{};
 
-    std::vector<Subset> m_vSubsets;
-
 private:
-    GameAssets m_vAssets;
+    ra::data::models::GameAssets m_vAssets;
 
     std::atomic<int> m_nLoadCount = 0;
     int m_nMasteryPopupId = 0;

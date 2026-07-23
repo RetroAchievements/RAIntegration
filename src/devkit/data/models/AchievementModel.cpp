@@ -3,15 +3,14 @@
 #include "context/IGameContext.hh"
 #include "context/IRcClient.hh"
 
-#include "data/context/GameAssets.hh" // TODO: this is a reference outside of the devkit code for FirstLocalID
-
-#include "util/Log.hh"
-
+#include "data/models/GameAssets.hh"
 #include "data/models/LocalBadgesModel.hh"
-#include "data/models/TriggerValidation.hh"
+
+#include "data/util/TriggerValidation.hh"
 
 #include "services/ServiceLocator.hh"
 
+#include "util/Log.hh"
 #include "util/Strings.hh"
 
 #include <rcheevos/src/rcheevos/rc_internal.h>
@@ -169,7 +168,7 @@ bool AchievementModel::ValidateAsset(std::wstring& sError)
         return false;
     }
 
-    return TriggerValidation::Validate(sTrigger, sError, AssetType::Achievement);
+    return ra::data::util::TriggerValidation::TriggerValidation::Validate(sTrigger, sError, AssetType::Achievement);
 }
 
 void AchievementModel::DoFrame()
@@ -311,7 +310,7 @@ void AchievementModel::SyncIDToRuntime() const
 
 void AchievementModel::SyncTitleToRuntime()
 {
-    m_sTitleBuffer = ra::util::String::Narrow(GetName());
+    m_sTitleBuffer = ra::util::String::Narrow(GetTitle());
     m_pAchievementInfo->public_.title = m_sTitleBuffer.c_str();
 }
 
@@ -729,7 +728,7 @@ bool AchievementModel::Deserialize(ra::util::Tokenizer& pTokenizer)
     // line is valid
     SetName(ra::util::String::Widen(sTitle));
     SetDescription(ra::util::String::Widen(sDescription));
-    if (GetID() >= ra::data::context::GameAssets::FirstLocalId || GetAuthor().empty())
+    if (GetID() >= ra::data::models::GameAssets::FirstLocalId || GetAuthor().empty())
         SetAuthor(ra::util::String::Widen(sAuthor));
     SetPoints(nPoints);
     SetBadge(ra::util::String::Widen(sBadge));

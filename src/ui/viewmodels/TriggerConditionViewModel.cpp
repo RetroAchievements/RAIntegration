@@ -4,7 +4,6 @@
 #include "util\Strings.hh"
 
 #include "data\context\GameContext.hh"
-#include "data\models\TriggerValidation.hh"
 #include "data\util\IndirectNoteResolver.hh"
 
 #include "services\AchievementLogicSerializer.hh"

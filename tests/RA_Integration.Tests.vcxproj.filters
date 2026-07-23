@@ -309,12 +309,6 @@
     <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\data\context\GameAssets.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\context\GameAssets_Tests.cpp">
-      <Filter>Tests\Data\Context</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\AssetUploadViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>

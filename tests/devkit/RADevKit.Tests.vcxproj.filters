@@ -64,9 +64,6 @@
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
-    <ClCompile Include="data\models\TriggerValidation_Tests.cpp">
-      <Filter>data\models</Filter>
-    </ClCompile>
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
@@ -78,6 +75,12 @@
     </ClCompile>
     <ClCompile Include="data\util\IndirectNoteResolver_Tests.cpp">
       <Filter>data\util</Filter>
+    </ClCompile>
+    <ClCompile Include="data\util\TriggerValidation_Tests.cpp">
+      <Filter>data\util</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\GameAssets_Tests.cpp">
+      <Filter>data\models</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -184,6 +187,15 @@
     </ClInclude>
     <ClInclude Include="testutil\AchievementAsserts.hh">
       <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\AchievementSetAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\LeaderboardAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
+    <ClInclude Include="context\mocks\MockDevKitContext.hh">
+      <Filter>context\mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

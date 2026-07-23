@@ -5,7 +5,7 @@
 #include "services/ILogger.hh"
 #include "services/ServiceLocator.hh"
 
-#include "testutil/CppUnitTest.hh"
+#include "tests/devkit/testutil/CppUnitTest.hh"
 
 namespace ra {
 namespace services {

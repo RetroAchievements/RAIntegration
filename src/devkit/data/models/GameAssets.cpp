@@ -1,21 +1,21 @@
 #include "GameAssets.hh"
 
-#include "Exports.hh"
-#include "util\Log.hh"
+#include "context/IDevKitContext.hh"
+#include "context/IGameContext.hh"
 
-#include "GameContext.hh"
+#include "data/models/LocalBadgesModel.hh"
 
-#include "data\models\LocalBadgesModel.hh"
-#include "data\models\RichPresenceModel.hh"
+#include "services/ILocalStorage.hh"
+#include "services/ServiceLocator.hh"
 
-#include "services\ILocalStorage.hh"
-#include "services\ServiceLocator.hh"
+#include "util/Log.hh"
+#include "util/Strings.hh"
 
-#include "util\Strings.hh"
+#include <rcheevos/include/rc_api_runtime.h>
 
 namespace ra {
 namespace data {
-namespace context {
+namespace models {
 
 ra::data::models::AssetModelBase* GameAssets::FindAsset(ra::data::models::AssetType nType, uint32_t nId)
 {
@@ -215,16 +215,16 @@ void GameAssets::OnBeforeItemRemoved(ModelBase& pModel)
 
 void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase*>& vAssetsToReload)
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    if (pGameContext.Subsets().empty()) // server assets haven't been loaded yet
+    if (AchievementSets().Count() == 0) // server assets haven't been loaded yet
         return;
 
-    const auto nPrimarySubsetId = pGameContext.Subsets().front().AchievementSetID();
+    const auto nPrimarySubsetId = AchievementSets().GetItemAt(0)->GetID();
 
     auto* pRichPresence = dynamic_cast<ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0));
     if (pRichPresence != nullptr)
         pRichPresence->ReloadRichPresenceScript();
 
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::context::IGameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.ActiveGameId()));
     if (pData == nullptr)
@@ -454,7 +454,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
 
 void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>& vAssetsToSave)
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::context::IGameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.ActiveGameId()));
     if (pData == nullptr)
@@ -463,21 +463,19 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
         return;
     }
 
-#ifdef RA_UTEST
-    pData->WriteLine("0.0.0.0");
-#else
-    pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
-#endif
+    const auto& pDevKitContext = ra::services::ServiceLocator::Get<ra::context::IDevKitContext>();
+    pData->WriteLine(pDevKitContext.Version()); // version used to create the file
 
     uint32_t nPrimarySubsetId = 0;
-    if (pGameContext.Subsets().empty())
+    const auto* pPrimarySubset = AchievementSets().GetItemAt(0);
+    if (pPrimarySubset == nullptr)
     {
         pData->WriteLine(pGameContext.GameTitle());
     }
     else
     {
-        nPrimarySubsetId = pGameContext.Subsets().front().AchievementSetID();
-        pData->WriteLine(pGameContext.Subsets().front().Title());
+        nPrimarySubsetId = pPrimarySubset->GetID();
+        pData->WriteLine(pPrimarySubset->GetTitle());
     }
 
     bool bHasDeleted = false;
@@ -587,6 +585,54 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
     }
 }
 
-} // namespace context
+void GameAssets::InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response, bool bSubsetWithoutBase)
+{
+    Expects(game_data_response != nullptr);
+
+    m_vAchievementSets.Clear();
+
+    for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
+    {
+        auto vmAchievementSet = std::make_unique<AchievementSetModel>();
+        const auto* pSet = &game_data_response->sets[i];
+
+        AchievementSetType nType = AchievementSetType::Bonus;
+        switch (pSet->type)
+        {
+            case RC_ACHIEVEMENT_SET_TYPE_CORE:
+                nType = AchievementSetType::Core;
+                break;
+            case RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE:
+                nType = AchievementSetType::Exclusive;
+                break;
+            case RC_ACHIEVEMENT_SET_TYPE_SPECIALTY:
+                nType = AchievementSetType::Specialty;
+                break;
+            default:
+                nType = AchievementSetType::Bonus;
+                break;
+        }
+
+
+        vmAchievementSet->Initialize(pSet->id,
+            ra::context::IGameContext::GetRealGameId(pSet->game_id),
+            ra::util::String::Widen(pSet->title), nType);
+
+        m_vAchievementSets.Append(std::move(vmAchievementSet));
+
+        // core subset should always be first
+        if (pSet->type == RC_ACHIEVEMENT_SET_TYPE_CORE)
+            m_vAchievementSets.MoveItem(m_vAchievementSets.Count() - 1, 0);
+    }
+
+    if (bSubsetWithoutBase && m_vAchievementSets.Count() == 1)
+    {
+        auto* pCoreSet = m_vAchievementSets.GetItemAt(0);
+        pCoreSet->SetTitle(ra::util::String::Printf(L"%s (%s)",
+            pCoreSet->GetTitle(), game_data_response->title));
+    }
+}
+
+} // namespace models
 } // namespace data
 } // namespace ra

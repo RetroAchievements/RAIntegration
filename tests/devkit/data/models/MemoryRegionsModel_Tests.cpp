@@ -51,7 +51,7 @@ public:
 
         Assert::AreEqual(AssetType::MemoryRegions, regions.GetType());
         Assert::AreEqual(0U, regions.GetID());
-        Assert::AreEqual(std::wstring(L"Memory Regions"), regions.GetName());
+        Assert::AreEqual(std::wstring(L"Memory Regions"), regions.GetTitle());
         Assert::AreEqual(std::wstring(L""), regions.GetDescription());
         Assert::AreEqual(AssetCategory::Core, regions.GetCategory());
         Assert::AreEqual(AssetState::Inactive, regions.GetState());

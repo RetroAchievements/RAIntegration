@@ -72,7 +72,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="data\context\GameAssets.cpp" />
     <ClCompile Include="api\ApiCall.cpp" />
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
     <ClCompile Include="api\impl\DisconnectedServer.cpp" />
@@ -205,7 +204,6 @@
     <ClInclude Include="api\UpdateRichPresence.hh" />
     <ClInclude Include="api\UploadBadge.hh" />
     <ClInclude Include="data\context\EmulatorContext.hh" />
-    <ClInclude Include="data\context\GameAssets.hh" />
     <ClInclude Include="data\context\GameContext.hh" />
     <ClInclude Include="data\context\SessionTracker.hh" />
     <ClInclude Include="data\Types.hh" />

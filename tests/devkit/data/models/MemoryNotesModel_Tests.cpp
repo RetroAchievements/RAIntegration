@@ -194,7 +194,7 @@ public:
 
         Assert::AreEqual(AssetType::MemoryNotes, notes.GetType());
         Assert::AreEqual(0U, notes.GetID());
-        Assert::AreEqual(std::wstring(L"Memory Notes"), notes.GetName());
+        Assert::AreEqual(std::wstring(L"Memory Notes"), notes.GetTitle());
         Assert::AreEqual(std::wstring(L""), notes.GetDescription());
         Assert::AreEqual(AssetCategory::Core, notes.GetCategory());
         Assert::AreEqual(AssetState::Inactive, notes.GetState());

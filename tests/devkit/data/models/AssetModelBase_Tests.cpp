@@ -37,7 +37,7 @@ private:
 
         void Serialize(ra::services::TextWriter& pWriter) const override
         {
-            WriteQuoted(pWriter, GetName());
+            WriteQuoted(pWriter, GetTitle());
             WritePossiblyQuoted(pWriter, GetString());
             WriteNumber(pWriter, GetInt());
             WriteQuoted(pWriter, Utf8QuotedString);
@@ -115,7 +115,7 @@ public:
 
         Assert::AreEqual(AssetType::Achievement, asset.GetType());
         Assert::AreEqual(0U, asset.GetID());
-        Assert::AreEqual(std::wstring(L""), asset.GetName());
+        Assert::AreEqual(std::wstring(L""), asset.GetTitle());
         Assert::AreEqual(std::wstring(L""), asset.GetDescription());
         Assert::AreEqual(AssetCategory::Core, asset.GetCategory());
         Assert::AreEqual(AssetState::Inactive, asset.GetState());
@@ -215,7 +215,7 @@ public:
         pTokenizer.Advance(); // skip leading colon
         Assert::IsTrue(asset.Deserialize(pTokenizer));
 
-        Assert::AreEqual(std::wstring(L"Name"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"Name"), asset.GetTitle());
         Assert::AreEqual(std::wstring(L"String"), asset.GetString());
         Assert::AreEqual(99U, asset.GetInt());
         Assert::AreEqual(std::string("UTF-8-Quoted"), asset.Utf8QuotedString);
@@ -231,7 +231,7 @@ public:
         pTokenizer.Advance(); // skip leading colon
         Assert::IsTrue(asset.Deserialize(pTokenizer));
 
-        Assert::AreEqual(std::wstring(L"Mission: Impossible"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"Mission: Impossible"), asset.GetTitle());
         Assert::AreEqual(std::wstring(L"Mission: Impossible"), asset.GetString());
         Assert::AreEqual(0U, asset.GetInt());
         Assert::AreEqual(std::string("Mission: Impossible"), asset.Utf8QuotedString);
@@ -247,7 +247,7 @@ public:
         pTokenizer.Advance(); // skip leading colon
         Assert::IsTrue(asset.Deserialize(pTokenizer));
 
-        Assert::AreEqual(std::wstring(L"A \"Test\" B"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"A \"Test\" B"), asset.GetTitle());
         Assert::AreEqual(std::wstring(L"A \"Test\" B"), asset.GetString());
         Assert::AreEqual(0U, asset.GetInt());
         Assert::AreEqual(std::string("A \"Test\" B"), asset.Utf8QuotedString);
@@ -263,7 +263,7 @@ public:
         pTokenizer.Advance(); // skip leading colon
         Assert::IsTrue(asset.Deserialize(pTokenizer));
 
-        Assert::AreEqual(std::wstring(L"A\\B"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"A\\B"), asset.GetTitle());
         Assert::AreEqual(std::wstring(L"A\\B"), asset.GetString());
         Assert::AreEqual(0U, asset.GetInt());
         Assert::AreEqual(std::string("A\\B"), asset.Utf8QuotedString);
@@ -279,7 +279,7 @@ public:
         pTokenizer.Advance(); // skip leading colon
         Assert::IsFalse(asset.Deserialize(pTokenizer));
 
-        Assert::AreEqual(std::wstring(L"A"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"A"), asset.GetTitle());
         Assert::AreEqual(std::wstring(L"B"), asset.GetString());
         Assert::AreEqual(0U, asset.GetInt());
         Assert::AreEqual(std::string(), asset.Utf8QuotedString);
@@ -295,7 +295,7 @@ public:
         pTokenizer.Advance(); // skip leading colon
         Assert::IsFalse(asset.Deserialize(pTokenizer));
 
-        Assert::AreEqual(std::wstring(L"A"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"A"), asset.GetTitle());
         Assert::AreEqual(std::wstring(L"B"), asset.GetString());
         Assert::AreEqual(5U, asset.GetInt());
         Assert::AreEqual(std::string("D"), asset.Utf8QuotedString);
@@ -311,7 +311,7 @@ public:
         pTokenizer.Advance(); // skip leading colon
         Assert::IsFalse(asset.Deserialize(pTokenizer));
 
-        Assert::AreEqual(std::wstring(), asset.GetName());
+        Assert::AreEqual(std::wstring(), asset.GetTitle());
         Assert::AreEqual(std::wstring(), asset.GetString());
         Assert::AreEqual(0U, asset.GetInt());
         Assert::AreEqual(std::string(), asset.Utf8QuotedString);
@@ -327,7 +327,7 @@ public:
         pTokenizer.Advance(); // skip leading colon
         Assert::IsFalse(asset.Deserialize(pTokenizer));
 
-        Assert::AreEqual(std::wstring(L"A"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"A"), asset.GetTitle());
         Assert::AreEqual(std::wstring(), asset.GetString());
         Assert::AreEqual(0U, asset.GetInt());
         Assert::AreEqual(std::string(), asset.Utf8QuotedString);
@@ -349,11 +349,11 @@ public:
 
         asset.UpdateLocalCheckpoint();
         Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
-        Assert::AreEqual(std::wstring(L"LocalName"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"LocalName"), asset.GetTitle());
 
         asset.UpdateServerCheckpoint();
         Assert::AreEqual(AssetChanges::None, asset.GetChanges());
-        Assert::AreEqual(std::wstring(L"LocalName"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"LocalName"), asset.GetTitle());
     }
 
     TEST_METHOD(TestRestoreCheckpoint)
@@ -372,14 +372,14 @@ public:
 
         asset.RestoreLocalCheckpoint();
         Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
-        Assert::AreEqual(std::wstring(L"LocalName"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"LocalName"), asset.GetTitle());
 
         asset.SetName(L"ModifiedName");
         Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
 
         asset.RestoreServerCheckpoint();
         Assert::AreEqual(AssetChanges::None, asset.GetChanges());
-        Assert::AreEqual(std::wstring(L"ServerName"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"ServerName"), asset.GetTitle());
     }
 
     TEST_METHOD(TestUpdateDefinitionCheckpoint)
@@ -470,7 +470,7 @@ public:
         pTokenizer.Advance(); // skip leading colon
         asset.ResetLocalCheckpoint(pTokenizer);
 
-        Assert::AreEqual(std::wstring(L"Name"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"Name"), asset.GetTitle());
         Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
     }
 

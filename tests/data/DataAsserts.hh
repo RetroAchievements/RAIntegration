@@ -27,62 +27,6 @@ std::wstring ToString<ra::data::context::GameContext::Mode>(const ra::data::cont
     }
 }
 
-template<>
-std::wstring ToString<ra::data::context::GameContext::SubsetType>(const ra::data::context::GameContext::SubsetType& nSubsetType)
-{
-    switch (nSubsetType)
-    {
-        case ra::data::context::GameContext::SubsetType::Core:
-            return L"Core";
-        case ra::data::context::GameContext::SubsetType::Bonus:
-            return L"Bonus";
-        case ra::data::context::GameContext::SubsetType::Specialty:
-            return L"Specialty";
-        case ra::data::context::GameContext::SubsetType::Exclusive:
-            return L"Exclusive";
-        default:
-            return std::to_wstring(static_cast<int>(nSubsetType));
-    }
-}
-
-template<>
-std::wstring ToString<ra::data::models::LeaderboardModel::LeaderboardParts>(const ra::data::models::LeaderboardModel::LeaderboardParts& nParts)
-{
-    switch (nParts)
-    {
-        case ra::data::models::LeaderboardModel::LeaderboardParts::None:
-            return L"None";
-        case ra::data::models::LeaderboardModel::LeaderboardParts::Start:
-            return L"Start";
-        case ra::data::models::LeaderboardModel::LeaderboardParts::Submit:
-            return L"Submit";
-        case ra::data::models::LeaderboardModel::LeaderboardParts::Cancel:
-            return L"Cancel";
-        case ra::data::models::LeaderboardModel::LeaderboardParts::Value:
-            return L"Value";
-        default:
-            return std::to_wstring(static_cast<int>(nParts));
-    }
-}
-
-template<>
-std::wstring ToString<ra::data::models::AchievementType>(const ra::data::models::AchievementType& nAchievementType)
-{
-    switch (nAchievementType)
-    {
-        case ra::data::models::AchievementType::None:
-            return L"None";
-        case ra::data::models::AchievementType::Missable:
-            return L"Missable";
-        case ra::data::models::AchievementType::Progression:
-            return L"Progression";
-        case ra::data::models::AchievementType::Win:
-            return L"Win";
-        default:
-            return std::to_wstring(static_cast<int>(nAchievementType));
-    }
-}
-
 #pragma warning(pop)
 
 } // namespace CppUnitTestFramework

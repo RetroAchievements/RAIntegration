@@ -4,6 +4,7 @@
 
 #include "context\UserContext.hh"
 #include "context\impl\ConsoleContext.hh"
+#include "context\impl\DevKitContext.hh"
 #include "context\impl\EmulatorMemoryContext.hh"
 #include "context\impl\RcClient.hh"
 
@@ -101,6 +102,9 @@ void Initialization::RegisterCoreServices()
     ra::services::ServiceLocator::Provide<ra::services::IClock>(std::move(pClock));
     ra::services::ServiceLocator::Provide<ra::services::IFileSystem>(std::move(pFileSystem));
     ra::services::ServiceLocator::Provide<ra::services::ILogger>(std::move(pLogger));
+
+    auto pDevKitContext = std::make_unique<ra::context::impl::DevKitContext>();
+    ra::services::ServiceLocator::Provide<ra::context::IDevKitContext>(std::move(pDevKitContext));
 
     auto pConfiguration = std::make_unique<ra::services::impl::JsonFileConfiguration>();
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(std::move(pConfiguration));

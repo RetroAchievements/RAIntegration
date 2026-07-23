@@ -312,9 +312,6 @@
     <ClCompile Include="data\context\SessionTracker.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
-    <ClCompile Include="data\context\GameAssets.cpp">
-      <Filter>Data\Context</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\ProgressViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -786,9 +783,6 @@
       <Filter>Data\Context</Filter>
     </ClInclude>
     <ClInclude Include="data\context\SessionTracker.hh">
-      <Filter>Data\Context</Filter>
-    </ClInclude>
-    <ClInclude Include="data\context\GameAssets.hh">
       <Filter>Data\Context</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\ProgressViewModel.hh">

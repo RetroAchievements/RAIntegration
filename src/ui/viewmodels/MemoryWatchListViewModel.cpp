@@ -6,7 +6,6 @@
 
 #include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
-#include "data\models\TriggerValidation.hh"
 
 #include "services\AchievementLogicSerializer.hh"
 #include "services\FrameEventQueue.hh"

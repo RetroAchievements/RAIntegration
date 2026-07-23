@@ -71,14 +71,16 @@
     <ClCompile Include="data\ModelPropertyContainer_Tests.cpp" />
     <ClCompile Include="data\ModelProperty_Tests.cpp" />
     <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
+    <ClCompile Include="data\models\GameAssets_Tests.cpp" />
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
     <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp" />
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
-    <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
     <ClCompile Include="data\util\IndirectNoteResolver_Tests.cpp" />
+    <ClCompile Include="data\util\TriggerValidation_Tests.cpp" />
     <ClCompile Include="util\Tokenizer_Tests.cpp" />
     <ClInclude Include="context\mocks\MockConsoleContext.hh" />
+    <ClInclude Include="context\mocks\MockDevKitContext.hh" />
     <ClInclude Include="context\mocks\MockEmulatorMemoryContext.hh" />
     <ClInclude Include="context\mocks\MockGameContext.hh" />
     <ClInclude Include="context\mocks\MockRcClient.hh" />
@@ -92,6 +94,7 @@
     <ClInclude Include="services\mocks\MockMessageDispatcher.hh" />
     <ClInclude Include="services\mocks\MockThreadPool.hh" />
     <ClInclude Include="testutil\AchievementAsserts.hh" />
+    <ClInclude Include="testutil\AchievementSetAsserts.hh" />
     <ClInclude Include="testutil\AssetAsserts.hh" />
     <ClInclude Include="testutil\CppUnitTest.hh" />
     <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
@@ -104,6 +107,7 @@
     <ClCompile Include="util\StringBuilder_Tests.cpp" />
     <ClCompile Include="util\Strings_Tests.cpp" />
     <ClInclude Include="testutil\HttpAsserts.hh" />
+    <ClInclude Include="testutil\LeaderboardAsserts.hh" />
     <ClInclude Include="testutil\MemoryAsserts.hh" />
     <ClInclude Include="testutil\MemoryRegionAsserts.hh" />
     <ClInclude Include="testutil\ValueAsserts.hh" />

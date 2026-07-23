@@ -6,9 +6,11 @@
 #include "tests\RA_UnitTestHelpers.h"
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
+#include "tests\devkit\context\mocks\MockDevKitContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
+#include "tests\devkit\services\mocks\MockLogger.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockClipboard.hh"
@@ -32,11 +34,13 @@ private:
     {
     public:
         ra::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockDevKitContext mockDevKitContext;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorContext;
         ra::context::mocks::MockUserContext mockUserContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockClipboard mockClipboard;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockLogger mockLogger;
 
         std::array<unsigned char, 32> memory{};
 

@@ -116,7 +116,7 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
     // reset the GameContext
     m_nMode = nMode;
     m_sGameTitle.clear();
-    m_vSubsets.clear();
+    m_vAssets.ClearAchievementSets();
     m_vAssets.ResetLocalId();
 
     m_vAssets.BeginUpdate();
@@ -293,7 +293,7 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
         // activate rich presence (or remove if not defined)
         if (pRichPresence && nResult == RC_OK)
         {
-            pRichPresence->SetSubsetID(m_vSubsets.front().AchievementSetID());
+            pRichPresence->SetSubsetID(Assets().AchievementSets().GetItemAt(0)->GetID());
 
             // if the server value differs from the local value, the model will appear as Unpublished
             if (pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
@@ -501,11 +501,6 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
 
 void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response)
 {
-    Expects(game_data_response != nullptr);
-
-    std::lock_guard<std::mutex> lock(m_mLoadMutex);
-    m_vSubsets.clear();
-
     // GameID dictates which game is loaded for purposes of local achievement storage and memory notes
     m_nGameId = GetRealGameId(game_data_response->id);
     // ActiveGameID dictates which game is running for purposes of rich presence and pings
@@ -516,46 +511,11 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
         ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().BeginSession(nActiveGameId);
     }
 
-    for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
-    {
-        const auto* pSet = &game_data_response->sets[i];
-        if (pSet->type == RC_ACHIEVEMENT_SET_TYPE_CORE)
-        {
-            // core subset should always be first
-            m_vSubsets.insert(m_vSubsets.begin(),
-                              Subset(pSet->id, GetRealGameId(pSet->game_id),
-                                     ra::util::String::Widen(pSet->title), SubsetType::Core));
-        }
-        else
-        {
-            SubsetType nType = SubsetType::Bonus;
-            switch (pSet->type)
-            {
-                case RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE:
-                    nType = SubsetType::Exclusive;
-                    break;
-                case RC_ACHIEVEMENT_SET_TYPE_SPECIALTY:
-                    nType = SubsetType::Specialty;
-                    break;
-                default:
-                    nType = SubsetType::Bonus;
-                    break;
-            }
-            m_vSubsets.emplace_back(pSet->id, GetRealGameId(pSet->game_id),
-                                    ra::util::String::Widen(pSet->title), nType);
-        }
-    }
+    Assets().InitializeSubsets(game_data_response, m_nActiveGameId != m_nGameId);
 
     // if subsets were found, migrate any SUBSET-User.txt files into the the GAME-User.txt file
-    if (m_vSubsets.size() > 1)
-    {
+    if (Assets().AchievementSets().Count() > 1)
         MigrateSubsetUserFiles();
-    }
-    else if (m_nActiveGameId != m_nGameId)
-    {
-        m_vSubsets.front().SetTitle(ra::util::String::Printf(L"%s (%s)",
-            m_vSubsets.front().Title(), game_data_response->title));
-    }
 }
 
 void GameContext::MigrateSubsetUserFiles()
@@ -563,22 +523,22 @@ void GameContext::MigrateSubsetUserFiles()
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     std::unique_ptr<ra::services::TextWriter> pGameData;
 
-    for (size_t i = 1; i < m_vSubsets.size(); ++i)
+    for (const auto& pSubset : Assets().AchievementSets())
     {
-        const auto& pSubset = m_vSubsets.at(i);
-        Expects(pSubset.GameID() != m_nGameId);
+        if (pSubset.GetBackingGameID() == m_nGameId)
+            continue;
 
         auto pSubsetData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements,
-                                                  std::to_wstring(pSubset.GameID()));
+            std::to_wstring(pSubset.GetBackingGameID()));
         if (pSubsetData)
         {
             // replace ID with "0|SUBSETID" so new IDs will be generated
-            std::string sSubsetReplace = "0|" + std::to_string(pSubset.AchievementSetID());
+            std::string sSubsetReplace = "0|" + std::to_string(pSubset.GetID());
 
             if (!pGameData)
             {
                 pGameData = pLocalStorage.AppendText(ra::services::StorageItemType::UserAchievements,
-                                                     std::to_wstring(m_nGameId));
+                    std::to_wstring(m_nGameId));
                 if (!pGameData)
                 {
                     RA_LOG_ERR("Could not append to %u-User.txt", m_nGameId);
@@ -622,17 +582,17 @@ void GameContext::MigrateSubsetUserFiles()
             // release the file so it can be deleted, then delete it.
             pSubsetData.reset();
             pLocalStorage.Delete(ra::services::StorageItemType::UserAchievements,
-                                 std::to_wstring(pSubset.GameID()));
+                std::to_wstring(pSubset.GetBackingGameID()));
         }
     }
 }
 
 uint32_t GameContext::GetGameId(uint32_t nSubsetId) const noexcept
 {
-    for (const auto& pSubset : m_vSubsets)
+    for (const auto& pSubset : Assets().AchievementSets())
     {
-        if (pSubset.ID() == nSubsetId)
-            return pSubset.GameID();
+        if (pSubset.GetID() == nSubsetId)
+            return pSubset.GetBackingGameID();
     }
 
     return GameId();

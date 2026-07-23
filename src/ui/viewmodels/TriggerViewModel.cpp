@@ -10,8 +10,6 @@
 
 #include "util\Strings.hh"
 
-#include "data\models\TriggerValidation.hh"
-
 #include "services\AchievementLogicSerializer.hh"
 #include "services\AchievementRuntime.hh"
 #include "services\IClipboard.hh"
@@ -963,9 +961,9 @@ void TriggerViewModel::Summarize()
     TriggerSummaryViewModel vmSummary;
 
     if (m_vGroups.Count() == 1)
-        vmSummary.SetWindowTitle(L"Trigger Summary - " + pAssetEditor.GetAsset()->GetName());
+        vmSummary.SetWindowTitle(L"Trigger Summary - " + pAssetEditor.GetAsset()->GetTitle());
     else
-        vmSummary.SetWindowTitle(pGroup->GetLabel() + L" Summary - " + pAssetEditor.GetAsset()->GetName());
+        vmSummary.SetWindowTitle(pGroup->GetLabel() + L" Summary - " + pAssetEditor.GetAsset()->GetTitle());
 
     vmSummary.InitializeFrom(*pCondSet);
     vmSummary.AddHeaders();

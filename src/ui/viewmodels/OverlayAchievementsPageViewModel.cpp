@@ -129,7 +129,7 @@ void OverlayAchievementsPageViewModel::Refresh()
             if (!pSubset->active)
                 continue;
 
-            if (pSubset->public_.id == ra::data::context::GameAssets::LocalSubsetId)
+            if (pSubset->public_.id == ra::data::models::AchievementSetModel::LocalId)
             {
                 vDeactivatedSubsets.push_back(pSubset);
                 pSubset->active = 0;
@@ -381,7 +381,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     vmAchievement.SetCreatedDate(ra::util::String::FormatDateTime(pAchievement->created_time));
     vmAchievement.SetModifiedDate(ra::util::String::FormatDateTime(pAchievement->updated_time));
 
-    if (nAchievementID >= ra::data::context::GameAssets::FirstLocalId)
+    if (nAchievementID >= ra::data::models::GameAssets::FirstLocalId)
     {
         vmAchievement.SetWonBy(L"Local Achievement");
         return;

@@ -527,6 +527,47 @@ public:
         Assert::AreEqual(4U, pItem.GetChanges());
     }
 
+    TEST_METHOD(TestAddItemASCIIIndirect)
+    {
+        MemoryWatchListViewModelHarness watchList;
+
+        std::array<uint8_t, 64> memory = {};
+        memory.at(0) = 8;
+        memory.at(8) = 'H';
+        memory.at(9) = 'i';
+        memory.at(12) = 'B';
+        memory.at(13) = 'y';
+        memory.at(14) = 'e';
+        watchList.mockEmulatorContext.MockMemory(memory);
+
+        watchList.AddItem("I:0x 0000_M:0xX0000", ra::data::Memory::Format::Hex);
+
+        Assert::AreEqual({ 1U }, watchList.Items().Count());
+        auto& pItem = *watchList.Items().GetItemAt(0);
+        pItem.SetSize(ra::data::Memory::Size::Text);
+
+        // text @ word(0) | word(0) = 0x0008
+        Assert::AreEqual(std::wstring(L""), pItem.GetRealNote());
+        Assert::AreEqual(8U, pItem.GetAddress());
+        Assert::IsTrue(pItem.IsIndirectAddress());
+        Assert::AreEqual(ra::data::Memory::Size::Text, pItem.GetSize());
+        Assert::AreEqual(std::wstring(L"Hi"), pItem.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"00000000"), pItem.GetPreviousValue()); // from before size was changed to text
+        Assert::AreEqual(0U, pItem.GetChanges());
+
+        memory.at(0) = 12;
+        watchList.DoFrame();
+        Assert::AreEqual(std::wstring(L"Bye"), pItem.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"Hi"), pItem.GetPreviousValue());
+        Assert::AreEqual(1U, pItem.GetChanges());
+
+        memory.at(1) = 1; // word(0) = 0x010C | out of range
+        watchList.DoFrame();
+        Assert::AreEqual(std::wstring(L""), pItem.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"Bye"), pItem.GetPreviousValue());
+        Assert::AreEqual(2U, pItem.GetChanges());
+    }
+
     TEST_METHOD(TestSetCurrentValue)
     {
         MemoryWatchListViewModelHarness watchList;

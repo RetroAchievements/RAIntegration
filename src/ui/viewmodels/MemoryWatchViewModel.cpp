@@ -380,6 +380,10 @@ std::wstring MemoryWatchViewModel::BuildCurrentValue() const
 {
     if (m_nSize == ra::data::Memory::Size::Text)
     {
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+        if (m_nAddress >= pMemoryContext.TotalMemorySize())
+            return L"";
+
         ra::services::SearchResults pResults;
         pResults.Initialize(m_nAddress, MaxTextBookmarkLength, ra::services::SearchType::AsciiText);
         return pResults.GetFormattedValue(m_nAddress, ra::data::Memory::Size::Text);

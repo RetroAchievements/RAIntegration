@@ -2,6 +2,7 @@
 
 #include "context/IDevKitContext.hh"
 #include "context/IGameContext.hh"
+#include "context/IRcClient.hh"
 
 #include "data/models/LocalBadgesModel.hh"
 
@@ -12,10 +13,16 @@
 #include "util/Strings.hh"
 
 #include <rcheevos/include/rc_api_runtime.h>
+#include <rcheevos/src/rc_client_internal.h>
 
 namespace ra {
 namespace data {
 namespace models {
+
+GameAssets::~GameAssets() noexcept
+{
+    DetachFromRuntime();
+}
 
 ra::data::models::AssetModelBase* GameAssets::FindAsset(ra::data::models::AssetType nType, uint32_t nId)
 {
@@ -142,6 +149,12 @@ void GameAssets::OnModelValueChanged(gsl::index nIndex, const IntModelProperty::
         else
             m_vPauseOnTriggerLeaderboardIds.insert(nId);
     }
+    else if (args.Property == ra::data::models::AssetModelBase::SubsetIDProperty ||
+             args.Property == ra::data::models::AssetModelBase::CategoryProperty)
+    {
+        if (m_pPublishedSubsets != nullptr) // assets previously sync'd, resync them
+            SyncAssetsToRuntime();
+    }
 
     ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnModelValueChanged(nIndex, args);
 }
@@ -211,6 +224,22 @@ void GameAssets::OnBeforeItemRemoved(ModelBase& pModel)
     }
 
     ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnBeforeItemRemoved(pModel);
+}
+
+void GameAssets::OnItemsRemoved(const std::vector<gsl::index>& vDeletedIndices)
+{
+    if (m_pPublishedSubsets != nullptr) // assets previously sync'd, resync them
+        SyncAssetsToRuntime();
+
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnItemsRemoved(vDeletedIndices);
+}
+
+void GameAssets::OnItemsAdded(const std::vector<gsl::index>& vNewIndices)
+{
+    if (m_pPublishedSubsets != nullptr) // assets previously sync'd, resync them
+        SyncAssetsToRuntime();
+
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnItemsAdded(vNewIndices);
 }
 
 void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase*>& vAssetsToReload)
@@ -585,51 +614,82 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
     }
 }
 
-void GameAssets::InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response, bool bSubsetWithoutBase)
+void GameAssets::AddAchievementSet(uint32_t nId, uint32_t nGameId, const std::wstring& sTitle, AchievementSetType nType)
 {
-    Expects(game_data_response != nullptr);
+    auto vmAchievementSet = std::make_unique<AchievementSetModel>();
+    vmAchievementSet->Initialize(nId, nGameId, sTitle, nType);
+    m_vAchievementSets.Append(std::move(vmAchievementSet));
 
-    m_vAchievementSets.Clear();
+    // core subset should always be first
+    if (nType == AchievementSetType::Core)
+        m_vAchievementSets.MoveItem(m_vAchievementSets.Count() - 1, 0);
+}
 
-    for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
+void GameAssets::SyncAssetsToRuntime()
+{
+    auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+    if (!pClient->game || !pClient->game->subsets)
+        return;
+
+    const bool bIsInitializing = (m_pPublishedSubsets == nullptr);
+    if (bIsInitializing)
     {
-        auto vmAchievementSet = std::make_unique<AchievementSetModel>();
-        const auto* pSet = &game_data_response->sets[i];
-
-        AchievementSetType nType = AchievementSetType::Bonus;
-        switch (pSet->type)
-        {
-            case RC_ACHIEVEMENT_SET_TYPE_CORE:
-                nType = AchievementSetType::Core;
-                break;
-            case RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE:
-                nType = AchievementSetType::Exclusive;
-                break;
-            case RC_ACHIEVEMENT_SET_TYPE_SPECIALTY:
-                nType = AchievementSetType::Specialty;
-                break;
-            default:
-                nType = AchievementSetType::Bonus;
-                break;
-        }
-
-
-        vmAchievementSet->Initialize(pSet->id,
-            ra::context::IGameContext::GetRealGameId(pSet->game_id),
-            ra::util::String::Widen(pSet->title), nType);
-
-        m_vAchievementSets.Append(std::move(vmAchievementSet));
-
-        // core subset should always be first
-        if (pSet->type == RC_ACHIEVEMENT_SET_TYPE_CORE)
-            m_vAchievementSets.MoveItem(m_vAchievementSets.Count() - 1, 0);
+        rc_mutex_lock(&pClient->state.mutex);
+        m_pPublishedSubsets = pClient->game->subsets;
+        rc_mutex_unlock(&pClient->state.mutex);
     }
 
-    if (bSubsetWithoutBase && m_vAchievementSets.Count() == 1)
+    for (auto& pAchievementSet : m_vAchievementSets)
     {
-        auto* pCoreSet = m_vAchievementSets.GetItemAt(0);
-        pCoreSet->SetTitle(ra::util::String::Printf(L"%s (%s)",
-            pCoreSet->GetTitle(), game_data_response->title));
+        const auto nSubsetId = pAchievementSet.GetID();
+        for (auto* pSubset = m_pPublishedSubsets; pSubset; pSubset = pSubset->next)
+        {
+            if (pSubset->public_.id == nSubsetId)
+            {
+                pAchievementSet.SyncToRuntime(*pSubset, *this);
+                break;
+            }
+        }
+    }
+
+    if (bIsInitializing)
+    {
+        rc_mutex_lock(&pClient->state.mutex);
+        rc_client_subset_info_t** pNextSubset = &pClient->game->subsets;
+
+        for (auto& pAchievementSet : m_vAchievementSets)
+        {
+            *pNextSubset = pAchievementSet.GetPublishedSubsetInfo();
+            Expects(*pNextSubset != nullptr);
+            pNextSubset = &(*pNextSubset)->next;
+
+            *pNextSubset = pAchievementSet.GetLocalSubsetInfo();
+            Expects(*pNextSubset != nullptr);
+            pNextSubset = &(*pNextSubset)->next;
+        }
+
+        *pNextSubset = nullptr;
+        rc_mutex_unlock(&pClient->state.mutex);
+    }
+}
+
+void GameAssets::DetachFromRuntime()
+{
+    // detach from the runtime. we're about to destroy all the models
+    // so any injected data wil be invalid.
+    if (m_pPublishedSubsets != nullptr)
+    {
+        if (ra::services::ServiceLocator::Exists<ra::context::IRcClient>())
+        {
+            auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+            if (pClient && pClient->game)
+            {
+                pClient->game->subsets = m_pPublishedSubsets;
+                pClient->game->runtime.richpresence = nullptr;
+            }
+        }
+
+        m_pPublishedSubsets = nullptr;
     }
 }
 

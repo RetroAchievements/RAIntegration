@@ -1615,11 +1615,6 @@ void AssetListViewModel::ResetSelected()
         }
     }
 
-    // sync assets before calling EndUpdate to ensure anything watching for TriggerProperty to change
-    // can find the new definition (i.e. asset editor)
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    pRuntime.SyncAssets();
-
     // if the asset that is loaded in the editor no longer exists, clear out the editor
     // do this before EndUpdate so the asset won't have been destroyed yet
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
@@ -1775,11 +1770,6 @@ void AssetListViewModel::RevertSelected()
         }
     }
 
-    // sync assets before calling EndUpdate to ensure anything watching for TriggerProperty to change
-    // can find the new definition (i.e. asset editor)
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    pRuntime.SyncAssets();
-
     pAssets.EndUpdate();
 
     // update the local file
@@ -1806,36 +1796,29 @@ void AssetListViewModel::CreateNew()
         nType = vmNewAsset.GetSelectedType();
     }
 
-    bool bUpdateAsset = true;
     gsl::index nIndex = -1;
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    ra::data::models::AssetModelBase* pNewAsset = nullptr;
+    ra::data::models::AssetModelBase* pAsset = nullptr;
+    std::unique_ptr<ra::data::models::AssetModelBase> pNewAsset;
     switch (nType)
     {
         case ra::data::models::AssetType::Achievement:
             RA_LOG_INFO("Creating new achievement");
-            pNewAsset = &pGameContext.Assets().NewAchievement();
+            pNewAsset.reset(new ra::data::models::AchievementModel);
             break;
 
         case ra::data::models::AssetType::Leaderboard:
             RA_LOG_INFO("Creating new leaderboard");
-            pNewAsset = &pGameContext.Assets().NewLeaderboard();
+            pNewAsset.reset(new ra::data::models::LeaderboardModel);
             break;
 
         case ra::data::models::AssetType::RichPresence:
-            pNewAsset = pGameContext.Assets().FindRichPresence();
-            if (pNewAsset != nullptr)
-            {
-                bUpdateAsset = false;
-            }
-            else
+            pAsset = pGameContext.Assets().FindRichPresence();
+            if (pAsset == nullptr)
             {
                 RA_LOG_INFO("Creating rich presence");
-                auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
-                pRichPresence->CreateServerCheckpoint();
-                pRichPresence->CreateLocalCheckpoint();
-                pNewAsset = &pGameContext.Assets().Append(std::move(pRichPresence));
+                pNewAsset.reset(new ra::data::models::RichPresenceModel);
             }
             break;
 
@@ -1843,27 +1826,32 @@ void AssetListViewModel::CreateNew()
             break;
     }
 
-    Expects(pNewAsset != nullptr);
-
-    pNewAsset->SetSubsetID(GetSubsetFilter());
-
-    if (bUpdateAsset)
+    if (pNewAsset != nullptr)
     {
+        if (nType != ra::data::models::AssetType::RichPresence)
+            pNewAsset->SetID(pGameContext.Assets().GetNextLocalId());
+
+        pNewAsset->SetSubsetID(GetSubsetFilter());
+
         const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::context::UserContext>();
         pNewAsset->SetAuthor(ra::util::String::Widen(pUserContext.GetDisplayName()));
         pNewAsset->SetCategory(ra::data::models::AssetCategory::Local);
-        pNewAsset->UpdateServerCheckpoint();
+
+        pNewAsset->CreateServerCheckpoint();
+        pNewAsset->CreateLocalCheckpoint();
         pNewAsset->SetNew();
+
+        pAsset = &pGameContext.Assets().Append(std::move(pNewAsset));
     }
 
-    EnsureAppearsInFilteredList(*pNewAsset);
+    EnsureAppearsInFilteredList(*pAsset);
 
     {
         std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
 
         FilteredAssets().BeginUpdate();
 
-        const auto nId = ra::to_signed(pNewAsset->GetID());
+        const auto nId = ra::to_signed(pAsset->GetID());
 
         // select the new viewmodel, and deselect everything else
         for (gsl::index i = 0; i < ra::to_signed(m_vFilteredAssets.Count()); ++i)
@@ -1883,11 +1871,6 @@ void AssetListViewModel::CreateNew()
             }
         }
     }
-
-    // sync assets before calling EndUpdate to ensure anything watching for TriggerProperty to change
-    // can find the new definition (i.e. asset editor)
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    pRuntime.SyncAssets();
 
     FilteredAssets().EndUpdate();
 
@@ -2014,11 +1997,6 @@ void AssetListViewModel::CloneSelected()
             }
         }
     }
-
-    // sync assets before calling EndUpdate to ensure anything watching for TriggerProperty to change
-    // can find the new definition (i.e. asset editor)
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    pRuntime.SyncAssets();
 
     FilteredAssets().EndUpdate();
 

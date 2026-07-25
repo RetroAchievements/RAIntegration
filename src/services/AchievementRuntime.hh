@@ -36,11 +36,6 @@ public:
     void UnloadGame();
 
     /// <summary>
-    /// Syncs data in Assets to rc_client.
-    /// </summary>
-    void SyncAssets();
-
-    /// <summary>
     /// Clears all active achievements/leaderboards/rich presence from the runtime.
     /// </summary>
     void ResetRuntime();
@@ -154,18 +149,12 @@ public:
         bool m_bWaiting = true;
     };
 
-    void AttachMemory(void* pMemory);
-    bool DetachMemory(void* pMemory) noexcept;
-
 protected:
     AchievementRuntime(bool bInitializeRcClient);
 
 private:
     bool m_bPaused = false;
     DWORD m_hDoFrameThread = 0;
-
-    class ClientSynchronizer;
-    std::unique_ptr<ClientSynchronizer> m_pClientSynchronizer;
 
     int m_nRichPresenceParseResult = RC_OK;
     int m_nRichPresenceErrorLine = 0;

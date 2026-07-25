@@ -10,6 +10,8 @@
 
 #include "services/ServiceLocator.hh"
 
+#include "ui/IImageRepository.hh"
+
 #include "util/Log.hh"
 #include "util/Strings.hh"
 
@@ -320,20 +322,42 @@ void AchievementModel::SyncDescriptionToRuntime()
     m_pAchievementInfo->public_.description = m_sDescriptionBuffer.c_str();
 }
 
-void AchievementModel::SyncBadgeToRuntime() const
+void AchievementModel::SyncBadgeToRuntime()
 {
     const auto& sBadge = GetBadge();
+
     if (ra::util::String::StartsWith(sBadge, L"local\\"))
     {
         // cannot fit "local/md5.png" into 8 byte buffer. also, client may not understand.
         // encode a value that we can intercept in rc_client_achievement_get_image_url.
         snprintf(m_pAchievementInfo->public_.badge_name, sizeof(m_pAchievementInfo->public_.badge_name), "L%06x",
                  m_pAchievementInfo->public_.id);
+
+        const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
+        m_sBadgeUrl = ra::util::String::Printf("file://%s",
+            pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::util::String::Narrow(sBadge)));
+        std::replace(m_sBadgeUrl.begin(), m_sBadgeUrl.end(), '\\', '/');
+
+        m_pAchievementInfo->public_.badge_url = m_pAchievementInfo->public_.badge_locked_url = m_sBadgeUrl.c_str();
     }
     else
     {
         snprintf(m_pAchievementInfo->public_.badge_name, sizeof(m_pAchievementInfo->public_.badge_name), "%s",
                  ra::util::String::Narrow(sBadge).c_str());
+
+        char buffer[256];
+
+        if (rc_client_achievement_get_image_url(&m_pAchievementInfo->public_, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, buffer, sizeof(buffer)) == RC_OK)
+        {
+            m_sBadgeUrl = buffer;
+            m_pAchievementInfo->public_.badge_url = m_sBadgeUrl.c_str();
+        }
+
+        if (rc_client_achievement_get_image_url(&m_pAchievementInfo->public_, RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE, buffer, sizeof(buffer)) == RC_OK)
+        {
+            m_sBadgeLockedUrl = buffer;
+            m_pAchievementInfo->public_.badge_locked_url = m_sBadgeLockedUrl.c_str();
+        }
     }
 }
 
@@ -396,7 +420,7 @@ void AchievementModel::SyncTriggerToRuntime()
     ParseTrigger();
 }
 
-static void UpdateRuntimeLeaderboard(rc_client_game_info_t* pGame, rc_client_achievement_info_t* pAchievementInfo, rc_trigger_t* trigger) noexcept
+static void UpdateRuntimeAchievement(rc_client_game_info_t* pGame, rc_client_achievement_info_t* pAchievementInfo, rc_trigger_t* trigger) noexcept
 {
     const auto* pOldTrigger = pAchievementInfo->trigger;
     pAchievementInfo->trigger = trigger;
@@ -476,7 +500,7 @@ void AchievementModel::ParseTrigger() const
             rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
             trigger->trigger.has_memrefs = 1;
 
-            UpdateRuntimeLeaderboard(pGame, m_pAchievementInfo, &trigger->trigger);
+            UpdateRuntimeAchievement(pGame, m_pAchievementInfo, &trigger->trigger);
 
             m_pTriggerBuffer = std::move(trigger_buffer);
 
@@ -487,7 +511,7 @@ void AchievementModel::ParseTrigger() const
     {
         // parse error - disable achievement
         m_pAchievementInfo->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
-        UpdateRuntimeLeaderboard(pGame, m_pAchievementInfo, nullptr);
+        UpdateRuntimeAchievement(pGame, m_pAchievementInfo, nullptr);
 
         // release allocated memory
         m_pTriggerBuffer.reset();

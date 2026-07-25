@@ -796,6 +796,7 @@ public:
 
         editor.mockRuntime.MockLocalLeaderboard(111000001U, "Leaderboard");
         editor.mockGameContext.InitializeFromAchievementRuntime();
+        editor.mockGameContext.Assets().SyncAssetsToRuntime();
         auto* leaderboard = editor.mockGameContext.Assets().FindLeaderboard(111000001U);
         Expects(leaderboard != nullptr);
 

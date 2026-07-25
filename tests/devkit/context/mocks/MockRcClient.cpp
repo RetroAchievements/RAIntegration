@@ -263,6 +263,11 @@ static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game)
     return GetSubset(game, game->public_.id, game->public_.title);
 }
 
+void MockRcClient::MockCoreSubset()
+{
+    GetCoreSubset(GetClient()->game);
+}
+
 static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
     rc_client_subset_info_t* subset, uint32_t nId, const char* sTitle)
 {

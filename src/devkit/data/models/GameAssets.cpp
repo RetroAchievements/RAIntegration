@@ -655,7 +655,7 @@ void GameAssets::SyncAssetsToRuntime()
     if (bIsInitializing)
     {
         rc_mutex_lock(&pClient->state.mutex);
-        rc_client_subset_info_t** pNextSubset = &pClient->game->subsets;
+        GSL_SUPPRESS_F23 rc_client_subset_info_t** pNextSubset = &pClient->game->subsets;
 
         for (auto& pAchievementSet : m_vAchievementSets)
         {
@@ -673,7 +673,7 @@ void GameAssets::SyncAssetsToRuntime()
     }
 }
 
-void GameAssets::DetachFromRuntime()
+void GameAssets::DetachFromRuntime() noexcept
 {
     // detach from the runtime. we're about to destroy all the models
     // so any injected data wil be invalid.
@@ -681,7 +681,7 @@ void GameAssets::DetachFromRuntime()
     {
         if (ra::services::ServiceLocator::Exists<ra::context::IRcClient>())
         {
-            auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+            GSL_SUPPRESS_F6 auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
             if (pClient && pClient->game)
             {
                 pClient->game->subsets = m_pPublishedSubsets;

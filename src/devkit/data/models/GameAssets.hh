@@ -215,12 +215,12 @@ public:
     /// <summary>
     /// Removes references from the asset collection that were injected into the runtime.
     /// </summary>
-    void DetachFromRuntime();
+    void DetachFromRuntime() noexcept;
 
     /// <summary>
     /// Gets the next available local id.
     /// </summary>
-    uint32_t GetNextLocalId()
+    uint32_t GetNextLocalId() noexcept
     {
         return m_nNextLocalId++;
     }

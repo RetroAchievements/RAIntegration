@@ -36,6 +36,7 @@ public:
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::mocks::MockLogger mockLogger;
 
+        GSL_SUPPRESS_F6
         GameAssetsHarness() noexcept
         {
             mockGameContext.SetGameTitle(L"Game Title");

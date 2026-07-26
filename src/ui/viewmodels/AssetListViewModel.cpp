@@ -1844,6 +1844,7 @@ void AssetListViewModel::CreateNew()
         pAsset = &pGameContext.Assets().Append(std::move(pNewAsset));
     }
 
+    Expects(pAsset != nullptr);
     EnsureAppearsInFilteredList(*pAsset);
 
     {
@@ -1851,7 +1852,7 @@ void AssetListViewModel::CreateNew()
 
         FilteredAssets().BeginUpdate();
 
-        const auto nId = ra::to_signed(pAsset->GetID());
+        auto nId = ra::to_signed(pAsset->GetID());
 
         // select the new viewmodel, and deselect everything else
         for (gsl::index i = 0; i < ra::to_signed(m_vFilteredAssets.Count()); ++i)

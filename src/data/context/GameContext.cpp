@@ -496,6 +496,8 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
 
 void GameContext::InitializeAchievementSets(const rc_api_fetch_game_sets_response_t* game_data_response)
 {
+    Expects(game_data_response != nullptr);
+
     // GameID dictates which game is loaded for purposes of local achievement storage and memory notes
     m_nGameId = GetRealGameId(game_data_response->id);
     // ActiveGameID dictates which game is running for purposes of rich presence and pings
@@ -614,7 +616,7 @@ void GameContext::MigrateSubsetUserFiles()
     }
 }
 
-uint32_t GameContext::GetGameId(uint32_t nSubsetId) const noexcept
+uint32_t GameContext::GetGameId(uint32_t nSubsetId) const
 {
     for (const auto& pSubset : Assets().AchievementSets())
     {

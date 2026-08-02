@@ -104,6 +104,8 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
         SetFeatureEnabled(Feature::Hardcore, doc["Hardcore Active"].GetBool());
     if (doc.HasMember("Non Hardcore Warning"))
         SetFeatureEnabled(Feature::NonHardcoreWarning, doc["Non Hardcore Warning"].GetBool());
+    if (doc.HasMember("Only Hardcore Unlocks"))
+        SetFeatureEnabled(Feature::OnlyHardcoreUnlocks, doc["Only Hardcore Unlocks"].GetBool());
 
     ReadPopupLocation(*this, ra::ui::viewmodels::Popup::AchievementTriggered, doc, "Achievement Triggered Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
     if (doc.HasMember("Achievement Triggered Screenshot"))
@@ -206,6 +208,7 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Token", rapidjson::StringRef(m_sApiToken), a);
     doc.AddMember("Hardcore Active", IsFeatureEnabled(Feature::Hardcore), a);
     doc.AddMember("Non Hardcore Warning", IsFeatureEnabled(Feature::NonHardcoreWarning), a);
+    doc.AddMember("Only Hardcore Unlocks", IsFeatureEnabled(Feature::OnlyHardcoreUnlocks), a);
     WritePopupLocation(doc, a, "Achievement Triggered Notification Display", GetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered));
     doc.AddMember("Achievement Triggered Screenshot", IsFeatureEnabled(Feature::AchievementTriggeredScreenshot), a);
     WritePopupLocation(doc, a, "Mastery Notification Display", GetPopupLocation(ra::ui::viewmodels::Popup::Mastery));

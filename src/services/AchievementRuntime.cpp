@@ -63,6 +63,9 @@ static int CanSubmit()
         return 0;
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks) && !_RA_HardcoreModeIsActive())
+        return 0;
+
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
         return 0;
 
@@ -1083,6 +1086,15 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
     if (bSubmit && pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
     {
         vmPopup->SetTitle(L"Offline Achievement Unlocked");
+        bSubmit = false;
+    }
+
+    if (bSubmit && pConfiguration.IsFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks) && !_RA_HardcoreModeIsActive())
+    {
+        vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
+        vmPopup->SetErrorDetail(L"Only Hardcore Unlocks feature is enabled");
+
+        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement.id, "Only Hardcore Unlocks feature enabled");
         bSubmit = false;
     }
 

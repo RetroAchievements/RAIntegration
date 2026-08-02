@@ -39,7 +39,7 @@ public:
         m_nGameId = m_nActiveGameId = nGameId;
 
         // MockRuntime may have populated an AchievementSet. Update it too
-        auto* pPrimarySet = const_cast<ra::data::models::AchievementSetModel*>(Assets().AchievementSets().GetItemAt(0));
+        GSL_SUPPRESS_TYPE3 auto* pPrimarySet = const_cast<ra::data::models::AchievementSetModel*>(Assets().AchievementSets().GetItemAt(0));
         if (pPrimarySet)
         {
             pPrimarySet->SetID(nGameId);

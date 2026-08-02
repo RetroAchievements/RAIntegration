@@ -156,6 +156,11 @@ public:
         TestFeature(ra::services::Feature::NonHardcoreWarning, "Non Hardcore Warning", false);
     }
 
+    TEST_METHOD(TestOnlyHardcoreUnlocks)
+    {
+        TestFeature(ra::services::Feature::OnlyHardcoreUnlocks, "Only Hardcore Unlocks", false);
+    }
+
     TEST_METHOD(TestAchievementTriggeredScreenshot)
     {
         TestFeature(ra::services::Feature::AchievementTriggeredScreenshot, "Achievement Triggered Screenshot", false);

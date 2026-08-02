@@ -15,6 +15,7 @@ enum class Feature
     Leaderboards,
     PreferDecimal,
     NonHardcoreWarning,
+    OnlyHardcoreUnlocks,
     AchievementTriggeredScreenshot,
     MasteryNotificationScreenshot,
     Offline,

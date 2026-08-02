@@ -721,6 +721,7 @@ public:
         auto* pAchievement46 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
         emulator.mockAchievementRuntime.UnlockAchievement(pAchievement46, RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH);
         emulator.mockGameContext.InitializeFromAchievementRuntime();
+        emulator.mockGameContext.Assets().SyncAssetsToRuntime();
 
         auto* vmAchievement44 = emulator.mockGameContext.Assets().FindAchievement(44U);
         auto* vmAchievement45 = emulator.mockGameContext.Assets().FindAchievement(45U);
@@ -806,6 +807,7 @@ public:
         auto* pAchievement46 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
         emulator.mockAchievementRuntime.UnlockAchievement(pAchievement46, RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH);
         emulator.mockGameContext.InitializeFromAchievementRuntime();
+        emulator.mockGameContext.Assets().SyncAssetsToRuntime();
 
         auto* vmAchievement44 = emulator.mockGameContext.Assets().FindAchievement(44U);
         auto* vmAchievement45 = emulator.mockGameContext.Assets().FindAchievement(45U);
@@ -977,6 +979,7 @@ public:
         auto* pAchievement46 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
         emulator.mockAchievementRuntime.UnlockAchievement(pAchievement46, RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH);
         emulator.mockGameContext.InitializeFromAchievementRuntime();
+        emulator.mockGameContext.Assets().SyncAssetsToRuntime();
 
         auto* vmAchievement44 = emulator.mockGameContext.Assets().FindAchievement(44U);
         auto* vmAchievement45 = emulator.mockGameContext.Assets().FindAchievement(45U);
@@ -1249,6 +1252,7 @@ public:
         emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
         emulator.mockAchievementRuntime.MockAchievementWithTrigger(47U);
         emulator.mockGameContext.InitializeFromAchievementRuntime();
+        emulator.mockGameContext.Assets().SyncAssetsToRuntime();
 
         auto* vmAchievement44 = emulator.mockGameContext.Assets().FindAchievement(44U);
         auto* vmAchievement45 = emulator.mockGameContext.Assets().FindAchievement(45U);

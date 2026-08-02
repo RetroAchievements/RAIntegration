@@ -66,7 +66,7 @@ public:
         } pBuffer{ 0 };
 
         const auto& pEmulatorMemoryContext = ra::services::ServiceLocator::Get<IEmulatorMemoryContext>();
-        const auto nRead = pEmulatorMemoryContext.ReadMemory(static_cast<ra::data::ByteAddress>(nAddress), pBuffer.buffer, num_bytes);
+        const auto nRead = pEmulatorMemoryContext.ReadMemory(gsl::narrow_cast<ra::data::ByteAddress>(nAddress), pBuffer.buffer, num_bytes);
         return (nRead == num_bytes) ? pBuffer.n : 0;
     }
 

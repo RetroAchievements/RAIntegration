@@ -410,7 +410,8 @@ public:
     {
         AssetUploadViewModelHarness vmUpload;
         vmUpload.mockGameContext.SetGameId(11U);
-        vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
+        vmUpload.mockGameContext.Assets().AddAchievementSet(22, 33, L"Subset", ra::data::models::AchievementSetType::Bonus);
+
         auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Local, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
         pAchievement.SetSubsetID(22U);
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
@@ -1117,7 +1118,7 @@ public:
     TEST_METHOD(TestSingleLocalLeaderboardSubset)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
+        vmUpload.mockGameContext.Assets().AddAchievementSet(22, 33, L"Subset", ra::data::models::AchievementSetType::Bonus);
         auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1",
                                                      "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
         pLeaderboard.SetSubsetID(22U);
@@ -1221,7 +1222,7 @@ public:
     {
         AssetUploadViewModelHarness vmUpload;
         vmUpload.mockUserContext.Initialize("User", "APITOKEN");
-        vmUpload.mockGameContext.MockSubset(33, 22, "Subset");
+        vmUpload.mockGameContext.Assets().AddAchievementSet(22, 33, L"Subset", ra::data::models::AchievementSetType::Bonus);
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 

@@ -209,7 +209,7 @@ private:
     void SyncIDToRuntime() const;
     void SyncTitleToRuntime();
     void SyncDescriptionToRuntime();
-    void SyncBadgeToRuntime() const;
+    void SyncBadgeToRuntime();
     void SyncPointsToRuntime() const;
     void SyncAchievementTypeToRuntime() const;
     void SyncCategoryToRuntime() const;
@@ -230,6 +230,8 @@ private:
     // temporary buffers for local changes
     std::string m_sTitleBuffer;
     std::string m_sDescriptionBuffer;
+    std::string m_sBadgeUrl;
+    std::string m_sBadgeLockedUrl;
     mutable std::unique_ptr<uint8_t[]> m_pTriggerBuffer;
 };
 

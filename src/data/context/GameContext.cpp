@@ -127,6 +127,7 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
     if (nGameId == 0)
     {
         m_vAssets.EndUpdate();
+        m_vAssets.DetachFromRuntime();
 
         m_sGameHash.clear();
         m_nActiveGameId = 0;
@@ -135,12 +136,7 @@ bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaus
         {
             m_nGameId = 0;
 
-            auto* pRichPresence = m_vAssets.FindRichPresence();
-            if (pRichPresence != nullptr)
-                pRichPresence->Deactivate(); // detach custom rich presence
-
-            auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
-            rc_client_unload_game(pClient);
+            ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().UnloadGame();
 
             OnActiveGameChanged();
         }
@@ -353,8 +349,7 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
         // finish up
         m_vAssets.EndUpdate();
 
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        pRuntime.SyncAssets();
+        m_vAssets.SyncAssetsToRuntime();
 
         EndLoad();
     }
@@ -499,8 +494,10 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
     }
 }
 
-void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response)
+void GameContext::InitializeAchievementSets(const rc_api_fetch_game_sets_response_t* game_data_response)
 {
+    Expects(game_data_response != nullptr);
+
     // GameID dictates which game is loaded for purposes of local achievement storage and memory notes
     m_nGameId = GetRealGameId(game_data_response->id);
     // ActiveGameID dictates which game is running for purposes of rich presence and pings
@@ -511,7 +508,39 @@ void GameContext::InitializeSubsets(const rc_api_fetch_game_sets_response_t* gam
         ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().BeginSession(nActiveGameId);
     }
 
-    Assets().InitializeSubsets(game_data_response, m_nActiveGameId != m_nGameId);
+    Assets().ClearAchievementSets();
+
+    for (uint32_t i = 0; i < game_data_response->num_sets; ++i)
+    {
+        const auto* pSet = &game_data_response->sets[i];
+        std::wstring sTitle = ra::util::String::Widen(pSet->title);
+
+        ra::data::models::AchievementSetType nType = ra::data::models::AchievementSetType::Bonus;
+        switch (pSet->type)
+        {
+            case RC_ACHIEVEMENT_SET_TYPE_CORE:
+                nType = ra::data::models::AchievementSetType::Core;
+                break;
+            case RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE:
+                nType = ra::data::models::AchievementSetType::Exclusive;
+                break;
+            case RC_ACHIEVEMENT_SET_TYPE_SPECIALTY:
+                nType = ra::data::models::AchievementSetType::Specialty;
+                break;
+            default:
+                nType = ra::data::models::AchievementSetType::Bonus;
+                break;
+        }
+
+        if (nType != ra::data::models::AchievementSetType::Core && game_data_response->num_sets == 1)
+        {
+            // subset loaded without base game. add game title as suffix to set title.
+            sTitle = ra::util::String::Printf(L"%s (%s)", sTitle, game_data_response->title);
+        }
+
+        const auto nGameId = ra::context::IGameContext::GetRealGameId(pSet->game_id);
+        Assets().AddAchievementSet(pSet->id, nGameId, sTitle, nType);
+    }
 
     // if subsets were found, migrate any SUBSET-User.txt files into the the GAME-User.txt file
     if (Assets().AchievementSets().Count() > 1)
@@ -587,7 +616,7 @@ void GameContext::MigrateSubsetUserFiles()
     }
 }
 
-uint32_t GameContext::GetGameId(uint32_t nSubsetId) const noexcept
+uint32_t GameContext::GetGameId(uint32_t nSubsetId) const
 {
     for (const auto& pSubset : Assets().AchievementSets())
     {

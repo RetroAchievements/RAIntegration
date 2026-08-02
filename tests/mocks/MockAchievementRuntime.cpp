@@ -27,29 +27,6 @@ void MockAchievementRuntime::MockUser(const std::string& sUsername, const std::s
     pClient->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
 }
 
-void MockAchievementRuntime::MockGame()
-{
-    rc_client_game_info_t* game = static_cast<rc_client_game_info_t*>(calloc(1, sizeof(rc_client_game_info_t)));
-    Expects(game != nullptr);
-    rc_buffer_init(&game->buffer);
-    rc_runtime_init(&game->runtime);
-
-    game->public_.id = 1;
-    game->public_.console_id = RC_CONSOLE_NINTENDO;
-    game->public_.badge_name = "012345";
-    game->public_.title = "Game Title";
-
-    GetClient()->game = game;
-
-    if (ra::services::ServiceLocator::Exists<ra::data::context::GameContext>())
-    {
-        auto* mockGameContext = dynamic_cast<ra::data::context::mocks::MockGameContext*>(
-            &ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>());
-        if (mockGameContext != nullptr)
-            mockGameContext->MockSubset(game->public_.id, game->public_.title, ra::data::models::AchievementSetType::Core);
-    }
-}
-
 static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name) noexcept
 {
     rc_client_subset_info_t* subset = game->subsets, **next = &game->subsets;
@@ -83,6 +60,29 @@ static rc_client_subset_info_t* GetLocalSubset(rc_client_game_info_t* game)
 {
     Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsNotNull(game, L"MockGame must be called first");
     return GetSubset(game, ra::data::models::AchievementSetModel::LocalId, "Local");
+}
+
+void MockAchievementRuntime::MockGame()
+{
+    rc_client_game_info_t* game = static_cast<rc_client_game_info_t*>(calloc(1, sizeof(rc_client_game_info_t)));
+    Expects(game != nullptr);
+    rc_buffer_init(&game->buffer);
+    rc_runtime_init(&game->runtime);
+
+    game->public_.id = 1;
+    game->public_.console_id = RC_CONSOLE_NINTENDO;
+    game->public_.badge_name = "012345";
+    game->public_.title = "Game Title";
+
+    GetClient()->game = game;
+
+    if (ra::services::ServiceLocator::Exists<ra::data::context::GameContext>())
+    {
+        ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>()
+            .Assets().AddAchievementSet(1, game->public_.id, ra::util::String::Widen(game->public_.title));
+
+        GetCoreSubset(game);
+    }
 }
 
 static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
@@ -137,10 +137,10 @@ void MockAchievementRuntime::MockSubset(uint32_t nSubsetId, const std::string& s
 
     if (ra::services::ServiceLocator::Exists<ra::data::context::GameContext>())
     {
-        auto* mockGameContext = dynamic_cast<ra::data::context::mocks::MockGameContext*>(
-            &ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>());
-        if (mockGameContext != nullptr)
-            mockGameContext->MockSubset(nSubsetId, sName);
+        ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>()
+            .Assets().AddAchievementSet(pSubset->public_.id, game->public_.id,
+                                        ra::util::String::Widen(pSubset->public_.title),
+                                        ra::data::models::AchievementSetType::Bonus);
     }
 }
 
@@ -308,6 +308,11 @@ rc_client_leaderboard_info_t* MockAchievementRuntime::ActivateLeaderboard(uint32
     return leaderboard;
 }
 
+void MockAchievementRuntime::SyncAssets()
+{
+    ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets().SyncAssetsToRuntime();
+}
+
 } // namespace mocks
 } // namespace services
 
@@ -324,14 +329,36 @@ void MockGameContext::InitializeFromAchievementRuntime()
     {
         GameContext::InitializeFromAchievementRuntime(pMockRuntime->GetAchievementDefinitions(),
                                                       pMockRuntime->GetLeaderboardDefinitions());
-
-        pMockRuntime->SyncAssets();
     }
     else
     {
         std::map<uint32_t, std::string> mAchievementDefinitions;
         std::map<uint32_t, std::string> mLeaderboardDefinitions;
         GameContext::InitializeFromAchievementRuntime(mAchievementDefinitions, mLeaderboardDefinitions);
+    }
+
+    // assets cannot be associated to the virtual subset, assign them to the first non-local subset
+    uint32_t nSubsetId = ra::data::models::AchievementSetModel::LocalId;
+    for (auto& pAsset : Assets())
+    {
+        if (pAsset.GetSubsetID() == ra::data::models::AchievementSetModel::LocalId)
+        {
+            if (nSubsetId == ra::data::models::AchievementSetModel::LocalId)
+            {
+                const auto* pSubset = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient()->game->subsets;
+                for (; pSubset; pSubset = pSubset->next)
+                {
+                    if (pSubset->public_.id != ra::data::models::AchievementSetModel::LocalId)
+                    {
+                        nSubsetId = pSubset->public_.id;
+                        break;
+                    }
+                }
+            }
+
+            pAsset.SetSubsetID(nSubsetId);
+            pAsset.SetCategory(ra::data::models::AssetCategory::Local);
+        }
     }
 }
 

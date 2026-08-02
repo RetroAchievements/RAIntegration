@@ -6,6 +6,8 @@
 
 #include "util/TypeCasts.hh"
 
+struct rc_client_subset_info_t;
+
 namespace ra {
 namespace data {
 namespace models {
@@ -18,11 +20,13 @@ enum AchievementSetType
     Exclusive,
 };
 
+class GameAssets;
+
 class AchievementSetModel : public DataModelBase
 {
 public:
-    AchievementSetModel() noexcept = default;
-	~AchievementSetModel() = default;
+    AchievementSetModel() noexcept;
+	~AchievementSetModel();
     AchievementSetModel(const AchievementSetModel&) noexcept = delete;
     AchievementSetModel& operator=(const AchievementSetModel&) noexcept = delete;
     AchievementSetModel(AchievementSetModel&&) noexcept = delete;
@@ -96,6 +100,15 @@ public:
     /// Sets the title to display.
     /// </summary>
     void SetTitle(const std::wstring& sValue) { SetValue(TitleProperty, sValue); }
+
+    void SyncToRuntime(rc_client_subset_info_t& pSubset, GameAssets& pAsset);
+
+    rc_client_subset_info_t* GetPublishedSubsetInfo() const;
+    rc_client_subset_info_t* GetLocalSubsetInfo() const;
+
+private:
+    struct SubsetInfo;
+    std::unique_ptr<struct SubsetInfo> m_pInfo;
 };
 
 } // namespace models

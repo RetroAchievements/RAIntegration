@@ -151,19 +151,6 @@ public:
     GSL_SUPPRESS_C128
     void InitializeFromAchievementRuntime();
 
-    void MockSubset(uint32_t nSubsetId, const std::string& sName, ra::data::models::AchievementSetType nType = ra::data::models::AchievementSetType::Bonus)
-    {
-        MockSubset(nSubsetId, nSubsetId, sName, nType);
-    }
-
-    void MockSubset(uint32_t nGameId, uint32_t nAchievementSetId, const std::string& sName, ra::data::models::AchievementSetType nType = ra::data::models::AchievementSetType::Bonus)
-    {
-        auto& vAchievementSets = const_cast<ra::data::DataModelCollection<ra::data::models::AchievementSetModel>&>(Assets().AchievementSets());
-        auto vmAchievementSet = std::make_unique<ra::data::models::AchievementSetModel>();
-        vmAchievementSet->Initialize(nAchievementSetId, nGameId, ra::util::String::Widen(sName), nType);
-        vAchievementSets.Append(std::move(vmAchievementSet));
-    }
-
 private:
     class MockMemoryNotesModel : public ra::data::models::MemoryNotesModel
     {

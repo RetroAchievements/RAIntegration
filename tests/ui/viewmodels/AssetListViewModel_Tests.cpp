@@ -549,6 +549,7 @@ private:
             if (notify)
                 mockGameContext.NotifyActiveGameChanged();
 
+            mockRuntime.GetClient()->game->subsets->public_.id = mockGameContext.ActiveGameId();
             SetSubsetFilter(mockGameContext.ActiveGameId());
         }
 
@@ -1279,7 +1280,6 @@ public:
         pAch4->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
 
         vmAssetList.mockGameContext.InitializeFromAchievementRuntime();
-        vmAssetList.mockRuntime.SyncAssets();
         vmAssetList.mockGameContext.NotifyActiveGameChanged();
 
         Assert::AreEqual({2U}, vmAssetList.AchievementSets().Count());
@@ -1323,7 +1323,6 @@ public:
         vmAssetList.mockRuntime.MockSubsetAchievement(555, 3, "Ach3")->public_.points = 25;
 
         vmAssetList.mockGameContext.InitializeFromAchievementRuntime();
-        vmAssetList.mockRuntime.SyncAssets();
         vmAssetList.mockGameContext.NotifyActiveGameChanged();
         vmAssetList.ForceUpdateButtons();
 
@@ -1354,7 +1353,7 @@ public:
         Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
         Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
         Assert::AreEqual({111000001U}, pAsset->GetId());
-        Assert::AreEqual(0, pAsset->GetPoints());
+        Assert::AreEqual(5, pAsset->GetPoints());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
         Assert::AreEqual({0U}, vmAssetList.mockWindowManager.AssetEditor.GetID());
@@ -3323,6 +3322,7 @@ public:
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
         vmAssetList.ForceUpdateButtons();
+        vmAssetList.mockGameContext.Assets().SyncAssetsToRuntime();
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -3351,7 +3351,7 @@ public:
         Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
         Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
         Assert::AreEqual({ 111000001U }, pAsset->GetId());
-        Assert::AreEqual(0, pAsset->GetPoints());
+        Assert::AreEqual(5, pAsset->GetPoints());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
         Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
@@ -3378,12 +3378,12 @@ public:
         GSL_SUPPRESS_TYPE1
         auto* pAch1 = reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, 111000001U));
         Expects(pAch1 != nullptr);
-        Assert::AreEqual({0}, pAch1->public_.points);
+        Assert::AreEqual({5}, pAch1->public_.points);
 
         GSL_SUPPRESS_TYPE1
         auto* pAch2 = reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, 111000002U));
         Expects(pAch2 != nullptr);
-        Assert::AreEqual({0}, pAch2->public_.points);
+        Assert::AreEqual({5}, pAch2->public_.points);
     }
 
     TEST_METHOD(TestCreateNewHardcore)
@@ -3437,7 +3437,7 @@ public:
         Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
         Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
         Assert::AreEqual({ 111000001U }, pAsset->GetId());
-        Assert::AreEqual(0, pAsset->GetPoints());
+        Assert::AreEqual(5, pAsset->GetPoints());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
         Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
@@ -3475,7 +3475,7 @@ public:
         Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
         Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
         Assert::AreEqual({ 111000001U }, pAsset->GetId());
-        Assert::AreEqual(0, pAsset->GetPoints());
+        Assert::AreEqual(5, pAsset->GetPoints());
     }
 
     TEST_METHOD(TestCreateNewSpecialFilterActive)
@@ -3509,7 +3509,7 @@ public:
         Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
         Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
         Assert::AreEqual({ 111000001U }, pAsset->GetId());
-        Assert::AreEqual(0, pAsset->GetPoints());
+        Assert::AreEqual(5, pAsset->GetPoints());
     }
 
     TEST_METHOD(TestCreateNewAchievementFilterTypeAchievement)
@@ -3549,7 +3549,7 @@ public:
         Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
         Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
         Assert::AreEqual({ 111000001U }, pAsset->GetId());
-        Assert::AreEqual(0, pAsset->GetPoints());
+        Assert::AreEqual(5, pAsset->GetPoints());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
         Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());

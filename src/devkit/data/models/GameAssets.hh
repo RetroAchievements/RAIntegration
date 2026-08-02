@@ -14,6 +14,7 @@
 #include <set>
 
 struct rc_api_fetch_game_sets_response_t;
+struct rc_client_subset_info_t;
 
 namespace ra {
 namespace data {
@@ -23,7 +24,7 @@ class GameAssets : public DataModelCollection<AssetModelBase>
 {
 public:
     GSL_SUPPRESS_F6 GameAssets() = default;
-    virtual ~GameAssets() noexcept = default;
+    virtual ~GameAssets() noexcept;
     GameAssets(const GameAssets&) noexcept = delete;
     GameAssets& operator=(const GameAssets&) noexcept = delete;
     GameAssets(GameAssets&&) noexcept = delete;
@@ -161,14 +162,19 @@ public:
     const DataModelCollection<AchievementSetModel>& AchievementSets() const noexcept { return m_vAchievementSets; }
 
     /// <summary>
-    /// Initializes the achievement sets collection.
+    /// Adds an achievement set to the AchievementSets collection.
     /// </summary>
-    void InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response, bool bSubsetWithoutBase);
+    void AddAchievementSet(uint32_t nId, uint32_t nGameId, const std::wstring& sTitle,
+                           AchievementSetType nType = AchievementSetType::Core);
 
     /// <summary>
     /// Resets the achievement sets collection.
     /// </summary>
-    void ClearAchievementSets() { m_vAchievementSets.Clear(); }
+    void ClearAchievementSets()
+    {
+        DetachFromRuntime();
+        m_vAchievementSets.Clear();
+    }
 
     /// <summary>
     /// The unique identifier of the first local asset.
@@ -201,6 +207,24 @@ public:
     /// </summary>
     void GetPauseOnTriggerLeaderboards(std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards) const;
 
+    /// <summary>
+    /// Syncs the collection into the runtime.
+    /// </summary>
+    void SyncAssetsToRuntime();
+
+    /// <summary>
+    /// Removes references from the asset collection that were injected into the runtime.
+    /// </summary>
+    void DetachFromRuntime() noexcept;
+
+    /// <summary>
+    /// Gets the next available local id.
+    /// </summary>
+    uint32_t GetNextLocalId() noexcept
+    {
+        return m_nNextLocalId++;
+    }
+
 protected:
     bool IsWatching() const noexcept override { return true; }
 
@@ -208,10 +232,14 @@ protected:
     void OnModelValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
 
     void OnBeforeItemRemoved(ModelBase& pModel) override;
+    void OnItemsRemoved(const std::vector<gsl::index>& vDeletedIndices) override;
+    void OnItemsAdded(const std::vector<gsl::index>& vNewIndices) override;
 
     uint32_t m_nNextLocalId = FirstLocalId;
 
     DataModelCollection<AchievementSetModel> m_vAchievementSets;
+    struct rc_client_subset_info_t* m_pPublishedSubsets = nullptr;
+
     std::set<uint32_t> m_vPauseOnResetAchievementIds;
     std::set<uint32_t> m_vPauseOnResetLeaderboardIds;
     std::set<uint32_t> m_vPauseOnTriggerLeaderboardIds;

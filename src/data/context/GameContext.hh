@@ -113,8 +113,8 @@ public:
 
     void DoFrame();
 
-    void InitializeSubsets(const rc_api_fetch_game_sets_response_t* game_data_response);
-    uint32_t GetGameId(uint32_t nSubsetId) const noexcept;
+    void InitializeAchievementSets(const rc_api_fetch_game_sets_response_t* game_data_response);
+    uint32_t GetGameId(uint32_t nSubsetId) const;
 
     ra::data::models::MemoryNotesModel& MemoryNotes() override
     {

@@ -55,6 +55,8 @@ public:
     std::map<uint32_t, std::string>& GetAchievementDefinitions() noexcept { return m_mAchievementDefinitions; }
     std::map<uint32_t, std::string>& GetLeaderboardDefinitions() noexcept { return m_mLeaderboardDefinitions; }
 
+    void SyncAssets();
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_Override;
 

@@ -1596,7 +1596,7 @@ public:
         sets.sets = subsets;
         sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
 
-        game.InitializeSubsets(&sets);
+        game.InitializeAchievementSets(&sets);
 
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
@@ -1638,7 +1638,7 @@ public:
         sets.sets = subsets;
         sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
 
-        game.InitializeSubsets(&sets);
+        game.InitializeAchievementSets(&sets);
 
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
@@ -1684,7 +1684,7 @@ public:
         sets.sets = subsets;
         sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
 
-        game.InitializeSubsets(&sets);
+        game.InitializeAchievementSets(&sets);
 
         Assert::AreEqual(3333U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());
@@ -1727,7 +1727,7 @@ public:
         sets.sets = subsets;
         sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
 
-        game.InitializeSubsets(&sets);
+        game.InitializeAchievementSets(&sets);
 
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(5555U, game.ActiveGameId());
@@ -1771,7 +1771,7 @@ public:
         sets.sets = subsets;
         sets.num_sets = sizeof(subsets) / sizeof(subsets[0]);
 
-        game.InitializeSubsets(&sets);
+        game.InitializeAchievementSets(&sets);
 
         Assert::AreEqual(2222U, game.GameId());
         Assert::AreEqual(2222U, game.ActiveGameId());

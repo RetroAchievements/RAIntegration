@@ -3,7 +3,7 @@
 #include "RA_Defs.h"
 #include "RA_Resource.h"
 
-#include "api\FetchBadgeIds.hh"
+#include "context\IRcClient.hh"
 
 #include "data\context\EmulatorContext.hh"
 
@@ -19,6 +19,8 @@
 
 #include "util\EnumOps.hh"
 #include "util\Log.hh"
+
+#include <rcheevos/include/rc_api_editor.h>
 
 using ra::data::models::AssetModelBase;
 using ra::data::models::AchievementModel;
@@ -513,6 +515,36 @@ void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstrin
 
 void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstring& sText)
 {
+    if (m_nMinimum == 0 && !ra::util::String::StartsWith(sText, L"local\\"))
+    {
+        const auto& pRcClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>();
+
+        rc_api_fetch_badge_range_request_t api_params;
+        memset(&api_params, 0, sizeof(api_params));
+
+        rc_api_request_t api_request;
+        const int nResult = rc_api_init_fetch_badge_range_request_hosted(&api_request, &api_params, pRcClient.GetHost());
+        if (nResult == RC_OK)
+        {
+            pRcClient.DispatchRequest(api_request, [this](const rc_api_server_response_t& server_response, void*)
+            {
+                rc_api_fetch_badge_range_response_t api_response;
+                const auto nResult = rc_api_process_fetch_badge_range_server_response(&api_response, &server_response);
+                if (nResult == RC_OK)
+                {
+                    SetRange(ra::to_signed(api_response.first_badge_id),
+                        ra::to_signed(api_response.next_badge_id) - 1);
+
+                    InvokeOnUIThread([hWnd = m_hWndSpinner]() noexcept { ::EnableWindow(hWnd, true); });
+                }
+
+                rc_api_destroy_fetch_badge_range_response(&api_response);
+            }, nullptr);
+
+            rc_api_destroy_request(&api_request);
+        }
+    }
+
     InvokeOnUIThread([this, sTextCopy = sText]()
     {
         if (ra::util::String::StartsWith(sTextCopy, L"local\\"))
@@ -523,21 +555,7 @@ void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstrin
         else
         {
             SetWindowTextW(m_hWnd, sTextCopy.c_str());
-
-            if (m_nMinimum == 0)
-            {
-                ::EnableWindow(m_hWndSpinner, false);
-
-                ra::api::FetchBadgeIds::Request request;
-                request.CallAsync([this](const ra::api::FetchBadgeIds::Response& response) {
-                    SetRange(ra::to_signed(response.FirstID), ra::to_signed(response.NextID) - 1);
-                    InvokeOnUIThread([hWnd = m_hWndSpinner]() noexcept { ::EnableWindow(hWnd, true); });
-                });
-            }
-            else
-            {
-                ::EnableWindow(m_hWndSpinner, true);
-            }
+            ::EnableWindow(m_hWndSpinner, (m_nMinimum != 0));
         }
     });
 }

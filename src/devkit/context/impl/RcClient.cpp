@@ -224,7 +224,8 @@ void RcClient::CallApi(const std::string& sApi, const ra::services::Http::Reques
     void* pCallbackData) const
 {
     std::wstring sParameter;
-    if (sApi == "codenotes2") {
+    if (sApi == "codenotes2")
+    {
         const auto svGameId = FindParameter(pRequest.GetPostData(), "g=");
         if (!svGameId.empty())
             sParameter = ra::util::String::Widen(svGameId);

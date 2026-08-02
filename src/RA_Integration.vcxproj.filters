@@ -647,9 +647,6 @@
     <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
-    <ClInclude Include="api\FetchBadgeIds.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="api\UploadBadge.hh">
       <Filter>API</Filter>
     </ClInclude>

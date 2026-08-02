@@ -779,46 +779,6 @@ LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request
     return response;
 }
 
-FetchBadgeIds::Response ConnectedServer::FetchBadgeIds(const FetchBadgeIds::Request&)
-{
-    FetchBadgeIds::Response response;
-
-    rc_api_fetch_badge_range_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    rc_api_request_t api_request;
-    const int result = rc_api_init_fetch_badge_range_request(&api_request, &api_params);
-    if (result == RC_OK)
-    {
-        ra::services::Http::Response httpResponse;
-        if (DoRequest(api_request, FetchBadgeIds::Name(), httpResponse, response))
-        {
-            rc_api_fetch_badge_range_response_t api_response;
-            rc_api_server_response_t server_response;
-            HttpResponseToServerResponse(httpResponse, &server_response);
-
-            const auto nResult = rc_api_process_fetch_badge_range_server_response(&api_response, &server_response);
-
-            if (ValidateResponse(nResult, api_response.response, FetchBadgeIds::Name(), httpResponse.StatusCode(), response))
-            {
-                response.Result = ApiResult::Success;
-                response.FirstID = api_response.first_badge_id;
-                response.NextID = api_response.next_badge_id;
-            }
-
-            rc_api_destroy_fetch_badge_range_response(&api_response);
-        }
-    }
-    else
-    {
-        response.Result = ApiResult::Failed;
-        response.ErrorMessage = rc_error_str(result);
-    }
-
-    rc_api_destroy_request(&api_request);
-    return response;
-}
-
 UploadBadge::Response ConnectedServer::UploadBadge(const UploadBadge::Request& request)
 {
     UploadBadge::Response response;

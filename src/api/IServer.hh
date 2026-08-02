@@ -3,7 +3,6 @@
 #pragma once
 
 #include "api/FetchAchievementInfo.hh"
-#include "api/FetchBadgeIds.hh"
 #include "api/FetchLeaderboardInfo.hh"
 #include "api/LatestClient.hh"
 #include "api/ResolveHash.hh"
@@ -30,7 +29,6 @@ public:
 
     // === other functions ===
     virtual LatestClient::Response LatestClient(const LatestClient::Request& request) = 0;
-    virtual FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) = 0;
     virtual UploadBadge::Response UploadBadge(const UploadBadge::Request& request) = 0;
 
 protected:

@@ -22,7 +22,6 @@ public:
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) override;
     UpdateRichPresence::Response UpdateRichPresence(const UpdateRichPresence::Request& request) override;
     LatestClient::Response LatestClient(const LatestClient::Request& request) override;
-    FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override;
     UploadBadge::Response UploadBadge(const UploadBadge::Request& request) override;
 
 private:

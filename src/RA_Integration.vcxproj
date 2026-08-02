@@ -191,7 +191,6 @@
     <ClInclude Include="..\RAInterface\RA_Interface.h" />
     <ClInclude Include="api\ApiCall.hh" />
     <ClInclude Include="api\FetchAchievementInfo.hh" />
-    <ClInclude Include="api\FetchBadgeIds.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
     <ClInclude Include="api\impl\DisconnectedServer.hh" />

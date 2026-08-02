@@ -18,7 +18,6 @@ FetchAchievementInfo::Response FetchAchievementInfo::Request::Call() const { ret
 UpdateLeaderboard::Response UpdateLeaderboard::Request::Call() const { return Server().UpdateLeaderboard(*this); }
 FetchLeaderboardInfo::Response FetchLeaderboardInfo::Request::Call() const { return Server().FetchLeaderboardInfo(*this); }
 UpdateRichPresence::Response UpdateRichPresence::Request::Call() const { return Server().UpdateRichPresence(*this); }
-LatestClient::Response LatestClient::Request::Call() const { return Server().LatestClient(*this); }
 UploadBadge::Response UploadBadge::Request::Call() const { return Server().UploadBadge(*this); }
 
 } // namespace api

@@ -187,6 +187,7 @@ public:
 protected:
     void UpdateUserAgent();
     virtual bool ValidateClientVersion(bool& bHardcore);
+    bool FetchLatestVersion();
 
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;
     std::string m_sVersion;

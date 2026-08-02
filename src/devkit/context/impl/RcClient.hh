@@ -31,6 +31,10 @@ protected:
     virtual void CallApi(const std::string& sApi, const ra::services::Http::Request& pRequest,
         std::function<void(const rc_api_server_response_t&, void*)> fCallback,
         void* pCallbackData) const;
+    virtual ra::services::Http::Response CallApiSync(const std::string& sApi,
+        const ra::services::Http::Request& pRequest) const;
+    void LogResponse(const std::string& sApi, const ra::services::Http::Response& httpResponse) const;
+    virtual const char* GetResponseLogQualifier() const noexcept { return "response"; }
 
 private:
     static void LogMessage(const char* sMessage, const rc_client_t* pClient);

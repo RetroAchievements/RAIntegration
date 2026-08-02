@@ -49,11 +49,6 @@ public:
 
     // === other functions ===
 
-    LatestClient::Response LatestClient(const LatestClient::Request&) override
-    {
-        return UnsupportedApi<LatestClient::Response>(LatestClient::Name());
-    }
-
     UploadBadge::Response UploadBadge(const UploadBadge::Request&) override
     {
         return UnsupportedApi<UploadBadge::Response>(UploadBadge::Name());

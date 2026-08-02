@@ -146,7 +146,7 @@ static std::string LogRequest(std::string sParams)
     return sApi;
 }
 
-static void LogResponse(const std::string& sApi, const ra::services::Http::Response& httpResponse)
+void RcClient::LogResponse(const std::string& sApi, const ra::services::Http::Response& httpResponse) const
 {
     if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
     {
@@ -162,11 +162,11 @@ static void LogResponse(const std::string& sApi, const ra::services::Http::Respo
                 if (nIndex2 != std::string::npos)
                     sResponse.replace(nIndex, nIndex2 - nIndex, "[redacted]");
             }
-            RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), sResponse.c_str());
+            RA_LOG_INFO("<< %s %s (%d): %s", sApi.c_str(), GetResponseLogQualifier(), ra::etoi(httpResponse.StatusCode()), sResponse.c_str());
         }
         else
         {
-            RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
+            RA_LOG_INFO("<< %s %s (%d): %s", sApi.c_str(), GetResponseLogQualifier(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
         }
     }
 }
@@ -178,7 +178,7 @@ void RcClient::SendRequest(const rc_api_request_t& pRequest, rc_api_server_respo
     httpRequest.SetContentType(pRequest.content_type);
 
     std::string sApi = LogRequest(httpRequest.GetPostData());
-    const auto httpResponse = httpRequest.Call();
+    const auto httpResponse = CallApiSync(sApi, httpRequest);
 
     LogResponse(sApi, httpResponse);
 
@@ -189,6 +189,11 @@ void RcClient::SendRequest(const rc_api_request_t& pRequest, rc_api_server_respo
         pResponse.body = sResponseBuffer.c_str();
         pResponse.body_length = sResponseBuffer.length();
     }
+}
+
+ra::services::Http::Response RcClient::CallApiSync(const std::string&, const ra::services::Http::Request& pRequest) const
+{
+	return pRequest.Call();
 }
 
 void RcClient::DispatchRequest(const rc_api_request_t& pRequest,
@@ -231,7 +236,7 @@ void RcClient::CallApi(const std::string& sApi, const ra::services::Http::Reques
             sParameter = ra::util::String::Widen(svGameId);
     }
 
-    pRequest.CallAsync([fCallback, pCallbackData, sApi=sApi, sParameter](const ra::services::Http::Response& httpResponse)
+    pRequest.CallAsync([this, fCallback, pCallbackData, sApi=sApi, sParameter](const ra::services::Http::Response& httpResponse)
         {
             rc_api_server_response_t pResponse;
             std::string sErrorBuffer;

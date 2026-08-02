@@ -4,7 +4,6 @@
 
 #include "api/FetchAchievementInfo.hh"
 #include "api/FetchLeaderboardInfo.hh"
-#include "api/LatestClient.hh"
 #include "api/ResolveHash.hh"
 #include "api/UpdateAchievement.hh"
 #include "api/UpdateLeaderboard.hh"
@@ -28,7 +27,6 @@ public:
     virtual UpdateRichPresence::Response UpdateRichPresence(const UpdateRichPresence::Request& request) = 0;
 
     // === other functions ===
-    virtual LatestClient::Response LatestClient(const LatestClient::Request& request) = 0;
     virtual UploadBadge::Response UploadBadge(const UploadBadge::Request& request) = 0;
 
 protected:

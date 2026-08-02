@@ -20,7 +20,6 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockOverlayManager.hh"
-#include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -36,7 +35,6 @@ private:
     class EmulatorContextHarness : public EmulatorContext
     {
     public:
-        ra::api::mocks::MockServer mockServer;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockUserContext mockUserContext;
@@ -62,13 +60,9 @@ private:
         void MockVersions(const std::string& sClientVersion, const std::string& sServerVersion, const std::string& sMinimumVersion)
         {
             SetClientVersion(sClientVersion);
-            mockServer.HandleRequest<ra::api::LatestClient>([sServerVersion, sMinimumVersion](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
-            {
-                response.LatestVersion = sServerVersion;
-                response.MinimumVersion = sMinimumVersion;
-                response.Result = ra::api::ApiResult::Success;
-                return true;
-            });
+
+            mockRcClient.MockResponse("r=latestclient&e=" + std::to_string(ra::etoi(m_nEmulatorId)),
+                ra::util::String::Printf("{\"Success\":true,\"MinimumVersion\":\"%s\",\"LatestVersion\":\"%s\"}", sMinimumVersion, sServerVersion));
         }
 
         void MockVersions(const std::string& sClientVersion, const std::string& sServerVersion)
@@ -143,14 +137,7 @@ public:
     {
         EmulatorContextHarness emulator;
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
-        emulator.SetClientVersion("0.56");
-        emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request& request, ra::api::LatestClient::Response& response)
-        {
-            Assert::AreEqual(static_cast<unsigned int>(EmulatorID::RA_Snes9x), request.EmulatorId);
-            response.LatestVersion = "0.56";
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        emulator.MockVersions("0.56", "0.56");
 
         Assert::IsTrue(emulator.ValidateClientVersion());
         Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
@@ -171,12 +158,7 @@ public:
         EmulatorContextHarness emulator;
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57");
-        emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
-        {
-            response.ErrorMessage = "Could not communicate with server.";
-            response.Result = ra::api::ApiResult::Error;
-            return true;
-        });
+        emulator.mockRcClient.MockResponse("r=latestclient&e=2", "Could not communicate with server.", 0);
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Could not retrieve latest client version."), vmMessageBox.GetHeader());
@@ -194,12 +176,7 @@ public:
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57");
         emulator.mockLoginService.Login("User", "Token");
-        emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
-        {
-            response.ErrorMessage = "Could not communicate with server.";
-            response.Result = ra::api::ApiResult::Error;
-            return true;
-        });
+        emulator.mockRcClient.MockResponse("r=latestclient&e=2", "Could not communicate with server.", 0);
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Could not retrieve latest client version."), vmMessageBox.GetHeader());
@@ -219,16 +196,11 @@ public:
         emulator.SetClientVersion("0.57");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.mockConfiguration.SetApiToken("Token");
-        emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
-        {
-            response.ErrorMessage = "Could not communicate with server.";
-            response.Result = ra::api::ApiResult::Error;
-            return true;
-        });
+        emulator.mockRcClient.MockResponse("r=latestclient&e=2", "{\"Success\":false,\"Error\":\"Something bad happened.\"}", 500);
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Could not retrieve latest client version."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode. Login canceled.\nCould not communicate with server."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode. Login canceled.\nSomething bad happened."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
@@ -243,16 +215,11 @@ public:
         emulator.SetClientVersion("0.57");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.mockLoginService.DisableLogin();
-        emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
-        {
-            response.ErrorMessage = "Could not communicate with server.";
-            response.Result = ra::api::ApiResult::Error;
-            return true;
-        });
+        emulator.mockRcClient.MockResponse("r=latestclient&e=2", "{\"Success\":false,\"Error\":\"Something bad happened.\"}", 500);
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Could not retrieve latest client version."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode.\nCould not communicate with server."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode.\nSomething bad happened."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
@@ -267,16 +234,11 @@ public:
         emulator.SetClientVersion("0.57");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.mockLoginService.Login("User", "Token");
-        emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
-        {
-            response.ErrorMessage = "Could not communicate with server.";
-            response.Result = ra::api::ApiResult::Error;
-            return true;
-        });
+        emulator.mockRcClient.MockResponse("r=latestclient&e=2", "{\"Success\":false,\"Error\":\"Something bad happened.\"}", 500);
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Could not retrieve latest client version."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode. You will be logged out.\nCould not communicate with server."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode. You will be logged out.\nSomething bad happened."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
@@ -553,16 +515,11 @@ public:
         EmulatorContextHarness emulator;
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("1.0");
-        emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
-        {
-            response.ErrorMessage = "Unknown client";
-            response.Result = ra::api::ApiResult::Error;
-            return true;
-        });
+        emulator.mockRcClient.MockResponse("r=latestclient&e=2", "{\"Success\":false,\"Status\":404,\"Code\":\"not_found\",\"Error\":\"Unknown client.\"}", 404);
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Could not retrieve latest client version."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Unknown client"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Unknown client."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 

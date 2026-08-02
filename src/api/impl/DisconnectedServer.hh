@@ -1,12 +1,12 @@
 #pragma once
 
-#include "OfflineServer.hh"
+#include "ServerBase.hh"
 
 namespace ra {
 namespace api {
 namespace impl {
 
-class DisconnectedServer : public OfflineServer
+class DisconnectedServer : public ServerBase
 {
 public:
     explicit DisconnectedServer(const std::string& sHost) : m_sHost(sHost) {}
@@ -14,8 +14,6 @@ public:
     const char* Name() const noexcept override { return "disconnected client"; }
 
     const std::string& Host() const noexcept { return m_sHost; }
-
-    LatestClient::Response LatestClient(const LatestClient::Request& request) override;
 
 private:
     const std::string m_sHost;

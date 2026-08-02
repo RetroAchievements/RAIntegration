@@ -14,6 +14,11 @@ protected:
     void CallApi(const std::string& sApi, const ra::services::Http::Request& pRequest,
         std::function<void(const rc_api_server_response_t&, void*)> fCallback,
         void* pCallbackData) const override;
+
+    ra::services::Http::Response CallApiSync(const std::string& sApi,
+        const ra::services::Http::Request& pRequest) const override;
+
+    const char* GetResponseLogQualifier() const noexcept override { return "response [offline]"; }
 };
 
 } // namespace impl

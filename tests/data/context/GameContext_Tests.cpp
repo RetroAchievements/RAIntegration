@@ -136,12 +136,13 @@ public:
 
         ra::data::models::LeaderboardModel& MockLeaderboard()
         {
-            auto& pLeaderboard = Assets().NewLeaderboard();
-            pLeaderboard.SetID(1U);
-            pLeaderboard.SetName(L"LeaderboardTitle");
-            pLeaderboard.SetDescription(L"LeaderboardDescription");
-            pLeaderboard.UpdateServerCheckpoint();
-            return pLeaderboard;
+            auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+            vmLeaderboard->SetID(1U);
+            vmLeaderboard->SetName(L"LeaderboardTitle");
+            vmLeaderboard->SetDescription(L"LeaderboardDescription");
+            vmLeaderboard->CreateServerCheckpoint();
+            vmLeaderboard->CreateLocalCheckpoint();
+            return dynamic_cast<ra::data::models::LeaderboardModel&>(Assets().Append(std::move(vmLeaderboard)));
         }
 
         void RemoveNonAchievementAssets()

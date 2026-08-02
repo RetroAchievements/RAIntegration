@@ -78,11 +78,6 @@ public:
     }
 
     /// <summary>
-    /// Creates a new leaderboard asset.
-    /// </summary>
-    ra::data::models::LeaderboardModel& NewLeaderboard();
-
-    /// <summary>
     /// Finds the rich presence asset.
     /// </summary>
     ra::data::models::RichPresenceModel* FindRichPresence()

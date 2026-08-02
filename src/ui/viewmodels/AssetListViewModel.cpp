@@ -1955,24 +1955,26 @@ void AssetListViewModel::CloneSelected()
         const auto* pSourceLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(pAsset);
         if (pSourceLeaderboard != nullptr)
         {
-            auto& vmLeaderboard = pGameContext.Assets().NewLeaderboard();
-            vmLeaderboard.SetSubsetID(pSourceLeaderboard->GetSubsetID());
-            vmLeaderboard.SetCategory(ra::data::models::AssetCategory::Local);
-            vmLeaderboard.SetAuthor(pAuthor);
-            vmLeaderboard.UpdateServerCheckpoint();
+            auto pLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+            pLeaderboard->SetID(pGameContext.Assets().GetNextLocalId());
+            pLeaderboard->SetSubsetID(pSourceLeaderboard->GetSubsetID());
+            pLeaderboard->SetCategory(ra::data::models::AssetCategory::Local);
+            pLeaderboard->SetAuthor(pAuthor);
+            pLeaderboard->CreateServerCheckpoint();
 
-            vmLeaderboard.SetName(pSourceLeaderboard->GetTitle() + L" (copy)");
-            vmLeaderboard.SetDescription(pSourceLeaderboard->GetDescription());
-            vmLeaderboard.SetStartTrigger(pSourceLeaderboard->GetStartTrigger());
-            vmLeaderboard.SetSubmitTrigger(pSourceLeaderboard->GetSubmitTrigger());
-            vmLeaderboard.SetCancelTrigger(pSourceLeaderboard->GetCancelTrigger());
-            vmLeaderboard.SetValueDefinition(pSourceLeaderboard->GetValueDefinition());
-            vmLeaderboard.SetValueFormat(pSourceLeaderboard->GetValueFormat());
-            vmLeaderboard.SetLowerIsBetter(pSourceLeaderboard->IsLowerBetter());
-            vmLeaderboard.SetNew();
+            pLeaderboard->SetName(pSourceLeaderboard->GetTitle() + L" (copy)");
+            pLeaderboard->SetDescription(pSourceLeaderboard->GetDescription());
+            pLeaderboard->SetStartTrigger(pSourceLeaderboard->GetStartTrigger());
+            pLeaderboard->SetSubmitTrigger(pSourceLeaderboard->GetSubmitTrigger());
+            pLeaderboard->SetCancelTrigger(pSourceLeaderboard->GetCancelTrigger());
+            pLeaderboard->SetValueDefinition(pSourceLeaderboard->GetValueDefinition());
+            pLeaderboard->SetValueFormat(pSourceLeaderboard->GetValueFormat());
+            pLeaderboard->SetLowerIsBetter(pSourceLeaderboard->IsLowerBetter());
+            pLeaderboard->CreateLocalCheckpoint();
+            pLeaderboard->SetNew();
 
+            auto& vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel&>(pGameContext.Assets().Append(std::move(pLeaderboard)));
             EnsureAppearsInFilteredList(vmLeaderboard);
-
             vNewIDs.push_back(vmLeaderboard.GetID());
         }
     }

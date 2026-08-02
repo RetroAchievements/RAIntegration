@@ -122,27 +122,33 @@ public:
             const std::wstring& sTitle, const std::wstring& sDescription, const std::string& sStart,
             const std::string& sCancel, const std::string& sSubmit, const std::string& sValue, Value::Format nFormat)
         {
-            auto& pLeaderboard = NewLeaderboard();
-            pLeaderboard.SetCategory(nCategory);
-            pLeaderboard.SetName(sTitle);
-            pLeaderboard.SetDescription(sDescription);
-            pLeaderboard.SetStartTrigger(sStart);
-            pLeaderboard.SetSubmitTrigger(sSubmit);
-            pLeaderboard.SetCancelTrigger(sCancel);
-            pLeaderboard.SetValueDefinition(sValue);
-            pLeaderboard.SetValueFormat(nFormat);
+            auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
 
             if (nCategory == AssetCategory::Local)
             {
-                pLeaderboard.UpdateLocalCheckpoint();
+                vmLeaderboard->CreateServerCheckpoint();
+                vmLeaderboard->SetID(m_nNextLocalId++);
             }
             else
             {
-                pLeaderboard.SetID(gsl::narrow_cast<uint32_t>(Count()));
-                pLeaderboard.UpdateServerCheckpoint();
+                vmLeaderboard->SetID(gsl::narrow_cast<uint32_t>(Count()));
             }
 
-            return pLeaderboard;
+            vmLeaderboard->SetCategory(nCategory);
+            vmLeaderboard->SetName(sTitle);
+            vmLeaderboard->SetDescription(sDescription);
+            vmLeaderboard->SetStartTrigger(sStart);
+            vmLeaderboard->SetSubmitTrigger(sSubmit);
+            vmLeaderboard->SetCancelTrigger(sCancel);
+            vmLeaderboard->SetValueDefinition(sValue);
+            vmLeaderboard->SetValueFormat(nFormat);
+
+            if (nCategory != AssetCategory::Local)
+                vmLeaderboard->CreateServerCheckpoint();
+
+            vmLeaderboard->CreateLocalCheckpoint();
+
+            return dynamic_cast<ra::data::models::LeaderboardModel&>(Append(std::move(vmLeaderboard)));
         }
 
         void MockUserFile(const std::string& sContents)

@@ -505,7 +505,7 @@ private:
             AddAchievement(AssetCategory::Core, 15, L"Ach3");
         }
 
-        void AddLeaderboard(AssetCategory nCategory, const std::wstring& sTitle)
+        ra::data::models::LeaderboardModel& AddLeaderboard(AssetCategory nCategory, const std::wstring& sTitle)
         {
             auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
             vmLeaderboard->SetID(gsl::narrow_cast<unsigned int>(mockGameContext.Assets().Count() + 1));
@@ -514,9 +514,11 @@ private:
             vmLeaderboard->CreateServerCheckpoint();
             vmLeaderboard->CreateLocalCheckpoint();
             vmLeaderboard->SetSubsetID(mockGameContext.ActiveGameId());
-            mockGameContext.Assets().Append(std::move(vmLeaderboard));
+            auto& vmAsset = mockGameContext.Assets().Append(std::move(vmLeaderboard));
 
             EnsureCoreSubset();
+
+            return dynamic_cast<ra::data::models::LeaderboardModel&>(vmAsset);
         }
 
         void AddLeaderboard()
@@ -4472,22 +4474,21 @@ public:
         vmAssetList.mockUserContext.Initialize("Username", "DisplayName", "ApiToken");
         vmAssetList.SetGameId(22U);
         vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.mockGameContext.SetNote(0x1234, L"First note");
+        vmAssetList.mockGameContext.SetNote(0x5555, L"Second note");
         vmAssetList.SetSubsetFilter(22U);
         vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::Leaderboard);
-        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
-        auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
-        Assert::IsNotNull(vmLeaderboard);
-        Ensures(vmLeaderboard != nullptr);
-        vmLeaderboard->SetDescription(L"Desc1");
-        vmLeaderboard->SetStartTrigger("0=1");
-        vmLeaderboard->SetSubmitTrigger("0xH1234=1");
-        vmLeaderboard->SetCancelTrigger("0xH1234=2");
-        vmLeaderboard->SetValueDefinition("0xH5555*2");
-        vmLeaderboard->SetValueFormat(ra::data::Value::Format::Score);
-        vmLeaderboard->SetLowerIsBetter(true);
-        vmLeaderboard->SetAuthor(L"OriginalAuthor");
+        auto& vmLeaderboard = vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
+        vmLeaderboard.SetDescription(L"Desc1");
+        vmLeaderboard.SetStartTrigger("0=1");
+        vmLeaderboard.SetSubmitTrigger("0xH1234=1");
+        vmLeaderboard.SetCancelTrigger("0xH1234=2");
+        vmLeaderboard.SetValueDefinition("0xH5555*2");
+        vmLeaderboard.SetValueFormat(ra::data::Value::Format::Score);
+        vmLeaderboard.SetLowerIsBetter(true);
+        vmLeaderboard.SetAuthor(L"OriginalAuthor");
 
-        Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count()); // leaderboard + notes
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
         Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
@@ -4504,7 +4505,7 @@ public:
         vmAssetList.CloneSelected();
 
         // new Local leaderboard should be created and focused
-        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
         Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
@@ -4527,6 +4528,7 @@ public:
         Assert::AreEqual(ra::data::Value::Format::Score, pLeaderboard->GetValueFormat());
         Assert::IsTrue(pLeaderboard->IsLowerBetter());
         Assert::AreEqual(std::wstring(L"DisplayName"), pLeaderboard->GetAuthor());
+        Assert::AreEqual(std::wstring(L""), pLeaderboard->GetValidationError());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
         Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());

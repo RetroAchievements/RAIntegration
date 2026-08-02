@@ -46,18 +46,6 @@ const ra::data::models::AssetModelBase* GameAssets::FindAsset(ra::data::models::
     return nullptr;
 }
 
-ra::data::models::AchievementModel& GameAssets::NewAchievement()
-{
-    auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
-    vmAchievement->SetID(m_nNextLocalId++);
-    vmAchievement->SetPoints(0);
-    vmAchievement->SetNew();
-    vmAchievement->CreateServerCheckpoint();
-    vmAchievement->CreateLocalCheckpoint();
-
-    return dynamic_cast<ra::data::models::AchievementModel&>(AddItem(std::move(vmAchievement)));
-}
-
 ra::data::models::AssetCategory GameAssets::MostPublishedAssetCategory() const
 {
     bool bHasLocalAssets = false;

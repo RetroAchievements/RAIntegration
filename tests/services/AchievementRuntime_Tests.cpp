@@ -3312,7 +3312,7 @@ public:
     TEST_METHOD(TestRichPresenceOverrideInspectingMemoryCompatibilityMode)
     {
         AchievementRuntimeHarness runtime;
-        runtime.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Core);
+        runtime.mockGameContext.MockAchievement();
         runtime.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         runtime.MockInspectingMemory(true);
         Assert::AreEqual(std::string("Testing Compatibility"), runtime.GetRichPresenceOverride());
@@ -3338,7 +3338,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        runtime.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Core);
+        runtime.mockGameContext.MockAchievement();
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         Assert::AreEqual(std::string("Inspecting Memory in Hardcore mode"), runtime.GetRichPresenceOverride());
     }
@@ -3347,8 +3347,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
+        auto& pAch = runtime.mockGameContext.MockAchievement();
         pAch.SetName(L"Modified");
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
@@ -3359,9 +3358,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
-        pAch.UpdateServerCheckpoint();
+        auto& pAch = runtime.mockGameContext.MockAchievement();
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::string("Inspecting Memory"), runtime.GetRichPresenceOverride());
@@ -3371,9 +3368,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
-        pAch.SetID(1);
+        auto& pAch = runtime.mockGameContext.MockAchievement();
         pAch.SetName(L"Modified");
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
@@ -3384,9 +3379,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
-        pAch.SetID(1);
+        auto& pAch = runtime.mockGameContext.MockAchievement();
         pAch.SetName(L"Modified");
         pAch.UpdateLocalCheckpoint();
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Unpublished);
@@ -3398,10 +3391,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Unofficial);
-        pAch.SetID(1);
-        pAch.UpdateServerCheckpoint();
+        auto& pAch = runtime.mockGameContext.MockUnofficialAchievement();
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::string("Inspecting Memory"), runtime.GetRichPresenceOverride());
@@ -3411,9 +3401,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Unofficial);
-        pAch.SetID(1);
+        auto& pAch = runtime.mockGameContext.MockUnofficialAchievement();
         pAch.SetName(L"Modified");
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
@@ -3424,7 +3412,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        runtime.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
+        runtime.mockGameContext.MockLocalAchievement();
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
     }
@@ -3433,10 +3421,8 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        runtime.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
-        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
-        pAch.UpdateServerCheckpoint();
+        runtime.mockGameContext.MockLocalAchievement();
+        auto& pAch = runtime.mockGameContext.MockAchievement();
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
@@ -3446,9 +3432,8 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        runtime.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
-        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
+        runtime.mockGameContext.MockLocalAchievement();;
+        auto& pAch = runtime.mockGameContext.MockAchievement();
         pAch.SetName(L"Modified");
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);

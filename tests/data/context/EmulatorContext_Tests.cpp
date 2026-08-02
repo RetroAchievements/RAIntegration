@@ -76,20 +76,6 @@ private:
             MockVersions(sClientVersion, sServerVersion, sServerVersion);
         }
 
-        ra::data::models::AchievementModel& MockAchievement()
-        {
-            auto& pAch = mockGameContext.Assets().NewAchievement();
-            pAch.SetCategory(ra::data::models::AssetCategory::Core);
-            pAch.SetID(1U);
-            pAch.SetName(L"AchievementTitle");
-            pAch.SetDescription(L"AchievementDescription");
-            pAch.SetBadge(L"12345");
-            pAch.SetPoints(5);
-            pAch.SetState(ra::data::models::AssetState::Active);
-            pAch.UpdateServerCheckpoint();
-            return pAch;
-        }
-
     private:
         ra::services::ServiceLocator::ServiceOverride<EmulatorContext> m_Override;
     };

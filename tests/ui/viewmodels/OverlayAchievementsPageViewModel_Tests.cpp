@@ -72,19 +72,12 @@ private:
             return nullptr;
         }
 
-        ra::data::models::AchievementModel& NewAchievement(AssetCategory nCategory)
-        {
-            auto& pAchievement = mockGameContext.Assets().NewAchievement();
-            pAchievement.SetCategory(nCategory);
-            return pAchievement;
-        }
-
         void SetProgress(ra::AchievementID nId, int nValue, int nMax)
         {
             auto* pAchievement = mockGameContext.Assets().FindAchievement(nId);
             if (!pAchievement)
             {
-                pAchievement = &mockGameContext.Assets().NewAchievement();
+                pAchievement = &mockGameContext.MockAchievement();
                 pAchievement->SetID(nId);
                 pAchievement->SetTrigger("0=1");
             }
@@ -536,7 +529,7 @@ public:
         snprintf(pAch3->public_.badge_name, sizeof(pAch3->public_.badge_name), "L000003");
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         // L000003 badge points at VM for full local badge path
-        auto& vmAch3 = achievementsPage.mockGameContext.Assets().NewAchievement();
+        auto& vmAch3 = achievementsPage.mockGameContext.MockAchievement();
         vmAch3.SetID(3);
         vmAch3.SetBadge(L"local\\1-abcdef0123456789.png");
 

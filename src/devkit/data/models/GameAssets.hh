@@ -57,11 +57,6 @@ public:
     }
 
     /// <summary>
-    /// Creates a new achievement asset.
-    /// </summary>
-    ra::data::models::AchievementModel& NewAchievement();
-
-    /// <summary>
     /// Finds the leaderboard asset for the specified ID.
     /// </summary>
     ra::data::models::LeaderboardModel* FindLeaderboard(uint32_t nId)

@@ -193,6 +193,11 @@ public:
     /// </summary>
     static constexpr size_t MaxSerializedLength = 65535;
 
+    /// <summary>
+    /// Gets the unique ientifier of the first warning achievement.
+    /// </summary>
+    static constexpr uint32_t FirstWarningAchievementId = 101000001;
+
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;

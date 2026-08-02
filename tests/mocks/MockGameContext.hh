@@ -39,7 +39,7 @@ public:
         m_nGameId = m_nActiveGameId = nGameId;
 
         // MockRuntime may have populated an AchievementSet. Update it too
-        auto* pPrimarySet = const_cast<ra::data::models::AchievementSetModel*>(Assets().AchievementSets().GetItemAt(0));
+        GSL_SUPPRESS_TYPE3 auto* pPrimarySet = const_cast<ra::data::models::AchievementSetModel*>(Assets().AchievementSets().GetItemAt(0));
         if (pPrimarySet)
         {
             pPrimarySet->SetID(nGameId);
@@ -150,6 +150,91 @@ public:
 
     GSL_SUPPRESS_C128
     void InitializeFromAchievementRuntime();
+
+    static ra::data::models::AchievementModel& MockAchievement(ra::data::models::GameAssets& pAssets, ra::data::models::AssetCategory nCategory)
+    {
+        auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
+
+        if (nCategory == ra::data::models::AssetCategory::Local)
+        {
+            vmAchievement->CreateServerCheckpoint();
+            vmAchievement->SetID(pAssets.GetNextLocalId());
+        }
+        else
+        {
+            vmAchievement->SetID(gsl::narrow_cast<uint32_t>(pAssets.Count() + 1));
+        }
+
+        vmAchievement->SetCategory(nCategory);
+        vmAchievement->SetName(L"AchievementTitle");
+        vmAchievement->SetDescription(L"AchievementDescription");
+        vmAchievement->SetBadge(L"12345");
+        vmAchievement->SetPoints(5);
+        vmAchievement->SetState(ra::data::models::AssetState::Active);
+        vmAchievement->SetTrigger("1=1");
+
+        if (nCategory != ra::data::models::AssetCategory::Local)
+            vmAchievement->CreateServerCheckpoint();
+
+        vmAchievement->CreateLocalCheckpoint();
+        return dynamic_cast<ra::data::models::AchievementModel&>(pAssets.Append(std::move(vmAchievement)));
+    }
+
+    /// <summary>
+    /// Creates a new AchievementModel for a promoted achievement.
+    /// </summary>
+    ra::data::models::AchievementModel& MockAchievement()
+    {
+        return MockAchievement(Assets(), ra::data::models::AssetCategory::Core);
+    }
+
+    /// <summary>
+    /// Creates a new AchievementModel for an unpromoted achievement.
+    /// </summary>
+    ra::data::models::AchievementModel& MockUnofficialAchievement()
+    {
+        return MockAchievement(Assets(), ra::data::models::AssetCategory::Unofficial);
+    }
+
+    /// <summary>
+    /// Creates a new AchievementModel for a promoted achievement.
+    /// </summary>
+    ra::data::models::AchievementModel& MockLocalAchievement()
+    {
+        return MockAchievement(Assets(), ra::data::models::AssetCategory::Local);
+    }
+
+    static ra::data::models::LeaderboardModel& MockLeaderboard(ra::data::models::GameAssets& pAssets, ra::data::models::AssetCategory nCategory)
+    {
+        auto vmLeaderboard = std::make_unique<ra::data::models::AchievementModel>();
+
+        if (nCategory == ra::data::models::AssetCategory::Local)
+        {
+            vmLeaderboard->CreateServerCheckpoint();
+            vmLeaderboard->SetID(pAssets.GetNextLocalId());
+        }
+        else
+        {
+            vmLeaderboard->SetID(gsl::narrow_cast<uint32_t>(pAssets.Count() + 1));
+        }
+
+        vmLeaderboard->SetName(L"LeaderboardTitle");
+        vmLeaderboard->SetDescription(L"LeaderboardDescription");
+
+        if (nCategory != ra::data::models::AssetCategory::Local)
+            vmLeaderboard->CreateServerCheckpoint();
+
+        vmLeaderboard->CreateLocalCheckpoint();
+        return dynamic_cast<ra::data::models::LeaderboardModel&>(pAssets.Append(std::move(vmLeaderboard)));
+    }
+
+    /// <summary>
+    /// Creates a new AchievementModel for a promoted achievement.
+    /// </summary>
+    ra::data::models::LeaderboardModel& MockLeaderboard()
+    {
+        return MockLeaderboard(Assets(), ra::data::models::AssetCategory::Core);
+    }
 
 private:
     class MockMemoryNotesModel : public ra::data::models::MemoryNotesModel

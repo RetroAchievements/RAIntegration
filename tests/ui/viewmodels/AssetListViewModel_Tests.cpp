@@ -451,7 +451,7 @@ private:
             EnsureCoreSubset();
         }
 
-        void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle,
+        ra::data::models::AchievementModel& AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle,
             const std::wstring& sDescription, const std::wstring& sBadge, const std::string& sTrigger)
         {
             auto vmAchievement = std::make_unique<MockAchievementModel>();
@@ -469,9 +469,11 @@ private:
             vmAchievement->SetLocalAchievementInfo(*vmAchievement->m_pInfo);
             vmAchievement->SyncToLocalAchievementInfo();
             vmAchievement->EndUpdate();
-            mockGameContext.Assets().Append(std::move(vmAchievement));
+            auto& pAsset = mockGameContext.Assets().Append(std::move(vmAchievement));
 
             EnsureCoreSubset();
+
+            return dynamic_cast<ra::data::models::AchievementModel&>(pAsset);
         }
 
         void AddNewAchievement(unsigned nPoints, const std::wstring& sTitle,
@@ -3833,13 +3835,14 @@ public:
         vmAssetList.mockUserContext.Initialize("Username", "DisplayName", "ApiToken");
         vmAssetList.SetGameId(22U);
         vmAssetList.mockGameContext.SetActiveGameId(22U);
+        vmAssetList.mockGameContext.SetNote(0x1111, L"First Note");
         vmAssetList.SetSubsetFilter(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
-        vmAssetList.mockGameContext.Assets().FindAchievement(2)->SetAuthor(L"OriginalAuthor");
-        vmAssetList.mockGameContext.Assets().FindAchievement(2)->SetAchievementType(ra::data::models::AchievementType::Progression);
+        auto& pAch2 = vmAssetList.AddAchievement(AssetCategory::Core, 10, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+        pAch2.SetAuthor(L"OriginalAuthor");
+        pAch2.SetAchievementType(ra::data::models::AchievementType::Progression);
 
-        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count()); // two achievements + notes
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
         Assert::AreEqual(AssetListViewModel::CategoryFilter::Core, vmAssetList.GetCategoryFilter());
 
@@ -3856,7 +3859,7 @@ public:
         vmAssetList.CloneSelected();
 
         // new Local achievement should be created and focused
-        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 4U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
         Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 
@@ -3868,7 +3871,7 @@ public:
         Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
         Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
         Assert::AreEqual({ 111000001U }, pAsset->GetId());
-        Assert::AreEqual(7, pAsset->GetPoints());
+        Assert::AreEqual(10, pAsset->GetPoints());
 
         const auto* pAchievement = vmAssetList.mockGameContext.Assets().FindAchievement(pAsset->GetId());
         Expects(pAchievement != nullptr);
@@ -3878,6 +3881,7 @@ public:
         Assert::AreEqual(std::string("0xH1111=1"), pAchievement->GetTrigger());
         Assert::AreEqual(std::wstring(L"DisplayName"), pAchievement->GetAuthor());
         Assert::AreEqual(ra::data::models::AchievementType::Progression, pAchievement->GetAchievementType());
+        Assert::AreEqual(std::wstring(L""), pAchievement->GetValidationError());
 
         // and loaded in the editor, which should be shown (local achievement will always have ID 0)
         Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
@@ -3887,7 +3891,7 @@ public:
 
         // copying the copy should create another copy, deselecting the first
         vmAssetList.CloneSelected();
-        Assert::AreEqual({ 4U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 5U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
         Assert::AreEqual(AssetListViewModel::CategoryFilter::Local, vmAssetList.GetCategoryFilter());
 

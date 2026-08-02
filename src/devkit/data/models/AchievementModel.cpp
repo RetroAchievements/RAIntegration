@@ -148,7 +148,7 @@ void AchievementModel::CommitTransaction()
 bool AchievementModel::IsShownInList() const
 {
     // don't show warning achievements in asset list
-    if (GetID() > 101000000 && GetCategory() == AssetCategory::Core)
+    if (GetID() >= FirstWarningAchievementId && GetCategory() == AssetCategory::Core)
         return false;
 
     return true;

@@ -2,8 +2,6 @@
 
 #include "util\Strings.hh"
 
-#include "api\impl\OfflineServer.hh"
-
 #include "context\IRcClient.hh"
 #include "context\UserContext.hh"
 

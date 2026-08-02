@@ -183,33 +183,6 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
     }
 }
 
-static void GetOptionalJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Value& pDocument,
-    _In_ const char* const sField, _In_ const char* const sDefaultValue = "")
-{
-    if (pDocument.HasMember(sField))
-    {
-        auto& pField = pDocument[sField];
-        if (pField.IsString())
-            sValue = pField.GetString();
-        else
-            sValue = sDefaultValue;
-    }
-    else
-    {
-        sValue = sDefaultValue;
-    }
-}
-
-static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam, _In_ const std::string& sValue)
-{
-    if (!sParams.empty() && sParams.back() != '?')
-        sParams.push_back('&');
-
-    sParams.append(sParam);
-    sParams.push_back('=');
-    ra::services::Http::UrlEncodeAppend(sParams, sValue);
-}
-
 static bool DoRequestWithoutLog(const rc_api_request_t& api_request, _UNUSED const char* sApiName, ra::services::Http::Response& pHttpResponse, ApiResponseBase& pResponse)
 {
     ra::services::Http::Request httpRequest(api_request.url);

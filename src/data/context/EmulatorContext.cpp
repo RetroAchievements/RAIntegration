@@ -290,12 +290,15 @@ bool EmulatorContext::FetchLatestVersion()
             rc_json_get_optional_string(&sMinimumVersion, &api_response, &fields[4], "MinimumVersion", sLatestVersion);
             m_sMinimumVersion = sMinimumVersion;
 
+#ifndef RA_UTEST
+            // RA_LOG_INFO becomes a no-op in the unit tests so nServerVersion and nLocalVersion become unreferenced.
             const unsigned long long nServerVersion = ParseVersion(m_sLatestVersion.c_str());
             const unsigned long long nLocalVersion = ParseVersion(m_sVersion.c_str());
             RA_LOG_INFO("Client %s date: server %s, current %s",
                 (nLocalVersion >= nServerVersion) ? "up to" : "out of",
                 m_sLatestVersion,
                 m_sVersion);
+#endif
 
             bResult = true;
         }

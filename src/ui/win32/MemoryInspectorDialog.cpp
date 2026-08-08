@@ -470,9 +470,76 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
 
             return TRUE;
         }
+
+        case IDC_RA_EXPAND_NOTES:
+            ToggleCodeNotesExpanded();
+            return TRUE;
     }
 
     return DialogBase::OnCommand(nCommand);
+}
+
+void MemoryInspectorDialog::ToggleCodeNotesExpanded()
+{
+    auto hGroupBox = ::GetDlgItem(GetHWND(), IDC_RA_GBX_NOTES);
+    auto hTextBox = ::GetDlgItem(GetHWND(), IDC_RA_NOTE_TEXT);
+    if (!hGroupBox || !hTextBox)
+        return;
+
+    RECT rcGroupBox, rcTextBox;
+    ::GetWindowRect(hGroupBox, &rcGroupBox);
+    const int nGroupBoxWidth = rcGroupBox.right - rcGroupBox.left;
+    ::GetWindowRect(hTextBox, &rcTextBox);
+    const int nTextBoxWidth = rcTextBox.right - rcTextBox.left;
+
+    int nNewGroupBoxHeight, nNewTextBoxHeight;
+    if (m_bIsCodeNotesExpanded)
+    {
+        nNewGroupBoxHeight = m_nCodeNoteGroupBoxCollapsedHeight;
+        nNewTextBoxHeight = m_nCodeNoteTextBoxCollapsedHeight;
+
+        SetDlgItemTextW(GetHWND(), IDC_RA_EXPAND_NOTES, L"\\/");
+        m_bIsCodeNotesExpanded = false;
+    }
+    else
+    {
+        RECT rcMemViewer;
+        auto hMemViewer = ::GetDlgItem(GetHWND(), IDC_RA_MEMVIEWER);
+        ::GetWindowRect(hMemViewer, &rcMemViewer);
+
+        m_nCodeNoteGroupBoxCollapsedHeight = rcGroupBox.bottom - rcGroupBox.top;
+        nNewGroupBoxHeight = rcMemViewer.bottom - rcGroupBox.top;
+
+        m_nCodeNoteTextBoxCollapsedHeight = rcTextBox.bottom - rcTextBox.top;
+        nNewTextBoxHeight = rcMemViewer.bottom - rcTextBox.top - (rcGroupBox.bottom - rcTextBox.bottom);
+
+        SetDlgItemTextW(GetHWND(), IDC_RA_EXPAND_NOTES, L"/\\");
+        m_bIsCodeNotesExpanded = true;
+    }
+
+    ::SetWindowPos(hGroupBox, 0, 0, 0, nGroupBoxWidth, nNewGroupBoxHeight, SWP_NOMOVE | SWP_NOZORDER);
+    ::SetWindowPos(hTextBox, 0, 0, 0, nTextBoxWidth, nNewTextBoxHeight, SWP_NOMOVE | SWP_NOZORDER);
+
+    const int vMemViewerDlgItems[] = {
+        IDC_RA_LBL_MEMVIEW,
+        IDC_RA_MEMVIEW_8BIT,
+        IDC_RA_MEMVIEW_16BIT,
+        IDC_RA_MEMVIEW_32BIT,
+        IDC_RA_MEMVIEW_32BITBE,
+        IDC_RA_MEMBITS_TITLE,
+        IDC_RA_MEMBITS,
+        IDC_RA_MEMVIEWER,
+    };
+    const int nShow = (m_bIsCodeNotesExpanded) ? SW_HIDE : SW_SHOW;
+    for (gsl::index nIndex = 0; nIndex < sizeof(vMemViewerDlgItems) / sizeof(vMemViewerDlgItems[0]); ++nIndex)
+        ::ShowWindow(::GetDlgItem(GetHWND(), vMemViewerDlgItems[nIndex]), nShow);
+
+    using namespace ra::bitwise_ops;
+    auto nAnchor = Anchor::Top | Anchor::Left | Anchor::Right;
+    if (m_bIsCodeNotesExpanded)
+        nAnchor |= Anchor::Bottom;
+    UpdateAnchor(IDC_RA_GBX_NOTES, nAnchor);
+    UpdateAnchor(IDC_RA_NOTE_TEXT, nAnchor);
 }
 
 INT_PTR CALLBACK MemoryInspectorDialog::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)

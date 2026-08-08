@@ -605,6 +605,37 @@ void DialogBase::InitializeAnchors() noexcept
     }
 }
 
+void DialogBase::UpdateAnchor(int nIDDlgItem, Anchor nAnchor) noexcept
+{
+    auto hControl = ::GetDlgItem(m_hWnd, nIDDlgItem);
+    if (!hControl)
+        return;
+
+    for (auto& info : m_vControlAnchors)
+    {
+        if (info.nIDDlgItem == nIDDlgItem)
+        {
+            info.nAnchor = nAnchor;
+
+            RECT rcWindow;
+            ::GetClientRect(m_hWnd, &rcWindow);
+
+            POINT pTopLeft = { rcWindow.left, rcWindow.top };
+            ::ClientToScreen(m_hWnd, &pTopLeft);
+            ::OffsetRect(&rcWindow, pTopLeft.x, pTopLeft.y);
+
+            RECT rcControl;
+            ::GetWindowRect(hControl, &rcControl);
+
+            info.nMarginLeft = rcControl.left - rcWindow.left;
+            info.nMarginTop = rcControl.top - rcWindow.top;
+            info.nMarginRight = rcWindow.right - rcControl.right;
+            info.nMarginBottom = rcWindow.bottom - rcControl.bottom;
+            break;
+        }
+    }
+}
+
 void DialogBase::UpdateAnchoredControls()
 {
     if (m_vControlAnchors.empty())

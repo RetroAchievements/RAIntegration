@@ -6,8 +6,6 @@
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
-#include "api\LatestClient.hh"
-
 #include "context\IRcClient.hh"
 #include "context\UserContext.hh"
 
@@ -30,6 +28,7 @@
 #include "RAInterface\RA_Emulators.h"
 
 #include <rcheevos/src/rc_client_internal.h>
+#include <rcheevos/src/rapi/rc_api_common.h>
 
 namespace ra {
 namespace data {
@@ -228,6 +227,86 @@ bool EmulatorContext::ValidateClientVersion()
     return true;
 }
 
+bool EmulatorContext::FetchLatestVersion()
+{
+    const auto& pRcClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>();
+
+    // latestclient does not have an rapi wrapper
+    rc_api_request_t request;
+    memset(&request, 0, sizeof(request));
+
+    rc_api_url_builder_t builder;
+    rc_api_url_build_dorequest_url(&request, pRcClient.GetHost());
+    rc_url_builder_init(&builder, &request.buffer, 48);
+    rc_url_builder_append_str_param(&builder, "r", "latestclient");
+    rc_url_builder_append_str_param(&builder, "e", std::to_string(ra::etoi(m_nEmulatorId)).c_str());
+    request.post_data = rc_url_builder_finalize(&builder);
+    request.content_type = RC_CONTENT_TYPE_URLENCODED;
+
+    // this function is expected to return a result synchronously
+    rc_api_server_response_t server_response;
+    std::string sResponseBuffer;
+    pRcClient.SendRequest(request, server_response, sResponseBuffer);
+
+    rc_api_response_t api_response;
+    rc_buffer_init(&api_response.buffer);
+
+    rc_json_field_t fields[] = {
+        RC_JSON_NEW_FIELD("Success"),
+        RC_JSON_NEW_FIELD("Error"),
+        RC_JSON_NEW_FIELD("Code"),
+        RC_JSON_NEW_FIELD("LatestVersion"),
+        RC_JSON_NEW_FIELD("MinimumVersion")
+    };
+
+    bool bResult = false;
+    const auto nResult = rc_json_parse_server_response(&api_response, &server_response, fields, sizeof(fields) / sizeof(fields[0]));
+    if (nResult != RC_OK || !api_response.succeeded)
+    {
+        m_sLatestVersionError = api_response.error_message ? api_response.error_message : rc_error_str(nResult);
+
+        if (nResult == RC_NOT_FOUND)
+        {
+            // if m_nEmulatorID is not recognized by the server, let it through regardless of version.
+            // assume it's a new emulator that hasn't been released yet.
+            m_sLatestVersion = "0.0.0.0";
+            bResult = true;
+
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Could not retrieve latest client version.", ra::util::String::Widen(m_sLatestVersionError));
+        }
+        else
+        {
+            m_sLatestVersion = "Unknown";
+        }
+    }
+    else
+    {
+        const char* sLatestVersion;
+        if (rc_json_get_required_string(&sLatestVersion, &api_response, &fields[3], "LatestVersion"))
+        {
+            m_sLatestVersion = sLatestVersion;
+
+            const char* sMinimumVersion;
+            rc_json_get_optional_string(&sMinimumVersion, &api_response, &fields[4], "MinimumVersion", sLatestVersion);
+            m_sMinimumVersion = sMinimumVersion;
+
+#ifndef RA_UTEST
+            // RA_LOG_INFO becomes a no-op in the unit tests so nServerVersion and nLocalVersion become unreferenced.
+            const unsigned long long nServerVersion = ParseVersion(m_sLatestVersion.c_str());
+            const unsigned long long nLocalVersion = ParseVersion(m_sVersion.c_str());
+            RA_LOG_INFO("Client %s date: server %s, current %s",
+                (nLocalVersion >= nServerVersion) ? "up to" : "out of",
+                m_sLatestVersion,
+                m_sVersion);
+#endif
+
+            bResult = true;
+        }
+    }
+
+    return bResult;
+}
+
 /// <summary>
 /// Returns <c>true</c> if the player is allowed to play using the current client.
 /// </summary>
@@ -241,43 +320,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
 
     // fetch the latest version
     if (m_sLatestVersion.empty())
-    {
-        ra::api::LatestClient::Request request;
-        request.EmulatorId = ra::etoi(m_nEmulatorId);
-        auto response = request.Call();
-        if (!response.Succeeded())
-        {
-            if (ra::util::String::StartsWith(response.ErrorMessage, "Unknown client"))
-            {
-                // if m_nEmulatorID is not recognized by the server, let it through regardless of version.
-                // assume it's a new emulator that hasn't been released yet.
-                m_sLatestVersion = "0.0.0.0";
-                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Could not retrieve latest client version.", ra::util::String::Widen(response.ErrorMessage));
-            }
-            else
-            {
-                m_sLatestVersion = "Unknown";
-                m_sLatestVersionError = response.ErrorMessage;
-            }
-        }
-        else
-        {
-            m_sLatestVersion = response.LatestVersion;
-            m_sMinimumVersion = response.MinimumVersion;
-
-#ifndef RA_UTEST
-            const unsigned long long nServerVersion = ParseVersion(m_sLatestVersion.c_str());
-            const unsigned long long nLocalVersion = ParseVersion(m_sVersion.c_str());
-            RA_LOG_INFO("Client %s date: server %s, current %s",
-                   (nLocalVersion >= nServerVersion) ? "up to" : "out of",
-                   m_sLatestVersion,
-                   m_sVersion);
-#endif
-        }
-
-        if (m_nEmulatorId == EmulatorID::RA_Gens)
-            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"RAGens is being retired", L"With the next major release of the toolkit, you will no longer be able to play games using RAGens. Please switch over to RALibretro or RetroArch.");
-    }
+        FetchLatestVersion();
 
     // if we failed to fetch the latest version, abort
     if (m_sLatestVersion == "Unknown")

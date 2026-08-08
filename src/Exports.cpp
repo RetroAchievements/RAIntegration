@@ -6,7 +6,6 @@
 #include "RA_Resource.h"
 
 #include "api\IServer.hh"
-#include "api\impl\OfflineServer.hh"
 
 #include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
@@ -103,7 +102,6 @@ static void InitializeOfflineMode()
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
     pConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
 
-    ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<ra::api::impl::OfflineServer>());
     ra::services::ServiceLocator::Provide<ra::context::IRcClient>(std::make_unique<ra::services::impl::OfflineRcClient>());
 
     // reattach hooks to new rc_client_t

@@ -90,16 +90,6 @@ public:
 
     // === other functions ===
 
-    LatestClient::Response LatestClient(const LatestClient::Request& request) override
-    {
-        return HandleRequest<ra::api::LatestClient>(request);
-    }
-
-    FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override
-    {
-        return HandleRequest<ra::api::FetchBadgeIds>(request);
-    }
-
     UploadBadge::Response UploadBadge(const UploadBadge::Request& request) override
     {
         return HandleRequest<ra::api::UploadBadge>(request);

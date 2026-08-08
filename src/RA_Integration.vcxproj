@@ -74,8 +74,6 @@
   <ItemGroup>
     <ClCompile Include="api\ApiCall.cpp" />
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
-    <ClCompile Include="api\impl\DisconnectedServer.cpp" />
-    <ClCompile Include="api\impl\OfflineServer.cpp" />
     <ClCompile Include="data\context\EmulatorContext.cpp" />
     <ClCompile Include="data\context\GameContext.cpp" />
     <ClCompile Include="data\context\SessionTracker.cpp" />
@@ -191,14 +189,11 @@
     <ClInclude Include="..\RAInterface\RA_Interface.h" />
     <ClInclude Include="api\ApiCall.hh" />
     <ClInclude Include="api\FetchAchievementInfo.hh" />
-    <ClInclude Include="api\FetchBadgeIds.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
     <ClInclude Include="api\impl\DisconnectedServer.hh" />
-    <ClInclude Include="api\impl\OfflineServer.hh" />
     <ClInclude Include="api\impl\ServerBase.hh" />
     <ClInclude Include="api\IServer.hh" />
-    <ClInclude Include="api\LatestClient.hh" />
     <ClInclude Include="api\UpdateAchievement.hh" />
     <ClInclude Include="api\UpdateLeaderboard.hh" />
     <ClInclude Include="api\UpdateRichPresence.hh" />

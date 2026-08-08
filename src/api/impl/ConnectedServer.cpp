@@ -183,33 +183,6 @@ static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson
     }
 }
 
-static void GetOptionalJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Value& pDocument,
-    _In_ const char* const sField, _In_ const char* const sDefaultValue = "")
-{
-    if (pDocument.HasMember(sField))
-    {
-        auto& pField = pDocument[sField];
-        if (pField.IsString())
-            sValue = pField.GetString();
-        else
-            sValue = sDefaultValue;
-    }
-    else
-    {
-        sValue = sDefaultValue;
-    }
-}
-
-static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam, _In_ const std::string& sValue)
-{
-    if (!sParams.empty() && sParams.back() != '?')
-        sParams.push_back('&');
-
-    sParams.append(sParam);
-    sParams.push_back('=');
-    ra::services::Http::UrlEncodeAppend(sParams, sValue);
-}
-
 static bool DoRequestWithoutLog(const rc_api_request_t& api_request, _UNUSED const char* sApiName, ra::services::Http::Response& pHttpResponse, ApiResponseBase& pResponse)
 {
     ra::services::Http::Request httpRequest(api_request.url);
@@ -740,73 +713,6 @@ UpdateRichPresence::Response ConnectedServer::UpdateRichPresence(const UpdateRic
                 response.Result = ApiResult::Success;
 
             rc_api_destroy_update_rich_presence_response(&api_response);
-        }
-    }
-    else
-    {
-        response.Result = ApiResult::Failed;
-        response.ErrorMessage = rc_error_str(result);
-    }
-
-    rc_api_destroy_request(&api_request);
-    return response;
-}
-
-LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request& request)
-{
-    LatestClient::Response response;
-    rapidjson::Document document;
-    std::string sPostData;
-
-    // LatestClient doesn't require User/Password, so the next few lines are a subset of DoRequest
-    AppendUrlParam(sPostData, "r", "latestclient");
-    AppendUrlParam(sPostData, "e", std::to_string(request.EmulatorId));
-    RA_LOG_INFO("%s Request: %s", LatestClient::Name(), sPostData.c_str());
-
-    ra::services::Http::Request httpRequest(ra::util::String::Printf("%s/dorequest.php", m_sHost));
-    httpRequest.SetPostData(sPostData);
-
-    const auto httpResponse = httpRequest.Call();
-    if (GetJson(LatestClient::Name(), httpResponse, response, document))
-    {
-        response.Result = ApiResult::Success;
-        GetRequiredJsonField(response.LatestVersion, document, "LatestVersion", response);
-        GetOptionalJsonField(response.MinimumVersion, document, "MinimumVersion");
-        if (response.MinimumVersion.empty())
-            response.MinimumVersion = response.LatestVersion;
-    }
-
-    return response;
-}
-
-FetchBadgeIds::Response ConnectedServer::FetchBadgeIds(const FetchBadgeIds::Request&)
-{
-    FetchBadgeIds::Response response;
-
-    rc_api_fetch_badge_range_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    rc_api_request_t api_request;
-    const int result = rc_api_init_fetch_badge_range_request(&api_request, &api_params);
-    if (result == RC_OK)
-    {
-        ra::services::Http::Response httpResponse;
-        if (DoRequest(api_request, FetchBadgeIds::Name(), httpResponse, response))
-        {
-            rc_api_fetch_badge_range_response_t api_response;
-            rc_api_server_response_t server_response;
-            HttpResponseToServerResponse(httpResponse, &server_response);
-
-            const auto nResult = rc_api_process_fetch_badge_range_server_response(&api_response, &server_response);
-
-            if (ValidateResponse(nResult, api_response.response, FetchBadgeIds::Name(), httpResponse.StatusCode(), response))
-            {
-                response.Result = ApiResult::Success;
-                response.FirstID = api_response.first_badge_id;
-                response.NextID = api_response.next_badge_id;
-            }
-
-            rc_api_destroy_fetch_badge_range_response(&api_response);
         }
     }
     else

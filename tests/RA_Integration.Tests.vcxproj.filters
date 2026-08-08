@@ -102,19 +102,10 @@
     <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="api\ConnectedServer_Tests.cpp">
-      <Filter>Tests\API</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\api\ApiCall.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\api\impl\OfflineServer.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\api\impl\ConnectedServer.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\api\impl\DisconnectedServer.cpp">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp">

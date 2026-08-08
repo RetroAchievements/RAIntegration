@@ -121,6 +121,9 @@ static ra::services::Http::Response HandleOfflineRequest(const ra::services::Htt
         return ra::services::Http::Response(ra::services::Http::StatusCode::OK, sContents);
     }
 
+    if (sApi == "latestclient")
+        return ra::services::Http::Response(ra::services::Http::StatusCode::OK, "{\"Success\":true,\"LatestVersion\":\"0.0.0.0\"}");
+
     return ra::services::Http::Response(ra::services::Http::StatusCode::NotImplemented,
         ra::util::String::Printf("{\"Success\":false,\"Error\":\"No offline implementation for %s\"}", sApi));
 }
@@ -130,14 +133,11 @@ void OfflineRcClient::CallApi(const std::string& sApi, const ra::services::Http:
     void* pCallbackData) const
 {
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
-        [httpRequest = pRequest, fCallback, pCallbackData, sApi]()
+        [this, httpRequest = pRequest, fCallback, pCallbackData, sApi]()
         {
             ra::services::Http::Response httpResponse = HandleOfflineRequest(httpRequest, sApi);
 
-            if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
-            {
-                RA_LOG_INFO("<< %s response (offline) (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
-            }
+            LogResponse(sApi, httpResponse);
 
             rc_api_server_response_t pResponse;
             memset(&pResponse, 0, sizeof(pResponse));
@@ -147,6 +147,11 @@ void OfflineRcClient::CallApi(const std::string& sApi, const ra::services::Http:
 
             fCallback(pResponse, pCallbackData);
         });
+}
+
+ra::services::Http::Response OfflineRcClient::CallApiSync(const std::string& sApi, const ra::services::Http::Request& pRequest) const
+{
+    return HandleOfflineRequest(pRequest, sApi);
 }
 
 } // namespace impl

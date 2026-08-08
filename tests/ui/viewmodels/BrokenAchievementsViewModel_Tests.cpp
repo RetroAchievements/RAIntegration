@@ -42,34 +42,22 @@ private:
             mockGameContext.SetGameTitle(L"GAME");
             mockGameContext.SetGameHash("HASH");
 
-            auto& ach1 = mockGameContext.Assets().NewAchievement();
-            ach1.SetCategory(ra::data::models::AssetCategory::Core);
-            ach1.SetID(1U);
+            auto& ach1 = mockGameContext.MockAchievement();
             ach1.SetName(L"Title1");
             ach1.SetState(ra::data::models::AssetState::Inactive);
-            auto& ach2 = mockGameContext.Assets().NewAchievement();
-            ach2.SetCategory(ra::data::models::AssetCategory::Core);
-            ach2.SetID(2U);
+            auto& ach2 = mockGameContext.MockAchievement();
             ach2.SetName(L"Title2");
             ach2.SetState(ra::data::models::AssetState::Active);
-            auto& ach3 = mockGameContext.Assets().NewAchievement();
-            ach3.SetCategory(ra::data::models::AssetCategory::Core);
-            ach3.SetID(3U);
+            auto& ach3 = mockGameContext.MockAchievement();
             ach3.SetName(L"Title3");
             ach3.SetState(ra::data::models::AssetState::Inactive);
-            auto& ach4 = mockGameContext.Assets().NewAchievement();
-            ach4.SetCategory(ra::data::models::AssetCategory::Core);
-            ach4.SetID(4U);
+            auto& ach4 = mockGameContext.MockAchievement();
             ach4.SetName(L"Title4");
             ach4.SetState(ra::data::models::AssetState::Active);
-            auto& ach5 = mockGameContext.Assets().NewAchievement();
-            ach5.SetCategory(ra::data::models::AssetCategory::Core);
-            ach5.SetID(5U);
+            auto& ach5 = mockGameContext.MockAchievement();
             ach5.SetName(L"Title5");
             ach5.SetState(ra::data::models::AssetState::Active);
-            auto& ach6 = mockGameContext.Assets().NewAchievement();
-            ach6.SetCategory(ra::data::models::AssetCategory::Core);
-            ach6.SetID(6U);
+            auto& ach6 = mockGameContext.MockAchievement();
             ach6.SetName(L"Title6");
             ach6.SetState(ra::data::models::AssetState::Active);
 
@@ -106,7 +94,7 @@ public:
     {
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.mockGameContext.SetGameId(1U);
-        vmBrokenAchievements.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
+        vmBrokenAchievements.mockGameContext.MockLocalAchievement();
         vmBrokenAchievements.mockWindowManager.AssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
 
         bool bDialogSeen = false;

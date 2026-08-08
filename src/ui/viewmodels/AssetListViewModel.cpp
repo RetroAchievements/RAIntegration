@@ -1933,46 +1933,54 @@ void AssetListViewModel::CloneSelected()
         const auto* pSourceAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
         if (pSourceAchievement != nullptr)
         {
-            auto& vmAchievement = pGameContext.Assets().NewAchievement();
-            vmAchievement.SetSubsetID(pSourceAchievement->GetSubsetID());
-            vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
-            vmAchievement.SetAuthor(pAuthor);
-            vmAchievement.UpdateServerCheckpoint();
+            auto pAchievement = std::make_unique<ra::data::models::AchievementModel>();
+            pAchievement->SetID(pGameContext.Assets().GetNextLocalId());
+            pAchievement->SetSubsetID(pSourceAchievement->GetSubsetID());
+            pAchievement->SetCategory(ra::data::models::AssetCategory::Local);
+            pAchievement->SetAuthor(pAuthor);
+            pAchievement->CreateServerCheckpoint();
+            pAchievement->CreateLocalCheckpoint();
 
-            vmAchievement.SetName(pSourceAchievement->GetTitle() + L" (copy)");
-            vmAchievement.SetDescription(pSourceAchievement->GetDescription());
-            vmAchievement.SetBadge(pSourceAchievement->GetBadge());
-            vmAchievement.SetPoints(pSourceAchievement->GetPoints());
-            vmAchievement.SetTrigger(pSourceAchievement->GetTrigger());
-            vmAchievement.SetAchievementType(pSourceAchievement->GetAchievementType());
-            vmAchievement.SetNew();
+            pAchievement->SetName(pSourceAchievement->GetTitle() + L" (copy)");
+            pAchievement->SetDescription(pSourceAchievement->GetDescription());
+            pAchievement->SetBadge(pSourceAchievement->GetBadge());
+            pAchievement->SetPoints(pSourceAchievement->GetPoints());
+            pAchievement->SetTrigger(pSourceAchievement->GetTrigger());
+            pAchievement->SetAchievementType(pSourceAchievement->GetAchievementType());
+            pAchievement->SetNew();
 
+            pAchievement->Validate(); // force re-validation now that everything is set
+
+            const auto& vmAchievement = dynamic_cast<ra::data::models::AchievementModel&>(pGameContext.Assets().Append(std::move(pAchievement)));
             EnsureAppearsInFilteredList(vmAchievement);
-
             vNewIDs.push_back(vmAchievement.GetID());
         }
 
         const auto* pSourceLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(pAsset);
         if (pSourceLeaderboard != nullptr)
         {
-            auto& vmLeaderboard = pGameContext.Assets().NewLeaderboard();
-            vmLeaderboard.SetSubsetID(pSourceLeaderboard->GetSubsetID());
-            vmLeaderboard.SetCategory(ra::data::models::AssetCategory::Local);
-            vmLeaderboard.SetAuthor(pAuthor);
-            vmLeaderboard.UpdateServerCheckpoint();
+            auto pLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+            pLeaderboard->SetID(pGameContext.Assets().GetNextLocalId());
+            pLeaderboard->SetSubsetID(pSourceLeaderboard->GetSubsetID());
+            pLeaderboard->SetCategory(ra::data::models::AssetCategory::Local);
+            pLeaderboard->SetAuthor(pAuthor);
+            pLeaderboard->CreateServerCheckpoint();
+            pLeaderboard->CreateLocalCheckpoint();
 
-            vmLeaderboard.SetName(pSourceLeaderboard->GetTitle() + L" (copy)");
-            vmLeaderboard.SetDescription(pSourceLeaderboard->GetDescription());
-            vmLeaderboard.SetStartTrigger(pSourceLeaderboard->GetStartTrigger());
-            vmLeaderboard.SetSubmitTrigger(pSourceLeaderboard->GetSubmitTrigger());
-            vmLeaderboard.SetCancelTrigger(pSourceLeaderboard->GetCancelTrigger());
-            vmLeaderboard.SetValueDefinition(pSourceLeaderboard->GetValueDefinition());
-            vmLeaderboard.SetValueFormat(pSourceLeaderboard->GetValueFormat());
-            vmLeaderboard.SetLowerIsBetter(pSourceLeaderboard->IsLowerBetter());
-            vmLeaderboard.SetNew();
+            pLeaderboard->SetName(pSourceLeaderboard->GetTitle() + L" (copy)");
+            pLeaderboard->SetDescription(pSourceLeaderboard->GetDescription());
+            pLeaderboard->SetStartTrigger(pSourceLeaderboard->GetStartTrigger());
+            pLeaderboard->SetSubmitTrigger(pSourceLeaderboard->GetSubmitTrigger());
+            pLeaderboard->SetCancelTrigger(pSourceLeaderboard->GetCancelTrigger());
+            pLeaderboard->SetValueDefinition(pSourceLeaderboard->GetValueDefinition());
+            pLeaderboard->SetValueFormat(pSourceLeaderboard->GetValueFormat());
+            pLeaderboard->SetLowerIsBetter(pSourceLeaderboard->IsLowerBetter());
+            pLeaderboard->SetNew();
 
+            pLeaderboard->Validate(); // force re-validation now that everything is set
+
+            const auto& vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel&>(pGameContext.Assets().Append(std::move(pLeaderboard)));
             EnsureAppearsInFilteredList(vmLeaderboard);
-
             vNewIDs.push_back(vmLeaderboard.GetID());
         }
     }

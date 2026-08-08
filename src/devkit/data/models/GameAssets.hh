@@ -57,11 +57,6 @@ public:
     }
 
     /// <summary>
-    /// Creates a new achievement asset.
-    /// </summary>
-    ra::data::models::AchievementModel& NewAchievement();
-
-    /// <summary>
     /// Finds the leaderboard asset for the specified ID.
     /// </summary>
     ra::data::models::LeaderboardModel* FindLeaderboard(uint32_t nId)
@@ -76,11 +71,6 @@ public:
     {
         return dynamic_cast<const ra::data::models::LeaderboardModel*>(FindAsset(ra::data::models::AssetType::Leaderboard, nId));
     }
-
-    /// <summary>
-    /// Creates a new leaderboard asset.
-    /// </summary>
-    ra::data::models::LeaderboardModel& NewLeaderboard();
 
     /// <summary>
     /// Finds the rich presence asset.

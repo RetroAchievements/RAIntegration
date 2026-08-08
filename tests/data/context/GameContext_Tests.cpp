@@ -33,6 +33,7 @@
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
+#include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
@@ -122,26 +123,12 @@ public:
 
         ra::data::models::AchievementModel& MockAchievement()
         {
-            auto& pAch = Assets().NewAchievement();
-            pAch.SetCategory(ra::data::models::AssetCategory::Core);
-            pAch.SetID(1U);
-            pAch.SetName(L"AchievementTitle");
-            pAch.SetDescription(L"AchievementDescription");
-            pAch.SetBadge(L"12345");
-            pAch.SetPoints(5);
-            pAch.SetState(ra::data::models::AssetState::Active);
-            pAch.UpdateServerCheckpoint();
-            return pAch;
+            return ra::data::context::mocks::MockGameContext::MockAchievement(Assets(), ra::data::models::AssetCategory::Core);
         }
 
         ra::data::models::LeaderboardModel& MockLeaderboard()
         {
-            auto& pLeaderboard = Assets().NewLeaderboard();
-            pLeaderboard.SetID(1U);
-            pLeaderboard.SetName(L"LeaderboardTitle");
-            pLeaderboard.SetDescription(L"LeaderboardDescription");
-            pLeaderboard.UpdateServerCheckpoint();
-            return pLeaderboard;
+            return ra::data::context::mocks::MockGameContext::MockLeaderboard(Assets(), ra::data::models::AssetCategory::Core);
         }
 
         void RemoveNonAchievementAssets()
@@ -921,7 +908,7 @@ public:
 
         // new achievement should be allocated an ID higher than the largest existing local
         // ID, even if intermediate values are available
-        const auto& pAch2 = game.Assets().NewAchievement();
+        const auto& pAch2 = ra::data::context::mocks::MockGameContext::MockAchievement(game.Assets(), ra::data::models::AssetCategory::Local);
         Assert::AreEqual(999000004U, pAch2.GetID());
     }
 

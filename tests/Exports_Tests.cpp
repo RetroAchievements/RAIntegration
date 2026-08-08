@@ -441,17 +441,6 @@ private:
         MockWindowManager mockWindowManager;
         MockClock mockClock;
 
-        ra::data::models::AchievementModel& MockAchievement(unsigned int nId)
-        {
-            auto& pAch = mockGameContext.Assets().NewAchievement();
-            pAch.SetCategory(ra::data::models::AssetCategory::Core);
-            pAch.SetID(nId);
-            pAch.SetTrigger("1=1");
-            pAch.UpdateServerCheckpoint();
-            pAch.SetState(ra::data::models::AssetState::Active);
-            return pAch;
-        }
-
     private:
         MockThreadPool mockThreadPool;
         MockServer mockServer;

@@ -72,29 +72,35 @@ public:
         ra::data::models::AchievementModel& AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle,
             const std::wstring& sDescription, const std::wstring& sBadge, const std::string& sTrigger)
         {
-            auto& pAchievement = NewAchievement();
-            pAchievement.SetCategory(nCategory);
-            pAchievement.SetPoints(nPoints);
-            pAchievement.SetName(sTitle);
-            pAchievement.SetDescription(sDescription);
-            pAchievement.SetBadge(sBadge);
-            pAchievement.SetTrigger(sTrigger);
-
-            std::wstring sAuthor = L"Auth";
-            sAuthor.push_back(sBadge.front());
-            pAchievement.SetAuthor(sAuthor);
+            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
 
             if (nCategory == AssetCategory::Local)
             {
-                pAchievement.UpdateLocalCheckpoint();
+                vmAchievement->CreateServerCheckpoint();
+                vmAchievement->SetID(m_nNextLocalId++);
             }
             else
             {
-                pAchievement.SetID(gsl::narrow_cast<uint32_t>(Count()));
-                pAchievement.UpdateServerCheckpoint();
+                vmAchievement->SetID(gsl::narrow_cast<uint32_t>(Count() + 1));
             }
 
-            return pAchievement;
+            vmAchievement->SetCategory(nCategory);
+            vmAchievement->SetPoints(nPoints);
+            vmAchievement->SetName(sTitle);
+            vmAchievement->SetDescription(sDescription);
+            vmAchievement->SetBadge(sBadge);
+            vmAchievement->SetTrigger(sTrigger);
+
+            std::wstring sAuthor = L"Auth";
+            sAuthor.push_back(sBadge.front());
+            vmAchievement->SetAuthor(sAuthor);
+
+            if (nCategory != AssetCategory::Local)
+                vmAchievement->CreateServerCheckpoint();
+
+            vmAchievement->CreateLocalCheckpoint();
+
+            return dynamic_cast<ra::data::models::AchievementModel&>(Append(std::move(vmAchievement)));
         }
 
         ra::data::models::AchievementModel& AddAchievement()
@@ -122,27 +128,33 @@ public:
             const std::wstring& sTitle, const std::wstring& sDescription, const std::string& sStart,
             const std::string& sCancel, const std::string& sSubmit, const std::string& sValue, Value::Format nFormat)
         {
-            auto& pLeaderboard = NewLeaderboard();
-            pLeaderboard.SetCategory(nCategory);
-            pLeaderboard.SetName(sTitle);
-            pLeaderboard.SetDescription(sDescription);
-            pLeaderboard.SetStartTrigger(sStart);
-            pLeaderboard.SetSubmitTrigger(sSubmit);
-            pLeaderboard.SetCancelTrigger(sCancel);
-            pLeaderboard.SetValueDefinition(sValue);
-            pLeaderboard.SetValueFormat(nFormat);
+            auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
 
             if (nCategory == AssetCategory::Local)
             {
-                pLeaderboard.UpdateLocalCheckpoint();
+                vmLeaderboard->CreateServerCheckpoint();
+                vmLeaderboard->SetID(m_nNextLocalId++);
             }
             else
             {
-                pLeaderboard.SetID(gsl::narrow_cast<uint32_t>(Count()));
-                pLeaderboard.UpdateServerCheckpoint();
+                vmLeaderboard->SetID(gsl::narrow_cast<uint32_t>(Count()));
             }
 
-            return pLeaderboard;
+            vmLeaderboard->SetCategory(nCategory);
+            vmLeaderboard->SetName(sTitle);
+            vmLeaderboard->SetDescription(sDescription);
+            vmLeaderboard->SetStartTrigger(sStart);
+            vmLeaderboard->SetSubmitTrigger(sSubmit);
+            vmLeaderboard->SetCancelTrigger(sCancel);
+            vmLeaderboard->SetValueDefinition(sValue);
+            vmLeaderboard->SetValueFormat(nFormat);
+
+            if (nCategory != AssetCategory::Local)
+                vmLeaderboard->CreateServerCheckpoint();
+
+            vmLeaderboard->CreateLocalCheckpoint();
+
+            return dynamic_cast<ra::data::models::LeaderboardModel&>(Append(std::move(vmLeaderboard)));
         }
 
         void MockUserFile(const std::string& sContents)
@@ -199,12 +211,12 @@ public:
     {
         GameAssetsHarness gameAssets;
         gameAssets.AddAchievement(AssetCategory::Core, 5, L"Ach1", L"Desc1", L"11111", "1=1");
-        gameAssets.AddAchievement(AssetCategory::Local, 5, L"Ach2", L"Desc2", L"22222", "2=2");
+        const auto& vmAchievement = gameAssets.AddAchievement(AssetCategory::Local, 5, L"Ach2", L"Desc2", L"22222", "2=2");
         gameAssets.AddAchievement(AssetCategory::Unofficial, 5, L"Ach3", L"Desc3", L"33333", "3=3");
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\n%u:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId + 1);
+        const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\n%u:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", vmAchievement.GetID());
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -740,11 +752,11 @@ public:
     {
         GameAssetsHarness gameAssets;
         gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", Value::Format::Seconds);
-        gameAssets.AddLeaderboard(AssetCategory::Local, L"LB2", L"Desc2", "0xH2234=1", "0xH2234=2", "0xH2234=3", "M:0xH2235", Value::Format::Minutes);
+        const auto& vmLeaderboard2 = gameAssets.AddLeaderboard(AssetCategory::Local, L"LB2", L"Desc2", "0xH2234=1", "0xH2234=2", "0xH2234=3", "M:0xH2235", Value::Format::Minutes);
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\nL%u:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2:0\n", GameAssets::FirstLocalId + 1);
+        const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\nL%u:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2:0\n", vmLeaderboard2.GetID());
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 

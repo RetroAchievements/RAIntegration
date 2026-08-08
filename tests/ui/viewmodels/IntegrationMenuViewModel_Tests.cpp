@@ -140,25 +140,27 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(18);
-        menu.AssertMenuItem(0, IDM_RA_FILES_LOGIN, L"&Login");
-        menu.AssertMenuSeparator(1);
-        menu.AssertMenuItem(2, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
-        menu.AssertMenuItem(3, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
-        menu.AssertMenuSeparator(4);
-        menu.AssertMenuItem(5, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
-        menu.AssertMenuItem(6, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
-        menu.AssertMenuSeparator(7);
-        menu.AssertMenuItem(8, IDM_RA_FILES_OPENALL, L"&Open All");
-        menu.AssertMenuItem(9, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
-        menu.AssertMenuItem(10, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
-        menu.AssertMenuItem(11, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
-        menu.AssertMenuItem(12, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        menu.AssertMenuItem(13, IDM_RA_FILES_CODENOTES, L"Memory &Notes");
-        menu.AssertMenuItem(14, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
-        menu.AssertMenuSeparator(15);
-        menu.AssertMenuItem(16, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuItem(17, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        menu.AssertMenuSize(19);
+        gsl::index nIndex = 0;
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_LOGIN, L"&Login");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
+        menu.AssertMenuItem(nIndex++, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
+        menu.AssertMenuItem(nIndex++, IDM_RA_ONLY_HARDCORE_UNLOCKS, L"Only Hardcore Unloc&ks");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
+        menu.AssertMenuItem(nIndex++, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_OPENALL, L"&Open All");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_CODENOTES, L"Memory &Notes");
+        menu.AssertMenuItem(nIndex++, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
     }
 
     TEST_METHOD(TestBuildMenuLoggedIn)
@@ -168,31 +170,33 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(24);
-        menu.AssertMenuItem(0, IDM_RA_FILES_LOGOUT, L"Log&out");
-        menu.AssertMenuSeparator(1);
-        menu.AssertMenuItem(2, IDM_RA_OPENUSERPAGE, L"Open my &User Page");
-        menu.AssertMenuItem(3, IDM_RA_OPENGAMEPAGE, L"Open this &Game's Page");
-        menu.AssertMenuSeparator(4);
-        menu.AssertMenuItem(5, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
-        menu.AssertMenuItem(6, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
-        menu.AssertMenuSeparator(7);
-        menu.AssertMenuItem(8, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
-        menu.AssertMenuItem(9, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
-        menu.AssertMenuSeparator(10);
-        menu.AssertMenuItem(11, IDM_RA_FILES_OPENALL, L"&Open All");
-        menu.AssertMenuItem(12, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
-        menu.AssertMenuItem(13, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
-        menu.AssertMenuItem(14, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
-        menu.AssertMenuItem(15, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        menu.AssertMenuItem(16, IDM_RA_FILES_CODENOTES, L"Memory &Notes");
-        menu.AssertMenuItem(17, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
-        menu.AssertMenuSeparator(18);
-        menu.AssertMenuItem(19, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuItem(20, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
-        menu.AssertMenuSeparator(21);
-        menu.AssertMenuItem(22, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
-        menu.AssertMenuItem(23, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+        menu.AssertMenuSize(25);
+        gsl::index nIndex = 0;
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_LOGOUT, L"Log&out");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_OPENUSERPAGE, L"Open my &User Page");
+        menu.AssertMenuItem(nIndex++, IDM_RA_OPENGAMEPAGE, L"Open this &Game's Page");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
+        menu.AssertMenuItem(nIndex++, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
+        menu.AssertMenuItem(nIndex++, IDM_RA_ONLY_HARDCORE_UNLOCKS, L"Only Hardcore Unloc&ks");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
+        menu.AssertMenuItem(nIndex++, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_OPENALL, L"&Open All");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_CODENOTES, L"Memory &Notes");
+        menu.AssertMenuItem(nIndex++, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
+        menu.AssertMenuItem(nIndex++, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 
     TEST_METHOD(TestBuildMenuOffline)
@@ -202,25 +206,27 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(18);
-        menu.AssertMenuItem(0, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
-        menu.AssertMenuItem(1, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
-        menu.AssertMenuSeparator(2);
-        menu.AssertMenuItem(3, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
-        menu.AssertMenuItem(4, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
-        menu.AssertMenuSeparator(5);
-        menu.AssertMenuItem(6, IDM_RA_FILES_OPENALL, L"&Open All");
-        menu.AssertMenuItem(7, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
-        menu.AssertMenuItem(8, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
-        menu.AssertMenuItem(9, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
-        menu.AssertMenuItem(10, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        menu.AssertMenuItem(11, IDM_RA_FILES_CODENOTES, L"Memory &Notes");
-        menu.AssertMenuItem(12, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
-        menu.AssertMenuSeparator(13);
-        menu.AssertMenuItem(14, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuItem(15, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
-        menu.AssertMenuSeparator(16);
-        menu.AssertMenuItem(17, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+        menu.AssertMenuSize(19);
+        gsl::index nIndex = 0;
+        menu.AssertMenuItem(nIndex++, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
+        menu.AssertMenuItem(nIndex++, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
+        menu.AssertMenuItem(nIndex++, IDM_RA_ONLY_HARDCORE_UNLOCKS, L"Only Hardcore Unloc&ks");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
+        menu.AssertMenuItem(nIndex++, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_OPENALL, L"&Open All");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_CODENOTES, L"Memory &Notes");
+        menu.AssertMenuItem(nIndex++, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        menu.AssertMenuSeparator(nIndex++);
+        menu.AssertMenuItem(nIndex++, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 
     TEST_METHOD(TestLoginHardcoreValidClient)
@@ -398,6 +404,73 @@ public:
         menu.ActivateMenuItem(IDM_RA_NON_HARDCORE_WARNING);
 
         Assert::IsFalse(menu.mockConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning));
+        Assert::IsTrue(bMenuRebuilt);
+    }
+
+    TEST_METHOD(TestToggleOnlyHardcoreUnlocksEnabledConfirm)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.mockConfiguration.SetFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks, false);
+        bool bMenuRebuilt = false;
+        menu.mockEmulatorContext.SetRebuildMenuFunction([&bMenuRebuilt]() { bMenuRebuilt = true;  });
+        bool bDialogSeen = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+            Assert::AreEqual(std::wstring(L"Are you sure you want to disable non-hardcore unlocks?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Enabling this setting prevents any non-hardcore unlocks from being sent to the server. They will still show popups locally for debugging purposes."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+            bDialogSeen = true;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        menu.ActivateMenuItem(IDM_RA_ONLY_HARDCORE_UNLOCKS);
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::IsTrue(menu.mockConfiguration.IsFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks));
+        Assert::IsTrue(bMenuRebuilt);
+    }
+
+    TEST_METHOD(TestToggleOnlyHardcoreUnlocksEnabledCancel)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.mockConfiguration.SetFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks, false);
+        bool bMenuRebuilt = false;
+        menu.mockEmulatorContext.SetRebuildMenuFunction([&bMenuRebuilt]() { bMenuRebuilt = true;  });
+        bool bDialogSeen = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+            Assert::AreEqual(std::wstring(L"Are you sure you want to disable non-hardcore unlocks?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Enabling this setting prevents any non-hardcore unlocks from being sent to the server. They will still show popups locally for debugging purposes."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+            bDialogSeen = true;
+            return ra::ui::DialogResult::No;
+        });
+
+        menu.ActivateMenuItem(IDM_RA_ONLY_HARDCORE_UNLOCKS);
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::IsFalse(menu.mockConfiguration.IsFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks));
+        Assert::IsFalse(bMenuRebuilt);
+    }
+
+    TEST_METHOD(TestToggleOnlyHardcoreUnlocksDisabled)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.mockConfiguration.SetFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks, true);
+        bool bMenuRebuilt = false;
+        menu.mockEmulatorContext.SetRebuildMenuFunction([&bMenuRebuilt]() { bMenuRebuilt = true;  });
+        bool bDialogSeen = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel&) {
+            bDialogSeen = true;
+            return ra::ui::DialogResult::No;
+        });
+
+        menu.ActivateMenuItem(IDM_RA_ONLY_HARDCORE_UNLOCKS);
+
+        Assert::IsFalse(bDialogSeen);
+        Assert::IsFalse(menu.mockConfiguration.IsFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks));
         Assert::IsTrue(bMenuRebuilt);
     }
 

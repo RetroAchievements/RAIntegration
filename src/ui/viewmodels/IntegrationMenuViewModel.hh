@@ -27,6 +27,7 @@ private:
     static void OpenGamePage();
     static void ToggleHardcoreMode();
     static void ToggleNonHardcoreWarning();
+    static void ToggleOnlyHardcoreUnlocks();
     static void ToggleLeaderboards();
     static void ShowOverlaySettings();
     static void ShowAssetList();

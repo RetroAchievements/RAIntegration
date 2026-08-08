@@ -75,6 +75,7 @@ void IntegrationMenuViewModel::AddCommonMenuItems(LookupItemViewModelCollection&
 
     vmMenu.Add(IDM_RA_HARDCORE_MODE, L"&Hardcore Mode").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     vmMenu.Add(IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning));
+    vmMenu.Add(IDM_RA_ONLY_HARDCORE_UNLOCKS, L"Only Hardcore Unloc&ks").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks));
     vmMenu.Add(0, L"-----");
     vmMenu.Add(IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards));
     vmMenu.Add(IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
@@ -117,6 +118,10 @@ void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
 
         case IDM_RA_NON_HARDCORE_WARNING:
             ToggleNonHardcoreWarning();
+            break;
+
+        case IDM_RA_ONLY_HARDCORE_UNLOCKS:
+            ToggleOnlyHardcoreUnlocks();
             break;
 
         case IDM_RA_TOGGLELEADERBOARDS:
@@ -250,6 +255,31 @@ void IntegrationMenuViewModel::ToggleNonHardcoreWarning()
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     pEmulatorContext.UpdateMenuState(IDM_RA_NON_HARDCORE_WARNING);
+}
+
+void IntegrationMenuViewModel::ToggleOnlyHardcoreUnlocks()
+{
+    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks))
+    {
+        pConfiguration.SetFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks, false);
+    }
+    else
+    {
+        ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+        vmMessageBox.SetHeader(L"Are you sure you want to disable non-hardcore unlocks?");
+        vmMessageBox.SetMessage(L"Enabling this setting prevents any non-hardcore unlocks from being sent to the server. They will still show popups locally for debugging purposes.");
+        vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+        vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+        if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
+            return;
+
+        pConfiguration.SetFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks, true);
+    }
+
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    pEmulatorContext.UpdateMenuState(IDM_RA_ONLY_HARDCORE_UNLOCKS);
 }
 
 void IntegrationMenuViewModel::ToggleLeaderboards()

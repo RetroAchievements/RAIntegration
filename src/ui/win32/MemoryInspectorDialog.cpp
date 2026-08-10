@@ -290,6 +290,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     SetAnchor(IDC_RA_NOTE_TEXT, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_PUBLISH_NOTE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_REVERT_NOTE, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_EXPAND_NOTES, Anchor::Top | Anchor::Right);
 
     SetAnchor(IDC_RA_MEMVIEW_8BIT, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_MEMVIEW_16BIT, Anchor::Top | Anchor::Left);

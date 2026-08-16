@@ -198,6 +198,29 @@ bool SearchImpl::GetMatchingAddress(const SearchResults& srResults, gsl::index n
     return false;
 }
 
+void SearchImpl::EnumerateMatches(const SearchResults& srResults,
+    std::function<bool(const SearchResult&)> fCallback) const
+{
+    SearchResult result;
+    result.nSize = GetMemSize();
+
+    for (const auto& pBlock : srResults.m_vBlocks)
+    {
+        const auto nRealFirstAddress = ConvertToRealAddress(pBlock.GetFirstAddress());
+        const auto bResult = pBlock.EnumerateMatchingAddresses(
+            [this, &result, &pBlock, nRealFirstAddress, fCallback](ra::data::ByteAddress nAddress) {
+                result.nAddress = ConvertToRealAddress(nAddress);
+
+                const uint32_t nOffset = result.nAddress - nRealFirstAddress;
+                result.nValue = BuildValue(pBlock.GetBytes() + nOffset);
+                return fCallback(result);
+            });
+
+        if (!bResult)
+            break;
+    }
+}
+
 size_t SearchImpl::GetIndexOfBlockForVirtualAddress(const SearchResults& srResults, uint32_t nAddress)
 {
     size_t nIndexLow = 0;

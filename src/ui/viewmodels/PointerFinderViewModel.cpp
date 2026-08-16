@@ -253,26 +253,23 @@ void PointerFinderViewModel::FindBestChains(std::vector<PotentialPointerChain>& 
 void PointerFinderViewModel::GetPointerAddresses(std::vector<ra::data::ByteAddress>& vPointerAddresses, const ra::services::SearchResults& pResults)
 {
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pResults.MatchingAddressCount()); nIndex++)
-    {
-        ra::services::SearchResult pResult;
-        if (!pResults.GetMatchingAddress(nIndex, pResult))
-            continue;
-
+    pResults.EnumerateMatches([&vPointerAddresses, &pConsoleContext](const ra::services::SearchResult& pResult) {
         // ignore null values
         if (pResult.nValue == 0)
-            continue;
+            return true;
 
         // ignore non-pointer values
         const auto nPointerAddress = pConsoleContext.ByteAddressFromRealAddress(pResult.nValue);
         if (nPointerAddress == 0xFFFFFFFF)
-            continue;
+            return true;
 
         // add to the list if not already there
         const auto pInsertIter = std::lower_bound(vPointerAddresses.begin(), vPointerAddresses.end(), nPointerAddress);
         if (pInsertIter == vPointerAddresses.end() || *pInsertIter != nPointerAddress)
             vPointerAddresses.insert(pInsertIter, nPointerAddress);
-    }
+
+        return true;
+    });
 }
 
 PointerFinderViewModel::PointerAddressRange PointerFinderViewModel::NarrowSearch(
@@ -310,24 +307,19 @@ void PointerFinderViewModel::FindPointers(std::vector<PotentialPointerChain>& vP
         return;
 
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pResults.MatchingAddressCount()); nIndex++)
-    {
-        ra::services::SearchResult pResult;
-        if (!pResults.GetMatchingAddress(nIndex, pResult))
-            continue;
-
+    pResults.EnumerateMatches([&pConsoleContext, &vPotentialPointers, pRange, nSearchAddress, nStateIndex](const ra::services::SearchResult& pResult) {
         // ignore null values
         if (pResult.nValue == 0)
-            continue;
+            return true;
 
         // ignore non-pointer values
         const auto nPointerAddress = pConsoleContext.ByteAddressFromRealAddress(pResult.nValue);
         if (nPointerAddress == 0xFFFFFFFF)
-            continue;
+            return true;
 
         // ignore pointers not in the search range
         if (!std::binary_search(pRange.first, pRange.second, nPointerAddress))
-            continue;
+            return true;
 
         auto& pPointerChain = vPotentialPointers.emplace_back();
         auto& pPointer = pPointerChain.vNodes.emplace_back();
@@ -335,7 +327,9 @@ void PointerFinderViewModel::FindPointers(std::vector<PotentialPointerChain>& vP
         pPointer.nAddress = pResult.nAddress;
         pPointer.nOffset = ra::to_signed(nSearchAddress) - nPointerAddress;
         pPointer.nValue.at(nStateIndex) = pResult.nValue;
-    }
+
+        return true;
+    });
 }
 
 void PointerFinderViewModel::FindMatches(std::vector<PotentialPointerChain>& vPotentialPointers, const StateViewModel& pState, size_t nStateIndex)
@@ -344,6 +338,7 @@ void PointerFinderViewModel::FindMatches(std::vector<PotentialPointerChain>& vPo
         return;
 
     auto pPotentialPointer = vPotentialPointers.begin();
+    auto pMatchedPointer = vPotentialPointers.begin();
     auto nNextAddress = pPotentialPointer->vNodes.begin()->nAddress;
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
 
@@ -351,43 +346,43 @@ void PointerFinderViewModel::FindMatches(std::vector<PotentialPointerChain>& vPo
     Expects(pResults != nullptr);
     const auto nSearchAddress = pState.Viewer().GetAddress();
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pResults->MatchingAddressCount()); nIndex++)
+    pResults->EnumerateMatches([&pConsoleContext, &vPotentialPointers,
+            &pPotentialPointer, &pMatchedPointer, &nNextAddress, nSearchAddress,
+            nStateIndex](const ra::services::SearchResult& pResult)
     {
-        ra::services::SearchResult pResult;
-        if (!pResults->GetMatchingAddress(nIndex, pResult))
-            continue;
-
         if (pResult.nAddress < nNextAddress)
-            continue;
+            return true;
 
-        bool bIsMatch = false;
-        if (pResult.nAddress == nNextAddress && pResult.nValue != 0)
+        if (pResult.nAddress == nNextAddress && // found pointer
+            pResult.nValue != 0)                // ignore null values
         {
             const auto nPointerAddress = pConsoleContext.ByteAddressFromRealAddress(pResult.nValue);
-            if (nPointerAddress != 0xFFFFFFFF)
+            if (nPointerAddress != 0xFFFFFFFF)  // ignore non-pointer values
             {
                 auto& pNode = *pPotentialPointer->vNodes.begin();
                 if (nPointerAddress + pNode.nOffset == nSearchAddress)
                 {
+                    // pointer value + offset is target address, keep it!
                     pNode.nValue.at(nStateIndex) = pResult.nValue;
-                    bIsMatch = true;
+
+                    if (pPotentialPointer != pMatchedPointer)
+                        std::iter_swap(pMatchedPointer, pPotentialPointer);
+                    ++pMatchedPointer;
                 }
             }
         }
 
-        pPotentialPointer->bPrune = !bIsMatch;
         ++pPotentialPointer;
 
         if (pPotentialPointer == vPotentialPointers.end())
-            break;
+            return false;
 
         nNextAddress = pPotentialPointer->vNodes.begin()->nAddress;
-    }
+        return true;
+    });
 
-    vPotentialPointers.erase(std::remove_if(
-        vPotentialPointers.begin(), vPotentialPointers.end(),
-        [](const PotentialPointerChain& pChain) { return pChain.bPrune; }
-    ), vPotentialPointers.end());
+    if (pPotentialPointer != pMatchedPointer)
+        vPotentialPointers.erase(pMatchedPointer, pPotentialPointer);
 }
 
 void PointerFinderViewModel::BookmarkSelected()

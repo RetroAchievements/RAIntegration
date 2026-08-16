@@ -167,6 +167,12 @@ public:
     }
 
     /// <summary>
+    /// Calls the provided callback for each matching address.
+    /// </summary>
+    /// <param name="fCallback">Callback to call for each element, returns <c>true</c> to continue iterating, or <c>false</c> to stop.</param>
+    bool EnumerateMatchingAddresses(std::function<bool(ra::data::ByteAddress)> fCallback) const;
+
+    /// <summary>
     /// Attempts to minimize memory allocations by detecting and sharing large blocks of repeated data.
     /// </summary>
     /// <param name="vBlocks">A collection of previously captured memory blocks that could be shared.</param>
@@ -174,6 +180,8 @@ public:
 
 private:
     bool IsBytesAllocated() const noexcept { return GetBytesSize() > sizeof(m_vBytes); }
+
+    bool EnumerateMatchingAddressesInternal(std::function<bool(ra::data::ByteAddress)> fCallback) const;
 
     void ShareMemory(const std::vector<CapturedMemoryBlock>& vBlocks, uint32_t nHash) noexcept;
     //void SetRepeat(uint32_t nCount, uint32_t nValue) noexcept;

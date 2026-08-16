@@ -384,6 +384,12 @@ bool SearchResults::ExcludeResult(const SearchResult& pResult)
     return false;
 }
 
+void SearchResults::EnumerateMatches(std::function<bool(const SearchResult& result)> fCallback) const
+{
+    if (m_pImpl != nullptr)
+        m_pImpl->EnumerateMatches(*this, fCallback);
+}
+
 bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResult& result) const noexcept
 {
     if (m_pImpl == nullptr)

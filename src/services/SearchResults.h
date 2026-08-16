@@ -127,6 +127,12 @@ public:
     void Initialize(_In_ const std::vector<SearchResult>& srResults, _In_ SearchType nSearchType);
 
     /// <summary>
+    /// Calls the provided callback for each matching address.
+    /// </summary>
+    /// <param name="fCallback">Callback to call for each element, returns <c>true</c> to continue iterating, or <c>false</c> to stop.</param>
+    void EnumerateMatches(std::function<bool(const SearchResult& result)> fCallback) const;
+
+    /// <summary>
     /// Gets the nIndex'th matching address.
     /// </summary>
     /// <param name="result">The result.</param>

@@ -76,6 +76,10 @@ public:
     bool GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex,
                             _Out_ SearchResult& result) const noexcept;
 
+    // calls the provided callback for each matching address
+    void EnumerateMatches(const SearchResults& srResults, 
+                          std::function<bool(const SearchResult&)> fCallback) const;
+
     /// <summary>
     /// Gets a value from the search results using the provided virtual address (in result.nAddress)
     /// </summary>

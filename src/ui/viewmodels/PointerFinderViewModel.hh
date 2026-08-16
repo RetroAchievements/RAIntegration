@@ -267,6 +267,7 @@ public:
     private:
         friend class PointerFinderViewModel;
         ra::data::ByteAddress m_nAddress = 0;
+        int32_t m_nOffset = 0;
         bool m_bMatched = false;
     };
 
@@ -285,6 +286,27 @@ protected:
 
 private:
     std::array<StateViewModel, 4> m_vStates;
+
+    struct PotentialPointerNode
+    {
+        ra::data::ByteAddress nAddress = 0;
+        int32_t nOffset = 0;
+        std::array<uint32_t, 4> nValue {};
+    };
+    struct PotentialPointerChain
+    {
+        std::vector<PotentialPointerNode> vNodes;
+        int nScore = 0;
+        bool bPrune = false;
+    };
+    typedef std::pair<const ra::data::ByteAddress*, const ra::data::ByteAddress*> PointerAddressRange;
+    void FindBestChains(std::vector<PotentialPointerChain>& vPotentialPointers, const StateViewModel& pState, size_t nStateIndex);
+    void FindPointers(std::vector<PotentialPointerChain>& vPotentialPointers, const ra::services::SearchResults& pResults, size_t nStateIndex,
+        const std::vector<ra::data::ByteAddress>& vPointerAddresses, PointerAddressRange pRange, ra::data::ByteAddress nSearchAddress);
+    void FindMatches(std::vector<PotentialPointerChain>& vPotentialPointers, const StateViewModel& pState, size_t nStateIndex);
+
+    static void GetPointerAddresses(std::vector<ra::data::ByteAddress>& vPointerAddresses, const ra::services::SearchResults& pResults);
+    static PointerAddressRange NarrowSearch(const std::vector<ra::data::ByteAddress>& vPointerAddresses, ra::data::ByteAddress nSearchAddress);
 
     ra::ui::ViewModelCollection<PotentialPointerViewModel> m_vResults;
     LookupItemViewModelCollection m_vSearchTypes;

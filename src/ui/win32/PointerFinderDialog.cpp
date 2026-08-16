@@ -117,7 +117,7 @@ PointerFinderDialog::PointerFinderDialog(PointerFinderViewModel& vmPointerFinder
     auto pOffsetColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         PointerFinderViewModel::PotentialPointerViewModel::OffsetProperty);
     pOffsetColumn->SetHeader(L"Offset");
-    pOffsetColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
+    pOffsetColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 90);
     m_bindResults.BindColumn(1, std::move(pOffsetColumn));
 
     auto pValue1Column = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(

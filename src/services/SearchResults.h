@@ -134,7 +134,7 @@ public:
     bool GetMatchingAddress(gsl::index nIndex, _Out_ SearchResult& result) const noexcept;
 
     /// <summary>
-    /// Gets and item from the results matching a result from another set of results.
+    /// Gets an item from the results matching a result from another set of results.
     /// </summary>
     /// <param name="pSrcResult">The result to find a match for.</param>
     /// <param name="result">The result.</param>

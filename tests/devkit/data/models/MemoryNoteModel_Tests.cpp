@@ -390,6 +390,23 @@ public:
                            Memory::Size::Array, 24);
     }
 
+    TEST_METHOD(TestGetPointerNoteAtNegativeOffset)
+    {
+        MemoryNoteModelHarness note;
+        const std::wstring sNote =
+            L"Bomb Timer Pointer (24-bit)\r\n"
+            L"+0xFFFFFFFE - Bombs Defused\r\n" // -2
+            L"+0xFFFFFFFC - Bomb Timer";       // -4
+        note.SetNote(sNote);
+
+        Assert::AreEqual(Memory::Size::TwentyFourBit, note.GetMemSize());
+        Assert::AreEqual(sNote, note.GetNote()); // full note for pointer address
+
+        // extracted notes for offset fields
+        AssertIndirectNote(note, 0xFFFFFFFEU, L"Bombs Defused", Memory::Size::Unknown, 1);
+        AssertIndirectNote(note, 0xFFFFFFFCU, L"Bomb Timer", Memory::Size::Unknown, 1);
+    }
+
     TEST_METHOD(TestHeaderedPointer)
     {
         MemoryNoteModelHarness note;

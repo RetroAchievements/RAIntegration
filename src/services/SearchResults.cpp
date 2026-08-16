@@ -324,6 +324,22 @@ bool SearchResults::Initialize(const SearchResults& srFirst, std::function<void(
 }
 
 _Use_decl_annotations_
+bool SearchResults::Initialize(_In_ const SearchResults& srFirst, _In_ std::function<bool(const SearchResult& pResult)> fFilter)
+{
+    m_nType = srFirst.m_nType;
+    m_pImpl = srFirst.m_pImpl;
+    m_nCompareType = ComparisonType::Equals;
+    m_nFilterType = SearchFilterType::LastKnownValue;
+    m_sFilterValue = L"[Custom]";
+
+    m_pImpl->ApplyFilter(*this, srFirst, fFilter);
+
+    RA_LOG_INFO("Allocated %zu bytes for filtered search", CalcSize(m_vBlocks));
+
+    return true;
+}
+
+_Use_decl_annotations_
 bool SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCompareType,
     SearchFilterType nFilterType, const std::wstring& sFilterValue)
 {

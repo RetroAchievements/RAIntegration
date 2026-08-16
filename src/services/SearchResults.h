@@ -106,6 +106,15 @@ public:
         _In_ ComparisonType nCompareType, _In_ SearchFilterType nFilterType, _In_ const std::wstring& sFilterValue);
 
     /// <summary>
+    /// Initializes a result set by comparing provided memory against another result set.
+    /// </summary>
+    /// <param name="srFirst">The result set to filter.</param>
+    /// <param name="pReadMemory">A function that provides current values of memory.</param>
+    /// <param name="fFilter">A function that determines whether or not to exclude an address (returns <c>true</c> to keep</param>
+    /// <returns><c>true</c> if initialization was successful, <c>false</c> if the filter value was not supported</returns>
+    bool Initialize(_In_ const SearchResults& srFirst, _In_ std::function<bool(const SearchResult& pResult)> fFilter);
+
+    /// <summary>
     /// Gets the number of matching addresses.
     /// </summary>
     size_t MatchingAddressCount() const noexcept;

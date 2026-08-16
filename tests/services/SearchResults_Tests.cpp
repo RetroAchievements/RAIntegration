@@ -915,6 +915,39 @@ public:
         Assert::AreEqual(0x37U, result.nValue);
     }
 
+    TEST_METHOD(TestInitializeFromResultsEightBitCustomFilter)
+    {
+        std::array<unsigned char, 5> memory{ 0x00, 0x11, 0x34, 0xAB, 0x56 };
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, 5U, ra::services::SearchType::EightBit);
+        Assert::AreEqual({ 5U }, results1.MatchingAddressCount());
+
+        // find the odd values
+        SearchResults results2;
+        results2.Initialize(results1, [](const SearchResult& pResult) { return pResult.nValue % 2 != 0; });
+
+        Assert::AreEqual({ 2U }, results2.MatchingAddressCount());
+        Assert::IsFalse(results2.ContainsAddress(0U));
+        Assert::IsTrue(results2.ContainsAddress(1U));
+        Assert::IsFalse(results2.ContainsAddress(2U));
+        Assert::IsTrue(results2.ContainsAddress(3U));
+        Assert::IsFalse(results2.ContainsAddress(4U));
+
+        SearchResult result;
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(1U, result.nAddress);
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, result.nSize);
+        Assert::AreEqual(0x11U, result.nValue);
+
+        Assert::IsTrue(results2.GetMatchingAddress(1U, result));
+        Assert::AreEqual(3U, result.nAddress);
+        Assert::AreEqual(ra::data::Memory::Size::EightBit, result.nSize);
+        Assert::AreEqual(0xABU, result.nValue);
+    }
+
     TEST_METHOD(TestInitializeFromResultsSixteenBitNotEqualPrevious)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
@@ -2939,7 +2972,6 @@ public:
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBitBigEndian, result.nSize);
         Assert::AreEqual(0xdeadbeefU, result.nValue);
     }
-
 };
 
 } // namespace tests

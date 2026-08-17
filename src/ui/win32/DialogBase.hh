@@ -146,6 +146,8 @@ protected:
         m_vControlAnchors.emplace_back(AnchorInfo{ 0, 0, 0, 0, nIDDlgItem, nAnchor });
     }
 
+    void UpdateAnchor(int nIDDlgItem, Anchor nAnchor) noexcept;
+
     void SetMinimumSize(int nMinimumWidth, int nMinimumHeight) noexcept
     {
         m_oMinimumSize.Width = nMinimumWidth;

@@ -82,6 +82,11 @@ private:
     bindings::RadioButtonBinding m_bindViewer32Bit;
     bindings::RadioButtonBinding m_bindViewer32BitBE;
     bindings::MemoryViewerControlBinding m_bindViewer;
+
+    void ToggleCodeNotesExpanded();
+    bool m_bIsCodeNotesExpanded = false;
+    int m_nCodeNoteGroupBoxCollapsedHeight = 0;
+    int m_nCodeNoteTextBoxCollapsedHeight = 0;
 };
 
 } // namespace win32

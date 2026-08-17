@@ -155,6 +155,8 @@
 #define IDC_RA_REMOVE_REGION            1250
 #define IDC_RA_VIEW_DETAIL              1251
 #define IDC_RA_LBL_VALUE                1252
+#define IDC_RA_EXPAND_NOTES             1253
+#define IDC_RA_LBL_MEMVIEW              1254
 
 
 #define IDD_RA_MEMORY                   1501
@@ -228,7 +230,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1253
+#define _APS_NEXT_CONTROL_VALUE         1255
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

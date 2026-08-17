@@ -22,17 +22,19 @@ public:
     PointerFinder(PointerFinder&&) noexcept = delete;
     PointerFinder& operator=(PointerFinder&&) noexcept = delete;
 
-private:
     typedef struct PointerValue
     {
-        PointerValue(ra::data::ByteAddress nAddress, uint32_t nValue)
-            : nAddress(nAddress), nValue(nValue)
+        PointerValue(ra::data::ByteAddress nAddress, uint32_t nValue, ra::data::ByteAddress nValueAsAddress) noexcept
+            : nAddress(nAddress), nValue(nValue), nValueAsAddress(nValueAsAddress)
         {
         }
-
+        
         ra::data::ByteAddress nAddress;
         uint32_t nValue;
+        ra::data::ByteAddress nValueAsAddress;
     } PointerValue;
+
+private:
     typedef std::pair<const PointerValue*, const PointerValue*> PointerAddressRange;
 
 public:
@@ -41,7 +43,8 @@ public:
     public:
         void Initialize(const SearchResults& pSearchResults);
 
-        uint32_t GetValue(ra::data::ByteAddress nAddress) const;
+        const PointerValue* GetValue(ra::data::ByteAddress nAddress) const;
+        ra::data::ByteAddress GetValueAsAddress(ra::data::ByteAddress nAddress) const;
 
     private:
         friend class PointerFinder;
@@ -59,7 +62,7 @@ public:
         std::vector<int32_t> vOffsets;
     } PotentialPointer;
 
-    void Analyze(std::vector<PotentialPointer>& vResults);
+    void Analyze(std::vector<PotentialPointer>& vResults, std::function<void(size_t, size_t)> fProgress);
 
 private:
     typedef struct Node
@@ -70,8 +73,33 @@ private:
         ra::data::ByteAddress nNextAddress = 0;    // the address of the next pointer node
     } Node;
 
-    void GetRootNodes(std::vector<ra::data::ByteAddress>& vRootNodes) const;
-    void GetDirectPointers(std::vector<PotentialPointer>& vDirectNodes, const std::vector<ra::data::ByteAddress>& vRootNodes) const;
+    typedef struct CaptureMetrics
+    {
+        std::vector<PotentialPointer> vBestRoutes;
+        std::vector<PotentialPointer>::const_iterator pIterator;
+        std::vector<PotentialPointer>::const_iterator pStopIterator;
+        const Capture* pCapture = nullptr;
+    } CaptureMetrics;
+
+    typedef struct AnalysisState
+    {
+        std::vector<CaptureMetrics> vCaptureMetrics;
+        std::vector<int32_t> vOffsets;
+        uint32_t nScore = 0;
+        size_t nProgress = 0;
+        size_t nRootProgressSize = 0;
+        size_t nMaxProgress = 0;
+        std::function<void(size_t, size_t)> fProgress;
+        std::vector<PotentialPointer>* vResults = nullptr;
+    } AnalysisState;
+
+    void GetPointers(std::vector<PotentialPointer>& vIndirectNodes, std::function<void(size_t, size_t)> fProgress) const;
+    static void GetPointers(std::vector<PotentialPointer>& vIndirectNodes, AnalysisState& pAnalysisState);
+    static void SortPointers(std::vector<PotentialPointer>& vPointers);
+    static void InitializeBestRoutes(std::vector<PotentialPointer>& vPointers, const Capture& pCapture, ra::data::ByteAddress nTargetAddres);
+    static bool FindSharedOffset(std::vector<CaptureMetrics>& vCaptureMetrics) noexcept;
+    static void ProcessSharedOffset(std::vector<PotentialPointer>& vIndirectNodes, AnalysisState& pAnalysisState);
+    static bool PointersMatch(std::vector<std::vector<PotentialPointer>::const_iterator>& vIterators) noexcept;
 
     std::vector<std::pair<const Capture&, ra::data::ByteAddress>> m_vCaptures;
 };

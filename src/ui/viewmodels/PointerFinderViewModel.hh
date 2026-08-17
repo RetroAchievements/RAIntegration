@@ -283,6 +283,8 @@ public:
     }
 
 protected:
+    static const BoolModelProperty ShowProgressDialogProperty;
+
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     ra::data::Memory::Size GetSearchSize() const;

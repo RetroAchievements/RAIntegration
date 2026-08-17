@@ -13,6 +13,7 @@
 
 #include "ui/viewmodels/FileDialogViewModel.hh"
 #include "ui/viewmodels/MessageBoxViewModel.hh"
+#include "ui/viewmodels/ProgressViewModel.hh"
 #include "ui/viewmodels/WindowManager.hh"
 
 namespace ra {
@@ -21,6 +22,7 @@ namespace viewmodels {
 
 const StringModelProperty PointerFinderViewModel::ResultCountTextProperty("PointerFinderViewModel", "ResultCountText", L"0");
 const IntModelProperty PointerFinderViewModel::SearchTypeProperty("PointerFinderViewModel", "SearchType", ra::etoi(ra::services::SearchType::ThirtyTwoBitAligned));
+const BoolModelProperty PointerFinderViewModel::ShowProgressDialogProperty("PointerFinderViewModel", "ShowProgressDialog", true);
 
 const StringModelProperty PointerFinderViewModel::StateViewModel::AddressProperty("StateViewModel", "Address", L"");
 const StringModelProperty PointerFinderViewModel::StateViewModel::CaptureButtonTextProperty("StateViewModel", "CaptureButtonText", L"Capture");
@@ -185,10 +187,31 @@ void PointerFinderViewModel::Find()
     }
 
     std::vector<ra::services::PointerFinder::PotentialPointer> vResults;
-    pPointerFinder.Analyze(vResults);
+
+    if (GetValue(ShowProgressDialogProperty))
+    {
+        ProgressViewModel vmProgress;
+        vmProgress.SetMessage(ra::util::String::Printf(L"Analyzing potential pointers"));
+        vmProgress.QueueTask([&pPointerFinder, &vResults, &vmProgress]() {
+            size_t nLastTotal = 0;
+            pPointerFinder.Analyze(vResults, [&nLastTotal, &vmProgress](size_t nProgress, size_t nTotal)
+                {
+                    if (nTotal != nLastTotal)
+                    {
+                        vmProgress.SetMessage(ra::util::String::Printf(L"Analyzing %u potential pointers", gsl::narrow_cast<uint32_t>(nTotal)));
+                        nLastTotal = nTotal;
+                    }
+                    vmProgress.SetProgress(gsl::narrow_cast<int>(nProgress * 100 / nTotal));
+                });
+            });
+        vmProgress.ShowModal();
+    }
+    else
+    {
+        pPointerFinder.Analyze(vResults, nullptr);
+    }
 
     const auto nSize = GetSearchSize();
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     for (const auto& pPotentialPointer : vResults)
     {
@@ -206,11 +229,12 @@ void PointerFinderViewModel::Find()
             const auto& pState = m_vStates.at(nStateIndex);
             if (!pState.CanCapture())
             {
-                const auto nValue = pState.CapturedMemory().GetValue(pPointer.m_nAddress);
-                pPointer.SetPointerValue(nStateIndex, ra::data::Memory::FormatValue(nValue, nSize, ra::data::Memory::Format::Hex));
-
-                const auto nAddress = pConsoleContext.ByteAddressFromRealAddress(nValue);
-                vPointerAddress.at(nStateIndex) = nAddress + nOffset;
+                const auto* pValue = m_vStates.at(nStateIndex).CapturedMemory().GetValue(pPointer.m_nAddress);
+                if (pValue)
+                {
+                    pPointer.SetPointerValue(nStateIndex, ra::data::Memory::FormatValue(pValue->nValue, nSize, ra::data::Memory::Format::Hex));
+                    vPointerAddress.at(nStateIndex) = pValue->nValueAsAddress + nOffset;
+                }
             }
         }
 
@@ -219,18 +243,19 @@ void PointerFinderViewModel::Find()
             auto& pOffset = m_vResults.Add();
             nOffset = pPotentialPointer.vOffsets.at(nOffsetIndex);
             pOffset.m_nOffset = nOffset;
-            pPointer.SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
+            pOffset.SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
 
             for (gsl::index nStateIndex = 0; nStateIndex < NUM_STATES; ++nStateIndex)
             {
                 auto nPointerAddress = vPointerAddress.at(nStateIndex);
                 if (nPointerAddress)
                 {
-                    const auto nValue = m_vStates.at(nStateIndex).CapturedMemory().GetValue(nPointerAddress);
-                    pOffset.SetPointerValue(nStateIndex, ra::data::Memory::FormatValue(nValue, nSize, ra::data::Memory::Format::Hex));
-
-                    const auto nAddress = pConsoleContext.ByteAddressFromRealAddress(nValue);
-                    vPointerAddress.at(nStateIndex) = nAddress + nOffset;
+                    const auto* pValue = m_vStates.at(nStateIndex).CapturedMemory().GetValue(nPointerAddress);
+                    if (pValue)
+                    {
+                        pOffset.SetPointerValue(nStateIndex, ra::data::Memory::FormatValue(pValue->nValue, nSize, ra::data::Memory::Format::Hex));
+                        vPointerAddress.at(nStateIndex) = pValue->nValueAsAddress + nOffset;
+                    }
                 }
             }
         }

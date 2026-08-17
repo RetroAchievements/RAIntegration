@@ -38,6 +38,7 @@ private:
 
         GSL_SUPPRESS_F6 PointerFinderViewModelHarness() : PointerFinderViewModel()
         {
+            SetValue(ShowProgressDialogProperty, false);
         }
 
         ~PointerFinderViewModelHarness()

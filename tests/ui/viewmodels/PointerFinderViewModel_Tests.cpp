@@ -176,7 +176,6 @@ public:
             Assert::IsTrue(pState.CanCapture());
             Assert::AreEqual(std::wstring(L"0x1234"), pState.GetAddress());
             Assert::AreEqual(std::wstring(L"Capture"), pState.GetCaptureButtonText());
-            Assert::IsNull(pState.CapturedMemory());
 
             pState.ToggleCapture();
 
@@ -185,7 +184,6 @@ public:
             Assert::IsFalse(pState.CanCapture());
             Assert::AreEqual(std::wstring(L"0x1234"), pState.GetAddress());
             Assert::AreEqual(std::wstring(L"Release"), pState.GetCaptureButtonText());
-            Assert::IsNotNull(pState.CapturedMemory());
 
             pState.ToggleCapture();
 
@@ -194,7 +192,6 @@ public:
             Assert::IsTrue(pState.CanCapture());
             Assert::AreEqual(std::wstring(L"0x1234"), pState.GetAddress());
             Assert::AreEqual(std::wstring(L"Capture"), pState.GetCaptureButtonText());
-            Assert::IsNull(pState.CapturedMemory());
         }
     }
 
@@ -387,9 +384,9 @@ public:
 
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 3U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
-        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
-        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+        vmPointerFinder.AssertRow(0, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+        vmPointerFinder.AssertRow(1, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(2, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
         Assert::AreEqual(std::wstring(L"3"), vmPointerFinder.GetResultCountText());
     }
     
@@ -428,8 +425,8 @@ public:
         vmPointerFinder.Find();
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 2U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"001c", L"0034", L"0034"); // 1c+04=>20, 34+04=>38
-        vmPointerFinder.AssertRow(1, L"0x00a4", L"+0x00", L"0020", L"0020", L"0038", L"0038"); // 20+00=>20, 38+00=>38
+        vmPointerFinder.AssertRow(0, L"0x00a4", L"+0x00", L"0020", L"0020", L"0038", L"0038"); // 20+00=>20, 38+00=>38
+        vmPointerFinder.AssertRow(1, L"0x0008", L"+0x04", L"001c", L"001c", L"0034", L"0034"); // 1c+04=>20, 34+04=>38
         Assert::AreEqual(std::wstring(L"2"), vmPointerFinder.GetResultCountText());
     }
 
@@ -456,6 +453,41 @@ public:
         Assert::AreEqual({ 1U }, vmPointerFinder.PotentialPointers().Count());
         vmPointerFinder.AssertRow(0, L"No pointers found.", L"", L"", L"", L"", L"");
         Assert::AreEqual(std::wstring(L"0"), vmPointerFinder.GetResultCountText());
+    }
+
+    TEST_METHOD(TestFindOffsetNested)
+    {
+        PointerFinderViewModelHarness vmPointerFinder;
+        vmPointerFinder.mockGameContext.SetGameId(1U);
+        vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
+
+        // 0008 + 4 + 12
+        std::array<unsigned char, 256> pMemory{};
+        pMemory.at(0x08) = 0x1c; // $0000 = 001C +  4 => 0020
+        pMemory.at(0x20) = 0x44; // $0020 = 0044 + 12 => 0x50
+        pMemory.at(0x21) = 0x00;
+        pMemory.at(0x50) = 0x55; // $0050
+        pMemory.at(0x51) = 0x46;
+        vmPointerFinder.MockMemory(pMemory);
+
+        vmPointerFinder.States().at(0).SetAddress(L"0x50");
+        vmPointerFinder.States().at(0).ToggleCapture();
+
+        pMemory.at(0x08) = 0x34; // $0000 = 0034 +  4 => 0038
+        pMemory.at(0x38) = 0x68; // $0038 = 0068 + 12 => 0074
+        pMemory.at(0x39) = 0x00;
+        pMemory.at(0x74) = 0x55;
+        pMemory.at(0x75) = 0x46;
+
+        vmPointerFinder.States().at(1).SetAddress(L"0x74");
+        vmPointerFinder.States().at(1).ToggleCapture();
+        vmPointerFinder.Find();
+
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        Assert::AreEqual({ 2U }, vmPointerFinder.PotentialPointers().Count());
+        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(1, L"", L"+0x0C", L"0044", L"0068", L"", L""); // 44+0C=>50, 68+0C=>74
+        Assert::AreEqual(std::wstring(L"1"), vmPointerFinder.GetResultCountText());
     }
 
     TEST_METHOD(TestBookmarkSelected)
@@ -492,9 +524,9 @@ public:
 
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 3U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
-        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
-        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+        vmPointerFinder.AssertRow(0, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+        vmPointerFinder.AssertRow(1, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(2, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
 
         // no selection
         vmPointerFinder.BookmarkSelected();
@@ -504,7 +536,7 @@ public:
         vmPointerFinder.PotentialPointers().GetItemAt(1)->SetSelected(true);
         vmPointerFinder.BookmarkSelected();
         Assert::AreEqual({ 1U }, pBookmarks.Items().Count());
-        Assert::AreEqual({ 0x0070U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual({ 0x0008U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
     }
 
     TEST_METHOD(TestExportResults)
@@ -533,9 +565,9 @@ public:
 
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 3U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
-        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
-        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+        vmPointerFinder.AssertRow(0, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+        vmPointerFinder.AssertRow(1, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(2, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
 
         bool bDialogSeen = false;
         vmPointerFinder.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
@@ -556,7 +588,7 @@ public:
 
         Assert::IsTrue(bDialogSeen);
         const std::string& sContents = vmPointerFinder.mockFileSystem.GetFileContents(L"E:\\Data\\3-Pointers.csv");
-        Assert::AreEqual(std::string("Address,Offset,State1,State2\n0x0008,+0x04,001c,0034\n0x0070,+0x04,001c,0034\n0x009c,+0x00,0020,0038\n"),
+        Assert::AreEqual(std::string("Address,Offset,State1,State2\n0x009c,+0x00,0020,0038\n0x0008,+0x04,001c,0034\n0x0070,+0x04,001c,0034\n"),
                          sContents);
     }
 
@@ -586,9 +618,9 @@ public:
 
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 3U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
-        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
-        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+        vmPointerFinder.AssertRow(0, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+        vmPointerFinder.AssertRow(1, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(2, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
 
         bool bDialogSeen = false;
         vmPointerFinder.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(

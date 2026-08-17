@@ -2,6 +2,7 @@
 #define RA_UI_POINTERFINDERVIEWMODEL_H
 #pragma once
 
+#include "services/PointerFinder.hh"
 #include "services/SearchResults.h"
 
 #include "ui/WindowViewModelBase.hh"
@@ -108,7 +109,7 @@ public:
 
         void ToggleCapture();
 
-        const ra::services::SearchResults* CapturedMemory() const noexcept { return m_pCapture.get(); }
+        const ra::services::PointerFinder::Capture& CapturedMemory() const noexcept { return m_pCapture; }
 
         MemoryViewerViewModel& Viewer() noexcept { return m_pViewer; }
         const MemoryViewerViewModel& Viewer() const noexcept { return m_pViewer; }
@@ -126,7 +127,7 @@ public:
 
         PointerFinderViewModel* m_pOwner = nullptr;
         MemoryViewerViewModel m_pViewer;
-        std::unique_ptr<ra::services::SearchResults> m_pCapture;
+        ra::services::PointerFinder::Capture m_pCapture;
     };
 
     std::array<StateViewModel, 4>& States() noexcept { return m_vStates; }
@@ -284,29 +285,11 @@ public:
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
+    ra::data::Memory::Size GetSearchSize() const;
+
 private:
-    std::array<StateViewModel, 4> m_vStates;
-
-    struct PotentialPointerNode
-    {
-        ra::data::ByteAddress nAddress = 0;
-        int32_t nOffset = 0;
-        std::array<uint32_t, 4> nValue {};
-    };
-    struct PotentialPointerChain
-    {
-        std::vector<PotentialPointerNode> vNodes;
-        int nScore = 0;
-        bool bPrune = false;
-    };
-    typedef std::pair<const ra::data::ByteAddress*, const ra::data::ByteAddress*> PointerAddressRange;
-    void FindBestChains(std::vector<PotentialPointerChain>& vPotentialPointers, const StateViewModel& pState, size_t nStateIndex);
-    void FindPointers(std::vector<PotentialPointerChain>& vPotentialPointers, const ra::services::SearchResults& pResults, size_t nStateIndex,
-        const std::vector<ra::data::ByteAddress>& vPointerAddresses, PointerAddressRange pRange, ra::data::ByteAddress nSearchAddress);
-    void FindMatches(std::vector<PotentialPointerChain>& vPotentialPointers, const StateViewModel& pState, size_t nStateIndex);
-
-    static void GetPointerAddresses(std::vector<ra::data::ByteAddress>& vPointerAddresses, const ra::services::SearchResults& pResults);
-    static PointerAddressRange NarrowSearch(const std::vector<ra::data::ByteAddress>& vPointerAddresses, ra::data::ByteAddress nSearchAddress);
+    static constexpr size_t NUM_STATES = 4;
+    std::array<StateViewModel, NUM_STATES> m_vStates;
 
     ra::ui::ViewModelCollection<PotentialPointerViewModel> m_vResults;
     LookupItemViewModelCollection m_vSearchTypes;

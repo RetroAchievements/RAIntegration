@@ -95,22 +95,13 @@ void PointerFinderViewModel::StateViewModel::Capture()
     }
 
     DispatchMemoryRead([this]() {
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
         const auto nMemorySize = gsl::narrow<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize());
 
         ra::services::SearchResults pInitialResults;
         pInitialResults.Initialize(0, nMemorySize, m_pOwner->GetSearchType());
 
-        m_pCapture.reset(new ra::services::SearchResults());
-
-        m_pCapture->Initialize(pInitialResults,
-            [&pConsoleContext](const ra::services::SearchResult& pSearchResult) {
-                if (pSearchResult.nValue == 0)
-                    return false;
-
-                return (pConsoleContext.ByteAddressFromRealAddress(pSearchResult.nValue) != 0xFFFFFFFF);
-            });
+        m_pCapture.Initialize(pInitialResults);
     });
 
     SetValue(CaptureButtonTextProperty, L"Release");
@@ -119,7 +110,8 @@ void PointerFinderViewModel::StateViewModel::Capture()
 
 void PointerFinderViewModel::StateViewModel::ClearCapture()
 {
-    m_pCapture.reset();
+    ra::services::SearchResults pEmptyResults;
+    m_pCapture.Initialize(pEmptyResults);
 
     SetValue(CaptureButtonTextProperty, CaptureButtonTextProperty.GetDefaultValue());
     SetValue(CanCaptureProperty, true);
@@ -169,54 +161,82 @@ void PointerFinderViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& 
 
 void PointerFinderViewModel::Find()
 {
-    std::vector<PotentialPointerChain> vPotentialPointers;
-    ra::data::Memory::Size nSize = ra::data::Memory::Size::Unknown;
-    bool bPerformedSearch = false;
-
     // TODO: capture/restore selected address (find may be clicked again after changing captures)
 
     m_vResults.BeginUpdate();
     m_vResults.Clear();
 
+    ra::services::PointerFinder pPointerFinder;
+    int nUniqueAddresses = 0;
+    ra::data::ByteAddress nPreviousAddress = 0xFFFFFFFF;
     for (size_t i = 0; i < m_vStates.size(); i++)
     {
         const auto& pStateI = m_vStates.at(i);
         if (pStateI.CanCapture())
             continue;
 
-        if (vPotentialPointers.empty())
+        const auto nAddress = pStateI.Viewer().GetAddress();
+        pPointerFinder.AddCapture(pStateI.CapturedMemory(), nAddress);
+        if (nAddress != nPreviousAddress)
         {
-            FindBestChains(vPotentialPointers, pStateI, i);
-            nSize = pStateI.CapturedMemory()->GetSize();
+            nPreviousAddress = nAddress;
+            ++nUniqueAddresses;
         }
-        else
-        {
-            FindMatches(vPotentialPointers, pStateI, i);
-            bPerformedSearch = true;
-        }
-
-        if (vPotentialPointers.empty())
-            break;
     }
 
+    std::vector<ra::services::PointerFinder::PotentialPointer> vResults;
+    pPointerFinder.Analyze(vResults);
+
+    const auto nSize = GetSearchSize();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-    for (const auto& pPotentialPointer : vPotentialPointers)
+    for (const auto& pPotentialPointer : vResults)
     {
         auto& pPointer = m_vResults.Add();
-        const auto& pNode = pPotentialPointer.vNodes.at(0);
-        pPointer.m_nAddress = pNode.nAddress;
+        pPointer.m_nAddress = pPotentialPointer.nRootAddress;
         pPointer.SetPointerAddress(pMemoryContext.FormatAddress(pPointer.m_nAddress));
-        pPointer.SetOffset(ra::util::String::Printf(L"+0x%02X", pNode.nOffset));
 
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vStates.size()); ++nIndex)
+        auto nOffset = pPotentialPointer.vOffsets.front();
+        pPointer.m_nOffset = nOffset;
+        pPointer.SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
+
+        std::array<ra::data::ByteAddress, NUM_STATES> vPointerAddress = {};
+        for (gsl::index nStateIndex = 0; nStateIndex < NUM_STATES; ++nStateIndex)
         {
-            const auto nValue = pNode.nValue.at(nIndex);
-            if (nValue)
-                pPointer.SetPointerValue(nIndex, ra::data::Memory::FormatValue(nValue, nSize, ra::data::Memory::Format::Hex));
+            const auto& pState = m_vStates.at(nStateIndex);
+            if (!pState.CanCapture())
+            {
+                const auto nValue = pState.CapturedMemory().GetValue(pPointer.m_nAddress);
+                pPointer.SetPointerValue(nStateIndex, ra::data::Memory::FormatValue(nValue, nSize, ra::data::Memory::Format::Hex));
+
+                const auto nAddress = pConsoleContext.ByteAddressFromRealAddress(nValue);
+                vPointerAddress.at(nStateIndex) = nAddress + nOffset;
+            }
+        }
+
+        for (gsl::index nOffsetIndex = 1; nOffsetIndex < gsl::narrow_cast<gsl::index>(pPotentialPointer.vOffsets.size()); ++nOffsetIndex)
+        {
+            auto& pOffset = m_vResults.Add();
+            nOffset = pPotentialPointer.vOffsets.at(nOffsetIndex);
+            pOffset.m_nOffset = nOffset;
+            pPointer.SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
+
+            for (gsl::index nStateIndex = 0; nStateIndex < NUM_STATES; ++nStateIndex)
+            {
+                auto nPointerAddress = vPointerAddress.at(nStateIndex);
+                if (nPointerAddress)
+                {
+                    const auto nValue = m_vStates.at(nStateIndex).CapturedMemory().GetValue(nPointerAddress);
+                    pOffset.SetPointerValue(nStateIndex, ra::data::Memory::FormatValue(nValue, nSize, ra::data::Memory::Format::Hex));
+
+                    const auto nAddress = pConsoleContext.ByteAddressFromRealAddress(nValue);
+                    vPointerAddress.at(nStateIndex) = nAddress + nOffset;
+                }
+            }
         }
     }
 
-    if (m_vResults.Count() == 0 && bPerformedSearch)
+    if (m_vResults.Count() == 0 && nUniqueAddresses >= 2)
     {
         auto* pPointer = &m_vResults.Add();
         pPointer->SetPointerAddress(L"No pointers found.");
@@ -224,165 +244,28 @@ void PointerFinderViewModel::Find()
     }
     else
     {
-        SetValue(ResultCountTextProperty, std::to_wstring(m_vResults.Count()));
+        SetValue(ResultCountTextProperty, std::to_wstring(vResults.size()));
     }
 
     m_vResults.EndUpdate();
 
-    if (!bPerformedSearch)
+    if (nUniqueAddresses < 2)
         ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Cannot find.", L"At least two unique addresses must be captured before potential pointers can be located.");
 }
 
-void PointerFinderViewModel::FindBestChains(std::vector<PotentialPointerChain>& vPotentialPointers, const StateViewModel& pState, size_t nStateIndex)
+ra::data::Memory::Size PointerFinderViewModel::GetSearchSize() const
 {
-    // extract all pointers from the search results
-    const auto* pResults = pState.CapturedMemory();
-    Expects(pResults != nullptr);
-
-    std::vector<ra::data::ByteAddress> vPointerAddresses;
-    GetPointerAddresses(vPointerAddresses, *pResults);
-
-    // limit the results to addresses within MAX_OFFSET of the pointer value
-    const auto nSearchAddress = pState.Viewer().GetAddress();
-    const auto pRange = NarrowSearch(vPointerAddresses, nSearchAddress);
-
-    // get things pointing to the filtered addresses
-    FindPointers(vPotentialPointers, *pResults, nStateIndex, vPointerAddresses, pRange, nSearchAddress);
-}
-
-void PointerFinderViewModel::GetPointerAddresses(std::vector<ra::data::ByteAddress>& vPointerAddresses, const ra::services::SearchResults& pResults)
-{
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
-    pResults.EnumerateMatches([&vPointerAddresses, &pConsoleContext](const ra::services::SearchResult& pResult) {
-        // ignore null values
-        if (pResult.nValue == 0)
-            return true;
-
-        // ignore non-pointer values
-        const auto nPointerAddress = pConsoleContext.ByteAddressFromRealAddress(pResult.nValue);
-        if (nPointerAddress == 0xFFFFFFFF)
-            return true;
-
-        // add to the list if not already there
-        const auto pInsertIter = std::lower_bound(vPointerAddresses.begin(), vPointerAddresses.end(), nPointerAddress);
-        if (pInsertIter == vPointerAddresses.end() || *pInsertIter != nPointerAddress)
-            vPointerAddresses.insert(pInsertIter, nPointerAddress);
-
-        return true;
-    });
-}
-
-PointerFinderViewModel::PointerAddressRange PointerFinderViewModel::NarrowSearch(
-    const std::vector<ra::data::ByteAddress>& vPointerAddresses, ra::data::ByteAddress nSearchAddress)
-{
-    if (vPointerAddresses.size() == 0)
-        return PointerAddressRange(vPointerAddresses.data(), vPointerAddresses.data());
-
-    const auto pSearchIter = std::lower_bound(vPointerAddresses.begin(), vPointerAddresses.end(), nSearchAddress);
-    auto pEnd = pSearchIter;
-    auto pStart = pSearchIter;
-
-    uint32_t nMaxOffset = MAX_OFFSET;
-    for (int i = 0; i < 4; ++i, nMaxOffset *= 2)
+    auto nSize = ra::data::Memory::Size::ThirtyTwoBit;
+    switch (GetSearchType())
     {
-        while (pEnd < vPointerAddresses.end() && *pEnd - nSearchAddress <= nMaxOffset)
-            ++pEnd;
-
-        while (pStart > vPointerAddresses.begin() && nSearchAddress - *(pStart - 1) <= nMaxOffset)
-            --pStart;
-
-        const auto nMatches = gsl::narrow_cast<size_t>(pEnd - pStart);
-        if (nMatches >= 8 || nMatches == vPointerAddresses.size())
+        case ra::services::SearchType::SixteenBit:
+        case ra::services::SearchType::SixteenBitAligned:
+        case ra::services::SearchType::SixteenBitBigEndian:
+            nSize = ra::data::Memory::Size::SixteenBit;
             break;
     }
 
-    return PointerAddressRange(vPointerAddresses.data() + (pStart - vPointerAddresses.begin()),
-                               vPointerAddresses.data() + (pEnd - vPointerAddresses.begin()));
-}
-
-void PointerFinderViewModel::FindPointers(std::vector<PotentialPointerChain>& vPotentialPointers, const ra::services::SearchResults& pResults, size_t nStateIndex,
-    const std::vector<ra::data::ByteAddress>& vPointerAddresses, PointerFinderViewModel::PointerAddressRange pRange, ra::data::ByteAddress nSearchAddress)
-{
-    if (pRange.first == pRange.second)
-        return;
-
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
-    pResults.EnumerateMatches([&pConsoleContext, &vPotentialPointers, pRange, nSearchAddress, nStateIndex](const ra::services::SearchResult& pResult) {
-        // ignore null values
-        if (pResult.nValue == 0)
-            return true;
-
-        // ignore non-pointer values
-        const auto nPointerAddress = pConsoleContext.ByteAddressFromRealAddress(pResult.nValue);
-        if (nPointerAddress == 0xFFFFFFFF)
-            return true;
-
-        // ignore pointers not in the search range
-        if (!std::binary_search(pRange.first, pRange.second, nPointerAddress))
-            return true;
-
-        auto& pPointerChain = vPotentialPointers.emplace_back();
-        auto& pPointer = pPointerChain.vNodes.emplace_back();
-        memset(&pPointer, 0, sizeof(pPointer));
-        pPointer.nAddress = pResult.nAddress;
-        pPointer.nOffset = ra::to_signed(nSearchAddress) - nPointerAddress;
-        pPointer.nValue.at(nStateIndex) = pResult.nValue;
-
-        return true;
-    });
-}
-
-void PointerFinderViewModel::FindMatches(std::vector<PotentialPointerChain>& vPotentialPointers, const StateViewModel& pState, size_t nStateIndex)
-{
-    if (vPotentialPointers.empty())
-        return;
-
-    auto pPotentialPointer = vPotentialPointers.begin();
-    auto pMatchedPointer = vPotentialPointers.begin();
-    auto nNextAddress = pPotentialPointer->vNodes.begin()->nAddress;
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
-
-    const auto* pResults = pState.CapturedMemory();
-    Expects(pResults != nullptr);
-    const auto nSearchAddress = pState.Viewer().GetAddress();
-
-    pResults->EnumerateMatches([&pConsoleContext, &vPotentialPointers,
-            &pPotentialPointer, &pMatchedPointer, &nNextAddress, nSearchAddress,
-            nStateIndex](const ra::services::SearchResult& pResult)
-    {
-        if (pResult.nAddress < nNextAddress)
-            return true;
-
-        if (pResult.nAddress == nNextAddress && // found pointer
-            pResult.nValue != 0)                // ignore null values
-        {
-            const auto nPointerAddress = pConsoleContext.ByteAddressFromRealAddress(pResult.nValue);
-            if (nPointerAddress != 0xFFFFFFFF)  // ignore non-pointer values
-            {
-                auto& pNode = *pPotentialPointer->vNodes.begin();
-                if (nPointerAddress + pNode.nOffset == nSearchAddress)
-                {
-                    // pointer value + offset is target address, keep it!
-                    pNode.nValue.at(nStateIndex) = pResult.nValue;
-
-                    if (pPotentialPointer != pMatchedPointer)
-                        std::iter_swap(pMatchedPointer, pPotentialPointer);
-                    ++pMatchedPointer;
-                }
-            }
-        }
-
-        ++pPotentialPointer;
-
-        if (pPotentialPointer == vPotentialPointers.end())
-            return false;
-
-        nNextAddress = pPotentialPointer->vNodes.begin()->nAddress;
-        return true;
-    });
-
-    if (pPotentialPointer != pMatchedPointer)
-        vPotentialPointers.erase(pMatchedPointer, pPotentialPointer);
+    return nSize;
 }
 
 void PointerFinderViewModel::BookmarkSelected()
@@ -395,17 +278,7 @@ void PointerFinderViewModel::BookmarkSelected()
     {
         if (pItem.IsSelected())
         {
-            auto nSize = ra::data::Memory::Size::ThirtyTwoBit;
-            switch (GetSearchType())
-            {
-                case ra::services::SearchType::SixteenBit:
-                case ra::services::SearchType::SixteenBitAligned:
-                case ra::services::SearchType::SixteenBitBigEndian:
-                    nSize = ra::data::Memory::Size::SixteenBit;
-                    break;
-            }
-
-            vmBookmarks.AddBookmark(pItem.m_nAddress, nSize);
+            vmBookmarks.AddBookmark(pItem.m_nAddress, GetSearchSize());
             break;
         }
     }

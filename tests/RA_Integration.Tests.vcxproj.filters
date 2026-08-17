@@ -399,6 +399,9 @@
     <ClCompile Include="..\src\ui\viewmodels\MemoryNotesViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\services\PointerFinder.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

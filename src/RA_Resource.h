@@ -219,6 +219,7 @@
 #define IDM_RA_FILES_OPENALL            1719
 #define IDM_RA_FILES_POINTERFINDER      1720
 #define IDM_RA_FILES_POINTERINSPECTOR   1721
+#define IDM_RA_ONLY_HARDCORE_UNLOCKS    1723
 #define IDM_RA_MENUEND                  1739
 
 // Next default values for new objects

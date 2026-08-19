@@ -464,7 +464,7 @@ public:
 
         // 0008 + 4 + 12
         std::array<unsigned char, 256> pMemory{};
-        pMemory.at(0x08) = 0x1c; // $0000 = 001C +  4 => 0020
+        pMemory.at(0x08) = 0x1c; // $0008 = 001C +  4 => 0020
         pMemory.at(0x20) = 0x44; // $0020 = 0044 + 12 => 0x50
         pMemory.at(0x21) = 0x00;
         pMemory.at(0x50) = 0x55; // $0050
@@ -474,7 +474,7 @@ public:
         vmPointerFinder.States().at(0).SetAddress(L"0x50");
         vmPointerFinder.States().at(0).ToggleCapture();
 
-        pMemory.at(0x08) = 0x34; // $0000 = 0034 +  4 => 0038
+        pMemory.at(0x08) = 0x34; // $0008 = 0034 +  4 => 0038
         pMemory.at(0x38) = 0x68; // $0038 = 0068 + 12 => 0074
         pMemory.at(0x39) = 0x00;
         pMemory.at(0x74) = 0x55;

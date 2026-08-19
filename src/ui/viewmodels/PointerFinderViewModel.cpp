@@ -170,6 +170,7 @@ void PointerFinderViewModel::Find()
 
     ra::services::PointerFinder pPointerFinder;
     int nUniqueAddresses = 0;
+    size_t nPointerCount = 0;
     ra::data::ByteAddress nPreviousAddress = 0xFFFFFFFF;
     for (size_t i = 0; i < m_vStates.size(); i++)
     {
@@ -184,6 +185,8 @@ void PointerFinderViewModel::Find()
             nPreviousAddress = nAddress;
             ++nUniqueAddresses;
         }
+
+        nPointerCount += pStateI.CapturedMemory().GetCapturedPointerCount();
     }
 
     std::vector<ra::services::PointerFinder::PotentialPointer> vResults;
@@ -191,16 +194,10 @@ void PointerFinderViewModel::Find()
     if (GetValue(ShowProgressDialogProperty))
     {
         ProgressViewModel vmProgress;
-        vmProgress.SetMessage(ra::util::String::Printf(L"Analyzing potential pointers"));
+        vmProgress.SetMessage(ra::util::String::Printf(L"Analyzing %u potential pointers", gsl::narrow_cast<uint32_t>(nPointerCount)));
         vmProgress.QueueTask([&pPointerFinder, &vResults, &vmProgress]() {
-            size_t nLastTotal = 0;
-            pPointerFinder.Analyze(vResults, [&nLastTotal, &vmProgress](size_t nProgress, size_t nTotal)
+            pPointerFinder.Analyze(vResults, [&vmProgress](size_t nProgress, size_t nTotal)
                 {
-                    if (nTotal != nLastTotal)
-                    {
-                        vmProgress.SetMessage(ra::util::String::Printf(L"Analyzing %u potential pointers", gsl::narrow_cast<uint32_t>(nTotal)));
-                        nLastTotal = nTotal;
-                    }
                     vmProgress.SetProgress(gsl::narrow_cast<int>(nProgress * 100 / nTotal));
                 });
             });
@@ -238,7 +235,7 @@ void PointerFinderViewModel::Find()
             }
         }
 
-        for (gsl::index nOffsetIndex = 1; nOffsetIndex < gsl::narrow_cast<gsl::index>(pPotentialPointer.vOffsets.size()); ++nOffsetIndex)
+        for (gsl::index nOffsetIndex = 1; nOffsetIndex < gsl::narrow_cast<gsl::index>(pPotentialPointer.nOffsetLength); ++nOffsetIndex)
         {
             auto& pOffset = m_vResults.Add();
             nOffset = pPotentialPointer.vOffsets.at(nOffsetIndex);

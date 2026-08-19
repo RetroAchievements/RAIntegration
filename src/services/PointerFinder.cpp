@@ -16,7 +16,6 @@ namespace ra {
 namespace services {
 
 constexpr int32_t MAX_OFFSET = 1024;
-constexpr uint32_t MAX_DEPTH = 4;
 
 void PointerFinder::Capture::Initialize(const SearchResults& pSearchResults)
 {
@@ -123,7 +122,7 @@ static uint32_t CalculateScore(int32_t nOffset) noexcept
     return ra::to_unsigned((nOffset < 0) ? (-nOffset * 8) : nOffset);
 }
 
-void PointerFinder::InitializeBestRoutes(std::vector<PotentialPointer>& vPointers, const Capture& pCapture, ra::data::ByteAddress nTargetAddress)
+void PointerFinder::InitializePotentialPointers(std::vector<PotentialPointer>& vPointers, const Capture& pCapture, ra::data::ByteAddress nTargetAddress)
 {
     vPointers.reserve(pCapture.m_vPointerValues.size());
 
@@ -135,7 +134,7 @@ void PointerFinder::InitializeBestRoutes(std::vector<PotentialPointer>& vPointer
             auto& pPointer = vPointers.emplace_back();
             pPointer.nRootAddress = pValue.nAddress;
 
-            pPointer.vOffsets.push_back(nOffset);
+            pPointer.vOffsets.at(pPointer.nOffsetLength++) = nOffset;
             pPointer.nScore = CalculateScore(nOffset);
         }
     }
@@ -145,6 +144,58 @@ void PointerFinder::InitializeBestRoutes(std::vector<PotentialPointer>& vPointer
         {
             return a.vOffsets.front() < b.vOffsets.front();
         });
+}
+
+void PointerFinder::RemoveUnsharedOffsets(std::vector<CaptureMetrics>& vCaptureMetrics)
+{
+    // determine which offsets are shared across all captures
+    std::vector<int32_t> vSharedOffsets;
+
+    int32_t nPrevOffset = std::numeric_limits<int>::min();
+    for (const auto& pPointer : vCaptureMetrics.front().vPotentialPointers)
+    {
+        const auto nOffset = pPointer.vOffsets.front();
+        if (nOffset != nPrevOffset)
+        {
+            vSharedOffsets.push_back(nOffset);
+            nPrevOffset = nOffset;
+        }
+    }
+
+    for (auto pCaptureMetrics = vCaptureMetrics.begin() + 1; pCaptureMetrics < vCaptureMetrics.end(); ++pCaptureMetrics)
+    {
+        vSharedOffsets.erase(std::remove_if(vSharedOffsets.begin(), vSharedOffsets.end(),
+            [&pCaptureMetrics](const int32_t nOffset) noexcept
+            {
+                for (const auto& pPointer : pCaptureMetrics->vPotentialPointers)
+                {
+                    if (pPointer.vOffsets.front() == nOffset)
+                        return false;
+                }
+
+                return true;
+            }),
+            vSharedOffsets.end());
+    }
+
+    // remove any potential pointers at offsets not shared by all captures
+    if (vSharedOffsets.empty())
+    {
+        for (auto& pCaptureMetrics : vCaptureMetrics)
+            pCaptureMetrics.vPotentialPointers.clear();
+    }
+    else
+    {
+        for (auto& pCaptureMetrics : vCaptureMetrics)
+        {
+            pCaptureMetrics.vPotentialPointers.erase(std::remove_if(pCaptureMetrics.vPotentialPointers.begin(), pCaptureMetrics.vPotentialPointers.end(),
+                [&vSharedOffsets](const PotentialPointer& a)
+                {
+                    return !std::binary_search(vSharedOffsets.begin(), vSharedOffsets.end(), a.vOffsets.front());
+                }),
+                pCaptureMetrics.vPotentialPointers.end());
+        }
+    }
 }
 
 void PointerFinder::GetPointers(std::vector<PotentialPointer>& vIndirectNodes, std::function<void(size_t, size_t)> fProgress) const
@@ -157,13 +208,16 @@ void PointerFinder::GetPointers(std::vector<PotentialPointer>& vIndirectNodes, s
     {
         auto& pCaptureMetrics = pAnalysisState.vCaptureMetrics.emplace_back();
         pCaptureMetrics.pCapture = &pCapture.first;
-        InitializeBestRoutes(pCaptureMetrics.vBestRoutes, pCapture.first, pCapture.second);
+        InitializePotentialPointers(pCaptureMetrics.vPotentialPointers, pCapture.first, pCapture.second);
     }
+
+    RemoveUnsharedOffsets(pAnalysisState.vCaptureMetrics);
 
     if (pAnalysisState.fProgress)
     {
-        pAnalysisState.nRootProgressSize = pAnalysisState.vCaptureMetrics.front().vBestRoutes.size();
-        pAnalysisState.nMaxProgress = pAnalysisState.nRootProgressSize * (pAnalysisState.nRootProgressSize + 1);
+        constexpr size_t nMinProgress = 1; // std::max cannot deduce type of literal
+        pAnalysisState.nRootProgressSize = pAnalysisState.vCaptureMetrics.front().vPotentialPointers.size();
+        pAnalysisState.nMaxProgress = std::max(nMinProgress, pAnalysisState.nRootProgressSize * (pAnalysisState.nRootProgressSize + 1));
         pAnalysisState.fProgress(0, pAnalysisState.nMaxProgress);
     }
 
@@ -173,7 +227,7 @@ void PointerFinder::GetPointers(std::vector<PotentialPointer>& vIndirectNodes, s
 void PointerFinder::GetPointers(std::vector<PotentialPointer>& vIndirectNodes, AnalysisState& pAnalysisState)
 {
     for (auto& pCaptureMetrics : pAnalysisState.vCaptureMetrics)
-        pCaptureMetrics.pIterator = pCaptureMetrics.vBestRoutes.cbegin();
+        pCaptureMetrics.pIterator = pCaptureMetrics.vPotentialPointers.cbegin();
 
     const size_t nProgressStart = pAnalysisState.nProgress;
     do
@@ -186,20 +240,21 @@ void PointerFinder::GetPointers(std::vector<PotentialPointer>& vIndirectNodes, A
         for (auto& pCaptureMetrics : pAnalysisState.vCaptureMetrics)
             pCaptureMetrics.pIterator = pCaptureMetrics.pStopIterator;
 
-        if (pAnalysisState.fProgress && pAnalysisState.vOffsets.size() < 2)
+        if (pAnalysisState.fProgress && pAnalysisState.nOffsetLength < 2)
         {
-            if (pAnalysisState.vOffsets.size() == 1)
-                pAnalysisState.nProgress = nProgressStart + (pAnalysisState.vCaptureMetrics.front().pIterator - pAnalysisState.vCaptureMetrics.front().vBestRoutes.cbegin());
+            const auto nItemsProcessed = (pAnalysisState.vCaptureMetrics.front().pIterator - pAnalysisState.vCaptureMetrics.front().vPotentialPointers.cbegin());
+            if (pAnalysisState.nOffsetLength == 1)
+                pAnalysisState.nProgress = nProgressStart + nItemsProcessed;
             else
-                pAnalysisState.nProgress++;
+                pAnalysisState.nProgress = nProgressStart + nItemsProcessed * (pAnalysisState.nRootProgressSize + 1);
 
             pAnalysisState.fProgress(pAnalysisState.nProgress, pAnalysisState.nMaxProgress);
         }
     } while (true);
 
-    if (pAnalysisState.fProgress && pAnalysisState.vOffsets.size() < 2)
+    if (pAnalysisState.fProgress && pAnalysisState.nOffsetLength < 2)
     {
-        if (pAnalysisState.vOffsets.size() == 1)
+        if (pAnalysisState.nOffsetLength == 1)
             pAnalysisState.nProgress = nProgressStart + pAnalysisState.nRootProgressSize;
         else
             pAnalysisState.nProgress++;
@@ -210,48 +265,21 @@ void PointerFinder::GetPointers(std::vector<PotentialPointer>& vIndirectNodes, A
 
 bool PointerFinder::FindSharedOffset(std::vector<CaptureMetrics>& vCaptureMetrics) noexcept
 {
-    int32_t nMaxOffset = std::numeric_limits<int>::min();
+    // assert: metrics arrays only contain shared offsets per RemoveUnsharedOffsets
+    //         and they're in incremental order, so all we have to do is update the
+    //         stop iterators.
+    if (vCaptureMetrics.front().pIterator == vCaptureMetrics.front().vPotentialPointers.cend())
+        return false;
+
+    const auto nOffset = vCaptureMetrics.front().pIterator->vOffsets.front();
+
     for (auto& pCaptureMetric : vCaptureMetrics)
     {
-        if (pCaptureMetric.pIterator == pCaptureMetric.vBestRoutes.cend())
-            return false;
-
-        nMaxOffset = std::max(nMaxOffset, pCaptureMetric.pIterator->vOffsets.front());
+        auto pIter = pCaptureMetric.pIterator;
+        while (pIter < pCaptureMetric.vPotentialPointers.end() && pIter->vOffsets.front() == nOffset)
+            ++pIter;
+        pCaptureMetric.pStopIterator = pIter;
     }
-
-    bool bRepeat;
-    do
-    {
-        bRepeat = false;
-        for (auto& pCaptureMetrics : vCaptureMetrics)
-        {
-            const auto pStop = pCaptureMetrics.vBestRoutes.cend();
-
-            auto pIter = pCaptureMetrics.pIterator;
-            if (pIter->vOffsets.front() < nMaxOffset)
-            {
-                do {
-                    if (++pIter == pStop)
-                        return false;
-                } while (pIter->vOffsets.front() < nMaxOffset);
-            }
-
-            if (pIter->vOffsets.front() > nMaxOffset)
-            {
-                nMaxOffset = pIter->vOffsets.front();
-                bRepeat = true;
-                break;
-            }
-
-            pCaptureMetrics.pIterator = pIter;
-
-            do {
-                ++pIter;
-            } while (pIter < pStop && pIter->vOffsets.front() == nMaxOffset);
-
-            pCaptureMetrics.pStopIterator = pIter;
-        }
-    } while (bRepeat);
 
     return true;
 }
@@ -268,11 +296,11 @@ void PointerFinder::ProcessSharedOffset(std::vector<PotentialPointer>& vIndirect
     AnalysisState pNewAnalysisState;
     pNewAnalysisState.nScore = pAnalysisState.nScore + CalculateScore(nOffset);
 
-    pNewAnalysisState.vOffsets.push_back(nOffset);
-    for (const auto nChildOffset : pAnalysisState.vOffsets)
-        pNewAnalysisState.vOffsets.push_back(nChildOffset);
+    pNewAnalysisState.vOffsets.at(0) = nOffset;
+    memcpy(&pNewAnalysisState.vOffsets.at(1), &pAnalysisState.vOffsets.at(0), pAnalysisState.nOffsetLength * sizeof(pAnalysisState.vOffsets.at(0)));
+    pNewAnalysisState.nOffsetLength = pAnalysisState.nOffsetLength + 1;
 
-    if (pNewAnalysisState.vOffsets.size() < MAX_DEPTH)
+    if (pNewAnalysisState.nOffsetLength < MAX_DEPTH)
     {
         pNewAnalysisState.fProgress = pAnalysisState.fProgress;
         pNewAnalysisState.nRootProgressSize = pAnalysisState.nRootProgressSize;
@@ -303,6 +331,7 @@ void PointerFinder::ProcessSharedOffset(std::vector<PotentialPointer>& vIndirect
                     if (pNewAnalysisState.nScore < pPointer.nScore)
                     {
                         pPointer.vOffsets = pNewAnalysisState.vOffsets;
+                        pPointer.nOffsetLength = pNewAnalysisState.nOffsetLength;
                         pPointer.nScore = pNewAnalysisState.nScore;
                     }
 
@@ -315,22 +344,43 @@ void PointerFinder::ProcessSharedOffset(std::vector<PotentialPointer>& vIndirect
                 auto& pPointer = vIndirectNodes.emplace_back();
                 pPointer.nRootAddress = nRootAddress;
                 pPointer.vOffsets = pNewAnalysisState.vOffsets;
+                pPointer.nOffsetLength = pNewAnalysisState.nOffsetLength;
                 pPointer.nScore = pNewAnalysisState.nScore;
             }
         }
         else if (!pNewAnalysisState.vCaptureMetrics.empty())
         {
-            gsl::index nIndex = 0;
-            for (auto& pCaptureMetric : pNewAnalysisState.vCaptureMetrics)
+            const auto nRootAddress = vIterators.front()->nRootAddress;
+            if (!std::binary_search(pAnalysisState.vDeadEndAddresses.begin(), pAnalysisState.vDeadEndAddresses.end(), nRootAddress))
             {
-                pCaptureMetric.vBestRoutes.clear();
-                InitializeBestRoutes(pCaptureMetric.vBestRoutes, *pCaptureMetric.pCapture, vIterators.at(nIndex)->nRootAddress);
-                ++nIndex;
-            }
+                gsl::index nIndex = 0;
+                for (auto& pCaptureMetric : pNewAnalysisState.vCaptureMetrics)
+                {
+                    pCaptureMetric.vPotentialPointers.clear();
+                    InitializePotentialPointers(pCaptureMetric.vPotentialPointers, *pCaptureMetric.pCapture, vIterators.at(nIndex)->nRootAddress);
+                    ++nIndex;
+                }
 
-            pNewAnalysisState.nProgress = pAnalysisState.nProgress;
-            GetPointers(vIndirectNodes, pNewAnalysisState);
-            pAnalysisState.nProgress = pNewAnalysisState.nProgress;
+                RemoveUnsharedOffsets(pNewAnalysisState.vCaptureMetrics);
+
+                const auto nFoundPointers = pAnalysisState.vResults->size();
+
+                pNewAnalysisState.nProgress = pAnalysisState.nProgress;
+                GetPointers(vIndirectNodes, pNewAnalysisState);
+                pAnalysisState.nProgress = pNewAnalysisState.nProgress;
+
+                if (pAnalysisState.vResults->size() == nFoundPointers)
+                {
+                    const auto pInsertAt = std::lower_bound(pAnalysisState.vDeadEndAddresses.begin(), pAnalysisState.vDeadEndAddresses.end(), nRootAddress);
+                    if (pInsertAt == pAnalysisState.vDeadEndAddresses.end() || *pInsertAt != nRootAddress)
+                        pAnalysisState.vDeadEndAddresses.insert(pInsertAt, nRootAddress);
+                }
+            }
+            else
+            {
+                static int nUnused = 0;
+                nUnused++;
+            }
         }
 
         // advance to the next combination

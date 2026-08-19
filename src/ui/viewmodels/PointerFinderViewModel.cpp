@@ -194,11 +194,20 @@ void PointerFinderViewModel::Find()
     if (GetValue(ShowProgressDialogProperty))
     {
         ProgressViewModel vmProgress;
-        vmProgress.SetMessage(ra::util::String::Printf(L"Analyzing %u potential pointers", gsl::narrow_cast<uint32_t>(nPointerCount)));
-        vmProgress.QueueTask([&pPointerFinder, &vResults, &vmProgress]() {
-            pPointerFinder.Analyze(vResults, [&vmProgress](size_t nProgress, size_t nTotal)
+        std::wstring sMessage = ra::util::String::Printf(L"Analyzing %u potential pointers", gsl::narrow_cast<uint32_t>(nPointerCount));
+        vmProgress.SetMessage(sMessage);
+        vmProgress.QueueTask([&pPointerFinder, &vResults, &vmProgress, &sMessage]() {
+            uint32_t nCount = 0;
+            pPointerFinder.Analyze(vResults, [&vmProgress, &sMessage, &nCount](size_t nProgress, size_t nTotal)
                 {
+                    if (vmProgress.GetDialogResult() != DialogResult::None)
+                        return false;
+
+                    static const std::array<const wchar_t*, 6> sProgressTicker = { L"", L".", L"..", L"...", L" ..", L"  ." };
+                    nCount = (nCount + 1) % sProgressTicker.size();
+                    vmProgress.SetMessage(sMessage + sProgressTicker.at(nCount));
                     vmProgress.SetProgress(gsl::narrow_cast<int>(nProgress * 100 / nTotal));
+                    return true;
                 });
             });
         vmProgress.ShowModal();

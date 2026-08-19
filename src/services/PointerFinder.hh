@@ -56,7 +56,7 @@ public:
 
     void AddCapture(const Capture& pCapture, ra::data::ByteAddress nTargetAddress);
 
-    static constexpr uint32_t MAX_DEPTH = 4;
+    static constexpr uint32_t MAX_DEPTH = 16;
 
     typedef struct PotentialPointer
     {
@@ -66,7 +66,7 @@ public:
         std::array<int32_t, MAX_DEPTH> vOffsets{};
     } PotentialPointer;
 
-    void Analyze(std::vector<PotentialPointer>& vResults, std::function<void(size_t, size_t)> fProgress);
+    void Analyze(std::vector<PotentialPointer>& vResults, std::function<bool(size_t, size_t)> fProgress);
 
 private:
     typedef struct Node
@@ -85,28 +85,43 @@ private:
         const Capture* pCapture = nullptr;
     } CaptureMetrics;
 
+    typedef struct AnalysisProgress
+    {
+        size_t nProgress = 0;
+        size_t nRootProgressSize = 0;
+        size_t nMaxProgress = 0;
+        size_t nChecksSinceLastProgressUpdated = 0;
+        bool bAborted = false;
+        std::function<bool(size_t, size_t)> fProgress;
+
+        std::vector<PotentialPointer>* vResults = nullptr;
+
+        std::array<int32_t, MAX_DEPTH> vOffsets{};
+
+        // addresses that cannot be reached by a common offset from any pointers across captures.
+        std::vector<ra::data::ByteAddress> vUnreachableAddresses;
+
+        // addresses that could not be found within MAX_DEPTH traversals.
+        // index of outer array is the depth at which the address could not be resolved.
+        std::array<std::vector<ra::data::ByteAddress>, MAX_DEPTH> vDeadEndAddresses;
+    } AnalysisProgress;
+
     typedef struct AnalysisState
     {
         std::vector<CaptureMetrics> vCaptureMetrics;
         uint32_t nScore = 0;
-        uint32_t nOffsetLength = 0;
-        std::array<int32_t, MAX_DEPTH> vOffsets{};
+        uint32_t nDepth = 0;
 
-        std::vector<ra::data::ByteAddress> vDeadEndAddresses;
-        size_t nProgress = 0;
-        size_t nRootProgressSize = 0;
-        size_t nMaxProgress = 0;
-        std::function<void(size_t, size_t)> fProgress;
-        std::vector<PotentialPointer>* vResults = nullptr;
+        AnalysisProgress* pProgress = nullptr;
     } AnalysisState;
 
-    void GetPointers(std::vector<PotentialPointer>& vIndirectNodes, std::function<void(size_t, size_t)> fProgress) const;
-    static void GetPointers(std::vector<PotentialPointer>& vIndirectNodes, AnalysisState& pAnalysisState);
+    void GetPointers(std::vector<PotentialPointer>& vIndirectNodes, std::function<bool(size_t, size_t)> fProgress) const;
+    static void AnalyzeState(AnalysisState& pAnalysisState);
     static void SortPointers(std::vector<PotentialPointer>& vPointers);
     static void InitializePotentialPointers(std::vector<PotentialPointer>& vPointers, const Capture& pCapture, ra::data::ByteAddress nTargetAddres);
     static void RemoveUnsharedOffsets(std::vector<CaptureMetrics>& vCaptureMetrics);
     static bool FindSharedOffset(std::vector<CaptureMetrics>& vCaptureMetrics) noexcept;
-    static void ProcessSharedOffset(std::vector<PotentialPointer>& vIndirectNodes, AnalysisState& pAnalysisState);
+    static void ProcessSharedOffset(AnalysisState& pAnalysisState);
     static bool PointersMatch(std::vector<std::vector<PotentialPointer>::const_iterator>& vIterators) noexcept;
 
     std::vector<std::pair<const Capture&, ra::data::ByteAddress>> m_vCaptures;

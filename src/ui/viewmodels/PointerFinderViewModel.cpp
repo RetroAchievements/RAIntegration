@@ -8,6 +8,7 @@
 #include "data/context/EmulatorContext.hh"
 #include "data/context/GameContext.hh"
 
+#include "services/IClipboard.hh"
 #include "services/IFileSystem.hh"
 #include "services/ServiceLocator.hh"
 
@@ -204,7 +205,7 @@ void PointerFinderViewModel::Find()
                         return false;
 
                     static const std::array<const wchar_t*, 6> sProgressTicker = { L"", L".", L"..", L"...", L" ..", L"  ." };
-                    nCount = (nCount + 1) % sProgressTicker.size();
+                    nCount = (nCount + 1) % gsl::narrow_cast<uint32_t>(sProgressTicker.size());
                     vmProgress.SetMessage(sMessage + sProgressTicker.at(nCount));
                     vmProgress.SetProgress(gsl::narrow_cast<int>(nProgress * 100 / nTotal));
                     return true;
@@ -304,13 +305,47 @@ ra::data::Memory::Size PointerFinderViewModel::GetSearchSize() const
     return nSize;
 }
 
-void PointerFinderViewModel::BookmarkSelected()
+void PointerFinderViewModel::BookmarkSelected() const
 {
     auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     if (!vmBookmarks.IsVisible())
         vmBookmarks.Show();
 
     std::vector<gsl::index> vSelectedItems;
+    GetSelectedItems(vSelectedItems);
+    if (vSelectedItems.empty())
+        return;
+
+    ConvertResultsToAchievementLogic(vSelectedItems,
+        [&vmBookmarks](const std::string& sSerialized)
+        {
+            vmBookmarks.AddBookmark(sSerialized);
+        });
+}
+
+void PointerFinderViewModel::CopySelectedToClipboard() const
+{
+    std::vector<gsl::index> vSelectedItems;
+    GetSelectedItems(vSelectedItems);
+    if (vSelectedItems.empty())
+        return;
+
+    if (vSelectedItems.size() > 1)
+    {
+        MessageBoxViewModel::ShowErrorMessage(L"Multiple items selected", L"Only one item can be copied at a time.");
+        return;
+    }
+
+    ConvertResultsToAchievementLogic(vSelectedItems,
+        [](const std::string& sSerialized)
+        {
+            auto& pClipboard = ra::services::ServiceLocator::Get<ra::services::IClipboard>();
+            pClipboard.SetText(ra::util::String::Widen(sSerialized));
+        });
+}
+
+void PointerFinderViewModel::GetSelectedItems(std::vector<gsl::index>& nIndices) const
+{
     gsl::index nStartIndex = 0;
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++nIndex)
     {
@@ -322,14 +357,14 @@ void PointerFinderViewModel::BookmarkSelected()
 
         if (pItem->IsSelected())
         {
-            if (vSelectedItems.empty() || vSelectedItems.back() != nStartIndex)
-                vSelectedItems.push_back(nStartIndex);
+            if (nIndices.empty() || nIndices.back() != nStartIndex)
+                nIndices.push_back(nStartIndex);
         }
     }
+}
 
-    if (vSelectedItems.empty())
-        return;
-
+void PointerFinderViewModel::ConvertResultsToAchievementLogic(const std::vector<gsl::index>& nIndices, std::function<void(const std::string& sSerialized)> fCallback) const
+{
     auto nSize = ra::data::Memory::Size::ThirtyTwoBit;
     uint32_t nMask = 0xFFFFFFFF;
     uint32_t nOffset = 0;
@@ -350,7 +385,7 @@ void PointerFinderViewModel::BookmarkSelected()
             nMask = 0xFFFFFFFF; // indicate masking is not needed
     }
 
-    for (auto nIndex : vSelectedItems)
+    for (auto nIndex : nIndices)
     {
         const auto* pItem = m_vResults.GetItemAt(nIndex);
         Expects(pItem != nullptr);
@@ -360,7 +395,7 @@ void PointerFinderViewModel::BookmarkSelected()
         do
         {
             ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::services::TriggerConditionType::AddAddress);
-            ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, nAddress); 
+            ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, nAddress);
 
             if (nOffset != 0)
             {
@@ -380,7 +415,7 @@ void PointerFinderViewModel::BookmarkSelected()
             {
                 ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::services::TriggerConditionType::Measured);
                 ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address,
-                        nSize, ra::to_unsigned(pItem->m_nOffset));
+                    nSize, ra::to_unsigned(pItem->m_nOffset));
                 break;
             }
 
@@ -388,7 +423,7 @@ void PointerFinderViewModel::BookmarkSelected()
             pItem = pNextItem;
         } while (true);
 
-        vmBookmarks.AddBookmark(sBuffer);
+        fCallback(sBuffer);
     }
 }
 

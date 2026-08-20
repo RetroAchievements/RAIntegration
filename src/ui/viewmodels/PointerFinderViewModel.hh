@@ -66,7 +66,12 @@ public:
     /// <summary>
     /// Bookmarks the currently item from the search results.
     /// </summary>
-    void BookmarkSelected();
+    void BookmarkSelected() const;
+
+    /// <summary>
+    /// Copies the currently item from the search results as achievemnet logic.
+    /// </summary>
+    void CopySelectedToClipboard() const;
 
     class StateViewModel : public ViewModelBase,
                            protected ra::data::context::EmulatorContext::DispatchesReadMemory
@@ -288,6 +293,9 @@ protected:
 
     void AddPotentialPointer(const ra::services::PointerFinder::PotentialPointer& pPotentialPointer, ra::data::Memory::Size nSize);
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+    void GetSelectedItems(std::vector<gsl::index>& nIndices) const;
+    void ConvertResultsToAchievementLogic(const std::vector<gsl::index>& nIndices, std::function<void(const std::string& sSerialized)> fCallback) const;
 
     ra::data::Memory::Size GetSearchSize() const;
 

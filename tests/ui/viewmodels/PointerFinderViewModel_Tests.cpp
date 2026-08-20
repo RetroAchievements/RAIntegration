@@ -11,6 +11,8 @@
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+
+#include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -572,6 +574,142 @@ public:
         vmPointerFinder.BookmarkSelected();
         Assert::AreEqual({ 5U }, pBookmarks.Items().Count());
         Assert::AreEqual(std::string("I:0x 0020_I:0x 0008_I:0x 0000_M:0x 0004"), pBookmarks.Items().GetItemAt(4)->GetIndirectAddress());
+    }
+
+    TEST_METHOD(TestCopySelectedToClipboard)
+    {
+        PointerFinderViewModelHarness vmPointerFinder;
+        ra::services::mocks::MockClipboard mockClipboard;
+        vmPointerFinder.mockGameContext.SetGameId(1U);
+        vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
+
+        // no results - nothing copied, no dialog shown
+        vmPointerFinder.CopySelectedToClipboard();
+        Assert::AreEqual(std::wstring(), mockClipboard.GetText());
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        vmPointerFinder.mockDesktop.ResetExpectedWindows();
+
+        // initialize results
+        ra::services::PointerFinder::PotentialPointer pPointer;
+        pPointer.nRootAddress = 0x009c;
+        pPointer.vOffsets.at(0) = 0;
+        pPointer.nOffsetLength = 1;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
+
+        pPointer.nRootAddress = 0x0008;
+        pPointer.vOffsets.at(0) = 4;
+        pPointer.nOffsetLength = 1;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
+
+        pPointer.nRootAddress = 0x0020;
+        pPointer.vOffsets.at(0) = 8;
+        pPointer.vOffsets.at(1) = 0;
+        pPointer.vOffsets.at(2) = 4;
+        pPointer.nOffsetLength = 3;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
+
+        pPointer.nRootAddress = 0x0070;
+        pPointer.vOffsets.at(0) = 4;
+        pPointer.nOffsetLength = 1;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
+
+        // no selection
+        vmPointerFinder.CopySelectedToClipboard();
+        Assert::AreEqual(std::wstring(), mockClipboard.GetText());
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        vmPointerFinder.mockDesktop.ResetExpectedWindows();
+
+        // selection
+        vmPointerFinder.PotentialPointers().GetItemAt(1)->SetSelected(true);
+        vmPointerFinder.CopySelectedToClipboard();
+        Assert::AreEqual(std::wstring(L"I:0x 0008_M:0x 0004"), mockClipboard.GetText());
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        vmPointerFinder.mockDesktop.ResetExpectedWindows();
+        vmPointerFinder.PotentialPointers().GetItemAt(1)->SetSelected(false);
+
+        // first part of chain
+        vmPointerFinder.PotentialPointers().GetItemAt(2)->SetSelected(true);
+        vmPointerFinder.CopySelectedToClipboard();
+        Assert::AreEqual(std::wstring(L"I:0x 0020_I:0x 0008_I:0x 0000_M:0x 0004"), mockClipboard.GetText());
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        vmPointerFinder.mockDesktop.ResetExpectedWindows();
+        vmPointerFinder.PotentialPointers().GetItemAt(2)->SetSelected(false);
+        mockClipboard.SetText(L"");
+
+        // middle part of chain
+        vmPointerFinder.PotentialPointers().GetItemAt(3)->SetSelected(true);
+        vmPointerFinder.CopySelectedToClipboard();
+        Assert::AreEqual(std::wstring(L"I:0x 0020_I:0x 0008_I:0x 0000_M:0x 0004"), mockClipboard.GetText());
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        vmPointerFinder.mockDesktop.ResetExpectedWindows();
+        vmPointerFinder.PotentialPointers().GetItemAt(3)->SetSelected(false);
+        mockClipboard.SetText(L"");
+
+        // end part of chain
+        vmPointerFinder.PotentialPointers().GetItemAt(4)->SetSelected(true);
+        vmPointerFinder.CopySelectedToClipboard();
+        Assert::AreEqual(std::wstring(L"I:0x 0020_I:0x 0008_I:0x 0000_M:0x 0004"), mockClipboard.GetText());
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        vmPointerFinder.mockDesktop.ResetExpectedWindows();
+        mockClipboard.SetText(L"");
+
+        // entire chain
+        vmPointerFinder.PotentialPointers().GetItemAt(3)->SetSelected(false);
+        vmPointerFinder.PotentialPointers().GetItemAt(2)->SetSelected(false);
+        vmPointerFinder.CopySelectedToClipboard();
+        Assert::AreEqual(std::wstring(L"I:0x 0020_I:0x 0008_I:0x 0000_M:0x 0004"), mockClipboard.GetText());
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        vmPointerFinder.mockDesktop.ResetExpectedWindows();
+    }
+
+    TEST_METHOD(TestCopySelectedToClipboardMultipleSelections)
+    {
+        PointerFinderViewModelHarness vmPointerFinder;
+        ra::services::mocks::MockClipboard mockClipboard;
+        vmPointerFinder.mockGameContext.SetGameId(1U);
+        vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
+
+        // initialize results
+        ra::services::PointerFinder::PotentialPointer pPointer;
+        pPointer.nRootAddress = 0x009c;
+        pPointer.vOffsets.at(0) = 0;
+        pPointer.nOffsetLength = 1;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
+
+        pPointer.nRootAddress = 0x0008;
+        pPointer.vOffsets.at(0) = 4;
+        pPointer.nOffsetLength = 1;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
+
+        pPointer.nRootAddress = 0x0020;
+        pPointer.vOffsets.at(0) = 8;
+        pPointer.vOffsets.at(1) = 0;
+        pPointer.vOffsets.at(2) = 4;
+        pPointer.nOffsetLength = 3;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
+
+        pPointer.nRootAddress = 0x0070;
+        pPointer.vOffsets.at(0) = 4;
+        pPointer.nOffsetLength = 1;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
+
+        // selection
+        vmPointerFinder.PotentialPointers().GetItemAt(1)->SetSelected(true);
+        vmPointerFinder.PotentialPointers().GetItemAt(4)->SetSelected(true);
+
+        bool bDialogSeen = false;
+        vmPointerFinder.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogSeen](const ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                Assert::AreEqual(std::wstring(L"Multiple items selected"), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"Only one item can be copied at a time."), vmMessageBox.GetMessage());
+
+                bDialogSeen = true;
+                return ra::ui::DialogResult::OK;
+            }
+        );
+        vmPointerFinder.CopySelectedToClipboard();
+        Assert::AreEqual(std::wstring(L""), mockClipboard.GetText());
+        Assert::IsTrue(bDialogSeen);
     }
 
     TEST_METHOD(TestExportResults)

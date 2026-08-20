@@ -164,7 +164,7 @@ PointerFinderDialog::PointerFinderDialog(PointerFinderViewModel& vmPointerFinder
     SetAnchor(IDC_RA_RESET_FILTER, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_APPLY_FILTER, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_RESULTS_BOOKMARK, Anchor::Left | Anchor::Bottom);
-    SetAnchor(IDC_RA_RESULTS_EXPORT, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_COPY_ALL, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_RESULTS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
 
     SetAnchor(IDC_RA_GBX_STATE_1, Anchor::Left | Anchor::Bottom | Anchor::Right);
@@ -226,9 +226,17 @@ BOOL PointerFinderDialog::OnCommand(WORD nCommand)
         }
 
         case IDC_RA_RESULTS_BOOKMARK: {
-            auto* vmPointerFinder = dynamic_cast<PointerFinderViewModel*>(&m_vmWindow);
+            const auto* vmPointerFinder = dynamic_cast<PointerFinderViewModel*>(&m_vmWindow);
             if (vmPointerFinder)
                 vmPointerFinder->BookmarkSelected();
+
+            return TRUE;
+        }
+
+        case IDC_RA_COPY_ALL: {
+            const auto* vmPointerFinder = dynamic_cast<PointerFinderViewModel*>(&m_vmWindow);
+            if (vmPointerFinder)
+                vmPointerFinder->CopySelectedToClipboard();
 
             return TRUE;
         }

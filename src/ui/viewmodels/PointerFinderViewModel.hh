@@ -269,6 +269,7 @@ public:
         friend class PointerFinderViewModel;
         ra::data::ByteAddress m_nAddress = 0;
         int32_t m_nOffset = 0;
+        bool m_bIsChild = false;
         bool m_bMatched = false;
     };
 
@@ -285,6 +286,7 @@ public:
 protected:
     static const BoolModelProperty ShowProgressDialogProperty;
 
+    void AddPotentialPointer(const ra::services::PointerFinder::PotentialPointer& pPotentialPointer, ra::data::Memory::Size nSize);
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     ra::data::Memory::Size GetSearchSize() const;

@@ -218,54 +218,8 @@ void PointerFinderViewModel::Find()
     }
 
     const auto nSize = GetSearchSize();
-    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     for (const auto& pPotentialPointer : vResults)
-    {
-        auto& pPointer = m_vResults.Add();
-        pPointer.m_nAddress = pPotentialPointer.nRootAddress;
-        pPointer.SetPointerAddress(pMemoryContext.FormatAddress(pPointer.m_nAddress));
-
-        auto nOffset = pPotentialPointer.vOffsets.front();
-        pPointer.m_nOffset = nOffset;
-        pPointer.SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
-
-        std::array<ra::data::ByteAddress, NUM_STATES> vPointerAddress = {};
-        for (gsl::index nStateIndex = 0; nStateIndex < NUM_STATES; ++nStateIndex)
-        {
-            const auto& pState = m_vStates.at(nStateIndex);
-            if (!pState.CanCapture())
-            {
-                const auto* pValue = m_vStates.at(nStateIndex).CapturedMemory().GetValue(pPointer.m_nAddress);
-                if (pValue)
-                {
-                    pPointer.SetPointerValue(nStateIndex, ra::data::Memory::FormatValue(pValue->nValue, nSize, ra::data::Memory::Format::Hex));
-                    vPointerAddress.at(nStateIndex) = pValue->nValueAsAddress + nOffset;
-                }
-            }
-        }
-
-        for (gsl::index nOffsetIndex = 1; nOffsetIndex < gsl::narrow_cast<gsl::index>(pPotentialPointer.nOffsetLength); ++nOffsetIndex)
-        {
-            auto& pOffset = m_vResults.Add();
-            nOffset = pPotentialPointer.vOffsets.at(nOffsetIndex);
-            pOffset.m_nOffset = nOffset;
-            pOffset.SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
-
-            for (gsl::index nStateIndex = 0; nStateIndex < NUM_STATES; ++nStateIndex)
-            {
-                auto nPointerAddress = vPointerAddress.at(nStateIndex);
-                if (nPointerAddress)
-                {
-                    const auto* pValue = m_vStates.at(nStateIndex).CapturedMemory().GetValue(nPointerAddress);
-                    if (pValue)
-                    {
-                        pOffset.SetPointerValue(nStateIndex, ra::data::Memory::FormatValue(pValue->nValue, nSize, ra::data::Memory::Format::Hex));
-                        vPointerAddress.at(nStateIndex) = pValue->nValueAsAddress + nOffset;
-                    }
-                }
-            }
-        }
-    }
+        AddPotentialPointer(pPotentialPointer, nSize);
 
     if (m_vResults.Count() == 0 && nUniqueAddresses >= 2)
     {
@@ -282,6 +236,57 @@ void PointerFinderViewModel::Find()
 
     if (nUniqueAddresses < 2)
         ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Cannot find.", L"At least two unique addresses must be captured before potential pointers can be located.");
+}
+
+void PointerFinderViewModel::AddPotentialPointer(const ra::services::PointerFinder::PotentialPointer& pPotentialPointer, ra::data::Memory::Size nSize)
+{
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+
+    auto& pPointer = m_vResults.Add();
+    pPointer.m_nAddress = pPotentialPointer.nRootAddress;
+    pPointer.SetPointerAddress(pMemoryContext.FormatAddress(pPointer.m_nAddress));
+
+    auto nOffset = pPotentialPointer.vOffsets.front();
+    pPointer.m_nOffset = nOffset;
+    pPointer.SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
+
+    std::array<ra::data::ByteAddress, NUM_STATES> vPointerAddress = {};
+    for (gsl::index nStateIndex = 0; nStateIndex < NUM_STATES; ++nStateIndex)
+    {
+        const auto& pState = m_vStates.at(nStateIndex);
+        if (!pState.CanCapture())
+        {
+            const auto* pValue = m_vStates.at(nStateIndex).CapturedMemory().GetValue(pPointer.m_nAddress);
+            if (pValue)
+            {
+                pPointer.SetPointerValue(nStateIndex, ra::data::Memory::FormatValue(pValue->nValue, nSize, ra::data::Memory::Format::Hex));
+                vPointerAddress.at(nStateIndex) = pValue->nValueAsAddress + nOffset;
+            }
+        }
+    }
+
+    for (gsl::index nOffsetIndex = 1; nOffsetIndex < gsl::narrow_cast<gsl::index>(pPotentialPointer.nOffsetLength); ++nOffsetIndex)
+    {
+        auto& pOffset = m_vResults.Add();
+        nOffset = pPotentialPointer.vOffsets.at(nOffsetIndex);
+        pOffset.m_bIsChild = true;
+        pOffset.m_nOffset = nOffset;
+        pOffset.SetOffset(ra::util::String::Printf(L"+0x%02X", nOffset));
+
+        for (gsl::index nStateIndex = 0; nStateIndex < NUM_STATES; ++nStateIndex)
+        {
+            auto nPointerAddress = vPointerAddress.at(nStateIndex);
+            if (nPointerAddress)
+            {
+                const auto* pValue = m_vStates.at(nStateIndex).CapturedMemory().GetValue(nPointerAddress);
+                if (pValue)
+                {
+                    pOffset.SetPointerValue(nStateIndex, ra::data::Memory::FormatValue(pValue->nValue, nSize, ra::data::Memory::Format::Hex));
+                    vPointerAddress.at(nStateIndex) = pValue->nValueAsAddress + nOffset;
+                }
+            }
+        }
+    }
 }
 
 ra::data::Memory::Size PointerFinderViewModel::GetSearchSize() const
@@ -305,13 +310,85 @@ void PointerFinderViewModel::BookmarkSelected()
     if (!vmBookmarks.IsVisible())
         vmBookmarks.Show();
 
-    for (const auto& pItem : m_vResults)
+    std::vector<gsl::index> vSelectedItems;
+    gsl::index nStartIndex = 0;
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++nIndex)
     {
-        if (pItem.IsSelected())
+        const auto* pItem = m_vResults.GetItemAt(nIndex);
+        Expects(pItem != nullptr);
+
+        if (!pItem->m_bIsChild)
+            nStartIndex = nIndex;
+
+        if (pItem->IsSelected())
         {
-            vmBookmarks.AddBookmark(pItem.m_nAddress, GetSearchSize());
-            break;
+            if (vSelectedItems.empty() || vSelectedItems.back() != nStartIndex)
+                vSelectedItems.push_back(nStartIndex);
         }
+    }
+
+    if (vSelectedItems.empty())
+        return;
+
+    auto nSize = ra::data::Memory::Size::ThirtyTwoBit;
+    uint32_t nMask = 0xFFFFFFFF;
+    uint32_t nOffset = 0;
+
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
+    if (!pConsoleContext.GetRealAddressConversion(&nSize, &nMask, &nOffset))
+    {
+        nSize = GetSearchSize();
+        nMask = 0xFFFFFFFF;
+        nOffset = pConsoleContext.RealAddressFromByteAddress(0);
+        if (nOffset == 0xFFFFFFFF)
+            nOffset = 0;
+    }
+    else if (nMask != 0xFFFFFFFF)
+    {
+        const auto nBitsMask = ra::to_unsigned((1 << ra::data::Memory::SizeBits(nSize)) - 1);
+        if (nBitsMask == nMask)
+            nMask = 0xFFFFFFFF; // indicate masking is not needed
+    }
+
+    for (auto nIndex : vSelectedItems)
+    {
+        const auto* pItem = m_vResults.GetItemAt(nIndex);
+        Expects(pItem != nullptr);
+
+        uint32_t nAddress = gsl::narrow_cast<uint32_t>(pItem->m_nAddress);
+        std::string sBuffer;
+        do
+        {
+            ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::services::TriggerConditionType::AddAddress);
+            ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, nAddress); 
+
+            if (nOffset != 0)
+            {
+                ra::services::AchievementLogicSerializer::AppendOperator(sBuffer, ra::services::TriggerOperatorType::Subtract);
+                ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nOffset);
+            }
+            else if (nMask != 0xFFFFFFFF)
+            {
+                ra::services::AchievementLogicSerializer::AppendOperator(sBuffer, ra::services::TriggerOperatorType::BitwiseAnd);
+                ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nMask);
+            }
+
+            ra::services::AchievementLogicSerializer::AppendConditionSeparator(sBuffer);
+
+            const PotentialPointerViewModel* pNextItem = m_vResults.GetItemAt(++nIndex);
+            if (pNextItem == nullptr || !pNextItem->m_bIsChild)
+            {
+                ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::services::TriggerConditionType::Measured);
+                ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address,
+                        nSize, ra::to_unsigned(pItem->m_nOffset));
+                break;
+            }
+
+            nAddress = pItem->m_nOffset;
+            pItem = pNextItem;
+        } while (true);
+
+        vmBookmarks.AddBookmark(sBuffer);
     }
 }
 

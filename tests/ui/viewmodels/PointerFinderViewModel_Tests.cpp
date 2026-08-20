@@ -9,6 +9,7 @@
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
+#include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -72,6 +73,8 @@ private:
             Assert::AreEqual(sPointerValue3, pPointer->GetPointerValue3());
             Assert::AreEqual(sPointerValue4, pPointer->GetPointerValue4());
         }
+
+        using PointerFinderViewModel::AddPotentialPointer;
     };
 
 public:
@@ -489,11 +492,14 @@ public:
         vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
         vmPointerFinder.AssertRow(1, L"", L"+0x0C", L"0044", L"0068", L"", L""); // 44+0C=>50, 68+0C=>74
         Assert::AreEqual(std::wstring(L"1"), vmPointerFinder.GetResultCountText());
+
+
     }
 
     TEST_METHOD(TestBookmarkSelected)
     {
         PointerFinderViewModelHarness vmPointerFinder;
+        ra::context::mocks::MockRcClient mockRcClient;
         vmPointerFinder.mockGameContext.SetGameId(1U);
         vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
 
@@ -506,28 +512,28 @@ public:
         Assert::AreEqual({ 0U }, pBookmarks.Items().Count());
 
         // initialize results
-        std::array<unsigned char, 256> pMemory{};
-        pMemory.at(0x08) = 0x1c;
-        pMemory.at(0x70) = 0x1c;
-        pMemory.at(0x9c) = 0x20;
-        vmPointerFinder.MockMemory(pMemory);
+        ra::services::PointerFinder::PotentialPointer pPointer;
+        pPointer.nRootAddress = 0x009c;
+        pPointer.vOffsets.at(0) = 0;
+        pPointer.nOffsetLength = 1;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
 
-        vmPointerFinder.States().at(0).SetAddress(L"0x20");
-        vmPointerFinder.States().at(0).ToggleCapture();
+        pPointer.nRootAddress = 0x0008;
+        pPointer.vOffsets.at(0) = 4;
+        pPointer.nOffsetLength = 1;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
 
-        pMemory.at(0x08) = 0x34;
-        pMemory.at(0x70) = 0x34;
-        pMemory.at(0x9c) = 0x38;
+        pPointer.nRootAddress = 0x0020;
+        pPointer.vOffsets.at(0) = 8;
+        pPointer.vOffsets.at(1) = 0;
+        pPointer.vOffsets.at(2) = 4;
+        pPointer.nOffsetLength = 3;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
 
-        vmPointerFinder.States().at(1).SetAddress(L"0x38");
-        vmPointerFinder.States().at(1).ToggleCapture();
-        vmPointerFinder.Find();
-
-        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
-        Assert::AreEqual({ 3U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
-        vmPointerFinder.AssertRow(1, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
-        vmPointerFinder.AssertRow(2, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        pPointer.nRootAddress = 0x0070;
+        pPointer.vOffsets.at(0) = 4;
+        pPointer.nOffsetLength = 1;
+        vmPointerFinder.AddPotentialPointer(pPointer, ra::data::Memory::Size::SixteenBit);
 
         // no selection
         vmPointerFinder.BookmarkSelected();
@@ -537,7 +543,35 @@ public:
         vmPointerFinder.PotentialPointers().GetItemAt(1)->SetSelected(true);
         vmPointerFinder.BookmarkSelected();
         Assert::AreEqual({ 1U }, pBookmarks.Items().Count());
-        Assert::AreEqual({ 0x0008U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual(std::string("I:0x 0008_M:0x 0004"), pBookmarks.Items().GetItemAt(0)->GetIndirectAddress());
+        vmPointerFinder.PotentialPointers().GetItemAt(1)->SetSelected(false);
+
+        // first part of chain
+        vmPointerFinder.PotentialPointers().GetItemAt(2)->SetSelected(true);
+        vmPointerFinder.BookmarkSelected();
+        Assert::AreEqual({ 2U }, pBookmarks.Items().Count());
+        Assert::AreEqual(std::string("I:0x 0020_I:0x 0008_I:0x 0000_M:0x 0004"), pBookmarks.Items().GetItemAt(1)->GetIndirectAddress());
+        vmPointerFinder.PotentialPointers().GetItemAt(2)->SetSelected(false);
+
+        // middle part of chain
+        vmPointerFinder.PotentialPointers().GetItemAt(3)->SetSelected(true);
+        vmPointerFinder.BookmarkSelected();
+        Assert::AreEqual({ 3U }, pBookmarks.Items().Count());
+        Assert::AreEqual(std::string("I:0x 0020_I:0x 0008_I:0x 0000_M:0x 0004"), pBookmarks.Items().GetItemAt(2)->GetIndirectAddress());
+        vmPointerFinder.PotentialPointers().GetItemAt(3)->SetSelected(false);
+
+        // end part of chain
+        vmPointerFinder.PotentialPointers().GetItemAt(4)->SetSelected(true);
+        vmPointerFinder.BookmarkSelected();
+        Assert::AreEqual({ 4U }, pBookmarks.Items().Count());
+        Assert::AreEqual(std::string("I:0x 0020_I:0x 0008_I:0x 0000_M:0x 0004"), pBookmarks.Items().GetItemAt(3)->GetIndirectAddress());
+
+        // entire chain
+        vmPointerFinder.PotentialPointers().GetItemAt(3)->SetSelected(false);
+        vmPointerFinder.PotentialPointers().GetItemAt(2)->SetSelected(false);
+        vmPointerFinder.BookmarkSelected();
+        Assert::AreEqual({ 5U }, pBookmarks.Items().Count());
+        Assert::AreEqual(std::string("I:0x 0020_I:0x 0008_I:0x 0000_M:0x 0004"), pBookmarks.Items().GetItemAt(4)->GetIndirectAddress());
     }
 
     TEST_METHOD(TestExportResults)

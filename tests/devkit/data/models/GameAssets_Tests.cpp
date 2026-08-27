@@ -251,6 +251,7 @@ public:
 
         // gameAssets is not the same instance as mockGameContext.Assets, so manually update the badge reference count
         auto& pLocalBadges = gameAssets.mockGameContext.LocalBadges();
+        pLocalBadges.SetLastDirectory(L"C:\\Games\\Images");
         pLocalBadges.AddReference(L"local\\22-ABCDE.png", false);
 
         // simulate the pre-commit of the achievement by converting the reference from uncommitted to committed
@@ -262,6 +263,7 @@ public:
         gameAssets.ReloadAsset(AssetType::Achievement, GameAssets::FirstLocalId);
 
         const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\n"
+            "BadgeDir=C:\\Games\\Images\n"
             "%u:\"1=1\":Temp:Temp::::Authl:10:::::\"local\\\\22-ABCDE.png\"\n", GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
@@ -455,7 +457,7 @@ public:
     {
         GameAssetsHarness gameAssets;
         gameAssets.mockGameContext.SetGameId(22);
-        gameAssets.MockUserFileContents(
+        gameAssets.MockUserFileContents("BadgeDir=C:\\BadgeImages\n"
             "111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::local\\22-A.png\n");
 
         gameAssets.ReloadAllAssets();
@@ -467,6 +469,7 @@ public:
 
         const auto& pLocalBadges = gameAssets.mockGameContext.LocalBadges();
         Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-A.png", true));
+        Assert::AreEqual(std::wstring(L"C:\\BadgeImages"), pLocalBadges.GetLastDirectory());
     }
 
     TEST_METHOD(TestMergeLocalAssetsTwoLocalAchievementsWithSubsetInfo)

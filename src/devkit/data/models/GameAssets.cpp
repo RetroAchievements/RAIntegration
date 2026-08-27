@@ -326,6 +326,14 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 pTokenizer.Consume('M');
                 break;
 
+            case 'B':
+                if (pTokenizer.Match("BadgeDir=")) {
+                    const auto pLastDirectory = pTokenizer.ReadTo('\n');
+                    auto& pLocalBadges = ra::services::ServiceLocator::GetMutable<ra::context::IGameContext>().LocalBadges();
+                    pLocalBadges.SetLastDirectory(ra::util::String::Widen(pLastDirectory));
+                }
+                break;
+
             default:
                 continue;
         }
@@ -482,6 +490,13 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
     {
         nPrimarySubsetId = pPrimarySubset->GetID();
         pData->WriteLine(pPrimarySubset->GetTitle());
+    }
+
+    const auto& sLastBadgeDirectory = pGameContext.LocalBadges().GetLastDirectory();
+    if (!sLastBadgeDirectory.empty())
+    {
+        pData->Write("BadgeDir=");
+        pData->WriteLine(sLastBadgeDirectory);
     }
 
     bool bHasDeleted = false;

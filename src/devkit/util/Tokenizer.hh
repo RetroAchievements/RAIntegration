@@ -64,6 +64,13 @@ public:
     }
 
     /// <summary>
+    /// Attempts to match the specified string.
+    /// </summary>
+    /// <returns><c>true</c> if the next set of characters matches the provided text.</returns>
+    /// <remarks>Consumes the text if matched.</remarks>
+    bool Match(const std::string_view sText) noexcept;
+
+    /// <summary>
     /// Advances the cursor to the next occurrence of the specified character, or the end of the string if no
     /// occurrences are found and returns a string containing all of the characters advanced over.
     /// </summary>

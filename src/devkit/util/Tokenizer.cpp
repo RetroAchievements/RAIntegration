@@ -3,6 +3,20 @@
 namespace ra {
 namespace util {
 
+bool Tokenizer::Match(const std::string_view sText) noexcept
+{
+    if (m_nPosition + sText.length() <= m_sString.length())
+    {
+        if (m_sString.compare(m_nPosition, sText.length(), sText) == 0)
+        {
+            m_nPosition += sText.length();
+            return true;
+        }
+    }
+
+    return false;
+}
+
 std::string Tokenizer::ReadQuotedString()
 {
     std::string sString;

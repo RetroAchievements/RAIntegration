@@ -2411,6 +2411,43 @@ public:
         Assert::AreEqual(std::wstring(L"File does not appear to be a valid jpg image."), sMessage);
     }
 
+    TEST_METHOD(TestSelectBadgeFileRemembersLastDirectory)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        editor.LoadAsset(&achievement);
+
+        editor.mockGameContext.LocalBadges().SetLastDirectory(L"C:\\Badges");
+
+        bool bDialogSeen = false;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+            {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"C:\\Badges"), vmFileDialog.GetInitialDirectory());
+
+                vmFileDialog.SetFileName(L"C:\\Badges\\Game1\\image.png");
+                return DialogResult::OK;
+            });
+
+        std::wstring sMessage;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+            {
+                sMessage = vmMessage.GetMessage();
+                return DialogResult::OK;
+            });
+
+        const std::string sFileContents("\x89PNG\x0D\x0A\x1A\x0D\x00\x00\x00\x0DIHDR", 16);
+        editor.mockFileSystem.MockFile(L"C:\\image.png", sFileContents);
+
+        editor.SelectBadgeFile();
+
+        Assert::AreEqual(std::wstring(L"C:\\Badges\\Game1"), editor.mockGameContext.LocalBadges().GetLastDirectory());
+        Assert::IsTrue(bDialogSeen);
+    }
+
     TEST_METHOD(TestChangingGroupUpdatesDebugHighlights)
     {
         AssetEditorViewModelHarness editor;

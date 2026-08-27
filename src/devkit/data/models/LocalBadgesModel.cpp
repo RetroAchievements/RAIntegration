@@ -11,6 +11,8 @@ namespace ra {
 namespace data {
 namespace models {
 
+const StringModelProperty LocalBadgesModel::LastDirectoryProperty("LocalBadgesModel", "LastDirectory", L"");
+
 LocalBadgesModel::LocalBadgesModel() noexcept
 {
     GSL_SUPPRESS_F6 SetValue(TypeProperty, ra::etoi(AssetType::LocalBadges));

@@ -1,5 +1,7 @@
 #include "AssetEditorViewModel.hh"
 
+#include "data\context\GameContext.hh"
+
 #include "data\models\AchievementModel.hh"
 #include "data\models\LeaderboardModel.hh"
 
@@ -103,14 +105,20 @@ AssetEditorViewModel::~AssetEditorViewModel()
 
 void AssetEditorViewModel::SelectBadgeFile()
 {
+    auto& pLocalBadges = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().LocalBadges();
     ui::viewmodels::FileDialogViewModel vmFile;
     vmFile.AddFileType(L"Image Files", L"*.png;*.gif;*.jpg;*.jpeg");
     vmFile.SetDefaultExtension(L"png");
+    vmFile.SetInitialDirectory(pLocalBadges.GetLastDirectory());
     if (vmFile.ShowOpenFileDialog(*this) != DialogResult::OK)
         return;
 
     const auto& pFileName = vmFile.GetFileName();
     auto& pFileSystemService = ra::services::ServiceLocator::GetMutable<ra::services::IFileSystem>();
+
+    const auto pDirectory = pFileSystemService.GetDirectory(pFileName);
+    pLocalBadges.SetLastDirectory(pDirectory);
+
     const auto pFile = pFileSystemService.OpenTextFile(pFileName);
     if (!pFile)
     {

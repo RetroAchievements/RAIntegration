@@ -233,6 +233,7 @@ private:
     void SyncStateToRuntime(AssetState nNewState) const;
     void SyncValueFormatToRuntime() const;
     void SyncTrackerToRuntime() const;
+    void SyncCategoryToRuntime() const;
     void SyncDefinitionToRuntime();
 
     void SyncStateFromRuntime(uint8_t nState);

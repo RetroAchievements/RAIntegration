@@ -406,7 +406,7 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
             // process the response
             rc_api_update_leaderboard_response_t response;
             nResult = rc_api_process_update_leaderboard_server_response(&response, &api_response);
-            if (nResult == RC_OK || nResult == RC_ACCESS_DENIED)
+            if (nResult == RC_OK)
             {
                 if (pLeaderboard.GetCategory() == ra::data::models::AssetCategory::Local)
                 {

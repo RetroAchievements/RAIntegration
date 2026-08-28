@@ -1084,7 +1084,7 @@ public:
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
         vmUpload.mockRcClient.MockResponse(
-            "r=uploadleaderboard&u=User&t=APITOKEN&g=22&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&t=unpromoted&h=b9e48151adc764317296ac777ab550f1",
+            "r=uploadleaderboard&u=User&t=APITOKEN&g=22&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&m=unpromoted&h=b9e48151adc764317296ac777ab550f1",
             "{\"Success\":\"true\",\"LeaderboardID\":7716}"
         );
 
@@ -1114,7 +1114,7 @@ public:
         Assert::AreEqual({1U}, vmUpload.TaskCount());
 
         vmUpload.mockRcClient.MockResponse(
-            "r=uploadleaderboard&u=User&t=APITOKEN&g=33&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&t=unpromoted&h=b9e48151adc764317296ac777ab550f1",
+            "r=uploadleaderboard&u=User&t=APITOKEN&g=33&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&m=unpromoted&h=b9e48151adc764317296ac777ab550f1",
             "{\"Success\":\"true\",\"LeaderboardID\":7716}"
         );
 
@@ -1128,6 +1128,32 @@ public:
         Assert::AreEqual(AssetChanges::None, pLeaderboard.GetChanges());
 
         vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestSingleLocalLeaderboardNoClaim)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
+        auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
+        Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
+
+        vmUpload.QueueAsset(pLeaderboard);
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadleaderboard&u=User&t=APITOKEN&g=22&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&m=unpromoted&h=b9e48151adc764317296ac777ab550f1",
+            "{\"Success\":false,\"Status\":403,\"Code\":\"access_denied\",\"Error\":\"You must have an active claim on this game to perform this action.\"}"
+        );
+
+        vmUpload.DoUpload();
+
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
+        // newly published local leaderboard should be changed to unofficial and have it's ID updated
+        Assert::AreEqual(AssetCategory::Local, pLeaderboard.GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
+
+        vmUpload.AssertFailed(0, 1, L"* Title1: You must have an active claim on this game to perform this action.");
     }
 
     TEST_METHOD(TestRichPresence)

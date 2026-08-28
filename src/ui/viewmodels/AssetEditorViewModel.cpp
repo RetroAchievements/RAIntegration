@@ -106,18 +106,25 @@ AssetEditorViewModel::~AssetEditorViewModel()
 void AssetEditorViewModel::SelectBadgeFile()
 {
     auto& pLocalBadges = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().LocalBadges();
+    const auto sOldLastDirectory = pLocalBadges.GetLastDirectory();
     ui::viewmodels::FileDialogViewModel vmFile;
     vmFile.AddFileType(L"Image Files", L"*.png;*.gif;*.jpg;*.jpeg");
     vmFile.SetDefaultExtension(L"png");
-    vmFile.SetInitialDirectory(pLocalBadges.GetLastDirectory());
+    vmFile.SetInitialDirectory(sOldLastDirectory);
     if (vmFile.ShowOpenFileDialog(*this) != DialogResult::OK)
         return;
 
     const auto& pFileName = vmFile.GetFileName();
     auto& pFileSystemService = ra::services::ServiceLocator::GetMutable<ra::services::IFileSystem>();
 
-    const auto pDirectory = pFileSystemService.GetDirectory(pFileName);
-    pLocalBadges.SetLastDirectory(pDirectory);
+    const auto sNewLastDirectory = pFileSystemService.GetDirectory(pFileName);
+    if (sNewLastDirectory != sOldLastDirectory)
+    {
+        pLocalBadges.SetLastDirectory(sNewLastDirectory);
+        std::vector<ra::data::models::AssetModelBase*> vAssetsToSave;
+        vAssetsToSave.push_back(&pLocalBadges);
+        ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets().SaveAssets(vAssetsToSave);
+    }
 
     const auto pFile = pFileSystemService.OpenTextFile(pFileName);
     if (!pFile)

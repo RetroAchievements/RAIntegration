@@ -11,11 +11,14 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockDevKitContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
+#include "tests\devkit\services\mocks\MockLogger.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AchievementAsserts.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
@@ -72,6 +75,7 @@ private:
         AssetEditorViewModelHarness(AssetEditorViewModelHarness&&) noexcept = delete;
         AssetEditorViewModelHarness& operator=(AssetEditorViewModelHarness&&) noexcept = delete;
 
+        ra::context::mocks::MockDevKitContext mockDevKitContext;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockUserContext mockUserContext;
@@ -79,6 +83,8 @@ private:
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockLogger mockLogger;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -2417,6 +2423,7 @@ public:
         AchievementModel achievement;
         editor.LoadAsset(&achievement);
 
+        editor.mockGameContext.SetActiveGameId(1);
         editor.mockGameContext.LocalBadges().SetLastDirectory(L"C:\\Badges");
 
         bool bDialogSeen = false;
@@ -2446,6 +2453,9 @@ public:
 
         Assert::AreEqual(std::wstring(L"C:\\Badges\\Game1"), editor.mockGameContext.LocalBadges().GetLastDirectory());
         Assert::IsTrue(bDialogSeen);
+
+        const auto pUserFile = editor.mockLocalStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, L"1");
+        Assert::AreEqual(std::string("0.0.0.0\nGame Title\nBadgeDir=C:\\Badges\\Game1\n"), pUserFile);
     }
 
     TEST_METHOD(TestChangingGroupUpdatesDebugHighlights)

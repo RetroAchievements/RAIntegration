@@ -236,6 +236,12 @@ public:
         // chained value note
         AssertValidation("A:0xH0008_1=6", L""); // 1 is not an address so it shouldn't matter that it doesn't have a note
     }
+
+    TEST_METHOD(TestRecallConstantAcrossAlts)
+    {
+        AssertValidation("SQ:0xX00aa4968=4_K:11160468_I:{recall}_N:0xX00000000!=0_M:0=1.3."
+                         "SK:11160468_I:{recall}_N:0xX00000000!=0_R:0=1", L"");
+    }
 };
 
 } // namespace tests

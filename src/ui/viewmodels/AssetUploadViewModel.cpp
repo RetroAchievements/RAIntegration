@@ -1,7 +1,6 @@
 #include "AssetUploadViewModel.hh"
 
 #include "api\UpdateAchievement.hh"
-#include "api\UpdateLeaderboard.hh"
 #include "api\UpdateRichPresence.hh"
 #include "api\UploadBadge.hh"
 
@@ -21,6 +20,7 @@
 
 #include <rcheevos/include/rc_api_runtime.h>
 #include <rcheevos/include/rc_api_editor.h>
+#include <rcheevos/src/rc_client_internal.h>
 
 namespace ra {
 namespace ui {
@@ -346,51 +346,108 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
 void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    std::string sNarrowTitle = ra::util::String::Narrow(pLeaderboard.GetName());
+    std::string sNarrowDescription = ra::util::String::Narrow(pLeaderboard.GetDescription());
 
-    ra::api::UpdateLeaderboard::Request request;
-    request.GameId = pGameContext.GetGameId(pLeaderboard.GetSubsetID());
-    request.Title = pLeaderboard.GetName();
-    request.Description = pLeaderboard.GetDescription();
-    request.StartTrigger = pLeaderboard.GetStartTrigger();
-    request.SubmitTrigger = pLeaderboard.GetSubmitTrigger();
-    request.CancelTrigger = pLeaderboard.GetCancelTrigger();
-    request.ValueDefinition = pLeaderboard.GetValueDefinition();
-    request.Format = pLeaderboard.GetValueFormat();
-    request.LowerIsBetter = pLeaderboard.IsLowerBetter();
+    // construct the API request
+    rc_api_update_leaderboard_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+    api_params.game_id = pGameContext.GetGameId(pLeaderboard.GetSubsetID()); // TODO: switch to achievement_set_id
+    api_params.title = sNarrowTitle.c_str();
+    api_params.description = sNarrowDescription.c_str();
+    api_params.start_trigger = pLeaderboard.GetStartTrigger().c_str();
+    api_params.submit_trigger = pLeaderboard.GetSubmitTrigger().c_str();
+    api_params.cancel_trigger = pLeaderboard.GetCancelTrigger().c_str();
+    api_params.value_definition = pLeaderboard.GetValueDefinition().c_str();
+    api_params.format = ra::data::Value::FormatToServerEnum(pLeaderboard.GetValueFormat());
+    api_params.lower_is_better = pLeaderboard.IsLowerBetter() ? 1 : 0;
 
-    if (pLeaderboard.GetCategory() != ra::data::models::AssetCategory::Local)
-        request.LeaderboardId = pLeaderboard.GetID();
-
-    const auto& response = request.Call();
-
-    // update the leaderboard model
-    if (response.Succeeded())
+    switch (pLeaderboard.GetCategory())
     {
-        if (pLeaderboard.GetCategory() == ra::data::models::AssetCategory::Local)
+        case ra::data::models::AssetCategory::Local:
+            // new leaderboard, submit to unpromoted:
+            api_params.state = RC_LEADERBOARD_STATE_UNPROMOTED;
+            break;
+
+        case ra::data::models::AssetCategory::Promoted:
+            // promoted leaderboard
+            api_params.leaderboard_id = pLeaderboard.GetID();
+            api_params.state = RC_LEADERBOARD_STATE_ACTIVE;
+            break;
+
+        default:
+            // unpromoted leaderboard
+            api_params.leaderboard_id = pLeaderboard.GetID();
+            api_params.state = RC_LEADERBOARD_STATE_UNPROMOTED;
+            break;
+    }
+
+    auto& pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>();
+    rc_api_request_t api_request;
+    auto nResult = rc_api_init_update_leaderboard_request_hosted(&api_request, &api_params, pClient.GetHost());
+    std::string sErrorMessage = rc_error_str(nResult);
+
+    if (nResult == RC_OK)
+    {
+        bool bRetry = false;
+        std::string sResponseBuffer;
+
+        do
         {
-            pLeaderboard.SetCategory(ra::data::models::AssetCategory::Promoted);
-            pLeaderboard.SetID(response.LeaderboardId);
-        }
+            bRetry = false;
 
-        pLeaderboard.UpdateLocalCheckpoint();
-        pLeaderboard.UpdateServerCheckpoint();
-    }
-    else if (response.Result == ra::api::ApiResult::Incomplete)
-    {
-        Rest();
-        UploadLeaderboard(pLeaderboard);
-        return;
+            // send the API request
+            rc_api_server_response_t api_response;
+            pClient.SendRequest(api_request, api_response, sResponseBuffer);
+
+            // process the response
+            rc_api_update_leaderboard_response_t response;
+            nResult = rc_api_process_update_leaderboard_server_response(&response, &api_response);
+            if (nResult == RC_OK || nResult == RC_ACCESS_DENIED)
+            {
+                if (pLeaderboard.GetCategory() == ra::data::models::AssetCategory::Local)
+                {
+                    pLeaderboard.SetCategory(ra::data::models::AssetCategory::Unpromoted);
+                    pLeaderboard.SetID(response.leaderboard_id);
+                }
+
+                pLeaderboard.UpdateLocalCheckpoint();
+                pLeaderboard.UpdateServerCheckpoint();
+            }
+            else
+            {
+                bRetry = rc_client_should_retry(&api_response);
+                if (!bRetry)
+                {
+                    if (response.response.error_message)
+                        sErrorMessage = response.response.error_message;
+                    else
+                        sErrorMessage = rc_error_str(nResult);
+                }
+            }
+
+            rc_api_destroy_update_leaderboard_response(&response);
+
+            if (!bRetry)
+                break;
+
+            Rest();
+        } while (true);
     }
 
-    // update the queue
+    rc_api_destroy_request(&api_request);
+
     std::lock_guard<std::mutex> pLock(m_pMutex);
     for (auto& pScan : m_vUploadQueue)
     {
         if (pScan.pAsset == &pLeaderboard)
         {
-            pScan.sErrorMessage = response.ErrorMessage;
+            pScan.sErrorMessage = sErrorMessage;
 
-            if (response.ErrorMessage == "Invalid state")
+            if (nResult == RC_INVALID_STATE)
             {
                 // generic API failure. Try to guess what went wrong
                 if (pLeaderboard.GetName().empty())
@@ -407,7 +464,7 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
                     pScan.sErrorMessage = "At least one value condition is required";
             }
 
-            pScan.nState = response.Succeeded() ? UploadState::Success : UploadState::Failed;
+            pScan.nState = (nResult == RC_OK) ? UploadState::Success : UploadState::Failed;
             break;
         }
     }
@@ -587,8 +644,7 @@ void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel&
             }
             else
             {
-                bRetry = api_response.http_status_code == ra::etoi(ra::services::Http::StatusCode::TooManyRequests)
-                    || api_response.http_status_code == RC_API_SERVER_RESPONSE_RETRYABLE_CLIENT_ERROR;
+                bRetry = rc_client_should_retry(&api_response);
                 if (!bRetry)
                 {
                     if (response.response.error_message)

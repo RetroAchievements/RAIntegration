@@ -2495,6 +2495,36 @@ public:
         editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Submit);
         Assert::AreEqual({ 0 }, editor.Trigger().Conditions().Count());
     }
+
+    TEST_METHOD(TestPasteAndModifyIncompleteComparison)
+    {
+        AssetEditorViewModelHarness editor;
+
+        // create an achievement and hook it up to a runtime structure that will hold the trigger definition
+        struct rc_client_achievement_info_t achievement_info;
+        memset(&achievement_info, 0, sizeof(achievement_info));
+        AchievementModel achievement;
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.SetLocalAchievementInfo(achievement_info);
+        editor.LoadAsset(&achievement);
+
+        // paste an invalid trigger definition so that runtime structure has a null pointer
+        ra::services::mocks::MockClipboard mockClipboard;
+        mockClipboard.SetText(L"I:0xX0004_M:0xX0008");
+        editor.Trigger().PasteFromClipboard();
+
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Invalid operator"), editor.GetAssetValidationError());
+
+        // modify the condition so the serialized trigger changes and the condset gets discarded
+        editor.Trigger().Conditions().GetItemAt(0)->SetSourceValue(0x000045);
+
+        // make sure the condset gets rebuilt by the tooltip code
+        const auto* pCondition = editor.Trigger().Conditions().GetItemAt(1);
+        Assert::AreEqual(std::wstring(L"0x0008 (indirect $0x0045+0x08)\r\n[No memory note]"),
+            pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
 };
 
 } // namespace tests

@@ -7,7 +7,6 @@
 #include "data\util\IndirectNoteResolver.hh"
 
 #include "services\AchievementLogicSerializer.hh"
-#include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
@@ -637,8 +636,9 @@ const rc_condition_t* TriggerConditionViewModel::GetFirstCondition() const
     }
     else
     {
-        Expects(pGroup->m_pConditionSet != nullptr);
-        pFirstCondition = pGroup->m_pConditionSet->conditions;
+        auto* pCondSet = pGroup->GetConditionSet(pTriggerViewModel->IsValue());
+        Expects(pCondSet != nullptr);
+        pFirstCondition = pCondSet->conditions;
     }
 
     return pFirstCondition;
@@ -688,7 +688,7 @@ ra::data::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::data::By
     if (pCondition)
     {
         auto& pCodeNotes = ra::services::ServiceLocator::Get<ra::context::IGameContext>().MemoryNotes();
-        ra::data::util::IndirectNoteResolver pIndirectNoteResolver(pCodeNotes);
+        const ra::data::util::IndirectNoteResolver pIndirectNoteResolver(pCodeNotes);
         std::vector<ra::data::util::IndirectNoteResolver::Node> vParentChain;
 
         const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);

@@ -147,6 +147,39 @@ void SearchImpl::ApplyFilter(SearchResults& srNew, const SearchResults& srPrevio
     }
 }
 
+void SearchImpl::ApplyFilter(SearchResults & srNew, const SearchResults & srPrevious,
+    std::function<bool(const SearchResult&)> fFilter) const
+{
+    std::vector<ra::data::ByteAddress> vMatches;
+    SearchResult pResult;
+    pResult.nSize = GetMemSize();
+
+    for (auto& block : srPrevious.m_vBlocks)
+    {
+        const auto* pBlockBytes = block.GetBytes();
+        const auto* pBlockBytesStop = pBlockBytes + block.GetBytesSize() - GetPadding();
+        const auto nStride = GetStride();
+        const auto nBlockAddress = block.GetFirstAddress();
+        pResult.nAddress = ConvertToRealAddress(nBlockAddress);
+
+        for (const auto* pScan = pBlockBytes; pScan < pBlockBytesStop; pScan += nStride)
+        {
+            pResult.nValue = BuildValue(pScan);
+            if (fFilter(pResult))
+                vMatches.push_back(ConvertFromRealAddress(pResult.nAddress));
+
+            pResult.nAddress += nStride;
+        }
+
+        if (!vMatches.empty())
+        {
+            std::vector<uint8_t> vMemory(pBlockBytes, pBlockBytes + block.GetBytesSize());
+            AddBlocks(srNew, vMatches, vMemory, block.GetFirstAddress(), GetPadding());
+            vMatches.clear();
+        }
+    }
+}
+
 bool SearchImpl::GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex, _Out_ SearchResult& result) const noexcept
 {
     result.nSize = GetMemSize();
@@ -163,6 +196,29 @@ bool SearchImpl::GetMatchingAddress(const SearchResults& srResults, gsl::index n
     }
 
     return false;
+}
+
+void SearchImpl::EnumerateMatches(const SearchResults& srResults,
+    std::function<bool(const SearchResult&)> fCallback) const
+{
+    SearchResult result;
+    result.nSize = GetMemSize();
+
+    for (const auto& pBlock : srResults.m_vBlocks)
+    {
+        const auto nRealFirstAddress = ConvertToRealAddress(pBlock.GetFirstAddress());
+        const auto bResult = pBlock.EnumerateMatchingAddresses(
+            [this, &result, &pBlock, nRealFirstAddress, fCallback](ra::data::ByteAddress nAddress) {
+                result.nAddress = ConvertToRealAddress(nAddress);
+
+                const uint32_t nOffset = result.nAddress - nRealFirstAddress;
+                result.nValue = BuildValue(pBlock.GetBytes() + nOffset);
+                return fCallback(result);
+            });
+
+        if (!bResult)
+            break;
+    }
 }
 
 size_t SearchImpl::GetIndexOfBlockForVirtualAddress(const SearchResults& srResults, uint32_t nAddress)

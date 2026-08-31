@@ -2,6 +2,7 @@
 #define RA_UI_POINTERFINDERVIEWMODEL_H
 #pragma once
 
+#include "services/PointerFinder.hh"
 #include "services/SearchResults.h"
 
 #include "ui/WindowViewModelBase.hh"
@@ -65,7 +66,12 @@ public:
     /// <summary>
     /// Bookmarks the currently item from the search results.
     /// </summary>
-    void BookmarkSelected();
+    void BookmarkSelected() const;
+
+    /// <summary>
+    /// Copies the currently item from the search results as achievemnet logic.
+    /// </summary>
+    void CopySelectedToClipboard() const;
 
     class StateViewModel : public ViewModelBase,
                            protected ra::data::context::EmulatorContext::DispatchesReadMemory
@@ -108,7 +114,7 @@ public:
 
         void ToggleCapture();
 
-        const ra::services::SearchResults* CapturedMemory() const noexcept { return m_pCapture.get(); }
+        const ra::services::PointerFinder::Capture& CapturedMemory() const noexcept { return m_pCapture; }
 
         MemoryViewerViewModel& Viewer() noexcept { return m_pViewer; }
         const MemoryViewerViewModel& Viewer() const noexcept { return m_pViewer; }
@@ -126,7 +132,7 @@ public:
 
         PointerFinderViewModel* m_pOwner = nullptr;
         MemoryViewerViewModel m_pViewer;
-        std::unique_ptr<ra::services::SearchResults> m_pCapture;
+        ra::services::PointerFinder::Capture m_pCapture;
     };
 
     std::array<StateViewModel, 4>& States() noexcept { return m_vStates; }
@@ -267,6 +273,8 @@ public:
     private:
         friend class PointerFinderViewModel;
         ra::data::ByteAddress m_nAddress = 0;
+        int32_t m_nOffset = 0;
+        bool m_bIsChild = false;
         bool m_bMatched = false;
     };
 
@@ -281,10 +289,19 @@ public:
     }
 
 protected:
+    static const BoolModelProperty ShowProgressDialogProperty;
+
+    void AddPotentialPointer(const ra::services::PointerFinder::PotentialPointer& pPotentialPointer, ra::data::Memory::Size nSize);
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
+    void GetSelectedItems(std::vector<gsl::index>& nIndices) const;
+    void ConvertResultsToAchievementLogic(const std::vector<gsl::index>& nIndices, std::function<void(const std::string& sSerialized)> fCallback) const;
+
+    ra::data::Memory::Size GetSearchSize() const;
+
 private:
-    std::array<StateViewModel, 4> m_vStates;
+    static constexpr size_t NUM_STATES = 4;
+    std::array<StateViewModel, NUM_STATES> m_vStates;
 
     ra::ui::ViewModelCollection<PotentialPointerViewModel> m_vResults;
     LookupItemViewModelCollection m_vSearchTypes;

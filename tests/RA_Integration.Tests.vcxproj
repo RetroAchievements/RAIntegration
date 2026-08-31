@@ -94,6 +94,7 @@
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="..\src\services\impl\LoginService.cpp" />
     <ClCompile Include="..\src\services\impl\OfflineRcClient.cpp" />
+    <ClCompile Include="..\src\services\PointerFinder.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
     <ClCompile Include="..\src\services\search\SearchImpl.cpp" />
     <ClCompile Include="..\src\ui\Theme.cpp" />

@@ -335,46 +335,67 @@ ra::data::ByteAddress CapturedMemoryBlock::GetMatchingAddress(gsl::index nIndex)
     if (AreAllAddressesMatching())
         return m_nFirstAddress + gsl::narrow_cast<ra::data::ByteAddress>(nIndex);
 
-    const auto nAddressesSize = (m_nAddressCount + 7) / 8;
-    const uint8_t* pAddresses = (nAddressesSize > sizeof(m_vAddresses)) ? m_pAddresses : &m_vAddresses[0];
-    ra::data::ByteAddress nAddress = m_nFirstAddress;
-    const ra::data::ByteAddress nStop = m_nFirstAddress + m_nAddressCount;
-    uint8_t nMask = 0x01;
-
-    if (pAddresses != nullptr)
-    {
-        do
+    ra::data::ByteAddress nAddress = 0;
+    EnumerateMatchingAddressesInternal([&nAddress, &nIndex](ra::data::ByteAddress nScanAddress) noexcept {
+        if (nIndex == 0)
         {
-            if (*pAddresses & nMask)
-            {
-                if (nIndex-- == 0)
-                    return nAddress;
-            }
+            nAddress = nScanAddress;
+            return false;
+        }
 
-            if (nMask == 0x80)
-            {
-                nMask = 0x01;
-                pAddresses++;
+        --nIndex;
+        return true;
+    });
 
-                while (!*pAddresses)
-                {
-                    nAddress += 8;
-                    if (nAddress >= nStop)
-                        break;
+    return nAddress;
+}
 
-                    pAddresses++;
-                }
-            }
-            else
-            {
-                nMask <<= 1;
-            }
+bool CapturedMemoryBlock::EnumerateMatchingAddresses(std::function<bool(ra::data::ByteAddress)> fCallback) const
+{
+    if (!AreAllAddressesMatching())
+        return EnumerateMatchingAddressesInternal(fCallback);
 
-            nAddress++;
-        } while (nAddress < nStop);
+    for (auto nAddress = m_nFirstAddress; nAddress < m_nFirstAddress + m_nAddressCount; ++nAddress)
+    {
+        if (!fCallback(nAddress))
+            return false;
     }
 
-    return 0;
+    return true;
+}
+
+bool CapturedMemoryBlock::EnumerateMatchingAddressesInternal(std::function<bool(ra::data::ByteAddress)> fCallback) const
+{
+    const uint8_t* pAddresses = GetMatchingAddressPointer();
+    if (GSL_UNLIKELY(pAddresses == nullptr))
+        return false;
+
+    ra::data::ByteAddress nAddress = m_nFirstAddress;
+    const ra::data::ByteAddress nStop = nAddress + m_nAddressCount;
+
+    do
+    {
+        uint8_t nValue = *pAddresses++;
+        if (nValue)
+        {
+            ra::data::ByteAddress nScanAddress = nAddress;
+            do
+            {
+                if (nValue & 1)
+                {
+                    if (!fCallback(nScanAddress))
+                        return false;
+                }
+
+                ++nScanAddress;
+                nValue >>= 1;
+            } while (nValue);
+        }
+
+        nAddress += 8;
+    } while (nAddress < nStop);
+
+    return true;
 }
 
 } // namespace data

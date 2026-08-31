@@ -106,6 +106,15 @@ public:
         _In_ ComparisonType nCompareType, _In_ SearchFilterType nFilterType, _In_ const std::wstring& sFilterValue);
 
     /// <summary>
+    /// Initializes a result set by comparing provided memory against another result set.
+    /// </summary>
+    /// <param name="srFirst">The result set to filter.</param>
+    /// <param name="pReadMemory">A function that provides current values of memory.</param>
+    /// <param name="fFilter">A function that determines whether or not to exclude an address (returns <c>true</c> to keep</param>
+    /// <returns><c>true</c> if initialization was successful, <c>false</c> if the filter value was not supported</returns>
+    bool Initialize(_In_ const SearchResults& srFirst, _In_ std::function<bool(const SearchResult& pResult)> fFilter);
+
+    /// <summary>
     /// Gets the number of matching addresses.
     /// </summary>
     size_t MatchingAddressCount() const noexcept;
@@ -118,6 +127,12 @@ public:
     void Initialize(_In_ const std::vector<SearchResult>& srResults, _In_ SearchType nSearchType);
 
     /// <summary>
+    /// Calls the provided callback for each matching address.
+    /// </summary>
+    /// <param name="fCallback">Callback to call for each element, returns <c>true</c> to continue iterating, or <c>false</c> to stop.</param>
+    void EnumerateMatches(std::function<bool(const SearchResult& result)> fCallback) const;
+
+    /// <summary>
     /// Gets the nIndex'th matching address.
     /// </summary>
     /// <param name="result">The result.</param>
@@ -125,7 +140,7 @@ public:
     bool GetMatchingAddress(gsl::index nIndex, _Out_ SearchResult& result) const noexcept;
 
     /// <summary>
-    /// Gets and item from the results matching a result from another set of results.
+    /// Gets an item from the results matching a result from another set of results.
     /// </summary>
     /// <param name="pSrcResult">The result to find a match for.</param>
     /// <param name="result">The result.</param>

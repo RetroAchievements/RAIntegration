@@ -101,6 +101,7 @@
     <ClCompile Include="services\impl\WindowsHttpRequester.cpp" />
     <ClCompile Include="services\Initialization.cpp" />
     <ClCompile Include="services\PerformanceCounter.cpp" />
+    <ClCompile Include="services\PointerFinder.cpp" />
     <ClCompile Include="services\SearchResults.cpp" />
     <ClCompile Include="services\search\SearchImpl.cpp" />
     <ClCompile Include="ui\drawing\gdi\GDIBitmapSurface.cpp" />
@@ -237,6 +238,7 @@
     <ClInclude Include="services\impl\WindowsHttpRequester.hh" />
     <ClInclude Include="services\Initialization.hh" />
     <ClInclude Include="services\PerformanceCounter.hh" />
+    <ClInclude Include="services\PointerFinder.hh" />
     <ClInclude Include="services\search\SearchImpl.hh" />
     <ClInclude Include="services\search\SearchImpl_16bit.hh" />
     <ClInclude Include="services\search\SearchImpl_16bit_aligned.hh" />

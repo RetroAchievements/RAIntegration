@@ -68,9 +68,17 @@ public:
     virtual void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious,
                              std::function<void(ra::data::ByteAddress, uint8_t*, size_t)> pReadMemory) const;
 
+    // populates a vector of addresses that match the specified filter when applied to a previous search result
+    void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious,
+        std::function<bool(const SearchResult& pResult)> fFilter) const;
+
     // gets the nIndex'th search result
     bool GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex,
                             _Out_ SearchResult& result) const noexcept;
+
+    // calls the provided callback for each matching address
+    void EnumerateMatches(const SearchResults& srResults, 
+                          std::function<bool(const SearchResult&)> fCallback) const;
 
     /// <summary>
     /// Gets a value from the search results using the provided virtual address (in result.nAddress)

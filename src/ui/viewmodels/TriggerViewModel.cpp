@@ -338,7 +338,7 @@ void TriggerViewModel::PasteFromClipboard()
         sNarrowText.insert(0, "M:");
     }
 
-    const auto nResult = AppendMemRefChain(sNarrowText);
+    const auto nResult = AppendMemRefChain(sNarrowText, true);
     if (nResult != RC_OK)
     {
         if (nResult == RC_MULTIPLE_GROUPS)
@@ -354,7 +354,7 @@ void TriggerViewModel::PasteFromClipboard()
     }
 }
 
-int TriggerViewModel::AppendMemRefChain(const std::string& sTrigger)
+int TriggerViewModel::AppendMemRefChain(const std::string& sTrigger, bool bSelect)
 {
     // have to use internal parsing functions to decode conditions without full trigger/value
     // restriction validation (full validation will occur after new conditions are added)
@@ -391,14 +391,19 @@ int TriggerViewModel::AppendMemRefChain(const std::string& sTrigger)
 
     m_bInitializingConditions = true;
 
-    DeselectAllConditions();
+    if (bSelect)
+        DeselectAllConditions();
 
     const auto nCountBefore = GetValue(ScrollMaximumProperty);
     UpdateConditions(pGroup);
-    const auto nCountAfter = GetValue(ScrollMaximumProperty);
-    EnsureVisible(nCountBefore, nCountAfter - nCountBefore);
 
-    SelectRange(nCountBefore, gsl::narrow_cast<gsl::index>(nCountAfter) - 1, true);
+    if (bSelect)
+    {
+        const auto nCountAfter = GetValue(ScrollMaximumProperty);
+        EnsureVisible(nCountBefore, nCountAfter - nCountBefore);
+
+        SelectRange(nCountBefore, gsl::narrow_cast<gsl::index>(nCountAfter) - 1, true);
+    }
 
     m_bInitializingConditions = false;
 
@@ -706,7 +711,7 @@ void TriggerViewModel::NewCondition()
         }
     }
 
-    AppendMemRefChain(sMemRef);
+    AppendMemRefChain(sMemRef, true);
 }
 
 void TriggerViewModel::AddAltGroup(int nId, rc_condset_t* pConditionSet)
@@ -815,17 +820,23 @@ void TriggerViewModel::InitializeFrom(const std::string& sTrigger)
     {
         InitializeGroups(*m_pTrigger);
     }
-    else if (m_bIsValue)
-    {
-        rc_value_t pValue;
-        memset(&pValue, 0, sizeof(pValue));
-        InitializeFrom(pValue);
-    }
     else
     {
-        rc_trigger_t pTrigger;
-        memset(&pTrigger, 0, sizeof(pTrigger));
-        InitializeFrom(pTrigger);
+        if (m_bIsValue)
+        {
+            rc_value_t pValue;
+            memset(&pValue, 0, sizeof(pValue));
+            InitializeFrom(pValue);
+        }
+        else
+        {
+            rc_trigger_t pTrigger;
+            memset(&pTrigger, 0, sizeof(pTrigger));
+            InitializeFrom(pTrigger);
+        }
+
+        if (!sTrigger.empty())
+            AppendMemRefChain(sTrigger, false);
     }
 }
 

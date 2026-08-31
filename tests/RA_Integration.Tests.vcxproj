@@ -207,7 +207,7 @@
     <ClInclude Include="mocks\MockAudioSystem.hh" />
     <ClInclude Include="mocks\MockClipboard.hh" />
     <ClInclude Include="mocks\MockClock.hh" />
-    <ClInclude Include="mocks\MockConfiguration.hh" />
+    <ClInclude Include="mocks\MockWindowConfiguration.hh" />
     <ClInclude Include="mocks\MockConsoleContext.hh" />
     <ClInclude Include="mocks\MockDesktop.hh" />
     <ClInclude Include="mocks\MockEmulatorContext.hh" />

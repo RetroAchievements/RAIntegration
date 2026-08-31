@@ -222,7 +222,8 @@
     <ClInclude Include="services\GameIdentifier.hh" />
     <ClInclude Include="services\IAudioSystem.hh" />
     <ClInclude Include="services\IClipboard.hh" />
-    <ClInclude Include="services\IConfiguration.hh" />
+    <ClInclude Include="services\impl\JsonFileWindowConfiguration.hh" />
+    <ClInclude Include="services\IWindowConfiguration.hh" />
     <ClInclude Include="services\ILoginService.hh" />
     <ClInclude Include="services\impl\FileLocalStorage.hh" />
     <ClInclude Include="services\impl\FileLogger.hh" />

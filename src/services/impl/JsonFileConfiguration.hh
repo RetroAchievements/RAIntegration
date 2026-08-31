@@ -3,12 +3,13 @@
 #pragma once
 
 #include "services\IConfiguration.hh"
+#include "services\IWindowConfiguration.hh"
 
 namespace ra {
 namespace services {
 namespace impl {
 
-class JsonFileConfiguration : public IConfiguration
+class JsonFileConfiguration : public IConfiguration, public IWindowConfiguration
 {
 public:
     bool Load(const std::wstring& sFilename);
@@ -26,9 +27,6 @@ public:
 
     unsigned int GetNumBackgroundThreads() const noexcept override { return m_nBackgroundThreads; }
 
-    const std::wstring& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
-    void SetRomDirectory(const std::wstring& sValue) override { m_sRomDirectory = sValue; }
-
     const std::wstring& GetScreenshotDirectory() const noexcept override { return m_sScreenshotDirectory; }
     void SetScreenshotDirectory(const std::wstring& sValue) override { m_sScreenshotDirectory = sValue; }
 
@@ -42,7 +40,6 @@ public:
     bool IsCustomHost() const noexcept override { return m_bCustomHost; }
     const std::string& GetHostName() const override;
     const std::string& GetHostUrl() const override;
-    const std::string& GetImageHostUrl() const override;
 
     void Save() const override;
 
@@ -58,7 +55,6 @@ private:
     std::array<ra::ui::viewmodels::PopupLocation, ra::etoi(ra::ui::viewmodels::Popup::NumPopups)> m_vPopupLocations = {};
 
     unsigned int m_nBackgroundThreads = 8;
-    std::wstring m_sRomDirectory;
     std::wstring m_sScreenshotDirectory;
 
     typedef struct WindowPosition
@@ -73,7 +69,6 @@ private:
     bool m_bCustomHost = false;
     std::string m_sHostName;
     std::string m_sHostUrl;
-    std::string m_sImageHostUrl;
 
     std::wstring m_sFilename;
 };

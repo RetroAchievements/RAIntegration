@@ -7,15 +7,16 @@
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
+#include "tests\devkit\services\mocks\MockConfiguration.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\ui\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockSurface.hh"
+#include "tests\mocks\MockWindowConfiguration.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 #include "tests\ui\UIAsserts.hh"
@@ -41,6 +42,7 @@ private:
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockThreadPool mockThreadPool;
+        ra::services::mocks::MockWindowConfiguration mockWindowConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::mocks::MockOverlayTheme mockTheme;
@@ -258,7 +260,7 @@ public:
     TEST_METHOD(TestAddRemoveScoreTrackerLeaderboardEnabled)
     {
         OverlayManagerHarness overlay;
-        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
+        overlay.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
 
         const auto& vmScoreTracker = overlay.AddScoreTracker(3);
         Assert::AreEqual(3, vmScoreTracker.GetPopupId());
@@ -286,7 +288,7 @@ public:
     TEST_METHOD(TestAddRemoveScoreTrackerLeaderboardDisabled)
     {
         OverlayManagerHarness overlay;
-        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::None);
+        overlay.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::None);
 
         const auto& vmScoreTracker = overlay.AddScoreTracker(3);
         Assert::AreEqual(3, vmScoreTracker.GetPopupId());
@@ -314,7 +316,7 @@ public:
     TEST_METHOD(TestAddMultipleScoreTrackers)
     {
         OverlayManagerHarness overlay;
-        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
+        overlay.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
         overlay.AddLeaderboard(3, "0xH1234");
         overlay.AddLeaderboard(4, "0xH2345");
 
@@ -347,7 +349,7 @@ public:
     TEST_METHOD(TestAddMultipleScoreTrackersSharedValue)
     {
         OverlayManagerHarness overlay;
-        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
+        overlay.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
         overlay.AddLeaderboard(3, "0xH1234");
         overlay.AddLeaderboard(4, "0xH1234"); // same value definition
 
@@ -483,7 +485,7 @@ public:
     TEST_METHOD(TestAddRemoveChallengeIndicator)
     {
         OverlayManagerHarness overlay;
-        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
+        overlay.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
 
         const auto& vmIndicator = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
         Assert::AreEqual(6, vmIndicator.GetPopupId());
@@ -512,7 +514,7 @@ public:
     TEST_METHOD(TestAddRemoveChallengeIndicatorDestroyPending)
     {
         OverlayManagerHarness overlay;
-        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
+        overlay.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
 
         const auto& vmIndicator = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
         Assert::IsFalse(vmIndicator.IsDestroyPending());
@@ -543,7 +545,7 @@ public:
     TEST_METHOD(TestAddMultipleChallengeIndicator)
     {
         OverlayManagerHarness overlay;
-        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
+        overlay.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
 
         const auto& vmIndicator = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
         const auto& vmIndicator2 = overlay.AddChallengeIndicator(7, ra::ui::ImageType::Badge, "22222");
@@ -588,7 +590,7 @@ public:
     TEST_METHOD(TestAddExistingChallengeIndicator)
     {
         OverlayManagerHarness overlay;
-        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
+        overlay.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
 
         const auto& vmIndicator = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
         Assert::AreEqual(6, vmIndicator.GetPopupId());
@@ -607,7 +609,7 @@ public:
     TEST_METHOD(TestAddRemoveProgressIndicator)
     {
         OverlayManagerHarness overlay;
-        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::BottomRight);
+        overlay.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::BottomRight);
 
         overlay.UpdateProgressTracker(ra::ui::ImageType::Badge, "12345_lock", L"3/7");
         auto* pTracker = overlay.GetProgressTracker();

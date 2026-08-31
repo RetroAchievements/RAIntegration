@@ -6,7 +6,7 @@
 
 #include "data\ModelProperty.hh"
 
-#include "services\IConfiguration.hh"
+#include "services\IWindowConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\IDesktop.hh"
@@ -171,9 +171,9 @@ void WindowBinding::RestoreSizeAndPosition()
     const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
     pDesktop.GetWorkArea(oWorkAreaPosition, oWorkAreaSize);
 
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    auto oPosition = pConfiguration.GetWindowPosition(m_sSizeAndPositionKey);
-    auto oSize = pConfiguration.GetWindowSize(m_sSizeAndPositionKey);
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    auto oPosition = pWindowConfiguration.GetWindowPosition(m_sSizeAndPositionKey);
+    auto oSize = pWindowConfiguration.GetWindowSize(m_sSizeAndPositionKey);
 
     if (oSize.Width == INT32_MIN || oSize.Height == INT32_MIN)
     {
@@ -303,7 +303,7 @@ void WindowBinding::OnSizeChanged(_UNUSED ra::ui::Size oSize)
         GetWindowRect(m_hWnd, &rcDialog);
         const ra::ui::Size oDialogSize{ rcDialog.right - rcDialog.left, rcDialog.bottom - rcDialog.top };
 
-        ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowSize(m_sSizeAndPositionKey, oDialogSize);
+        ra::services::ServiceLocator::GetMutable<ra::services::IWindowConfiguration>().SetWindowSize(m_sSizeAndPositionKey, oDialogSize);
     }
 
     ControlBinding::ForceRepaint(m_hWnd);
@@ -322,7 +322,7 @@ void WindowBinding::OnPositionChanged(_UNUSED ra::ui::Position oPosition)
         GetWindowRect(g_RAMainWnd, &rcMainWindow);
         const ra::ui::Position oRelativePosition{ rcDialog.left - rcMainWindow.left, rcDialog.top - rcMainWindow.top };
 
-        ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowPosition(m_sSizeAndPositionKey, oRelativePosition);
+        ra::services::ServiceLocator::GetMutable<ra::services::IWindowConfiguration>().SetWindowPosition(m_sSizeAndPositionKey, oRelativePosition);
     }
 }
 

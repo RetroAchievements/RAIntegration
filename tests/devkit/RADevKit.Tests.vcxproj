@@ -87,6 +87,7 @@
     <ClInclude Include="context\mocks\MockRcClient.hh" />
     <ClInclude Include="context\mocks\MockUserContext.hh" />
     <ClInclude Include="services\mocks\MockClock.hh" />
+    <ClInclude Include="services\mocks\MockConfiguration.hh" />
     <ClInclude Include="services\mocks\MockDebuggerDetector.hh" />
     <ClInclude Include="services\mocks\MockFileSystem.hh" />
     <ClInclude Include="services\mocks\MockHttpRequester.hh" />

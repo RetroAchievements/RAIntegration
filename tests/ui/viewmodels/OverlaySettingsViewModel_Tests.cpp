@@ -5,8 +5,9 @@
 #include "ui\viewmodels\FileDialogViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
-#include "tests\mocks\MockConfiguration.hh"
+#include "tests\devkit\services\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockWindowConfiguration.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -55,37 +56,38 @@ private:
     {
     public:
         ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::services::mocks::MockWindowConfiguration mockWindowConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
     };
 
     void ValidatePopupLocationInitialize(ra::ui::viewmodels::Popup nPopup, std::function<ra::ui::viewmodels::PopupLocation(OverlaySettingsViewModel&)> fGetValue)
     {
         OverlaySettingsViewModelHarness vmSettings;
-        vmSettings.mockConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::None);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::None);
         vmSettings.Initialize();
         Assert::AreEqual(ra::ui::viewmodels::PopupLocation::None, fGetValue(vmSettings));
 
-        vmSettings.mockConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::TopLeft);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::TopLeft);
         vmSettings.Initialize();
         Assert::AreEqual(ra::ui::viewmodels::PopupLocation::TopLeft, fGetValue(vmSettings));
 
-        vmSettings.mockConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::TopMiddle);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::TopMiddle);
         vmSettings.Initialize();
         Assert::AreEqual(ra::ui::viewmodels::PopupLocation::TopMiddle, fGetValue(vmSettings));
 
-        vmSettings.mockConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::TopRight);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::TopRight);
         vmSettings.Initialize();
         Assert::AreEqual(ra::ui::viewmodels::PopupLocation::TopRight, fGetValue(vmSettings));
 
-        vmSettings.mockConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::BottomLeft);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::BottomLeft);
         vmSettings.Initialize();
         Assert::AreEqual(ra::ui::viewmodels::PopupLocation::BottomLeft, fGetValue(vmSettings));
 
-        vmSettings.mockConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::BottomMiddle);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::BottomMiddle);
         vmSettings.Initialize();
         Assert::AreEqual(ra::ui::viewmodels::PopupLocation::BottomMiddle, fGetValue(vmSettings));
 
-        vmSettings.mockConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::BottomRight);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(nPopup, ra::ui::viewmodels::PopupLocation::BottomRight);
         vmSettings.Initialize();
         Assert::AreEqual(ra::ui::viewmodels::PopupLocation::BottomRight, fGetValue(vmSettings));
     }
@@ -95,31 +97,31 @@ private:
         OverlaySettingsViewModelHarness vmSettings;
         fSetValue(vmSettings, ra::ui::viewmodels::PopupLocation::None);
         vmSettings.Commit();
-        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::None, vmSettings.mockConfiguration.GetPopupLocation(nPopup));
+        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::None, vmSettings.mockWindowConfiguration.GetPopupLocation(nPopup));
 
         fSetValue(vmSettings, ra::ui::viewmodels::PopupLocation::TopLeft);
         vmSettings.Commit();
-        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::TopLeft, vmSettings.mockConfiguration.GetPopupLocation(nPopup));
+        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::TopLeft, vmSettings.mockWindowConfiguration.GetPopupLocation(nPopup));
 
         fSetValue(vmSettings, ra::ui::viewmodels::PopupLocation::TopMiddle);
         vmSettings.Commit();
-        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::TopMiddle, vmSettings.mockConfiguration.GetPopupLocation(nPopup));
+        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::TopMiddle, vmSettings.mockWindowConfiguration.GetPopupLocation(nPopup));
 
         fSetValue(vmSettings, ra::ui::viewmodels::PopupLocation::TopRight);
         vmSettings.Commit();
-        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::TopRight, vmSettings.mockConfiguration.GetPopupLocation(nPopup));
+        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::TopRight, vmSettings.mockWindowConfiguration.GetPopupLocation(nPopup));
 
         fSetValue(vmSettings, ra::ui::viewmodels::PopupLocation::BottomLeft);
         vmSettings.Commit();
-        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::BottomLeft, vmSettings.mockConfiguration.GetPopupLocation(nPopup));
+        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::BottomLeft, vmSettings.mockWindowConfiguration.GetPopupLocation(nPopup));
 
         fSetValue(vmSettings, ra::ui::viewmodels::PopupLocation::BottomMiddle);
         vmSettings.Commit();
-        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::BottomMiddle, vmSettings.mockConfiguration.GetPopupLocation(nPopup));
+        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::BottomMiddle, vmSettings.mockWindowConfiguration.GetPopupLocation(nPopup));
 
         fSetValue(vmSettings, ra::ui::viewmodels::PopupLocation::BottomRight);
         vmSettings.Commit();
-        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::BottomRight, vmSettings.mockConfiguration.GetPopupLocation(nPopup));
+        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::BottomRight, vmSettings.mockWindowConfiguration.GetPopupLocation(nPopup));
     }
 
     void ValidateFeatureInitialize(ra::services::Feature feature, std::function<bool(OverlaySettingsViewModel&)> fGetValue)
@@ -127,8 +129,8 @@ private:
         OverlaySettingsViewModelHarness vmSettings;
 
         // screenshot toggles require the associated notification to be enabled
-        vmSettings.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
-        vmSettings.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery, ra::ui::viewmodels::PopupLocation::BottomLeft);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery, ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         vmSettings.mockConfiguration.SetFeatureEnabled(feature, false);
         vmSettings.Initialize();
@@ -266,10 +268,10 @@ public:
         OverlaySettingsViewModelHarness vmSettings;
 
         // popup off has precedence over screenshot on (should disable screenshot)
-        vmSettings.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::None);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::None);
         vmSettings.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot, true);
 
-        vmSettings.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery, ra::ui::viewmodels::PopupLocation::None);
+        vmSettings.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery, ra::ui::viewmodels::PopupLocation::None);
         vmSettings.mockConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot, true);
 
         vmSettings.Initialize();

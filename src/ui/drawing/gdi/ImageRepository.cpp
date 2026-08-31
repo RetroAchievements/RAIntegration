@@ -6,6 +6,8 @@
 #include "RA_md5factory.h"
 #include "util\Log.hh"
 
+#include "context\IRcClient.hh"
+
 #include "data\context\GameContext.hh"
 
 #include "services\Http.hh"
@@ -13,6 +15,8 @@
 #include "services\IFileSystem.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
+
+#include <rcheevos\include\rc_api_runtime.h>
 
 namespace ra {
 namespace ui {
@@ -185,26 +189,32 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName, cons
     std::string sUrl = sSourceUrl;
     if (sSourceUrl.empty())
     {
+        const auto& pRcClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>();
+        rc_api_fetch_image_request_t api_params;
+        memset(&api_params, 0, sizeof(api_params));
+        api_params.image_name = sName.c_str();
         switch (nType)
         {
             case ImageType::Badge:
-                sUrl = pConfiguration.GetImageHostUrl();
-                sUrl += "/Badge/";
+                api_params.image_type = RC_IMAGE_TYPE_ACHIEVEMENT;
                 break;
+
             case ImageType::UserPic:
-                sUrl = pConfiguration.GetHostUrl();
-                sUrl += "/UserPic/";
+                api_params.image_type = RC_IMAGE_TYPE_USER;
                 break;
+
             case ImageType::Icon:
-                sUrl = pConfiguration.GetImageHostUrl();
-                sUrl += "/Images/";
+                api_params.image_type = RC_IMAGE_TYPE_GAME;
                 break;
-            default:
-                Expects(!"Unsupported image type");
-                return;
         }
-        sUrl += sName;
-        sUrl += ".png";
+
+        rc_api_request_t api_request;
+        if (rc_api_init_fetch_image_request_hosted(&api_request, &api_params, pRcClient.GetHost()) == RC_OK)
+            sUrl = api_request.url;
+
+        rc_api_destroy_request(&api_request);
+        if (sUrl.empty())
+            return;
     }
 
     RA_LOG_INFO("Downloading %s", sUrl.c_str());

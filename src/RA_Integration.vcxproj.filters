@@ -404,7 +404,7 @@
     <ClInclude Include="RA_ImageFactory.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="services\IConfiguration.hh">
+    <ClInclude Include="services\IWindowConfiguration.hh">
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\impl\JsonFileConfiguration.hh">
@@ -937,6 +937,9 @@
     </ClInclude>
     <ClInclude Include="services\PointerFinder.hh">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="services\impl\JsonFileWindowConfiguration.hh">
+      <Filter>Services\Impl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

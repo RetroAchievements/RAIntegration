@@ -1136,7 +1136,8 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
 
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(sAudioPath);
 
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered) !=
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    if (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered) !=
         ra::ui::viewmodels::PopupLocation::None)
     {
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -1163,8 +1164,8 @@ static void HandleChallengeIndicatorShowEvent(const rc_client_achievement_t& pAc
         return;
     }
 
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Challenge) !=
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    if (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Challenge) !=
         ra::ui::viewmodels::PopupLocation::None)
     {
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -1189,8 +1190,8 @@ static void HandleProgressIndicatorUpdateEvent(const rc_client_achievement_t& pA
         return;
     }
 
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) != ra::ui::viewmodels::PopupLocation::None)
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    if (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) != ra::ui::viewmodels::PopupLocation::None)
     {
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
 
@@ -1217,10 +1218,11 @@ static void HandleProgressIndicatorHideEvent()
 
 static void ShowCompletionPopup(uint32_t nGameId, const std::wstring& sTitle, uint32_t nAchievements, uint32_t nPoints, const std::string& sBadgeName)
 {
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Mastery) == ra::ui::viewmodels::PopupLocation::None)
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    if (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Mastery) == ra::ui::viewmodels::PopupLocation::None)
         return;
 
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
@@ -1293,7 +1295,8 @@ static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeader
     }
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted) !=
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    if (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted) !=
         ra::ui::viewmodels::PopupLocation::None &&
         pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
@@ -1315,7 +1318,8 @@ static void HandleLeaderboardFailedEvent(const rc_client_leaderboard_t& pLeaderb
     }
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled) !=
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    if (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled) !=
         ra::ui::viewmodels::PopupLocation::None &&
         pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
@@ -1329,7 +1333,8 @@ static void HandleLeaderboardFailedEvent(const rc_client_leaderboard_t& pLeaderb
 static void ShowSimplifiedScoreboard(const rc_client_leaderboard_t& pLeaderboard)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) ==
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    if (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) ==
         ra::ui::viewmodels::PopupLocation::None ||
         !pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
@@ -1455,7 +1460,8 @@ static void HandleLeaderboardTrackerUpdateEvent(const rc_client_leaderboard_trac
 static void HandleLeaderboardTrackerShowEvent(const rc_client_leaderboard_tracker_t& pTracker)
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) !=
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    if (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) !=
         ra::ui::viewmodels::PopupLocation::None &&
         pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {
@@ -1475,7 +1481,8 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
                                              const rc_client_leaderboard_t& pLeaderboard)
 {
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) ==
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    if (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) ==
         ra::ui::viewmodels::PopupLocation::None ||
         !pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards))
     {

@@ -2,8 +2,7 @@
 #define RA_SERVICES_ICONFIGURATION
 #pragma once
 
-#include "ui\Types.hh"
-#include "ui\viewmodels\PopupViewModelBase.hh"
+#include <string>
 
 namespace ra {
 namespace services {
@@ -20,7 +19,6 @@ enum class Feature
     MasteryNotificationScreenshot,
     Offline,
 };
-
 
 class IConfiguration
 {
@@ -62,45 +60,19 @@ public:
     virtual void SetFeatureEnabled(Feature nFeature, bool bEnabled) = 0;
 
     /// <summary>
-    /// Gets where the specified popup should be displayed.
-    /// </summary>
-    virtual ra::ui::viewmodels::PopupLocation GetPopupLocation(ra::ui::viewmodels::Popup nPopup) const = 0;
-
-    /// <summary>
-    /// Sets where the specified popup should be displayed.
-    /// </summary>
-    virtual void SetPopupLocation(ra::ui::viewmodels::Popup nPopup, ra::ui::viewmodels::PopupLocation nPopupLocation) = 0;
-
-    /// <summary>
     /// Gets the number of background threads to spawn.
     /// </summary>
     virtual unsigned int GetNumBackgroundThreads() const = 0;
 
-    virtual const std::wstring& GetRomDirectory() const = 0;
-    virtual void SetRomDirectory(const std::wstring& sValue) = 0;
-
+    /// <summary>
+    /// Gets the directory where screenshots should be stored.
+    /// </summary>
     virtual const std::wstring& GetScreenshotDirectory() const = 0;
+
+    /// <summary>
+    /// Sets the directory where screenshots should be stored.
+    /// </summary>
     virtual void SetScreenshotDirectory(const std::wstring& sValue) = 0;
-
-    /// <summary>
-    /// Gets the remembered position of the window identified by <paramref name="sPositionKey"/>.
-    /// </summary>
-    virtual ra::ui::Position GetWindowPosition(const std::string& sPositionKey) const = 0;
-
-    /// <summary>
-    /// Sets the position to remember for the window identified by <paramref name="sPositionKey"/>.
-    /// </summary>
-    virtual void SetWindowPosition(const std::string& sPositionKey, const ra::ui::Position& oPosition) = 0;
-
-    /// <summary>
-    /// Gets the remembered size of the window identified by <paramref name="sPositionKey"/>.
-    /// </summary>
-    virtual ra::ui::Size GetWindowSize(const std::string& sPositionKey) const = 0;
-
-    /// <summary>
-    /// Sets the size to remember for the window identified by <paramref name="sPositionKey"/>.
-    /// </summary>
-    virtual void SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize) = 0;
 
     /// <summary>
     /// Gets whether or not a custom host was provided.
@@ -116,11 +88,6 @@ public:
     /// Gets the URL to the host to communicate with (includes protocol).
     /// </summary>
     virtual const std::string& GetHostUrl() const = 0;
-
-    /// <summary>
-    /// Gets the URL to the host to communicate with (includes protocol) for image retrieval.
-    /// </summary>
-    virtual const std::string& GetImageHostUrl() const = 0;
 
     /// <summary>
     /// Saves the current configuration so it can be used in a future session.

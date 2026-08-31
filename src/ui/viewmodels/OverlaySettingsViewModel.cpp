@@ -1,6 +1,7 @@
 #include "OverlaySettingsViewModel.hh"
 
 #include "services\IConfiguration.hh"
+#include "services\IWindowConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\FileDialogViewModel.hh"
@@ -44,22 +45,24 @@ OverlaySettingsViewModel::OverlaySettingsViewModel() noexcept
 void OverlaySettingsViewModel::Initialize()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    SetMessageLocation(pConfiguration.GetPopupLocation(Popup::Message));
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+
+    SetMessageLocation(pWindowConfiguration.GetPopupLocation(Popup::Message));
 
     // set screenshot before location so location is given preference
     SetScreenshotAchievementTrigger(pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot));
-    SetAchievementTriggerLocation(pConfiguration.GetPopupLocation(Popup::AchievementTriggered));
+    SetAchievementTriggerLocation(pWindowConfiguration.GetPopupLocation(Popup::AchievementTriggered));
 
     SetScreenshotMastery(pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot));
-    SetMasteryLocation(pConfiguration.GetPopupLocation(Popup::Mastery));
+    SetMasteryLocation(pWindowConfiguration.GetPopupLocation(Popup::Mastery));
 
-    SetLeaderboardStartedLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardStarted));
-    SetLeaderboardCanceledLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardCanceled));
-    SetLeaderboardTrackerLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardTracker));
-    SetLeaderboardScoreboardLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardScoreboard));
+    SetLeaderboardStartedLocation(pWindowConfiguration.GetPopupLocation(Popup::LeaderboardStarted));
+    SetLeaderboardCanceledLocation(pWindowConfiguration.GetPopupLocation(Popup::LeaderboardCanceled));
+    SetLeaderboardTrackerLocation(pWindowConfiguration.GetPopupLocation(Popup::LeaderboardTracker));
+    SetLeaderboardScoreboardLocation(pWindowConfiguration.GetPopupLocation(Popup::LeaderboardScoreboard));
 
-    SetActiveChallengeLocation(pConfiguration.GetPopupLocation(Popup::Challenge));
-    SetProgressTrackerLocation(pConfiguration.GetPopupLocation(Popup::Progress));
+    SetActiveChallengeLocation(pWindowConfiguration.GetPopupLocation(Popup::Challenge));
+    SetProgressTrackerLocation(pWindowConfiguration.GetPopupLocation(Popup::Progress));
 
     SetScreenshotLocation(pConfiguration.GetScreenshotDirectory());
 }
@@ -67,18 +70,19 @@ void OverlaySettingsViewModel::Initialize()
 void OverlaySettingsViewModel::Commit()
 {
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    auto& pWindowConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IWindowConfiguration>();
 
-    pConfiguration.SetPopupLocation(Popup::Message, GetMessageLocation());
-    pConfiguration.SetPopupLocation(Popup::AchievementTriggered, GetAchievementTriggerLocation());
+    pWindowConfiguration.SetPopupLocation(Popup::Message, GetMessageLocation());
+    pWindowConfiguration.SetPopupLocation(Popup::AchievementTriggered, GetAchievementTriggerLocation());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot, ScreenshotAchievementTrigger());
-    pConfiguration.SetPopupLocation(Popup::Mastery, GetMasteryLocation());
+    pWindowConfiguration.SetPopupLocation(Popup::Mastery, GetMasteryLocation());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot, ScreenshotMastery());
-    pConfiguration.SetPopupLocation(Popup::LeaderboardStarted, GetLeaderboardStartedLocation());
-    pConfiguration.SetPopupLocation(Popup::LeaderboardCanceled, GetLeaderboardCanceledLocation());
-    pConfiguration.SetPopupLocation(Popup::LeaderboardTracker, GetLeaderboardTrackerLocation());
-    pConfiguration.SetPopupLocation(Popup::LeaderboardScoreboard, GetLeaderboardScoreboardLocation());
-    pConfiguration.SetPopupLocation(Popup::Challenge, GetActiveChallengeLocation());
-    pConfiguration.SetPopupLocation(Popup::Progress, GetProgressTrackerLocation());
+    pWindowConfiguration.SetPopupLocation(Popup::LeaderboardStarted, GetLeaderboardStartedLocation());
+    pWindowConfiguration.SetPopupLocation(Popup::LeaderboardCanceled, GetLeaderboardCanceledLocation());
+    pWindowConfiguration.SetPopupLocation(Popup::LeaderboardTracker, GetLeaderboardTrackerLocation());
+    pWindowConfiguration.SetPopupLocation(Popup::LeaderboardScoreboard, GetLeaderboardScoreboardLocation());
+    pWindowConfiguration.SetPopupLocation(Popup::Challenge, GetActiveChallengeLocation());
+    pWindowConfiguration.SetPopupLocation(Popup::Progress, GetProgressTrackerLocation());
 
     std::wstring sLocation = ScreenshotLocation();
     if (!sLocation.empty() && sLocation.back() != '\\')

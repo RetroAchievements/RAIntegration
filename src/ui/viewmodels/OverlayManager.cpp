@@ -3,8 +3,8 @@
 #include "util\Log.hh"
 
 #include "services\IClock.hh"
-#include "services\IConfiguration.hh"
 #include "services\IThreadPool.hh"
+#include "services\IWindowConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\IDesktop.hh"
@@ -433,8 +433,8 @@ void OverlayManager::ClearLeaderboardPopups()
 ra::ui::Position OverlayManager::GetRenderLocation(const ra::ui::viewmodels::PopupViewModelBase& vmPopup,
     int nX, int nY, const ra::ui::drawing::ISurface& pSurface, const PopupLocations& pPopupLocations)
 {
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    const auto nPopupLocation = pConfiguration.GetPopupLocation(vmPopup.GetPopupType());
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    const auto nPopupLocation = pWindowConfiguration.GetPopupLocation(vmPopup.GetPopupType());
 
     Position nPos;
     nPos.X = nX;
@@ -563,8 +563,8 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, const Popu
 
 void OverlayManager::AdjustLocationForPopup(PopupLocations& pPopupLocations, const ra::ui::viewmodels::PopupViewModelBase& vmPopup)
 {
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    const auto nPopupLocation = pConfiguration.GetPopupLocation(vmPopup.GetPopupType());
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    const auto nPopupLocation = pWindowConfiguration.GetPopupLocation(vmPopup.GetPopupType());
     const auto nHeight = vmPopup.GetRenderImage().GetHeight();
     const auto nOffset = vmPopup.GetVerticalOffset() + nHeight;
 
@@ -642,8 +642,8 @@ void OverlayManager::UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, Po
     assert(!m_vScoreTrackers.empty());
 
     const auto& pAssets = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets();
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    const auto bEnabled = (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) != ra::ui::viewmodels::PopupLocation::None);
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    const auto bEnabled = (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) != ra::ui::viewmodels::PopupLocation::None);
     std::set<unsigned> vDisplayedValues;
 
     auto pIter = m_vScoreTrackers.begin();
@@ -696,8 +696,8 @@ void OverlayManager::UpdateChallengeIndicators(ra::ui::drawing::ISurface& pSurfa
     constexpr int nSpacing = 10;
     auto nRenderX = nSpacing;
 
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    const auto bEnabled = (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Challenge) != ra::ui::viewmodels::PopupLocation::None);
+    const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+    const auto bEnabled = (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Challenge) != ra::ui::viewmodels::PopupLocation::None);
     if (bEnabled)
     {
         // adjust offsets so the items appear horizontally stacked
@@ -750,8 +750,8 @@ void OverlayManager::UpdateProgressTracker(ra::ui::drawing::ISurface& pSurface, 
     }
     else
     {
-        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        const auto bEnabled = (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) != ra::ui::viewmodels::PopupLocation::None);
+        const auto& pWindowConfiguration = ra::services::ServiceLocator::Get<ra::services::IWindowConfiguration>();
+        const auto bEnabled = (pWindowConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) != ra::ui::viewmodels::PopupLocation::None);
 
         if (bEnabled)
             AdjustLocationForPopup(pPopupLocations, *m_vmProgressTracker);

@@ -91,25 +91,31 @@ static constexpr uint32_t ParseUInt32(std::wstring_view sValue)
 static void ParseRanges(std::vector<std::pair<uint32_t, uint32_t>>& vRanges, const std::wstring& sIndices)
 {
     const std::wstring_view sRemaining = sIndices;
-    size_t nIndex;
+    size_t nStartIndex = 0;
+    size_t nCommaIndex;
     do
     {
-        nIndex = sRemaining.find(',');
-        const auto sRange = sRemaining.substr(0, nIndex);
+        nCommaIndex = sRemaining.find(',', nStartIndex);
+        const auto sRange = sRemaining.substr(nStartIndex, nCommaIndex);
 
-        const auto nIndex2 = sRange.find('-');
-        if (nIndex2 == std::wstring::npos)
+        const auto nDashIndex = sRange.find('-');
+        if (nDashIndex == std::wstring::npos)
         {
             const uint32_t nValue = ParseUInt32(sRange);
             vRanges.push_back({ nValue, nValue });
         }
         else
         {
-            const uint32_t nStart = ParseUInt32(sRange.substr(0, nIndex2));
-            const uint32_t nEnd = ParseUInt32(sRange.substr(nIndex2 + 1));
+            const uint32_t nStart = ParseUInt32(sRange.substr(0, nDashIndex));
+            const uint32_t nEnd = ParseUInt32(sRange.substr(nDashIndex + 1));
             vRanges.push_back({ nStart, nEnd });
         }
-    } while (nIndex < sRemaining.length());
+
+        if (nCommaIndex == std::wstring::npos)
+            break;
+
+        nStartIndex = nCommaIndex + 1;
+    } while (nStartIndex < sRemaining.length());
 }
 
 static void MergeIndices(TriggerSummaryViewModel::TriggerClauseViewModel& pClause1, const TriggerSummaryViewModel::TriggerClauseViewModel& pClause2)
@@ -200,11 +206,15 @@ bool TriggerSummaryViewModel::MergeChangedToFrom(
         }
     }
 
-    // differing non-bit values have to report both the before and after expectations
+    // Differing non-bit values have to report both the before and after expectations.
+    // If the before has a hit target, use is/was; otherwise, use changed from/to.
     if (pClause1.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
     {
         pClause1.nType = TriggerClauseType::ChangedTo;
-        pClause1.SetOperation(L"changed to");
+        if (pClause1.pCondition->required_hits != 0)
+            pClause1.SetOperation(L"was");
+        else if (pClause2.pCondition->required_hits == 0)
+            pClause1.SetOperation(L"changed to");
     }
     else
     {
@@ -215,7 +225,10 @@ bool TriggerSummaryViewModel::MergeChangedToFrom(
     if (pClause2.pCondition->operand1.memref_access_type == RC_OPERAND_ADDRESS)
     {
         pClause2.nType = TriggerClauseType::ChangedTo;
-        pClause2.SetOperation(L"changed to");
+        if (pClause2.pCondition->required_hits != 0)
+            pClause2.SetOperation(L"was");
+        else if (pClause1.pCondition->required_hits == 0)
+            pClause2.SetOperation(L"changed to");
     }
     else
     {
@@ -407,16 +420,59 @@ static void HandleTally(TriggerSummaryViewModel::TriggerClauseViewModel& pClause
 {
     if (pCondition.required_hits == 1)
     {
-        // don't say "do something once" for a single captured hit starting condition
-        if (pCondition.type != RC_CONDITION_STANDARD)
+        if (pCondition.type != RC_CONDITION_RESET_IF)
             pClause.SetTally(L"once");
     }
     else if (pCondition.required_hits > 1)
     {
-        if (IsChangeType(pClause.nType))
-            pClause.SetTally(ra::util::String::Printf(L"%u times", pCondition.required_hits));
-        else
+        if (!IsChangeType(pClause.nType))
             pClause.SetTally(ra::util::String::Printf(L"for %u frames", pCondition.required_hits));
+        else if (pCondition.required_hits == 2)
+            pClause.SetTally(L"twice");
+        else
+            pClause.SetTally(ra::util::String::Printf(L"%u times", pCondition.required_hits));
+    }
+}
+
+static void HandlePreviousType(TriggerSummaryViewModel::TriggerClauseViewModel& pClause,
+    uint8_t nPreviousType, ViewModelCollection<TriggerSummaryViewModel::TriggerClauseViewModel>& vClauses)
+{
+    switch (nPreviousType)
+    {
+        case RC_CONDITION_OR_NEXT:
+        case RC_CONDITION_AND_NEXT:
+            break;
+        default:
+            return;
+    }
+
+    for (gsl::index nIndex = vClauses.Count() - 1; nIndex > 0; --nIndex)
+    {
+        if (vClauses.GetItemAt(nIndex) == &pClause)
+        {
+            for (--nIndex; nIndex >= 0; --nIndex)
+            {
+                auto *pParentClause = vClauses.GetItemAt(nIndex);
+                if (pParentClause && !rc_condition_is_combining(pParentClause->pCondition))
+                    break;
+            }
+
+            ++nIndex; // nIndex is currently pointing at the last condition of the previous clause
+            MergeIndices(*vClauses.GetItemAt(nIndex), pClause);
+            break;
+        }
+    }
+
+    switch (nPreviousType)
+    {
+        case RC_CONDITION_OR_NEXT:
+            pClause.SetIndices(L"OR");
+            break;
+        case RC_CONDITION_AND_NEXT:
+            pClause.SetIndices(L"AND");
+            break;
+        default:
+            return;
     }
 }
 
@@ -456,6 +512,7 @@ static void HandleCompareMemoryReferenceToSelf(TriggerSummaryViewModel::TriggerC
 
             case RC_OPERATOR_NE:
                 pClause.SetOperation(L"changed");
+                pClause.nType = TriggerClauseType::Changed;
                 break;
 
             case RC_OPERATOR_LT:
@@ -493,6 +550,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
 {
     uint32_t nFirstIndex = 0;
     uint32_t nLastIndex = 0;
+    uint8_t nPreviousType = 0;
 
     const auto* pMemoryNotes = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets().FindMemoryNotes();
 
@@ -534,7 +592,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             if (nFirstIndex != nLastIndex)
             {
                 std::vector<ra::data::util::IndirectNoteResolver::Node> vParentChain;
-                ra::data::util::IndirectNoteResolver pResolver(*pMemoryNotes);
+                const ra::data::util::IndirectNoteResolver pResolver(*pMemoryNotes);
                 pResolver.ResolveOperand(*pCondition, true, vParentChain);
                 if (!vParentChain.empty())
                     pNote = vParentChain.back().pNote;
@@ -578,7 +636,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
                     if (nFirstIndex != nLastIndex)
                     {
                         std::vector<ra::data::util::IndirectNoteResolver::Node> vParentChain;
-                        ra::data::util::IndirectNoteResolver pResolver(*pMemoryNotes);
+                        const ra::data::util::IndirectNoteResolver pResolver(*pMemoryNotes);
                         pResolver.ResolveOperand(*pCondition, false, vParentChain);
                         if (!vParentChain.empty())
                             pNote2 = vParentChain.back().pNote;
@@ -651,6 +709,9 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
         // handle hit targets
         HandleTally(pClause, *pCondition);
 
+        // handle previous type
+        HandlePreviousType(pClause, nPreviousType, m_vClauses);
+
         // attempt to merge any other conditions comparing the same address (i.e. A>4 && A<6 => A between 4 and 6)
         if (rc_operand_is_memref(&pCondition->operand1))
         {
@@ -664,74 +725,125 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
                 }
             }
         }
+
+        nPreviousType = pCondition->type;
+    }
+}
+
+enum class TriggerClauseBucket
+{
+    None,
+    Trigger,
+    Ongoing,
+    Unless,
+    Start,
+    Restart,
+    Unimportant,
+    Conflicting,
+    Chained,
+
+    Count,
+};
+
+static TriggerClauseBucket DetermineBucket(const TriggerSummaryViewModel::TriggerClauseViewModel& pClause)
+{
+    auto nBucket = TriggerClauseBucket::Ongoing;
+
+    switch (pClause.nType)
+    {
+        default:
+            // anything that is only true for one frame should be classified as a trigger.
+            if (IsChangeType(pClause.nType))
+                nBucket = TriggerClauseBucket::Trigger;
+            break;
+
+        case TriggerClauseType::AlwaysTrue:
+            nBucket = TriggerClauseBucket::Unimportant;
+            break;
+
+        case TriggerClauseType::AlwaysFalse:
+            nBucket = TriggerClauseBucket::Conflicting;
+            break;
+    }
+
+    switch (pClause.pCondition->type)
+    {
+        case RC_CONDITION_PAUSE_IF:
+            nBucket = TriggerClauseBucket::Unless;
+            break;
+
+        case RC_CONDITION_RESET_IF:
+            nBucket = TriggerClauseBucket::Restart;
+            break;
+
+        case RC_CONDITION_TRIGGER:
+            nBucket = TriggerClauseBucket::Trigger;
+            break;
+
+        case RC_CONDITION_AND_NEXT:
+        case RC_CONDITION_OR_NEXT:
+            nBucket = TriggerClauseBucket::Chained;
+            break;
+
+        default:
+            // Assume once() clauses are start conditions
+            if (pClause.pCondition->required_hits == 1)
+                nBucket = TriggerClauseBucket::Start;
+            break;
+    }
+
+    return nBucket;
+}
+
+static void CategorizeClauses(std::vector<std::vector<const TriggerSummaryViewModel::TriggerClauseViewModel*>>& vBuckets, const ViewModelCollection<TriggerSummaryViewModel::TriggerClauseViewModel>& vClauses)
+{
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vClauses.Count()); ++nIndex)
+    {
+        auto* pClause = vClauses.GetItemAt(nIndex);
+        if (!pClause)
+            continue;
+
+        gsl::index nChainIndex = nIndex;
+        auto nBucket = DetermineBucket(*pClause);
+        if (nBucket == TriggerClauseBucket::Chained)
+        {
+            for (; nIndex < gsl::narrow_cast<gsl::index>(vClauses.Count()); ++nIndex)
+            {
+                pClause = vClauses.GetItemAt(nIndex);
+                if (!pClause)
+                    continue;
+
+                nBucket = DetermineBucket(*pClause);
+                if (nBucket != TriggerClauseBucket::Chained)
+                    break;
+            }
+        }
+
+        auto& pBucket = vBuckets.at(ra::etoi(nBucket));
+        for (; nChainIndex < nIndex; ++nChainIndex)
+            pBucket.push_back(vClauses.GetItemAt(nChainIndex));
+        pBucket.push_back(pClause);
+    }
+
+    // Items with a hit target are thrown into the Start bucket.
+    auto& pStartBucket = vBuckets.at(ra::etoi(TriggerClauseBucket::Start));
+    if (!pStartBucket.empty())
+    {
+        if (vBuckets.at(ra::etoi(TriggerClauseBucket::Restart)).empty())
+        {
+            // If there isn't a ResetIf, move them to the Trigger bucket.
+            auto& pTriggerBucket = vBuckets.at(ra::etoi(TriggerClauseBucket::Trigger));
+            for (const auto* pClause : pStartBucket)
+                pTriggerBucket.push_back(pClause);
+            pStartBucket.clear();
+        }
     }
 }
 
 void TriggerSummaryViewModel::AddHeaders()
 {
-    enum class TriggerClauseBucket
-    {
-        None,
-        Trigger,
-        Ongoing,
-        Unless,
-        Start,
-        Restart,
-        Unimportant,
-        Conflicting,
-
-        Count,
-    };
-
-    std::vector<std::vector<TriggerClauseViewModel*>> vBuckets(ra::etoi(TriggerClauseBucket::Count));
-
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vClauses.Count()); ++nIndex)
-    {
-        auto* pClause = m_vClauses.GetItemAt(nIndex);
-        if (!pClause)
-            continue;
-
-        auto nBucket = TriggerClauseBucket::Ongoing;
-
-        switch (pClause->nType)
-        {
-            default:
-                // anything that is only true for one frame should be classified as a trigger.
-                if (IsChangeType(pClause->nType))
-                    nBucket = TriggerClauseBucket::Trigger;
-                break;
-
-            case TriggerClauseType::AlwaysTrue:
-                nBucket = TriggerClauseBucket::Unimportant;
-                break;
-
-            case TriggerClauseType::AlwaysFalse:
-                nBucket = TriggerClauseBucket::Conflicting;
-                break;
-        }
-
-        switch (pClause->pCondition->type)
-        {
-            case RC_CONDITION_PAUSE_IF:
-                nBucket = TriggerClauseBucket::Unless;
-                break;
-
-            case RC_CONDITION_RESET_IF:
-                nBucket = TriggerClauseBucket::Restart;
-                break;
-
-            case RC_CONDITION_TRIGGER:
-                nBucket = TriggerClauseBucket::Trigger;
-                break;
-
-            default:
-                if (pClause->pCondition->required_hits > 0)
-                    nBucket = TriggerClauseBucket::Start;
-                break;
-        }
-
-        vBuckets.at(ra::etoi(nBucket)).push_back(pClause);
-    }
+    std::vector<std::vector<const TriggerClauseViewModel*>> vBuckets(ra::etoi(TriggerClauseBucket::Count));
+    CategorizeClauses(vBuckets, m_vClauses);
 
     const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
 
@@ -761,6 +873,14 @@ void TriggerSummaryViewModel::AddHeaders()
                     }
                 }
             }
+
+            // don't say "do something once" for a single captured hit starting condition
+            if (nBucket == TriggerClauseBucket::Start && vBucketItems.size() == 1)
+            {
+                auto* pItem = m_vClauses.GetItemAt(nInsertIndex - 1);
+                if (pItem->GetTally() == L"once")
+                    pItem->SetTally(L"");
+            }
         };
 
     fBuildGroup(TriggerClauseBucket::Conflicting, L"--- CONFLICTING ---", pTheme.ColorExplainConflicting());
@@ -777,15 +897,28 @@ void TriggerSummaryViewModel::AddHeaders()
     }
 
     const auto vUnlessItems = vBuckets.at(ra::etoi(TriggerClauseBucket::Unless));
-    if (!vUnlessItems.empty()) {
-        fBuildGroup(TriggerClauseBucket::Unless, vUnlessItems.size() > 1 ? L"--- UNLESS ANY ---" : L"--- UNLESS ---", pTheme.ColorExplainUnless());
+    if (!vUnlessItems.empty())
+    {
+        const wchar_t* sHeader = vUnlessItems.size() > 1 ? L"--- UNLESS ANY ---" : L"--- UNLESS ---";
+        fBuildGroup(TriggerClauseBucket::Unless, sHeader, pTheme.ColorExplainUnless());
     }
 
     fBuildGroup(TriggerClauseBucket::Start, L"--- STARTING WHEN ---", pTheme.ColorExplainStartingWhen());
 
     const auto vRestartItems = vBuckets.at(ra::etoi(TriggerClauseBucket::Restart));
-    if (!vRestartItems.empty()) {
-        fBuildGroup(TriggerClauseBucket::Restart, vRestartItems.size() > 1 ? L"--- FAILING WHEN ANY ---" : L"--- FAILING WHEN ---", pTheme.ColorExplainFailingWhen());
+    if (!vRestartItems.empty())
+    {
+        const wchar_t* sHeader;
+        if (vBuckets.at(ra::etoi(TriggerClauseBucket::Start)).empty())
+        {
+            // No starting condition. Anything with hit counts was moved into Ongoing bucket.
+            sHeader = vRestartItems.size() > 1 ? L"--- RESTART WHEN ANY ---" : L"--- RESTART WHEN ---";
+        }
+        else
+        {
+            sHeader = vRestartItems.size() > 1 ? L"--- FAILING WHEN ANY ---" : L"--- FAILING WHEN ---";
+        }
+        fBuildGroup(TriggerClauseBucket::Restart, sHeader, pTheme.ColorExplainFailingWhen());
     }
 
     fBuildGroup(TriggerClauseBucket::Unimportant, L"--- IMPOTENT ---", pTheme.ColorExplainImpotent());

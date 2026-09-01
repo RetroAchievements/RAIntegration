@@ -108,8 +108,22 @@ public:
         summary.InitializeFrom("0xH1234=5.1._R:0xH2345=6.1.");
 
         Assert::AreEqual({ 2U }, summary.Clauses().Count());
-        summary.AssertClause(0, L"1", L"0x1234", L"is", L"5", L""); // don't report once for "start" conditions
-        summary.AssertClause(1, L"2", L"0x2345", L"is", L"6", L"once"); // do report once for non-"start" conditions
+        summary.AssertClause(0, L"1", L"0x1234", L"is", L"5", L"once");
+        summary.AssertClause(1, L"2", L"0x2345", L"is", L"6", L""); // once is redundant on a ResetIf
+    }
+
+    TEST_METHOD(TestOnceWithSameAddress)
+    {
+        ra::ui::EditorTheme pTheme;
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> pThemeOverride(&pTheme);
+
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("0xH1234=5_0xH2345=6.1._0xH2345=7");
+
+        Assert::AreEqual({ 3U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"0x1234", L"is", L"5");
+        summary.AssertClause(1, L"2", L"0x2345", L"was", L"6", L"once");
+        summary.AssertClause(2, L"3", L"0x2345", L"is", L"7");
     }
 
     TEST_METHOD(TestSimpleNote)
@@ -187,6 +201,49 @@ public:
         summary.AssertClause(1, L"2", L"Difficulty", L"increased", L"");
         summary.AssertClause(2, L"3", L"Difficulty", L"decreased", L"");
         summary.AssertClause(3, L"4", L"Difficulty", L"increased", L"");
+    }
+
+    TEST_METHOD(TestOrNext)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("O:0xH1234=5_0xH2345=8");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"0x1234", L"is", L"5");
+        summary.AssertClause(1, L"OR", L"0x2345", L"is", L"8");
+    }
+
+    TEST_METHOD(TestOrNextAliased)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World\n5=Jupiter");
+        summary.mockGameContext.SetNote({ 0x2345U }, L"Open Space Encounter\n8=Merchant");
+        summary.InitializeFrom("O:0xH1234=5_0xH2345=8");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"World", L"is", L"Jupiter");
+        summary.AssertClause(1, L"OR", L"Open Space Encounter", L"is", L"Merchant");
+    }
+
+    TEST_METHOD(TestOrNextAliasedPointerChain)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"[16-bit pointer]\n+4=World\n5=Jupiter\n+8=Open Space Encounter\n8=Merchant");
+        summary.InitializeFrom("I:0x1234_O:0x0004=5_I:0x1234_0x0008=8");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-4", L"World", L"is", L"Jupiter");
+        summary.AssertClause(1, L"OR", L"Open Space Encounter", L"is", L"Merchant");
+    }
+
+    TEST_METHOD(TestAndNext)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("N:0xH1234=5_0xH2345=8");
+
+        Assert::AreEqual({ 2U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"0x1234", L"is", L"5");
+        summary.AssertClause(1, L"AND", L"0x2345", L"is", L"8");
     }
 
     TEST_METHOD(TestChangedTo)
@@ -406,6 +463,78 @@ public:
         summary.AssertClause(3, L"2", L"0x2345", L"is", L"6");
         summary.AssertHeader(4, L"--- FAILING WHEN ---");
         summary.AssertClause(5, L"3", L"0x3456", L"is", L"8", L"for 3 frames");
+    }
+
+    TEST_METHOD(TestAddHeadersMultipleHitTargetsWithReset)
+    {
+        ra::ui::EditorTheme pTheme;
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> pThemeOverride(&pTheme);
+
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("0xH1234=5_0xH2345=6.1._R:0x3456=8.3._0xH4567=4.1.");
+        summary.AddHeaders();
+
+        Assert::AreEqual({ 7U }, summary.Clauses().Count());
+        summary.AssertHeader(0, L"--- TRIGGER WHEN ---");
+        summary.AssertClause(1, L"1", L"0x1234", L"is", L"5");
+        summary.AssertHeader(2, L"--- STARTING WHEN ---");
+        summary.AssertClause(3, L"2", L"0x2345", L"is", L"6", L"once");
+        summary.AssertClause(4, L"4", L"0x4567", L"is", L"4", L"once");
+        summary.AssertHeader(5, L"--- FAILING WHEN ---");
+        summary.AssertClause(6, L"3", L"0x3456", L"is", L"8", L"for 3 frames");
+    }
+
+    TEST_METHOD(TestAddHeadersHitTargetWithResetOnce)
+    {
+        ra::ui::EditorTheme pTheme;
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> pThemeOverride(&pTheme);
+
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("0xH1234=5_0xH2345=6.3._R:0x3456=8.1._R:0x4567!=d0x4567.2.");
+        summary.AddHeaders();
+
+        Assert::AreEqual({ 6U }, summary.Clauses().Count());
+        summary.AssertHeader(0, L"--- TRIGGER WHEN ---");
+        summary.AssertClause(1, L"1", L"0x1234", L"is", L"5");
+        summary.AssertClause(2, L"2", L"0x2345", L"is", L"6", L"for 3 frames");
+        summary.AssertHeader(3, L"--- RESTART WHEN ANY ---"); // header includes ANY when multiple clauses exist
+        summary.AssertClause(4, L"3", L"0x3456", L"is", L"8"); // once is redudant on any resetif, not just if there are multiple
+        summary.AssertClause(5, L"4", L"0x4567", L"changed", L"", L"twice");
+    }
+
+    TEST_METHOD(TestAddHeadersStartingWhenAndNextWithHitTarget)
+    {
+        ra::ui::EditorTheme pTheme;
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> pThemeOverride(&pTheme);
+
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("0xH1234=5_N:0xH2345=6_0x3456=8.3.");
+        summary.AddHeaders();
+
+        Assert::AreEqual({ 4U }, summary.Clauses().Count());
+        summary.AssertHeader(0, L"--- TRIGGER WHEN ---");
+        summary.AssertClause(1, L"1", L"0x1234", L"is", L"5");
+        summary.AssertClause(2, L"2-3", L"0x2345", L"is", L"6");
+        summary.AssertClause(3, L"AND", L"0x3456", L"is", L"8", L"for 3 frames");
+    }
+
+    TEST_METHOD(TestAddHeadersAssumeHitTargetGreaterThanOneIsTriggerWhenSingleHitTargetsExist)
+    {
+        ra::ui::EditorTheme pTheme;
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> pThemeOverride(&pTheme);
+
+        TriggerSummaryViewModelHarness summary;
+        summary.InitializeFrom("0xH1234=5_0xH2345=6.1._0x3456=8.3._R:0x4567=4");
+        summary.AddHeaders();
+
+        Assert::AreEqual({ 7U }, summary.Clauses().Count());
+        summary.AssertHeader(0, L"--- TRIGGER WHEN ---");
+        summary.AssertClause(1, L"1", L"0x1234", L"is", L"5");
+        summary.AssertClause(2, L"3", L"0x3456", L"is", L"8", L"for 3 frames");
+        summary.AssertHeader(3, L"--- STARTING WHEN ---");
+        summary.AssertClause(4, L"2", L"0x2345", L"is", L"6");
+        summary.AssertHeader(5, L"--- FAILING WHEN ---");
+        summary.AssertClause(6, L"4", L"0x4567", L"is", L"4");
     }
 };
 

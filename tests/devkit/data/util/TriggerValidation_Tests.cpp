@@ -203,6 +203,7 @@ public:
         mockGameContext.SetNote(0x0028, L"Unsized Byte address");
         mockGameContext.SetNote(0x0030, L"[16-bit BE] BE Word address");
         mockGameContext.SetNote(0x0040, L"[40-bytes] array of words");
+        mockGameContext.SetNote(0x10080, L"[32-bit pointer] structured data\n+4=[32-bit] first\n+8=[16-bit] second");
 
         // valid reads
         AssertValidation("0xH0008>8", L"");
@@ -229,12 +230,22 @@ public:
 
         // sub-note addresses
         AssertValidation("0xH0009>8", L"Condition 1: No memory note for address 0009");
-        AssertValidation("0xH0011>8", L"Condition 1: 8-bit read of address 0011 differs from memory note size 16-bit at 0010");
+        AssertValidation("0xH0011>8", L"Condition 1: 8-bit read of address 0011 differs from memory note size 16-bit at address 0010");
         AssertValidation("0xH0040>8", L""); // start of array
         AssertValidation("0xH0052>8", L""); // in array
 
         // chained value note
         AssertValidation("A:0xH0008_1=6", L""); // 1 is not an address so it shouldn't matter that it doesn't have a note
+
+        // pointer (PSX mask is 0x00FFFFFF, which can be converted to a 24-bit read)
+        ra::context::mocks::MockConsoleContext mockConsoleContext(PlayStation, L"PSX");
+        AssertValidation("I:0xX10080_0xX0004=3", L"");
+        AssertValidation("I:0xX10080_0xX0008=3", L"Condition 2: 32-bit read of offset 8 differs from memory note size 16-bit");
+        AssertValidation("I:0xX10080_0x 0008=3", L"");
+        AssertValidation("I:0xX10080_0xX000C=3", L"Condition 2: No memory note for offset 0c");
+        AssertValidation("I:0xW10080_0x 0008=3", L"");
+        AssertValidation("I:0xX10080&65535_0x 0008=3", L"Condition 1: Pointer mask is too small for system");
+        AssertValidation("I:0xX10080&16777215_0x 0008=3", L"");
     }
 };
 

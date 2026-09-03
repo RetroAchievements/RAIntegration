@@ -203,7 +203,6 @@ public:
         mockGameContext.SetNote(0x0028, L"Unsized Byte address");
         mockGameContext.SetNote(0x0030, L"[16-bit BE] BE Word address");
         mockGameContext.SetNote(0x0040, L"[40-bytes] array of words");
-        mockGameContext.SetNote(0x10080, L"[32-bit pointer] structured data\n+4=[32-bit] first\n+8=[16-bit] second");
 
         // valid reads
         AssertValidation("0xH0008>8", L"");
@@ -239,6 +238,7 @@ public:
 
         // pointer (PSX mask is 0x00FFFFFF, which can be converted to a 24-bit read)
         ra::context::mocks::MockConsoleContext mockConsoleContext(PlayStation, L"PSX");
+        mockGameContext.SetNote(0x10080, L"[32-bit pointer] structured data\n+4=[32-bit] first\n+8=[16-bit] second");
         AssertValidation("I:0xX10080_0xX0004=3", L"");
         AssertValidation("I:0xX10080_0xX0008=3", L"Condition 2: 32-bit read of offset 8 differs from memory note size 16-bit");
         AssertValidation("I:0xX10080_0x 0008=3", L"");

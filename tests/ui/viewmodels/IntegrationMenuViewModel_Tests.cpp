@@ -21,16 +21,17 @@
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockConfiguration.hh"
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
-#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLoginService.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
+#include "tests\mocks\MockWindowConfiguration.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -58,6 +59,7 @@ private:
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::mocks::MockLoginService mockLoginService;
         ra::services::mocks::MockThreadPool mockThreadPool;
+        ra::services::mocks::MockWindowConfiguration mockWindowConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 

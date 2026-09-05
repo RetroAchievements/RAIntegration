@@ -7,6 +7,8 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
+#include <rcheevos\src\rapi\rc_api_common.h>
+
 #ifndef RA_UTEST
 #include "services\impl\StringTextWriter.hh"
 #include "services\impl\WindowsHttpRequester.hh"
@@ -69,7 +71,6 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     // default values
     m_sUsername.clear();
     m_sApiToken.clear();
-    m_sRomDirectory.clear();
     m_mWindowPositions.clear();
     m_nBackgroundThreads = 8;
     m_vEnabledFeatures =
@@ -133,8 +134,6 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
 
     if (doc.HasMember("Num Background Threads"))
         m_nBackgroundThreads = doc["Num Background Threads"].GetUint();
-    if (doc.HasMember("ROM Directory"))
-        m_sRomDirectory = ra::util::String::Widen(doc["ROM Directory"].GetString());
 
     if (doc.HasMember("Window Positions"))
     {
@@ -222,9 +221,6 @@ void JsonFileConfiguration::Save() const
     WritePopupLocation(doc, a, "Informational Notification Display", GetPopupLocation(ra::ui::viewmodels::Popup::Message));
     doc.AddMember("Prefer Decimal", IsFeatureEnabled(Feature::PreferDecimal), a);
     doc.AddMember("Num Background Threads", m_nBackgroundThreads, a);
-
-    if (!m_sRomDirectory.empty())
-        doc.AddMember("ROM Directory", ra::util::String::Narrow(m_sRomDirectory), a);
 
     if (!m_sScreenshotDirectory.empty())
         doc.AddMember("Screenshot Directory", ra::util::String::Narrow(m_sScreenshotDirectory), a);
@@ -330,14 +326,6 @@ const std::string& JsonFileConfiguration::GetHostUrl() const
     return m_sHostUrl;
 }
 
-const std::string& JsonFileConfiguration::GetImageHostUrl() const
-{
-    if (m_sImageHostUrl.empty())
-        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->ReadHostFile();
-
-    return m_sImageHostUrl;
-}
-
 void JsonFileConfiguration::ReadHostFile()
 {
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
@@ -356,9 +344,7 @@ void JsonFileConfiguration::UpdateHost()
     if (m_sHostName.empty())
     {
         m_bCustomHost = false;
-        m_sHostName = "retroachievements.org";
-        m_sHostUrl = "https://retroachievements.org";
-        m_sImageHostUrl = "http://i.retroachievements.org";
+        m_sHostUrl = rc_api_default_host();
 
 #ifndef RA_UTEST
         const auto sOSVersion = ra::ui::win32::Desktop::GetWindowsVersionString();
@@ -389,7 +375,7 @@ void JsonFileConfiguration::UpdateHost()
                         "An error occurred trying to communicate with the server via secure protocols. Switching to non-secure protocols.\n\n"
                         "retroachievements.org requires TLS 1.2 or higher. You may need to manually enable it on this operating system. Note that non-secure protocols are deprecated and will no longer be allowed at some point in the future.",
                         "Security Error", MB_OK);
-                    m_sHostUrl = "http://retroachievements.org";
+                    m_sHostUrl.erase(m_sHostUrl.begin() + 4, m_sHostUrl.begin() + 5);
                 }
             }
         }
@@ -402,17 +388,12 @@ void JsonFileConfiguration::UpdateHost()
 
         const auto nIndex = m_sHostName.find("://");
         if (nIndex == std::string::npos)
-        {
             m_sHostUrl = "http://" + m_sHostName;
-        }
         else
-        {
             m_sHostUrl.swap(m_sHostName);
-            m_sHostName = m_sHostUrl.substr(nIndex + 3);
-        }
-
-        m_sImageHostUrl = m_sHostUrl;
     }
+
+    m_sHostName = m_sHostUrl.substr(m_sHostUrl.find("://") + 3);
 
     RA_LOG_INFO("Using server: %s", m_sHostUrl.c_str());
 }

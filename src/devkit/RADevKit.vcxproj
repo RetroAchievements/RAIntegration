@@ -123,6 +123,7 @@
     <ClInclude Include="data\Value.hh" />
     <ClInclude Include="services\Http.hh" />
     <ClInclude Include="services\IClock.hh" />
+    <ClInclude Include="services\IConfiguration.hh" />
     <ClInclude Include="services\IDebuggerDetector.hh" />
     <ClInclude Include="services\IFileSystem.hh" />
     <ClInclude Include="services\IHttpRequester.hh" />

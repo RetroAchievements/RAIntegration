@@ -200,5 +200,6 @@
     <ClInclude Include="context\mocks\MockDevKitContext.hh">
       <Filter>context\mocks</Filter>
     </ClInclude>
+    <ClInclude Include="services\mocks\MockConfiguration.hh" />
   </ItemGroup>
 </Project>

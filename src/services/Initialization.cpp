@@ -20,6 +20,7 @@
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
 #include "services\impl\JsonFileConfiguration.hh"
+#include "services\impl\JsonFileWindowConfiguration.hh"
 #include "services\impl\LoginService.hh"
 #include "services\impl\MessageDispatcher.hh"
 #include "services\impl\ThreadPool.hh"
@@ -140,6 +141,9 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
         &ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
     const auto sFilename = ra::util::String::Printf(L"%sRAPrefs_%s.cfg", pFileSystem.BaseDirectory(), sClientName);
     pConfiguration->Load(sFilename);
+
+    auto pWindowConfiguration = std::make_unique<ra::services::impl::JsonFileWindowConfiguration>(*pConfiguration);
+    ra::services::ServiceLocator::Provide<ra::services::IWindowConfiguration>(std::move(pWindowConfiguration));
 
     auto pLocalStorage = std::make_unique<ra::services::impl::FileLocalStorage>(pFileSystem);
     ra::services::ServiceLocator::Provide<ra::services::ILocalStorage>(std::move(pLocalStorage));

@@ -7,13 +7,13 @@
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
+#include "tests\devkit\services\mocks\MockConfiguration.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\ui\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockAudioSystem.hh"
-#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
@@ -24,6 +24,7 @@
 #include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockSurface.hh"
+#include "tests\mocks\MockWindowConfiguration.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 #include "tests\ui\UIAsserts.hh"
@@ -72,6 +73,7 @@ public:
     ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
     ra::services::mocks::MockLoginService mockLoginService;
     ra::services::mocks::MockThreadPool mockThreadPool;
+    ra::services::mocks::MockWindowConfiguration mockWindowConfiguration;
     ra::ui::drawing::mocks::MockSurfaceFactory mockSurfaceFactory;
     ra::ui::mocks::MockDesktop mockDesktop;
     ra::ui::mocks::MockImageRepository mockImageRepository;
@@ -1560,7 +1562,7 @@ public:
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1595,7 +1597,7 @@ public:
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1630,7 +1632,7 @@ public:
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
         runtime.mockFileSystem.MockFileSize(runtime.mockFileSystem.BaseDirectory() + L"Overlay\\rareunlock.wav", 12345);
 
@@ -1663,7 +1665,7 @@ public:
         pAch6->public_.rarity = 23.45f;
         pAch6->public_.rarity_hardcore = 12.34f;
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1695,7 +1697,7 @@ public:
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1728,7 +1730,7 @@ public:
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1761,7 +1763,7 @@ public:
         runtime.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1794,7 +1796,7 @@ public:
         vmAch6->SetTrigger("0xH0000=2");
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1827,7 +1829,7 @@ public:
         vmAch6->SetTrigger("0xH0000=2");
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1860,7 +1862,7 @@ public:
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
         runtime.mockEmulatorMemoryContext.SetMemoryModified();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1895,7 +1897,7 @@ public:
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
         runtime.mockEmulatorMemoryContext.MockMemoryInsecure(true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1932,7 +1934,7 @@ public:
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
         runtime.mockEmulatorMemoryContext.MockMemoryInsecure(true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1965,7 +1967,7 @@ public:
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -1999,7 +2001,7 @@ public:
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks, true);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
             ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -2035,7 +2037,7 @@ public:
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::OnlyHardcoreUnlocks, true);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
             ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -2067,7 +2069,7 @@ public:
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
         runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
                                                    ra::ui::viewmodels::PopupLocation::None);
 
         rc_client_event_t event;
@@ -2124,7 +2126,7 @@ public:
         auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
         memcpy(pAch6->public_.badge_name, "012345", 7);
         runtime.WrapAchievement(pAch6);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2146,7 +2148,7 @@ public:
         auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
         memcpy(pAch6->public_.badge_name, "012345", 7);
         runtime.WrapAchievement(pAch6);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
                                                    ra::ui::viewmodels::PopupLocation::None);
 
         rc_client_event_t event;
@@ -2164,7 +2166,7 @@ public:
         AchievementRuntimeHarness runtime;
         auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
         runtime.WrapAchievement(pAch6);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
         runtime.mockOverlayManager.AddChallengeIndicator(6U, ra::ui::ImageType::Badge, "55223");
         auto* pPopup = runtime.mockOverlayManager.GetChallengeIndicator(6U);
@@ -2185,7 +2187,7 @@ public:
         AchievementRuntimeHarness runtime;
         auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
         runtime.WrapAchievement(pAch6);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
         auto* pPopup = runtime.mockOverlayManager.GetChallengeIndicator(6U);
         Assert::IsNull(pPopup);
@@ -2207,7 +2209,7 @@ public:
         snprintf(pAch6->public_.measured_progress, sizeof(pAch6->public_.measured_progress), "6/10");
         memcpy(pAch6->public_.badge_name, "012345", 7);
         runtime.WrapAchievement(pAch6);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2231,7 +2233,7 @@ public:
         snprintf(pAch6->public_.measured_progress, sizeof(pAch6->public_.measured_progress), "6/10");
         memcpy(pAch6->public_.badge_name, "012345", 7);
         runtime.WrapAchievement(pAch6);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
                                                    ra::ui::viewmodels::PopupLocation::None);
 
         rc_client_event_t event;
@@ -2252,7 +2254,7 @@ public:
         memcpy(pAch6->public_.badge_name, "012345", 7);
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
         vmAch6->SetBadge(L"local\\abcdefg.png");
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2276,7 +2278,7 @@ public:
         snprintf(pAch6->public_.measured_progress, sizeof(pAch6->public_.measured_progress), "6/10");
         memcpy(pAch6->public_.badge_name, "012345", 7);
         runtime.WrapAchievement(pAch6);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
         runtime.mockOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, "000001", L"4/10");
 
@@ -2301,7 +2303,7 @@ public:
         snprintf(pAch6->public_.measured_progress, sizeof(pAch6->public_.measured_progress), "6/10");
         memcpy(pAch6->public_.badge_name, "012345", 7);
         runtime.WrapAchievement(pAch6);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
         runtime.mockOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, "000001", L"4/10");
         auto* pPopup = runtime.mockOverlayManager.GetProgressTracker();
@@ -2329,7 +2331,7 @@ public:
         runtime.MockAchievement(11U, "0xH0000=1")->public_.points = 5;
         runtime.MockAchievement(12U, "0xH0000=1")->public_.points = 10;
         runtime.MockAchievement(13U, "0xH0000=1")->public_.points = 5;
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
                                                    ra::ui::viewmodels::PopupLocation::TopMiddle);
         runtime.mockSessionTracker.MockSession(1U, time(NULL), std::chrono::seconds(20000));
 
@@ -2362,7 +2364,7 @@ public:
         runtime.MockAchievement(11U, "0xH0000=1")->public_.points = 5;
         runtime.MockAchievement(12U, "0xH0000=1")->public_.points = 10;
         runtime.MockAchievement(13U, "0xH0000=1")->public_.points = 5;
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
                                                    ra::ui::viewmodels::PopupLocation::TopMiddle);
         runtime.mockSessionTracker.MockSession(1U, time(NULL), std::chrono::seconds(20000));
 
@@ -2397,7 +2399,7 @@ public:
         runtime.WrapAchievement(runtime.MockSubsetAchievement(11U, "0xH0000=1", pSubset))->SetPoints(5);
         runtime.WrapAchievement(runtime.MockSubsetAchievement(12U, "0xH0000=1", pSubset))->SetPoints(10);
         runtime.WrapAchievement(runtime.MockSubsetAchievement(13U, "0xH0000=1", pSubset))->SetPoints(5);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
             ra::ui::viewmodels::PopupLocation::TopMiddle);
         runtime.mockSessionTracker.MockSession(1U, time(NULL), std::chrono::seconds(20000));
 
@@ -2433,7 +2435,7 @@ public:
         runtime.WrapAchievement(runtime.MockSubsetAchievement(11U, "0xH0000=1", pSubset))->SetPoints(5);
         runtime.WrapAchievement(runtime.MockSubsetAchievement(12U, "0xH0000=1", pSubset))->SetPoints(10);
         runtime.WrapAchievement(runtime.MockSubsetAchievement(13U, "0xH0000=1", pSubset))->SetPoints(5);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
             ra::ui::viewmodels::PopupLocation::TopMiddle);
         runtime.mockSessionTracker.MockSession(1U, time(NULL), std::chrono::seconds(20000));
 
@@ -2460,7 +2462,7 @@ public:
         auto *pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -2486,7 +2488,7 @@ public:
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted,
                                                    ra::ui::viewmodels::PopupLocation::None);
 
         rc_client_event_t event;
@@ -2505,7 +2507,7 @@ public:
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, false);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -2524,7 +2526,7 @@ public:
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -2550,7 +2552,7 @@ public:
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled,
                                                    ra::ui::viewmodels::PopupLocation::None);
 
         rc_client_event_t event;
@@ -2569,7 +2571,7 @@ public:
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, false);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled,
                                                    ra::ui::viewmodels::PopupLocation::BottomLeft);
 
         rc_client_event_t event;
@@ -2590,7 +2592,7 @@ public:
         pLbd4->public_.tracker_value = "1:23.45";
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2632,7 +2634,7 @@ public:
         pLbd4->public_.tracker_value = "1:23.45";
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2663,7 +2665,7 @@ public:
         pLbd4->public_.tracker_value = "1:23.45";
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2694,7 +2696,7 @@ public:
         auto* vmLbd4 = runtime.WrapLeaderboard(pLbd4);
         vmLbd4->SetDescription(L"Modified Description");
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2726,7 +2728,7 @@ public:
         vmLbd4->SetDescription(L"Modified Description");
         vmLbd4->UpdateLocalCheckpoint();
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2757,7 +2759,7 @@ public:
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockEmulatorMemoryContext.MockMemoryModified(true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2787,7 +2789,7 @@ public:
         pLbd4->public_.tracker_value = "1:23.45";
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2818,7 +2820,7 @@ public:
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockEmulatorMemoryContext.MockMemoryInsecure(true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2849,7 +2851,7 @@ public:
         pLbd4->public_.tracker_value = "1:23.45";
         runtime.WrapLeaderboard(pLbd4);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_event_t event;
@@ -2876,7 +2878,7 @@ public:
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_leaderboard_tracker_t tracker;
@@ -2901,7 +2903,7 @@ public:
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
                                                    ra::ui::viewmodels::PopupLocation::None);
 
         rc_client_leaderboard_tracker_t tracker;
@@ -2924,7 +2926,7 @@ public:
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, false);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_leaderboard_tracker_t tracker;
@@ -2947,7 +2949,7 @@ public:
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
         runtime.mockOverlayManager.AddScoreTracker(1U).SetDisplayText(L"XXX");
 
@@ -2973,7 +2975,7 @@ public:
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
                                                    ra::ui::viewmodels::PopupLocation::None);
 
         rc_client_leaderboard_tracker_t tracker;
@@ -2996,7 +2998,7 @@ public:
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, false);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_leaderboard_tracker_t tracker;
@@ -3019,7 +3021,7 @@ public:
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
         runtime.mockOverlayManager.AddScoreTracker(1U).SetDisplayText(L"XXX");
 
@@ -3044,7 +3046,7 @@ public:
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_leaderboard_scoreboard_entry_t entries[3];
@@ -3111,7 +3113,7 @@ public:
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::None);
 
         rc_client_leaderboard_scoreboard_entry_t entries[3];
@@ -3152,7 +3154,7 @@ public:
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, false);
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_leaderboard_scoreboard_entry_t entries[3];
@@ -3193,7 +3195,7 @@ public:
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
         auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         rc_client_leaderboard_scoreboard_entry_t entries[7];
@@ -3331,7 +3333,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+        runtime.mockWindowConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
                                                    ra::ui::viewmodels::PopupLocation::BottomRight);
 
         bool bWasReset = false;

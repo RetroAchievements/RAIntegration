@@ -219,6 +219,9 @@
     <ClInclude Include="data\models\AchievementSetModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
+    <ClInclude Include="services\IConfiguration.hh">
+      <Filter>services</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">

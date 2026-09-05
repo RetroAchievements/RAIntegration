@@ -416,7 +416,7 @@
     <ClInclude Include="mocks\MockClock.hh">
       <Filter>Mocks</Filter>
     </ClInclude>
-    <ClInclude Include="mocks\MockConfiguration.hh">
+    <ClInclude Include="mocks\MockWindowConfiguration.hh">
       <Filter>Mocks</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockConsoleContext.hh">

@@ -7,6 +7,8 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\WindowViewModelBase.hh"
+
 #include <GSL\span>
 
 namespace ra {

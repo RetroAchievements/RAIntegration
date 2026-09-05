@@ -10,8 +10,8 @@
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
+#include "tests\devkit\services\mocks\MockConfiguration.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
-#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 

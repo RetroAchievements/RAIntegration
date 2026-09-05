@@ -11,11 +11,14 @@
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 
+#include "tests\devkit\context\mocks\MockDevKitContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockClock.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
+#include "tests\devkit\services\mocks\MockLocalStorage.hh"
+#include "tests\devkit\services\mocks\MockLogger.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\AchievementAsserts.hh"
 #include "tests\devkit\testutil\AssetAsserts.hh"
@@ -72,6 +75,7 @@ private:
         AssetEditorViewModelHarness(AssetEditorViewModelHarness&&) noexcept = delete;
         AssetEditorViewModelHarness& operator=(AssetEditorViewModelHarness&&) noexcept = delete;
 
+        ra::context::mocks::MockDevKitContext mockDevKitContext;
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         ra::context::mocks::MockRcClient mockRcClient;
         ra::context::mocks::MockUserContext mockUserContext;
@@ -79,6 +83,8 @@ private:
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockLogger mockLogger;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -2409,6 +2415,47 @@ public:
         Assert::AreEqual(sBadge, achievement.GetBadge());
         Assert::IsTrue(bDialogSeen);
         Assert::AreEqual(std::wstring(L"File does not appear to be a valid jpg image."), sMessage);
+    }
+
+    TEST_METHOD(TestSelectBadgeFileRemembersLastDirectory)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        editor.LoadAsset(&achievement);
+
+        editor.mockGameContext.SetActiveGameId(1);
+        editor.mockGameContext.LocalBadges().SetLastDirectory(L"C:\\Badges");
+
+        bool bDialogSeen = false;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+            {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"C:\\Badges"), vmFileDialog.GetInitialDirectory());
+
+                vmFileDialog.SetFileName(L"C:\\Badges\\Game1\\image.png");
+                return DialogResult::OK;
+            });
+
+        std::wstring sMessage;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+            {
+                sMessage = vmMessage.GetMessage();
+                return DialogResult::OK;
+            });
+
+        const std::string sFileContents("\x89PNG\x0D\x0A\x1A\x0D\x00\x00\x00\x0DIHDR", 16);
+        editor.mockFileSystem.MockFile(L"C:\\image.png", sFileContents);
+
+        editor.SelectBadgeFile();
+
+        Assert::AreEqual(std::wstring(L"C:\\Badges\\Game1"), editor.mockGameContext.LocalBadges().GetLastDirectory());
+        Assert::IsTrue(bDialogSeen);
+
+        const auto pUserFile = editor.mockLocalStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, L"1");
+        Assert::AreEqual(std::string("0.0.0.0\nGame Title\nBadgeDir=C:\\Badges\\Game1\n"), pUserFile);
     }
 
     TEST_METHOD(TestChangingGroupUpdatesDebugHighlights)

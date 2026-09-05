@@ -101,6 +101,11 @@ public:
     virtual std::unique_ptr<TextWriter> AppendTextFile(const std::wstring& sPath) const = 0;
 
     /// <summary>
+    /// Gets the directory portion of a path.
+    /// </summary>
+    virtual std::wstring GetDirectory(const std::wstring& sPath) const = 0;
+
+    /// <summary>
     /// Gets the filename portion of a path.
     /// </summary>
     virtual std::wstring GetFileName(const std::wstring& sPath) const = 0;

@@ -155,6 +155,25 @@ public:
         Assert::IsFalse(tokenizer.Consume('d'));
         Assert::IsFalse(tokenizer.Consume('\0'));
     }
+
+    TEST_METHOD(TestMatch)
+    {
+        std::string input("abcdefgh");
+        Tokenizer tokenizer(input);
+
+        Assert::IsFalse(tokenizer.Match("bcd")); // first character is 'a'
+        Assert::IsTrue(tokenizer.Match("abc"));
+        Assert::AreEqual('d', tokenizer.PeekChar());
+        Assert::IsFalse(tokenizer.Match("abc"));
+        Assert::IsFalse(tokenizer.Match("den"));
+        Assert::IsTrue(tokenizer.Match("def"));
+        Assert::AreEqual('g', tokenizer.PeekChar());
+        Assert::IsFalse(tokenizer.Match("ghi"));
+        Assert::IsTrue(tokenizer.Match("gh"));
+        Assert::IsTrue(tokenizer.EndOfString());
+        Assert::IsFalse(tokenizer.Match("i"));
+        Assert::IsTrue(tokenizer.Match(""));
+    }
 };
 
 

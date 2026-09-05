@@ -54,6 +54,21 @@ public:
 	/// </summary>
 	void Commit(const std::wstring& sPreviousBadgeName, const std::wstring& sNewBadgeName);
 
+	/// <summary>
+	/// The <see cref="ModelProperty" /> for the last directory from which a badge was selected.
+	/// </summary>
+	static const StringModelProperty LastDirectoryProperty;
+
+	/// <summary>
+	/// Gets the last directory from which a badge was selected.
+	/// </summary>
+	const std::wstring& GetLastDirectory() const { return GetValue(LastDirectoryProperty); }
+
+	/// <summary>
+	/// Sets the last directory from which a badge was selected.
+	/// </summary>
+	void SetLastDirectory(const std::wstring& sValue) { SetValue(LastDirectoryProperty, sValue); }
+
 private:
 	struct BadgeReferenceCount
 	{

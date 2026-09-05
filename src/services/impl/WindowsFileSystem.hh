@@ -34,6 +34,7 @@ public:
     std::unique_ptr<TextWriter> CreateTextFile(const std::wstring& sPath) const override;
     std::unique_ptr<TextWriter> AppendTextFile(const std::wstring& sPath) const override;
 
+    std::wstring GetDirectory(const std::wstring& sPath) const override;
     std::wstring GetFileName(const std::wstring& sPath) const override;
     std::wstring GetExtension(const std::wstring& sPath) const override;
     std::wstring RemoveExtension(const std::wstring& sPath) const override;

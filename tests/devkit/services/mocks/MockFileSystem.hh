@@ -189,6 +189,15 @@ public:
         return std::unique_ptr<TextWriter>(pWriter.release());
     }
 
+    std::wstring GetDirectory(const std::wstring& sPath) const override
+    {
+        const auto nIndex = sPath.find_last_of(L"/\\");
+        if (nIndex != std::string::npos)
+            return std::wstring(sPath, 0, nIndex);
+
+        return sPath;
+    }
+
     std::wstring GetFileName(const std::wstring& sPath) const override
     {
         const auto nIndex = sPath.find_last_of(L"/\\");

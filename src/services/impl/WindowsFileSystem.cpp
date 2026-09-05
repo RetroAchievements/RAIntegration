@@ -38,6 +38,15 @@ const std::wstring& WindowsFileSystem::MakeAbsolute(std::wstring& sBuffer, const
     return sBuffer;
 }
 
+std::wstring WindowsFileSystem::GetDirectory(const std::wstring& sPath) const
+{
+    const auto nIndex = sPath.find_last_of(L"/\\");
+    if (nIndex != std::string::npos)
+        return std::wstring(sPath, 0, nIndex);
+
+    return sPath;
+}
+
 std::wstring WindowsFileSystem::GetFileName(const std::wstring& sPath) const
 {
     const auto nIndex = sPath.find_last_of(L"/\\");

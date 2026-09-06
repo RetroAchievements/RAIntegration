@@ -5,6 +5,8 @@
 #include "services/ServiceLocator.hh"
 #include "services/IConfiguration.hh"
 
+#include "util/Strings.hh"
+
 #include <rcheevos/src/rcheevos/rc_internal.h>
 
 namespace ra {

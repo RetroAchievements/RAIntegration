@@ -1,5 +1,9 @@
 #include "data/Requirement.hh"
 
+#include "context/mocks/MockEmulatorMemoryContext.hh"
+
+#include "services/mocks/MockConfiguration.hh"
+
 #include "testutil/CppUnitTest.hh"
 
 namespace ra {
@@ -71,6 +75,77 @@ public:
         Assert::IsFalse(Requirement::IsOperandTypeParameterless(Requirement::OperandType::Value));
         Assert::IsFalse(Requirement::IsOperandTypeParameterless(Requirement::OperandType::Float));
         Assert::IsTrue(Requirement::IsOperandTypeParameterless(Requirement::OperandType::Recall));
+    }
+
+    TEST_METHOD(TestFormatOperandValueNumber)
+    {
+        ra::services::mocks::MockConfiguration mockConfiguration;
+        mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+
+        Assert::AreEqual(std::wstring(L"0"), Requirement::FormatOperandValue(0U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"1"), Requirement::FormatOperandValue(1U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"10"), Requirement::FormatOperandValue(10U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"100"), Requirement::FormatOperandValue(100U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"1000000000"), Requirement::FormatOperandValue(1000000000U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"4294967295"), Requirement::FormatOperandValue(0xFFFFFFFFU, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"12"), Requirement::FormatOperandValue(12.34f, ra::data::Requirement::OperandType::Value));
+
+        mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
+
+        Assert::AreEqual(std::wstring(L"0x00"), Requirement::FormatOperandValue(0U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x01"), Requirement::FormatOperandValue(1U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x0a"), Requirement::FormatOperandValue(10U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x64"), Requirement::FormatOperandValue(100U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x3b9aca00"), Requirement::FormatOperandValue(1000000000U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0xffffffff"), Requirement::FormatOperandValue(0xFFFFFFFFU, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x0c"), Requirement::FormatOperandValue(12.34f, ra::data::Requirement::OperandType::Value));
+    }
+
+    TEST_METHOD(TestFormatOperandValueFloat)
+    {
+        ra::services::mocks::MockConfiguration mockConfiguration;
+        mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+
+        Assert::AreEqual(std::wstring(L"0.0"), Requirement::FormatOperandValue(0.0f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.0"), Requirement::FormatOperandValue(1.0f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.23"), Requirement::FormatOperandValue(1.23f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"-3.14159"), Requirement::FormatOperandValue(-3.14159f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"960.75"), Requirement::FormatOperandValue(960.75f, ra::data::Requirement::OperandType::Float));
+
+        mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
+
+        Assert::AreEqual(std::wstring(L"0.0"), Requirement::FormatOperandValue(0.0f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.0"), Requirement::FormatOperandValue(1.0f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.23"), Requirement::FormatOperandValue(1.23f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"-3.14159"), Requirement::FormatOperandValue(-3.14159f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"960.75"), Requirement::FormatOperandValue(960.75f, ra::data::Requirement::OperandType::Float));
+    }
+
+    TEST_METHOD(TestFormatOperandValueAddress)
+    {
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::services::mocks::MockConfiguration mockConfiguration;
+        mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+
+        Assert::AreEqual(std::wstring(L"0x0000"), Requirement::FormatOperandValue(0U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x0c3500"), Requirement::FormatOperandValue(800000U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660U, ra::data::Requirement::OperandType::Delta));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660U, ra::data::Requirement::OperandType::Prior));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660U, ra::data::Requirement::OperandType::BCD));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660U, ra::data::Requirement::OperandType::Inverted));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660.25f, ra::data::Requirement::OperandType::Address));
+
+        mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
+
+        Assert::AreEqual(std::wstring(L"0x0000"), Requirement::FormatOperandValue(0U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x0c3500"), Requirement::FormatOperandValue(800000U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660U, ra::data::Requirement::OperandType::Delta));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660U, ra::data::Requirement::OperandType::Prior));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660U, ra::data::Requirement::OperandType::Inverted));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660U, ra::data::Requirement::OperandType::BCD));
+        Assert::AreEqual(std::wstring(L"0x1234"), Requirement::FormatOperandValue(4660.25f, ra::data::Requirement::OperandType::Address));
     }
 
     TEST_METHOD(TestIsModifyingOperator)

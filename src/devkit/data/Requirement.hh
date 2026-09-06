@@ -7,6 +7,8 @@
 
 #include <rcheevos/include/rc_runtime_types.h>
 
+typedef struct rc_typed_value_t rc_typed_value_t;
+
 namespace ra {
 namespace data {
 
@@ -204,6 +206,21 @@ public:
                 return false;
         }
     }
+
+    /// <summary>
+    /// Formats a value according to the specified OperandType.
+    /// </summary>
+    static std::wstring FormatOperandValue(unsigned nValue, Requirement::OperandType nType);
+
+    /// <summary>
+    /// Formats a value according to the specified OperandType.
+    /// </summary>
+    static std::wstring FormatOperandValue(float fValue, Requirement::OperandType nType);
+
+    /// <summary>
+    /// Formats a value according to the specified OperandType.
+    /// </summary>
+    static std::wstring FormatOperandValue(rc_typed_value_t& pValue, Requirement::OperandType nType);
 
     enum class OperatorType : uint8_t
     {

@@ -78,6 +78,7 @@
     <ClCompile Include="data\models\MemoryNotesModel.cpp" />
     <ClCompile Include="data\models\MemoryRegionsModel.cpp" />
     <ClCompile Include="data\models\RichPresenceModel.cpp" />
+    <ClCompile Include="data\Requirement.cpp" />
     <ClCompile Include="data\util\AchievementLogicSerializer.cpp" />
     <ClCompile Include="data\util\IndirectNoteResolver.cpp" />
     <ClCompile Include="data\util\TriggerValidation.cpp" />

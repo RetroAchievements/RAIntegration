@@ -98,8 +98,6 @@ public:
     bool IsModifying() const { return ra::data::Requirement::SupportsModifyingOperators(GetType()); }
 
     static bool IsComparisonVisible(const ViewModelBase& vmItem, int nValue);
-    static std::wstring FormatValue(unsigned nValue, ra::data::Requirement::OperandType nType);
-    static std::wstring FormatValue(float fValue, ra::data::Requirement::OperandType nType);
 
     static const IntModelProperty RowColorProperty;
     Color GetRowColor() const { return Color(ra::to_unsigned(GetValue(RowColorProperty))); }

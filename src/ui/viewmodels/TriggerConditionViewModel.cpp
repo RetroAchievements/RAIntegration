@@ -114,57 +114,6 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, ra:
     }
 }
 
-static std::wstring FormatTypedValue(rc_typed_value_t& pValue, ra::data::Requirement::OperandType nType)
-{
-    switch (nType)
-    {
-        case ra::data::Requirement::OperandType::Value:
-        {
-            rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
-            const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-                return std::to_wstring(pValue.value.u32);
-
-            return ra::util::String::Printf(L"0x%02x", pValue.value.u32);
-        }
-
-        case ra::data::Requirement::OperandType::Float:
-        {
-            rc_typed_value_convert(&pValue, RC_VALUE_TYPE_FLOAT);
-            auto sFloat = std::to_wstring(pValue.value.f32);
-            if (sFloat.find('.') != std::string::npos)
-            {
-                while (sFloat.back() == '0')
-                    sFloat.pop_back();
-                if (sFloat.back() == '.')
-                    sFloat.push_back('0');
-            }
-            return sFloat;
-        }
-
-        default:
-            rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
-            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-            return pMemoryContext.FormatAddress(pValue.value.u32);
-    }
-}
-
-std::wstring TriggerConditionViewModel::FormatValue(unsigned nValue, ra::data::Requirement::OperandType nType)
-{
-    rc_typed_value_t pValue{};
-    pValue.type = RC_VALUE_TYPE_UNSIGNED;
-    pValue.value.u32 = nValue;
-    return FormatTypedValue(pValue, nType);
-}
-
-std::wstring TriggerConditionViewModel::FormatValue(float fValue, ra::data::Requirement::OperandType nType)
-{
-    rc_typed_value_t pValue{};
-    pValue.type = RC_VALUE_TYPE_FLOAT;
-    pValue.value.f32 = fValue;
-    return FormatTypedValue(pValue, nType);
-}
-
 void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sValueProperty, ra::data::Requirement::OperandType nOldType, ra::data::Requirement::OperandType nNewType)
 {
     const auto& sValue = GetValue(sValueProperty);
@@ -185,7 +134,7 @@ void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sVa
             ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, pValue.value.u32, sError);
     }
 
-    SetValue(sValueProperty, FormatTypedValue(pValue, nNewType));
+    SetValue(sValueProperty, ra::data::Requirement::FormatOperandValue(pValue, nNewType));
 }
 
 void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty,
@@ -234,7 +183,7 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
             break;
     }
 
-    SetValue(pValueProperty, FormatTypedValue(pValue, nType));
+    SetValue(pValueProperty, ra::data::Requirement::FormatOperandValue(pValue, nType));
 }
 
 void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
@@ -377,7 +326,7 @@ void TriggerConditionViewModel::OnValueChanged(const BoolModelProperty::ChangeAr
 
 void TriggerConditionViewModel::SetSourceValue(unsigned int nValue)
 {
-    SetValue(SourceValueProperty, FormatValue(nValue, GetSourceType()));
+    SetValue(SourceValueProperty, ra::data::Requirement::FormatOperandValue(nValue, GetSourceType()));
 }
 
 ra::data::ByteAddress TriggerConditionViewModel::GetSourceAddress() const
@@ -390,12 +339,12 @@ ra::data::ByteAddress TriggerConditionViewModel::GetSourceAddress() const
 
 void TriggerConditionViewModel::SetTargetValue(unsigned int nValue)
 {
-    SetValue(TargetValueProperty, FormatValue(nValue, GetTargetType()));
+    SetValue(TargetValueProperty, ra::data::Requirement::FormatOperandValue(nValue, GetTargetType()));
 }
 
 void TriggerConditionViewModel::SetTargetValue(float fValue)
 {
-    SetValue(TargetValueProperty, FormatValue(fValue, GetTargetType()));
+    SetValue(TargetValueProperty, ra::data::Requirement::FormatOperandValue(fValue, GetTargetType()));
 }
 
 ra::data::ByteAddress TriggerConditionViewModel::GetTargetAddress() const
@@ -540,7 +489,7 @@ static void BuildOperandTooltip(std::wstring& sTooltip, const rc_operand_t& pOpe
     switch (pValue.type)
     {
         case RC_VALUE_TYPE_FLOAT:
-            sTooltip += FormatTypedValue(pValue, ra::data::Requirement::OperandType::Float);
+            sTooltip += ra::data::Requirement::FormatOperandValue(pValue, ra::data::Requirement::OperandType::Float);
             break;
         case RC_VALUE_TYPE_SIGNED:
             sTooltip += ra::util::String::Printf(L"%d", pValue.value.i32);

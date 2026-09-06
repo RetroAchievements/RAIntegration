@@ -202,7 +202,7 @@ public:
                 }
 
                 vmItems.SetItemValue(nIndex, *m_pBoundProperty,
-                    ra::ui::viewmodels::TriggerConditionViewModel::FormatValue(fValue, nOperandType));
+                    ra::data::Requirement::FormatOperandValue(fValue, nOperandType));
                 return true;
             }
 
@@ -227,7 +227,7 @@ public:
                     }
 
                     vmItems.SetItemValue(nIndex, *m_pBoundProperty,
-                        ra::ui::viewmodels::TriggerConditionViewModel::FormatValue(nValue, nOperandType));
+                        ra::data::Requirement::FormatOperandValue(nValue, nOperandType));
                     return true;
                 }
             }
@@ -245,7 +245,7 @@ public:
                 }
 
                 vmItems.SetItemValue(nIndex, *m_pBoundProperty,
-                    ra::ui::viewmodels::TriggerConditionViewModel::FormatValue(nValue, nOperandType));
+                    ra::data::Requirement::FormatOperandValue(nValue, nOperandType));
 
                 return true;
             }

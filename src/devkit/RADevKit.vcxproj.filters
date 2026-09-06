@@ -326,5 +326,8 @@
     <ClCompile Include="data\util\AchievementLogicSerializer.cpp">
       <Filter>data\util</Filter>
     </ClCompile>
+    <ClCompile Include="data\Requirement.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -296,6 +296,8 @@ public:
         ParseAndRegenerateValue("M:0xS2345$M:0xS2346"); // bit6 in alts
         ParseAndRegenerateValue("A:0xH1234&31_M:0"); // bitwise and
         ParseAndRegenerateValue("A:0xH1234^129_M:0"); // bitwise or
+
+        ParseAndRegenerateValue("I:0xH1234_0x 2345"); // missing measured
     }
 
     TEST_METHOD(TestTriggerUpdateConditionModified)

@@ -620,6 +620,9 @@ const rc_condition_t* TriggerConditionViewModel::GetFirstCondition() const
         // find the condset associated to the selected group
         if (nIndex == 0)
         {
+            if (!pTrigger->requirement)
+                return nullptr;
+
             pFirstCondition = pTrigger->requirement->conditions;
         }
         else

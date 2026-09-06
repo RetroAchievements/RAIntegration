@@ -188,7 +188,7 @@ private:
     void UpdateConditions(const GroupViewModel* pGroup);
     void UpdateTotalHits(const GroupViewModel* pGroup);
 
-    int AppendMemRefChain(const std::string& sTrigger);
+    int AppendMemRefChain(const std::string& sTrigger, bool bSelect);
 
     void DeselectAllConditions();
     rc_trigger_t* ParseTrigger(const std::string& sTrigger);

@@ -59,68 +59,104 @@ static bool ValidateLeaderboardTrigger(const rc_trigger_t* pTrigger, std::wstrin
     return true;
 }
 
-static bool ValidateMemoryNotesOperand(const rc_operand_t& pOperand, const ra::data::models::MemoryNotesModel& pNotes,
-                                       std::wstring& sError)
+static std::wstring FormatAddress(ra::data::ByteAddress nAddress, bool bIsOffset)
 {
-    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-    const auto nMemRefSize = Memory::SizeFromRcheevosSize(pOperand.size);
-
-    const auto nAddress = pOperand.value.memref->address;
-    ra::data::ByteAddress nStartAddress = nAddress;
-    Memory::Size nNoteSize = Memory::Size::Unknown;
-
-    const auto* pNote = pNotes.FindMemoryNoteModel(nAddress, false);
-    if (pNote)
+    if (bIsOffset)
     {
-        // ignore bit/nibble reads inside a known address
-        if (nMemRefSize == Memory::Size::BitCount || Memory::SizeBits(nMemRefSize) < 8)
-            return true;
+        if (nAddress < 10)
+            return L"offset " + std::to_wstring(nAddress);
 
-        nNoteSize = pNote->GetMemSize();
+        return ra::util::String::Printf(L"offset %02x", nAddress);
     }
-    else
+
+    const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+    return L"address " + pMemoryContext.FormatAddress(nAddress).substr(2);
+}
+
+static const ra::data::models::MemoryNoteModel* ValidateMemoryNotesOperand(
+    const ra::data::models::MemoryNotesModel& pNotes,
+    const ra::data::models::MemoryNoteModel* pParentNote,
+    const rc_operand_t& pOperand, bool bIsAddAddressChain,
+    std::wstring& sError)
+{
+    // Find the memory note for the operand.
+    const ra::data::models::MemoryNoteModel* pOperandNote = nullptr;
+    const auto nAddress = pOperand.value.memref->address;
+    auto nStartAddress = nAddress;
+    if (!bIsAddAddressChain)
+        pOperandNote = pNotes.FindMemoryNoteModel(nAddress, false);
+    else if (pParentNote)
+        pOperandNote = pParentNote->GetPointerNoteAtOffset(nAddress);
+
+    if (!pOperandNote)
     {
-        // no note at address. see if it's included in a larger container note
-        nStartAddress = pNotes.FindNoteStart(nAddress);
-        if (nStartAddress == 0xFFFFFFFF)
+        if (!bIsAddAddressChain)
         {
-            sError = ra::util::String::Printf(L"No memory note for address %s", pMemoryContext.FormatAddress(nAddress).substr(2));
-            return false;
+            // No note at address. See if it's included in a larger container note.
+            nStartAddress = pNotes.FindNoteStart(nAddress);
+            if (nStartAddress != 0xFFFFFFFF)
+                pOperandNote = pNotes.FindMemoryNoteModel(nStartAddress, false);
         }
 
-        const auto pStartNote = pNotes.FindMemoryNoteModel(nStartAddress, false);
-        nNoteSize = pStartNote ? pStartNote->GetMemSize() : Memory::Size::Unknown;
+        if (!pOperandNote)
+        {
+            sError = ra::util::String::Printf(L"No memory note for %s", FormatAddress(nAddress, bIsAddAddressChain));
+            return nullptr;
+        }
     }
 
-    if (nMemRefSize == nNoteSize)
-        return true;
+    // Ignore bit/nibble reads inside a known address.
+    const auto nMemRefSize = Memory::SizeFromRcheevosSize(pOperand.size);
+    if (nMemRefSize == Memory::Size::BitCount || Memory::SizeBits(nMemRefSize) < 8)
+        return pOperandNote;
 
-    // "array" and "text" are not real sizes to validate against
+    // Size match. Note is valid.
+    const Memory::Size nNoteSize = pOperandNote->GetMemSize();
+    if (nNoteSize == nMemRefSize)
+        return pOperandNote;
+
+    // "array" and "text" are not real sizes to validate against.
     if (nNoteSize == Memory::Size::Array || nNoteSize == Memory::Size::Text)
-        return true;
+        return pOperandNote;
 
+    // A pointer may be masked by reading a smaller size.
+    if (pOperandNote->IsPointer())
+    {
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
+        ra::data::Memory::Size nReadSize;
+        uint32_t nMask, nOffset;
+        if (pConsoleContext.GetRealAddressConversion(&nReadSize, &nMask, &nOffset))
+        {
+            if (nReadSize == nMemRefSize)
+                return pOperandNote;
+        }
+    }
+
+    // If the note did not specify a size, assume 8-bit.
     if (nNoteSize == Memory::Size::Unknown)
     {
-        // note exists, but did not specify a size. assume 8-bit
+        // Ignore bit/nibble reads.
         if (Memory::SizeBits(nMemRefSize) <= 8)
-            return true;
+            return pOperandNote;
 
-        sError = ra::util::String::Printf(L"%s read of address %s differs from implied memory note size %s", Memory::SizeString(nMemRefSize),
-                                          pMemoryContext.FormatAddress(nAddress).substr(2), Memory::SizeString(Memory::Size::EightBit));
+        sError = ra::util::String::Printf(L"%s read of %s differs from implied memory note size %s",
+            Memory::SizeString(nMemRefSize), FormatAddress(nAddress, bIsAddAddressChain),
+            Memory::SizeString(Memory::Size::EightBit));
     }
     else
     {
-        sError = ra::util::String::Printf(L"%s read of address %s differs from memory note size %s", Memory::SizeString(nMemRefSize),
-                                          pMemoryContext.FormatAddress(nAddress).substr(2), Memory::SizeString(nNoteSize));
+        sError = ra::util::String::Printf(L"%s read of %s differs from memory note size %s",
+            Memory::SizeString(nMemRefSize), FormatAddress(nAddress, bIsAddAddressChain),
+            Memory::SizeString(nNoteSize));
     }
 
     if (nStartAddress != nAddress)
     {
         sError.append(L" at ");
-        sError.append(pMemoryContext.FormatAddress(nStartAddress).substr(2));
+        sError.append(FormatAddress(nStartAddress, bIsAddAddressChain));
     }
 
-    return false;
+    return nullptr;
 }
 
 static bool ValidateMemoryNotesCondSet(const rc_condset_t* pCondSet, const ra::data::models::MemoryNotesModel& pNotes,
@@ -132,34 +168,58 @@ static bool ValidateMemoryNotesCondSet(const rc_condset_t* pCondSet, const ra::d
     bool bIsAddAddressChain = false;
     size_t nIndex = 0;
     const auto* pCondition = pCondSet->conditions;
+    const ra::data::models::MemoryNoteModel* pParentNote = nullptr;
     for (; pCondition; pCondition = pCondition->next)
     {
         ++nIndex;
-        if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
-        {
-            bIsAddAddressChain = true;
-            continue;
-        }
-
-        if (bIsAddAddressChain)
-        {
-            bIsAddAddressChain = false;
-            continue;
-        }
 
         const auto* pOperand1 = rc_condition_get_real_operand1(pCondition);
-        if (pOperand1 && rc_operand_is_memref(pOperand1) &&
-            !ValidateMemoryNotesOperand(*pOperand1, pNotes, sError))
+        if (!pOperand1)
+            continue;
+
+        const ra::data::models::MemoryNoteModel* pOperand1Note = nullptr;
+        if (rc_operand_is_memref(pOperand1))
         {
-            sError = ra::util::String::Printf(L"Condition %u: %s", nIndex, sError);
-            return false;
+            pOperand1Note = ValidateMemoryNotesOperand(pNotes, pParentNote, *pOperand1, bIsAddAddressChain, sError);
+            if (!pOperand1Note)
+            {
+                sError = ra::util::String::Printf(L"Condition %u: %s", nIndex, sError);
+                return false;
+            }
         }
 
-        if (rc_operand_is_memref(&pCondition->operand2) &&
-            !ValidateMemoryNotesOperand(pCondition->operand2, pNotes, sError))
+        if (rc_operand_is_memref(&pCondition->operand2))
         {
-            sError = ra::util::String::Printf(L"Condition %u: %s", nIndex, sError);
-            return false;
+            const auto* pOperand2Note = ValidateMemoryNotesOperand(pNotes, pParentNote, pCondition->operand2, bIsAddAddressChain, sError);
+            if (!pOperand2Note)
+            {
+                sError = ra::util::String::Printf(L"Condition %u: %s", nIndex, sError);
+                return false;
+            }
+        }
+        else if (pCondition->oper == RC_OPERATOR_AND && pCondition->operand2.type == RC_OPERAND_CONST)
+        {
+            const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
+            ra::data::Memory::Size nReadSize;
+            uint32_t nMask, nOffset;
+            if (pConsoleContext.GetRealAddressConversion(&nReadSize, &nMask, &nOffset))
+            {
+                if (nMask != 0xFFFFFFFF && nMask > pCondition->operand2.value.num)
+                {
+                    sError = ra::util::String::Printf(L"Condition %u: Pointer mask is too small for system", nIndex);
+                    return false;
+                }
+            }
+        }
+
+        if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
+        {
+            pParentNote = pOperand1Note;
+            bIsAddAddressChain = true;
+        }
+        else
+        {
+            bIsAddAddressChain = false;
         }
     }
 

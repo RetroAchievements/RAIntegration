@@ -168,7 +168,7 @@ bool ConsoleContext::GetRealAddressConversion(ra::data::Memory::Size* nReadSize,
         case ConsoleID::N64:
         case ConsoleID::PlayStation:
             *nReadSize = ra::data::Memory::Size::TwentyFourBit;
-            *nMask = 0xFFFFFFFF;
+            *nMask = 0x00FFFFFF;
             *nOffset = 0;
             return true;
 

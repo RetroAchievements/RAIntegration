@@ -47,16 +47,22 @@ public:
         Assert::AreEqual(1U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, result.nSize);
         Assert::AreEqual(0x12U, result.nValue);
+        Assert::AreEqual({ 0 }, results.GetAddressIndex(1U));
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, result.nSize);
         Assert::AreEqual(0x34U, result.nValue);
+        Assert::AreEqual({ 1 }, results.GetAddressIndex(2U));
 
         Assert::IsTrue(results.GetMatchingAddress(2U, result));
         Assert::AreEqual(3U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, result.nSize);
         Assert::AreEqual(0xABU, result.nValue);
+        Assert::AreEqual({ 2 }, results.GetAddressIndex(3U));
+
+        Assert::AreEqual({ -1 }, results.GetAddressIndex(0U));
+        Assert::AreEqual({ -1 }, results.GetAddressIndex(4U));
     }
 
     TEST_METHOD(TestInitializeFromMemorySixteenBit)
@@ -131,11 +137,15 @@ public:
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::SixteenBit, result.nSize);
         Assert::AreEqual(0x1200U, result.nValue);
+        Assert::AreEqual({ 0 }, results.GetAddressIndex(0U));
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::SixteenBit, result.nSize);
         Assert::AreEqual(0xAB34U, result.nValue);
+        Assert::AreEqual({ 1 }, results.GetAddressIndex(2U));
+
+        Assert::AreEqual({ -1 }, results.GetAddressIndex(1U));
     }
 
     TEST_METHOD(TestInitializeFromMemoryThirtyTwoBitAligned)
@@ -163,11 +173,15 @@ public:
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, result.nSize);
         Assert::AreEqual(0xAB341200U, result.nValue);
+        Assert::AreEqual({ 0 }, results.GetAddressIndex(0U));
 
         Assert::IsTrue(results.GetMatchingAddress(1U, result));
         Assert::AreEqual(4U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, result.nSize);
         Assert::AreEqual(0x2044CD56U, result.nValue);
+        Assert::AreEqual({ 1 }, results.GetAddressIndex(4U));
+
+        Assert::AreEqual({ -1 }, results.GetAddressIndex(2U));
     }
 
     TEST_METHOD(TestInitializeFromMemorySixteenBitBigEndian)
@@ -390,6 +404,8 @@ public:
         Assert::AreEqual(3U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, result.nSize);
         Assert::AreEqual(0xABU, result.nValue);
+
+        Assert::AreEqual({ 0 }, results2.GetAddressIndex(3U));
     }
 
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsInvalidConstant)
@@ -443,16 +459,19 @@ public:
         Assert::AreEqual(0U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, result.nSize);
         Assert::AreEqual(0x00U, result.nValue);
+        Assert::AreEqual({ 0 }, results3.GetAddressIndex(0U));
 
         Assert::IsTrue(results3.GetMatchingAddress(1U, result));
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, result.nSize);
         Assert::AreEqual(0x00U, result.nValue);
+        Assert::AreEqual({ 1 }, results3.GetAddressIndex(2U));
 
         Assert::IsTrue(results3.GetMatchingAddress(2U, result));
         Assert::AreEqual(5U, result.nAddress);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, result.nSize);
         Assert::AreEqual(0x00U, result.nValue);
+        Assert::AreEqual({ 2 }, results3.GetAddressIndex(5U));
     }
 
     TEST_METHOD(TestInitializeFromResultsEightBitNotEqualsConstant)

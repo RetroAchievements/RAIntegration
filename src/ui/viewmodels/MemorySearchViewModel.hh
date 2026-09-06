@@ -475,6 +475,8 @@ public:
     /// </summary>
     void ExcludeSelected();
     static const BoolModelProperty HasSelectionProperty;
+    bool HasSelection() const { return GetValue(HasSelectionProperty); }
+    void ClearSelection();
 
     /// <summary>
     /// Bookmarks the currently selected items from the search results.

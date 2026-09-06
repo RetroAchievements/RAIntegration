@@ -148,6 +148,11 @@ public:
     bool GetMatchingAddress(const SearchResult& pSrcResult, _Out_ SearchResult& result) const noexcept;
 
     /// <summary>
+    /// Gets the index of the specified address. Returns <c>-1</c> if the address was not captured.
+    /// </summary>
+    gsl::index GetAddressIndex(ra::data::ByteAddress nAddress) const noexcept;
+
+    /// <summary>
     /// Gets the raw bytes at the specified address.
     /// </summary>
     bool GetBytes(ra::data::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept;

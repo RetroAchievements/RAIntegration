@@ -85,6 +85,8 @@
     <ClCompile Include="data\models\AchievementSetModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
+    <ClCompile Include="data\util\AchievementLogicSerializer_Tests.cpp" />
+    <ClCompile Include="data\Requirement_Tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -201,5 +203,6 @@
       <Filter>context\mocks</Filter>
     </ClInclude>
     <ClInclude Include="services\mocks\MockConfiguration.hh" />
+    <ClInclude Include="testutil\RequirementAsserts.hh" />
   </ItemGroup>
 </Project>

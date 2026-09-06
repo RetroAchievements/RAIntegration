@@ -348,9 +348,6 @@
     <ClCompile Include="ui\win32\PointerInspectorDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
-    <ClCompile Include="services\AchievementLogicSerializer.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="services\search\SearchImpl.cpp">
       <Filter>Services\Search</Filter>
     </ClCompile>
@@ -826,9 +823,6 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\GridMemoryWatchValueColumnBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
-    </ClInclude>
-    <ClInclude Include="services\AchievementLogicSerializer.hh">
-      <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\search\SearchImpl.hh">
       <Filter>Services\Search</Filter>

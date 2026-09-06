@@ -10,7 +10,7 @@
 
 #include "util\Strings.hh"
 
-#include "services\AchievementLogicSerializer.hh"
+#include "data\util\AchievementLogicSerializer.hh"
 #include "services\AchievementRuntime.hh"
 #include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
@@ -36,30 +36,30 @@ const IntModelProperty TriggerViewModel::GroupViewModel::ColorProperty("GroupVie
 TriggerViewModel::TriggerViewModel() noexcept
     : m_pConditionsMonitor(*this)
 {
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Standard), L"");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::PauseIf), L"Pause If");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::ResetIf), L"Reset If");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::ResetNextIf), L"Reset Next If");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AddSource), L"Add Source");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::SubSource), L"Sub Source");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AddHits), L"Add Hits");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::SubHits), L"Sub Hits");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AddAddress), L"Add Address");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AndNext), L"And Next");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::OrNext), L"Or Next");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Measured), L"Measured");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::MeasuredIf), L"Measured If");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Trigger), L"Trigger");
-    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Remember), L"Remember");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::Standard), L"");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::PauseIf), L"Pause If");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::ResetIf), L"Reset If");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::ResetNextIf), L"Reset Next If");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::AddSource), L"Add Source");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::SubSource), L"Sub Source");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::AddHits), L"Add Hits");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::SubHits), L"Sub Hits");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::AddAddress), L"Add Address");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::AndNext), L"And Next");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::OrNext), L"Or Next");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::Measured), L"Measured");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::MeasuredIf), L"Measured If");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::Trigger), L"Trigger");
+    m_vConditionTypes.Add(ra::etoi(ra::data::Requirement::Type::Remember), L"Remember");
 
-    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Address), L"Mem");
-    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Value), L"Value");
-    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Delta), L"Delta");
-    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Prior), L"Prior");
-    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::BCD), L"BCD");
-    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Float), L"Float");
-    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Inverted), L"Invert");
-    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Recall), L"Recall");
+    m_vOperandTypes.Add(ra::etoi(ra::data::Requirement::OperandType::Address), L"Mem");
+    m_vOperandTypes.Add(ra::etoi(ra::data::Requirement::OperandType::Value), L"Value");
+    m_vOperandTypes.Add(ra::etoi(ra::data::Requirement::OperandType::Delta), L"Delta");
+    m_vOperandTypes.Add(ra::etoi(ra::data::Requirement::OperandType::Prior), L"Prior");
+    m_vOperandTypes.Add(ra::etoi(ra::data::Requirement::OperandType::BCD), L"BCD");
+    m_vOperandTypes.Add(ra::etoi(ra::data::Requirement::OperandType::Float), L"Float");
+    m_vOperandTypes.Add(ra::etoi(ra::data::Requirement::OperandType::Inverted), L"Invert");
+    m_vOperandTypes.Add(ra::etoi(ra::data::Requirement::OperandType::Recall), L"Recall");
 
     m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit0), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit0));
     m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::Bit1), ra::data::Memory::SizeString(ra::data::Memory::Size::Bit1));
@@ -86,20 +86,20 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::MBF32), ra::data::Memory::SizeString(ra::data::Memory::Size::MBF32));
     m_vOperandSizes.Add(ra::etoi(ra::data::Memory::Size::MBF32LE), ra::data::Memory::SizeString(ra::data::Memory::Size::MBF32LE));
 
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Equals), L"=");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::LessThan), L"<");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::LessThanOrEqual), L"<=");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::GreaterThan), L">");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::GreaterThanOrEqual), L">=");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::NotEquals), L"!=");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::None), L"");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Multiply), L"*");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Divide), L"/");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Modulus), L"%");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Add), L"+");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Subtract), L"-");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::BitwiseAnd), L"&");
-    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::BitwiseXor), L"^");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::Equals), L"=");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::LessThan), L"<");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::LessThanOrEqual), L"<=");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::GreaterThan), L">");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::GreaterThanOrEqual), L">=");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::NotEquals), L"!=");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::None), L"");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::Multiply), L"*");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::Divide), L"/");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::Modulus), L"%");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::Add), L"+");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::Subtract), L"-");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::BitwiseAnd), L"&");
+    m_vOperatorTypes.Add(ra::etoi(ra::data::Requirement::OperatorType::BitwiseXor), L"^");
 }
 
 std::string TriggerViewModel::Serialize() const
@@ -191,7 +191,7 @@ const std::string& TriggerViewModel::GroupViewModel::GetSerialized() const
                 if (!pCondition->next)
                     break;
 
-                ra::services::AchievementLogicSerializer::AppendConditionSeparator(m_sSerialized);
+                ra::data::util::AchievementLogicSerializer::AppendConditionSeparator(m_sSerialized);
                 pCondition = pCondition->next;
             }
         }
@@ -385,7 +385,7 @@ int TriggerViewModel::AppendMemRefChain(const std::string& sTrigger, bool bSelec
     Expects(pGroup != nullptr);
     std::string sSerialized = pGroup->GetSerialized();
     if (!sSerialized.empty())
-        ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+        ra::data::util::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
     sSerialized.append(sTrigger);
     pGroup->UpdateSerialized(sSerialized);
 
@@ -441,7 +441,7 @@ void TriggerViewModel::RemoveSelectedConditions()
         if (m_vSelectedConditions.find(nIndex) == m_vSelectedConditions.end())
         {
             if (!sSerialized.empty())
-                ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+                ra::data::util::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
 
             if (nIndex < nFirstVisibleIndex || nIndex >= nFirstVisibleIndex + nVisibleItemCount)
             {
@@ -523,7 +523,7 @@ void TriggerViewModel::MoveSelectedConditionsUp()
             {
                 Expects(pCondition != nullptr);
                 if (!sSerialized.empty())
-                    ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+                    ra::data::util::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
 
                 vmCondition.InitializeFrom(*pCondition);
                 vmCondition.SerializeAppend(sSerialized);
@@ -588,7 +588,7 @@ void TriggerViewModel::MoveSelectedConditionsDown()
             {
                 Expects(pCondition != nullptr);
                 if (!sSerialized.empty())
-                    ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+                    ra::data::util::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
 
                 vmCondition.InitializeFrom(*pCondition);
                 vmCondition.SerializeAppend(sSerialized);
@@ -680,7 +680,7 @@ void TriggerViewModel::NewCondition()
             nSize = ra::data::Memory::SizeFromRcheevosSize(nMemRefSize);
 
         // assume the user wants to compare to the current value of the watched memory address
-        ra::services::AchievementLogicSerializer::AppendOperator(sMemRef, ra::services::TriggerOperatorType::Equals);
+        ra::data::util::AchievementLogicSerializer::AppendOperator(sMemRef, ra::data::Requirement::OperatorType::Equals);
 
         // pull the value from the memory viewer to avoid reading from the emulator
         nAddress = pMemoryInspector.GetCurrentAddress();
@@ -701,12 +701,12 @@ void TriggerViewModel::NewCondition()
         // append the value to the condition
         if (nTypedValue.type == RC_VALUE_TYPE_FLOAT)
         {
-            ra::services::AchievementLogicSerializer::AppendOperand(sMemRef, ra::services::TriggerOperandType::Float,
+            ra::data::util::AchievementLogicSerializer::AppendOperand(sMemRef, ra::data::Requirement::OperandType::Float,
                                                                     nSize, nTypedValue.value.f32);
         }
         else
         {
-            ra::services::AchievementLogicSerializer::AppendOperand(sMemRef, ra::services::TriggerOperandType::Value,
+            ra::data::util::AchievementLogicSerializer::AppendOperand(sMemRef, ra::data::Requirement::OperandType::Value,
                                                                     nSize, nTypedValue.value.u32);
         }
     }
@@ -1173,7 +1173,7 @@ void TriggerViewModel::UpdateCurrentGroup(bool bRememberHits, const IntModelProp
         if (nIndex == nConditionCount)
             break;
 
-        ra::services::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
+        ra::data::util::AchievementLogicSerializer::AppendConditionSeparator(sSerialized);
         pCondition = pCondition->next;
     }
 
@@ -1404,9 +1404,9 @@ void TriggerViewModel::ToggleDecimal()
 
     for (auto& pItem : m_vConditions)
     {
-        if (pItem.GetSourceType() == TriggerOperandType::Value)
+        if (pItem.GetSourceType() == ra::data::Requirement::OperandType::Value)
             pItem.SetSourceValue(ParseNumeric(pItem.GetSourceValue()));
-        if (pItem.GetTargetType() == TriggerOperandType::Value)
+        if (pItem.GetTargetType() == ra::data::Requirement::OperandType::Value)
             pItem.SetTargetValue(ParseNumeric(pItem.GetTargetValue()));
     }
 
@@ -1606,9 +1606,10 @@ bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,
         const auto* vmCondition = vmConditions.GetItemAt(nScan);
         Expects(vmCondition != nullptr);
 
-        switch (vmCondition->GetType())
+        const auto nType = vmCondition->GetType();
+        switch (nType)
         {
-            case ra::ui::viewmodels::TriggerConditionType::AddHits:
+            case ra::data::Requirement::Type::AddHits:
                 bIsHitsChain = true;
                 nConditionHits = vmCondition->GetCurrentHits();
                 if (nConditionHits != 0)
@@ -1618,7 +1619,7 @@ bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,
                 }
                 break;
 
-            case ra::ui::viewmodels::TriggerConditionType::SubHits:
+            case ra::data::Requirement::Type::SubHits:
                 bIsHitsChain = true;
                 nConditionHits = vmCondition->GetCurrentHits();
                 if (nConditionHits != 0)
@@ -1628,16 +1629,10 @@ bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,
                 }
                 break;
 
-            case ra::ui::viewmodels::TriggerConditionType::AddAddress:
-            case ra::ui::viewmodels::TriggerConditionType::AddSource:
-            case ra::ui::viewmodels::TriggerConditionType::SubSource:
-            case ra::ui::viewmodels::TriggerConditionType::Remember:
-            case ra::ui::viewmodels::TriggerConditionType::AndNext:
-            case ra::ui::viewmodels::TriggerConditionType::OrNext:
-            case ra::ui::viewmodels::TriggerConditionType::ResetNextIf:
-                break;
-
             default:
+                if (ra::data::Requirement::IsCombining(nType))
+                    break;
+
                 if (nScan >= nIndex)
                 {
                     if (bIsHitsChain)

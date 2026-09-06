@@ -7,11 +7,13 @@
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockConfiguration.hh"
+#include "tests\devkit\testutil\RequirementAsserts.hh"
 #include "tests\devkit\ui\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
+
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -127,53 +129,53 @@ public:
         Assert::AreEqual(std::string(), vmTrigger.Serialize());
 
         Assert::AreEqual({ 15U }, vmTrigger.ConditionTypes().Count());
-        Assert::AreEqual((int)TriggerConditionType::Standard, vmTrigger.ConditionTypes().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::Standard, vmTrigger.ConditionTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L""), vmTrigger.ConditionTypes().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::PauseIf, vmTrigger.ConditionTypes().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::PauseIf, vmTrigger.ConditionTypes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Pause If"), vmTrigger.ConditionTypes().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::ResetIf, vmTrigger.ConditionTypes().GetItemAt(2)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::ResetIf, vmTrigger.ConditionTypes().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"Reset If"), vmTrigger.ConditionTypes().GetItemAt(2)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::ResetNextIf, vmTrigger.ConditionTypes().GetItemAt(3)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::ResetNextIf, vmTrigger.ConditionTypes().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Reset Next If"), vmTrigger.ConditionTypes().GetItemAt(3)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::AddSource, vmTrigger.ConditionTypes().GetItemAt(4)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::AddSource, vmTrigger.ConditionTypes().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L"Add Source"), vmTrigger.ConditionTypes().GetItemAt(4)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::SubSource, vmTrigger.ConditionTypes().GetItemAt(5)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::SubSource, vmTrigger.ConditionTypes().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"Sub Source"), vmTrigger.ConditionTypes().GetItemAt(5)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::AddHits, vmTrigger.ConditionTypes().GetItemAt(6)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::AddHits, vmTrigger.ConditionTypes().GetItemAt(6)->GetId());
         Assert::AreEqual(std::wstring(L"Add Hits"), vmTrigger.ConditionTypes().GetItemAt(6)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::SubHits, vmTrigger.ConditionTypes().GetItemAt(7)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::SubHits, vmTrigger.ConditionTypes().GetItemAt(7)->GetId());
         Assert::AreEqual(std::wstring(L"Sub Hits"), vmTrigger.ConditionTypes().GetItemAt(7)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::AddAddress, vmTrigger.ConditionTypes().GetItemAt(8)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::AddAddress, vmTrigger.ConditionTypes().GetItemAt(8)->GetId());
         Assert::AreEqual(std::wstring(L"Add Address"), vmTrigger.ConditionTypes().GetItemAt(8)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::AndNext, vmTrigger.ConditionTypes().GetItemAt(9)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::AndNext, vmTrigger.ConditionTypes().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"And Next"), vmTrigger.ConditionTypes().GetItemAt(9)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::OrNext, vmTrigger.ConditionTypes().GetItemAt(10)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::OrNext, vmTrigger.ConditionTypes().GetItemAt(10)->GetId());
         Assert::AreEqual(std::wstring(L"Or Next"), vmTrigger.ConditionTypes().GetItemAt(10)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::Measured, vmTrigger.ConditionTypes().GetItemAt(11)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::Measured, vmTrigger.ConditionTypes().GetItemAt(11)->GetId());
         Assert::AreEqual(std::wstring(L"Measured"), vmTrigger.ConditionTypes().GetItemAt(11)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::MeasuredIf, vmTrigger.ConditionTypes().GetItemAt(12)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::MeasuredIf, vmTrigger.ConditionTypes().GetItemAt(12)->GetId());
         Assert::AreEqual(std::wstring(L"Measured If"), vmTrigger.ConditionTypes().GetItemAt(12)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::Trigger, vmTrigger.ConditionTypes().GetItemAt(13)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::Trigger, vmTrigger.ConditionTypes().GetItemAt(13)->GetId());
         Assert::AreEqual(std::wstring(L"Trigger"), vmTrigger.ConditionTypes().GetItemAt(13)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::Remember, vmTrigger.ConditionTypes().GetItemAt(14)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::Type::Remember, vmTrigger.ConditionTypes().GetItemAt(14)->GetId());
         Assert::AreEqual(std::wstring(L"Remember"), vmTrigger.ConditionTypes().GetItemAt(14)->GetLabel());
 
         Assert::AreEqual({ 8U }, vmTrigger.OperandTypes().Count());
-        Assert::AreEqual((int)TriggerOperandType::Address, vmTrigger.OperandTypes().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Address, vmTrigger.OperandTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Mem"), vmTrigger.OperandTypes().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)TriggerOperandType::Value, vmTrigger.OperandTypes().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Value, vmTrigger.OperandTypes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Value"), vmTrigger.OperandTypes().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)TriggerOperandType::Delta, vmTrigger.OperandTypes().GetItemAt(2)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Delta, vmTrigger.OperandTypes().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"Delta"), vmTrigger.OperandTypes().GetItemAt(2)->GetLabel());
-        Assert::AreEqual((int)TriggerOperandType::Prior, vmTrigger.OperandTypes().GetItemAt(3)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Prior, vmTrigger.OperandTypes().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Prior"), vmTrigger.OperandTypes().GetItemAt(3)->GetLabel());
-        Assert::AreEqual((int)TriggerOperandType::BCD, vmTrigger.OperandTypes().GetItemAt(4)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::BCD, vmTrigger.OperandTypes().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L"BCD"), vmTrigger.OperandTypes().GetItemAt(4)->GetLabel());
-        Assert::AreEqual((int)TriggerOperandType::Float, vmTrigger.OperandTypes().GetItemAt(5)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Float, vmTrigger.OperandTypes().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"Float"), vmTrigger.OperandTypes().GetItemAt(5)->GetLabel());
-        Assert::AreEqual((int)TriggerOperandType::Inverted, vmTrigger.OperandTypes().GetItemAt(6)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Inverted, vmTrigger.OperandTypes().GetItemAt(6)->GetId());
         Assert::AreEqual(std::wstring(L"Invert"), vmTrigger.OperandTypes().GetItemAt(6)->GetLabel());
-        Assert::AreEqual((int)TriggerOperandType::Recall, vmTrigger.OperandTypes().GetItemAt(7)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Recall, vmTrigger.OperandTypes().GetItemAt(7)->GetId());
         Assert::AreEqual(std::wstring(L"Recall"), vmTrigger.OperandTypes().GetItemAt(7)->GetLabel());
 
         Assert::AreEqual({ 24U }, vmTrigger.OperandSizes().Count());
@@ -227,33 +229,33 @@ public:
         Assert::AreEqual(std::wstring(L"MBF32 LE"), vmTrigger.OperandSizes().GetItemAt(23)->GetLabel());
 
         Assert::AreEqual({ 14U }, vmTrigger.OperatorTypes().Count());
-        Assert::AreEqual((int)TriggerOperatorType::Equals, vmTrigger.OperatorTypes().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Equals, vmTrigger.OperatorTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"="), vmTrigger.OperatorTypes().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::LessThan, vmTrigger.OperatorTypes().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::LessThan, vmTrigger.OperatorTypes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"<"), vmTrigger.OperatorTypes().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::LessThanOrEqual, vmTrigger.OperatorTypes().GetItemAt(2)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::LessThanOrEqual, vmTrigger.OperatorTypes().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"<="), vmTrigger.OperatorTypes().GetItemAt(2)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::GreaterThan, vmTrigger.OperatorTypes().GetItemAt(3)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::GreaterThan, vmTrigger.OperatorTypes().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L">"), vmTrigger.OperatorTypes().GetItemAt(3)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::GreaterThanOrEqual, vmTrigger.OperatorTypes().GetItemAt(4)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::GreaterThanOrEqual, vmTrigger.OperatorTypes().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L">="), vmTrigger.OperatorTypes().GetItemAt(4)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::NotEquals, vmTrigger.OperatorTypes().GetItemAt(5)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::NotEquals, vmTrigger.OperatorTypes().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"!="), vmTrigger.OperatorTypes().GetItemAt(5)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::None, vmTrigger.OperatorTypes().GetItemAt(6)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::None, vmTrigger.OperatorTypes().GetItemAt(6)->GetId());
         Assert::AreEqual(std::wstring(L""), vmTrigger.OperatorTypes().GetItemAt(6)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::Multiply, vmTrigger.OperatorTypes().GetItemAt(7)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Multiply, vmTrigger.OperatorTypes().GetItemAt(7)->GetId());
         Assert::AreEqual(std::wstring(L"*"), vmTrigger.OperatorTypes().GetItemAt(7)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::Divide, vmTrigger.OperatorTypes().GetItemAt(8)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Divide, vmTrigger.OperatorTypes().GetItemAt(8)->GetId());
         Assert::AreEqual(std::wstring(L"/"), vmTrigger.OperatorTypes().GetItemAt(8)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::Modulus, vmTrigger.OperatorTypes().GetItemAt(9)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Modulus, vmTrigger.OperatorTypes().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"%"), vmTrigger.OperatorTypes().GetItemAt(9)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::Add, vmTrigger.OperatorTypes().GetItemAt(10)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Add, vmTrigger.OperatorTypes().GetItemAt(10)->GetId());
         Assert::AreEqual(std::wstring(L"+"), vmTrigger.OperatorTypes().GetItemAt(10)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::Subtract, vmTrigger.OperatorTypes().GetItemAt(11)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Subtract, vmTrigger.OperatorTypes().GetItemAt(11)->GetId());
         Assert::AreEqual(std::wstring(L"-"), vmTrigger.OperatorTypes().GetItemAt(11)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::BitwiseAnd, vmTrigger.OperatorTypes().GetItemAt(12)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::BitwiseAnd, vmTrigger.OperatorTypes().GetItemAt(12)->GetId());
         Assert::AreEqual(std::wstring(L"&"), vmTrigger.OperatorTypes().GetItemAt(12)->GetLabel());
-        Assert::AreEqual((int)TriggerOperatorType::BitwiseXor, vmTrigger.OperatorTypes().GetItemAt(13)->GetId());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::BitwiseXor, vmTrigger.OperatorTypes().GetItemAt(13)->GetId());
         Assert::AreEqual(std::wstring(L"^"), vmTrigger.OperatorTypes().GetItemAt(13)->GetLabel());
     }
 
@@ -307,7 +309,7 @@ public:
 
         TriggerMonitor pMonitor(vmTrigger);
         vmTrigger.SetSelectedGroupIndex(0);
-        vmTrigger.Conditions().GetItemAt(0)->SetOperator(ra::ui::viewmodels::TriggerOperatorType::LessThan);
+        vmTrigger.Conditions().GetItemAt(0)->SetOperator(ra::data::Requirement::OperatorType::LessThan);
         Assert::AreEqual(std::string("0xH1234<0xH2345S0xX5555=1"), pMonitor.sNewTrigger);
 
         vmTrigger.SetSelectedGroupIndex(1);
@@ -1119,7 +1121,7 @@ public:
 
         vmTrigger.NewCondition();
         Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
-        vmTrigger.Conditions().GetItemAt(1)->SetType(TriggerConditionType::AddAddress);
+        vmTrigger.Conditions().GetItemAt(1)->SetType(ra::data::Requirement::Type::AddAddress);
         vmTrigger.Conditions().GetItemAt(1)->SetSourceValue(2);
         vmTrigger.NewCondition();
         Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
@@ -1706,10 +1708,10 @@ public:
         vmTrigger.NewCondition();
         auto* vmCondition = vmTrigger.Conditions().GetItemAt(0);
         Expects(vmCondition != nullptr);
-        vmCondition->SetType(ra::services::TriggerConditionType::Measured);
-        vmCondition->SetSourceType(ra::services::TriggerOperandType::Value);
+        vmCondition->SetType(ra::data::Requirement::Type::Measured);
+        vmCondition->SetSourceType(ra::data::Requirement::OperandType::Value);
         vmCondition->SetSourceValue(0);
-        vmCondition->SetTargetType(ra::services::TriggerOperandType::Value);
+        vmCondition->SetTargetType(ra::data::Requirement::OperandType::Value);
         vmCondition->SetTargetValue(1U);
 
         vmTrigger.SetMeasuredTrackedAsPercent(true);

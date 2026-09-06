@@ -1,14 +1,13 @@
 #include "MemoryWatchViewModel.hh"
 
 #include "RA_Defs.h"
-#include "RA_Json.h"
 #include "util\Strings.hh"
 
 #include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
 
-#include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
+#include "data\util\AchievementLogicSerializer.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
@@ -171,9 +170,9 @@ void MemoryWatchViewModel::OnSizeChanged(const IntModelProperty::ChangeArgs& arg
         {
             // update the serialized indirect address string
             std::string sOldSerialized;
-            ra::services::AchievementLogicSerializer::AppendConditionType(sOldSerialized, TriggerConditionType::Measured);
-            ra::services::AchievementLogicSerializer::AppendOperand(
-                sOldSerialized, ra::services::TriggerOperandType::Address, ra::itoe<ra::data::Memory::Size>(args.tOldValue), 0U);
+            ra::data::util::AchievementLogicSerializer::AppendConditionType(sOldSerialized, ra::data::Requirement::Type::Measured);
+            ra::data::util::AchievementLogicSerializer::AppendOperand(
+                sOldSerialized, ra::data::Requirement::OperandType::Address, ra::itoe<ra::data::Memory::Size>(args.tOldValue), 0U);
             auto nZeroIndex = sOldSerialized.find("00");
             if (nZeroIndex != std::string::npos)
             {
@@ -182,8 +181,8 @@ void MemoryWatchViewModel::OnSizeChanged(const IntModelProperty::ChangeArgs& arg
                 if (nIndex != std::string::npos)
                 {
                     std::string sNewSerialized;
-                    ra::services::AchievementLogicSerializer::AppendOperand(
-                        sNewSerialized, ra::services::TriggerOperandType::Address, m_nSize, 0U);
+                    ra::data::util::AchievementLogicSerializer::AppendOperand(
+                        sNewSerialized, ra::data::Requirement::OperandType::Address, m_nSize, 0U);
                     nZeroIndex = sNewSerialized.find("00");
                     if (nZeroIndex != std::string::npos)
                     {
@@ -201,8 +200,8 @@ void MemoryWatchViewModel::OnSizeChanged(const IntModelProperty::ChangeArgs& arg
             if (pCondition)
             {
                 std::string sSerialized;
-                ra::services::AchievementLogicSerializer::AppendOperand(
-                    sSerialized, ra::services::TriggerOperandType::Address, m_nSize, 0U);
+                ra::data::util::AchievementLogicSerializer::AppendOperand(
+                    sSerialized, ra::data::Requirement::OperandType::Address, m_nSize, 0U);
 
                 const char* memaddr = sSerialized.c_str();
                 uint32_t unused;

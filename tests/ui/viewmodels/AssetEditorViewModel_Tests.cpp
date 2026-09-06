@@ -9,7 +9,6 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
-#include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 
 #include "tests\devkit\context\mocks\MockDevKitContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
@@ -25,6 +24,7 @@
 #include "tests\devkit\testutil\AssetAsserts.hh"
 #include "tests\devkit\testutil\LeaderboardAsserts.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
+#include "tests\devkit\testutil\RequirementAsserts.hh"
 #include "tests\devkit\testutil\ValueAsserts.hh"
 #include "tests\devkit\ui\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -1373,11 +1373,11 @@ public:
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
-        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
-        Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
-        Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
 
         pCondition->SetTargetValue(2U);
@@ -1395,11 +1395,11 @@ public:
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
-        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
-        Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
-        Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
     }
 
@@ -1419,11 +1419,11 @@ public:
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
-        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
-        Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
-        Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
 
         pCondition->SetTargetValue(2U);
@@ -1436,11 +1436,11 @@ public:
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
-        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
-        Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
-        Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
     }
 
@@ -1464,11 +1464,11 @@ public:
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
-        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
-        Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
-        Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
 
         vmAch->SetTrigger("0xH1234=2");
@@ -1486,11 +1486,11 @@ public:
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
-        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
-        Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pCondition->GetTargetSize());
-        Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
     }
 
@@ -1510,7 +1510,7 @@ public:
         Expects(pTrigger != nullptr);
 
         Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
-        editor.Trigger().Conditions().GetItemAt(1)->SetType(ra::ui::viewmodels::TriggerConditionType::Measured);
+        editor.Trigger().Conditions().GetItemAt(1)->SetType(ra::data::Requirement::Type::Measured);
 
         // make sure the trigger definition got updated
         Assert::AreEqual(std::string("M:0xH1234=1.1._M:0xH2345=1.2."), vmAch->GetTrigger());
@@ -1526,10 +1526,10 @@ public:
         Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(1);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, pCondition->GetType());
 
         // fix the error
-        editor.Trigger().Conditions().GetItemAt(0)->SetType(ra::ui::viewmodels::TriggerConditionType::Standard);
+        editor.Trigger().Conditions().GetItemAt(0)->SetType(ra::data::Requirement::Type::Standard);
 
         // make sure the trigger definition got updated
         Assert::AreEqual(std::string("0xH1234=1.1._M:0xH2345=1.2."), vmAch->GetTrigger());
@@ -1545,10 +1545,10 @@ public:
         Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(TriggerConditionType::Standard, pCondition->GetType());
+        Assert::AreEqual(ra::data::Requirement::Type::Standard, pCondition->GetType());
         pCondition = editor.Trigger().Conditions().GetItemAt(1);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, pCondition->GetType());
     }
 
     TEST_METHOD(TestTriggerUpdatedInvalidAlts)
@@ -1567,7 +1567,7 @@ public:
 
         editor.Trigger().SetSelectedGroupIndex(2);
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
-        editor.Trigger().Conditions().GetItemAt(0)->SetType(ra::ui::viewmodels::TriggerConditionType::Measured);
+        editor.Trigger().Conditions().GetItemAt(0)->SetType(ra::data::Requirement::Type::Measured);
 
         // make sure the trigger definition got updated
         Assert::AreEqual(std::string("0=0SM:0xH1234=1.1.SM:0xH2345=1.2."), vmAch->GetTrigger());
@@ -1583,14 +1583,14 @@ public:
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, pCondition->GetType());
 
         // select the other alt
         editor.Trigger().SetSelectedGroupIndex(1);
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, pCondition->GetType());
         Assert::AreEqual(1U, pCondition->GetRequiredHits());
         Assert::AreEqual(std::wstring(L"Multiple measured targets"), editor.GetAssetValidationError());
         Assert::IsTrue(editor.HasAssetValidationError());
@@ -1600,7 +1600,7 @@ public:
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, pCondition->GetType());
         Assert::AreEqual(2U, pCondition->GetRequiredHits());
         Assert::AreEqual(std::wstring(L"Multiple measured targets"), editor.GetAssetValidationError());
         Assert::IsTrue(editor.HasAssetValidationError());
@@ -1625,13 +1625,13 @@ public:
         // make sure the UI kept the change
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, pCondition->GetType());
         Assert::AreEqual(2U, pCondition->GetRequiredHits());
 
         // select the other alt (was broken)
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
-        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, pCondition->GetType());
         Assert::AreEqual(2U, pCondition->GetRequiredHits());
     }
 
@@ -1656,13 +1656,13 @@ public:
         Assert::IsNotNull(group.m_pConditionSet);
 
         // change to address switches size to match source
-        condition.SetTargetType(TriggerOperandType::Delta);
+        condition.SetTargetType(ra::data::Requirement::OperandType::Delta);
         Assert::AreEqual(std::string("0xH1234=d0xH0001"), vmAch->GetTrigger());
         Assert::AreEqual(initialVersion + 1, editor.GetTriggerVersion());
         Assert::IsNotNull(group.m_pConditionSet);
 
         // change to value sets size back to 32-bit
-        condition.SetTargetType(TriggerOperandType::Value);
+        condition.SetTargetType(ra::data::Requirement::OperandType::Value);
         Assert::AreEqual(std::string("0xH1234=1"), vmAch->GetTrigger());
         Assert::AreEqual(initialVersion + 2, editor.GetTriggerVersion());
         Assert::IsNotNull(group.m_pConditionSet);
@@ -1744,9 +1744,9 @@ public:
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
-        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
-        Assert::AreEqual((int)TriggerOperatorType::None, (int)pCondition->GetOperator());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::None, (int)pCondition->GetOperator());
 
         vmLbd->SetValueDefinition("M:0xH2222");
 
@@ -1763,9 +1763,9 @@ public:
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
         Assert::AreEqual(ra::data::Memory::Size::EightBit, pCondition->GetSourceSize());
-        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual((int)ra::data::Requirement::OperandType::Address, (int)pCondition->GetSourceType());
         Assert::AreEqual(std::wstring(L"0x2222"), pCondition->GetSourceValue());
-        Assert::AreEqual((int)TriggerOperatorType::None, (int)pCondition->GetOperator());
+        Assert::AreEqual((int)ra::data::Requirement::OperatorType::None, (int)pCondition->GetOperator());
 
         // modify the UI
         pCondition->SetSourceValue(0x3333U);

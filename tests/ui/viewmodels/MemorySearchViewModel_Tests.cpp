@@ -128,7 +128,6 @@ private:
         bool CanEditFilterValue() const { return GetValue(CanEditFilterValueProperty); }
         bool CanGoToPreviousPage() const { return GetValue(CanGoToPreviousPageProperty); }
         bool CanGoToNextPage() const { return GetValue(CanGoToNextPageProperty); }
-        bool HasSelection() const { return GetValue(HasSelectionProperty); }
 
         void SetScrollOffset(int nValue) { SetValue(ScrollOffsetProperty, nValue); }
 

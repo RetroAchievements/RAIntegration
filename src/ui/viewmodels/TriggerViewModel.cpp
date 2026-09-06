@@ -1606,7 +1606,8 @@ bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,
         const auto* vmCondition = vmConditions.GetItemAt(nScan);
         Expects(vmCondition != nullptr);
 
-        switch (vmCondition->GetType())
+        const auto nType = vmCondition->GetType();
+        switch (nType)
         {
             case ra::data::Requirement::Type::AddHits:
                 bIsHitsChain = true;
@@ -1628,16 +1629,10 @@ bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,
                 }
                 break;
 
-            case ra::data::Requirement::Type::AddAddress:
-            case ra::data::Requirement::Type::AddSource:
-            case ra::data::Requirement::Type::SubSource:
-            case ra::data::Requirement::Type::Remember:
-            case ra::data::Requirement::Type::AndNext:
-            case ra::data::Requirement::Type::OrNext:
-            case ra::data::Requirement::Type::ResetNextIf:
-                break;
-
             default:
+                if (ra::data::Requirement::IsCombining(nType))
+                    break;
+
                 if (nScan >= nIndex)
                 {
                     if (bIsHitsChain)

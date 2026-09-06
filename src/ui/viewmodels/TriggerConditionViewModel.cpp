@@ -283,18 +283,18 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         const auto nNewType = ra::itoe<ra::data::Requirement::OperandType>(args.tNewValue);
         ChangeOperandType(SourceValueProperty, nOldType, nNewType);
 
-        if (!IsAddressType(nNewType))
+        if (!ra::data::Requirement::IsOperandTypeForAddress(nNewType))
         {
             SetValue(HasSourceSizeProperty, false);
-            SetSourceSize(nNewType == ra::data::Requirement::OperandType::Value || IsParameterlessType(nNewType) ? ra::data::Memory::Size::ThirtyTwoBit : ra::data::Memory::Size::Float);
+            SetSourceSize(nNewType == ra::data::Requirement::OperandType::Value || ra::data::Requirement::IsOperandTypeParameterless(nNewType) ? ra::data::Memory::Size::ThirtyTwoBit : ra::data::Memory::Size::Float);
         }
-        else if (!IsAddressType(nOldType))
+        else if (!ra::data::Requirement::IsOperandTypeForAddress(nOldType))
         {
             SetSourceSize(GetTargetSize());
             SetValue(HasSourceSizeProperty, true);
         }
 
-        SetValue(HasSourceValueProperty, IsParameterlessType(nNewType) ? false : true);
+        SetValue(HasSourceValueProperty, ra::data::Requirement::IsOperandTypeParameterless(nNewType) ? false : true);
     }
     else if (args.Property == TargetTypeProperty)
     {
@@ -302,18 +302,18 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         const auto nNewType = ra::itoe<ra::data::Requirement::OperandType>(args.tNewValue);
         ChangeOperandType(TargetValueProperty, nOldType, nNewType);
 
-        if (!IsAddressType(nNewType))
+        if (!ra::data::Requirement::IsOperandTypeForAddress(nNewType))
         {
             SetValue(HasTargetSizeProperty, false);
-            SetTargetSize(nNewType == ra::data::Requirement::OperandType::Value || IsParameterlessType(nNewType) ? ra::data::Memory::Size::ThirtyTwoBit : ra::data::Memory::Size::Float);
+            SetTargetSize(nNewType == ra::data::Requirement::OperandType::Value || ra::data::Requirement::IsOperandTypeParameterless(nNewType) ? ra::data::Memory::Size::ThirtyTwoBit : ra::data::Memory::Size::Float);
         }
-        else if (!IsAddressType(ra::itoe<ra::data::Requirement::OperandType>(args.tOldValue)))
+        else if (!ra::data::Requirement::IsOperandTypeForAddress(ra::itoe<ra::data::Requirement::OperandType>(args.tOldValue)))
         {
             SetTargetSize(GetSourceSize());
             SetValue(HasTargetSizeProperty, GetValue(HasTargetProperty));
         }
 
-        SetValue(HasTargetValueProperty, IsParameterlessType(nNewType) || !GetValue(HasTargetProperty) ? false : true);
+        SetValue(HasTargetValueProperty, ra::data::Requirement::IsOperandTypeParameterless(nNewType) || !GetValue(HasTargetProperty) ? false : true);
     }
     else if (args.Property == OperatorProperty)
     {
@@ -324,8 +324,8 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     {
         const auto nOldType = ra::itoe<ra::data::Requirement::Type>(args.tOldValue);
         const auto nNewType = ra::itoe<ra::data::Requirement::Type>(args.tNewValue);
-        const auto bIsModifying = IsModifying(nNewType);
-        if (bIsModifying != IsModifying(nOldType))
+        const auto bIsModifying = ra::data::Requirement::SupportsModifyingOperators(nNewType);
+        if (bIsModifying != ra::data::Requirement::SupportsModifyingOperators(nOldType))
             SetOperator(bIsModifying ? ra::data::Requirement::OperatorType::None : ra::data::Requirement::OperatorType::Equals);
         else if (!bIsModifying && GetOperator() == ra::data::Requirement::OperatorType::None)
             SetOperator(ra::data::Requirement::OperatorType::Equals);
@@ -340,30 +340,11 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         pTriggerViewModel->ResumeConditionMonitor();
 }
 
-static constexpr bool IsModifyingOperator(ra::data::Requirement::OperatorType nType)
-{
-    switch (nType)
-    {
-        case ra::data::Requirement::OperatorType::None:
-        case ra::data::Requirement::OperatorType::Multiply:
-        case ra::data::Requirement::OperatorType::Divide:
-        case ra::data::Requirement::OperatorType::BitwiseAnd:
-        case ra::data::Requirement::OperatorType::BitwiseXor:
-        case ra::data::Requirement::OperatorType::Modulus:
-        case ra::data::Requirement::OperatorType::Add:
-        case ra::data::Requirement::OperatorType::Subtract:
-            return true;
-
-        default:
-            return false;
-    }
-}
-
 void TriggerConditionViewModel::UpdateHasHits()
 {
     const auto nType = GetType();
 
-    if (IsModifying(nType))
+    if (ra::data::Requirement::SupportsModifyingOperators(nType))
     {
         SetValue(HasHitsProperty, false);
         SetValue(CanEditHitsProperty, false);
@@ -371,7 +352,7 @@ void TriggerConditionViewModel::UpdateHasHits()
     else if (nType == ra::data::Requirement::Type::Measured && IsForValue())
     {
         // if Measured value is generated from hit count, show the hit count, but don't allow the target to be edited
-        SetValue(HasHitsProperty, !IsModifyingOperator(GetOperator()));
+        SetValue(HasHitsProperty, !ra::data::Requirement::IsModifyingOperator(GetOperator()));
         SetValue(CanEditHitsProperty, false);
         SetValue(RequiredHitsProperty, 0);
     }
@@ -387,8 +368,8 @@ void TriggerConditionViewModel::OnValueChanged(const BoolModelProperty::ChangeAr
     if (args.Property == HasTargetProperty)
     {
         const auto nTargetType = GetTargetType();
-        SetValue(HasTargetSizeProperty, args.tNewValue && IsAddressType(nTargetType));
-        SetValue(HasTargetValueProperty, args.tNewValue && !IsParameterlessType(nTargetType));
+        SetValue(HasTargetSizeProperty, args.tNewValue && ra::data::Requirement::IsOperandTypeForAddress(nTargetType));
+        SetValue(HasTargetValueProperty, args.tNewValue && !ra::data::Requirement::IsOperandTypeParameterless(nTargetType));
     }
 
     ViewModelBase::OnValueChanged(args);
@@ -432,7 +413,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
         const auto nType = GetSourceType();
         if (nType == ra::data::Requirement::OperandType::Value)
         {
-            if (IsAddressType(GetTargetType()) && ra::data::Memory::SizeBits(GetTargetSize()) >= 8)
+            if (ra::data::Requirement::IsOperandTypeForAddress(GetTargetType()) && ra::data::Memory::SizeBits(GetTargetSize()) >= 8)
                 return GetPotentialEnumValueTooltip(GetSourceValue(), GetTargetAddress());
 
             return GetValueTooltip(GetSourceAddress());
@@ -461,7 +442,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
         const auto nType = GetTargetType();
         if (nType == ra::data::Requirement::OperandType::Value)
         {
-            if (IsAddressType(GetSourceType()) && ra::data::Memory::SizeBits(GetSourceSize()) >= 8)
+            if (ra::data::Requirement::IsOperandTypeForAddress(GetSourceType()) && ra::data::Memory::SizeBits(GetSourceSize()) >= 8)
                 return GetPotentialEnumValueTooltip(GetTargetValue(), GetSourceAddress());
 
             return GetValueTooltip(GetTargetAddress());
@@ -907,47 +888,6 @@ std::wstring TriggerConditionViewModel::GetRecallTooltip(bool bOperand2) const
     return sTooltip;
 }
 
-bool TriggerConditionViewModel::IsModifying(ra::data::Requirement::Type nType) noexcept
-{
-    switch (nType)
-    {
-        case ra::data::Requirement::Type::AddAddress:
-        case ra::data::Requirement::Type::AddSource:
-        case ra::data::Requirement::Type::SubSource:
-        case ra::data::Requirement::Type::Remember:
-            return true;
-
-        default:
-            return false;
-    }
-}
-
-bool TriggerConditionViewModel::IsAddressType(ra::data::Requirement::OperandType nType) noexcept
-{
-    switch (nType)
-    {
-        case ra::data::Requirement::OperandType::Value:
-        case ra::data::Requirement::OperandType::Float:
-        case ra::data::Requirement::OperandType::Recall:
-            return false;
-
-        default:
-            return true;
-    }
-}
-
-/* Has no address or value */
-bool TriggerConditionViewModel::IsParameterlessType(ra::data::Requirement::OperandType nType) noexcept
-{
-    switch (nType)
-    {
-        case ra::data::Requirement::OperandType::Recall:
-            return true;
-        default:
-            return false;
-    }
-}
-
 bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem, int nValue)
 {
     const auto* vmCondition = dynamic_cast<const TriggerConditionViewModel*>(&vmItem);
@@ -956,7 +896,7 @@ bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem,
 
     // comparison operators should only be visible for non-modifying operations
     const auto nOperator = ra::itoe<ra::data::Requirement::OperatorType>(nValue);
-    if (!IsModifyingOperator(nOperator))
+    if (!ra::data::Requirement::IsModifyingOperator(nOperator))
         return !vmCondition->IsModifying();
 
     // modifying operators should be visible for modifying operations

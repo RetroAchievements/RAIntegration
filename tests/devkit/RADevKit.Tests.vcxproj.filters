@@ -86,6 +86,7 @@
       <Filter>data\models</Filter>
     </ClCompile>
     <ClCompile Include="data\util\AchievementLogicSerializer_Tests.cpp" />
+    <ClCompile Include="data\Requirement_Tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

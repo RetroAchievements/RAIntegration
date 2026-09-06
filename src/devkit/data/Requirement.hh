@@ -95,6 +95,42 @@ public:
         MeasuredAsPercent = 99
     };
 
+    static constexpr bool IsCombining(Type nType) noexcept
+    {
+        switch (nType)
+        {
+            case Type::Standard:
+            case Type::PauseIf:
+            case Type::ResetIf:
+            case Type::Measured:
+            case Type::MeasuredAsPercent:
+            case Type::MeasuredIf:
+            case Type::Trigger:
+                return false;
+
+            default:
+                return true;
+        }
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> if the condition supports modifying operators.
+    /// </summary>
+    static constexpr bool SupportsModifyingOperators(Type nType) noexcept
+    {
+        switch (nType)
+        {
+            case Type::AddAddress:
+            case Type::AddSource:
+            case Type::SubSource:
+            case Type::Remember:
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
     enum class OperandType : uint8_t
     {
         /// <summary>
@@ -137,6 +173,37 @@ public:
         /// </summary>
         Recall = RC_OPERAND_RECALL
     };
+
+    /// <summary>
+    /// Returns <c>true</c> if the operand is an address.
+    /// </summary>
+    static constexpr bool IsOperandTypeForAddress(OperandType nType) noexcept
+    {
+        switch (nType)
+        {
+            case OperandType::Value:
+            case OperandType::Float:
+            case OperandType::Recall:
+                return false;
+
+            default:
+                return true;
+        }
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> if the operand has no address or value portion.
+    /// </summary>
+    static constexpr bool IsOperandTypeParameterless(ra::data::Requirement::OperandType nType) noexcept
+    {
+        switch (nType)
+        {
+            case ra::data::Requirement::OperandType::Recall:
+                return true;
+            default:
+                return false;
+        }
+    }
 
     enum class OperatorType : uint8_t
     {
@@ -210,6 +277,28 @@ public:
         /// </summary>
         BitwiseXor = RC_OPERATOR_XOR
     };
+
+    /// <summary>
+    /// Returns <c>true</c> if the operator is used to combine the left and right operands.
+    /// </summary>
+    static constexpr bool IsModifyingOperator(ra::data::Requirement::OperatorType nType)
+    {
+        switch (nType)
+        {
+            case ra::data::Requirement::OperatorType::None:
+            case ra::data::Requirement::OperatorType::Multiply:
+            case ra::data::Requirement::OperatorType::Divide:
+            case ra::data::Requirement::OperatorType::BitwiseAnd:
+            case ra::data::Requirement::OperatorType::BitwiseXor:
+            case ra::data::Requirement::OperatorType::Modulus:
+            case ra::data::Requirement::OperatorType::Add:
+            case ra::data::Requirement::OperatorType::Subtract:
+                return true;
+
+            default:
+                return false;
+        }
+    }
 };
 
 } // namespace data

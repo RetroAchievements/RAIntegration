@@ -95,7 +95,7 @@ public:
     std::wstring GetTooltip(const StringModelProperty& nProperty) const;
     std::wstring GetTooltip(const IntModelProperty& nProperty) const;
 
-    bool IsModifying() const { return IsModifying(GetType()); }
+    bool IsModifying() const { return ra::data::Requirement::SupportsModifyingOperators(GetType()); }
 
     static bool IsComparisonVisible(const ViewModelBase& vmItem, int nValue);
     static std::wstring FormatValue(unsigned nValue, ra::data::Requirement::OperandType nType);
@@ -126,9 +126,6 @@ private:
         const StringModelProperty& pValueProperty, const rc_operand_t& operand);
     void ChangeOperandType(const StringModelProperty& sValueProperty, ra::data::Requirement::OperandType nOldType, ra::data::Requirement::OperandType nNewType);
 
-    static bool IsModifying(ra::data::Requirement::Type nType) noexcept;
-    static bool IsAddressType(ra::data::Requirement::OperandType nType) noexcept;
-    static bool IsParameterlessType(ra::data::Requirement::OperandType nType) noexcept;
     void UpdateHasHits();
     bool IsForValue() const noexcept;
 

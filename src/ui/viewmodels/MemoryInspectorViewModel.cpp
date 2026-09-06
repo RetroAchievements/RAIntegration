@@ -300,6 +300,23 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nNe
 
     UpdateNoteButtons();
 
+    // update selected items in the search results
+    if (m_pSearch.HasSelection())
+    {
+        bool isSelected = false;
+        for (auto& pResult : m_pSearch.Results())
+        {
+            if (pResult.nAddress == nNewAddress)
+            {
+                isSelected = pResult.IsSelected();
+                break;
+            }
+        }
+
+        if (!isSelected)
+            m_pSearch.ClearSelection();
+    }
+
     // update viewer first so memory will be ready for GetValueAtAddress call
     m_pViewer.SetAddress(nNewAddress);
 

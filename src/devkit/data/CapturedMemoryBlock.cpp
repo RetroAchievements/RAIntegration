@@ -330,6 +330,55 @@ bool CapturedMemoryBlock::ContainsMatchingAddress(ra::data::ByteAddress nAddress
     return (pAddresses[nIndex >> 3] & nBit);
 }
 
+gsl::index CapturedMemoryBlock::GetAddressIndex(ra::data::ByteAddress nAddress) const
+{
+    if (nAddress < m_nFirstAddress)
+        return -1;
+
+    auto nIndex = nAddress - m_nFirstAddress;
+    if (nIndex >= m_nAddressCount)
+        return -1;
+
+    if (AreAllAddressesMatching())
+        return gsl::narrow_cast<gsl::index>(nIndex);
+
+    const uint8_t* pAddresses = GetMatchingAddressPointer();
+    Expects(pAddresses != nullptr);
+    const auto nBit = 1 << (nIndex & 7);
+    if (!(pAddresses[nIndex >> 3] & nBit))
+        return -1;
+
+    gsl::index nMatchingIndex = 0;
+
+    if (nIndex >= 8)
+    {
+        const std::array<uint8_t, 16> vBitsSet = { 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4 };
+        do
+        {
+            const auto nByte = *pAddresses++;
+            if (nByte != 0)
+            {
+                nMatchingIndex += vBitsSet.at(nByte & 0x0F);
+                nMatchingIndex += vBitsSet.at(nByte >> 4);
+            }
+
+            nIndex -= 8;
+        } while (nIndex >= 8);
+    }
+
+    uint8_t nMask = 0x01;
+    const uint8_t nMatch = *pAddresses;
+    while (nMask < nBit)
+    {
+        if (nMatch & nMask)
+            nMatchingIndex++;
+
+        nMask <<= 1;
+    }
+
+    return nMatchingIndex;
+}
+
 ra::data::ByteAddress CapturedMemoryBlock::GetMatchingAddress(gsl::index nIndex) const noexcept
 {
     if (AreAllAddressesMatching())

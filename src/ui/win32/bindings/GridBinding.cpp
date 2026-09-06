@@ -329,6 +329,19 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
             }
             return;
         }
+
+        if (m_pEnsureVisibleProperty && *m_pEnsureVisibleProperty == args.Property)
+        {
+            const auto nIndex = gsl::narrow_cast<gsl::index>(args.tNewValue);
+            if (nIndex >= 0 && nIndex < gsl::narrow_cast<gsl::index>(GetValue(*m_pScrollMaximumProperty)))
+            {
+                InvokeOnUIThread([this, nIndex]() noexcept {
+                    ListView_EnsureVisible(m_hWnd, gsl::narrow_cast<int>(nIndex), FALSE);
+                });
+            }
+
+            SetValue(*m_pEnsureVisibleProperty, -1);
+        }
     }
     else if (m_pEnsureVisibleProperty && *m_pEnsureVisibleProperty == args.Property)
     {

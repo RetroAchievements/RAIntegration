@@ -260,6 +260,41 @@ public:
         Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
     }
 
+    TEST_METHOD(TestSetCurrentAddressKeepsSelectedSearchResult)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.Search().BeginNewSearch();
+        inspector.Search().ApplyFilter();
+        Assert::AreEqual({ 9U }, inspector.Search().Results().Count());
+        inspector.Search().Results().GetItemAt(3)->SetSelected(true);
+
+        inspector.SetCurrentAddress({ 3U });
+
+        Assert::IsTrue(inspector.Search().Results().GetItemAt(3)->IsSelected());
+        Assert::IsTrue(inspector.Search().HasSelection());
+    }
+
+    TEST_METHOD(TestSetCurrentAddressClearsSelectedSearchResultForAlternateAddress)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.Search().BeginNewSearch();
+        inspector.Search().ApplyFilter();
+        Assert::AreEqual({ 9U }, inspector.Search().Results().Count());
+        inspector.Search().Results().GetItemAt(3)->SetSelected(true);
+
+        inspector.SetCurrentAddress({ 4U });
+
+        // Item 3 is no longer selected
+        Assert::IsFalse(inspector.Search().Results().GetItemAt(3)->IsSelected());
+
+        // Item 4 does not get selected
+        Assert::IsFalse(inspector.Search().Results().GetItemAt(4)->IsSelected());
+
+        Assert::IsFalse(inspector.Search().HasSelection());
+    }
+
     TEST_METHOD(TestSetViewerAddress)
     {
         MemoryInspectorViewModelHarness inspector;

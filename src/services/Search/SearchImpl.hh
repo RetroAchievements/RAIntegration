@@ -80,6 +80,8 @@ public:
     void EnumerateMatches(const SearchResults& srResults, 
                           std::function<bool(const SearchResult&)> fCallback) const;
 
+    gsl::index GetAddressIndex(const SearchResults& srResults, ra::data::ByteAddress nAddress) const;
+
     /// <summary>
     /// Gets a value from the search results using the provided virtual address (in result.nAddress)
     /// </summary>

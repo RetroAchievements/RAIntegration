@@ -291,13 +291,15 @@ bool WindowsHttpRequester::IsRetryable(unsigned int nStatusCode) const noexcept
         case 0:                                      // Not attempted
         case HTTP_STATUS_OK:                         // Success
         case ERROR_INTERNET_TIMEOUT:                 // Timeout
-        case ERROR_INTERNET_NAME_NOT_RESOLVED:       // DNS lookup failed
+        case ERROR_INTERNET_NAME_NOT_RESOLVED:       // DNS lookup failed (HTTP level)
+        case WSATRY_AGAIN:                           // DNS lookup failed (socket level)
         case ERROR_INTERNET_OPERATION_CANCELLED:     // Handle closed before request complete
         case ERROR_INTERNET_INCORRECT_HANDLE_STATE:  // Handle not initialized
         case ERROR_INTERNET_ITEM_NOT_FOUND:          // Data not available at this time
         case ERROR_INTERNET_CANNOT_CONNECT:          // Handshake failed
         case ERROR_INTERNET_CONNECTION_ABORTED:      // Connection aborted
-        case ERROR_INTERNET_CONNECTION_RESET:        // Connection reset
+        case ERROR_INTERNET_CONNECTION_RESET:        // Connection reset (HTTP level)
+        case WSAECONNRESET:                          // Connection reset (socket level)
         case ERROR_INTERNET_FORCE_RETRY:             // Explicit request to retry
         case ERROR_HTTP_INVALID_SERVER_RESPONSE:     // Response could not be parsed, corrupt?
         case ERROR_INTERNET_DISCONNECTED:            // Lost connection during request

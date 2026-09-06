@@ -1,17 +1,13 @@
-#include "CppUnitTest.h"
+#include "data/util/AchievementLogicSerializer.hh"
 
-#include "services\AchievementLogicSerializer.hh"
+#include "context\mocks/MockConsoleContext.hh"
+#include "context\mocks/MockEmulatorMemoryContext.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
-#include "tests\data\DataAsserts.hh"
-
-#include "tests\devkit\context\mocks\MockConsoleContext.hh"
-#include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+#include "testutil/CppUnitTest.hh"
 
 namespace ra {
-namespace services {
+namespace data {
+namespace util {
 namespace tests {
 
 TEST_CLASS(AchievementLogicSerializer_Tests)
@@ -192,5 +188,6 @@ public:
 };
 
 } // namespace tests
-} // namespace services
+} // namespace util
+} // namespace data
 } // namespace ra

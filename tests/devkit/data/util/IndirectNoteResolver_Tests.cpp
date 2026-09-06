@@ -7,7 +7,7 @@
 
 #include "testutil/CppUnitTest.hh"
 
-#include <rcheevos\src\rcheevos\rc_internal.h>
+#include <rcheevos/src/rcheevos/rc_internal.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

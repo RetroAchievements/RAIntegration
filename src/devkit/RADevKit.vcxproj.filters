@@ -222,6 +222,12 @@
     <ClInclude Include="services\IConfiguration.hh">
       <Filter>services</Filter>
     </ClInclude>
+    <ClInclude Include="data\util\AchievementLogicSerializer.hh">
+      <Filter>data\util</Filter>
+    </ClInclude>
+    <ClInclude Include="data\Requirement.hh">
+      <Filter>data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -316,6 +322,9 @@
     </ClCompile>
     <ClCompile Include="data\models\AchievementSetModel.cpp">
       <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\util\AchievementLogicSerializer.cpp">
+      <Filter>data\util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

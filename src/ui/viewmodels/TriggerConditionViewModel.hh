@@ -2,9 +2,8 @@
 #define RA_UI_TRIGGERCONDITIONVIEWMODEL_H
 #pragma once
 
-#include "data\Types.hh"
-
-#include "services\AchievementLogicSerializer.hh"
+#include "data\Requirement.hh"
+#include "data\models\MemoryNoteModel.hh"
 
 #include "ui\ViewModelBase.hh"
 #include "ui\Types.hh"
@@ -17,10 +16,6 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-using ra::services::TriggerConditionType;
-using ra::services::TriggerOperandType;
-using ra::services::TriggerOperatorType;
-
 class TriggerConditionViewModel : public ViewModelBase
 {
 public:
@@ -29,12 +24,12 @@ public:
     void SetIndex(int nValue) { SetValue(IndexProperty, nValue); }
 
     static const IntModelProperty TypeProperty;
-    TriggerConditionType GetType() const { return ra::itoe<TriggerConditionType>(GetValue(TypeProperty)); }
-    void SetType(TriggerConditionType nValue) { SetValue(TypeProperty, ra::etoi(nValue)); }
+    ra::data::Requirement::Type GetType() const { return ra::itoe<ra::data::Requirement::Type>(GetValue(TypeProperty)); }
+    void SetType(ra::data::Requirement::Type nValue) { SetValue(TypeProperty, ra::etoi(nValue)); }
 
     static const IntModelProperty SourceTypeProperty;
-    TriggerOperandType GetSourceType() const { return ra::itoe<TriggerOperandType>(GetValue(SourceTypeProperty)); }
-    void SetSourceType(TriggerOperandType nValue) { SetValue(SourceTypeProperty, ra::etoi(nValue)); }
+    ra::data::Requirement::OperandType GetSourceType() const { return ra::itoe<ra::data::Requirement::OperandType>(GetValue(SourceTypeProperty)); }
+    void SetSourceType(ra::data::Requirement::OperandType nValue) { SetValue(SourceTypeProperty, ra::etoi(nValue)); }
 
     static const BoolModelProperty HasSourceSizeProperty;
     static const IntModelProperty SourceSizeProperty;
@@ -48,13 +43,13 @@ public:
     void SetSourceValue(unsigned int sValue);
 
     static const IntModelProperty OperatorProperty;
-    TriggerOperatorType GetOperator() const { return ra::itoe<TriggerOperatorType>(GetValue(OperatorProperty)); }
-    void SetOperator(TriggerOperatorType nValue) { SetValue(OperatorProperty, ra::etoi(nValue)); }
+    ra::data::Requirement::OperatorType GetOperator() const { return ra::itoe<ra::data::Requirement::OperatorType>(GetValue(OperatorProperty)); }
+    void SetOperator(ra::data::Requirement::OperatorType nValue) { SetValue(OperatorProperty, ra::etoi(nValue)); }
 
     static const BoolModelProperty HasTargetProperty;
     static const IntModelProperty TargetTypeProperty;
-    TriggerOperandType GetTargetType() const { return ra::itoe<TriggerOperandType>(GetValue(TargetTypeProperty)); }
-    void SetTargetType(TriggerOperandType nValue) { SetValue(TargetTypeProperty, ra::etoi(nValue)); }
+    ra::data::Requirement::OperandType GetTargetType() const { return ra::itoe<ra::data::Requirement::OperandType>(GetValue(TargetTypeProperty)); }
+    void SetTargetType(ra::data::Requirement::OperandType nValue) { SetValue(TargetTypeProperty, ra::etoi(nValue)); }
 
     static const BoolModelProperty HasTargetSizeProperty;
     static const IntModelProperty TargetSizeProperty;
@@ -103,8 +98,8 @@ public:
     bool IsModifying() const { return IsModifying(GetType()); }
 
     static bool IsComparisonVisible(const ViewModelBase& vmItem, int nValue);
-    static std::wstring FormatValue(unsigned nValue, TriggerOperandType nType);
-    static std::wstring FormatValue(float fValue, TriggerOperandType nType);
+    static std::wstring FormatValue(unsigned nValue, ra::data::Requirement::OperandType nType);
+    static std::wstring FormatValue(float fValue, ra::data::Requirement::OperandType nType);
 
     static const IntModelProperty RowColorProperty;
     Color GetRowColor() const { return Color(ra::to_unsigned(GetValue(RowColorProperty))); }
@@ -117,7 +112,7 @@ private:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
-    void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size nSize, const std::wstring& nValue) const;
+    void SerializeAppendOperand(std::string& sBuffer, ra::data::Requirement::OperandType nType, ra::data::Memory::Size nSize, const std::wstring& nValue) const;
 
     std::wstring GetPotentialEnumValueTooltip(const std::wstring& sValue, ra::data::ByteAddress nCompareAddress) const;
     static std::wstring GetValueTooltip(unsigned int nValue);
@@ -129,11 +124,11 @@ private:
     const rc_condition_t* GetCondition() const;
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,
         const StringModelProperty& pValueProperty, const rc_operand_t& operand);
-    void ChangeOperandType(const StringModelProperty& sValueProperty, TriggerOperandType nOldType, TriggerOperandType nNewType);
+    void ChangeOperandType(const StringModelProperty& sValueProperty, ra::data::Requirement::OperandType nOldType, ra::data::Requirement::OperandType nNewType);
 
-    static bool IsModifying(TriggerConditionType nType) noexcept;
-    static bool IsAddressType(TriggerOperandType nType) noexcept;
-    static bool IsParameterlessType(TriggerOperandType nType) noexcept;
+    static bool IsModifying(ra::data::Requirement::Type nType) noexcept;
+    static bool IsAddressType(ra::data::Requirement::OperandType nType) noexcept;
+    static bool IsParameterlessType(ra::data::Requirement::OperandType nType) noexcept;
     void UpdateHasHits();
     bool IsForValue() const noexcept;
 

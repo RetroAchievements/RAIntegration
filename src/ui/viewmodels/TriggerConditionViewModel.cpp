@@ -4,9 +4,9 @@
 #include "util\Strings.hh"
 
 #include "data\context\GameContext.hh"
+#include "data\util\AchievementLogicSerializer.hh"
 #include "data\util\IndirectNoteResolver.hh"
 
-#include "services\AchievementLogicSerializer.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
@@ -20,12 +20,12 @@ namespace ui {
 namespace viewmodels {
 
 const IntModelProperty TriggerConditionViewModel::IndexProperty("TriggerConditionViewModel", "Index", 1);
-const IntModelProperty TriggerConditionViewModel::TypeProperty("TriggerConditionViewModel", "Type", ra::etoi(TriggerConditionType::Standard));
-const IntModelProperty TriggerConditionViewModel::SourceTypeProperty("TriggerConditionViewModel", "SourceType", ra::etoi(TriggerOperandType::Address));
+const IntModelProperty TriggerConditionViewModel::TypeProperty("TriggerConditionViewModel", "Type", ra::etoi(ra::data::Requirement::Type::Standard));
+const IntModelProperty TriggerConditionViewModel::SourceTypeProperty("TriggerConditionViewModel", "SourceType", ra::etoi(ra::data::Requirement::OperandType::Address));
 const IntModelProperty TriggerConditionViewModel::SourceSizeProperty("TriggerConditionViewModel", "SourceSize", ra::etoi(ra::data::Memory::Size::EightBit));
 const StringModelProperty TriggerConditionViewModel::SourceValueProperty("TriggerConditionViewModel", "SourceValue", L"0");
-const IntModelProperty TriggerConditionViewModel::OperatorProperty("TriggerConditionViewModel", "Operator", ra::etoi(TriggerOperatorType::Equals));
-const IntModelProperty TriggerConditionViewModel::TargetTypeProperty("TriggerConditionViewModel", "TargetType", ra::etoi(TriggerOperandType::Value));
+const IntModelProperty TriggerConditionViewModel::OperatorProperty("TriggerConditionViewModel", "Operator", ra::etoi(ra::data::Requirement::OperatorType::Equals));
+const IntModelProperty TriggerConditionViewModel::TargetTypeProperty("TriggerConditionViewModel", "TargetType", ra::etoi(ra::data::Requirement::OperandType::Value));
 const IntModelProperty TriggerConditionViewModel::TargetSizeProperty("TriggerConditionViewModel", "TargetSize", ra::etoi(ra::data::Memory::Size::ThirtyTwoBit));
 const StringModelProperty TriggerConditionViewModel::TargetValueProperty("TriggerConditionViewModel", "TargetValue", L"0");
 const IntModelProperty TriggerConditionViewModel::CurrentHitsProperty("TriggerConditionViewModel", "CurrentHits", 0);
@@ -54,36 +54,36 @@ std::string TriggerConditionViewModel::Serialize() const
 void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
 {
     const auto nType = GetType();
-    if (nType != TriggerConditionType::Standard)
+    if (nType != ra::data::Requirement::Type::Standard)
     {
-        if (nType == TriggerConditionType::Measured)
+        if (nType == ra::data::Requirement::Type::Measured)
         {
             const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
             if (pTriggerViewModel != nullptr && pTriggerViewModel->IsMeasuredTrackedAsPercent())
-                ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, TriggerConditionType::MeasuredAsPercent);
+                ra::data::util::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::data::Requirement::Type::MeasuredAsPercent);
             else
-                ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, TriggerConditionType::Measured);
+                ra::data::util::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::data::Requirement::Type::Measured);
         }
         else
         {
-            ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, nType);
+            ra::data::util::AchievementLogicSerializer::AppendConditionType(sBuffer, nType);
         }
     }
 
     SerializeAppendOperand(sBuffer, GetSourceType(), GetSourceSize(), GetSourceValue());
 
     const auto nOperator = GetOperator();
-    if (nOperator != TriggerOperatorType::None)
+    if (nOperator != ra::data::Requirement::OperatorType::None)
     {
-        ra::services::AchievementLogicSerializer::AppendOperator(sBuffer, nOperator);
+        ra::data::util::AchievementLogicSerializer::AppendOperator(sBuffer, nOperator);
         SerializeAppendOperand(sBuffer, GetTargetType(), GetTargetSize(), GetTargetValue());
     }
 
     if (GetValue(HasHitsProperty) && GetValue(CanEditHitsProperty))
-        ra::services::AchievementLogicSerializer::AppendHitTarget(sBuffer, GetRequiredHits());
+        ra::data::util::AchievementLogicSerializer::AppendHitTarget(sBuffer, GetRequiredHits());
 }
 
-void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size nSize, const std::wstring& sValue) const
+void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, ra::data::Requirement::OperandType nType, ra::data::Memory::Size nSize, const std::wstring& sValue) const
 {
     unsigned int nValue = 0;
     float fValue = 0.0;
@@ -91,34 +91,34 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
 
     switch (nType)
     {
-        case TriggerOperandType::Value:
+        case ra::data::Requirement::OperandType::Value:
             if (!ra::ParseNumeric(sValue, nValue, sError))
                 nValue = 0;
 
-            ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, nType, nSize, nValue);
+            ra::data::util::AchievementLogicSerializer::AppendOperand(sBuffer, nType, nSize, nValue);
             break;
 
-        case TriggerOperandType::Float:
+        case ra::data::Requirement::OperandType::Float:
             if (!ra::ParseFloat(sValue, fValue, sError))
                 fValue = 0.0;
 
-            ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, nType, nSize, fValue);
+            ra::data::util::AchievementLogicSerializer::AppendOperand(sBuffer, nType, nSize, fValue);
             break;
 
         default:
             if (!ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError))
                 nValue = 0;
 
-            ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, nType, nSize, nValue);
+            ra::data::util::AchievementLogicSerializer::AppendOperand(sBuffer, nType, nSize, nValue);
             break;
     }
 }
 
-static std::wstring FormatTypedValue(rc_typed_value_t& pValue, TriggerOperandType nType)
+static std::wstring FormatTypedValue(rc_typed_value_t& pValue, ra::data::Requirement::OperandType nType)
 {
     switch (nType)
     {
-        case TriggerOperandType::Value:
+        case ra::data::Requirement::OperandType::Value:
         {
             rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
             const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -128,7 +128,7 @@ static std::wstring FormatTypedValue(rc_typed_value_t& pValue, TriggerOperandTyp
             return ra::util::String::Printf(L"0x%02x", pValue.value.u32);
         }
 
-        case TriggerOperandType::Float:
+        case ra::data::Requirement::OperandType::Float:
         {
             rc_typed_value_convert(&pValue, RC_VALUE_TYPE_FLOAT);
             auto sFloat = std::to_wstring(pValue.value.f32);
@@ -149,7 +149,7 @@ static std::wstring FormatTypedValue(rc_typed_value_t& pValue, TriggerOperandTyp
     }
 }
 
-std::wstring TriggerConditionViewModel::FormatValue(unsigned nValue, TriggerOperandType nType)
+std::wstring TriggerConditionViewModel::FormatValue(unsigned nValue, ra::data::Requirement::OperandType nType)
 {
     rc_typed_value_t pValue{};
     pValue.type = RC_VALUE_TYPE_UNSIGNED;
@@ -157,7 +157,7 @@ std::wstring TriggerConditionViewModel::FormatValue(unsigned nValue, TriggerOper
     return FormatTypedValue(pValue, nType);
 }
 
-std::wstring TriggerConditionViewModel::FormatValue(float fValue, TriggerOperandType nType)
+std::wstring TriggerConditionViewModel::FormatValue(float fValue, ra::data::Requirement::OperandType nType)
 {
     rc_typed_value_t pValue{};
     pValue.type = RC_VALUE_TYPE_FLOAT;
@@ -165,13 +165,13 @@ std::wstring TriggerConditionViewModel::FormatValue(float fValue, TriggerOperand
     return FormatTypedValue(pValue, nType);
 }
 
-void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sValueProperty, TriggerOperandType nOldType, TriggerOperandType nNewType)
+void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sValueProperty, ra::data::Requirement::OperandType nOldType, ra::data::Requirement::OperandType nNewType)
 {
     const auto& sValue = GetValue(sValueProperty);
     std::wstring sError;
 
     rc_typed_value_t pValue{};
-    if (nOldType == TriggerOperandType::Float)
+    if (nOldType == ra::data::Requirement::OperandType::Float)
     {
         pValue.type = RC_VALUE_TYPE_FLOAT;
         ra::ParseFloat(sValue, pValue.value.f32, sError);
@@ -193,28 +193,28 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
 {
     rc_typed_value_t pValue{};
 
-    const auto nType = static_cast<TriggerOperandType>(operand.type);
+    const auto nType = static_cast<ra::data::Requirement::OperandType>(operand.type);
     SetValue(pTypeProperty, ra::etoi(nType));
 
     switch (nType)
     {
-        case TriggerOperandType::Value:
+        case ra::data::Requirement::OperandType::Value:
             SetValue(pSizeProperty, ra::etoi(ra::data::Memory::Size::ThirtyTwoBit));
             pValue.type = RC_VALUE_TYPE_UNSIGNED;
             pValue.value.u32 = operand.value.num;
             break;
 
-        case TriggerOperandType::Float:
+        case ra::data::Requirement::OperandType::Float:
             SetValue(pSizeProperty, ra::etoi(ra::data::Memory::Size::Float));
             pValue.type = RC_VALUE_TYPE_FLOAT;
             pValue.value.f32 = gsl::narrow_cast<float>(operand.value.dbl);
             break;
 
-        case TriggerOperandType::Address:
-        case TriggerOperandType::Delta:
-        case TriggerOperandType::Prior:
-        case TriggerOperandType::BCD:
-        case TriggerOperandType::Inverted:
+        case ra::data::Requirement::OperandType::Address:
+        case ra::data::Requirement::OperandType::Delta:
+        case ra::data::Requirement::OperandType::Prior:
+        case ra::data::Requirement::OperandType::BCD:
+        case ra::data::Requirement::OperandType::Inverted:
         {
             const auto nSize = ra::data::Memory::SizeFromRcheevosSize(operand.size);
             SetValue(pSizeProperty, ra::etoi(nSize));
@@ -223,7 +223,7 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
             break;
         }
 
-        case TriggerOperandType::Recall:
+        case ra::data::Requirement::OperandType::Recall:
             SetValue(pSizeProperty, ra::etoi(ra::data::Memory::Size::ThirtyTwoBit));
             pValue.type = RC_VALUE_TYPE_UNSIGNED;
             pValue.value.u32 = 1;
@@ -239,7 +239,7 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
 
 void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
 {
-    SetType(static_cast<TriggerConditionType>(pCondition.type));
+    SetType(static_cast<ra::data::Requirement::Type>(pCondition.type));
 
     const auto* pOperand = rc_condition_get_real_operand1(&pCondition);
     Expects(pOperand != nullptr);
@@ -250,13 +250,13 @@ void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
     if (pOperand != &pCondition.operand1 &&
         (pCondition.operand1.type == RC_OPERAND_DELTA || pCondition.operand1.type == RC_OPERAND_PRIOR))
     {
-        const auto nType = static_cast<TriggerOperandType>(pCondition.operand1.type);
+        const auto nType = static_cast<ra::data::Requirement::OperandType>(pCondition.operand1.type);
         SetSourceType(nType);
     }
 
     SetOperand(TargetTypeProperty, TargetSizeProperty, TargetValueProperty, pCondition.operand2);
 
-    SetOperator(static_cast<TriggerOperatorType>(pCondition.oper));
+    SetOperator(static_cast<ra::data::Requirement::OperatorType>(pCondition.oper));
 
     SetCurrentHits(pCondition.current_hits);
 
@@ -279,14 +279,14 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
 
     if (args.Property == SourceTypeProperty)
     {
-        const auto nOldType = ra::itoe<TriggerOperandType>(args.tOldValue);
-        const auto nNewType = ra::itoe<TriggerOperandType>(args.tNewValue);
+        const auto nOldType = ra::itoe<ra::data::Requirement::OperandType>(args.tOldValue);
+        const auto nNewType = ra::itoe<ra::data::Requirement::OperandType>(args.tNewValue);
         ChangeOperandType(SourceValueProperty, nOldType, nNewType);
 
         if (!IsAddressType(nNewType))
         {
             SetValue(HasSourceSizeProperty, false);
-            SetSourceSize(nNewType == TriggerOperandType::Value || IsParameterlessType(nNewType) ? ra::data::Memory::Size::ThirtyTwoBit : ra::data::Memory::Size::Float);
+            SetSourceSize(nNewType == ra::data::Requirement::OperandType::Value || IsParameterlessType(nNewType) ? ra::data::Memory::Size::ThirtyTwoBit : ra::data::Memory::Size::Float);
         }
         else if (!IsAddressType(nOldType))
         {
@@ -298,16 +298,16 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     }
     else if (args.Property == TargetTypeProperty)
     {
-        const auto nOldType = ra::itoe<TriggerOperandType>(args.tOldValue);
-        const auto nNewType = ra::itoe<TriggerOperandType>(args.tNewValue);
+        const auto nOldType = ra::itoe<ra::data::Requirement::OperandType>(args.tOldValue);
+        const auto nNewType = ra::itoe<ra::data::Requirement::OperandType>(args.tNewValue);
         ChangeOperandType(TargetValueProperty, nOldType, nNewType);
 
         if (!IsAddressType(nNewType))
         {
             SetValue(HasTargetSizeProperty, false);
-            SetTargetSize(nNewType == TriggerOperandType::Value || IsParameterlessType(nNewType) ? ra::data::Memory::Size::ThirtyTwoBit : ra::data::Memory::Size::Float);
+            SetTargetSize(nNewType == ra::data::Requirement::OperandType::Value || IsParameterlessType(nNewType) ? ra::data::Memory::Size::ThirtyTwoBit : ra::data::Memory::Size::Float);
         }
-        else if (!IsAddressType(ra::itoe<TriggerOperandType>(args.tOldValue)))
+        else if (!IsAddressType(ra::itoe<ra::data::Requirement::OperandType>(args.tOldValue)))
         {
             SetTargetSize(GetSourceSize());
             SetValue(HasTargetSizeProperty, GetValue(HasTargetProperty));
@@ -317,18 +317,18 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     }
     else if (args.Property == OperatorProperty)
     {
-        SetValue(HasTargetProperty, ra::itoe<TriggerOperatorType>(args.tNewValue) != TriggerOperatorType::None);
+        SetValue(HasTargetProperty, ra::itoe<ra::data::Requirement::OperatorType>(args.tNewValue) != ra::data::Requirement::OperatorType::None);
         UpdateHasHits();
     }
     else if (args.Property == TypeProperty)
     {
-        const auto nOldType = ra::itoe<TriggerConditionType>(args.tOldValue);
-        const auto nNewType = ra::itoe<TriggerConditionType>(args.tNewValue);
+        const auto nOldType = ra::itoe<ra::data::Requirement::Type>(args.tOldValue);
+        const auto nNewType = ra::itoe<ra::data::Requirement::Type>(args.tNewValue);
         const auto bIsModifying = IsModifying(nNewType);
         if (bIsModifying != IsModifying(nOldType))
-            SetOperator(bIsModifying ? TriggerOperatorType::None : TriggerOperatorType::Equals);
-        else if (!bIsModifying && GetOperator() == TriggerOperatorType::None)
-            SetOperator(TriggerOperatorType::Equals);
+            SetOperator(bIsModifying ? ra::data::Requirement::OperatorType::None : ra::data::Requirement::OperatorType::Equals);
+        else if (!bIsModifying && GetOperator() == ra::data::Requirement::OperatorType::None)
+            SetOperator(ra::data::Requirement::OperatorType::Equals);
 
         UpdateHasHits();
     }
@@ -340,18 +340,18 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         pTriggerViewModel->ResumeConditionMonitor();
 }
 
-static constexpr bool IsModifyingOperator(TriggerOperatorType nType)
+static constexpr bool IsModifyingOperator(ra::data::Requirement::OperatorType nType)
 {
     switch (nType)
     {
-        case TriggerOperatorType::None:
-        case TriggerOperatorType::Multiply:
-        case TriggerOperatorType::Divide:
-        case TriggerOperatorType::BitwiseAnd:
-        case TriggerOperatorType::BitwiseXor:
-        case TriggerOperatorType::Modulus:
-        case TriggerOperatorType::Add:
-        case TriggerOperatorType::Subtract:
+        case ra::data::Requirement::OperatorType::None:
+        case ra::data::Requirement::OperatorType::Multiply:
+        case ra::data::Requirement::OperatorType::Divide:
+        case ra::data::Requirement::OperatorType::BitwiseAnd:
+        case ra::data::Requirement::OperatorType::BitwiseXor:
+        case ra::data::Requirement::OperatorType::Modulus:
+        case ra::data::Requirement::OperatorType::Add:
+        case ra::data::Requirement::OperatorType::Subtract:
             return true;
 
         default:
@@ -368,7 +368,7 @@ void TriggerConditionViewModel::UpdateHasHits()
         SetValue(HasHitsProperty, false);
         SetValue(CanEditHitsProperty, false);
     }
-    else if (nType == TriggerConditionType::Measured && IsForValue())
+    else if (nType == ra::data::Requirement::Type::Measured && IsForValue())
     {
         // if Measured value is generated from hit count, show the hit count, but don't allow the target to be edited
         SetValue(HasHitsProperty, !IsModifyingOperator(GetOperator()));
@@ -430,7 +430,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
     if (nProperty == SourceValueProperty)
     {
         const auto nType = GetSourceType();
-        if (nType == TriggerOperandType::Value)
+        if (nType == ra::data::Requirement::OperandType::Value)
         {
             if (IsAddressType(GetTargetType()) && ra::data::Memory::SizeBits(GetTargetSize()) >= 8)
                 return GetPotentialEnumValueTooltip(GetSourceValue(), GetTargetAddress());
@@ -438,10 +438,10 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
             return GetValueTooltip(GetSourceAddress());
         }
 
-        if (nType == TriggerOperandType::Float)
+        if (nType == ra::data::Requirement::OperandType::Float)
             return L"";
 
-        if (nType == TriggerOperandType::Recall)
+        if (nType == ra::data::Requirement::OperandType::Recall)
             return L"";
 
         if (IsIndirect())
@@ -459,7 +459,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
     if (nProperty == TargetValueProperty && GetValue(HasTargetValueProperty))
     {
         const auto nType = GetTargetType();
-        if (nType == TriggerOperandType::Value)
+        if (nType == ra::data::Requirement::OperandType::Value)
         {
             if (IsAddressType(GetSourceType()) && ra::data::Memory::SizeBits(GetSourceSize()) >= 8)
                 return GetPotentialEnumValueTooltip(GetTargetValue(), GetSourceAddress());
@@ -467,10 +467,10 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
             return GetValueTooltip(GetTargetAddress());
         }
 
-        if (nType == TriggerOperandType::Float)
+        if (nType == ra::data::Requirement::OperandType::Float)
             return L"";
 
-        if (nType == TriggerOperandType::Recall)
+        if (nType == ra::data::Requirement::OperandType::Recall)
             return L"";
 
         if (IsIndirect())
@@ -493,14 +493,14 @@ std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProp
     if (nProperty == SourceTypeProperty)
     {
         const auto nType = GetSourceType();
-        if (nType == TriggerOperandType::Recall)
+        if (nType == ra::data::Requirement::OperandType::Recall)
             return GetRecallTooltip(false);
     }
 
     if (nProperty == TargetTypeProperty)
     {
         const auto nType = GetTargetType();
-        if (nType == TriggerOperandType::Recall)
+        if (nType == ra::data::Requirement::OperandType::Recall)
             return GetRecallTooltip(true);
     }
 
@@ -559,7 +559,7 @@ static void BuildOperandTooltip(std::wstring& sTooltip, const rc_operand_t& pOpe
     switch (pValue.type)
     {
         case RC_VALUE_TYPE_FLOAT:
-            sTooltip += FormatTypedValue(pValue, ra::services::TriggerOperandType::Float);
+            sTooltip += FormatTypedValue(pValue, ra::data::Requirement::OperandType::Float);
             break;
         case RC_VALUE_TYPE_SIGNED:
             sTooltip += ra::util::String::Printf(L"%d", pValue.value.i32);
@@ -753,7 +753,7 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
             return ra::util::String::Printf(L"%s\r\n[No memory note]", sAddress);
     }
 
-    if (pNote->IsPointer() && GetType() == TriggerConditionType::AddAddress)
+    if (pNote->IsPointer() && GetType() == ra::data::Requirement::Type::AddAddress)
         return ra::util::String::Printf(L"%s\r\n%s", sAddress, pNote->GetPointerDescription());
 
     const auto svSubNote = pNote->GetSubNote(nSize);
@@ -907,14 +907,14 @@ std::wstring TriggerConditionViewModel::GetRecallTooltip(bool bOperand2) const
     return sTooltip;
 }
 
-bool TriggerConditionViewModel::IsModifying(TriggerConditionType nType) noexcept
+bool TriggerConditionViewModel::IsModifying(ra::data::Requirement::Type nType) noexcept
 {
     switch (nType)
     {
-        case TriggerConditionType::AddAddress:
-        case TriggerConditionType::AddSource:
-        case TriggerConditionType::SubSource:
-        case TriggerConditionType::Remember:
+        case ra::data::Requirement::Type::AddAddress:
+        case ra::data::Requirement::Type::AddSource:
+        case ra::data::Requirement::Type::SubSource:
+        case ra::data::Requirement::Type::Remember:
             return true;
 
         default:
@@ -922,13 +922,13 @@ bool TriggerConditionViewModel::IsModifying(TriggerConditionType nType) noexcept
     }
 }
 
-bool TriggerConditionViewModel::IsAddressType(TriggerOperandType nType) noexcept
+bool TriggerConditionViewModel::IsAddressType(ra::data::Requirement::OperandType nType) noexcept
 {
     switch (nType)
     {
-        case TriggerOperandType::Value:
-        case TriggerOperandType::Float:
-        case TriggerOperandType::Recall:
+        case ra::data::Requirement::OperandType::Value:
+        case ra::data::Requirement::OperandType::Float:
+        case ra::data::Requirement::OperandType::Recall:
             return false;
 
         default:
@@ -937,11 +937,11 @@ bool TriggerConditionViewModel::IsAddressType(TriggerOperandType nType) noexcept
 }
 
 /* Has no address or value */
-bool TriggerConditionViewModel::IsParameterlessType(TriggerOperandType nType) noexcept
+bool TriggerConditionViewModel::IsParameterlessType(ra::data::Requirement::OperandType nType) noexcept
 {
     switch (nType)
     {
-        case TriggerOperandType::Recall:
+        case ra::data::Requirement::OperandType::Recall:
             return true;
         default:
             return false;
@@ -955,7 +955,7 @@ bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem,
         return false;
 
     // comparison operators should only be visible for non-modifying operations
-    const auto nOperator = ra::itoe<TriggerOperatorType>(nValue);
+    const auto nOperator = ra::itoe<ra::data::Requirement::OperatorType>(nValue);
     if (!IsModifyingOperator(nOperator))
         return !vmCondition->IsModifying();
 
@@ -964,7 +964,7 @@ bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem,
         return true;
 
     // modifying operators can be selected for the Measured flag when editing a value
-    if (vmCondition->GetType() == TriggerConditionType::Measured && vmCondition->IsForValue())
+    if (vmCondition->GetType() == ra::data::Requirement::Type::Measured && vmCondition->IsForValue())
         return true;
 
     // modifying operator is not valid at this time

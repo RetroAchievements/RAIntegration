@@ -12,8 +12,8 @@
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockConfiguration.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
+#include "tests\devkit\testutil\RequirementAsserts.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 
 #include <rcheevos\src\rcheevos\rc_internal.h>
 
@@ -101,12 +101,12 @@ public:
     {
         TriggerConditionViewModelHarness vmCondition;
         Assert::AreEqual(1, vmCondition.GetIndex());
-        Assert::AreEqual(TriggerConditionType::Standard, vmCondition.GetType());
-        Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
+        Assert::AreEqual(ra::data::Requirement::Type::Standard, vmCondition.GetType());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Address, vmCondition.GetSourceType());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize());
         Assert::AreEqual(std::wstring(L"0"), vmCondition.GetSourceValue());
-        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
-        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetTargetType());
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Equals, vmCondition.GetOperator());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Value, vmCondition.GetTargetType());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize());
         Assert::AreEqual(std::wstring(L"0"), vmCondition.GetTargetValue());
         Assert::AreEqual(0U, vmCondition.GetCurrentHits());
@@ -124,42 +124,42 @@ public:
         TriggerConditionViewModelHarness vmCondition;
         vmCondition.SetTargetSize(ra::data::Memory::Size::SixteenBit);
 
-        Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Address, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize()); // initial size is 8-bit
 
-        vmCondition.SetSourceType(TriggerOperandType::BCD);
-        Assert::AreEqual(TriggerOperandType::BCD, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::BCD);
+        Assert::AreEqual(ra::data::Requirement::OperandType::BCD, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize());
 
-        vmCondition.SetSourceType(TriggerOperandType::Delta);
-        Assert::AreEqual(TriggerOperandType::Delta, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Delta);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Delta, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize());
 
-        vmCondition.SetSourceType(TriggerOperandType::Prior);
-        Assert::AreEqual(TriggerOperandType::Prior, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Prior);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Prior, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize());
 
-        vmCondition.SetSourceType(TriggerOperandType::Inverted);
-        Assert::AreEqual(TriggerOperandType::Inverted, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Inverted);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Inverted, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize());
 
-        vmCondition.SetSourceType(TriggerOperandType::Recall);
-        Assert::AreEqual(TriggerOperandType::Recall, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Recall);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Recall, vmCondition.GetSourceType());
         Assert::IsFalse(vmCondition.HasSourceSize());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetSourceSize());
 
-        vmCondition.SetSourceType(TriggerOperandType::Value);
-        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Value);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Value, vmCondition.GetSourceType());
         Assert::IsFalse(vmCondition.HasSourceSize());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetSourceSize()); // value always 32-bit
 
-        vmCondition.SetSourceType(TriggerOperandType::Address);
-        Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Address);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Address, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
         Assert::AreEqual(ra::data::Memory::Size::SixteenBit, vmCondition.GetSourceSize()); // copied from target size
     }
@@ -169,42 +169,42 @@ public:
         TriggerConditionViewModelHarness vmCondition;
         vmCondition.SetTargetSize(ra::data::Memory::Size::SixteenBit);
 
-        Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Address, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceValue());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize()); // initial size is 8-bit
 
-        vmCondition.SetSourceType(TriggerOperandType::BCD);
-        Assert::AreEqual(TriggerOperandType::BCD, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::BCD);
+        Assert::AreEqual(ra::data::Requirement::OperandType::BCD, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceValue());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize());
 
-        vmCondition.SetSourceType(TriggerOperandType::Delta);
-        Assert::AreEqual(TriggerOperandType::Delta, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Delta);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Delta, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceValue());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize());
 
-        vmCondition.SetSourceType(TriggerOperandType::Prior);
-        Assert::AreEqual(TriggerOperandType::Prior, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Prior);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Prior, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceValue());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize());
 
-        vmCondition.SetSourceType(TriggerOperandType::Inverted);
-        Assert::AreEqual(TriggerOperandType::Inverted, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Inverted);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Inverted, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceValue());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetSourceSize());
 
-        vmCondition.SetSourceType(TriggerOperandType::Recall);
-        Assert::AreEqual(TriggerOperandType::Recall, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Recall);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Recall, vmCondition.GetSourceType());
         Assert::IsFalse(vmCondition.HasSourceValue());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetSourceSize());
 
-        vmCondition.SetSourceType(TriggerOperandType::Value);
-        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Value);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Value, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceValue());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetSourceSize()); // value always 32-bit
 
-        vmCondition.SetSourceType(TriggerOperandType::Address);
-        Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
+        vmCondition.SetSourceType(ra::data::Requirement::OperandType::Address);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Address, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceValue());
         Assert::AreEqual(ra::data::Memory::Size::SixteenBit, vmCondition.GetSourceSize()); // copied from target size
     }
@@ -212,122 +212,122 @@ public:
     TEST_METHOD(TestHasTarget)
     {
         TriggerConditionViewModelHarness vmCondition;
-        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Equals, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::NotEquals);
-        Assert::AreEqual(TriggerOperatorType::NotEquals, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::NotEquals);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::NotEquals, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::LessThan);
-        Assert::AreEqual(TriggerOperatorType::LessThan, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::LessThan);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::LessThan, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::LessThanOrEqual);
-        Assert::AreEqual(TriggerOperatorType::LessThanOrEqual, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::LessThanOrEqual);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::LessThanOrEqual, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::GreaterThan);
-        Assert::AreEqual(TriggerOperatorType::GreaterThan, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::GreaterThan);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::GreaterThan, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::GreaterThanOrEqual);
-        Assert::AreEqual(TriggerOperatorType::GreaterThanOrEqual, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::GreaterThanOrEqual);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::GreaterThanOrEqual, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::None);
-        Assert::AreEqual(TriggerOperatorType::None, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::None);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::None, vmCondition.GetOperator());
         Assert::IsFalse(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::Multiply);
-        Assert::AreEqual(TriggerOperatorType::Multiply, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::Multiply);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Multiply, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::Divide);
-        Assert::AreEqual(TriggerOperatorType::Divide, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::Divide);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Divide, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::BitwiseAnd);
-        Assert::AreEqual(TriggerOperatorType::BitwiseAnd, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::BitwiseAnd);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::BitwiseAnd, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::Modulus);
-        Assert::AreEqual(TriggerOperatorType::Modulus, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::Modulus);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Modulus, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::Add);
-        Assert::AreEqual(TriggerOperatorType::Add, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::Add);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Add, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
 
-        vmCondition.SetOperator(TriggerOperatorType::Subtract);
-        Assert::AreEqual(TriggerOperatorType::Subtract, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::Subtract);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Subtract, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTarget());
     }
 
     TEST_METHOD(TestHasTargetSize)
     {
         TriggerConditionViewModelHarness vmCondition;
-        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetTargetType());
-        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Value, vmCondition.GetTargetType());
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Equals, vmCondition.GetOperator());
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
-        vmCondition.SetTargetType(TriggerOperandType::Address);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Address);
         Assert::IsTrue(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
-        vmCondition.SetOperator(TriggerOperatorType::None);
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::None);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
 
-        vmCondition.SetTargetType(TriggerOperandType::Value);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Value);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
-        vmCondition.SetTargetType(TriggerOperandType::Delta);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Delta);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
-        vmCondition.SetOperator(TriggerOperatorType::Equals);
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::Equals);
         Assert::IsTrue(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
-        vmCondition.SetTargetType(TriggerOperandType::Value);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Value);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
-        vmCondition.SetTargetType(TriggerOperandType::Recall);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Recall);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
-        vmCondition.SetOperator(TriggerOperatorType::None);
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::None);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize()); // value still 32-bit
 
-        vmCondition.SetTargetType(TriggerOperandType::Prior);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Prior);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
-        vmCondition.SetTargetType(TriggerOperandType::Value);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Value);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
-        vmCondition.SetTargetType(TriggerOperandType::Inverted);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Inverted);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
-        vmCondition.SetOperator(TriggerOperatorType::NotEquals);
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::NotEquals);
         Assert::IsTrue(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetTargetSize());
@@ -336,40 +336,40 @@ public:
     TEST_METHOD(TestHasTargetValue)
     {
         TriggerConditionViewModelHarness vmCondition;
-        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetTargetType());
-        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Value, vmCondition.GetTargetType());
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Equals, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasTargetValue());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
-        vmCondition.SetTargetType(TriggerOperandType::Address);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Address);
         Assert::IsTrue(vmCondition.HasTargetValue());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
-        vmCondition.SetTargetType(TriggerOperandType::Value);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Value);
         Assert::IsTrue(vmCondition.HasTargetValue());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
-        vmCondition.SetTargetType(TriggerOperandType::Delta);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Delta);
         Assert::IsTrue(vmCondition.HasTargetValue());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
-        vmCondition.SetTargetType(TriggerOperandType::Inverted);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Inverted);
         Assert::IsTrue(vmCondition.HasTargetValue());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetTargetSize());
 
-        vmCondition.SetTargetType(TriggerOperandType::BCD);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::BCD);
         Assert::IsTrue(vmCondition.HasTargetValue());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, vmCondition.GetTargetSize());
 
-        vmCondition.SetTargetType(TriggerOperandType::Recall);
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Recall);
         Assert::IsFalse(vmCondition.HasTargetValue());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
-        vmCondition.SetOperator(TriggerOperatorType::None);
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::None);
         Assert::IsFalse(vmCondition.HasTargetValue());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize()); // value still 32-bit
 
-        vmCondition.SetOperator(TriggerOperatorType::NotEquals);
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::NotEquals);
         Assert::IsFalse(vmCondition.HasTargetValue());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, vmCondition.GetTargetSize());
     }
@@ -377,116 +377,116 @@ public:
     TEST_METHOD(TestModifyingConditionUpdatesHasTargetValue)
     {
         TriggerConditionViewModelHarness vmCondition;
-        vmCondition.SetType(TriggerConditionType::AddSource);
+        vmCondition.SetType(ra::data::Requirement::Type::AddSource);
         Assert::IsFalse(vmCondition.HasTargetValue());
-        vmCondition.SetOperator(TriggerOperatorType::Divide);
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::Divide);
         Assert::IsTrue(vmCondition.HasTargetValue());
     }
 
     TEST_METHOD(TestHasTargetSizeHasTarget)
     {
         TriggerConditionViewModelHarness vmCondition;
-        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetTargetType());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Value, vmCondition.GetTargetType());
         Assert::IsFalse(vmCondition.HasTargetSize());
 
-        vmCondition.SetTargetType(TriggerOperandType::Address);
-        Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetTargetType());
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Address);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Address, vmCondition.GetTargetType());
         Assert::IsTrue(vmCondition.HasTargetSize());
 
-        vmCondition.SetTargetType(TriggerOperandType::BCD);
-        Assert::AreEqual(TriggerOperandType::BCD, vmCondition.GetTargetType());
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::BCD);
+        Assert::AreEqual(ra::data::Requirement::OperandType::BCD, vmCondition.GetTargetType());
         Assert::IsTrue(vmCondition.HasTargetSize());
 
-        vmCondition.SetTargetType(TriggerOperandType::Delta);
-        Assert::AreEqual(TriggerOperandType::Delta, vmCondition.GetTargetType());
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Delta);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Delta, vmCondition.GetTargetType());
         Assert::IsTrue(vmCondition.HasTargetSize());
 
-        vmCondition.SetTargetType(TriggerOperandType::Prior);
-        Assert::AreEqual(TriggerOperandType::Prior, vmCondition.GetTargetType());
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Prior);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Prior, vmCondition.GetTargetType());
         Assert::IsTrue(vmCondition.HasTargetSize());
 
-        vmCondition.SetTargetType(TriggerOperandType::Inverted);
-        Assert::AreEqual(TriggerOperandType::Inverted, vmCondition.GetTargetType());
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Inverted);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Inverted, vmCondition.GetTargetType());
         Assert::IsTrue(vmCondition.HasTargetSize());
 
-        vmCondition.SetTargetType(TriggerOperandType::Recall);
-        Assert::AreEqual(TriggerOperandType::Recall, vmCondition.GetTargetType());
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Recall);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Recall, vmCondition.GetTargetType());
         Assert::IsFalse(vmCondition.HasTargetSize());
 
-        vmCondition.SetTargetType(TriggerOperandType::Value);
-        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetTargetType());
+        vmCondition.SetTargetType(ra::data::Requirement::OperandType::Value);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Value, vmCondition.GetTargetType());
         Assert::IsFalse(vmCondition.HasTargetSize());
     }
 
     TEST_METHOD(TestHasHits)
     {
         TriggerConditionViewModelHarness vmCondition;
-        Assert::AreEqual(TriggerConditionType::Standard, vmCondition.GetType());
+        Assert::AreEqual(ra::data::Requirement::Type::Standard, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::AddAddress);
-        Assert::AreEqual(TriggerConditionType::AddAddress, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::AddAddress);
+        Assert::AreEqual(ra::data::Requirement::Type::AddAddress, vmCondition.GetType());
         Assert::IsFalse(vmCondition.HasHits());
         Assert::IsFalse(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::AddHits);
-        Assert::AreEqual(TriggerConditionType::AddHits, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::AddHits);
+        Assert::AreEqual(ra::data::Requirement::Type::AddHits, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::AddSource);
-        Assert::AreEqual(TriggerConditionType::AddSource, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::AddSource);
+        Assert::AreEqual(ra::data::Requirement::Type::AddSource, vmCondition.GetType());
         Assert::IsFalse(vmCondition.HasHits());
         Assert::IsFalse(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::AndNext);
-        Assert::AreEqual(TriggerConditionType::AndNext, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::AndNext);
+        Assert::AreEqual(ra::data::Requirement::Type::AndNext, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::Measured);
-        Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::Measured);
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::MeasuredIf);
-        Assert::AreEqual(TriggerConditionType::MeasuredIf, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::MeasuredIf);
+        Assert::AreEqual(ra::data::Requirement::Type::MeasuredIf, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::OrNext);
-        Assert::AreEqual(TriggerConditionType::OrNext, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::OrNext);
+        Assert::AreEqual(ra::data::Requirement::Type::OrNext, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::PauseIf);
-        Assert::AreEqual(TriggerConditionType::PauseIf, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::PauseIf);
+        Assert::AreEqual(ra::data::Requirement::Type::PauseIf, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::ResetIf);
-        Assert::AreEqual(TriggerConditionType::ResetIf, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::ResetIf);
+        Assert::AreEqual(ra::data::Requirement::Type::ResetIf, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::SubHits);
-        Assert::AreEqual(TriggerConditionType::SubHits, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::SubHits);
+        Assert::AreEqual(ra::data::Requirement::Type::SubHits, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::SubSource);
-        Assert::AreEqual(TriggerConditionType::SubSource, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::SubSource);
+        Assert::AreEqual(ra::data::Requirement::Type::SubSource, vmCondition.GetType());
         Assert::IsFalse(vmCondition.HasHits());
         Assert::IsFalse(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::Trigger);
-        Assert::AreEqual(TriggerConditionType::Trigger, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::Trigger);
+        Assert::AreEqual(ra::data::Requirement::Type::Trigger, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::Remember);
-        Assert::AreEqual(TriggerConditionType::Remember, vmCondition.GetType());
+        vmCondition.SetType(ra::data::Requirement::Type::Remember);
+        Assert::AreEqual(ra::data::Requirement::Type::Remember, vmCondition.GetType());
         Assert::IsFalse(vmCondition.HasHits());
         Assert::IsFalse(vmCondition.CanEditHits());
     }
@@ -498,41 +498,41 @@ public:
         vmTrigger.SetIsValue(true);
         vmCondition.SetTriggerViewModel(&vmTrigger);
 
-        Assert::AreEqual(TriggerConditionType::Standard, vmCondition.GetType());
+        Assert::AreEqual(ra::data::Requirement::Type::Standard, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::Measured);
-        Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
-        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        vmCondition.SetType(ra::data::Requirement::Type::Measured);
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, vmCondition.GetType());
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Equals, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsFalse(vmCondition.CanEditHits());
 
-        vmCondition.SetOperator(TriggerOperatorType::None);
-        Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
-        Assert::AreEqual(TriggerOperatorType::None, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::None);
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, vmCondition.GetType());
+        Assert::AreEqual(ra::data::Requirement::OperatorType::None, vmCondition.GetOperator());
         Assert::IsFalse(vmCondition.HasHits());
         Assert::IsFalse(vmCondition.CanEditHits());
 
-        vmCondition.SetType(TriggerConditionType::Standard);
-        Assert::AreEqual(TriggerConditionType::Standard, vmCondition.GetType());
-        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        vmCondition.SetType(ra::data::Requirement::Type::Standard);
+        Assert::AreEqual(ra::data::Requirement::Type::Standard, vmCondition.GetType());
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Equals, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsTrue(vmCondition.CanEditHits());
 
         vmCondition.SetRequiredHits(5U);
         Assert::AreEqual(5U, vmCondition.GetRequiredHits());
 
-        vmCondition.SetType(TriggerConditionType::Measured);
-        Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
-        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        vmCondition.SetType(ra::data::Requirement::Type::Measured);
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, vmCondition.GetType());
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Equals, vmCondition.GetOperator());
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsFalse(vmCondition.CanEditHits());
         Assert::AreEqual(0U, vmCondition.GetRequiredHits());
 
-        vmCondition.SetOperator(TriggerOperatorType::Multiply);
-        Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
-        Assert::AreEqual(TriggerOperatorType::Multiply, vmCondition.GetOperator());
+        vmCondition.SetOperator(ra::data::Requirement::OperatorType::Multiply);
+        Assert::AreEqual(ra::data::Requirement::Type::Measured, vmCondition.GetType());
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Multiply, vmCondition.GetOperator());
         Assert::IsFalse(vmCondition.HasHits());
         Assert::IsFalse(vmCondition.CanEditHits());
         Assert::AreEqual(0U, vmCondition.GetRequiredHits());
@@ -546,38 +546,38 @@ public:
         Assert::AreEqual(std::string("0xH1234=0xH2345.10."), sSerialized);
 
         // changing to a type that supports hits does not change the hit count
-        vmCondition.SetType(TriggerConditionType::AddHits);
+        vmCondition.SetType(ra::data::Requirement::Type::AddHits);
         sSerialized = vmCondition.Serialize();
         Assert::AreEqual(std::string("C:0xH1234=0xH2345.10."), sSerialized);
 
         // changing to a type that does not support hits should remove the hit count (and comparison)
-        vmCondition.SetType(TriggerConditionType::AddSource);
+        vmCondition.SetType(ra::data::Requirement::Type::AddSource);
         sSerialized = vmCondition.Serialize();
         Assert::AreEqual(std::string("A:0xH1234"), sSerialized);
 
         // changing back to a type that does support hits should restore the hit count and comparison
         // NOTE: editor does not behave this way as the condition is reconstructed from the serialized trigger
-        vmCondition.SetType(TriggerConditionType::ResetIf);
+        vmCondition.SetType(ra::data::Requirement::Type::ResetIf);
         sSerialized = vmCondition.Serialize();
         Assert::AreEqual(std::string("R:0xH1234=0xH2345.10."), sSerialized);
 
         // changing to a type that does not support hits should remove the hit count (and comparison)
-        vmCondition.SetType(TriggerConditionType::AddAddress);
+        vmCondition.SetType(ra::data::Requirement::Type::AddAddress);
         sSerialized = vmCondition.Serialize();
         Assert::AreEqual(std::string("I:0xH1234"), sSerialized);
 
         // changing to a type that does not support hits should remove the hit count (and comparison)
-        vmCondition.SetType(TriggerConditionType::SubSource);
+        vmCondition.SetType(ra::data::Requirement::Type::SubSource);
         sSerialized = vmCondition.Serialize();
         Assert::AreEqual(std::string("B:0xH1234"), sSerialized);
 
         // changing back to a type that does support hits should restore the hit count and comparison
-        vmCondition.SetType(TriggerConditionType::Standard);
+        vmCondition.SetType(ra::data::Requirement::Type::Standard);
         sSerialized = vmCondition.Serialize();
         Assert::AreEqual(std::string("0xH1234=0xH2345.10."), sSerialized);
 
         // changing to a type that does not support hits should remove the hit count (and comparison)
-        vmCondition.SetType(TriggerConditionType::Remember);
+        vmCondition.SetType(ra::data::Requirement::Type::Remember);
         sSerialized = vmCondition.Serialize();
         Assert::AreEqual(std::string("K:0xH1234"), sSerialized);
     }
@@ -1703,46 +1703,46 @@ public:
     {
         TriggerConditionViewModelHarness condition;
 
-        condition.SetType(TriggerConditionType::AddAddress);
+        condition.SetType(ra::data::Requirement::Type::AddAddress);
         Assert::IsTrue(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::AddHits);
+        condition.SetType(ra::data::Requirement::Type::AddHits);
         Assert::IsFalse(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::AddSource);
+        condition.SetType(ra::data::Requirement::Type::AddSource);
         Assert::IsTrue(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::AndNext);
+        condition.SetType(ra::data::Requirement::Type::AndNext);
         Assert::IsFalse(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::Measured);
+        condition.SetType(ra::data::Requirement::Type::Measured);
         Assert::IsFalse(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::MeasuredIf);
+        condition.SetType(ra::data::Requirement::Type::MeasuredIf);
         Assert::IsFalse(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::OrNext);
+        condition.SetType(ra::data::Requirement::Type::OrNext);
         Assert::IsFalse(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::PauseIf);
+        condition.SetType(ra::data::Requirement::Type::PauseIf);
         Assert::IsFalse(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::ResetIf);
+        condition.SetType(ra::data::Requirement::Type::ResetIf);
         Assert::IsFalse(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::Standard);
+        condition.SetType(ra::data::Requirement::Type::Standard);
         Assert::IsFalse(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::SubHits);
+        condition.SetType(ra::data::Requirement::Type::SubHits);
         Assert::IsFalse(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::SubSource);
+        condition.SetType(ra::data::Requirement::Type::SubSource);
         Assert::IsTrue(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::Trigger);
+        condition.SetType(ra::data::Requirement::Type::Trigger);
         Assert::IsFalse(condition.IsModifying());
 
-        condition.SetType(TriggerConditionType::Remember);
+        condition.SetType(ra::data::Requirement::Type::Remember);
         Assert::IsTrue(condition.IsModifying());
     }
 
@@ -1750,52 +1750,52 @@ public:
     {
         TriggerConditionViewModelHarness condition;
         condition.SetSourceValue(0x1234U);
-        condition.SetOperator(TriggerOperatorType::NotEquals);
+        condition.SetOperator(ra::data::Requirement::OperatorType::NotEquals);
         condition.SetTargetValue(8U);
         Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
         Assert::IsFalse(condition.IsModifying());
 
         // change to modifying switches operator to None. the 8 is unmodified, but ignored
-        condition.SetType(TriggerConditionType::AddSource);
-        Assert::AreEqual(TriggerOperatorType::None, condition.GetOperator());
+        condition.SetType(ra::data::Requirement::Type::AddSource);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::None, condition.GetOperator());
         Assert::AreEqual(std::string("A:0xH1234"), condition.Serialize());
         Assert::IsTrue(condition.IsModifying());
 
         // changing operator "restores" the 8
-        condition.SetOperator(TriggerOperatorType::Multiply);
+        condition.SetOperator(ra::data::Requirement::OperatorType::Multiply);
         Assert::AreEqual(std::string("A:0xH1234*8"), condition.Serialize());
 
         // change to non-modifying switches operator to Equals
-        condition.SetType(TriggerConditionType::ResetIf);
-        Assert::AreEqual(TriggerOperatorType::Equals, condition.GetOperator());
+        condition.SetType(ra::data::Requirement::Type::ResetIf);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Equals, condition.GetOperator());
         Assert::AreEqual(std::string("R:0xH1234=8"), condition.Serialize());
         Assert::IsFalse(condition.IsModifying());
 
         // change to modifying switches operator to None. the 8 is unmodified, but ignored
-        condition.SetType(TriggerConditionType::AddAddress);
-        Assert::AreEqual(TriggerOperatorType::None, condition.GetOperator());
+        condition.SetType(ra::data::Requirement::Type::AddAddress);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::None, condition.GetOperator());
         Assert::AreEqual(std::string("I:0xH1234"), condition.Serialize());
         Assert::IsTrue(condition.IsModifying());
 
         // change to non-modifying switches operator to Equals
-        condition.SetType(TriggerConditionType::Standard);
-        Assert::AreEqual(TriggerOperatorType::Equals, condition.GetOperator());
+        condition.SetType(ra::data::Requirement::Type::Standard);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Equals, condition.GetOperator());
         Assert::AreEqual(std::string("0xH1234=8"), condition.Serialize());
         Assert::IsFalse(condition.IsModifying());
 
         // change to modifying switches operator to None. the 8 is unmodified, but ignored
-        condition.SetType(TriggerConditionType::Remember);
-        Assert::AreEqual(TriggerOperatorType::None, condition.GetOperator());
+        condition.SetType(ra::data::Requirement::Type::Remember);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::None, condition.GetOperator());
         Assert::AreEqual(std::string("K:0xH1234"), condition.Serialize());
         Assert::IsTrue(condition.IsModifying());
 
         // changing operator "restores" the 8
-        condition.SetOperator(TriggerOperatorType::Multiply);
+        condition.SetOperator(ra::data::Requirement::OperatorType::Multiply);
         Assert::AreEqual(std::string("K:0xH1234*8"), condition.Serialize());
 
         // change to non-modifying switches operator to Equals
-        condition.SetType(TriggerConditionType::ResetIf);
-        Assert::AreEqual(TriggerOperatorType::Equals, condition.GetOperator());
+        condition.SetType(ra::data::Requirement::Type::ResetIf);
+        Assert::AreEqual(ra::data::Requirement::OperatorType::Equals, condition.GetOperator());
         Assert::AreEqual(std::string("R:0xH1234=8"), condition.Serialize());
         Assert::IsFalse(condition.IsModifying());
     }
@@ -1804,19 +1804,19 @@ public:
     {
         TriggerConditionViewModelHarness condition;
         condition.SetSourceValue(0x1234U);
-        condition.SetOperator(TriggerOperatorType::NotEquals);
+        condition.SetOperator(ra::data::Requirement::OperatorType::NotEquals);
         condition.SetTargetValue(8U);
         Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
         Assert::IsFalse(condition.HasTargetSize());
 
         // change to address switches size to match source
-        condition.SetTargetType(TriggerOperandType::Delta);
+        condition.SetTargetType(ra::data::Requirement::OperandType::Delta);
         Assert::IsTrue(condition.HasTargetSize());
         Assert::AreEqual(ra::data::Memory::Size::EightBit, condition.GetTargetSize());
         Assert::AreEqual(std::string("0xH1234!=d0xH0008"), condition.Serialize());
 
         // change to value sets size back to 32-bit
-        condition.SetTargetType(TriggerOperandType::Value);
+        condition.SetTargetType(ra::data::Requirement::OperandType::Value);
         Assert::IsFalse(condition.HasTargetSize());
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, condition.GetTargetSize());
         Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
@@ -1826,35 +1826,35 @@ public:
     {
         TriggerConditionViewModelHarness condition;
         condition.SetSourceValue(0x1234U);
-        condition.SetOperator(TriggerOperatorType::NotEquals);
+        condition.SetOperator(ra::data::Requirement::OperatorType::NotEquals);
         condition.SetTargetValue(8U);
         Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
 
-        condition.SetTargetType(TriggerOperandType::Float);
-        Assert::AreEqual(TriggerOperandType::Float, condition.GetTargetType());
+        condition.SetTargetType(ra::data::Requirement::OperandType::Float);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Float, condition.GetTargetType());
         Assert::AreEqual(std::wstring(L"8.0"), condition.GetTargetValue());
         Assert::AreEqual(std::string("0xH1234!=f8.0"), condition.Serialize());
 
         condition.SetTargetValue(L"3.14");
         Assert::AreEqual(std::string("0xH1234!=f3.14"), condition.Serialize());
 
-        condition.SetTargetType(TriggerOperandType::Value);
-        Assert::AreEqual(TriggerOperandType::Value, condition.GetTargetType());
+        condition.SetTargetType(ra::data::Requirement::OperandType::Value);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Value, condition.GetTargetType());
         Assert::AreEqual(std::wstring(L"0x03"), condition.GetTargetValue());
         Assert::AreEqual(std::string("0xH1234!=3"), condition.Serialize());
 
-        condition.SetTargetType(TriggerOperandType::Address);
-        Assert::AreEqual(TriggerOperandType::Address, condition.GetTargetType());
+        condition.SetTargetType(ra::data::Requirement::OperandType::Address);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Address, condition.GetTargetType());
         Assert::AreEqual(std::wstring(L"0x0003"), condition.GetTargetValue());
         Assert::AreEqual(std::string("0xH1234!=0xH0003"), condition.Serialize());
 
-        condition.SetTargetType(TriggerOperandType::Float);
-        Assert::AreEqual(TriggerOperandType::Float, condition.GetTargetType());
+        condition.SetTargetType(ra::data::Requirement::OperandType::Float);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Float, condition.GetTargetType());
         Assert::AreEqual(std::wstring(L"3.0"), condition.GetTargetValue());
         Assert::AreEqual(std::string("0xH1234!=f3.0"), condition.Serialize());
 
-        condition.SetTargetType(TriggerOperandType::Address);
-        Assert::AreEqual(TriggerOperandType::Address, condition.GetTargetType());
+        condition.SetTargetType(ra::data::Requirement::OperandType::Address);
+        Assert::AreEqual(ra::data::Requirement::OperandType::Address, condition.GetTargetType());
         Assert::AreEqual(std::wstring(L"0x0003"), condition.GetTargetValue());
         Assert::AreEqual(std::string("0xH1234!=0xH0003"), condition.Serialize());
     }
@@ -1863,28 +1863,28 @@ public:
     {
         TriggerConditionViewModelHarness condition;
         condition.SetSourceValue(0x1234U);
-        condition.SetOperator(TriggerOperatorType::NotEquals);
+        condition.SetOperator(ra::data::Requirement::OperatorType::NotEquals);
         condition.SetTargetValue(8U);
         Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
 
         condition.SetTargetValue(L"3.14");
-        Assert::AreEqual(TriggerOperandType::Value, condition.GetTargetType());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Value, condition.GetTargetType());
         Assert::AreEqual(std::wstring(L"3.14"), condition.GetTargetValue()); // value is not updated until trigger is reconstructed
         Assert::AreEqual(std::string("0xH1234!=0"), condition.Serialize()); // serializer will choke and convert to 0
 
-        condition.SetTargetType(TriggerOperandType::Float);
+        condition.SetTargetType(ra::data::Requirement::OperandType::Float);
         condition.SetTargetValue(L"3.14");
-        Assert::AreEqual(TriggerOperandType::Float, condition.GetTargetType());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Float, condition.GetTargetType());
         Assert::AreEqual(std::wstring(L"3.14"), condition.GetTargetValue());
         Assert::AreEqual(std::string("0xH1234!=f3.14"), condition.Serialize());
 
         condition.SetTargetValue(L"0x0F");
-        Assert::AreEqual(TriggerOperandType::Float, condition.GetTargetType());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Float, condition.GetTargetType());
         Assert::AreEqual(std::wstring(L"0x0F"), condition.GetTargetValue()); // value is not updated until trigger is reconstructed
         Assert::AreEqual(std::string("0xH1234!=f15.0"), condition.Serialize()); // apparently wcstof supports 0x prefix
 
         condition.SetTargetValue(L"6");
-        Assert::AreEqual(TriggerOperandType::Float, condition.GetTargetType());
+        Assert::AreEqual(ra::data::Requirement::OperandType::Float, condition.GetTargetType());
         Assert::AreEqual(std::wstring(L"6"), condition.GetTargetValue()); // value is not updated until trigger is reconstructed
         Assert::AreEqual(std::string("0xH1234!=f6.0"), condition.Serialize()); // serializer can handle this conversion
     }
@@ -1893,70 +1893,70 @@ public:
     {
         TriggerConditionViewModelHarness condition;
 
-        condition.SetType(TriggerConditionType::Standard);
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Equals)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::NotEquals)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThan)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThanOrEqual)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThan)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThanOrEqual)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::None)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseXor)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Modulus)));
+        condition.SetType(ra::data::Requirement::Type::Standard);
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Equals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::NotEquals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::LessThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::LessThanOrEqual)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::GreaterThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::GreaterThanOrEqual)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::None)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Multiply)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Divide)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::BitwiseAnd)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::BitwiseXor)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Modulus)));
 
-        condition.SetType(TriggerConditionType::AddAddress);
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Equals)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::NotEquals)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThan)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThanOrEqual)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThan)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThanOrEqual)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::None)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseXor)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Modulus)));
+        condition.SetType(ra::data::Requirement::Type::AddAddress);
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Equals)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::NotEquals)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::LessThan)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::LessThanOrEqual)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::GreaterThan)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::GreaterThanOrEqual)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::None)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Multiply)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Divide)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::BitwiseAnd)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::BitwiseXor)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Modulus)));
     }
 
     TEST_METHOD(TestIsComparisonVisibleMeasured)
     {
         TriggerConditionViewModelHarness condition;
 
-        condition.SetType(TriggerConditionType::Measured);
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Equals)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::NotEquals)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThan)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThanOrEqual)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThan)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThanOrEqual)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::None)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseXor)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Modulus)));
+        condition.SetType(ra::data::Requirement::Type::Measured);
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Equals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::NotEquals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::LessThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::LessThanOrEqual)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::GreaterThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::GreaterThanOrEqual)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::None)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Multiply)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Divide)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::BitwiseAnd)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::BitwiseXor)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Modulus)));
 
         TriggerViewModel vmTrigger;
         vmTrigger.SetIsValue(true);
         condition.SetTriggerViewModel(&vmTrigger);
 
         // None operator is visible when associated to a Value trigger
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Equals)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::NotEquals)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThan)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThanOrEqual)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThan)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThanOrEqual)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::None)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseXor)));
-        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Modulus)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Equals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::NotEquals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::LessThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::LessThanOrEqual)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::GreaterThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::GreaterThanOrEqual)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::None)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Multiply)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Divide)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::BitwiseAnd)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::BitwiseXor)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(ra::data::Requirement::OperatorType::Modulus)));
     }
 
     TEST_METHOD(TestFormatValueNumber)
@@ -1964,23 +1964,23 @@ public:
         TriggerConditionViewModelHarness condition;
         condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
 
-        Assert::AreEqual(std::wstring(L"0"), TriggerConditionViewModel::FormatValue(0U, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"1"), TriggerConditionViewModel::FormatValue(1U, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"10"), TriggerConditionViewModel::FormatValue(10U, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"100"), TriggerConditionViewModel::FormatValue(100U, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"1000000000"), TriggerConditionViewModel::FormatValue(1000000000U, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"4294967295"), TriggerConditionViewModel::FormatValue(0xFFFFFFFFU, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"12"), TriggerConditionViewModel::FormatValue(12.34f, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"0"), TriggerConditionViewModel::FormatValue(0U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"1"), TriggerConditionViewModel::FormatValue(1U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"10"), TriggerConditionViewModel::FormatValue(10U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"100"), TriggerConditionViewModel::FormatValue(100U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"1000000000"), TriggerConditionViewModel::FormatValue(1000000000U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"4294967295"), TriggerConditionViewModel::FormatValue(0xFFFFFFFFU, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"12"), TriggerConditionViewModel::FormatValue(12.34f, ra::data::Requirement::OperandType::Value));
 
         condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
 
-        Assert::AreEqual(std::wstring(L"0x00"), TriggerConditionViewModel::FormatValue(0U, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"0x01"), TriggerConditionViewModel::FormatValue(1U, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"0x0a"), TriggerConditionViewModel::FormatValue(10U, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"0x64"), TriggerConditionViewModel::FormatValue(100U, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"0x3b9aca00"), TriggerConditionViewModel::FormatValue(1000000000U, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"0xffffffff"), TriggerConditionViewModel::FormatValue(0xFFFFFFFFU, TriggerOperandType::Value));
-        Assert::AreEqual(std::wstring(L"0x0c"), TriggerConditionViewModel::FormatValue(12.34f, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x00"), TriggerConditionViewModel::FormatValue(0U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x01"), TriggerConditionViewModel::FormatValue(1U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x0a"), TriggerConditionViewModel::FormatValue(10U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x64"), TriggerConditionViewModel::FormatValue(100U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x3b9aca00"), TriggerConditionViewModel::FormatValue(1000000000U, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0xffffffff"), TriggerConditionViewModel::FormatValue(0xFFFFFFFFU, ra::data::Requirement::OperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x0c"), TriggerConditionViewModel::FormatValue(12.34f, ra::data::Requirement::OperandType::Value));
     }
 
     TEST_METHOD(TestFormatValueFloat)
@@ -1988,19 +1988,19 @@ public:
         TriggerConditionViewModelHarness condition;
         condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
 
-        Assert::AreEqual(std::wstring(L"0.0"), TriggerConditionViewModel::FormatValue(0.0f, TriggerOperandType::Float));
-        Assert::AreEqual(std::wstring(L"1.0"), TriggerConditionViewModel::FormatValue(1.0f, TriggerOperandType::Float));
-        Assert::AreEqual(std::wstring(L"1.23"), TriggerConditionViewModel::FormatValue(1.23f, TriggerOperandType::Float));
-        Assert::AreEqual(std::wstring(L"-3.14159"), TriggerConditionViewModel::FormatValue(-3.14159f, TriggerOperandType::Float));
-        Assert::AreEqual(std::wstring(L"960.75"), TriggerConditionViewModel::FormatValue(960.75f, TriggerOperandType::Float));
+        Assert::AreEqual(std::wstring(L"0.0"), TriggerConditionViewModel::FormatValue(0.0f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.0"), TriggerConditionViewModel::FormatValue(1.0f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.23"), TriggerConditionViewModel::FormatValue(1.23f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"-3.14159"), TriggerConditionViewModel::FormatValue(-3.14159f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"960.75"), TriggerConditionViewModel::FormatValue(960.75f, ra::data::Requirement::OperandType::Float));
 
         condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
 
-        Assert::AreEqual(std::wstring(L"0.0"), TriggerConditionViewModel::FormatValue(0.0f, TriggerOperandType::Float));
-        Assert::AreEqual(std::wstring(L"1.0"), TriggerConditionViewModel::FormatValue(1.0f, TriggerOperandType::Float));
-        Assert::AreEqual(std::wstring(L"1.23"), TriggerConditionViewModel::FormatValue(1.23f, TriggerOperandType::Float));
-        Assert::AreEqual(std::wstring(L"-3.14159"), TriggerConditionViewModel::FormatValue(-3.14159f, TriggerOperandType::Float));
-        Assert::AreEqual(std::wstring(L"960.75"), TriggerConditionViewModel::FormatValue(960.75f, TriggerOperandType::Float));
+        Assert::AreEqual(std::wstring(L"0.0"), TriggerConditionViewModel::FormatValue(0.0f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.0"), TriggerConditionViewModel::FormatValue(1.0f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.23"), TriggerConditionViewModel::FormatValue(1.23f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"-3.14159"), TriggerConditionViewModel::FormatValue(-3.14159f, ra::data::Requirement::OperandType::Float));
+        Assert::AreEqual(std::wstring(L"960.75"), TriggerConditionViewModel::FormatValue(960.75f, ra::data::Requirement::OperandType::Float));
     }
 
     TEST_METHOD(TestFormatValueAddress)
@@ -2008,25 +2008,25 @@ public:
         TriggerConditionViewModelHarness condition;
         condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
 
-        Assert::AreEqual(std::wstring(L"0x0000"), TriggerConditionViewModel::FormatValue(0U, TriggerOperandType::Address));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Address));
-        Assert::AreEqual(std::wstring(L"0x0c3500"), TriggerConditionViewModel::FormatValue(800000U, TriggerOperandType::Address));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Delta));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Prior));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::BCD));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Inverted));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660.25f, TriggerOperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x0000"), TriggerConditionViewModel::FormatValue(0U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x0c3500"), TriggerConditionViewModel::FormatValue(800000U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, ra::data::Requirement::OperandType::Delta));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, ra::data::Requirement::OperandType::Prior));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, ra::data::Requirement::OperandType::BCD));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, ra::data::Requirement::OperandType::Inverted));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660.25f, ra::data::Requirement::OperandType::Address));
 
         condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
 
-        Assert::AreEqual(std::wstring(L"0x0000"), TriggerConditionViewModel::FormatValue(0U, TriggerOperandType::Address));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Address));
-        Assert::AreEqual(std::wstring(L"0x0c3500"), TriggerConditionViewModel::FormatValue(800000U, TriggerOperandType::Address));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Delta));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Prior));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Inverted));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::BCD));
-        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660.25f, TriggerOperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x0000"), TriggerConditionViewModel::FormatValue(0U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x0c3500"), TriggerConditionViewModel::FormatValue(800000U, ra::data::Requirement::OperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, ra::data::Requirement::OperandType::Delta));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, ra::data::Requirement::OperandType::Prior));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, ra::data::Requirement::OperandType::Inverted));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, ra::data::Requirement::OperandType::BCD));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660.25f, ra::data::Requirement::OperandType::Address));
     }
 
     TEST_METHOD(TestUpdateRowColor)

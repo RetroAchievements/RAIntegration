@@ -452,6 +452,16 @@ API void CCONV _RA_InstallMemoryBankBlockReader(int nBankID, void* pReader)
     }
 }
 
+API void CCONV _RA_InstallSearchMemoryBankReader(int nBankID, void* pReader)
+{
+    auto* pEmulatorMemoryContext = dynamic_cast<ra::context::impl::EmulatorMemoryContext*>(&ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>());
+    if (pEmulatorMemoryContext)
+    {
+        pEmulatorMemoryContext->AddSearchMemoryBlockReader(
+            nBankID, static_cast<ra::context::impl::EmulatorMemoryContext::MemoryReadBlockFunction*>(pReader));
+    }
+}
+
 API void CCONV _RA_ClearMemoryBanks()
 {
     auto* pEmulatorMemoryContext = dynamic_cast<ra::context::impl::EmulatorMemoryContext*>(&ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>());

@@ -290,6 +290,25 @@ public:
         Assert::IsFalse(search.CanGoToNextPage());
     }
 
+    TEST_METHOD(TestBeginNewSearchFloat)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.SetSearchType(ra::services::SearchType::Float);
+        Assert::IsFalse(search.CanFilter());
+
+        search.BeginNewSearch();
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 0 }, search.GetScrollMaximum());
+        Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
+        Assert::AreEqual({ 8U }, search.GetResultCount());
+        Assert::AreEqual(ra::data::Memory::Size::Float, search.ResultMemSize());
+        Assert::AreEqual(std::wstring(L"New Float (aligned) Search"), search.GetFilterSummary());
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
+    }
+
     TEST_METHOD(TestApplyFilterEightBitConstantDecimal)
     {
         MemorySearchViewModelHarness search;
@@ -1320,6 +1339,46 @@ public:
 
         Assert::IsTrue(search.Results().GetItemAt(2)->IsSelected());
         Assert::IsTrue(search.Results().GetItemAt(3)->IsSelected());
+    }
+
+    TEST_METHOD(TestBookmarkSelectedFloat)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.memory.at(12) = 0xDB;
+        search.memory.at(13) = 0x0F;
+        search.memory.at(14) = 0x49;
+        search.memory.at(15) = 0x40;
+        search.SetSearchType(ra::services::SearchType::Float);
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::GreaterThan);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"3");
+        search.ApplyFilter();
+
+        search.SetComparisonType(ComparisonType::LessThan);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"4");
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
+        Assert::AreEqual({ 1U }, search.GetResultCount());
+        Assert::AreEqual(ra::data::Memory::Size::Float, search.ResultMemSize());
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        search.Results().GetItemAt(0)->SetSelected(true);
+
+        search.BookmarkSelected();
+        Assert::AreEqual({ 1U }, search.Results().Count());
+
+        const auto& pBookmarks = search.mockWindowManager.MemoryBookmarks.Bookmarks();
+        Assert::AreEqual({ 1U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 12U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual(ra::data::Memory::Size::Float, pBookmarks.Items().GetItemAt(0)->GetSize());
+
+        Assert::IsTrue(search.Results().GetItemAt(0)->IsSelected());
     }
 
     TEST_METHOD(TestBookmarkSelectedText)

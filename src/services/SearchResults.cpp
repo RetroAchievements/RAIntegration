@@ -384,6 +384,14 @@ bool SearchResults::ExcludeResult(const SearchResult& pResult)
     return false;
 }
 
+gsl::index SearchResults::GetAddressIndex(ra::data::ByteAddress nAddress) const noexcept
+{
+    if (m_pImpl != nullptr)
+        return m_pImpl->GetAddressIndex(*this, nAddress);
+
+    return -1;
+}
+
 void SearchResults::EnumerateMatches(std::function<bool(const SearchResult& result)> fCallback) const
 {
     if (m_pImpl != nullptr)

@@ -225,6 +225,12 @@
     <ClInclude Include="util\Json.hh">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="data\util\AchievementLogicSerializer.hh">
+      <Filter>data\util</Filter>
+    </ClInclude>
+    <ClInclude Include="data\Requirement.hh">
+      <Filter>data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -322,6 +328,12 @@
     </ClCompile>
     <ClCompile Include="util\Json.cpp">
       <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="data\util\AchievementLogicSerializer.cpp">
+      <Filter>data\util</Filter>
+    </ClCompile>
+    <ClCompile Include="data\Requirement.cpp">
+      <Filter>data</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1129,6 +1129,16 @@ void MemorySearchViewModel::PreviousPage()
     }
 }
 
+void MemorySearchViewModel::ClearSelection()
+{
+    if (m_vSearchResults.empty())
+        return;
+
+    m_vSelectedAddresses.clear();
+    for (auto& pResult : m_vResults)
+        pResult.SetSelected(false);
+}
+
 void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue)
 {
     if (m_vSearchResults.empty())
@@ -1138,6 +1148,7 @@ void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool b
     if (!bValue && nFrom == 0 && nTo >= gsl::narrow_cast<gsl::index>(pCurrentResults.MatchingAddressCount()) - 1)
     {
         m_vSelectedAddresses.clear();
+        SetValue(HasSelectionProperty, false);
         return;
     }
 
@@ -1178,6 +1189,12 @@ void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool b
             if (pCurrentResults.GetMatchingAddress(nIndex, pResult))
                 m_vSelectedAddresses.erase(pResult.nAddress);
         }
+    }
+
+    for (auto& vmResult : m_vResults)
+    {
+        const bool bIsSelected = m_vSelectedAddresses.find(vmResult.nAddress) != m_vSelectedAddresses.end();
+        vmResult.SetSelected(bIsSelected);
     }
 
     m_vResults.AddNotifyTarget(*this);

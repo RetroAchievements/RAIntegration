@@ -77,6 +77,8 @@
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
     <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp" />
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
+    <ClCompile Include="data\Requirement_Tests.cpp" />
+    <ClCompile Include="data\util\AchievementLogicSerializer_Tests.cpp" />
     <ClCompile Include="data\util\IndirectNoteResolver_Tests.cpp" />
     <ClCompile Include="data\util\TriggerValidation_Tests.cpp" />
     <ClCompile Include="util\Tokenizer_Tests.cpp" />
@@ -112,6 +114,7 @@
     <ClInclude Include="testutil\LeaderboardAsserts.hh" />
     <ClInclude Include="testutil\MemoryAsserts.hh" />
     <ClInclude Include="testutil\MemoryRegionAsserts.hh" />
+    <ClInclude Include="testutil\RequirementAsserts.hh" />
     <ClInclude Include="testutil\ValueAsserts.hh" />
     <ClInclude Include="ui\mocks\MockImageRepository.hh" />
   </ItemGroup>

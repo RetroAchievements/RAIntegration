@@ -5,7 +5,8 @@
 #include "context\IConsoleContext.hh"
 #include "context\IEmulatorMemoryContext.hh"
 
-#include "services\AchievementLogicSerializer.hh"
+#include "data\util\AchievementLogicSerializer.hh"
+
 #include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
 
@@ -966,7 +967,7 @@ std::string PointerInspectorViewModel::GetMemRefChain(bool bMeasured) const
         pLeafNote = &oLeafNote;
     }
 
-    sBuffer = ra::services::AchievementLogicSerializer::BuildMemRefChain(*pRootNote, *pLeafNote);
+    sBuffer = ra::data::util::AchievementLogicSerializer::BuildMemRefChain(*pRootNote, *pLeafNote);
 
     if (bMeasured) // BuildMemRefChain returns a Measured value. If that's what's wanted, return it.
         return sBuffer;
@@ -977,8 +978,8 @@ std::string PointerInspectorViewModel::GetMemRefChain(bool bMeasured) const
         sBuffer.erase(nIndex, 2);
 
     // add comparison to current value
-    ra::services::AchievementLogicSerializer::AppendOperator(sBuffer, ra::services::TriggerOperatorType::Equals);
-    ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Value,
+    ra::data::util::AchievementLogicSerializer::AppendOperator(sBuffer, ra::data::Requirement::OperatorType::Equals);
+    ra::data::util::AchievementLogicSerializer::AppendOperand(sBuffer, ra::data::Requirement::OperandType::Value,
                                                             vmField->GetSize(), vmField->GetCurrentValueRaw());
 
     return sBuffer;

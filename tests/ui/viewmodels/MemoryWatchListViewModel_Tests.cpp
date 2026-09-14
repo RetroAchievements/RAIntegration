@@ -10,12 +10,9 @@
 #include "tests\devkit\context\mocks\MockRcClient.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockConfiguration.hh"
-#include "tests\devkit\services\mocks\MockFileSystem.hh"
-#include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
-#include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 

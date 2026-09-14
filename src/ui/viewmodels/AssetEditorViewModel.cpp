@@ -193,7 +193,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
     {
         pAsset->AddNotifyTarget(*this);
 
-        SetName(pAsset->GetTitle());
+        SetName(pAsset->GetName());
         SetDescription(pAsset->GetDescription());
         SetState(pAsset->GetState());
         SetCategory(pAsset->GetCategory());

@@ -54,7 +54,7 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
                 {
                     auto& vmAchievement = m_vAchievements.Add();
                     vmAchievement.SetId(pAchievement->GetID());
-                    vmAchievement.SetLabel(pAchievement->GetTitle());
+                    vmAchievement.SetLabel(pAchievement->GetName());
                     vmAchievement.SetDescription(pAchievement->GetDescription());
                     vmAchievement.SetAchieved(!pAchievement->IsActive());
                 }

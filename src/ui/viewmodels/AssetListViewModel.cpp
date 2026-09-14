@@ -573,7 +573,7 @@ void AssetListViewModel::AddOrRemoveFilteredItem(gsl::index nAssetIndex)
 
 void AssetListViewModel::SyncAsset(AssetSummaryViewModel& vmSummary, const ra::data::models::AssetModelBase& pAsset)
 {
-    vmSummary.SetLabel(pAsset.GetTitle());
+    vmSummary.SetLabel(pAsset.GetName());
     vmSummary.SetType(pAsset.GetType());
     vmSummary.SetCategory(pAsset.GetCategory());
     vmSummary.SetChanges(pAsset.GetChanges());
@@ -1368,26 +1368,26 @@ void AssetListViewModel::ValidateAchievementForCore(std::wstring& sError, const 
 {
     const std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetTitle(), sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
 }
 
 void AssetListViewModel::ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pLeaderboard) const
 {
     std::wstring sTriggerError = ValidateTriggerLogic(pLeaderboard.GetStartTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Start", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
 
     sTriggerError = ValidateTriggerLogic(pLeaderboard.GetSubmitTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Submit", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
 
     sTriggerError = ValidateTriggerLogic(pLeaderboard.GetCancelTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Cancel", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
 
     const std::wstring sValueError = ValidateValueLogic(pLeaderboard.GetValueDefinition());
     if (!sValueError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Value", sValueError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
 }
 
 
@@ -1415,13 +1415,13 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
             if (pLeaderboard != nullptr)
             {
                 if (pLeaderboard->GetStartTrigger().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Start condition", pLeaderboard->GetTitle()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Start condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetCancelTrigger().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Cancel condition", pLeaderboard->GetTitle()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Cancel condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetSubmitTrigger().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Submit condition", pLeaderboard->GetTitle()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Submit condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetValueDefinition().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Value definition", pLeaderboard->GetTitle()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Value definition", pLeaderboard->GetName()));
 
                 ValidateLeaderboardForCore(sError, *pLeaderboard);
             }
@@ -1941,7 +1941,7 @@ void AssetListViewModel::CloneSelected()
             pAchievement->CreateServerCheckpoint();
             pAchievement->CreateLocalCheckpoint();
 
-            pAchievement->SetName(pSourceAchievement->GetTitle() + L" (copy)");
+            pAchievement->SetName(pSourceAchievement->GetName() + L" (copy)");
             pAchievement->SetDescription(pSourceAchievement->GetDescription());
             pAchievement->SetBadge(pSourceAchievement->GetBadge());
             pAchievement->SetPoints(pSourceAchievement->GetPoints());
@@ -1967,7 +1967,7 @@ void AssetListViewModel::CloneSelected()
             pLeaderboard->CreateServerCheckpoint();
             pLeaderboard->CreateLocalCheckpoint();
 
-            pLeaderboard->SetName(pSourceLeaderboard->GetTitle() + L" (copy)");
+            pLeaderboard->SetName(pSourceLeaderboard->GetName() + L" (copy)");
             pLeaderboard->SetDescription(pSourceLeaderboard->GetDescription());
             pLeaderboard->SetStartTrigger(pSourceLeaderboard->GetStartTrigger());
             pLeaderboard->SetSubmitTrigger(pSourceLeaderboard->GetSubmitTrigger());

@@ -2144,18 +2144,8 @@ int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) 
 } // namespace services
 } // namespace ra
 
-extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, _UNUSED void* pData)
+extern "C" unsigned int rc_peek_callback(unsigned int nAddress, uint8_t* buffer, unsigned int nBytes, _UNUSED void* pData)
 {
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-    switch (nBytes)
-    {
-        case 1:
-            return pMemoryContext.ReadMemoryByte(nAddress);
-        case 2:
-            return pMemoryContext.ReadMemory(nAddress, ra::data::Memory::Size::SixteenBit);
-        case 4:
-            return pMemoryContext.ReadMemory(nAddress, ra::data::Memory::Size::ThirtyTwoBit);
-        default:
-            return 0U;
-    }
+    return pMemoryContext.ReadMemory(nAddress, buffer, nBytes);
 }

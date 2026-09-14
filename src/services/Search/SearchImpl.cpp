@@ -21,6 +21,25 @@ bool SearchImpl::ContainsAddress(const SearchResults& srResults, ra::data::ByteA
     return false;
 }
 
+gsl::index SearchImpl::GetAddressIndex(const SearchResults& srResults, ra::data::ByteAddress nAddress) const
+{
+    if (nAddress & (GetStride() - 1))
+        return -1;
+
+    nAddress = ConvertFromRealAddress(nAddress);
+    const auto nIndex = GetIndexOfBlockForVirtualAddress(srResults, nAddress);
+    if (nIndex < srResults.m_vBlocks.size())
+    {
+        gsl::index nOffset = 0;
+        for (size_t nScan = 0; nScan < nIndex; ++nScan)
+            nOffset += srResults.m_vBlocks.at(nScan).GetMatchingAddressCount();
+
+        return nOffset + srResults.m_vBlocks.at(nIndex).GetAddressIndex(nAddress);
+    }
+
+    return -1;
+}
+
 bool SearchImpl::ExcludeResult(SearchResults& srResults, const SearchResult& pResult) const
 {
     if (pResult.nAddress & (GetStride() - 1))

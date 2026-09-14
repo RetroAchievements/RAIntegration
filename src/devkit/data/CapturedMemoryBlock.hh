@@ -118,6 +118,12 @@ public:
     bool ContainsMatchingAddress(ByteAddress nAddress) const;
 
     /// <summary>
+    /// Gets the index of the matching address for the specified address.
+    /// </summary>
+    /// <returns>Matching index, <c>-1</c> if not found.</returns>
+    gsl::index GetAddressIndex(ra::data::ByteAddress nAddress) const;
+
+    /// <summary>
     /// Specifies which addresses are matching from a slice of an address list.
     /// </summary>
     void SetMatchingAddresses(std::vector<ByteAddress>& vAddresses, gsl::index nFirstIndex, gsl::index nLastIndex);

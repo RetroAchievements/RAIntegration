@@ -2003,6 +2003,73 @@ public:
         Assert::AreEqual({7}, memory.at(14));             // but not memory
     }
 
+
+    TEST_METHOD(TestDoFrameFrozenBookmarkInvalidTruncatedIndirectAddress)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        std::array<unsigned char, 32> memory{};
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+        bookmarks.mockConsoleContext.SetId(N64); // N64 pointers are 24-bit addresses at $80000000
+        bookmarks.mockConsoleContext.ResetMemoryRegions();
+        bookmarks.mockConsoleContext.AddMemoryRegion(0x00000000, 0x001FFFFF, ra::data::MemoryRegion::Type::SystemRAM, 0x80000000);
+
+        bookmarks.AddBookmark("I:0xW0004_M:0xH0008"); // 24-bit read to mask pointer
+        auto* pBookmark = bookmarks.GetBookmark(0);
+        Expects(pBookmark != nullptr);
+
+        memory.at(0) = 6;
+        memory.at(1) = 1;
+        memory.at(4) = 4;
+        memory.at(7) = 0x80;
+        memory.at(12) = 7;
+        pBookmark->DoFrame();
+
+        Assert::AreEqual(12U, pBookmark->GetAddress());
+        Assert::IsTrue(pBookmark->IsIndirectAddress());
+        Assert::AreEqual(std::wstring(L"07"), pBookmark->GetCurrentValue());
+
+        pBookmark->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+
+        memory.at(0) = 3;
+        memory.at(12) = 4;
+
+        pBookmark->DoFrame();
+
+        // frozen values should be written back to memory
+        Assert::AreEqual(12U, pBookmark->GetAddress());
+        Assert::AreEqual(std::wstring(L"07"), pBookmark->GetCurrentValue());
+        Assert::AreEqual({ 7 }, memory.at(12));
+        Assert::IsTrue(pBookmark->IsIndirectAddressChainValid());
+
+        // console says only 0x1FFFFF bytes are valid. if pointer points beyond that, it shouldn't write
+        memory.at(6) = 0x20; // 80200004
+
+        pBookmark->DoFrame();
+        Assert::AreEqual({ 0x20000C }, pBookmark->GetAddress());  // address updated
+        Assert::IsFalse(pBookmark->IsIndirectAddressChainValid());
+
+        // null is implicitly invalid
+        memory.at(4) = 0;
+        memory.at(6) = 0;
+        memory.at(7) = 0;
+        Assert::AreEqual({ 0 }, memory.at(8));
+
+        pBookmark->DoFrame();
+        Assert::AreEqual({ 8 }, pBookmark->GetAddress());  // address updated
+        Assert::AreEqual({ 0 }, memory.at(8));             // but not memory
+        Assert::IsFalse(pBookmark->IsIndirectAddressChainValid());
+
+        // pointing at valid data again
+        memory.at(4) = 6;
+        memory.at(7) = 0x80;
+        Assert::AreEqual({ 0 }, memory.at(14));
+
+        pBookmark->DoFrame();
+        Assert::AreEqual({ 14 }, pBookmark->GetAddress());  // address updated
+        Assert::AreEqual({ 7 }, memory.at(14));             // but not memory
+        Assert::IsTrue(pBookmark->IsIndirectAddressChainValid());
+    }
+
 private:
     void FrozenTest(const std::string& sDefinition, uint8_t* pMemory, const std::wstring& sDisplay, uint8_t* pModifiedMemory)
     {

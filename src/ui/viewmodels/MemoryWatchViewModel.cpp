@@ -403,18 +403,46 @@ bool MemoryWatchViewModel::UpdateCurrentAddressFromIndirectAddress()
     {
         if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
         {
-            if (m_bIndirectAddressValid) // don't need to check validity if we've already found a problem
+            // If the chain is already invalid, we don't need to validate it any further. Just follow it to
+            // the final address so we can capture the current value.
+            if (!m_bIndirectAddressValid)
+                continue;
+
+            rc_typed_value_t address;
+            rc_evaluate_operand(&address, &pCondition->operand1, nullptr);
+            rc_typed_value_convert(&address, RC_VALUE_TYPE_UNSIGNED);
+
+            if (address.value.u32 == 0) // pointer is null
             {
-                rc_typed_value_t address;
-                rc_evaluate_operand(&address, &pCondition->operand1, nullptr);
-                rc_typed_value_convert(&address, RC_VALUE_TYPE_UNSIGNED);
+                m_bIndirectAddressValid = false;
+                continue;
+            }
 
-                if (address.value.u32 == 0) // pointer is null
-                    m_bIndirectAddressValid = false;
+            const auto nAdjustedAddress = pConsoleContext.ByteAddressFromRealAddress(address.value.u32);
+            if (nAdjustedAddress == 0xFFFFFFFF) // pointer is invalid
+            {
+                // if the operand is using a smaller size to mask the address, try to convert it back to
+                // a real address.
+                if (m_nPointerSize == ra::data::Memory::Size::Unknown)
+                {
+                    uint32_t nMask, nOffset;
+                    if (!pConsoleContext.GetRealAddressConversion(&m_nPointerSize, &nMask, &nOffset))
+                        m_nPointerSize = ra::data::Memory::Size::ThirtyTwoBit;
+                }
 
-                const auto nAdjustedAddress = pConsoleContext.ByteAddressFromRealAddress(address.value.u32);
-                if (nAdjustedAddress == 0xFFFFFFFF) // pointer is invalid
+                if (m_nPointerSize != ra::data::Memory::SizeFromRcheevosSize(pCondition->operand1.size))
+                {
+                    // size is not the expected masking size
                     m_bIndirectAddressValid = false;
+                    continue;
+                }
+
+                const auto nRealAddress = pConsoleContext.RealAddressFromByteAddress(address.value.u32);
+                if (nRealAddress == 0xFFFFFFFF) // pointer is invalid
+                {
+                    m_bIndirectAddressValid = false;
+                    continue;
+                }
             }
         }
         else if (pCondition->type == RC_CONDITION_MEASURED)

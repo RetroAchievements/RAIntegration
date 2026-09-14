@@ -297,6 +297,7 @@ private:
     ra::data::ByteAddress m_nAddress = 0;
     uint32_t m_nValue = 0;
     ra::data::Memory::Size m_nSize = ra::data::Memory::Size::EightBit;
+    ra::data::Memory::Size m_nPointerSize = ra::data::Memory::Size::Unknown;
     bool m_bModified = false;
     bool m_bInitialized = false;
     bool m_bSyncingDescriptionHeader = false;

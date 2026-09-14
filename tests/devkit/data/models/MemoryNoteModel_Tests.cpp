@@ -772,6 +772,26 @@ public:
         Assert::AreEqual(ra::data::Memory::Format::Dec, note.GetDefaultMemFormat());
     }
 
+    TEST_METHOD(TestGetEnumTextWithCommas)
+    {
+        MemoryNoteModelHarness note;
+        const std::wstring sNote =
+            L"[8-bit] Color\r\n"
+            L"0=None\r\n"
+            L"1=Red, White, or Blue\r\n"
+            L"2=Green\r\n"
+            L"3=Purple, then Orange\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring(L"Color"), note.GetSummary());
+        Assert::AreEqual(std::wstring_view(L"0=None"), note.GetEnumText(0));
+        Assert::AreEqual(std::wstring_view(L"1=Red, White, or Blue"), note.GetEnumText(1));
+        Assert::AreEqual(std::wstring_view(L"2=Green"), note.GetEnumText(2));
+        Assert::AreEqual(std::wstring_view(L"3=Purple, then Orange"), note.GetEnumText(3));
+        Assert::AreEqual(std::wstring_view(), note.GetEnumText(4));
+        Assert::AreEqual(ra::data::Memory::Format::Dec, note.GetDefaultMemFormat());
+    }
+
     TEST_METHOD(TestGetEnumTextSingleLine)
     {
         MemoryNoteModelHarness note;
@@ -1099,6 +1119,29 @@ public:
         Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit3));
         Assert::AreEqual(std::wstring_view(L"bit4 set: US"), note.GetSubNote(ra::data::Memory::Size::Bit4));
         Assert::AreEqual(std::wstring_view(L"bit5 set: EU"), note.GetSubNote(ra::data::Memory::Size::Bit5));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit6));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit7));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::NibbleUpper));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::NibbleLower));
+    }
+
+    TEST_METHOD(TestGetSubNoteMultiLineWithCommas)
+    {
+        MemoryNoteModelHarness note;
+        const std::wstring sNote =
+            L"[8-bit] Tower of Floo treasures\r\n"
+            L"b0: Herb, B1\r\n"
+            L"b1: 100g, 1F\r\n"
+            L"b2: Sword, 2F\r\n";
+        note.SetNote(sNote);
+
+        Assert::AreEqual(std::wstring(L"Tower of Floo treasures"), note.GetSummary());
+        Assert::AreEqual(std::wstring_view(L"b0: Herb, B1"), note.GetSubNote(ra::data::Memory::Size::Bit0));
+        Assert::AreEqual(std::wstring_view(L"b1: 100g, 1F"), note.GetSubNote(ra::data::Memory::Size::Bit1));
+        Assert::AreEqual(std::wstring_view(L"b2: Sword, 2F"), note.GetSubNote(ra::data::Memory::Size::Bit2));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit3));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit4));
+        Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit5));
         Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit6));
         Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::Bit7));
         Assert::AreEqual(std::wstring_view(), note.GetSubNote(ra::data::Memory::Size::NibbleUpper));

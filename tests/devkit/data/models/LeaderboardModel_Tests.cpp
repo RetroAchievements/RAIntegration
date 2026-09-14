@@ -44,7 +44,7 @@ public:
         Assert::AreEqual(0U, leaderboard.GetID());
         Assert::AreEqual(std::wstring(L""), leaderboard.GetTitle());
         Assert::AreEqual(std::wstring(L""), leaderboard.GetDescription());
-        Assert::AreEqual(AssetCategory::Core, leaderboard.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, leaderboard.GetCategory());
         Assert::AreEqual(AssetState::Inactive, leaderboard.GetState());
         Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
         Assert::AreEqual(std::string(""), leaderboard.GetStartTrigger());

@@ -472,7 +472,7 @@ public:
         Assert::IsNull(achievementsPage.GetItem(5));
     }
 
-    TEST_METHOD(TestRefreshCategoriesCoreOnly)
+    TEST_METHOD(TestRefreshCategoriesPromotedOnly)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
         achievementsPage.mockAchievementRuntime.MockGame();
@@ -481,7 +481,7 @@ public:
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockUnofficialAchievement(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockUnpromotedAchievement(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
@@ -495,7 +495,7 @@ public:
         pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 
         achievementsPage.mockWindowManager.AssetList.SetCategoryFilter(
-            ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Core);
+            ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Promoted);
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
@@ -503,7 +503,7 @@ public:
         Assert::AreEqual(std::wstring(L"1 of 2 achievements"), achievementsPage.GetSubTitle());
         Assert::AreEqual(std::wstring(L"4 of 5 points"), achievementsPage.GetTitleDetail());
 
-        // only 1 and 4 will be visible - 2 and 3 are not core, and will be filtered out
+        // only 1 and 4 will be visible - 2 and 3 are not promoted, and will be filtered out
         achievementsPage.AssertHeader(0, L"Locked");
         achievementsPage.AssertLockedAchievement(1, pAch1);
         achievementsPage.AssertHeader(2, L"Unlocked");
@@ -520,7 +520,7 @@ public:
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockUnofficialAchievement(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockUnpromotedAchievement(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
@@ -549,7 +549,7 @@ public:
 
         achievementsPage.AssertHeader(0, L"Game Title - Locked");
         achievementsPage.AssertLockedAchievement(1, pAch1);
-        achievementsPage.AssertHeader(2, L"Game Title - Unofficial");
+        achievementsPage.AssertHeader(2, L"Game Title - Unpromoted");
         achievementsPage.AssertLockedAchievement(3, pAch2);
         achievementsPage.AssertHeader(4, L"Game Title - Unlocked");
         achievementsPage.AssertUnlockedAchievement(5, pAch4);

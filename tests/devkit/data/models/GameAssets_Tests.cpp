@@ -118,9 +118,9 @@ public:
 
         void AddThreeAchievements()
         {
-            AddAchievement(AssetCategory::Core, 5, L"Ach1", L"Desc1", L"11111", "1=1");
-            AddAchievement(AssetCategory::Unofficial, 10, L"Ach2", L"Desc2", L"22222", "2=2");
-            AddAchievement(AssetCategory::Core, 15, L"Ach3", L"Desc3", L"33333", "3=3");
+            AddAchievement(AssetCategory::Promoted, 5, L"Ach1", L"Desc1", L"11111", "1=1");
+            AddAchievement(AssetCategory::Unpromoted, 10, L"Ach2", L"Desc2", L"22222", "2=2");
+            AddAchievement(AssetCategory::Promoted, 15, L"Ach3", L"Desc3", L"33333", "3=3");
             ResetLocalId();
         }
 
@@ -210,9 +210,9 @@ public:
     TEST_METHOD(TestSaveLocalOnlySavesLocal)
     {
         GameAssetsHarness gameAssets;
-        gameAssets.AddAchievement(AssetCategory::Core, 5, L"Ach1", L"Desc1", L"11111", "1=1");
+        gameAssets.AddAchievement(AssetCategory::Promoted, 5, L"Ach1", L"Desc1", L"11111", "1=1");
         const auto& vmAchievement = gameAssets.AddAchievement(AssetCategory::Local, 5, L"Ach2", L"Desc2", L"22222", "2=2");
-        gameAssets.AddAchievement(AssetCategory::Unofficial, 5, L"Ach3", L"Desc3", L"33333", "3=3");
+        gameAssets.AddAchievement(AssetCategory::Unpromoted, 5, L"Ach3", L"Desc3", L"33333", "3=3");
 
         gameAssets.SaveAllAssets();
 
@@ -395,14 +395,14 @@ public:
         Assert::IsNotNull(pAsset);
         Ensures(pAsset != nullptr);
         Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
-        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
 
         const auto* pAsset2 = gameAssets.FindAchievement({ 2U });
         Assert::IsNotNull(pAsset2);
         Ensures(pAsset2 != nullptr);
         Assert::AreEqual(std::string("0xH2345=0"), pAsset2->GetTrigger());
-        Assert::AreEqual(AssetCategory::Unofficial, pAsset2->GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, pAsset2->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset2->GetChanges());
     }
 
@@ -517,7 +517,7 @@ public:
         gameAssets.ReloadAsset(AssetType::Achievement, 1);
 
         Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
-        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
     }
 
@@ -537,7 +537,7 @@ public:
         gameAssets.ReloadAllAssets();
 
         Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
-        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
     }
 
@@ -557,7 +557,7 @@ public:
         Assert::IsNotNull(pAsset);
         Ensures(pAsset != nullptr);
         Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
-        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
 
         // item 3 should not have been updated from file
@@ -565,7 +565,7 @@ public:
         Assert::IsNotNull(pAsset3);
         Ensures(pAsset3 != nullptr);
         Assert::AreEqual(std::string("3=3"), pAsset3->GetTrigger());
-        Assert::AreEqual(AssetCategory::Core, pAsset3->GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, pAsset3->GetCategory());
         Assert::AreEqual(AssetChanges::None, pAsset3->GetChanges());
     }
 
@@ -624,7 +624,7 @@ public:
         Assert::IsNotNull(pAsset2);
         Ensures(pAsset2 != nullptr);
         Assert::AreEqual(std::wstring(L"Server"), pAsset2->GetTitle());
-        Assert::AreEqual(AssetCategory::Core, pAsset2->GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, pAsset2->GetCategory());
         Assert::AreEqual(AssetChanges::None, pAsset2->GetChanges());
     }
 
@@ -651,7 +651,7 @@ public:
         Assert::IsNotNull(pAsset2);
         Ensures(pAsset2 != nullptr);
         Assert::AreEqual(std::wstring(L"Server"), pAsset2->GetTitle());
-        Assert::AreEqual(AssetCategory::Core, pAsset2->GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, pAsset2->GetCategory());
         Assert::AreEqual(AssetChanges::None, pAsset2->GetChanges());
     }
 
@@ -715,7 +715,7 @@ public:
         Assert::IsNotNull(pAsset);
         Ensures(pAsset != nullptr);
         Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
-        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
 
         // memory regions should not have been modified
@@ -744,7 +744,7 @@ public:
         Assert::IsNotNull(pAsset);
         Ensures(pAsset != nullptr);
         Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
-        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
 
         // memory regions should have been modified
@@ -754,7 +754,7 @@ public:
     TEST_METHOD(TestSaveLocalLeaderboard)
     {
         GameAssetsHarness gameAssets;
-        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", Value::Format::Seconds);
+        gameAssets.AddLeaderboard(AssetCategory::Promoted, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", Value::Format::Seconds);
         const auto& vmLeaderboard2 = gameAssets.AddLeaderboard(AssetCategory::Local, L"LB2", L"Desc2", "0xH2234=1", "0xH2234=2", "0xH2234=3", "M:0xH2235", Value::Format::Minutes);
 
         gameAssets.SaveAllAssets();
@@ -767,7 +767,7 @@ public:
     {
         GameAssetsHarness gameAssets;
         gameAssets.AddThreeAchievements();
-        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", Value::Format::Seconds);
+        gameAssets.AddLeaderboard(AssetCategory::Promoted, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", Value::Format::Seconds);
         gameAssets.MockUserFileContents(
             "111000001:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n"
             "L111000002:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2\n");

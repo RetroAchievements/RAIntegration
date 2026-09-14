@@ -50,10 +50,10 @@ std::wstring ToString<ra::data::models::AssetCategory>(const ra::data::models::A
             return L"None";
         case ra::data::models::AssetCategory::Local:
             return L"Local";
-        case ra::data::models::AssetCategory::Core:
-            return L"Core";
-        case ra::data::models::AssetCategory::Unofficial:
-            return L"Unofficial";
+        case ra::data::models::AssetCategory::Promoted:
+            return L"Promoted";
+        case ra::data::models::AssetCategory::Unpromoted:
+            return L"Unpromoted";
         default:
             return std::to_wstring(static_cast<int>(t));
     }

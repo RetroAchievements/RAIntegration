@@ -47,22 +47,22 @@ public:
     void SetGameId(unsigned nValue) { SetValue(GameIdProperty, ra::to_signed(nValue)); }
 
     // <summary>
-    /// The <see cref="ModelProperty" /> for the core achievement count.
+    /// The <see cref="ModelProperty" /> for the promoted achievement count.
     /// </summary>
     static const IntModelProperty AchievementCountProperty;
 
     /// <summary>
-    /// Gets the total number of core achievements.
+    /// Gets the total number of promoted achievements.
     /// </summary>
     int GetAchievementCount() const { return GetValue(AchievementCountProperty); }
 
     // <summary>
-    /// The <see cref="ModelProperty" /> for the total core achievement points.
+    /// The <see cref="ModelProperty" /> for the total promoted achievement points.
     /// </summary>
     static const IntModelProperty TotalPointsProperty;
 
     /// <summary>
-    /// Gets the total number of points associated to core achievements.
+    /// Gets the total number of points associated to promoted achievements.
     /// </summary>
     int GetTotalPoints() const { return GetValue(TotalPointsProperty); }
 
@@ -194,8 +194,8 @@ public:
     {
         Local = ra::etoi(ra::data::models::AssetCategory::Local),
         All = -1,
-        Core = ra::etoi(ra::data::models::AssetCategory::Core),
-        Unofficial = ra::etoi(ra::data::models::AssetCategory::Unofficial),
+        Promoted = ra::etoi(ra::data::models::AssetCategory::Promoted),
+        Unpromoted = ra::etoi(ra::data::models::AssetCategory::Unpromoted),
     };
 
     /// <summary>
@@ -290,10 +290,10 @@ public:
 
 protected:
     virtual void Publish(std::vector<ra::data::models::AssetModelBase*>& vAssets);
-    bool ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly);
-    virtual void ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const noexcept(false);
-    virtual void ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pAchievement) const noexcept(false);
-    virtual void ValidateRichPresenceForCore(std::wstring& sError, const ra::data::models::RichPresenceModel& pRichPresence) const noexcept(false);
+    bool ValidateAssetsForPublish(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly);
+    virtual void ValidateAchievementForPublish(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const noexcept(false);
+    virtual void ValidateLeaderboardForPublish(std::wstring& sError, const ra::data::models::LeaderboardModel& pAchievement) const noexcept(false);
+    virtual void ValidateRichPresenceForPublish(std::wstring& sError, const ra::data::models::RichPresenceModel& pRichPresence) const noexcept(false);
 
     virtual bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const;
 

@@ -90,7 +90,7 @@ private:
         {
             auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
             vmLeaderboard->SetID(id);
-            vmLeaderboard->SetCategory(ra::data::models::AssetCategory::Core);
+            vmLeaderboard->SetCategory(ra::data::models::AssetCategory::Promoted);
             vmLeaderboard->SetValueDefinition(sDefinition);
             vmLeaderboard->CreateServerCheckpoint();
             vmLeaderboard->CreateLocalCheckpoint();

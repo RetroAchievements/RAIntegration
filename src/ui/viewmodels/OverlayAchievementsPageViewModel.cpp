@@ -116,11 +116,11 @@ void OverlayAchievementsPageViewModel::Refresh()
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
     std::vector<rc_client_subset_info_t*> vDeactivatedSubsets;
-    int nCategory = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE_AND_UNOFFICIAL;
+    int nCategory = RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED_AND_UNPROMOTED;
     const auto& pAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
-    if (pAssetList.GetCategoryFilter() == ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Core)
+    if (pAssetList.GetCategoryFilter() == ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Promoted)
     {
-        nCategory = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+        nCategory = RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED;
 
         // disable local subset while we build the list
         auto* pSubset = pClient->game ? pClient->game->subsets : nullptr;
@@ -173,7 +173,7 @@ void OverlayAchievementsPageViewModel::Refresh()
                     switch (pBucket->bucket_type)
                     {
                         case RC_CLIENT_ACHIEVEMENT_BUCKET_UNLOCKED:
-                        case RC_CLIENT_ACHIEVEMENT_BUCKET_UNOFFICIAL:
+                        case RC_CLIENT_ACHIEVEMENT_BUCKET_UNPROMOTED:
                             bCollapsed = true;
                             break;
                     }
@@ -228,12 +228,12 @@ void OverlayAchievementsPageViewModel::Refresh()
     {
         SetSubTitle(L"No achievements present");
     }
-    else if (summary.num_core_achievements > 0)
+    else if (summary.num_promoted_achievements > 0)
     {
         SetSubTitle(ra::util::String::Printf(L"%u of %u achievements",
-            summary.num_unlocked_achievements, summary.num_core_achievements));
+            summary.num_unlocked_achievements, summary.num_promoted_achievements));
 
-        m_sSummary = ra::util::String::Printf(L"%d of %d points", summary.points_unlocked, summary.points_core);
+        m_sSummary = ra::util::String::Printf(L"%d of %d points", summary.points_unlocked, summary.points_available);
     }
     else
     {

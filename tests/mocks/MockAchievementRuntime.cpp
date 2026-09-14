@@ -120,7 +120,7 @@ static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
     const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
     achievement->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
-    achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+    achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED;
     achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
     achievement->public_.points = 5;
     achievement->author = "Author";
@@ -213,11 +213,11 @@ void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAc
     }
 }
 
-rc_client_achievement_info_t* MockAchievementRuntime::MockUnofficialAchievement(uint32_t nId, const char* sTitle)
+rc_client_achievement_info_t* MockAchievementRuntime::MockUnpromotedAchievement(uint32_t nId, const char* sTitle)
 {
     rc_client_game_info_t* game = GetClient()->game;
     rc_client_achievement_info_t* achievement = AddAchievement(game, GetCoreSubset(game), nId, sTitle);
-    achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+    achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED;
     return achievement;
 }
 

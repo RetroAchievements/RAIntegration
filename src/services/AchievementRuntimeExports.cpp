@@ -188,12 +188,12 @@ public:
         return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
     }
 
-    static void set_unofficial_enabled(int) noexcept
+    static void set_unpromoted_enabled(int) noexcept
     {
         // do nothing. unofficial achievements should always be available when using the toolkit.
     }
 
-    static int get_unofficial_enabled() noexcept
+    static int get_unpromoted_enabled() noexcept
     {
         // unofficial achievements should always be available when using the toolkit.
         return true;
@@ -1146,7 +1146,7 @@ void SyncClientExternalHardcoreState()
                 const auto* achievement = subset->achievements;
                 const auto* stop = achievement + subset->public_.num_achievements;
                 for (; achievement < stop; ++achievement) {
-                    if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL) {
+                    if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED) {
                         bHasUnofficialAchievements = true;
 
                         if (achievement->public_.state == RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE)
@@ -1169,7 +1169,7 @@ void SyncClientExternalHardcoreState()
                 auto* achievement = subset->achievements;
                 const auto* stop = achievement + subset->public_.num_achievements;
                 for (; achievement < stop; ++achievement) {
-                    if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL) {
+                    if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED) {
                         if (achievement->public_.state == RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE) {
                             bool bFound = false;
                             for (const auto id : vActiveUnofficialAchievements) {
@@ -1208,8 +1208,8 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal) noexcept
 
     pClientExternal->set_hardcore_enabled = ra::services::AchievementRuntimeExports::set_hardcore_enabled;
     pClientExternal->get_hardcore_enabled = ra::services::AchievementRuntimeExports::get_hardcore_enabled;
-    pClientExternal->set_unofficial_enabled = ra::services::AchievementRuntimeExports::set_unofficial_enabled;
-    pClientExternal->get_unofficial_enabled = ra::services::AchievementRuntimeExports::get_unofficial_enabled;
+    pClientExternal->set_unpromoted_enabled = ra::services::AchievementRuntimeExports::set_unpromoted_enabled;
+    pClientExternal->get_unpromoted_enabled = ra::services::AchievementRuntimeExports::get_unpromoted_enabled;
     pClientExternal->set_encore_mode_enabled = ra::services::AchievementRuntimeExports::set_encore_mode_enabled;
     pClientExternal->get_encore_mode_enabled = ra::services::AchievementRuntimeExports::get_encore_mode_enabled;
     pClientExternal->set_spectator_mode_enabled = ra::services::AchievementRuntimeExports::set_spectator_mode_enabled;

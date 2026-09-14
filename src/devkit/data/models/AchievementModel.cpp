@@ -394,11 +394,11 @@ void AchievementModel::SyncCategoryToRuntime() const
     {
         case ra::data::models::AssetCategory::Core:
         case ra::data::models::AssetCategory::Local:
-            m_pAchievementInfo->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+            m_pAchievementInfo->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED;
             break;
 
         default:
-            m_pAchievementInfo->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+            m_pAchievementInfo->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED;
             break;
     }
 }
@@ -538,11 +538,11 @@ void AchievementModel::InitializeFromPublishedAchievement(
 
     switch (pAchievement.public_.category)
     {
-        case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
+        case RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED:
             SetCategory(AssetCategory::Core);
             break;
 
-        case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:
+        case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED:
             SetCategory(AssetCategory::Unofficial);
             break;
 

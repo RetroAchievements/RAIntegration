@@ -225,7 +225,7 @@ public:
         auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
 
         auto nCategory = ra::data::models::AssetCategory::Core;
-        if (pAchievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL)
+        if (pAchievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED)
         {
             nCategory = ra::data::models::AssetCategory::Unofficial;
         }
@@ -489,7 +489,7 @@ private:
         const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
         achievement->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
-        achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+        achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED;
         achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         achievement->public_.points = 5;
 
@@ -1725,7 +1725,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
-        pAch6->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+        pAch6->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED;
         memcpy(pAch6->public_.badge_name, "012345", 7);
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");

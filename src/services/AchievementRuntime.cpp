@@ -1284,7 +1284,7 @@ static void HandleGameCompletedEvent(const rc_client_t& pClient)
     rc_client_user_game_summary_t summary;
     rc_client_get_user_game_summary(&pClient, &summary);
 
-    ShowCompletionPopup(pGame->id, ra::util::String::Widen(pGame->title), summary.num_core_achievements, summary.points_core, pGame->badge_name);
+    ShowCompletionPopup(pGame->id, ra::util::String::Widen(pGame->title), summary.num_promoted_achievements, summary.points_available, pGame->badge_name);
 }
 
 static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeaderboard)

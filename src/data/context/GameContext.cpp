@@ -221,7 +221,7 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
             // show "game loaded" popup
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
             std::wstring sDescription = ra::util::String::Printf(L"%u achievements, %u points",
-                                                            pSummary.num_core_achievements, pSummary.points_core);
+                                                            pSummary.num_promoted_achievements, pSummary.points_available);
             if (pSummary.num_unsupported_achievements)
                 sDescription += ra::util::String::Printf(L" (%u unsupported)", pSummary.num_unsupported_achievements);
 
@@ -415,7 +415,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 // if the server has provided an unexpected category (usually 0), ignore it.
                 switch (pAchievementData->public_.category)
                 {
-                    case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
+                    case RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED:
                         // automatically activate all core achievements in compatibility mode
                         if (GetMode() == Mode::CompatibilityTest)
                         {
@@ -426,7 +426,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                         }
                         break;
 
-                    case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:
+                    case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED:
                         // all unofficial achievements should start inactive.
                         // rc_client automatically activates them.
                         pAchievementData->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;

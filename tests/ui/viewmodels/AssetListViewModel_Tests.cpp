@@ -1281,7 +1281,7 @@ public:
         vmAssetList.mockRuntime.MockSubsetAchievement(555, 3, "Ach3")->public_.points = 25;
         auto* pAch4 = vmAssetList.mockRuntime.MockSubsetAchievement(555, 4, "Ach4");
         pAch4->public_.points = 50;
-        pAch4->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+        pAch4->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED;
 
         vmAssetList.mockGameContext.InitializeFromAchievementRuntime();
         vmAssetList.mockGameContext.NotifyActiveGameChanged();

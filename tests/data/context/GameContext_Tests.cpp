@@ -1593,7 +1593,7 @@ public:
         const auto& pSubset = *game.Assets().AchievementSets().GetItemAt(0);
         Assert::AreEqual(11111U, pSubset.GetID());
         Assert::AreEqual(2222U, pSubset.GetBackingGameID());
-        Assert::AreEqual(ra::data::models::AchievementSetType::Promoted, pSubset.GetType());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Core, pSubset.GetType());
         Assert::AreEqual(std::wstring(L"Game Title"), pSubset.GetTitle());
     }
 
@@ -1635,7 +1635,7 @@ public:
         const auto& pSubset = *game.Assets().AchievementSets().GetItemAt(0);
         Assert::AreEqual(11111U, pSubset.GetID());
         Assert::AreEqual(2222U, pSubset.GetBackingGameID());
-        Assert::AreEqual(ra::data::models::AchievementSetType::Promoted, pSubset.GetType());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Core, pSubset.GetType());
         Assert::AreEqual(std::wstring(L"Game Title"), pSubset.GetTitle());
 
         const auto& pSubset2 = *game.Assets().AchievementSets().GetItemAt(1);
@@ -1724,7 +1724,7 @@ public:
         const auto& pSubset = *game.Assets().AchievementSets().GetItemAt(0);
         Assert::AreEqual(6666U, pSubset.GetID());
         Assert::AreEqual(2222U, pSubset.GetBackingGameID());
-        Assert::AreEqual(ra::data::models::AchievementSetType::Promoted, pSubset.GetType());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Core, pSubset.GetType());
         Assert::AreEqual(std::wstring(L"Game Title"), pSubset.GetTitle());
 
         const auto& pSubset2 = *game.Assets().AchievementSets().GetItemAt(1);
@@ -1768,7 +1768,7 @@ public:
         const auto& pSubset = *game.Assets().AchievementSets().GetItemAt(0);
         Assert::AreEqual(11111U, pSubset.GetID());
         Assert::AreEqual(2222U, pSubset.GetBackingGameID());
-        Assert::AreEqual(ra::data::models::AchievementSetType::Promoted, pSubset.GetType());
+        Assert::AreEqual(ra::data::models::AchievementSetType::Core, pSubset.GetType());
         Assert::AreEqual(std::wstring(L"Unsupported Game Version"), pSubset.GetTitle());
     }
 };

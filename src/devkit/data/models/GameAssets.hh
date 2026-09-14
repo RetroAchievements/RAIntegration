@@ -155,7 +155,7 @@ public:
     /// Adds an achievement set to the AchievementSets collection.
     /// </summary>
     void AddAchievementSet(uint32_t nId, uint32_t nGameId, const std::wstring& sTitle,
-                           AchievementSetType nType = AchievementSetType::Promoted);
+                           AchievementSetType nType = AchievementSetType::Core);
 
     /// <summary>
     /// Resets the achievement sets collection.

@@ -613,7 +613,7 @@ void GameAssets::AddAchievementSet(uint32_t nId, uint32_t nGameId, const std::ws
     m_vAchievementSets.Append(std::move(vmAchievementSet));
 
     // core subset should always be first
-    if (nType == AchievementSetType::Promoted)
+    if (nType == AchievementSetType::Core)
         m_vAchievementSets.MoveItem(m_vAchievementSets.Count() - 1, 0);
 }
 

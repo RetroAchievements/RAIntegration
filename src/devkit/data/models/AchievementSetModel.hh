@@ -14,7 +14,7 @@ namespace models {
 
 enum AchievementSetType
 {
-    Promoted,
+    Core,
     Bonus,
     Specialty,
     Exclusive,

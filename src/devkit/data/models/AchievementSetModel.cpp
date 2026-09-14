@@ -12,7 +12,7 @@ namespace ra {
 namespace data {
 namespace models {
 
-const IntModelProperty AchievementSetModel::TypeProperty("AchievementSetModel", "Type", ra::etoi(AchievementSetType::Promoted));
+const IntModelProperty AchievementSetModel::TypeProperty("AchievementSetModel", "Type", ra::etoi(AchievementSetType::Core));
 const IntModelProperty AchievementSetModel::IDProperty("AchievementSetModel", "ID", 0);
 const IntModelProperty AchievementSetModel::BackingGameIDProperty("AchievementSetModel", "BackingGameID", 0);
 const StringModelProperty AchievementSetModel::TitleProperty("AchievementSetModel", "Name", L"");

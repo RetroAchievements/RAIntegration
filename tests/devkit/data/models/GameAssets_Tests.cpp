@@ -43,7 +43,7 @@ public:
             mockGameContext.SetGameId(2U);
 
             auto vmAchievementSet = std::make_unique<ra::data::models::AchievementSetModel>();
-            vmAchievementSet->Initialize(2U, 3U, L"Game Title", ra::data::models::AchievementSetType::Promoted);
+            vmAchievementSet->Initialize(2U, 3U, L"Game Title", ra::data::models::AchievementSetType::Core);
             m_vAchievementSets.Append(std::move(vmAchievementSet));
         }
 

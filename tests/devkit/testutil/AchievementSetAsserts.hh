@@ -22,7 +22,7 @@ std::wstring ToString<ra::data::models::AchievementSetType>(const ra::data::mode
 {
     switch (t)
     {
-        case ra::data::models::AchievementSetType::Promoted:
+        case ra::data::models::AchievementSetType::Core:
             return L"Core";
         case ra::data::models::AchievementSetType::Bonus:
             return L"Bonus";

@@ -519,7 +519,7 @@ void GameContext::InitializeAchievementSets(const rc_api_fetch_game_sets_respons
         switch (pSet->type)
         {
             case RC_ACHIEVEMENT_SET_TYPE_CORE:
-                nType = ra::data::models::AchievementSetType::Promoted;
+                nType = ra::data::models::AchievementSetType::Core;
                 break;
             case RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE:
                 nType = ra::data::models::AchievementSetType::Exclusive;
@@ -532,7 +532,7 @@ void GameContext::InitializeAchievementSets(const rc_api_fetch_game_sets_respons
                 break;
         }
 
-        if (nType != ra::data::models::AchievementSetType::Promoted && game_data_response->num_sets == 1)
+        if (nType != ra::data::models::AchievementSetType::Core && game_data_response->num_sets == 1)
         {
             // subset loaded without base game. add game title as suffix to set title.
             sTitle = ra::util::String::Printf(L"%s (%s)", sTitle, game_data_response->title);

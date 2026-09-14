@@ -312,7 +312,7 @@ void AchievementModel::SyncIDToRuntime() const
 
 void AchievementModel::SyncTitleToRuntime()
 {
-    m_sTitleBuffer = ra::util::String::Narrow(GetTitle());
+    m_sTitleBuffer = ra::util::String::Narrow(GetName());
     m_pAchievementInfo->public_.title = m_sTitleBuffer.c_str();
 }
 

@@ -578,7 +578,7 @@ public:
         Assert::IsNotNull(pSubset->next); // there will be an inactive local subset
         const auto* pOriginalTrigger = pSubset->achievements->trigger;
 
-        Assert::AreEqual(std::wstring(L"Achievement Name"), vmAchievement.GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement Name"), vmAchievement.GetName());
         Assert::AreEqual(std::wstring(L"Do something cool"), vmAchievement.GetDescription());
         Assert::AreEqual(25, vmAchievement.GetPoints());
         Assert::AreEqual(12345U, vmAchievement.GetID());

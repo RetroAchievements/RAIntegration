@@ -623,7 +623,7 @@ public:
         const auto* pAsset2 = gameAssets.FindAchievement({ 1U });
         Assert::IsNotNull(pAsset2);
         Ensures(pAsset2 != nullptr);
-        Assert::AreEqual(std::wstring(L"Server"), pAsset2->GetTitle());
+        Assert::AreEqual(std::wstring(L"Server"), pAsset2->GetName());
         Assert::AreEqual(AssetCategory::Core, pAsset2->GetCategory());
         Assert::AreEqual(AssetChanges::None, pAsset2->GetChanges());
     }
@@ -650,7 +650,7 @@ public:
         const auto* pAsset2 = gameAssets.FindAchievement({ 1U });
         Assert::IsNotNull(pAsset2);
         Ensures(pAsset2 != nullptr);
-        Assert::AreEqual(std::wstring(L"Server"), pAsset2->GetTitle());
+        Assert::AreEqual(std::wstring(L"Server"), pAsset2->GetName());
         Assert::AreEqual(AssetCategory::Core, pAsset2->GetCategory());
         Assert::AreEqual(AssetChanges::None, pAsset2->GetChanges());
     }

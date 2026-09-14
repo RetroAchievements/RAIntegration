@@ -1,7 +1,6 @@
 #include "MemoryWatchListViewModel.hh"
 
 #include "RA_Defs.h"
-#include "RA_Json.h"
 #include "util\Strings.hh"
 
 #include "data\Types.hh"

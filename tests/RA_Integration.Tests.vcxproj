@@ -83,7 +83,6 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\src\Exports.cpp" />
-    <ClCompile Include="..\src\RA_Json.cpp" />
     <ClCompile Include="..\src\RA_md5factory.cpp" />
     <ClCompile Include="..\src\services\AchievementRuntime.cpp" />
     <ClCompile Include="..\src\services\AchievementRuntimeExports.cpp" />

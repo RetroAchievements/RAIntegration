@@ -63,9 +63,6 @@
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\RA_Json.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="services\FileLogger_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>

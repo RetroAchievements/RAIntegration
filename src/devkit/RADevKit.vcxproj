@@ -86,6 +86,7 @@
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="ui\ImageReference.cpp" />
     <ClCompile Include="util\GSL.cpp" />
+    <ClCompile Include="util\Json.cpp" />
     <ClCompile Include="util\StringBuilder.cpp" />
     <ClCompile Include="util\Strings.cpp" />
     <ClCompile Include="util\Tokenizer.cpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="util\Compat.hh" />
     <ClInclude Include="util\EnumOps.hh" />
     <ClInclude Include="util\GSL.hh" />
+    <ClInclude Include="util\Json.hh" />
     <ClInclude Include="util\Log.hh" />
     <ClInclude Include="util\StringBuilder.hh" />
     <ClInclude Include="util\Strings.hh" />

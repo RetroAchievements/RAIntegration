@@ -3,9 +3,9 @@
 #include "AchievementRuntimeExports.hh"
 #include "Exports.hh"
 #include "RA_Defs.h"
-#include "RA_Json.h"
 #include "RA_Resource.h"
 #include "util\EnumOps.hh"
+#include "util\Json.hh"
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
@@ -502,14 +502,17 @@ static void ProcessPatchData(const rc_api_server_response_t* server_response,
     auto pOldData = pLocalStorage.ReadText(StorageItemType::GameData, std::to_wstring(pGameContext.ActiveGameId()));
     if (pOldData != nullptr)
     {
-        rapidjson::Document pDocument;
-        if (LoadDocument(pDocument, *pOldData) && pDocument.HasMember("RichPresencePatch") &&
-            pDocument["RichPresencePatch"].IsString())
+        ra::util::Json::Reader pJson;
+        if (pJson.Parse(*pOldData))
         {
-            auto* pRichPresence = pGameContext.Assets().FindRichPresence();
-            Expects(pRichPresence != nullptr);
-            pRichPresence->SetScript(pDocument["RichPresencePatch"].GetString());
-            pRichPresence->UpdateLocalCheckpoint();
+            std::string sRichPresencePatch;
+            if (pJson.TryGetString("RichPresencePatch", sRichPresencePatch))
+            {
+                auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+                Expects(pRichPresence != nullptr);
+                pRichPresence->SetScript(sRichPresencePatch);
+                pRichPresence->UpdateLocalCheckpoint();
+            }
         }
     }
 

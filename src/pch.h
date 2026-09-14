@@ -60,15 +60,6 @@
 #include "pch_cppcorecheck_suppressions.h"
 #include "pch_microsoft_suppressions.h"
 
-/* RapidJSON Stuff */
-#define RAPIDJSON_HAS_STDSTRING 1
-#define RAPIDJSON_NOMEMBERITERATORCLASS 1
-#include <rapidjson\document.h> // has reader.h
-#include <rapidjson\error\en.h>
-#include <rapidjson\istreamwrapper.h>
-#include <rapidjson\ostreamwrapper.h>
-#include <rapidjson\writer.h> // has stringbuffer.h
-
 /* gsl stuff */
 #define GSL_THROW_ON_CONTRACT_VIOLATION
 #include <gsl\gsl>

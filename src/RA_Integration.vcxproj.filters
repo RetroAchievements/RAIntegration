@@ -87,9 +87,6 @@
     <ClCompile Include="ui\win32\Desktop.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Json.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>

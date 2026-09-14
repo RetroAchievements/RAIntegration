@@ -1,7 +1,7 @@
 #include "EditorTheme.hh"
 #include "OverlayTheme.hh"
 
-#include "RA_Json.h"
+#include "util\Json.hh"
 #include "util\Log.hh"
 
 #include "services\IFileSystem.hh"
@@ -10,44 +10,20 @@
 namespace ra {
 namespace ui {
 
-static void ReadSize(int& nSize, const rapidjson::Value& pSizes, const char* pJsonField)
+static void ReadColor(Color& nColor, const ra::util::Json::Reader::Node& pColors, const std::string& sFieldName)
 {
-    if (pSizes.HasMember(pJsonField))
+    std::string sValue;
+    if (pColors.TryGetString(sFieldName, sValue))
     {
-        const auto& pField = pSizes[pJsonField];
-        if (pField.IsInt())
-            nSize = pField.GetInt();
-    }
-}
+        if (sValue.length() == 7 && sValue.at(0) == '#')
+            sValue.erase(sValue.begin());
 
-static void ReadBool(bool& bValue, const rapidjson::Value& pContainer, const char* pJsonField)
-{
-    if (pContainer.HasMember(pJsonField))
-    {
-        const auto& pField = pContainer[pJsonField];
-        if (pField.IsBool())
-            bValue = pField.GetBool();
-    }
-}
-
-static void ReadColor(Color& nColor, const rapidjson::Value& pColors, const char* pJsonField)
-{
-    if (pColors.HasMember(pJsonField))
-    {
-        const auto& pField = pColors[pJsonField];
-        if (pField.IsString())
+        if (sValue.length() == 6)
         {
-            std::string sValue = pField.GetString();
-            if (sValue.length() == 7 && sValue.at(0) == '#')
-                sValue.erase(sValue.begin());
-
-            if (sValue.length() == 6)
-            {
-                char* pEnd;
-                const auto nValue = strtoul(sValue.c_str(), &pEnd, 16);
-                if (pEnd && *pEnd == '\0')
-                    nColor = Color(nValue | 0xFF000000);
-            }
+            char* pEnd;
+            const auto nValue = strtoul(sValue.c_str(), &pEnd, 16);
+            if (pEnd && *pEnd == '\0')
+                nColor = Color(nValue | 0xFF000000);
         }
     }
 }
@@ -63,86 +39,77 @@ void OverlayTheme::LoadFromFile()
     if (!pFile)
         return;
 
-    rapidjson::Document document;
-    if (!LoadDocument(document, *pFile))
+    ra::util::Json::Reader pJson;
+    if (!pJson.Parse(*pFile))
     {
-        RA_LOG_ERR("Unable to read Overlay\\theme.json: %s (%zu)",
-                    GetParseError_En(document.GetParseError()), document.GetErrorOffset());
+        RA_LOG_ERR("Unable to read %s: %s (%zu)", L"Overlay\\theme.json", pJson.GetParseError(), pJson.GetParseErrorOffset());
         return;
     }
 
-    if (document.HasMember("Popup"))
+    ra::util::Json::Reader::Node pPopup;
+    if (pJson.TryGetObject("Popup", pPopup))
     {
-        const rapidjson::Value& popup = document["Popup"];
+        pPopup.TryGetString("Font", m_sFontPopup);
 
-        if (popup.HasMember("Font"))
-            m_sFontPopup = popup["Font"].GetString();
-
-        if (popup.HasMember("FontSizes"))
+        ra::util::Json::Reader::Node pFontSizes;
+        if (pPopup.TryGetObject("FontSizes", pFontSizes))
         {
-            const rapidjson::Value& sizes = popup["FontSizes"];
-
-            ReadSize(m_nFontSizePopupTitle, sizes, "Title");
-            ReadSize(m_nFontSizePopupSubtitle, sizes, "Subtitle");
-            ReadSize(m_nFontSizePopupDetail, sizes, "Detail");
-            ReadSize(m_nFontSizePopupLeaderboardTitle, sizes, "LeaderboardTitle");
-            ReadSize(m_nFontSizePopupLeaderboardEntry, sizes, "LeaderboardEntry");
-            ReadSize(m_nFontSizePopupLeaderboardTracker, sizes, "LeaderboardTracker");
+            pFontSizes.TryGetInteger("Title", m_nFontSizePopupTitle);
+            pFontSizes.TryGetInteger("Subtitle", m_nFontSizePopupSubtitle);
+            pFontSizes.TryGetInteger("Detail", m_nFontSizePopupDetail);
+            pFontSizes.TryGetInteger("LeaderboardTitle", m_nFontSizePopupLeaderboardTitle);
+            pFontSizes.TryGetInteger("LeaderboardEntry", m_nFontSizePopupLeaderboardEntry);
+            pFontSizes.TryGetInteger("LeaderboardTracker", m_nFontSizePopupLeaderboardTracker);
         }
 
-        if (popup.HasMember("Colors"))
+        ra::util::Json::Reader::Node pColors;
+        if (pPopup.TryGetObject("Colors", pColors))
         {
-            const rapidjson::Value& colors = popup["Colors"];
-
-            ReadColor(m_colorBackground, colors, "Background");
-            ReadColor(m_colorMasteryBackground, colors, "MasteryBackground");
-            ReadColor(m_colorNonHardcoreBackground, colors, "NonHardcoreBackground");
-            ReadColor(m_colorBorder, colors, "Border");
-            ReadColor(m_colorTextShadow, colors, "TextShadow");
-            ReadColor(m_colorTitle, colors, "Title");
-            ReadColor(m_colorDescription, colors, "Description");
-            ReadColor(m_colorDetail, colors, "Detail");
-            ReadColor(m_colorError, colors, "Error");
-            ReadColor(m_colorLeaderboardEntry, colors, "LeaderboardEntry");
-            ReadColor(m_colorLeaderboardPlayer, colors, "LeaderboardPlayer");
+            ReadColor(m_colorBackground, pColors, "Background");
+            ReadColor(m_colorMasteryBackground, pColors, "MasteryBackground");
+            ReadColor(m_colorNonHardcoreBackground, pColors, "NonHardcoreBackground");
+            ReadColor(m_colorBorder, pColors, "Border");
+            ReadColor(m_colorTextShadow, pColors, "TextShadow");
+            ReadColor(m_colorTitle, pColors, "Title");
+            ReadColor(m_colorDescription, pColors, "Description");
+            ReadColor(m_colorDetail, pColors, "Detail");
+            ReadColor(m_colorError, pColors, "Error");
+            ReadColor(m_colorLeaderboardEntry, pColors, "LeaderboardEntry");
+            ReadColor(m_colorLeaderboardPlayer, pColors, "LeaderboardPlayer");
         }
     }
 
-    if (document.HasMember("Overlay"))
+    ra::util::Json::Reader::Node pOverlay;
+    if (pJson.TryGetObject("Overlay", pOverlay))
     {
-        const rapidjson::Value& overlay = document["Overlay"];
+        pOverlay.TryGetString("Font", m_sFontOverlay);
 
-        if (overlay.HasMember("Font"))
-            m_sFontOverlay = overlay["Font"].GetString();
-
-        if (overlay.HasMember("FontSizes"))
+        ra::util::Json::Reader::Node pFontSizes;
+        if (pOverlay.TryGetObject("FontSizes", pFontSizes))
         {
-            const rapidjson::Value& sizes = overlay["FontSizes"];
-
-            ReadSize(m_nFontSizeOverlayTitle, sizes, "Title");
-            ReadSize(m_nFontSizeOverlayHeader, sizes, "Header");
-            ReadSize(m_nFontSizeOverlaySummary, sizes, "Summary");
-            ReadSize(m_nFontSizeOverlayDetail, sizes, "Detail");
+            pFontSizes.TryGetInteger("Title", m_nFontSizeOverlayTitle);
+            pFontSizes.TryGetInteger("Header", m_nFontSizeOverlayHeader);
+            pFontSizes.TryGetInteger("Summary", m_nFontSizeOverlaySummary);
+            pFontSizes.TryGetInteger("Detail", m_nFontSizeOverlayDetail);
         }
 
-        if (overlay.HasMember("Colors"))
+        ra::util::Json::Reader::Node pColors;
+        if (pOverlay.TryGetObject("Colors", pColors))
         {
-            const rapidjson::Value& colors = overlay["Colors"];
-
-            ReadColor(m_colorOverlayPanel, colors, "Panel");
-            ReadColor(m_colorOverlayText, colors, "Text");
-            ReadColor(m_colorOverlayDisabledText, colors, "DisabledText");
-            ReadColor(m_colorOverlaySubText, colors, "SubText");
-            ReadColor(m_colorOverlayDisabledSubText, colors, "DisabledSubText");
-            ReadColor(m_colorOverlaySelectionBackground, colors, "SelectionBackground");
-            ReadColor(m_colorOverlaySelectionText, colors, "SelectionText");
-            ReadColor(m_colorOverlaySelectionDisabledText, colors, "SelectionDisabledText");
-            ReadColor(m_colorOverlayScrollBar, colors, "ScrollBar");
-            ReadColor(m_colorOverlayScrollBarGripper, colors, "ScrollBarGripper");
+            ReadColor(m_colorOverlayPanel, pColors, "Panel");
+            ReadColor(m_colorOverlayText, pColors, "Text");
+            ReadColor(m_colorOverlayDisabledText, pColors, "DisabledText");
+            ReadColor(m_colorOverlaySubText, pColors, "SubText");
+            ReadColor(m_colorOverlayDisabledSubText, pColors, "DisabledSubText");
+            ReadColor(m_colorOverlaySelectionBackground, pColors, "SelectionBackground");
+            ReadColor(m_colorOverlaySelectionText, pColors, "SelectionText");
+            ReadColor(m_colorOverlaySelectionDisabledText, pColors, "SelectionDisabledText");
+            ReadColor(m_colorOverlayScrollBar, pColors, "ScrollBar");
+            ReadColor(m_colorOverlayScrollBarGripper, pColors, "ScrollBarGripper");
         }
     }
 
-    ReadBool(m_bTransparent, document, "Transparent");
+    pJson.TryGetBoolean("Transparent", m_bTransparent);
 }
 
 void EditorTheme::LoadFromFile()
@@ -156,63 +123,55 @@ void EditorTheme::LoadFromFile()
     if (!pFile)
         return;
 
-    rapidjson::Document document;
-    if (!LoadDocument(document, *pFile))
+    ra::util::Json::Reader pJson;
+    if (!pJson.Parse(*pFile))
     {
-        RA_LOG_ERR("Unable to read Overlay\\editor_theme.json: %s (%zu)",
-            GetParseError_En(document.GetParseError()), document.GetErrorOffset());
+        RA_LOG_ERR("Unable to read %s: %s (%zu)", L"Overlay\\editor_theme.json", pJson.GetParseError(), pJson.GetParseErrorOffset());
         return;
     }
 
-    if (document.HasMember("MemoryViewer"))
+    ra::util::Json::Reader::Node pMemoryViewer;
+    if (pJson.TryGetObject("MemoryViewer", pMemoryViewer))
     {
-        const rapidjson::Value& memoryViewer = document["MemoryViewer"];
+        pMemoryViewer.TryGetString("Font", m_sFontMemoryViewer);
+        pMemoryViewer.TryGetInteger("FontSize", m_nFontSizeMemoryViewer);
 
-        if (memoryViewer.HasMember("Font"))
-            m_sFontMemoryViewer = memoryViewer["Font"].GetString();
-
-        if (memoryViewer.HasMember("FontSize"))
-            ReadSize(m_nFontSizeMemoryViewer, memoryViewer, "FontSize");
-
-        if (memoryViewer.HasMember("Colors"))
+        ra::util::Json::Reader::Node pColors;
+        if (pMemoryViewer.TryGetObject("Colors", pColors))
         {
-            const rapidjson::Value& colors = memoryViewer["Colors"];
-
-            ReadColor(m_colorBackground, colors, "Background");
-            ReadColor(m_colorSeparator, colors, "Separator");
-            ReadColor(m_colorCursor, colors, "Cursor");
-            ReadColor(m_colorNormal, colors, "Normal");
-            ReadColor(m_colorSelected, colors, "Selected");
-            ReadColor(m_colorHasNote, colors, "HasNote");
-            ReadColor(m_colorHasSurrogateNote, colors, "HasSurrogateNote");
-            ReadColor(m_colorHasBookmark, colors, "HasBookmark");
-            ReadColor(m_colorFrozen, colors, "Frozen");
-            ReadColor(m_colorHeader, colors, "Header");
-            ReadColor(m_colorHeaderSelected, colors, "HeaderSelected");
+            ReadColor(m_colorBackground, pColors, "Background");
+            ReadColor(m_colorSeparator, pColors, "Separator");
+            ReadColor(m_colorCursor, pColors, "Cursor");
+            ReadColor(m_colorNormal, pColors, "Normal");
+            ReadColor(m_colorSelected, pColors, "Selected");
+            ReadColor(m_colorHasNote, pColors, "HasNote");
+            ReadColor(m_colorHasSurrogateNote, pColors, "HasSurrogateNote");
+            ReadColor(m_colorHasBookmark, pColors, "HasBookmark");
+            ReadColor(m_colorFrozen, pColors, "Frozen");
+            ReadColor(m_colorHeader, pColors, "Header");
+            ReadColor(m_colorHeaderSelected, pColors, "HeaderSelected");
         }
     }
 
-    if (document.HasMember("CodeNotes"))
+    ra::util::Json::Reader::Node pCodeNotes;
+    if (pJson.TryGetObject("CodeNotes", pCodeNotes))
     {
-        const rapidjson::Value& codeNotes = document["CodeNotes"];
-
-        if (codeNotes.HasMember("Colors"))
+        ra::util::Json::Reader::Node pColors;
+        if (pCodeNotes.TryGetObject("Colors", pColors))
         {
-            const rapidjson::Value& colors = codeNotes["Colors"];
-
-            ReadColor(m_colorNoteNormal, colors, "Normal");
-            ReadColor(m_colorNoteModified, colors, "Modified");
+            ReadColor(m_colorNoteNormal, pColors, "Normal");
+            ReadColor(m_colorNoteModified, pColors, "Modified");
         }
     }
 
-    if (document.HasMember("TriggerColors"))
+    ra::util::Json::Reader::Node pTriggerColors;
+    if (pJson.TryGetObject("TriggerColors", pTriggerColors))
     {
-        const rapidjson::Value& triggerColors = document["TriggerColors"];
-        ReadColor(m_colorTriggerIsTrue, triggerColors, "IsTrue");
-        ReadColor(m_colorTriggerWasTrue, triggerColors, "WasTrue");
-        ReadColor(m_colorTriggerBecomingTrue, triggerColors, "BecomingTrue");
-        ReadColor(m_colorTriggerResetTrue, triggerColors, "ResetTrue");
-        ReadColor(m_colorTriggerPauseTrue, triggerColors, "PauseTrue");
+        ReadColor(m_colorTriggerIsTrue, pTriggerColors, "IsTrue");
+        ReadColor(m_colorTriggerWasTrue, pTriggerColors, "WasTrue");
+        ReadColor(m_colorTriggerBecomingTrue, pTriggerColors, "BecomingTrue");
+        ReadColor(m_colorTriggerResetTrue, pTriggerColors, "ResetTrue");
+        ReadColor(m_colorTriggerPauseTrue, pTriggerColors, "PauseTrue");
     }
 }
 

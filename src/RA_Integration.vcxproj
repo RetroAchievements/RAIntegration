@@ -87,7 +87,6 @@
     <ClCompile Include="RA_Core.cpp" />
     <ClCompile Include="RA_Defs.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
-    <ClCompile Include="RA_Json.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
     <ClCompile Include="services\AchievementRuntimeExports.cpp" />

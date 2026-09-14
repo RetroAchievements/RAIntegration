@@ -1,7 +1,7 @@
 #include "MemoryBookmarksViewModel.hh"
 
 #include "RA_Defs.h"
-#include "RA_Json.h"
+#include "util\Json.hh"
 #include "util\Strings.hh"
 
 #include "context\IEmulatorMemoryContext.hh"
@@ -195,13 +195,13 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
 
     m_vmMemoryWatchList.Items().BeginUpdate();
 
-    rapidjson::Document document;
-    if (LoadDocument(document, sBookmarksFile))
+    ra::util::Json::Reader pJson;
+    if (pJson.Parse(sBookmarksFile))
     {
-        if (document.HasMember("Bookmarks"))
+        std::vector<ra::util::Json::Reader::Node> vBookmarks;
+        if (pJson.TryGetObjectArray("Bookmarks", vBookmarks))
         {
-            const auto& bookmarks = document["Bookmarks"];
-            for (const auto& bookmark : bookmarks.GetArray())
+            for (const auto& bookmark : vBookmarks)
             {
                 auto* vmBookmark = m_vmMemoryWatchList.Items().GetItemAt<MemoryBookmarkViewModel>(nIndex);
                 if (vmBookmark == nullptr)
@@ -213,28 +213,26 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
 
                 vmBookmark->BeginInitialization();
 
-                if (bookmark.HasMember("MemAddr"))
+                std::string sMemAddr;
+                if (bookmark.TryGetString("MemAddr", sMemAddr))
                 {
                     // third bookmark format uses the memref serializer
-                    const char* memaddr = bookmark["MemAddr"].GetString();
-                    InitializeBookmark(*vmBookmark, memaddr);
+                    InitializeBookmark(*vmBookmark, sMemAddr);
 
-                    if (bookmark.HasMember("Size"))
+                    switch (bookmark.GetInteger("Size"))
                     {
-                        switch (bookmark["Size"].GetInt())
-                        {
-                            case 15: vmBookmark->SetSize(ra::data::Memory::Size::Text); break;
-                        }
+                        case 15: vmBookmark->SetSize(ra::data::Memory::Size::Text); break;
                     }
                 }
                 else
                 {
                     auto nSize = ra::data::Memory::Size::EightBit;
 
-                    if (bookmark.HasMember("Type"))
+                    int nType;
+                    if (bookmark.TryGetInteger("Type", nType))
                     {
                         // original bookmark format used Type for the three supported sizes.
-                        switch (bookmark["Type"].GetInt())
+                        switch (nType)
                         {
                             case 1: nSize = ra::data::Memory::Size::EightBit; break;
                             case 2: nSize = ra::data::Memory::Size::SixteenBit; break;
@@ -245,7 +243,8 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     {
                         // second bookmark format used the raw enum values, which was fragile.
                         // this enumerates the mapping for backwards compatibility.
-                        switch (bookmark["Size"].GetInt())
+                        nType = bookmark.GetInteger("Size", 10);
+                        switch (nType)
                         {
                             case 0: nSize = ra::data::Memory::Size::Bit0; break;
                             case 1: nSize = ra::data::Memory::Size::Bit1; break;
@@ -267,10 +266,10 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     }
 
                     vmBookmark->SetSize(nSize);
-                    vmBookmark->SetAddress(bookmark["Address"].GetUint());
+                    vmBookmark->SetAddress(bookmark.GetInteger("Address"));
                 }
 
-                if (bookmark.HasMember("Decimal") && bookmark["Decimal"].GetBool())
+                if (bookmark.GetBoolean("Decimal", false))
                     vmBookmark->SetFormat(ra::data::Memory::Format::Dec);
                 else
                     vmBookmark->SetFormat(ra::data::Memory::Format::Hex);
@@ -278,10 +277,11 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                 if (!vmBookmark->IsIndirectAddress()) // Indirect note already called UpdateRealNote
                     vmBookmark->UpdateRealNote();
 
-                if (bookmark.HasMember("Description"))
+                std::string sDescription;
+                if (bookmark.TryGetString("Description", sDescription))
                 {
-                    const auto sDescription = ra::util::String::Widen(bookmark["Description"].GetString());
-                    vmBookmark->SetDescription(sDescription);
+                    const auto sDescriptionWide = ra::util::String::Widen(sDescription);
+                    vmBookmark->SetDescription(sDescriptionWide);
                 }
 
                 vmBookmark->SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::None);
@@ -303,53 +303,49 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
 {
     std::string sSerialized;
 
-    rapidjson::Document document;
-    auto& allocator = document.GetAllocator();
-    document.SetObject();
+    ra::util::Json::Writer pWriter;
+    ra::util::Json::Writer::Node pBookmarks = pWriter.SetObjectArray("Bookmarks");
 
-    rapidjson::Value bookmarks(rapidjson::kArrayType);
     for (auto& vmBookmark : m_vmMemoryWatchList.Items())
     {
-        rapidjson::Value item(rapidjson::kObjectType);
+        ra::util::Json::Writer::Node pBookmark = pBookmarks.AppendObject();
 
         const auto nSize = vmBookmark.GetSize();
         switch (nSize)
         {
             case ra::data::Memory::Size::Text:
-                item.AddMember("Size", 15, allocator);
+                pBookmark.SetInteger("Size", 15);
                 if (vmBookmark.IsIndirectAddress())
-                    item.AddMember("MemAddr", vmBookmark.GetIndirectAddress(), allocator);
+                    pBookmark.SetString("MemAddr", vmBookmark.GetIndirectAddress());
                 else
-                    item.AddMember("Address", vmBookmark.GetAddress(), allocator);
+                    pBookmark.SetInteger("Address", vmBookmark.GetAddress());
                 break;
 
             default:
                 if (vmBookmark.IsIndirectAddress())
                 {
-                    item.AddMember("MemAddr", vmBookmark.GetIndirectAddress(), allocator);
+                    pBookmark.SetString("MemAddr", vmBookmark.GetIndirectAddress());
                 }
                 else
                 {
                     sSerialized.clear();
                     ra::data::util::AchievementLogicSerializer::AppendOperand(
                         sSerialized, ra::data::Requirement::OperandType::Address, nSize, vmBookmark.GetAddress());
-                    item.AddMember("MemAddr", sSerialized, allocator);
+                    pBookmark.SetString("MemAddr", sSerialized);
                 }
                 break;
         }
 
         if (vmBookmark.GetFormat() != ra::data::Memory::Format::Hex)
-            item.AddMember("Decimal", true, allocator);
+            pBookmark.SetBoolean("Decimal", true);
 
         if (vmBookmark.IsCustomDescription())
-            item.AddMember("Description", ra::util::String::Narrow(vmBookmark.GetDescription()), allocator);
+            pBookmark.SetString("Description", ra::util::String::Narrow(vmBookmark.GetDescription()));
 
-        bookmarks.PushBack(item, allocator);
         vmBookmark.ResetModified();
     }
 
-    document.AddMember("Bookmarks", bookmarks, allocator);
-    SaveDocument(document, sBookmarksFile);
+    pWriter.Save(sBookmarksFile);
 }
 
 void MemoryBookmarksViewModel::DoFrame()

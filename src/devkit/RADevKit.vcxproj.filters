@@ -222,6 +222,9 @@
     <ClInclude Include="services\IConfiguration.hh">
       <Filter>services</Filter>
     </ClInclude>
+    <ClInclude Include="util\Json.hh">
+      <Filter>util</Filter>
+    </ClInclude>
     <ClInclude Include="data\util\AchievementLogicSerializer.hh">
       <Filter>data\util</Filter>
     </ClInclude>
@@ -322,6 +325,9 @@
     </ClCompile>
     <ClCompile Include="data\models\AchievementSetModel.cpp">
       <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="util\Json.cpp">
+      <Filter>util</Filter>
     </ClCompile>
     <ClCompile Include="data\util\AchievementLogicSerializer.cpp">
       <Filter>data\util</Filter>

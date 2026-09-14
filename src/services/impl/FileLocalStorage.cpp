@@ -1,6 +1,5 @@
 #include "FileLocalStorage.hh"
 
-#include "RA_Json.h"
 #include "util\Log.hh"
 #include "util\Strings.hh"
 

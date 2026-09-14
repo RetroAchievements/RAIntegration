@@ -1,28 +1,19 @@
 #include "ConnectedServer.hh"
 
-#include "DisconnectedServer.hh"
-#include "RA_Defs.h"
+#include "util\Json.hh"
 #include "util\Log.hh"
-
-#include "RA_md5factory.h"
 
 #include "context\UserContext.hh"
 
 #include "services\Http.hh"
 #include "services\IFileSystem.hh"
 #include "services\IHttpRequester.hh"
-#include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
-
-#include <future>
-
-#include <rapidjson\document.h>
 
 #include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
 #include <rc_api_editor.h>
 #include <rc_api_info.h>
 #include <rc_api_runtime.h>
-#include <rc_api_user.h>
 
 namespace ra {
 namespace api {
@@ -56,12 +47,10 @@ _NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::StatusCode
 
 _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
                                _In_ const ra::services::Http::Response& httpResponse,
-                               _Inout_ ApiResponseBase& pResponse, _Out_ rapidjson::Document& pDocument)
+                               _Inout_ ApiResponseBase& pResponse, _Inout_ ra::util::Json::Reader& pJson)
 {
     if (httpResponse.Content().empty())
     {
-        pDocument.SetArray();
-
         if (!HandleHttpError(httpResponse.StatusCode(), pResponse))
         {
             pResponse.ErrorMessage = "Empty JSON response";
@@ -74,8 +63,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
 
     RA_LOG_INFO("-- %s Response: %s", sApiName, httpResponse.Content());
 
-    pDocument.Parse(httpResponse.Content());
-    if (pDocument.HasParseError())
+    if (!pJson.Parse(httpResponse.Content()))
     {
         if (HandleHttpError(httpResponse.StatusCode(), pResponse))
         {
@@ -87,7 +75,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
 
         pResponse.Result = ApiResult::Error;
 
-        if (pDocument.GetParseError() == rapidjson::kParseErrorValueInvalid && pDocument.GetErrorOffset() == 0)
+        if (pJson.GetParseErrorOffset() == 0)
         {
             // server did not return JSON, check for HTML
             if (ra::util::String::StartsWith(httpResponse.Content(), "<html>"))
@@ -123,15 +111,15 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
         if (pResponse.ErrorMessage.empty())
         {
             pResponse.ErrorMessage =
-                ra::util::String::Printf("JSON Parse Error: %s (at %zu)", GetParseError_En(pDocument.GetParseError()), pDocument.GetErrorOffset());
+                ra::util::String::Printf("JSON Parse Error: %s (at %zu)", pJson.GetParseError(), pJson.GetParseErrorOffset());
         }
 
         return false;
     }
 
-    if (pDocument.HasMember("Error"))
+    std::string sError;
+    if (pJson.TryGetString("Error", pResponse.ErrorMessage))
     {
-        pResponse.ErrorMessage = pDocument["Error"].GetString();
         if (httpResponse.StatusCode() == ra::services::Http::StatusCode::TooManyRequests)
         {
             pResponse.Result = ApiResult::Incomplete;
@@ -146,7 +134,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
         }
     }
 
-    if (pDocument.HasMember("Success") && !pDocument["Success"].GetBool())
+    if (pJson.GetBoolean("Success", true) == false)
     {
         pResponse.Result = ApiResult::Failed;
         RA_LOG_ERR("-- %s Error: Success=false", sApiName);
@@ -160,27 +148,6 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
     }
 
     return true;
-}
-
-static void GetRequiredJsonField(_Out_ std::string& sValue, _In_ const rapidjson::Value& pDocument,
-                                 _In_ const char* const sField, _Inout_ ApiResponseBase& response)
-{
-    if (!pDocument.HasMember(sField))
-    {
-        sValue.clear();
-
-        response.Result = ApiResult::Error;
-        if (response.ErrorMessage.empty())
-            response.ErrorMessage = ra::util::String::Printf("%s not found in response", sField);
-    }
-    else
-    {
-        auto& pField = pDocument[sField];
-        if (pField.IsString())
-            sValue = pField.GetString();
-        else
-            sValue.clear();
-    }
 }
 
 static bool DoRequestWithoutLog(const rc_api_request_t& api_request, _UNUSED const char* sApiName, ra::services::Http::Response& pHttpResponse, ApiResponseBase& pResponse)
@@ -326,7 +293,7 @@ static bool ValidateResponse(int nResult, const rc_api_response_t& api_response,
 }
 
 static bool DoUpload(const std::string& sHost, const char* _RESTRICT sApiName, const char* _RESTRICT sRequestName,
-    const std::wstring& sFilePath, ApiResponseBase& pResponse, rapidjson::Document& document)
+    const std::wstring& sFilePath, ApiResponseBase& pResponse, ra::util::Json::Reader& pJson)
 {
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     const auto nFileSize = pFileSystem.GetFileSize(sFilePath);
@@ -391,7 +358,7 @@ static bool DoUpload(const std::string& sHost, const char* _RESTRICT sApiName, c
     httpRequest.SetPostData(sPostData);
 
     const auto httpResponse = httpRequest.Call();
-    return GetJson(sApiName, httpResponse, pResponse, document);
+    return GetJson(sApiName, httpResponse, pResponse, pJson);
 }
 
 // === APIs ===
@@ -728,12 +695,13 @@ UpdateRichPresence::Response ConnectedServer::UpdateRichPresence(const UpdateRic
 UploadBadge::Response ConnectedServer::UploadBadge(const UploadBadge::Request& request)
 {
     UploadBadge::Response response;
-    rapidjson::Document document;
+    ra::util::Json::Reader pJson;
     std::string sPostData;
 
-    if (DoUpload(m_sHost, UploadBadge::Name(), "uploadbadgeimage", request.ImageFilePath, response, document))
+    if (DoUpload(m_sHost, UploadBadge::Name(), "uploadbadgeimage", request.ImageFilePath, response, pJson))
     {
-        if (!document.HasMember("Response"))
+        ra::util::Json::Reader::Node pResponse;
+        if (!pJson.TryGetObject("Response", pResponse))
         {
             if (response.Result == ApiResult::None)
                 response.Result = ApiResult::Error;
@@ -744,7 +712,13 @@ UploadBadge::Response ConnectedServer::UploadBadge(const UploadBadge::Request& r
         else
         {
             response.Result = ApiResult::Success;
-            GetRequiredJsonField(response.BadgeId, document["Response"], "BadgeIter", response);
+
+            if (!pResponse.TryGetString("BadgeIter", response.BadgeId))
+            {
+                response.Result = ApiResult::Error;
+                if (response.ErrorMessage.empty())
+                    response.ErrorMessage = ra::util::String::Printf("%s not found in response", "BadgeIter");
+            }
         }
     }
 

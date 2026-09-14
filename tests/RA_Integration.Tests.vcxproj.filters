@@ -351,12 +351,6 @@
     <ClCompile Include="..\src\ui\viewmodels\PointerInspectorViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\services\AchievementLogicSerializer.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="services\AchievementLogicSerializer_Tests.cpp">
-      <Filter>Tests\Services</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\services\search\SearchImpl.cpp">
       <Filter>Code</Filter>
     </ClCompile>

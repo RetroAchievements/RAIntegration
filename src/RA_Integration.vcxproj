@@ -42,6 +42,9 @@
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
@@ -86,7 +89,6 @@
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Json.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
-    <ClCompile Include="services\AchievementLogicSerializer.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
     <ClCompile Include="services\AchievementRuntimeExports.cpp" />
     <ClCompile Include="services\FrameEventQueue.cpp" />
@@ -215,7 +217,6 @@
     <ClInclude Include="RA_Log.h" />
     <ClInclude Include="RA_md5factory.h" />
     <ClInclude Include="RA_Resource.h" />
-    <ClInclude Include="services\AchievementLogicSerializer.hh" />
     <ClInclude Include="services\AchievementRuntime.hh" />
     <ClInclude Include="services\AchievementRuntimeExports.hh" />
     <ClInclude Include="services\FrameEventQueue.hh" />

@@ -187,10 +187,10 @@ public:
 
     bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
     {
-        const auto nOperandType = ra::itoe<ra::ui::viewmodels::TriggerOperandType>(vmItems.GetItemValue(nIndex, *m_pTypeProperty));
+        const auto nOperandType = ra::itoe<ra::data::Requirement::OperandType>(vmItems.GetItemValue(nIndex, *m_pTypeProperty));
         switch (nOperandType)
         {
-            case ra::ui::viewmodels::TriggerOperandType::Float:
+            case ra::data::Requirement::OperandType::Float:
             {
                 std::wstring sError;
                 float fValue = 0.0;
@@ -202,17 +202,17 @@ public:
                 }
 
                 vmItems.SetItemValue(nIndex, *m_pBoundProperty,
-                    ra::ui::viewmodels::TriggerConditionViewModel::FormatValue(fValue, nOperandType));
+                    ra::data::Requirement::FormatOperandValue(fValue, nOperandType));
                 return true;
             }
 
-            case ra::ui::viewmodels::TriggerOperandType::Recall:
+            case ra::data::Requirement::OperandType::Recall:
             {
                 vmItems.SetItemValue(nIndex, *m_pBoundProperty, L"");
                 return true;
             }
 
-            case ra::ui::viewmodels::TriggerOperandType::Value:
+            case ra::data::Requirement::OperandType::Value:
             {
                 const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
                 if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
@@ -227,7 +227,7 @@ public:
                     }
 
                     vmItems.SetItemValue(nIndex, *m_pBoundProperty,
-                        ra::ui::viewmodels::TriggerConditionViewModel::FormatValue(nValue, nOperandType));
+                        ra::data::Requirement::FormatOperandValue(nValue, nOperandType));
                     return true;
                 }
             }
@@ -245,7 +245,7 @@ public:
                 }
 
                 vmItems.SetItemValue(nIndex, *m_pBoundProperty,
-                    ra::ui::viewmodels::TriggerConditionViewModel::FormatValue(nValue, nOperandType));
+                    ra::data::Requirement::FormatOperandValue(nValue, nOperandType));
 
                 return true;
             }
@@ -311,10 +311,10 @@ public:
 protected:
     bool IsAddressType(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
     {
-        const auto nOperandType = ra::itoe<ra::ui::viewmodels::TriggerOperandType>(vmItems.GetItemValue(nIndex, *m_pTypeProperty));
-        return (nOperandType != ra::ui::viewmodels::TriggerOperandType::Value &&
-            nOperandType != ra::ui::viewmodels::TriggerOperandType::Float &&
-            nOperandType !=ra::ui::viewmodels::TriggerOperandType::Recall);
+        const auto nOperandType = ra::itoe<ra::data::Requirement::OperandType>(vmItems.GetItemValue(nIndex, *m_pTypeProperty));
+        return (nOperandType != ra::data::Requirement::OperandType::Value &&
+            nOperandType != ra::data::Requirement::OperandType::Float &&
+            nOperandType !=ra::data::Requirement::OperandType::Recall);
     }
 
 protected:

@@ -1,65 +1,64 @@
 #include "AchievementLogicSerializer.hh"
 
-#include "RA_Defs.h"
+#include "context/IConsoleContext.hh"
 
-#include "context\IConsoleContext.hh"
+#include "services/ServiceLocator.hh"
 
-#include "services\ServiceLocator.hh"
-
-#include "util\Strings.hh"
+#include "util/Strings.hh"
 
 namespace ra {
-namespace services {
+namespace data {
+namespace util {
 
-void AchievementLogicSerializer::AppendConditionType(std::string& sBuffer, TriggerConditionType nType)
+void AchievementLogicSerializer::AppendConditionType(std::string& sBuffer, Requirement::Type nType)
 {
     switch (nType)
     {
-        case TriggerConditionType::Standard:
+        case Requirement::Type::Standard:
             return;
-        case TriggerConditionType::PauseIf:
+        case Requirement::Type::PauseIf:
             sBuffer.push_back('P');
             break;
-        case TriggerConditionType::ResetIf:
+        case Requirement::Type::ResetIf:
             sBuffer.push_back('R');
             break;
-        case TriggerConditionType::AddSource:
+        case Requirement::Type::AddSource:
             sBuffer.push_back('A');
             break;
-        case TriggerConditionType::SubSource:
+        case Requirement::Type::SubSource:
             sBuffer.push_back('B');
             break;
-        case TriggerConditionType::AddHits:
+        case Requirement::Type::AddHits:
             sBuffer.push_back('C');
             break;
-        case TriggerConditionType::SubHits:
+        case Requirement::Type::SubHits:
             sBuffer.push_back('D');
             break;
-        case TriggerConditionType::Remember:
+        case Requirement::Type::Remember:
             sBuffer.push_back('K');
             break;
-        case TriggerConditionType::AndNext:
+        case Requirement::Type::AndNext:
             sBuffer.push_back('N');
             break;
-        case TriggerConditionType::OrNext:
+        case Requirement::Type::OrNext:
             sBuffer.push_back('O');
             break;
-        case TriggerConditionType::Measured:
+        case Requirement::Type::Measured:
             sBuffer.push_back('M');
             break;
-        case TriggerConditionType::MeasuredAsPercent:
+        case Requirement::Type::MeasuredAsPercent:
             sBuffer.push_back('G');
             break;
-        case TriggerConditionType::MeasuredIf:
+        case Requirement::Type::MeasuredIf:
             sBuffer.push_back('Q');
             break;
-        case TriggerConditionType::AddAddress:
+        case Requirement::Type::AddAddress:
             sBuffer.push_back('I');
             break;
-        case TriggerConditionType::Trigger:
+        case Requirement::Type::Trigger:
             sBuffer.push_back('T');
             break;
-        case TriggerConditionType::ResetNextIf:
+        case Requirement::Type::ResetNextIf:
             sBuffer.push_back('Z');
             break;
         default:
@@ -70,41 +69,41 @@ void AchievementLogicSerializer::AppendConditionType(std::string& sBuffer, Trigg
     sBuffer.push_back(':');
 }
 
-void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size nSize, uint32_t nValue)
+void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, Requirement::OperandType nType, ra::data::Memory::Size nSize, uint32_t nValue)
 {
     switch (nType)
     {
-        case TriggerOperandType::Address:
+        case Requirement::OperandType::Address:
             break;
 
-        case TriggerOperandType::Value:
+        case Requirement::OperandType::Value:
             sBuffer.append(std::to_string(nValue));
             return;
 
-        case TriggerOperandType::Float:
+        case Requirement::OperandType::Float:
             sBuffer.push_back('f');
             sBuffer.append(std::to_string(nValue));
             sBuffer.push_back('.');
             sBuffer.push_back('0');
             return;
 
-        case TriggerOperandType::Delta:
+        case Requirement::OperandType::Delta:
             sBuffer.push_back('d');
             break;
 
-        case TriggerOperandType::Prior:
+        case Requirement::OperandType::Prior:
             sBuffer.push_back('p');
             break;
 
-        case TriggerOperandType::BCD:
+        case Requirement::OperandType::BCD:
             sBuffer.push_back('b');
             break;
 
-        case TriggerOperandType::Inverted:
+        case Requirement::OperandType::Inverted:
             sBuffer.push_back('~');
             break;
 
-        case TriggerOperandType::Recall:
+        case Requirement::OperandType::Recall:
             sBuffer.append("{recall}");
             return;
 
@@ -119,16 +118,16 @@ void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOper
     switch (nSize)
     {
         case ra::data::Memory::Size::BitCount:              sBuffer.push_back('K'); break;
-        case ra::data::Memory::Size::Bit0:                 sBuffer.push_back('M'); break;
-        case ra::data::Memory::Size::Bit1:                 sBuffer.push_back('N'); break;
-        case ra::data::Memory::Size::Bit2:                 sBuffer.push_back('O'); break;
-        case ra::data::Memory::Size::Bit3:                 sBuffer.push_back('P'); break;
-        case ra::data::Memory::Size::Bit4:                 sBuffer.push_back('Q'); break;
-        case ra::data::Memory::Size::Bit5:                 sBuffer.push_back('R'); break;
-        case ra::data::Memory::Size::Bit6:                 sBuffer.push_back('S'); break;
-        case ra::data::Memory::Size::Bit7:                 sBuffer.push_back('T'); break;
-        case ra::data::Memory::Size::NibbleLower:          sBuffer.push_back('L'); break;
-        case ra::data::Memory::Size::NibbleUpper:          sBuffer.push_back('U'); break;
+        case ra::data::Memory::Size::Bit0:                  sBuffer.push_back('M'); break;
+        case ra::data::Memory::Size::Bit1:                  sBuffer.push_back('N'); break;
+        case ra::data::Memory::Size::Bit2:                  sBuffer.push_back('O'); break;
+        case ra::data::Memory::Size::Bit3:                  sBuffer.push_back('P'); break;
+        case ra::data::Memory::Size::Bit4:                  sBuffer.push_back('Q'); break;
+        case ra::data::Memory::Size::Bit5:                  sBuffer.push_back('R'); break;
+        case ra::data::Memory::Size::Bit6:                  sBuffer.push_back('S'); break;
+        case ra::data::Memory::Size::Bit7:                  sBuffer.push_back('T'); break;
+        case ra::data::Memory::Size::NibbleLower:           sBuffer.push_back('L'); break;
+        case ra::data::Memory::Size::NibbleUpper:           sBuffer.push_back('U'); break;
         case ra::data::Memory::Size::EightBit:              sBuffer.push_back('H'); break;
         case ra::data::Memory::Size::TwentyFourBit:         sBuffer.push_back('W'); break;
         case ra::data::Memory::Size::ThirtyTwoBit:          sBuffer.push_back('X'); break;
@@ -194,15 +193,15 @@ void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOper
     sBuffer.append(ra::util::String::Narrow(pMemoryContext.FormatAddress(nValue)), 2);
 }
 
-void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOperandType nType, ra::data::Memory::Size, float fValue)
+void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, Requirement::OperandType nType, ra::data::Memory::Size, float fValue)
 {
     switch (nType)
     {
-        case TriggerOperandType::Value:
+        case Requirement::OperandType::Value:
             sBuffer.append(std::to_string(ra::to_unsigned(gsl::narrow_cast<int>(fValue))));
             break;
 
-        case TriggerOperandType::Float: {
+        case Requirement::OperandType::Float: {
             std::string sFloat = std::to_string(fValue);
             if (sFloat.find('.') != std::string::npos)
             {
@@ -223,62 +222,62 @@ void AchievementLogicSerializer::AppendOperand(std::string& sBuffer, TriggerOper
     }
 }
 
-void AchievementLogicSerializer::AppendOperator(std::string& sBuffer, TriggerOperatorType nType)
+void AchievementLogicSerializer::AppendOperator(std::string& sBuffer, Requirement::OperatorType nType)
 {
     switch (nType)
     {
-        case TriggerOperatorType::Equals:
+        case Requirement::OperatorType::Equals:
             sBuffer.push_back('=');
             break;
 
-        case TriggerOperatorType::NotEquals:
+        case Requirement::OperatorType::NotEquals:
             sBuffer.push_back('!');
             sBuffer.push_back('=');
             break;
 
-        case TriggerOperatorType::LessThan:
+        case Requirement::OperatorType::LessThan:
             sBuffer.push_back('<');
             break;
 
-        case TriggerOperatorType::LessThanOrEqual:
+        case Requirement::OperatorType::LessThanOrEqual:
             sBuffer.push_back('<');
             sBuffer.push_back('=');
             break;
 
-        case TriggerOperatorType::GreaterThan:
+        case Requirement::OperatorType::GreaterThan:
             sBuffer.push_back('>');
             break;
 
-        case TriggerOperatorType::GreaterThanOrEqual:
+        case Requirement::OperatorType::GreaterThanOrEqual:
             sBuffer.push_back('>');
             sBuffer.push_back('=');
             break;
 
-        case TriggerOperatorType::Multiply:
+        case Requirement::OperatorType::Multiply:
             sBuffer.push_back('*');
             break;
 
-        case TriggerOperatorType::Divide:
+        case Requirement::OperatorType::Divide:
             sBuffer.push_back('/');
             break;
 
-        case TriggerOperatorType::BitwiseAnd:
+        case Requirement::OperatorType::BitwiseAnd:
             sBuffer.push_back('&');
             break;
 
-        case TriggerOperatorType::BitwiseXor:
+        case Requirement::OperatorType::BitwiseXor:
             sBuffer.push_back('^');
             break;
 
-        case TriggerOperatorType::Modulus:
+        case Requirement::OperatorType::Modulus:
             sBuffer.push_back('%');
             break;
 
-        case TriggerOperatorType::Add:
+        case Requirement::OperatorType::Add:
             sBuffer.push_back('+');
             break;
 
-        case TriggerOperatorType::Subtract:
+        case Requirement::OperatorType::Subtract:
             sBuffer.push_back('-');
             break;
 
@@ -339,14 +338,14 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
             nBitmaskOffset = std::string::npos;
         }
 
-        AppendConditionType(sBuffer, ra::services::TriggerConditionType::AddAddress);
-        AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, nAddress);
+        AppendConditionType(sBuffer, Requirement::Type::AddAddress);
+        AppendOperand(sBuffer, Requirement::OperandType::Address, nSize, nAddress);
         nPointerBase = pNote->GetPointerAddress();
 
         if (nOffset != 0)
         {
-            AppendOperator(sBuffer, ra::services::TriggerOperatorType::Subtract);
-            AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nOffset);
+            AppendOperator(sBuffer, Requirement::OperatorType::Subtract);
+            AppendOperand(sBuffer, Requirement::OperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nOffset);
         }
         else if (nMask != 0xFFFFFFFF)
         {
@@ -354,8 +353,8 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
             if (nMask != nBitsMask)
             {
                 nBitmaskOffset = sBuffer.length();
-                AppendOperator(sBuffer, ra::services::TriggerOperatorType::BitwiseAnd);
-                AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nMask);
+                AppendOperator(sBuffer, Requirement::OperatorType::BitwiseAnd);
+                AppendOperand(sBuffer, Requirement::OperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nMask);
             }
         }
 
@@ -369,16 +368,17 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
         AppendConditionSeparator(sBuffer);
     }
 
-    AppendConditionType(sBuffer, ra::services::TriggerConditionType::Measured);
+    AppendConditionType(sBuffer, Requirement::Type::Measured);
 
     nSize = pLeafNote.GetMemSize();
     if (nSize == ra::data::Memory::Size::Unknown)
         nSize = ra::data::Memory::Size::EightBit;
 
-    AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, nAddress);
+    AppendOperand(sBuffer, Requirement::OperandType::Address, nSize, nAddress);
 
     return sBuffer;
 }
 
-} // namespace services
+} // namespace util
+} // namespace data
 } // namespace ra

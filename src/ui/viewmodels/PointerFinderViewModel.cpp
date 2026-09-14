@@ -7,6 +7,7 @@
 
 #include "data/context/EmulatorContext.hh"
 #include "data/context/GameContext.hh"
+#include "data/util/AchievementLogicSerializer.hh"
 
 #include "services/IClipboard.hh"
 #include "services/IFileSystem.hh"
@@ -394,27 +395,27 @@ void PointerFinderViewModel::ConvertResultsToAchievementLogic(const std::vector<
         std::string sBuffer;
         do
         {
-            ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::services::TriggerConditionType::AddAddress);
-            ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address, nSize, nAddress);
+            ra::data::util::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::data::Requirement::Type::AddAddress);
+            ra::data::util::AchievementLogicSerializer::AppendOperand(sBuffer, ra::data::Requirement::OperandType::Address, nSize, nAddress);
 
             if (nOffset != 0)
             {
-                ra::services::AchievementLogicSerializer::AppendOperator(sBuffer, ra::services::TriggerOperatorType::Subtract);
-                ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nOffset);
+                ra::data::util::AchievementLogicSerializer::AppendOperator(sBuffer, ra::data::Requirement::OperatorType::Subtract);
+                ra::data::util::AchievementLogicSerializer::AppendOperand(sBuffer, ra::data::Requirement::OperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nOffset);
             }
             else if (nMask != 0xFFFFFFFF)
             {
-                ra::services::AchievementLogicSerializer::AppendOperator(sBuffer, ra::services::TriggerOperatorType::BitwiseAnd);
-                ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nMask);
+                ra::data::util::AchievementLogicSerializer::AppendOperator(sBuffer, ra::data::Requirement::OperatorType::BitwiseAnd);
+                ra::data::util::AchievementLogicSerializer::AppendOperand(sBuffer, ra::data::Requirement::OperandType::Value, ra::data::Memory::Size::ThirtyTwoBit, nMask);
             }
 
-            ra::services::AchievementLogicSerializer::AppendConditionSeparator(sBuffer);
+            ra::data::util::AchievementLogicSerializer::AppendConditionSeparator(sBuffer);
 
             const PotentialPointerViewModel* pNextItem = m_vResults.GetItemAt(++nIndex);
             if (pNextItem == nullptr || !pNextItem->m_bIsChild)
             {
-                ra::services::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::services::TriggerConditionType::Measured);
-                ra::services::AchievementLogicSerializer::AppendOperand(sBuffer, ra::services::TriggerOperandType::Address,
+                ra::data::util::AchievementLogicSerializer::AppendConditionType(sBuffer, ra::data::Requirement::Type::Measured);
+                ra::data::util::AchievementLogicSerializer::AppendOperand(sBuffer, ra::data::Requirement::OperandType::Address,
                     nSize, ra::to_unsigned(pItem->m_nOffset));
                 break;
             }

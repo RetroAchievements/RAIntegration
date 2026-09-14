@@ -7,10 +7,9 @@
 #include "context\IEmulatorMemoryContext.hh"
 
 #include "data\Types.hh"
+#include "data\util\AchievementLogicSerializer.hh"
 
-#include "services\AchievementLogicSerializer.hh"
 #include "services\FrameEventQueue.hh"
-#include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
@@ -19,7 +18,6 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include <rcheevos/src/rcheevos/rc_internal.h>
-#include <rcheevos/src/rc_client_internal.h>
 
 namespace ra {
 namespace ui {
@@ -333,8 +331,8 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
                 else
                 {
                     sSerialized.clear();
-                    ra::services::AchievementLogicSerializer::AppendOperand(
-                        sSerialized, ra::services::TriggerOperandType::Address, nSize, vmBookmark.GetAddress());
+                    ra::data::util::AchievementLogicSerializer::AppendOperand(
+                        sSerialized, ra::data::Requirement::OperandType::Address, nSize, vmBookmark.GetAddress());
                     item.AddMember("MemAddr", sSerialized, allocator);
                 }
                 break;

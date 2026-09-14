@@ -85,7 +85,6 @@
     <ClCompile Include="..\src\Exports.cpp" />
     <ClCompile Include="..\src\RA_Json.cpp" />
     <ClCompile Include="..\src\RA_md5factory.cpp" />
-    <ClCompile Include="..\src\services\AchievementLogicSerializer.cpp" />
     <ClCompile Include="..\src\services\AchievementRuntime.cpp" />
     <ClCompile Include="..\src\services\AchievementRuntimeExports.cpp" />
     <ClCompile Include="..\src\services\FrameEventQueue.cpp" />
@@ -152,7 +151,6 @@
     <ClCompile Include="devkit\context\mocks\MockRcClient.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="mocks\MockAchievementRuntime.cpp" />
-    <ClCompile Include="services\AchievementLogicSerializer_Tests.cpp" />
     <ClCompile Include="services\AchievementRuntimeExports_Tests.cpp" />
     <ClCompile Include="services\AchievementRuntime_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />

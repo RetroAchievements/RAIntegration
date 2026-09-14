@@ -1,11 +1,7 @@
 #include "MemoryInspectorViewModel.hh"
 
-#include "RA_Defs.h"
-
-#include "context\UserContext.hh"
-
-#include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
+#include "data\util\AchievementLogicSerializer.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -13,6 +9,8 @@
 #include "ui\viewmodels\AssetUploadViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
+
+#include "util\Strings.hh"
 
 namespace ra {
 namespace ui {
@@ -327,15 +325,15 @@ std::string MemoryInspectorViewModel::GetCurrentAddressMemRefChain() const
             const auto* pRootNote = pMemoryNotes->FindMemoryNoteModel(nIndirectSource);
             Expects(pRootNote != nullptr);
 
-            return ra::services::AchievementLogicSerializer::BuildMemRefChain(*pRootNote, *pNote);
+            return ra::data::util::AchievementLogicSerializer::BuildMemRefChain(*pRootNote, *pNote);
         }
     }
 
     std::string sMemRef;
-    ra::services::AchievementLogicSerializer::AppendConditionType(
-        sMemRef, ra::services::TriggerConditionType::Measured);
-    ra::services::AchievementLogicSerializer::AppendOperand(
-        sMemRef, ra::services::TriggerOperandType::Address, nSize, nAddress);
+    ra::data::util::AchievementLogicSerializer::AppendConditionType(
+        sMemRef, ra::data::Requirement::Type::Measured);
+    ra::data::util::AchievementLogicSerializer::AppendOperand(
+        sMemRef, ra::data::Requirement::OperandType::Address, nSize, nAddress);
     return sMemRef;
 }
 

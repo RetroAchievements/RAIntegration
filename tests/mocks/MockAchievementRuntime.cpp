@@ -213,7 +213,7 @@ void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAc
     }
 }
 
-rc_client_achievement_info_t* MockAchievementRuntime::MockUnofficialAchievement(uint32_t nId, const char* sTitle)
+rc_client_achievement_info_t* MockAchievementRuntime::MockUnpromotedAchievement(uint32_t nId, const char* sTitle)
 {
     rc_client_game_info_t* game = GetClient()->game;
     rc_client_achievement_info_t* achievement = AddAchievement(game, GetCoreSubset(game), nId, sTitle);

@@ -121,17 +121,17 @@ public:
     }
 
     /// <summary>
-    /// Determines if any Core assets exist.
+    /// Determines if any Promoted assets exist.
     /// </summary>
-    bool HasCoreAssets() const
+    bool HasPromotedAssets() const
     {
-        return (MostPublishedAssetCategory() == ra::data::models::AssetCategory::Core);
+        return (MostPublishedAssetCategory() == ra::data::models::AssetCategory::Promoted);
     }
 
     /// <summary>
     /// Determines the most published asset category.
     /// </summary>
-    /// <remarks>Core > Unpublished > Local > None</remarks>
+    /// <remarks>Promoted > Unpromoted > Local > None</remarks>
     ra::data::models::AssetCategory MostPublishedAssetCategory() const;
 
     /// <summary>
@@ -155,7 +155,7 @@ public:
     /// Adds an achievement set to the AchievementSets collection.
     /// </summary>
     void AddAchievementSet(uint32_t nId, uint32_t nGameId, const std::wstring& sTitle,
-                           AchievementSetType nType = AchievementSetType::Core);
+                           AchievementSetType nType = AchievementSetType::Promoted);
 
     /// <summary>
     /// Resets the achievement sets collection.

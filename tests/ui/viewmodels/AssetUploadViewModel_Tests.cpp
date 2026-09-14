@@ -254,10 +254,10 @@ private:
     };
 
 public:
-    TEST_METHOD(TestSingleUnofficialAchievement)
+    TEST_METHOD(TestSingleUnpromotedAchievement)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Unofficial, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Unpromoted, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
         vmUpload.QueueAsset(pAchievement);
@@ -290,10 +290,10 @@ public:
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestSingleCoreAchievement)
+    TEST_METHOD(TestSinglePromotedAchievement)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
         vmUpload.QueueAsset(pAchievement);
@@ -327,10 +327,10 @@ public:
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestSingleCoreAchievementMissable)
+    TEST_METHOD(TestSinglePromotedAchievementMissable)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
         pAchievement.SetAchievementType(ra::data::models::AchievementType::Missable);
         pAchievement.UpdateLocalCheckpoint();
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
@@ -398,8 +398,8 @@ public:
 
         Assert::IsTrue(bApiCalled);
 
-        // published local achievement should be changed to unofficial and have it's ID updated
-        Assert::AreEqual(AssetCategory::Unofficial, pAchievement.GetCategory());
+        // published local achievement should be changed to unpromoted and have it's ID updated
+        Assert::AreEqual(AssetCategory::Unpromoted, pAchievement.GetCategory());
         Assert::AreEqual(7716U, pAchievement.GetID());
         Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
 
@@ -442,18 +442,18 @@ public:
 
         Assert::IsTrue(bApiCalled);
 
-        // published local achievement should be changed to unofficial and have it's ID updated
-        Assert::AreEqual(AssetCategory::Unofficial, pAchievement.GetCategory());
+        // published local achievement should be changed to unpromoted and have it's ID updated
+        Assert::AreEqual(AssetCategory::Unpromoted, pAchievement.GetCategory());
         Assert::AreEqual(7716U, pAchievement.GetID());
         Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
 
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestSingleCoreAchievementError)
+    TEST_METHOD(TestSinglePromotedAchievementError)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
         vmUpload.QueueAsset(pAchievement);
@@ -465,7 +465,7 @@ public:
         {
             bApiCalled = true;
             pResponse.Result = ra::api::ApiResult::Error;
-            pResponse.ErrorMessage = "You must be a developer to modify values in Core!";
+            pResponse.ErrorMessage = "You must be a developer to modify promoted achievements!";
             return true;
         });
 
@@ -474,14 +474,14 @@ public:
         Assert::IsTrue(bApiCalled);
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
-        vmUpload.AssertFailed(0, 1, L"* Title1: You must be a developer to modify values in Core!");
+        vmUpload.AssertFailed(0, 1, L"* Title1: You must be a developer to modify promoted achievements!");
     }
 
-    TEST_METHOD(TestSingleCoreAchievementApiErrorTrigger)
+    TEST_METHOD(TestSinglePromotedAchievementApiErrorTrigger)
     {
         AssetUploadViewModelHarness vmUpload;
         auto& pAchievement =
-            vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+            vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
         pAchievement.UpdateServerCheckpoint();
         Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
 
@@ -517,11 +517,11 @@ public:
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
     }
 
-    TEST_METHOD(TestSingleCoreAchievementApiErrorDescription)
+    TEST_METHOD(TestSinglePromotedAchievementApiErrorDescription)
     {
         AssetUploadViewModelHarness vmUpload;
         auto& pAchievement = // description is a required field at the API level
-            vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"", L"12345", "0xH1234=1");
+            vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"", L"12345", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
         vmUpload.QueueAsset(pAchievement);
@@ -546,15 +546,15 @@ public:
         vmUpload.AssertFailed(0, 1, L"* Title1: Description is required");
     }
 
-    TEST_METHOD(TestMultipleCoreAchievements)
+    TEST_METHOD(TestMultiplePromotedAchievements)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
-        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title2", L"Desc2", L"12345", "0xH1234=1");
-        auto& pAchievement3 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title3", L"Desc3", L"12345", "0xH1234=1");
-        auto& pAchievement4 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title4", L"Desc4", L"12345", "0xH1234=1");
-        auto& pAchievement5 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title5", L"Desc5", L"12345", "0xH1234=1");
-        auto& pAchievement6 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title6", L"Desc6", L"12345", "0xH1234=1");
+        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title2", L"Desc2", L"12345", "0xH1234=1");
+        auto& pAchievement3 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title3", L"Desc3", L"12345", "0xH1234=1");
+        auto& pAchievement4 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title4", L"Desc4", L"12345", "0xH1234=1");
+        auto& pAchievement5 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title5", L"Desc5", L"12345", "0xH1234=1");
+        auto& pAchievement6 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title6", L"Desc6", L"12345", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement3.GetChanges());
@@ -596,15 +596,15 @@ public:
         vmUpload.AssertSuccess(6);
     }
 
-    TEST_METHOD(TestMultipleCoreAchievementsPartialFailure)
+    TEST_METHOD(TestMultiplePromotedAchievementsPartialFailure)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
-        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title2", L"Desc2", L"12345", "0xH1234=1");
-        auto& pAchievement3 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title3", L"Desc3", L"12345", "0xH1234=1");
-        auto& pAchievement4 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title4", L"Desc4", L"12345", "0xH1234=1");
-        auto& pAchievement5 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title5", L"Desc5", L"12345", "0xH1234=1");
-        auto& pAchievement6 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title6", L"Desc6", L"12345", "0xH1234=1");
+        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title2", L"Desc2", L"12345", "0xH1234=1");
+        auto& pAchievement3 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title3", L"Desc3", L"12345", "0xH1234=1");
+        auto& pAchievement4 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title4", L"Desc4", L"12345", "0xH1234=1");
+        auto& pAchievement5 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title5", L"Desc5", L"12345", "0xH1234=1");
+        auto& pAchievement6 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title6", L"Desc6", L"12345", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement3.GetChanges());
@@ -653,15 +653,15 @@ public:
         vmUpload.AssertFailed(5, 1, L"* Title4: Timeout");
     }
 
-    TEST_METHOD(TestMultipleCoreAchievementsAborted)
+    TEST_METHOD(TestMultiplePromotedAchievementsAborted)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
-        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title2", L"Desc2", L"12345", "0xH1234=1");
-        auto& pAchievement3 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title3", L"Desc3", L"12345", "0xH1234=1");
-        auto& pAchievement4 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title4", L"Desc4", L"12345", "0xH1234=1");
-        auto& pAchievement5 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title5", L"Desc5", L"12345", "0xH1234=1");
-        auto& pAchievement6 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title6", L"Desc6", L"12345", "0xH1234=1");
+        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title2", L"Desc2", L"12345", "0xH1234=1");
+        auto& pAchievement3 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title3", L"Desc3", L"12345", "0xH1234=1");
+        auto& pAchievement4 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title4", L"Desc4", L"12345", "0xH1234=1");
+        auto& pAchievement5 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title5", L"Desc5", L"12345", "0xH1234=1");
+        auto& pAchievement6 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title6", L"Desc6", L"12345", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement3.GetChanges());
@@ -704,10 +704,10 @@ public:
         vmUpload.AssertAbort(4, 0, L"");
     }
 
-    TEST_METHOD(TestSingleCoreAchievementWithImage)
+    TEST_METHOD(TestSinglePromotedAchievementWithImage)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
+        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
         vmUpload.QueueAsset(pAchievement);
@@ -754,11 +754,11 @@ public:
         vmUpload.AssertSuccess(1);
     }
 
-    TEST_METHOD(TestMultipleCoreAchievementsWithImages)
+    TEST_METHOD(TestMultiplePromotedAchievementsWithImages)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
-        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title2", L"Desc2", L"local\\22222", "0xH1234=1");
+        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
+        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title2", L"Desc2", L"local\\22222", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
 
@@ -809,11 +809,11 @@ public:
         vmUpload.AssertSuccess(2);
     }
 
-    TEST_METHOD(TestMultipleCoreAchievementsWithImages429)
+    TEST_METHOD(TestMultiplePromotedAchievementsWithImages429)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
-        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title2", L"Desc2", L"local\\22222", "0xH1234=1");
+        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
+        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title2", L"Desc2", L"local\\22222", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
 
@@ -871,11 +871,11 @@ public:
         vmUpload.AssertSuccess(2);
     }
 
-    TEST_METHOD(TestMultipleCoreAchievementsWithSameImage)
+    TEST_METHOD(TestMultiplePromotedAchievementsWithSameImage)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
-        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title2", L"Desc2", L"local\\12345", "0xH1234=1");
+        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
+        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title2", L"Desc2", L"local\\12345", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
 
@@ -921,11 +921,11 @@ public:
         vmUpload.AssertSuccess(2);
     }
 
-    TEST_METHOD(TestMultipleCoreAchievementsWithFailedImages)
+    TEST_METHOD(TestMultiplePromotedAchievementsWithFailedImages)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
-        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title2", L"Desc2", L"local\\22222", "0xH1234=1");
+        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
+        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title2", L"Desc2", L"local\\22222", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
 
@@ -965,11 +965,11 @@ public:
         vmUpload.AssertFailed(0, 2, L"* Title1: Unsupported image format\n* Title2: Unsupported image format");
     }
 
-    TEST_METHOD(TestMultipleCoreAchievementsWithSameFailedImage)
+    TEST_METHOD(TestMultiplePromotedAchievementsWithSameFailedImage)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
-        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title2", L"Desc2", L"local\\12345", "0xH1234=1");
+        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
+        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title2", L"Desc2", L"local\\12345", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
 
@@ -1009,11 +1009,11 @@ public:
         vmUpload.AssertFailed(0, 2, L"* Title1: Unsupported image format\n* Title2: Unsupported image format");
     }
 
-    TEST_METHOD(TestMultipleCoreAchievementsWithImagesOneFailed)
+    TEST_METHOD(TestMultiplePromotedAchievementsWithImagesOneFailed)
     {
         AssetUploadViewModelHarness vmUpload;
-        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
-        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title2", L"Desc2", L"local\\22222", "0xH1234=1");
+        auto& pAchievement1 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title1", L"Desc1", L"local\\12345", "0xH1234=1");
+        auto& pAchievement2 = vmUpload.AddAchievement(AssetCategory::Promoted, 5, L"Title2", L"Desc2", L"local\\22222", "0xH1234=1");
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
 
@@ -1107,8 +1107,8 @@ public:
 
         Assert::IsTrue(bApiCalled);
 
-        // published local leaderboard should be changed to core and have it's ID updated
-        Assert::AreEqual(AssetCategory::Core, pLeaderboard.GetCategory());
+        // published local leaderboard should be changed to promoted and have it's ID updated
+        Assert::AreEqual(AssetCategory::Promoted, pLeaderboard.GetCategory());
         Assert::AreEqual(7716U, pLeaderboard.GetID());
         Assert::AreEqual(AssetChanges::None, pLeaderboard.GetChanges());
 
@@ -1152,8 +1152,8 @@ public:
 
         Assert::IsTrue(bApiCalled);
 
-        // published local leaderboard should be changed to core and have it's ID updated
-        Assert::AreEqual(AssetCategory::Core, pLeaderboard.GetCategory());
+        // published local leaderboard should be changed to promoted and have it's ID updated
+        Assert::AreEqual(AssetCategory::Promoted, pLeaderboard.GetCategory());
         Assert::AreEqual(7716U, pLeaderboard.GetID());
         Assert::AreEqual(AssetChanges::None, pLeaderboard.GetChanges());
 

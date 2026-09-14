@@ -127,12 +127,12 @@ public:
         leaderboardsPage.AssertLeaderboard(2, pLbd2);
     }
 
-    TEST_METHOD(TestRefreshCoreOnly)
+    TEST_METHOD(TestRefreshPromotedOnly)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
         leaderboardsPage.mockAchievementRuntime.MockGame();
 
-        // only 1 and 3 will be visible - 2 is not core, and filtered out by asset list
+        // only 1 and 3 will be visible - 2 is not promoted, and filtered out by asset list
         auto* pLbd1 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(1);
                       leaderboardsPage.mockAchievementRuntime.MockLocalLeaderboard(2);
         auto* pLbd3 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(3);
@@ -150,7 +150,7 @@ public:
         Assert::IsNull(leaderboardsPage.GetItem(3));
     }
 
-    TEST_METHOD(TestRefreshCoreAndLocal)
+    TEST_METHOD(TestRefreshPromotedAndLocal)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
         leaderboardsPage.mockAchievementRuntime.MockGame();

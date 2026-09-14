@@ -360,7 +360,7 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
     {
         bool bShowHardcorePrompt = false;
         if (pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning))
-            bShowHardcorePrompt = Assets().HasCoreAssets();
+            bShowHardcorePrompt = Assets().HasPromotedAssets();
 
         if (bShowHardcorePrompt)
         {
@@ -416,7 +416,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 switch (pAchievementData->public_.category)
                 {
                     case RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED:
-                        // automatically activate all core achievements in compatibility mode
+                        // automatically activate all promoted achievements in compatibility mode
                         if (GetMode() == Mode::CompatibilityTest)
                         {
                             pAchievementData->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
@@ -427,7 +427,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                         break;
 
                     case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED:
-                        // all unofficial achievements should start inactive.
+                        // all unpromoted achievements should start inactive.
                         // rc_client automatically activates them.
                         pAchievementData->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
 
@@ -519,7 +519,7 @@ void GameContext::InitializeAchievementSets(const rc_api_fetch_game_sets_respons
         switch (pSet->type)
         {
             case RC_ACHIEVEMENT_SET_TYPE_CORE:
-                nType = ra::data::models::AchievementSetType::Core;
+                nType = ra::data::models::AchievementSetType::Promoted;
                 break;
             case RC_ACHIEVEMENT_SET_TYPE_EXCLUSIVE:
                 nType = ra::data::models::AchievementSetType::Exclusive;
@@ -532,7 +532,7 @@ void GameContext::InitializeAchievementSets(const rc_api_fetch_game_sets_respons
                 break;
         }
 
-        if (nType != ra::data::models::AchievementSetType::Core && game_data_response->num_sets == 1)
+        if (nType != ra::data::models::AchievementSetType::Promoted && game_data_response->num_sets == 1)
         {
             // subset loaded without base game. add game title as suffix to set title.
             sTitle = ra::util::String::Printf(L"%s (%s)", sTitle, game_data_response->title);

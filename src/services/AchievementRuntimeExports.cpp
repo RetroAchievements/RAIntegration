@@ -190,12 +190,12 @@ public:
 
     static void set_unpromoted_enabled(int) noexcept
     {
-        // do nothing. unofficial achievements should always be available when using the toolkit.
+        // do nothing. unpromoted achievements should always be available when using the toolkit.
     }
 
     static int get_unpromoted_enabled() noexcept
     {
-        // unofficial achievements should always be available when using the toolkit.
+        // unpromoted achievements should always be available when using the toolkit.
         return true;
     }
 
@@ -1134,23 +1134,27 @@ void SyncClientExternalHardcoreState()
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (rc_client_get_hardcore_enabled(pClient) != bHardcore)
     {
-        std::vector<uint32_t> vActiveUnofficialAchievements;
-        bool bHasUnofficialAchievements = false;
+        std::vector<uint32_t> vActiveUnpromotedAchievements;
+        bool bHasUnpromotedAchievements = false;
 
-        if (pClient->game) {
+        if (pClient->game)
+        {
             const auto* subset = pClient->game->subsets;
-            for (; subset; subset = subset->next) {
+            for (; subset; subset = subset->next)
+            {
                 if (!subset->active)
                     continue;
 
                 const auto* achievement = subset->achievements;
                 const auto* stop = achievement + subset->public_.num_achievements;
-                for (; achievement < stop; ++achievement) {
-                    if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED) {
-                        bHasUnofficialAchievements = true;
+                for (; achievement < stop; ++achievement)
+                {
+                    if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED)
+                    {
+                        bHasUnpromotedAchievements = true;
 
                         if (achievement->public_.state == RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE)
-                            vActiveUnofficialAchievements.push_back(achievement->public_.id);
+                            vActiveUnpromotedAchievements.push_back(achievement->public_.id);
                     }
                 }
             }
@@ -1158,27 +1162,33 @@ void SyncClientExternalHardcoreState()
 
         rc_client_set_hardcore_enabled(pClient, bHardcore);
 
-        // rc_client automatically activates unofficial achievements on hardcore change.
+        // rc_client automatically activates unpromoted achievements on hardcore change.
         // go through and deactivate anything that wasn't active before the switch.
-        if (bHasUnofficialAchievements) {
+        if (bHasUnpromotedAchievements)
+        {
             const auto* subset = pClient->game->subsets;
-            for (; subset; subset = subset->next) {
+            for (; subset; subset = subset->next)
+            {
                 if (!subset->active)
                     continue;
 
                 auto* achievement = subset->achievements;
                 const auto* stop = achievement + subset->public_.num_achievements;
-                for (; achievement < stop; ++achievement) {
+                for (; achievement < stop; ++achievement)
+                {
                     if (achievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED) {
                         if (achievement->public_.state == RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE) {
                             bool bFound = false;
-                            for (const auto id : vActiveUnofficialAchievements) {
-                                if (id == achievement->public_.id) {
+                            for (const auto id : vActiveUnpromotedAchievements)
+                            {
+                                if (id == achievement->public_.id)
+                                {
                                     bFound = true;
                                     break;
                                 }
                             }
-                            if (!bFound) {
+                            if (!bFound)
+                            {
                                 achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
 
                                 if (achievement->trigger)

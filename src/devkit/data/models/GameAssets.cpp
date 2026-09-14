@@ -72,18 +72,18 @@ ra::data::models::AssetCategory GameAssets::MostPublishedAssetCategory() const
                 bHasLocalAssets = true;
                 break;
 
-            case ra::data::models::AssetCategory::Unofficial:
+            case ra::data::models::AssetCategory::Unpromoted:
                 bHasUnpublishedAssets = true;
                 break;
 
             default:
                 // Core, Bonus, or something else that's been published
-                return ra::data::models::AssetCategory::Core;
+                return ra::data::models::AssetCategory::Promoted;
         }
     }
 
     if (bHasUnpublishedAssets)
-        return ra::data::models::AssetCategory::Unofficial;
+        return ra::data::models::AssetCategory::Unpromoted;
 
     if (bHasLocalAssets)
         return ra::data::models::AssetCategory::Local;
@@ -613,7 +613,7 @@ void GameAssets::AddAchievementSet(uint32_t nId, uint32_t nGameId, const std::ws
     m_vAchievementSets.Append(std::move(vmAchievementSet));
 
     // core subset should always be first
-    if (nType == AchievementSetType::Core)
+    if (nType == AchievementSetType::Promoted)
         m_vAchievementSets.MoveItem(m_vAchievementSets.Count() - 1, 0);
 }
 

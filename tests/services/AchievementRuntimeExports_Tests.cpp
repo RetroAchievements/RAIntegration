@@ -267,8 +267,8 @@ private:
 
         Assert::IsNotNull((void*)pClient.set_hardcore_enabled, L"set_hardcore_enabled not set");
         Assert::IsNotNull((void*)pClient.get_hardcore_enabled, L"get_hardcore_enabled not set");
-        Assert::IsNotNull((void*)pClient.set_unpromoted_enabled, L"set_unofficial_enabled not set");
-        Assert::IsNotNull((void*)pClient.get_unpromoted_enabled, L"get_unofficial_enabled not set");
+        Assert::IsNotNull((void*)pClient.set_unpromoted_enabled, L"set_unpromoted_enabled not set");
+        Assert::IsNotNull((void*)pClient.get_unpromoted_enabled, L"get_unpromoted_enabled not set");
         Assert::IsNotNull((void*)pClient.set_encore_mode_enabled, L"set_encore_mode_enabled not set");
         Assert::IsNotNull((void*)pClient.get_encore_mode_enabled, L"get_encore_mode_enabled not set");
         Assert::IsNotNull((void*)pClient.set_spectator_mode_enabled, L"set_spectator_mode_enabled not set");

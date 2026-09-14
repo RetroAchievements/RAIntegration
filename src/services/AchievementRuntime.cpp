@@ -89,7 +89,7 @@ static int CanSubmitAchievementUnlock(uint32_t nAchievementId, rc_client_t*)
     if (pAchievement == nullptr ||
         pAchievement->IsModified() ||
         pAchievement->GetChanges() != ra::data::models::AssetChanges::None ||
-        pAchievement->GetCategory() != ra::data::models::AssetCategory::Core)
+        pAchievement->GetCategory() != ra::data::models::AssetCategory::Promoted)
     {
         return 0;
     }
@@ -108,7 +108,7 @@ static int CanSubmitLeaderboardEntry(uint32_t nLeaderboardId, rc_client_t*)
     if (pLeaderboard == nullptr ||
         pLeaderboard->IsModified() ||
         pLeaderboard->GetChanges() != ra::data::models::AssetChanges::None ||
-        pLeaderboard->GetCategory() != ra::data::models::AssetCategory::Core)
+        pLeaderboard->GetCategory() != ra::data::models::AssetCategory::Promoted)
     {
         return 0;
     }
@@ -1028,8 +1028,8 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
             bTakeScreenshot = false;
             break;
 
-        case ra::data::models::AssetCategory::Unofficial:
-            vmPopup->SetTitle(L"Unofficial Achievement Unlocked");
+        case ra::data::models::AssetCategory::Unpromoted:
+            vmPopup->SetTitle(L"Unpromoted Achievement Unlocked");
             bSubmit = false;
             break;
 
@@ -1265,7 +1265,7 @@ static void HandleSubsetCompletedEvent(const rc_client_subset_t& pSubset)
             for (const auto& pAsset : pGameContext.Assets())
             {
                 const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pAsset);
-                if (pAchievement && pAchievement->GetSubsetID() == pSubset.id && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
+                if (pAchievement && pAchievement->GetSubsetID() == pSubset.id && pAchievement->GetCategory() == ra::data::models::AssetCategory::Promoted)
                     nPoints += pAchievement->GetPoints();
             }
 
@@ -1385,9 +1385,9 @@ static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLead
             bSubmit = false;
             break;
 
-        case ra::data::models::AssetCategory::Unofficial:
-            sTitle.insert(0, L"Unofficial ");
-            vmPopup->SetDetail(L"Unofficial leaderboards are not submitted.");
+        case ra::data::models::AssetCategory::Unpromoted:
+            sTitle.insert(0, L"Unpromoted ");
+            vmPopup->SetDetail(L"Unpromoted leaderboards are not submitted.");
             bSubmit = false;
             break;
 

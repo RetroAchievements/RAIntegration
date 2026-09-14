@@ -234,7 +234,7 @@ public:
         Assert::AreEqual(1U, pSubset->public_.num_achievements);
         Assert::IsTrue(pSubset->active);
 
-        set.assets.FindAchievement(ra::data::models::GameAssets::FirstLocalId)->SetCategory(ra::data::models::AssetCategory::Unofficial);
+        set.assets.FindAchievement(ra::data::models::GameAssets::FirstLocalId)->SetCategory(ra::data::models::AssetCategory::Unpromoted);
         set.SyncAssets();
 
         pSubset = set.GetLocalSubsetInfo();
@@ -359,7 +359,7 @@ public:
         Assert::AreEqual(1U, pSubset->public_.num_leaderboards);
         Assert::IsTrue(pSubset->active);
 
-        set.assets.FindLeaderboard(ra::data::models::GameAssets::FirstLocalId)->SetCategory(ra::data::models::AssetCategory::Core);
+        set.assets.FindLeaderboard(ra::data::models::GameAssets::FirstLocalId)->SetCategory(ra::data::models::AssetCategory::Promoted);
         set.SyncAssets();
 
         pSubset = set.GetLocalSubsetInfo();

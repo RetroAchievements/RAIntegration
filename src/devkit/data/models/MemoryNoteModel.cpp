@@ -1349,21 +1349,31 @@ static std::wstring_view MatchSubNote(std::wstring_view svNote, std::function<bo
             const auto svValues = GetValues(svLine);
             if (!svValues.empty())
             {
-                size_t nFront = 0;
-                do {
-                    const auto nComma = svValues.find_first_of(L",;", nFront);
-                    const auto svValue = (nComma == std::wstring::npos) ? svValues.substr(nFront) : svValues.substr(nFront, nComma - nFront);
+                if (svValues == svLine)
+                {
+                    // If the line starts with mapped values, GetValues() returns the whole line. Try to match it.
+                    if (fMatch(svLine))
+                        return svLine;
+                }
+                else
+                {
+                    // Break the values subclause into individual parts and try to match each.
+                    size_t nFront = 0;
+                    do {
+                        const auto nComma = svValues.find_first_of(L",;", nFront);
+                        const auto svValue = (nComma == std::wstring::npos) ? svValues.substr(nFront) : svValues.substr(nFront, nComma - nFront);
 
-                    if (fMatch(svValue))
-                        return svValue;
+                        if (fMatch(svValue))
+                            return svValue;
 
-                    if (nComma == std::wstring::npos)
-                        break;
+                        if (nComma == std::wstring::npos)
+                            break;
 
-                    nFront = nComma + 1;
-                    while (nFront < svValues.size() && ra::util::String::IsSpace(svValues.at(nFront)))
-                        ++nFront;
-                } while (nFront < svValues.size());
+                        nFront = nComma + 1;
+                        while (nFront < svValues.size() && ra::util::String::IsSpace(svValues.at(nFront)))
+                            ++nFront;
+                    } while (nFront < svValues.size());
+                }
             }
         }
 

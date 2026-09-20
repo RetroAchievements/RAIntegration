@@ -133,12 +133,12 @@ private:
         PromoteAllDisabled,
     };
 
-    enum class ResetButtonState
+    enum class ReloadButtonState
     {
-        Reset,
-        ResetDisabled,
-        ResetAll,
-        ResetAllDisabled
+        Reload,
+        ReloadDisabled,
+        ReloadAll,
+        ReloadAllDisabled
     };
 
     enum class RevertButtonState
@@ -305,28 +305,28 @@ private:
             }
         }
 
-        void AssertButtonState(ResetButtonState nResetButtonState)
+        void AssertButtonState(ReloadButtonState nReloadButtonState)
         {
-            switch (nResetButtonState)
+            switch (nReloadButtonState)
             {
-                case ResetButtonState::Reset:
-                    Assert::AreEqual(std::wstring(L"&Reset"), GetValue(ResetButtonTextProperty));
-                    Assert::IsTrue(CanReset(), L"Reset button should not be disabled");
+                case ReloadButtonState::Reload:
+                    Assert::AreEqual(std::wstring(L"&Reload"), GetValue(ReloadButtonTextProperty));
+                    Assert::IsTrue(CanReload(), L"Reload button should not be disabled");
                     break;
 
-                case ResetButtonState::ResetDisabled:
-                    Assert::AreEqual(std::wstring(L"&Reset"), GetValue(ResetButtonTextProperty));
-                    Assert::IsFalse(CanReset(), L"Reset button should be disabled");
+                case ReloadButtonState::ReloadDisabled:
+                    Assert::AreEqual(std::wstring(L"&Reload"), GetValue(ReloadButtonTextProperty));
+                    Assert::IsFalse(CanReload(), L"Reload button should be disabled");
                     break;
 
-                case ResetButtonState::ResetAll:
-                    Assert::AreEqual(std::wstring(L"&Reset All"), GetValue(ResetButtonTextProperty));
-                    Assert::IsTrue(CanReset(), L"Reset All button should not be disabled");
+                case ReloadButtonState::ReloadAll:
+                    Assert::AreEqual(std::wstring(L"&Reload All"), GetValue(ReloadButtonTextProperty));
+                    Assert::IsTrue(CanReload(), L"Reload All button should not be disabled");
                     break;
 
-                case ResetButtonState::ResetAllDisabled:
-                    Assert::AreEqual(std::wstring(L"&Reset All"), GetValue(ResetButtonTextProperty));
-                    Assert::IsFalse(CanReset(), L"Reset All button should be disabled");
+                case ReloadButtonState::ReloadAllDisabled:
+                    Assert::AreEqual(std::wstring(L"&Reload All"), GetValue(ReloadButtonTextProperty));
+                    Assert::IsFalse(CanReload(), L"Reload All button should be disabled");
                     break;
             }
         }
@@ -401,13 +401,13 @@ private:
         }
 
         void AssertButtonState(ActivateButtonState nActivateButtonState,
-            SaveButtonState nSaveButtonState, ResetButtonState nResetButtonState,
+            SaveButtonState nSaveButtonState, ReloadButtonState nReloadButtonState,
             RevertButtonState nRevertButtonState, CreateButtonState nCreateButtonState,
             CloneButtonState nCloneButtonState)
         {
             AssertButtonState(nActivateButtonState);
             AssertButtonState(nSaveButtonState);
-            AssertButtonState(nResetButtonState);
+            AssertButtonState(nReloadButtonState);
             AssertButtonState(nRevertButtonState);
             AssertButtonState(nCreateButtonState);
             AssertButtonState(nCloneButtonState);
@@ -1483,7 +1483,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAllDisabled, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAllDisabled, RevertButtonState::RevertAllDisabled,
+            ReloadButtonState::ReloadAllDisabled, RevertButtonState::RevertAllDisabled,
             CreateButtonState::Disabled, CloneButtonState::Disabled
         );
 
@@ -1494,7 +1494,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAllDisabled, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAllDisabled, RevertButtonState::RevertAllDisabled,
+            ReloadButtonState::ReloadAllDisabled, RevertButtonState::RevertAllDisabled,
             CreateButtonState::Disabled, CloneButtonState::Disabled
         );
     }
@@ -1510,7 +1510,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAllDisabled, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
+            ReloadButtonState::ReloadAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -1529,7 +1529,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
+            ReloadButtonState::ReloadAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -1550,7 +1550,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1572,7 +1572,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Deactivate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1596,7 +1596,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1616,7 +1616,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Promote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1638,7 +1638,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
+            ReloadButtonState::ReloadAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
 
@@ -1647,7 +1647,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Deactivate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1656,7 +1656,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1665,7 +1665,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1674,7 +1674,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
+            ReloadButtonState::ReloadAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -1697,7 +1697,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Deactivate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1707,7 +1707,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
+            ReloadButtonState::ReloadAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
 
@@ -1717,7 +1717,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAllDisabled, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
+            ReloadButtonState::ReloadAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
 
@@ -1727,7 +1727,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
+            ReloadButtonState::ReloadAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -1749,7 +1749,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Deactivate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1760,7 +1760,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::PromoteAll,
-            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
+            ReloadButtonState::ReloadAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -1782,7 +1782,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Save,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1805,7 +1805,7 @@ public:
         // single unmodified selected record, show save button instead of save all, but disable it
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1825,7 +1825,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1834,7 +1834,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Save,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1843,7 +1843,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1865,7 +1865,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Save,
-            ResetButtonState::ResetDisabled, RevertButtonState::Delete,
+            ReloadButtonState::ReloadDisabled, RevertButtonState::Delete,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1888,7 +1888,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Publish,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1911,7 +1911,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1931,7 +1931,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1941,7 +1941,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Publish,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1951,7 +1951,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1973,7 +1973,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::DemoteDisabled,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1997,7 +1997,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::PublishDisabled,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -2018,7 +2018,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::PromoteDisabled,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ReloadButtonState::Reload, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -4214,7 +4214,7 @@ public:
         Assert::IsTrue(bMessageSeen);
     }
 
-    TEST_METHOD(TestCloneReset)
+    TEST_METHOD(TestCloneReload)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
@@ -4254,14 +4254,14 @@ public:
         Assert::AreEqual({ 111000001U }, pAsset->GetId());
         Assert::AreEqual(7, pAsset->GetPoints());
 
-        // save the asset - if we reset without saving, it'll just get deleted
+        // save the asset - if we reload without saving, it'll just get deleted
         vmAssetList.ForceUpdateButtons();
         vmAssetList.SaveSelected();
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
 
-        // resetting the achievement should not change anything about it
+        // reloading the achievement should not change anything about it
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
         Expects(pAsset != nullptr);
@@ -4273,7 +4273,7 @@ public:
         Assert::AreEqual(7, pAsset->GetPoints());
     }
 
-    TEST_METHOD(TestCloneResetWithTemporaryImage)
+    TEST_METHOD(TestCloneReloadWithTemporaryImage)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
@@ -4314,16 +4314,16 @@ public:
         auto* pAchClone = vmAssetList.mockGameContext.Assets().FindAchievement(pAsset->GetId());
         Expects(pAchClone != nullptr);
 
-        // save the asset - if we reset without saving, it'll just get deleted
+        // save the asset - if we reload without saving, it'll just get deleted
         vmAssetList.ForceUpdateButtons();
         vmAssetList.SaveSelected();
         Assert::AreEqual(pAch->GetBadge(), pAchClone->GetBadge());
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
 
-        // resetting the achievement should not change anything about it
+        // reloading the achievement should not change anything about it
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
         Assert::AreEqual(pAch->GetBadge(), pAchClone->GetBadge());
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
@@ -4341,9 +4341,9 @@ public:
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, true));
 
-        // resetting the achievement should not change anything about it
+        // reloading the achievement should not change anything about it
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
         Assert::AreEqual(sBadge1, pAchClone->GetBadge());
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, true));
@@ -4356,9 +4356,9 @@ public:
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge2, false));
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
 
-        // resetting should update reference counts
+        // reloading should update reference counts
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
         Assert::AreEqual(sBadge1, pAchClone->GetBadge());
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, true));
@@ -4366,7 +4366,7 @@ public:
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
     }
 
-    TEST_METHOD(TestCloneResetWithTemporaryImages)
+    TEST_METHOD(TestCloneReloadWithTemporaryImages)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
@@ -4410,7 +4410,7 @@ public:
         Assert::AreEqual(pAch->GetBadge(), pAchClone->GetBadge());
         Assert::AreEqual(2, pLocalBadges->GetReferenceCount(sBadge1, false));
 
-        // save the asset - if we reset without saving, it'll just get deleted
+        // save the asset - if we reload without saving, it'll just get deleted
         vmAssetList.ForceUpdateButtons();
         vmAssetList.SaveSelected();
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
@@ -4419,9 +4419,9 @@ public:
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
 
-        // resetting the achievement should not change anything about it
+        // reloading the achievement should not change anything about it
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
         Assert::AreEqual(sBadge1, pAchClone->GetBadge());
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, true));
@@ -4445,9 +4445,9 @@ public:
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge2, true));
 
-        // resetting the achievement should not change anything about it
+        // reloading the achievement should not change anything about it
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
         Assert::AreEqual(sBadge2, pAchClone->GetBadge());
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
@@ -4462,9 +4462,9 @@ public:
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
 
-        // resetting should update reference counts
+        // reloading should update reference counts
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
         Assert::AreEqual(sBadge2, pAchClone->GetBadge());
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
@@ -4541,13 +4541,13 @@ public:
         bEditorShown = false;
     }
 
-    TEST_METHOD(TestResetSelectedAllUnmodified)
+    TEST_METHOD(TestReloadSelectedAllUnmodified)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
+        vmAssetList.AssertButtonState(ReloadButtonState::ReloadAll);
 
         bool bDialogShown = false;
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
@@ -4558,7 +4558,7 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -4569,13 +4569,13 @@ public:
         Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedAllKeepsModifiedMemoryNote)
+    TEST_METHOD(TestReloadSelectedAllKeepsModifiedMemoryNote)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
+        vmAssetList.AssertButtonState(ReloadButtonState::ReloadAll);
         vmAssetList.mockGameContext.InitializeNotes();
 
         bool bDialogShown = false;
@@ -4592,7 +4592,7 @@ public:
         vmAssetList.mockWindowManager.MemoryInspector.SetCurrentAddressNote(L"foo");
         Assert::IsTrue(vmAssetList.mockWindowManager.MemoryInspector.IsNoteUncommitted());
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -4603,14 +4603,14 @@ public:
         Assert::AreEqual(std::wstring(L"foo"), *pNote);
     }
 
-    TEST_METHOD(TestResetSelectedUnmodified)
+    TEST_METHOD(TestReloadSelectedUnmodified)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         bool bDialogShown = false;
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
@@ -4621,7 +4621,7 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -4632,14 +4632,14 @@ public:
         Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedUnmodifiedFromFile)
+    TEST_METHOD(TestReloadSelectedUnmodifiedFromFile)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         vmAssetList.MockUserFileContents("1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n");
 
@@ -4650,7 +4650,7 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -4662,14 +4662,14 @@ public:
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedModifiedFromFile)
+    TEST_METHOD(TestReloadSelectedModifiedFromFile)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
         Assert::IsNotNull(pAsset);
@@ -4686,7 +4686,7 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -4695,14 +4695,14 @@ public:
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedModifiedAbort)
+    TEST_METHOD(TestReloadSelectedModifiedAbort)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
         Assert::IsNotNull(pAsset);
@@ -4719,7 +4719,7 @@ public:
             return DialogResult::No;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -4728,7 +4728,7 @@ public:
         Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedModifiedInvalid)
+    TEST_METHOD(TestReloadSelectedModifiedInvalid)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
@@ -4736,7 +4736,7 @@ public:
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.SetValidationError(vmAssetList.FilteredAssets().GetItemAt(0)->GetId(), L"Error message goes here.");
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
         Assert::IsNotNull(pAsset);
@@ -4754,9 +4754,9 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
-        // invalid asset should be allowed to be reset, with only one confirmation dialog
+        // invalid asset should be allowed to be reloaded, with only one confirmation dialog
         Assert::AreEqual(1, nDialogShown);
 
         Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
@@ -4764,7 +4764,7 @@ public:
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedModifiedPromotedHardcore)
+    TEST_METHOD(TestReloadSelectedModifiedPromotedHardcore)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
@@ -4780,17 +4780,17 @@ public:
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel&) { return DialogResult::Yes; });
         vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
-        vmAssetList.ResetSelected();
-        Assert::AreEqual(std::string("reset promoted achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        vmAssetList.ReloadSelected();
+        Assert::AreEqual(std::string("reload promoted achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
 
         Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedModifiedPromotedHardcoreCancel)
+    TEST_METHOD(TestReloadSelectedModifiedPromotedHardcoreCancel)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
@@ -4806,17 +4806,17 @@ public:
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel&) { return DialogResult::Yes; });
         vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::No);
-        vmAssetList.ResetSelected();
-        Assert::AreEqual(std::string("reset promoted achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        vmAssetList.ReloadSelected();
+        Assert::AreEqual(std::string("reload promoted achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
 
         Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedModifiedFromFileHardcore)
+    TEST_METHOD(TestReloadSelectedModifiedFromFileHardcore)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
@@ -4824,7 +4824,7 @@ public:
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
         Assert::IsNotNull(pAsset);
@@ -4835,7 +4835,7 @@ public:
         vmAssetList.MockUserFileContents("1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n");
 
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel&) { return DialogResult::Yes; });
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
         Assert::AreEqual(std::string(), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
 
         Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
@@ -4843,7 +4843,7 @@ public:
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedNoLongerExistsInFileOpenInEditor)
+    TEST_METHOD(TestReloadSelectedNoLongerExistsInFileOpenInEditor)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
@@ -4851,7 +4851,7 @@ public:
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
         Assert::IsNotNull(pAsset);
@@ -4869,7 +4869,7 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -4879,7 +4879,7 @@ public:
         Assert::IsNull(vmAssetList.mockWindowManager.AssetEditor.GetAsset());
     }
 
-    TEST_METHOD(TestResetSelectedNoLongerExistsInFilePrimedChallenge)
+    TEST_METHOD(TestReloadSelectedNoLongerExistsInFilePrimedChallenge)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
@@ -4887,7 +4887,7 @@ public:
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         auto* vmAsset = vmAssetList.mockGameContext.Assets().GetItemAt(0);
         Assert::IsNotNull(vmAsset);
@@ -4909,7 +4909,7 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -4918,7 +4918,7 @@ public:
         Assert::IsTrue(pIndicator->IsDestroyPending());
     }
 
-    TEST_METHOD(TestResetSelectedNoLongerExistsInFilePrimedLeaderboard)
+    TEST_METHOD(TestReloadSelectedNoLongerExistsInFilePrimedLeaderboard)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
@@ -4927,7 +4927,7 @@ public:
         vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::Leaderboard);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         auto* vmAsset = vmAssetList.mockGameContext.Assets().GetItemAt(0);
         Assert::IsNotNull(vmAsset);
@@ -4949,7 +4949,7 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -4958,7 +4958,7 @@ public:
         Assert::IsTrue(pIndicator->IsDestroyPending());
     }
 
-    TEST_METHOD(TestResetSelectedSomeNew)
+    TEST_METHOD(TestReloadSelectedSomeNew)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
@@ -4968,9 +4968,9 @@ public:
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
 
-        // if new and non-new items are selected, allow the user to reset. new items will be discarded
+        // if new and non-new items are selected, allow the user to reload. new items will be discarded
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         bool bDialogShown = false;
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
@@ -4981,7 +4981,7 @@ public:
 
         vmAssetList.MockUserFileContents("2:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -4994,7 +4994,7 @@ public:
         Assert::AreEqual(std::string("0xH2345=0"), pAch2->GetTrigger());
     }
 
-    TEST_METHOD(TestResetSelectedAllSomeNew)
+    TEST_METHOD(TestReloadSelectedAllSomeNew)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
@@ -5002,9 +5002,9 @@ public:
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test2", L"Desc2", L"12345", "0xH1234=1");
         vmAssetList.SetCategoryFilter(AssetListViewModel::CategoryFilter::Local);
 
-        // if new and non-new items are selected, allow the user to reset. new items will be discarded
+        // if new and non-new items are selected, allow the user to reload. new items will be discarded
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
+        vmAssetList.AssertButtonState(ReloadButtonState::ReloadAll);
 
         bool bDialogShown = false;
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
@@ -5015,7 +5015,7 @@ public:
 
         vmAssetList.MockUserFileContents("2:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -5028,13 +5028,13 @@ public:
         Assert::AreEqual(std::string("0xH2345=0"), pAch2->GetTrigger());
     }
 
-    TEST_METHOD(TestResetSelectedAllNewFromFile)
+    TEST_METHOD(TestReloadSelectedAllNewFromFile)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
+        vmAssetList.AssertButtonState(ReloadButtonState::ReloadAll);
 
         vmAssetList.MockUserFileContents("111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
 
@@ -5045,7 +5045,7 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -5057,14 +5057,14 @@ public:
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
     }
 
-    TEST_METHOD(TestResetSelectedNewFromFileWithSelection)
+    TEST_METHOD(TestReloadSelectedNewFromFileWithSelection)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ReloadButtonState::Reload);
 
         vmAssetList.MockUserFileContents("111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
 
@@ -5075,15 +5075,15 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
-        // new item will be ignored when a selection is reset.
+        // new item will be ignored when a selection is reload.
         Assert::IsNull(vmAssetList.mockGameContext.Assets().FindAchievement({ 111000001U }));
     }
 
-    TEST_METHOD(TestResetSelectedAllNewFromFileLocalImage)
+    TEST_METHOD(TestReloadSelectedAllNewFromFileLocalImage)
     {
         AssetListViewModelHarness vmAssetList;
         const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
@@ -5091,7 +5091,7 @@ public:
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
+        vmAssetList.AssertButtonState(ReloadButtonState::ReloadAll);
         const std::wstring sBadge = L"local\\ABCD.png";
 
         vmAssetList.MockUserFileContents("111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::\"local\\\\ABCD.png\"\n");
@@ -5103,7 +5103,7 @@ public:
             return DialogResult::Yes;
         });
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
 
         Assert::IsTrue(bDialogShown);
 
@@ -5116,7 +5116,7 @@ public:
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge, true));
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge, false));
 
-        vmAssetList.ResetSelected();
+        vmAssetList.ReloadSelected();
         Assert::IsTrue(bDialogShown);
 
         // make sure reference counts remain unchanged
@@ -5674,7 +5674,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::DemoteDisabled,
-            ResetButtonState::ResetDisabled, RevertButtonState::Revert,
+            ReloadButtonState::ReloadDisabled, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -5695,7 +5695,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
-            ResetButtonState::ResetDisabled, RevertButtonState::Revert,
+            ReloadButtonState::ReloadDisabled, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -5716,7 +5716,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Publish,
-            ResetButtonState::ResetDisabled, RevertButtonState::DeleteDisabled,
+            ReloadButtonState::ReloadDisabled, RevertButtonState::DeleteDisabled,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -5738,14 +5738,14 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(ActivateButtonState::ActivateAll, SaveButtonState::PublishAll,
-                                      ResetButtonState::ResetAll, RevertButtonState::RevertAll,
+                                      ReloadButtonState::ReloadAll, RevertButtonState::RevertAll,
                                       CreateButtonState::Enabled, CloneButtonState::Disabled);
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(ActivateButtonState::Activate, SaveButtonState::Publish,
-                                      ResetButtonState::ResetDisabled, RevertButtonState::Revert,
+                                      ReloadButtonState::ReloadDisabled, RevertButtonState::Revert,
                                       CreateButtonState::Enabled, CloneButtonState::Disabled);
     }
 

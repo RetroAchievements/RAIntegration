@@ -38,11 +38,11 @@ const BoolModelProperty AssetListViewModel::IsProcessingActiveProperty("AssetLis
 const BoolModelProperty AssetListViewModel::KeepActiveProperty("AssetListViewModel", "KeepActive", false);
 const StringModelProperty AssetListViewModel::ActivateButtonTextProperty("AssetListViewModel", "ActivateButtonText", L"&Activate All");
 const StringModelProperty AssetListViewModel::SaveButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Save All");
-const StringModelProperty AssetListViewModel::ResetButtonTextProperty("AssetListViewModel", "ResetButtonText", L"&Reset All");
+const StringModelProperty AssetListViewModel::ReloadButtonTextProperty("AssetListViewModel", "ReloadButtonText", L"&Reload All");
 const StringModelProperty AssetListViewModel::RevertButtonTextProperty("AssetListViewModel", "RevertButtonText", L"Re&vert All");
 const BoolModelProperty AssetListViewModel::CanActivateProperty("AssetListViewModel", "CanActivate", false);
 const BoolModelProperty AssetListViewModel::CanSaveProperty("AssetListViewModel", "CanSave", false);
-const BoolModelProperty AssetListViewModel::CanResetProperty("AssetListViewModel", "CanReset", false);
+const BoolModelProperty AssetListViewModel::CanReloadProperty("AssetListViewModel", "CanReload", false);
 const BoolModelProperty AssetListViewModel::CanRevertProperty("AssetListViewModel", "CanRevert", false);
 const BoolModelProperty AssetListViewModel::CanCreateProperty("AssetListViewModel", "CanCreate", false);
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", false);
@@ -919,24 +919,24 @@ void AssetListViewModel::DoUpdateButtons()
         SetValue(CanSaveProperty, false);
     }
 
-    // Reset
+    // Reload
     if (bGameLoaded)
     {
         if (bHasSelection)
         {
-            SetValue(ResetButtonTextProperty, L"&Reset");
-            SetValue(CanResetProperty, bHasNonNewSelection && !bHasRichPresenceSelection);
+            SetValue(ReloadButtonTextProperty, L"&Reload");
+            SetValue(CanReloadProperty, bHasNonNewSelection && !bHasRichPresenceSelection);
         }
         else
         {
-            SetValue(ResetButtonTextProperty, ResetButtonTextProperty.GetDefaultValue());
-            SetValue(CanResetProperty, true);
+            SetValue(ReloadButtonTextProperty, ReloadButtonTextProperty.GetDefaultValue());
+            SetValue(CanReloadProperty, true);
         }
     }
     else
     {
-        SetValue(ResetButtonTextProperty, ResetButtonTextProperty.GetDefaultValue());
-        SetValue(CanResetProperty, false);
+        SetValue(ReloadButtonTextProperty, ReloadButtonTextProperty.GetDefaultValue());
+        SetValue(CanReloadProperty, false);
     }
 
     // Revert/Delete
@@ -1469,9 +1469,9 @@ void AssetListViewModel::Publish(std::vector<ra::data::models::AssetModelBase*>&
     vmAssetUpload.ShowResults();
 }
 
-void AssetListViewModel::ResetSelected()
+void AssetListViewModel::ReloadSelected()
 {
-    if (!CanReset())
+    if (!CanReload())
         return;
 
     bool bPromotedAssetSelected = false;
@@ -1493,7 +1493,7 @@ void AssetListViewModel::ResetSelected()
     if (bPromotedAssetSelected)
     {
         auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        if (!pEmulatorContext.WarnDisableHardcoreMode("reset promoted achievements"))
+        if (!pEmulatorContext.WarnDisableHardcoreMode("reload promoted achievements"))
             return;
     }
 
@@ -1516,12 +1516,12 @@ void AssetListViewModel::ResetSelected()
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.Assets().BeginUpdate();
 
-    std::vector<ra::data::models::AssetModelBase*> vAssetsToReset;
+    std::vector<ra::data::models::AssetModelBase*> vAssetsToReload;
     if (vSelectedAssets.empty())
     {
-        RA_LOG_INFO("Resetting all assets");
+        RA_LOG_INFO("Reloading all assets");
 
-        // reset all - identify active assets and remove any "new" items
+        // reload all - identify active assets and remove any "new" items
         for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()) - 1; nIndex >= 0; --nIndex)
         {
             auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
@@ -1553,15 +1553,15 @@ void AssetListViewModel::ResetSelected()
         if (bIsNoteUncommitted)
             sCurrentNoteValue = pMemoryInspector.GetCurrentAddressNote();
 
-        // when resetting all, always read the file to pick up new items
-        pGameContext.Assets().ReloadAssets(vAssetsToReset);
+        // when reloading all, always read the file to pick up new items
+        pGameContext.Assets().ReloadAssets(vAssetsToReload);
 
         if (bIsNoteUncommitted)
             pMemoryInspector.SetCurrentAddressNote(sCurrentNoteValue);
     }
     else
     {
-        // reset selection, remove "new" items and get the AssetViewModel for the others
+        // reload selection, remove "new" items and get the AssetViewModel for the others
         for (auto* pItem : vSelectedAssets)
         {
             if (pItem == nullptr)
@@ -1590,17 +1590,17 @@ void AssetListViewModel::ResetSelected()
                     if (pAsset->GetChanges() == ra::data::models::AssetChanges::New)
                         pGameContext.Assets().RemoveAt(nIndex);
                     else
-                        vAssetsToReset.push_back(pAsset);
+                        vAssetsToReload.push_back(pAsset);
                     break;
                 }
             }
         }
 
         // if there were any non-new items, reload them from disk
-        if (!vAssetsToReset.empty())
+        if (!vAssetsToReload.empty())
         {
             std::string sMessage;
-            for (const auto* pAsset : vAssetsToReset)
+            for (const auto* pAsset : vAssetsToReload)
             {
                 if (pAsset == nullptr)
                     continue;
@@ -1609,9 +1609,9 @@ void AssetListViewModel::ResetSelected()
                     sMessage.push_back(',');
                 sMessage.append(std::to_string(pAsset->GetID()));
             }
-            RA_LOG_INFO("Resetting %zu assets: %s", vAssetsToReset.size(), sMessage);
+            RA_LOG_INFO("Reloading %zu assets: %s", vAssetsToReload.size(), sMessage);
 
-            pGameContext.Assets().ReloadAssets(vAssetsToReset);
+            pGameContext.Assets().ReloadAssets(vAssetsToReload);
         }
     }
 
@@ -1654,12 +1654,12 @@ void AssetListViewModel::RevertSelected()
     if (!CanRevert())
         return;
 
-    std::vector<ra::data::models::AssetModelBase*> vAssetsToReset;
-    GetSelectedAssets(vAssetsToReset);
+    std::vector<ra::data::models::AssetModelBase*> vAssetsToRevert;
+    GetSelectedAssets(vAssetsToRevert);
 
     bool bLocalAssetSelected = false;
     bool bPromotedAssetSelected = false;
-    for (const auto* pAsset : vAssetsToReset)
+    for (const auto* pAsset : vAssetsToRevert)
     {
         if (pAsset == nullptr)
             continue;
@@ -1693,7 +1693,7 @@ void AssetListViewModel::RevertSelected()
     {
         vmMessageBox.SetHeader(L"Revert from server?");
 
-        if (vAssetsToReset.size() == m_vFilteredAssets.Count())
+        if (vAssetsToRevert.size() == m_vFilteredAssets.Count())
             sWarningMessage = L"This will discard all local work and revert the assets to the last state retrieved from the server.";
         else
             sWarningMessage = L"This will discard any local work for the selected assets and revert them to the last state retrieved from the server.";
@@ -1716,7 +1716,7 @@ void AssetListViewModel::RevertSelected()
         return;
 
     std::string sMessage;
-    for (const auto* pAsset : vAssetsToReset)
+    for (const auto* pAsset : vAssetsToRevert)
     {
         if (pAsset == nullptr)
             continue;
@@ -1741,13 +1741,13 @@ void AssetListViewModel::RevertSelected()
 
         sMessage.append(std::to_string(pAsset->GetID()));
     }
-    RA_LOG_INFO("Reverting %zu assets: %s", vAssetsToReset.size(), sMessage);
+    RA_LOG_INFO("Reverting %zu assets: %s", vAssetsToRevert.size(), sMessage);
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     auto& pAssets = pGameContext.Assets();
     pAssets.BeginUpdate();
 
-    for (auto* pAsset : vAssetsToReset)
+    for (auto* pAsset : vAssetsToRevert)
     {
         Expects(pAsset != nullptr);
         if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
@@ -1773,7 +1773,7 @@ void AssetListViewModel::RevertSelected()
     pAssets.EndUpdate();
 
     // update the local file
-    pAssets.SaveAssets(vAssetsToReset);
+    pAssets.SaveAssets(vAssetsToRevert);
     UpdateButtons();
 }
 

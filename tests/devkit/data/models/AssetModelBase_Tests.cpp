@@ -117,7 +117,7 @@ public:
         Assert::AreEqual(0U, asset.GetID());
         Assert::AreEqual(std::wstring(L""), asset.GetName());
         Assert::AreEqual(std::wstring(L""), asset.GetDescription());
-        Assert::AreEqual(AssetCategory::Core, asset.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, asset.GetCategory());
         Assert::AreEqual(AssetState::Inactive, asset.GetState());
         Assert::AreEqual(AssetChanges::None, asset.GetChanges());
     }
@@ -338,7 +338,7 @@ public:
     {
         AssetModelHarness asset;
         asset.SetName(L"ServerName");
-        asset.SetCategory(AssetCategory::Core);
+        asset.SetCategory(AssetCategory::Promoted);
         asset.CreateServerCheckpoint();
         asset.CreateLocalCheckpoint();
 
@@ -360,7 +360,7 @@ public:
     {
         AssetModelHarness asset;
         asset.SetName(L"ServerName");
-        asset.SetCategory(AssetCategory::Core);
+        asset.SetCategory(AssetCategory::Promoted);
         asset.CreateServerCheckpoint();
         asset.SetName(L"LocalName");
         asset.CreateLocalCheckpoint();
@@ -478,7 +478,7 @@ public:
     {
         AssetDefinitionViewModelHarness asset;
         asset.SetName(L"ServerName");
-        asset.SetCategory(AssetCategory::Core);
+        asset.SetCategory(AssetCategory::Promoted);
         asset.SetDefinition("ServerDefinition");
         asset.CreateServerCheckpoint();
         asset.CreateLocalCheckpoint();
@@ -525,7 +525,7 @@ public:
     {
         AssetModelHarness asset;
         asset.SetName(L"ServerName");
-        asset.SetCategory(AssetCategory::Core);
+        asset.SetCategory(AssetCategory::Promoted);
         asset.MockValidationError(L"Core Error");
 
         // creating server checkpoint does not validate
@@ -541,7 +541,7 @@ public:
     {
         AssetModelHarness asset;
         asset.SetName(L"ServerName");
-        asset.SetCategory(AssetCategory::Core);
+        asset.SetCategory(AssetCategory::Promoted);
         asset.CreateServerCheckpoint();
         Assert::AreEqual(std::wstring(), asset.GetValidationError());
 
@@ -555,7 +555,7 @@ public:
     {
         AssetModelHarness asset;
         asset.SetName(L"ServerName");
-        asset.SetCategory(AssetCategory::Core);
+        asset.SetCategory(AssetCategory::Promoted);
         asset.CreateServerCheckpoint();
         asset.CreateLocalCheckpoint();
         Assert::AreEqual(std::wstring(), asset.GetValidationError());
@@ -578,7 +578,7 @@ public:
     {
         AssetModelHarness asset;
         asset.SetName(L"ServerName");
-        asset.SetCategory(AssetCategory::Core);
+        asset.SetCategory(AssetCategory::Promoted);
         asset.MockValidationError(L"Local Error");
         asset.CreateServerCheckpoint();
         asset.CreateLocalCheckpoint();

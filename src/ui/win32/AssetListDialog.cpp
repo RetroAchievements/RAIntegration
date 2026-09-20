@@ -240,7 +240,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     auto pCategoryColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         AssetModelBase::CategoryProperty, vmAssetList.Categories());
     pCategoryColumn->SetHeader(L"Category");
-    pCategoryColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 70);
+    pCategoryColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
     m_bindAssets.BindColumn(4 + nOffset, std::move(pCategoryColumn));
 
     auto pChangesColumn = std::make_unique<ChangesColumnBinding>(
@@ -298,7 +298,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     SetAnchor(IDC_RA_DOWNLOAD_ACH, Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_REVERTSELECTED, Anchor::Bottom | Anchor::Right);
 
-    SetMinimumSize(570, 293);
+    SetMinimumSize(620, 293);
 }
 
 BOOL AssetListDialog::OnInitDialog()

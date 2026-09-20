@@ -89,7 +89,7 @@ static int CanSubmitAchievementUnlock(uint32_t nAchievementId, rc_client_t*)
     if (pAchievement == nullptr ||
         pAchievement->IsModified() ||
         pAchievement->GetChanges() != ra::data::models::AssetChanges::None ||
-        pAchievement->GetCategory() != ra::data::models::AssetCategory::Core)
+        pAchievement->GetCategory() != ra::data::models::AssetCategory::Promoted)
     {
         return 0;
     }
@@ -108,7 +108,7 @@ static int CanSubmitLeaderboardEntry(uint32_t nLeaderboardId, rc_client_t*)
     if (pLeaderboard == nullptr ||
         pLeaderboard->IsModified() ||
         pLeaderboard->GetChanges() != ra::data::models::AssetChanges::None ||
-        pLeaderboard->GetCategory() != ra::data::models::AssetCategory::Core)
+        pLeaderboard->GetCategory() != ra::data::models::AssetCategory::Promoted)
     {
         return 0;
     }
@@ -1028,8 +1028,8 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
             bTakeScreenshot = false;
             break;
 
-        case ra::data::models::AssetCategory::Unofficial:
-            vmPopup->SetTitle(L"Unofficial Achievement Unlocked");
+        case ra::data::models::AssetCategory::Unpromoted:
+            vmPopup->SetTitle(L"Unpromoted Achievement Unlocked");
             bSubmit = false;
             break;
 
@@ -1265,7 +1265,7 @@ static void HandleSubsetCompletedEvent(const rc_client_subset_t& pSubset)
             for (const auto& pAsset : pGameContext.Assets())
             {
                 const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pAsset);
-                if (pAchievement && pAchievement->GetSubsetID() == pSubset.id && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
+                if (pAchievement && pAchievement->GetSubsetID() == pSubset.id && pAchievement->GetCategory() == ra::data::models::AssetCategory::Promoted)
                     nPoints += pAchievement->GetPoints();
             }
 
@@ -1284,7 +1284,7 @@ static void HandleGameCompletedEvent(const rc_client_t& pClient)
     rc_client_user_game_summary_t summary;
     rc_client_get_user_game_summary(&pClient, &summary);
 
-    ShowCompletionPopup(pGame->id, ra::util::String::Widen(pGame->title), summary.num_core_achievements, summary.points_core, pGame->badge_name);
+    ShowCompletionPopup(pGame->id, ra::util::String::Widen(pGame->title), summary.num_promoted_achievements, summary.points_available, pGame->badge_name);
 }
 
 static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeaderboard)
@@ -1385,9 +1385,9 @@ static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLead
             bSubmit = false;
             break;
 
-        case ra::data::models::AssetCategory::Unofficial:
-            sTitle.insert(0, L"Unofficial ");
-            vmPopup->SetDetail(L"Unofficial leaderboards are not submitted.");
+        case ra::data::models::AssetCategory::Unpromoted:
+            sTitle.insert(0, L"Unpromoted ");
+            vmPopup->SetDetail(L"Unpromoted leaderboards are not submitted.");
             bSubmit = false;
             break;
 
@@ -2144,18 +2144,8 @@ int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) 
 } // namespace services
 } // namespace ra
 
-extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, _UNUSED void* pData)
+extern "C" unsigned int rc_peek_callback(unsigned int nAddress, uint8_t* buffer, unsigned int nBytes, _UNUSED void* pData)
 {
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-    switch (nBytes)
-    {
-        case 1:
-            return pMemoryContext.ReadMemoryByte(nAddress);
-        case 2:
-            return pMemoryContext.ReadMemory(nAddress, ra::data::Memory::Size::SixteenBit);
-        case 4:
-            return pMemoryContext.ReadMemory(nAddress, ra::data::Memory::Size::ThirtyTwoBit);
-        default:
-            return 0U;
-    }
+    return pMemoryContext.ReadMemory(nAddress, buffer, nBytes);
 }

@@ -28,8 +28,8 @@ enum class AssetCategory
 {
     None = -1,
     Local = 0,
-    Core = 3,
-    Unofficial = 5,
+    Promoted = 3,
+    Unpromoted = 5,
 };
 
 enum class AssetState
@@ -326,7 +326,7 @@ protected:
     struct AssetDefinition
     {
         const IntModelProperty* m_pProperty = nullptr;
-        std::string m_sCoreDefinition;
+        std::string m_sPublishedDefinition;
         std::string m_sLocalDefinition;
         std::string m_sCurrentDefinition;
         bool m_bLocalModified = false;

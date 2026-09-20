@@ -148,7 +148,7 @@ void AchievementModel::CommitTransaction()
 bool AchievementModel::IsShownInList() const
 {
     // don't show warning achievements in asset list
-    if (GetID() >= FirstWarningAchievementId && GetCategory() == AssetCategory::Core)
+    if (GetID() >= FirstWarningAchievementId && GetCategory() == AssetCategory::Promoted)
         return false;
 
     return true;
@@ -392,13 +392,13 @@ void AchievementModel::SyncCategoryToRuntime() const
 {
     switch (GetCategory())
     {
-        case ra::data::models::AssetCategory::Core:
+        case ra::data::models::AssetCategory::Promoted:
         case ra::data::models::AssetCategory::Local:
-            m_pAchievementInfo->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+            m_pAchievementInfo->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED;
             break;
 
         default:
-            m_pAchievementInfo->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+            m_pAchievementInfo->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED;
             break;
     }
 }
@@ -538,12 +538,12 @@ void AchievementModel::InitializeFromPublishedAchievement(
 
     switch (pAchievement.public_.category)
     {
-        case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
-            SetCategory(AssetCategory::Core);
+        case RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED:
+            SetCategory(AssetCategory::Promoted);
             break;
 
-        case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:
-            SetCategory(AssetCategory::Unofficial);
+        case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED:
+            SetCategory(AssetCategory::Unpromoted);
             break;
 
         default:

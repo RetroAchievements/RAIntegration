@@ -289,7 +289,7 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
 
     if (pAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
     {
-        request.Category = ra::to_unsigned(ra::etoi(ra::data::models::AssetCategory::Unofficial));
+        request.Category = ra::to_unsigned(ra::etoi(ra::data::models::AssetCategory::Unpromoted));
     }
     else
     {
@@ -304,7 +304,7 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
     {
         if (pAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
         {
-            pAchievement.SetCategory(ra::data::models::AssetCategory::Unofficial);
+            pAchievement.SetCategory(ra::data::models::AssetCategory::Unpromoted);
             pAchievement.SetID(response.AchievementId);
         }
 
@@ -368,7 +368,7 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
     {
         if (pLeaderboard.GetCategory() == ra::data::models::AssetCategory::Local)
         {
-            pLeaderboard.SetCategory(ra::data::models::AssetCategory::Core);
+            pLeaderboard.SetCategory(ra::data::models::AssetCategory::Promoted);
             pLeaderboard.SetID(response.LeaderboardId);
         }
 
@@ -429,7 +429,7 @@ void AssetUploadViewModel::UploadRichPresence(ra::data::models::RichPresenceMode
     if (response.Succeeded())
     {
         if (pRichPresence.GetCategory() == ra::data::models::AssetCategory::Local)
-            pRichPresence.SetCategory(ra::data::models::AssetCategory::Core);
+            pRichPresence.SetCategory(ra::data::models::AssetCategory::Promoted);
 
         pRichPresence.UpdateLocalCheckpoint();
         pRichPresence.UpdateServerCheckpoint();

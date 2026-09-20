@@ -632,7 +632,7 @@ public:
             bDialogShown = true;
 
             Assert::AreEqual(std::wstring(L"Paste failed."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Clipboard contained multiple groups."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Cannot paste multiple groups to non-empty trigger."), vmMessageBox.GetMessage());
 
             return DialogResult::OK;
         });
@@ -641,6 +641,52 @@ public:
         vmTrigger.PasteFromClipboard();
 
         Assert::IsTrue(bDialogShown);
+    }
+
+    TEST_METHOD(TestPasteFromClipboardMultipleGroupsEmpty)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "");
+        Assert::AreEqual({ 0U }, vmTrigger.Conditions().Count());
+
+        vmTrigger.mockClipboard.SetText(L"0xL65FF=11S0xT3333=1");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsFalse(vmTrigger.mockDesktop.WasDialogShown());
+
+        Assert::AreEqual({ 2U }, vmTrigger.Groups().Count());
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+
+        Assert::AreEqual(std::string("0xL65ff=11S0xT3333=1"), vmTrigger.Serialize());
+    }
+
+    TEST_METHOD(TestPasteFromClipboardMultipleGroupsEmptyErrorInAlt)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "");
+        Assert::AreEqual({ 0U }, vmTrigger.Conditions().Count());
+
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+            {
+                bDialogShown = true;
+
+                Assert::AreEqual(std::wstring(L"Paste failed."), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"Clipboard did not contain valid trigger conditions."), vmMessageBox.GetMessage());
+
+                return DialogResult::OK;
+            });
+
+        vmTrigger.mockClipboard.SetText(L"0xL65FF=11Sx3333=1");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsTrue(bDialogShown);
+
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+        Assert::AreEqual({ 0U }, vmTrigger.Conditions().Count());
+
+        Assert::AreEqual(std::string(), vmTrigger.Serialize());
     }
 
     TEST_METHOD(TestPasteFromClipboardMultipleConditions)

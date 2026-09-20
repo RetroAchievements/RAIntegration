@@ -185,15 +185,15 @@ public:
     /// </summary>
     ra::data::models::AchievementModel& MockAchievement()
     {
-        return MockAchievement(Assets(), ra::data::models::AssetCategory::Core);
+        return MockAchievement(Assets(), ra::data::models::AssetCategory::Promoted);
     }
 
     /// <summary>
     /// Creates a new AchievementModel for an unpromoted achievement.
     /// </summary>
-    ra::data::models::AchievementModel& MockUnofficialAchievement()
+    ra::data::models::AchievementModel& MockUnpromotedAchievement()
     {
-        return MockAchievement(Assets(), ra::data::models::AssetCategory::Unofficial);
+        return MockAchievement(Assets(), ra::data::models::AssetCategory::Unpromoted);
     }
 
     /// <summary>
@@ -233,7 +233,7 @@ public:
     /// </summary>
     ra::data::models::LeaderboardModel& MockLeaderboard()
     {
-        return MockLeaderboard(Assets(), ra::data::models::AssetCategory::Core);
+        return MockLeaderboard(Assets(), ra::data::models::AssetCategory::Promoted);
     }
 
 private:

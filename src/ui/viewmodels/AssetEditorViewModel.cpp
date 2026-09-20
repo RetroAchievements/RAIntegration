@@ -29,7 +29,7 @@ namespace viewmodels {
 const IntModelProperty AssetEditorViewModel::IDProperty("AssetEditorViewModel", "ID", 0);
 const StringModelProperty AssetEditorViewModel::NameProperty("AssetEditorViewModel", "Name", L"[No Achievement Loaded]");
 const StringModelProperty AssetEditorViewModel::DescriptionProperty("AssetEditorViewModel", "Description", L"Open an achievement from the Achievements List");
-const IntModelProperty AssetEditorViewModel::CategoryProperty("AssetEditorViewModel", "Category", ra::etoi(ra::data::models::AssetCategory::Core));
+const IntModelProperty AssetEditorViewModel::CategoryProperty("AssetEditorViewModel", "Category", ra::etoi(ra::data::models::AssetCategory::Promoted));
 const IntModelProperty AssetEditorViewModel::StateProperty("AssetEditorViewModel", "State", ra::etoi(ra::data::models::AssetState::Inactive));
 const BoolModelProperty AssetEditorViewModel::IsAchievementProperty("AssetEditorViewModel", "IsAchievement", true);
 const IntModelProperty AssetEditorViewModel::PointsProperty("AssetEditorViewModel", "Points", 0);
@@ -193,7 +193,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
     {
         pAsset->AddNotifyTarget(*this);
 
-        SetName(pAsset->GetTitle());
+        SetName(pAsset->GetName());
         SetDescription(pAsset->GetDescription());
         SetState(pAsset->GetState());
         SetCategory(pAsset->GetCategory());

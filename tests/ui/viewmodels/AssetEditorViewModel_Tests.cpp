@@ -137,7 +137,7 @@ public:
         Assert::AreEqual(0U, editor.GetID());
         Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
-        Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
         Assert::AreEqual(0, editor.GetPoints());
         Assert::AreEqual(std::wstring(L"00000"), editor.GetBadge());
@@ -214,7 +214,7 @@ public:
         achievement.SetID(1234U);
         achievement.SetState(AssetState::Active);
         achievement.SetDescription(L"Do something cool");
-        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetCategory(AssetCategory::Unpromoted);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
         achievement.CreateServerCheckpoint();
@@ -226,7 +226,7 @@ public:
         Assert::AreEqual(1234U, editor.GetID());
         Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something cool"), editor.GetDescription());
-        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
         Assert::AreEqual(10, editor.GetPoints());
         Assert::AreEqual(std::wstring(L"58329"), editor.GetBadge());
@@ -247,7 +247,7 @@ public:
         Assert::AreEqual(0U, editor.GetID());
         Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
-        Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
         Assert::AreEqual(0, editor.GetPoints());
         Assert::AreEqual(std::wstring(L"00000"), editor.GetBadge());
@@ -285,7 +285,7 @@ public:
         achievement.SetID(1234U);
         achievement.SetState(AssetState::Active);
         achievement.SetDescription(L"Do something cool");
-        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetCategory(AssetCategory::Unpromoted);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
         achievement.CreateServerCheckpoint();
@@ -317,7 +317,7 @@ public:
         achievement2.SetID(2345U);
         achievement2.SetState(AssetState::Waiting);
         achievement2.SetDescription(L"Do something else");
-        achievement2.SetCategory(AssetCategory::Unofficial);
+        achievement2.SetCategory(AssetCategory::Unpromoted);
         achievement2.SetPoints(5);
         achievement2.SetBadge(L"83295");
         achievement2.CreateServerCheckpoint();
@@ -331,7 +331,7 @@ public:
         Assert::AreEqual(1234U, editor.GetID());
         Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something modified"), editor.GetDescription());
-        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
         Assert::AreEqual(10, editor.GetPoints());
         Assert::AreEqual(std::wstring(L"58329"), editor.GetBadge());
@@ -347,7 +347,7 @@ public:
         Assert::AreEqual(1234U, editor.GetID());
         Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something modified"), editor.GetDescription());
-        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
         Assert::AreEqual(10, editor.GetPoints());
         Assert::AreEqual(std::wstring(L"58329"), editor.GetBadge());
@@ -369,7 +369,7 @@ public:
         Assert::AreEqual(2345U, editor.GetID());
         Assert::AreEqual(std::wstring(L"Test Achievement 2"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something else"), editor.GetDescription());
-        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, editor.GetCategory());
         Assert::AreEqual(AssetState::Waiting, editor.GetState());
         Assert::AreEqual(5, editor.GetPoints());
         Assert::AreEqual(std::wstring(L"83295"), editor.GetBadge());
@@ -393,7 +393,7 @@ public:
         achievement.SetState(AssetState::Active);
         achievement.SetDescription(L"Do something cool");
         achievement.SetTrigger("M:0xH1234=6.11.");
-        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetCategory(AssetCategory::Unpromoted);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
         achievement.CreateServerCheckpoint();
@@ -405,7 +405,7 @@ public:
         achievement2.SetState(AssetState::Waiting);
         achievement2.SetDescription(L"Do something cool");
         achievement2.SetTrigger("M:0xH1234=6.11.");
-        achievement2.SetCategory(AssetCategory::Unofficial);
+        achievement2.SetCategory(AssetCategory::Unpromoted);
         achievement2.SetPoints(10);
         achievement2.SetBadge(L"58329");
         achievement2.CreateServerCheckpoint();
@@ -439,7 +439,7 @@ public:
         achievement.SetState(AssetState::Active);
         achievement.SetDescription(L"Do something cool");
         achievement.SetTrigger("M:0xH1234=6.11.");
-        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetCategory(AssetCategory::Unpromoted);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
         achievement.CreateServerCheckpoint();
@@ -451,7 +451,7 @@ public:
         Assert::AreEqual(1234U, editor.GetID());
         Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something cool"), editor.GetDescription());
-        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
         Assert::AreEqual(10, editor.GetPoints());
         Assert::AreEqual(std::wstring(L"58329"), editor.GetBadge());
@@ -467,7 +467,7 @@ public:
         Assert::AreEqual(0U, editor.GetID());
         Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
-        Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
         Assert::AreEqual(0, editor.GetPoints());
         Assert::AreEqual(std::wstring(L"00000"), editor.GetBadge());
@@ -510,7 +510,7 @@ public:
         achievement.SetID(1234U);
         achievement.SetState(AssetState::Active);
         achievement.SetDescription(L"Do something cool");
-        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetCategory(AssetCategory::Unpromoted);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
         achievement.SetTrigger("A:0xH1234"); // AddSource cannot be final condition
@@ -542,7 +542,7 @@ public:
         achievement.SetID(1234U);
         achievement.SetState(AssetState::Active);
         achievement.SetDescription(L"Do something cool");
-        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetCategory(AssetCategory::Unpromoted);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
         achievement.SetTrigger("M:0xH1234=10");
@@ -582,7 +582,7 @@ public:
         achievement.SetID(1234U);
         achievement.SetState(AssetState::Active);
         achievement.SetDescription(L"Do something cool");
-        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetCategory(AssetCategory::Unpromoted);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
         achievement.SetTrigger("M:0xH1234=10");
@@ -624,7 +624,7 @@ public:
         achievement.SetID(1234U);
         achievement.SetState(AssetState::Active);
         achievement.SetDescription(L"Do something cool");
-        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetCategory(AssetCategory::Unpromoted);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
         achievement.SetTrigger("M:0xH1234=10");
@@ -659,7 +659,7 @@ public:
         achievement.SetID(1234U);
         achievement.SetState(AssetState::Active);
         achievement.SetDescription(L"Do something cool");
-        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetCategory(AssetCategory::Unpromoted);
         achievement.SetPoints(10);
         achievement.SetBadge(L"58329");
         achievement.SetTrigger("M:0xH1234=10");
@@ -693,7 +693,7 @@ public:
         leaderboard.SetID(1234U);
         leaderboard.SetState(AssetState::Active);
         leaderboard.SetDescription(L"Do something cool");
-        leaderboard.SetCategory(AssetCategory::Unofficial);
+        leaderboard.SetCategory(AssetCategory::Unpromoted);
         leaderboard.SetStartTrigger("0xH1234=1");
         leaderboard.SetCancelTrigger("0xH1234=2");
         leaderboard.SetSubmitTrigger("0xH1234=3");
@@ -709,7 +709,7 @@ public:
         Assert::AreEqual(1234U, editor.GetID());
         Assert::AreEqual(std::wstring(L"Test Leaderboard"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Do something cool"), editor.GetDescription());
-        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, editor.GetCategory());
         Assert::AreEqual(AssetState::Active, editor.GetState());
         Assert::AreEqual(ra::data::Value::Format::Centiseconds, editor.GetValueFormat());
         Assert::IsFalse(editor.IsLowerBetter());
@@ -730,7 +730,7 @@ public:
         Assert::AreEqual(0U, editor.GetID());
         Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetTitle());
         Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
-        Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
         Assert::AreEqual(0, editor.GetPoints());
         Assert::AreEqual(std::wstring(L"00000"), editor.GetBadge());
@@ -890,19 +890,19 @@ public:
 
         editor.LoadAsset(&achievement);
         Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"Test Achievement"), achievement.GetTitle());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), achievement.GetName());
 
         editor.SetName(L"New Name");
         Assert::AreEqual(std::wstring(L"New Name"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement.GetName());
 
         editor.SetName(L"New Name 2");
         Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name 2"), achievement.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement.GetName());
 
         achievement.SetName(L"New Name 3");
         Assert::AreEqual(std::wstring(L"New Name 3"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name 3"), achievement.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 3"), achievement.GetName());
     }
 
     TEST_METHOD(TestSyncDescription)
@@ -1019,25 +1019,25 @@ public:
     {
         AssetEditorViewModelHarness editor;
         AchievementModel achievement;
-        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetCategory(AssetCategory::Unpromoted);
         achievement.CreateServerCheckpoint();
         achievement.CreateLocalCheckpoint();
 
         editor.LoadAsset(&achievement);
-        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
-        Assert::AreEqual(AssetCategory::Unofficial, achievement.GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, achievement.GetCategory());
 
-        editor.SetCategory(AssetCategory::Core);
-        Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
-        Assert::AreEqual(AssetCategory::Core, achievement.GetCategory());
+        editor.SetCategory(AssetCategory::Promoted);
+        Assert::AreEqual(AssetCategory::Promoted, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, achievement.GetCategory());
 
-        editor.SetCategory(AssetCategory::Unofficial);
-        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
-        Assert::AreEqual(AssetCategory::Unofficial, achievement.GetCategory());
+        editor.SetCategory(AssetCategory::Unpromoted);
+        Assert::AreEqual(AssetCategory::Unpromoted, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, achievement.GetCategory());
 
-        achievement.SetCategory(AssetCategory::Core);
-        Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
-        Assert::AreEqual(AssetCategory::Core, achievement.GetCategory());
+        achievement.SetCategory(AssetCategory::Promoted);
+        Assert::AreEqual(AssetCategory::Promoted, editor.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, achievement.GetCategory());
     }
 
     TEST_METHOD(TestSyncPoints)
@@ -1329,28 +1329,28 @@ public:
 
         editor.LoadAsset(&achievement1);
         Assert::AreEqual(std::wstring(L"Achievement1"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"Achievement1"), achievement1.GetTitle());
-        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement1"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
 
         editor.SetName(L"New Name");
         Assert::AreEqual(std::wstring(L"New Name"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetTitle());
-        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
 
         editor.LoadAsset(&achievement2);
         Assert::AreEqual(std::wstring(L"Achievement2"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetTitle());
-        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
 
         editor.SetName(L"New Name 2");
         Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetName());
 
         achievement1.SetName(L"New Name 3");
         Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name 3"), achievement1.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 3"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetName());
     }
 
     TEST_METHOD(TestUpdateActiveTrigger)

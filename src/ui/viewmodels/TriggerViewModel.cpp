@@ -343,14 +343,29 @@ void TriggerViewModel::PasteFromClipboard()
     {
         if (nResult == RC_MULTIPLE_GROUPS)
         {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                L"Paste failed.", L"Clipboard contained multiple groups.");
+            // if any conditions already exist, abort
+            if (Conditions().Count() > 0 || Groups().Count() > 1)
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                    L"Paste failed.", L"Cannot paste multiple groups to non-empty trigger.");
+                return;
+            }
+
+            {
+                std::lock_guard<std::mutex> lock(m_pMutex);
+
+                m_pTrigger = ParseTrigger(sNarrowText);
+            }
+
+            if (m_pTrigger)
+            {
+                InitializeGroups(*m_pTrigger);
+                return;
+            }
         }
-        else
-        {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-                L"Paste failed.", ra::util::String::Printf(L"Clipboard did not contain valid %s conditions.", IsValue() ? "value" : "trigger"));
-        }
+
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+            L"Paste failed.", ra::util::String::Printf(L"Clipboard did not contain valid %s conditions.", IsValue() ? "value" : "trigger"));
     }
 }
 
@@ -378,7 +393,7 @@ int TriggerViewModel::AppendMemRefChain(const std::string& sTrigger, bool bSelec
         if (nSize > 0 && *memaddr == 'S') // alts detected
             return RC_MULTIPLE_GROUPS;
 
-        return RC_INVALID_STATE; // additional test that was not parsed
+        return RC_INVALID_STATE; // additional text that was not parsed
     }
 
     auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
@@ -972,9 +987,9 @@ void TriggerViewModel::Summarize()
     TriggerSummaryViewModel vmSummary;
 
     if (m_vGroups.Count() == 1)
-        vmSummary.SetWindowTitle(L"Trigger Summary - " + pAssetEditor.GetAsset()->GetTitle());
+        vmSummary.SetWindowTitle(L"Trigger Summary - " + pAssetEditor.GetAsset()->GetName());
     else
-        vmSummary.SetWindowTitle(pGroup->GetLabel() + L" Summary - " + pAssetEditor.GetAsset()->GetTitle());
+        vmSummary.SetWindowTitle(pGroup->GetLabel() + L" Summary - " + pAssetEditor.GetAsset()->GetName());
 
     vmSummary.InitializeFrom(*pCondSet);
     vmSummary.AddHeaders();

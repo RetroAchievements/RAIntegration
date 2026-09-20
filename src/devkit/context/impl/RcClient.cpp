@@ -43,7 +43,7 @@ RcClient::RcClient() noexcept
 
     m_pClient->state.allow_leaderboards_in_softcore = true;
 
-    rc_client_set_unofficial_enabled(m_pClient.get(), 1);
+    rc_client_set_unpromoted_enabled(m_pClient.get(), 1);
 }
 
 static void DummyEventHandler(const rc_client_event_t*, rc_client_t*) noexcept

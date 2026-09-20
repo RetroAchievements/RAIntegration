@@ -39,9 +39,9 @@ public:
 
         Assert::AreEqual(AssetType::RichPresence, richPresence.GetType());
         Assert::AreEqual(0U, richPresence.GetID());
-        Assert::AreEqual(std::wstring(L"Rich Presence"), richPresence.GetTitle());
+        Assert::AreEqual(std::wstring(L"Rich Presence"), richPresence.GetName());
         Assert::AreEqual(std::wstring(L""), richPresence.GetDescription());
-        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, richPresence.GetCategory());
         Assert::AreEqual(AssetState::Inactive, richPresence.GetState());
         Assert::AreEqual(AssetChanges::None, richPresence.GetChanges());
         Assert::AreEqual(std::string(""), richPresence.GetScript());
@@ -114,7 +114,7 @@ public:
         richPresence.ReloadRichPresenceScript();
         Assert::AreEqual(std::string("Display:\nFrom file\n"), richPresence.GetScript());
         Assert::AreEqual(AssetChanges::Unpublished, richPresence.GetChanges());
-        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, richPresence.GetCategory());
 
         Assert::AreEqual(std::string("Display:\nFrom file\n"), richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
     }
@@ -133,7 +133,7 @@ public:
         richPresence.ReloadRichPresenceScript();
         Assert::AreEqual(std::string("\nDisplay:\nFrom file\n"), richPresence.GetScript());
         Assert::AreEqual(AssetChanges::Unpublished, richPresence.GetChanges());
-        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, richPresence.GetCategory());
 
         Assert::AreEqual(std::string("\xef\xbb\xbf\nDisplay:\r\nFrom file\r\n"), richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
     }
@@ -171,7 +171,7 @@ public:
         richPresence.ReloadRichPresenceScript();
         Assert::AreEqual(std::string("Display:\nFrom file\n"), richPresence.GetScript());
         Assert::AreEqual(AssetChanges::Unpublished, richPresence.GetChanges());
-        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, richPresence.GetCategory());
 
         Assert::AreEqual(std::string("Display:\nFrom file\n"), richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
     }
@@ -191,7 +191,7 @@ public:
         richPresence.ReloadRichPresenceScript();
         Assert::AreEqual(std::string("Display:\nTest\n"), richPresence.GetScript());
         Assert::AreEqual(AssetChanges::None, richPresence.GetChanges());
-        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, richPresence.GetCategory());
 
         Assert::AreEqual(std::string("Display:\nTest\n"), richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
     }
@@ -213,7 +213,7 @@ public:
         richPresence.ReloadRichPresenceScript();
         Assert::AreEqual(std::string("Display:\nFrom file\n"), richPresence.GetScript());
         Assert::AreEqual(AssetChanges::Unpublished, richPresence.GetChanges());
-        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, richPresence.GetCategory());
         Assert::AreEqual(AssetState::Inactive, richPresence.GetState());
     }
 
@@ -234,7 +234,7 @@ public:
         richPresence.ReloadRichPresenceScript();
         Assert::AreEqual(std::string("Display:\nFrom file\n"), richPresence.GetScript());
         Assert::AreEqual(AssetChanges::Unpublished, richPresence.GetChanges());
-        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, richPresence.GetCategory());
         Assert::AreEqual(AssetState::Active, richPresence.GetState());
     }
 
@@ -253,7 +253,7 @@ public:
         richPresence.RestoreServerCheckpoint();
         Assert::AreEqual(std::string("Display:\nTest\n"), richPresence.GetScript());
         Assert::AreEqual(AssetChanges::None, richPresence.GetChanges());
-        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, richPresence.GetCategory());
 
         Assert::AreEqual(std::string("Display:\nTest\n"), richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
     }
@@ -298,7 +298,7 @@ public:
         richPresence.ReloadRichPresenceScript();
         Assert::AreEqual(std::string("Display:\nFrom file\n"), richPresence.GetScript());
         Assert::AreEqual(AssetChanges::Unpublished, richPresence.GetChanges());
-        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, richPresence.GetCategory());
 
         Assert::AreEqual(std::string("Display:\nFrom file\n"),
             richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"2"));
@@ -316,7 +316,7 @@ public:
 
         Assert::AreEqual(std::string(""), richPresence.GetScript());
         Assert::AreEqual(AssetChanges::None, richPresence.GetChanges());
-        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, richPresence.GetCategory());
 
         Assert::IsFalse(richPresence.mockLocalStorage.HasStoredData(ra::services::StorageItemType::RichPresence, L"2"));
     }

@@ -262,7 +262,7 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
 
     ra::api::UpdateAchievement::Request request;
     request.GameId = pGameContext.GetGameId(pAchievement.GetSubsetID());
-    request.Title = pAchievement.GetTitle();
+    request.Title = pAchievement.GetName();
     request.Description = pAchievement.GetDescription();
     request.Trigger = pAchievement.GetTrigger();
     request.Points = pAchievement.GetPoints();
@@ -289,7 +289,7 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
 
     if (pAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
     {
-        request.Category = ra::to_unsigned(ra::etoi(ra::data::models::AssetCategory::Unofficial));
+        request.Category = ra::to_unsigned(ra::etoi(ra::data::models::AssetCategory::Unpromoted));
     }
     else
     {
@@ -304,7 +304,7 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
     {
         if (pAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
         {
-            pAchievement.SetCategory(ra::data::models::AssetCategory::Unofficial);
+            pAchievement.SetCategory(ra::data::models::AssetCategory::Unpromoted);
             pAchievement.SetID(response.AchievementId);
         }
 
@@ -329,7 +329,7 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
             if (response.ErrorMessage == "Invalid state")
             {
                 // generic API failure. Try to guess what went wrong
-                if (pAchievement.GetTitle().empty())
+                if (pAchievement.GetName().empty())
                     pScan.sErrorMessage = "Title is required";
                 else if (pAchievement.GetDescription().empty())
                     pScan.sErrorMessage = "Description is required";
@@ -349,7 +349,7 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
 
     ra::api::UpdateLeaderboard::Request request;
     request.GameId = pGameContext.GetGameId(pLeaderboard.GetSubsetID());
-    request.Title = pLeaderboard.GetTitle();
+    request.Title = pLeaderboard.GetName();
     request.Description = pLeaderboard.GetDescription();
     request.StartTrigger = pLeaderboard.GetStartTrigger();
     request.SubmitTrigger = pLeaderboard.GetSubmitTrigger();
@@ -368,7 +368,7 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
     {
         if (pLeaderboard.GetCategory() == ra::data::models::AssetCategory::Local)
         {
-            pLeaderboard.SetCategory(ra::data::models::AssetCategory::Core);
+            pLeaderboard.SetCategory(ra::data::models::AssetCategory::Promoted);
             pLeaderboard.SetID(response.LeaderboardId);
         }
 
@@ -393,7 +393,7 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
             if (response.ErrorMessage == "Invalid state")
             {
                 // generic API failure. Try to guess what went wrong
-                if (pLeaderboard.GetTitle().empty())
+                if (pLeaderboard.GetName().empty())
                     pScan.sErrorMessage = "Title is required";
                 else if (pLeaderboard.GetDescription().empty())
                     pScan.sErrorMessage = "Description is required";
@@ -429,7 +429,7 @@ void AssetUploadViewModel::UploadRichPresence(ra::data::models::RichPresenceMode
     if (response.Succeeded())
     {
         if (pRichPresence.GetCategory() == ra::data::models::AssetCategory::Local)
-            pRichPresence.SetCategory(ra::data::models::AssetCategory::Core);
+            pRichPresence.SetCategory(ra::data::models::AssetCategory::Promoted);
 
         pRichPresence.UpdateLocalCheckpoint();
         pRichPresence.UpdateServerCheckpoint();
@@ -684,7 +684,7 @@ void AssetUploadViewModel::ShowResults() const
 
                     default:
                         sMessage.append(ra::util::String::Printf(L"\n* %s: %s",
-                            pItem.pAsset->GetTitle(),
+                            pItem.pAsset->GetName(),
                             pItem.sErrorMessage));
                         break;
                 }

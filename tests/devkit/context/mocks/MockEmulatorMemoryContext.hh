@@ -58,16 +58,10 @@ public:
     void MockMemoryInsecure(bool bValue) noexcept { m_bMemoryInsecure = bValue; }
     bool IsMemoryInsecure() const noexcept override { return m_bMemoryInsecure; }
 
-    static uint32_t Peek(uint32_t nAddress, uint32_t num_bytes, void*)
+    static uint32_t Peek(uint32_t nAddress, uint8_t* buffer, uint32_t num_bytes, void*)
     {
-        union x {
-            uint32_t n;
-            uint8_t buffer[4];
-        } pBuffer{ 0 };
-
         const auto& pEmulatorMemoryContext = ra::services::ServiceLocator::Get<IEmulatorMemoryContext>();
-        const auto nRead = pEmulatorMemoryContext.ReadMemory(gsl::narrow_cast<ra::data::ByteAddress>(nAddress), pBuffer.buffer, num_bytes);
-        return (nRead == num_bytes) ? pBuffer.n : 0;
+        return pEmulatorMemoryContext.ReadMemory(gsl::narrow_cast<ra::data::ByteAddress>(nAddress), buffer, num_bytes);
     }
 
 private:

@@ -288,7 +288,7 @@ void LeaderboardModel::SyncIDToRuntime() const
 
 void LeaderboardModel::SyncTitleToRuntime()
 {
-    m_sTitleBuffer = ra::util::String::Narrow(GetTitle());
+    m_sTitleBuffer = ra::util::String::Narrow(GetName());
     m_pLeaderboardInfo->public_.title = m_sTitleBuffer.c_str();
 }
 
@@ -477,7 +477,7 @@ void LeaderboardModel::InitializeFromPublishedLeaderboard(
     SetID(pLeaderboard.public_.id);
     SetName(ra::util::String::Widen(pLeaderboard.public_.title));
     SetDescription(ra::util::String::Widen(pLeaderboard.public_.description));
-    SetCategory(AssetCategory::Core);
+    SetCategory(AssetCategory::Promoted);
     SetValueFormat(Value::FormatFromRcheevosFormat(pLeaderboard.format));
     SetLowerIsBetter(pLeaderboard.public_.lower_is_better);
     SetHidden(pLeaderboard.hidden);

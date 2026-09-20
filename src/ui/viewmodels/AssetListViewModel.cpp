@@ -47,7 +47,7 @@ const BoolModelProperty AssetListViewModel::CanRevertProperty("AssetListViewMode
 const BoolModelProperty AssetListViewModel::CanCreateProperty("AssetListViewModel", "CanCreate", false);
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", false);
 const IntModelProperty AssetListViewModel::SubsetFilterProperty("AssetListViewModel", "SubsetFilter", 0);
-const IntModelProperty AssetListViewModel::CategoryFilterProperty("AssetListViewModel", "FilterCategory", ra::etoi(AssetListViewModel::CategoryFilter::Core));
+const IntModelProperty AssetListViewModel::CategoryFilterProperty("AssetListViewModel", "FilterCategory", ra::etoi(AssetListViewModel::CategoryFilter::Promoted));
 const IntModelProperty AssetListViewModel::SpecialFilterProperty("AssetListViewModel", "SpecialFilter", ra::etoi(AssetListViewModel::SpecialFilter::All));
 const IntModelProperty AssetListViewModel::AssetTypeFilterProperty("AssetListViewModel", "AssetTypeFilter", ra::etoi(ra::data::models::AssetType::Achievement));
 const IntModelProperty AssetListViewModel::EnsureVisibleAssetIndexProperty("AssetListViewModel", "EnsureVisibleAssetIndex", -1);
@@ -65,8 +65,8 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Disabled), L"Disabled");
 
     m_vCategories.Add(ra::etoi(CategoryFilter::All), L"All");
-    m_vCategories.Add(ra::etoi(CategoryFilter::Core), L"Core");
-    m_vCategories.Add(ra::etoi(CategoryFilter::Unofficial), L"Unofficial");
+    m_vCategories.Add(ra::etoi(CategoryFilter::Promoted), L"Promoted");
+    m_vCategories.Add(ra::etoi(CategoryFilter::Unpromoted), L"Unpromoted");
     m_vCategories.Add(ra::etoi(CategoryFilter::Local), L"Local");
 
     m_vSpecialFilters.Add(ra::etoi(SpecialFilter::All), L"All");
@@ -114,12 +114,12 @@ void AssetListViewModel::OnActiveGameChanged()
 
     switch (pGameContext.Assets().MostPublishedAssetCategory())
     {
-        case ra::data::models::AssetCategory::Core:
-            SetCategoryFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Core);
+        case ra::data::models::AssetCategory::Promoted:
+            SetCategoryFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Promoted);
             break;
 
-        case ra::data::models::AssetCategory::Unofficial:
-            SetCategoryFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Unofficial);
+        case ra::data::models::AssetCategory::Unpromoted:
+            SetCategoryFilter(ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Unpromoted);
             break;
 
         case ra::data::models::AssetCategory::Local:
@@ -573,7 +573,7 @@ void AssetListViewModel::AddOrRemoveFilteredItem(gsl::index nAssetIndex)
 
 void AssetListViewModel::SyncAsset(AssetSummaryViewModel& vmSummary, const ra::data::models::AssetModelBase& pAsset)
 {
-    vmSummary.SetLabel(pAsset.GetTitle());
+    vmSummary.SetLabel(pAsset.GetName());
     vmSummary.SetType(pAsset.GetType());
     vmSummary.SetCategory(pAsset.GetCategory());
     vmSummary.SetChanges(pAsset.GetChanges());
@@ -728,8 +728,8 @@ void AssetListViewModel::UpdateButtons()
 
 void AssetListViewModel::DoUpdateButtons()
 {
-    bool bHasCoreSelection = false;
-    bool bHasUnofficialSelection = false;
+    bool bHasPromotedSelection = false;
+    bool bHasUnpromotedSelection = false;
     bool bHasLocalSelection = false;
     bool bHasActiveSelection = false;
     bool bHasInactiveSelection = false;
@@ -739,8 +739,8 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasSelection = false;
     bool bHasModified = false;
     bool bHasUnpublished = false;
-    bool bHasUnofficial = false;
-    bool bHasCore = false;
+    bool bHasUnpromoted = false;
+    bool bHasPromoted = false;
     bool bHasLocal = false;
     bool bHasRichPresenceSelection = false;
     bool bHasNonRichPresenceSelection = false;
@@ -783,12 +783,12 @@ void AssetListViewModel::DoUpdateButtons()
 
                 switch (pItem.GetCategory())
                 {
-                    case ra::data::models::AssetCategory::Core:
-                        bHasCoreSelection = true;
+                    case ra::data::models::AssetCategory::Promoted:
+                        bHasPromotedSelection = true;
                         break;
-                    case ra::data::models::AssetCategory::Unofficial:
-                        bHasUnofficial = true;
-                        bHasUnofficialSelection = true;
+                    case ra::data::models::AssetCategory::Unpromoted:
+                        bHasUnpromoted = true;
+                        bHasUnpromotedSelection = true;
                         break;
                     case ra::data::models::AssetCategory::Local:
                         bHasLocalSelection = true;
@@ -835,11 +835,11 @@ void AssetListViewModel::DoUpdateButtons()
             {
                 switch (pItem.GetCategory())
                 {
-                    case ra::data::models::AssetCategory::Core:
-                        bHasCore = true;
+                    case ra::data::models::AssetCategory::Promoted:
+                        bHasPromoted = true;
                         break;
-                    case ra::data::models::AssetCategory::Unofficial:
-                        bHasUnofficial = true;
+                    case ra::data::models::AssetCategory::Unpromoted:
+                        bHasUnpromoted = true;
                         break;
                     case ra::data::models::AssetCategory::Local:
                         bHasLocal = true;
@@ -883,12 +883,12 @@ void AssetListViewModel::DoUpdateButtons()
         SetValue(SaveButtonTextProperty, L"Publi&sh");
         SetValue(CanSaveProperty, !bOffline);
     }
-    else if (bHasUnofficialSelection)
+    else if (bHasUnpromotedSelection)
     {
         SetValue(SaveButtonTextProperty, L"Pro&mote");
         SetValue(CanSaveProperty, !bOffline);
     }
-    else if (bHasCoreSelection)
+    else if (bHasPromotedSelection)
     {
         SetValue(SaveButtonTextProperty, L"De&mote");
         SetValue(CanSaveProperty, !bOffline && bHasNonRichPresenceSelection);
@@ -908,7 +908,7 @@ void AssetListViewModel::DoUpdateButtons()
         SetValue(SaveButtonTextProperty, L"Publi&sh All");
         SetValue(CanSaveProperty, !bOffline);
     }
-    else if (bHasUnofficial)
+    else if (bHasUnpromoted)
     {
         SetValue(SaveButtonTextProperty, L"Pro&mote All");
         SetValue(CanSaveProperty, !bOffline);
@@ -943,7 +943,7 @@ void AssetListViewModel::DoUpdateButtons()
     if (bGameLoaded)
     {
         bool bCanRevert = true;
-        if (bHasCoreSelection || bHasUnofficialSelection)
+        if (bHasPromotedSelection || bHasUnpromotedSelection)
         {
             SetValue(RevertButtonTextProperty, L"Re&vert");
         }
@@ -952,7 +952,7 @@ void AssetListViewModel::DoUpdateButtons()
             SetValue(RevertButtonTextProperty, L"&Delete");
             bCanRevert = !bHasRichPresenceSelection;
         }
-        else if (bHasLocal && !bHasCore && !bHasUnofficial)
+        else if (bHasLocal && !bHasPromoted && !bHasUnpromoted)
         {
             SetValue(RevertButtonTextProperty, L"&Delete");
             bCanRevert = false;
@@ -1051,20 +1051,20 @@ void AssetListViewModel::ActivateSelected()
 
     if (GetActivateButtonText().at(0) == 'D') // Deactivate
     {
-        bool bCoreAssetSelected = false;
+        bool bPromotedAssetSelected = false;
         for (const auto* vmItem : vSelectedAssets)
         {
-            if (vmItem && vmItem->GetCategory() == ra::data::models::AssetCategory::Core)
+            if (vmItem && vmItem->GetCategory() == ra::data::models::AssetCategory::Promoted)
             {
-                bCoreAssetSelected = true;
+                bPromotedAssetSelected = true;
                 break;
             }
         }
 
-        if (bCoreAssetSelected)
+        if (bPromotedAssetSelected)
         {
             auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-            if (!pEmulatorContext.WarnDisableHardcoreMode("deactivate core assets"))
+            if (!pEmulatorContext.WarnDisableHardcoreMode("deactivate promoted assets"))
                 return;
         }
 
@@ -1089,7 +1089,7 @@ void AssetListViewModel::ActivateSelected()
         if (bModifiedAssetSelected)
         {
             auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-            if (!pEmulatorContext.WarnDisableHardcoreMode("activate unpublished assets"))
+            if (!pEmulatorContext.WarnDisableHardcoreMode("activate unpromoted assets"))
                 return;
         }
 
@@ -1189,7 +1189,7 @@ void AssetListViewModel::SaveSelected()
         if (vSelectedAssets.empty())
             return;
 
-        if (!ValidateAssetsForCore(vSelectedAssets, true))
+        if (!ValidateAssetsForPublish(vSelectedAssets, true))
             return;
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
@@ -1207,18 +1207,18 @@ void AssetListViewModel::SaveSelected()
         GetSelectedAssets(vSelectedAssets, [](const ra::data::models::AssetModelBase& pModel)
         {
             return (pModel.GetChanges() == ra::data::models::AssetChanges::None &&
-                pModel.GetCategory() == ra::data::models::AssetCategory::Unofficial);
+                pModel.GetCategory() == ra::data::models::AssetCategory::Unpromoted);
         });
 
         if (vSelectedAssets.empty())
             return;
 
-        if (!ValidateAssetsForCore(vSelectedAssets, false))
+        if (!ValidateAssetsForPublish(vSelectedAssets, false))
             return;
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to promote %d items to core?", vSelectedAssets.size()));
-        vmMessageBox.SetMessage(L"Items in core are officially available for players to earn.");
+        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to promote %d items?", vSelectedAssets.size()));
+        vmMessageBox.SetMessage(L"Promoted items are officially available for players to earn.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
             return;
@@ -1226,7 +1226,7 @@ void AssetListViewModel::SaveSelected()
         for (auto* pAsset : vSelectedAssets)
         {
             if (pAsset != nullptr)
-                pAsset->SetCategory(ra::data::models::AssetCategory::Core);
+                pAsset->SetCategory(ra::data::models::AssetCategory::Promoted);
         }
 
         RA_LOG_INFO("Promoting %u items", vSelectedAssets.size());
@@ -1238,7 +1238,7 @@ void AssetListViewModel::SaveSelected()
         GetSelectedAssets(vSelectedAssets, [](const ra::data::models::AssetModelBase& pModel)
         {
             return (pModel.GetChanges() == ra::data::models::AssetChanges::None &&
-                pModel.GetCategory() == ra::data::models::AssetCategory::Core);
+                pModel.GetCategory() == ra::data::models::AssetCategory::Promoted);
         });
 
         if (vSelectedAssets.empty())
@@ -1262,8 +1262,8 @@ void AssetListViewModel::SaveSelected()
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
-        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to demote %d items to unofficial?", vSelectedAssets.size()));
-        vmMessageBox.SetMessage(L"Items in unofficial can no longer be earned by players.");
+        vmMessageBox.SetHeader(ra::util::String::Printf(L"Are you sure you want to demote %d items?", vSelectedAssets.size()));
+        vmMessageBox.SetMessage(L"Unpromoted items can no longer be earned by players.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
             return;
@@ -1271,7 +1271,7 @@ void AssetListViewModel::SaveSelected()
         for (auto* pAsset : vSelectedAssets)
         {
             if (pAsset != nullptr)
-                pAsset->SetCategory(ra::data::models::AssetCategory::Unofficial);
+                pAsset->SetCategory(ra::data::models::AssetCategory::Unpromoted);
         }
 
         RA_LOG_INFO("Demoting %u items", vSelectedAssets.size());
@@ -1364,41 +1364,41 @@ static std::wstring ValidateValueLogic(const std::string& sValue)
 #endif
 }
 
-void AssetListViewModel::ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const
+void AssetListViewModel::ValidateAchievementForPublish(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const
 {
     const std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetTitle(), sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
 }
 
-void AssetListViewModel::ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pLeaderboard) const
+void AssetListViewModel::ValidateLeaderboardForPublish(std::wstring& sError, const ra::data::models::LeaderboardModel& pLeaderboard) const
 {
     std::wstring sTriggerError = ValidateTriggerLogic(pLeaderboard.GetStartTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Start", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
 
     sTriggerError = ValidateTriggerLogic(pLeaderboard.GetSubmitTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Submit", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
 
     sTriggerError = ValidateTriggerLogic(pLeaderboard.GetCancelTrigger());
     if (!sTriggerError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Cancel", sTriggerError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
 
     const std::wstring sValueError = ValidateValueLogic(pLeaderboard.GetValueDefinition());
     if (!sValueError.empty())
-        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetTitle(), L"Value", sValueError));
+        sError.append(ra::util::String::Printf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
 }
 
 
-void AssetListViewModel::ValidateRichPresenceForCore(std::wstring& sError, const ra::data::models::RichPresenceModel& pRichPresence) const
+void AssetListViewModel::ValidateRichPresenceForPublish(std::wstring& sError, const ra::data::models::RichPresenceModel& pRichPresence) const
 {
     const auto& sScript = pRichPresence.GetScript();
     if (sScript.length() > ra::data::models::RichPresenceModel::MaxScriptLength)
         sError.append(ra::util::String::Printf(L"\n* %s: %s", L"Rich Presence", pRichPresence.GetValidationError()));
 }
 
-bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly)
+bool AssetListViewModel::ValidateAssetsForPublish(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bPromotedOnly)
 {
     std::wstring sError;
 
@@ -1407,7 +1407,7 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
         const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
         if (pAchievement != nullptr)
         {
-            ValidateAchievementForCore(sError, *pAchievement);
+            ValidateAchievementForPublish(sError, *pAchievement);
         }
         else
         {
@@ -1415,22 +1415,22 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
             if (pLeaderboard != nullptr)
             {
                 if (pLeaderboard->GetStartTrigger().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Start condition", pLeaderboard->GetTitle()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Start condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetCancelTrigger().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Cancel condition", pLeaderboard->GetTitle()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Cancel condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetSubmitTrigger().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Submit condition", pLeaderboard->GetTitle()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Submit condition", pLeaderboard->GetName()));
                 if (pLeaderboard->GetValueDefinition().empty())
-                    sError.append(ra::util::String::Printf(L"\n* %s: No Value definition", pLeaderboard->GetTitle()));
+                    sError.append(ra::util::String::Printf(L"\n* %s: No Value definition", pLeaderboard->GetName()));
 
-                ValidateLeaderboardForCore(sError, *pLeaderboard);
+                ValidateLeaderboardForPublish(sError, *pLeaderboard);
             }
             else
             {
                 const auto* pRichPresence = dynamic_cast<const ra::data::models::RichPresenceModel*>(pAsset);
                 if (pRichPresence != nullptr)
                 {
-                    ValidateRichPresenceForCore(sError, *pRichPresence);
+                    ValidateRichPresenceForPublish(sError, *pRichPresence);
                 }
             }
         }
@@ -1439,7 +1439,7 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
     if (!sError.empty())
     {
         sError.insert(0, L"The following items could not be published:");
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(bCoreOnly ? L"Publish aborted." : L"Promote to core aborted.", sError);
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(bPromotedOnly ? L"Publish aborted." : L"Promotion aborted.", sError);
         return false;
     }
 
@@ -1474,7 +1474,7 @@ void AssetListViewModel::ReloadSelected()
     if (!CanReload())
         return;
 
-    bool bCoreAssetSelected = false;
+    bool bPromotedAssetSelected = false;
     std::vector<const AssetSummaryViewModel*> vSelectedAssets;
     {
         std::lock_guard<std::mutex> lock(m_mtxFilteredItems);
@@ -1485,15 +1485,15 @@ void AssetListViewModel::ReloadSelected()
             {
                 vSelectedAssets.push_back(&pItem);
 
-                bCoreAssetSelected |= (pItem.GetCategory() == ra::data::models::AssetCategory::Core);
+                bPromotedAssetSelected |= (pItem.GetCategory() == ra::data::models::AssetCategory::Promoted);
             }
         }
     }
 
-    if (bCoreAssetSelected)
+    if (bPromotedAssetSelected)
     {
         auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        if (!pEmulatorContext.WarnDisableHardcoreMode("reload core achievements"))
+        if (!pEmulatorContext.WarnDisableHardcoreMode("reload promoted achievements"))
             return;
     }
 
@@ -1658,7 +1658,7 @@ void AssetListViewModel::RevertSelected()
     GetSelectedAssets(vAssetsToRevert);
 
     bool bLocalAssetSelected = false;
-    bool bCoreAssetSelected = false;
+    bool bPromotedAssetSelected = false;
     for (const auto* pAsset : vAssetsToRevert)
     {
         if (pAsset == nullptr)
@@ -1670,16 +1670,16 @@ void AssetListViewModel::RevertSelected()
                 bLocalAssetSelected = true;
                 break;
 
-            case ra::data::models::AssetCategory::Core:
-                bCoreAssetSelected = true;
+            case ra::data::models::AssetCategory::Promoted:
+                bPromotedAssetSelected = true;
                 break;
         }
     }
 
-    if (bCoreAssetSelected)
+    if (bPromotedAssetSelected)
     {
         auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        if (!pEmulatorContext.WarnDisableHardcoreMode("revert core assets"))
+        if (!pEmulatorContext.WarnDisableHardcoreMode("revert promoted assets"))
             return;
     }
 
@@ -1941,7 +1941,7 @@ void AssetListViewModel::CloneSelected()
             pAchievement->CreateServerCheckpoint();
             pAchievement->CreateLocalCheckpoint();
 
-            pAchievement->SetName(pSourceAchievement->GetTitle() + L" (copy)");
+            pAchievement->SetName(pSourceAchievement->GetName() + L" (copy)");
             pAchievement->SetDescription(pSourceAchievement->GetDescription());
             pAchievement->SetBadge(pSourceAchievement->GetBadge());
             pAchievement->SetPoints(pSourceAchievement->GetPoints());
@@ -1967,7 +1967,7 @@ void AssetListViewModel::CloneSelected()
             pLeaderboard->CreateServerCheckpoint();
             pLeaderboard->CreateLocalCheckpoint();
 
-            pLeaderboard->SetName(pSourceLeaderboard->GetTitle() + L" (copy)");
+            pLeaderboard->SetName(pSourceLeaderboard->GetName() + L" (copy)");
             pLeaderboard->SetDescription(pSourceLeaderboard->GetDescription());
             pLeaderboard->SetStartTrigger(pSourceLeaderboard->GetStartTrigger());
             pLeaderboard->SetSubmitTrigger(pSourceLeaderboard->GetSubmitTrigger());

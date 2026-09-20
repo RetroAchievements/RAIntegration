@@ -101,7 +101,7 @@ public:
     /// </summary>
     void SetTitle(const std::wstring& sValue) { SetValue(TitleProperty, sValue); }
 
-    void SyncToRuntime(rc_client_subset_info_t& pSubset, GameAssets& pAsset);
+    void SyncToRuntime(const rc_client_subset_info_t& pSubset, GameAssets& pAsset);
 
     rc_client_subset_info_t* GetPublishedSubsetInfo() const;
     rc_client_subset_info_t* GetLocalSubsetInfo() const;

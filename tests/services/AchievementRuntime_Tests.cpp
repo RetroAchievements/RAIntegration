@@ -224,10 +224,10 @@ public:
     {
         auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
 
-        auto nCategory = ra::data::models::AssetCategory::Core;
-        if (pAchievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL)
+        auto nCategory = ra::data::models::AssetCategory::Promoted;
+        if (pAchievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED)
         {
-            nCategory = ra::data::models::AssetCategory::Unofficial;
+            nCategory = ra::data::models::AssetCategory::Unpromoted;
         }
         else
         {
@@ -312,7 +312,7 @@ public:
 
     ra::data::models::LeaderboardModel* WrapLeaderboard(rc_client_leaderboard_info_t* pLeaderboard)
     {
-        auto nCategory = ra::data::models::AssetCategory::Core;
+        auto nCategory = ra::data::models::AssetCategory::Promoted;
 
         const auto* pSubset = GetClient()->game->subsets;
         for (; pSubset; pSubset = pSubset->next)
@@ -489,7 +489,7 @@ private:
         const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
         achievement->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
-        achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+        achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED;
         achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         achievement->public_.points = 5;
 
@@ -549,7 +549,7 @@ public:
         AchievementRuntimeHarness runtime;
 
         auto* pAchievement = runtime.MockAchievement(12345U, "0xH0000=1");
-        pAchievement->public_.category = gsl::narrow_cast<uint8_t>(ra::etoi(ra::data::models::AssetCategory::Core));
+        pAchievement->public_.category = gsl::narrow_cast<uint8_t>(ra::etoi(ra::data::models::AssetCategory::Promoted));
         pAchievement->public_.title = "Achievement Name";
         pAchievement->public_.description = "Do something cool";
         pAchievement->public_.points = 25;
@@ -578,7 +578,7 @@ public:
         Assert::IsNotNull(pSubset->next); // there will be an inactive local subset
         const auto* pOriginalTrigger = pSubset->achievements->trigger;
 
-        Assert::AreEqual(std::wstring(L"Achievement Name"), vmAchievement.GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement Name"), vmAchievement.GetName());
         Assert::AreEqual(std::wstring(L"Do something cool"), vmAchievement.GetDescription());
         Assert::AreEqual(25, vmAchievement.GetPoints());
         Assert::AreEqual(12345U, vmAchievement.GetID());
@@ -1721,11 +1721,11 @@ public:
         Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
     }
 
-    TEST_METHOD(TestHandleAchievementTriggeredEventUnofficial)
+    TEST_METHOD(TestHandleAchievementTriggeredEventUnpromoted)
     {
         AchievementRuntimeHarness runtime;
         auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
-        pAch6->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+        pAch6->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED;
         memcpy(pAch6->public_.badge_name, "012345", 7);
         auto* vmAch6 = runtime.WrapAchievement(pAch6);
         runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
@@ -1745,7 +1745,7 @@ public:
         auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
-        Assert::AreEqual(std::wstring(L"Unofficial Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Unpromoted Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
@@ -3459,21 +3459,21 @@ public:
         Assert::AreEqual(std::string("Fixing Achievements"), runtime.GetRichPresenceOverride());
     }
 
-    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryUnofficialAchievements)
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryUnpromotedAchievements)
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        auto& pAch = runtime.mockGameContext.MockUnofficialAchievement();
+        const auto& pAch = runtime.mockGameContext.MockUnpromotedAchievement();
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::string("Inspecting Memory"), runtime.GetRichPresenceOverride());
     }
 
-    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryModifiedUnofficialAchievements)
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryModifiedUnpromotedAchievements)
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        auto& pAch = runtime.mockGameContext.MockUnofficialAchievement();
+        auto& pAch = runtime.mockGameContext.MockUnpromotedAchievement();
         pAch.SetName(L"Modified");
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
@@ -3489,18 +3489,18 @@ public:
         Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
     }
 
-    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryLocalAndCoreAchievements)
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryLocalAndPromotedAchievements)
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
         runtime.mockGameContext.MockLocalAchievement();
-        auto& pAch = runtime.mockGameContext.MockAchievement();
+        const auto& pAch = runtime.mockGameContext.MockAchievement();
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
     }
 
-    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryLocalAndModifiedCoreAchievements)
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryLocalAndModifiedPromotedAchievements)
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);

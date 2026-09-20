@@ -51,9 +51,9 @@ public:
 
         Assert::AreEqual(AssetType::Achievement, achievement.GetType());
         Assert::AreEqual(0U, achievement.GetID());
-        Assert::AreEqual(std::wstring(L""), achievement.GetTitle());
+        Assert::AreEqual(std::wstring(L""), achievement.GetName());
         Assert::AreEqual(std::wstring(L""), achievement.GetDescription());
-        Assert::AreEqual(AssetCategory::Core, achievement.GetCategory());
+        Assert::AreEqual(AssetCategory::Promoted, achievement.GetCategory());
         Assert::AreEqual(AssetState::Inactive, achievement.GetState());
         Assert::AreEqual(AssetChanges::None, achievement.GetChanges());
         Assert::AreEqual(5, achievement.GetPoints());

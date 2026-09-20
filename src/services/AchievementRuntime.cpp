@@ -1570,7 +1570,7 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
             if (pAchievement != nullptr)
             {
                 vmPopup->SetDescription(
-                    ra::util::String::Printf(L"%s (%u)", pAchievement->GetTitle(), pAchievement->GetPoints()));
+                    ra::util::String::Printf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
                 vmPopup->SetImage(ra::ui::ImageType::Badge, ra::util::String::Narrow(pAchievement->GetBadge()));
             }
             else
@@ -1595,7 +1595,7 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nLeaderboardId);
         std::wstring sLeaderboardName = (pLeaderboard != nullptr) ?
-            pLeaderboard->GetTitle() : ra::util::String::Printf(L"Leaderboard %u", nLeaderboardId);
+            pLeaderboard->GetName() : ra::util::String::Printf(L"Leaderboard %u", nLeaderboardId);
         const auto sErrorMessage = pServerError.error_message ?
             ra::util::String::Widen(pServerError.error_message) : L"Error submitting leaderboard entry";
 

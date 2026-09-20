@@ -683,7 +683,7 @@ public:
         Assert::IsNotNull(vmAch1);
         Ensures(vmAch1 != nullptr);
         Assert::AreEqual(5U, vmAch1->GetID());
-        Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetName());
         Assert::AreEqual(std::wstring(L"Desc1"), vmAch1->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth1"), vmAch1->GetAuthor());
         Assert::AreEqual(ra::data::models::AssetCategory::Promoted, vmAch1->GetCategory());
@@ -696,7 +696,7 @@ public:
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(7U, vmAch2->GetID());
-        Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetName());
         Assert::AreEqual(std::wstring(L"Desc2"), vmAch2->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth2"), vmAch2->GetAuthor());
         Assert::AreEqual(ra::data::models::AssetCategory::Unpromoted, vmAch2->GetCategory());
@@ -731,7 +731,7 @@ public:
         Assert::IsNotNull(vmAch1);
         Ensures(vmAch1 != nullptr);
         Assert::AreEqual(5U, vmAch1->GetID());
-        Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetName());
         Assert::AreEqual(std::wstring(L"Desc1"), vmAch1->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth1"), vmAch1->GetAuthor());
         Assert::AreEqual(ra::data::models::AssetCategory::Unpromoted, vmAch1->GetCategory());
@@ -744,7 +744,7 @@ public:
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(7U, vmAch2->GetID());
-        Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetName());
         Assert::AreEqual(std::wstring(L"Desc2"), vmAch2->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Unpromoted, vmAch2->GetCategory());
         Assert::AreEqual(15, vmAch2->GetPoints());
@@ -782,7 +782,7 @@ public:
         auto* pAch = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach1"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach1"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc1"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth1"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"12345"), pAch->GetBadge());
@@ -794,7 +794,7 @@ public:
         pAch = game.Assets().FindAchievement(7U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach2b"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach2b"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc2b"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth2"), pAch->GetAuthor()); // author not merged
         Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
@@ -809,7 +809,7 @@ public:
         pAch = game.Assets().FindAchievement(9U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach3b"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach3b"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc3b"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth3"), pAch->GetAuthor()); // author not merged
         Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
@@ -824,7 +824,7 @@ public:
         pAch = game.Assets().FindAchievement(ra::data::models::GameAssets::FirstLocalId);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach3"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach3"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc3"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth3"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00555"), pAch->GetBadge());
@@ -836,7 +836,7 @@ public:
         pAch = game.Assets().FindAchievement(ra::data::models::GameAssets::FirstLocalId + 1);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach4"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach4"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc4"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth4"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00556"), pAch->GetBadge());
@@ -868,7 +868,7 @@ public:
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(7U, vmAch->GetID());
-        Assert::AreEqual(std::wstring(L"Ach2b"), vmAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach2b"), vmAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc2b"), vmAch->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Local, vmAch->GetCategory());
         Assert::AreEqual(25, vmAch->GetPoints());
@@ -882,7 +882,7 @@ public:
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(999000001U, vmAch->GetID()); // non-vms get first id and first id + 1
-        Assert::AreEqual(std::wstring(L"Ach3"), vmAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach3"), vmAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc3"), vmAch->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Local, vmAch->GetCategory());
         Assert::AreEqual(20, vmAch->GetPoints());
@@ -896,7 +896,7 @@ public:
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(999000003U, vmAch->GetID()); // non-vms get first id and first id + 1
-        Assert::AreEqual(std::wstring(L"Ach4"), vmAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach4"), vmAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc4"), vmAch->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Local, vmAch->GetCategory());
         Assert::AreEqual(10, vmAch->GetPoints());
@@ -963,7 +963,7 @@ public:
         auto* pAch = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach1b"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach1b"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc1b"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth1"), pAch->GetAuthor()); // author not merged
         Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
@@ -975,7 +975,7 @@ public:
         pAch = game.Assets().FindAchievement(7U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach2b"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach2b"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc2b"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth2"), pAch->GetAuthor()); // author not merged
         Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
@@ -987,7 +987,7 @@ public:
         pAch = game.Assets().FindAchievement(111000002U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach3"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach3"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc3"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth3"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00555"), pAch->GetBadge());
@@ -999,7 +999,7 @@ public:
         pAch = game.Assets().FindAchievement(111000003U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach4"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach4"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc4"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth4"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00556"), pAch->GetBadge());
@@ -1011,7 +1011,7 @@ public:
         pAch = game.Assets().FindAchievement(111000004U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach5"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach5"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc5"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth5"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00555"), pAch->GetBadge());
@@ -1023,7 +1023,7 @@ public:
         pAch = game.Assets().FindAchievement(111000005U);
         Assert::IsNotNull(pAch);
         Ensures(pAch != nullptr);
-        Assert::AreEqual(std::wstring(L"Ach6"), pAch->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc6"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth6"), pAch->GetAuthor());
         Assert::AreEqual(std::wstring(L"00556"), pAch->GetBadge());
@@ -1060,13 +1060,13 @@ public:
         const auto* pLb1 = game.Assets().FindLeaderboard(7U);
         Assert::IsNotNull(pLb1);
         Ensures(pLb1 != nullptr);
-        Assert::AreEqual(std::wstring(L"LB1"), pLb1->GetTitle());
+        Assert::AreEqual(std::wstring(L"LB1"), pLb1->GetName());
         Assert::AreEqual(std::wstring(L"Desc1"), pLb1->GetDescription());
 
         const auto* pLb2 = game.Assets().FindLeaderboard(8U);
         Assert::IsNotNull(pLb2);
         Ensures(pLb2 != nullptr);
-        Assert::AreEqual(std::wstring(L"LB2"), pLb2->GetTitle());
+        Assert::AreEqual(std::wstring(L"LB2"), pLb2->GetName());
         Assert::AreEqual(std::wstring(L"Desc2"), pLb2->GetDescription());
     }
 
@@ -1106,7 +1106,7 @@ public:
         Assert::IsNotNull(vmAch1);
         Ensures(vmAch1 != nullptr);
         Assert::AreEqual(9U, vmAch1->GetID());
-        Assert::AreEqual(std::wstring(L"Ach9"), vmAch1->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach9"), vmAch1->GetName());
         Assert::AreEqual(std::wstring(L"Desc9"), vmAch1->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Promoted, vmAch1->GetCategory());
         Assert::AreEqual(9, vmAch1->GetPoints());
@@ -1118,7 +1118,7 @@ public:
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(11U, vmAch2->GetID());
-        Assert::AreEqual(std::wstring(L"Ach11"), vmAch2->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach11"), vmAch2->GetName());
         Assert::AreEqual(std::wstring(L"Desc11"), vmAch2->GetDescription());
         Assert::AreEqual(ra::data::models::AssetCategory::Unpromoted, vmAch2->GetCategory());
         Assert::AreEqual(11, vmAch2->GetPoints());

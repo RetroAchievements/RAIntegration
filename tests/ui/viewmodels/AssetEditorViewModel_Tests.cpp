@@ -890,19 +890,19 @@ public:
 
         editor.LoadAsset(&achievement);
         Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"Test Achievement"), achievement.GetTitle());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), achievement.GetName());
 
         editor.SetName(L"New Name");
         Assert::AreEqual(std::wstring(L"New Name"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement.GetName());
 
         editor.SetName(L"New Name 2");
         Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name 2"), achievement.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement.GetName());
 
         achievement.SetName(L"New Name 3");
         Assert::AreEqual(std::wstring(L"New Name 3"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name 3"), achievement.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 3"), achievement.GetName());
     }
 
     TEST_METHOD(TestSyncDescription)
@@ -1329,28 +1329,28 @@ public:
 
         editor.LoadAsset(&achievement1);
         Assert::AreEqual(std::wstring(L"Achievement1"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"Achievement1"), achievement1.GetTitle());
-        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement1"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
 
         editor.SetName(L"New Name");
         Assert::AreEqual(std::wstring(L"New Name"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetTitle());
-        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
 
         editor.LoadAsset(&achievement2);
         Assert::AreEqual(std::wstring(L"Achievement2"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetTitle());
-        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
 
         editor.SetName(L"New Name 2");
         Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetName());
 
         achievement1.SetName(L"New Name 3");
         Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name 3"), achievement1.GetTitle());
-        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetTitle());
+        Assert::AreEqual(std::wstring(L"New Name 3"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetName());
     }
 
     TEST_METHOD(TestUpdateActiveTrigger)

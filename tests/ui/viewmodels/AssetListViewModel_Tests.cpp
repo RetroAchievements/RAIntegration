@@ -603,7 +603,7 @@ private:
             {
                 const auto pIter = m_mValidationErrors.find(pAchievement.GetID());
                 if (pIter != m_mValidationErrors.end())
-                    sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetTitle(), pIter->second));
+                    sError.append(ra::util::String::Printf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
             }
         }
 

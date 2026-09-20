@@ -987,9 +987,9 @@ void TriggerViewModel::Summarize()
     TriggerSummaryViewModel vmSummary;
 
     if (m_vGroups.Count() == 1)
-        vmSummary.SetWindowTitle(L"Trigger Summary - " + pAssetEditor.GetAsset()->GetTitle());
+        vmSummary.SetWindowTitle(L"Trigger Summary - " + pAssetEditor.GetAsset()->GetName());
     else
-        vmSummary.SetWindowTitle(pGroup->GetLabel() + L" Summary - " + pAssetEditor.GetAsset()->GetTitle());
+        vmSummary.SetWindowTitle(pGroup->GetLabel() + L" Summary - " + pAssetEditor.GetAsset()->GetName());
 
     vmSummary.InitializeFrom(*pCondSet);
     vmSummary.AddHeaders();

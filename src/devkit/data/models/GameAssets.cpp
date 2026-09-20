@@ -72,18 +72,18 @@ ra::data::models::AssetCategory GameAssets::MostPublishedAssetCategory() const
                 bHasLocalAssets = true;
                 break;
 
-            case ra::data::models::AssetCategory::Unofficial:
+            case ra::data::models::AssetCategory::Unpromoted:
                 bHasUnpublishedAssets = true;
                 break;
 
             default:
                 // Core, Bonus, or something else that's been published
-                return ra::data::models::AssetCategory::Core;
+                return ra::data::models::AssetCategory::Promoted;
         }
     }
 
     if (bHasUnpublishedAssets)
-        return ra::data::models::AssetCategory::Unofficial;
+        return ra::data::models::AssetCategory::Unpromoted;
 
     if (bHasLocalAssets)
         return ra::data::models::AssetCategory::Local;

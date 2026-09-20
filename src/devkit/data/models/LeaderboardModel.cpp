@@ -477,7 +477,7 @@ void LeaderboardModel::InitializeFromPublishedLeaderboard(
     SetID(pLeaderboard.public_.id);
     SetName(ra::util::String::Widen(pLeaderboard.public_.title));
     SetDescription(ra::util::String::Widen(pLeaderboard.public_.description));
-    SetCategory(AssetCategory::Core);
+    SetCategory(AssetCategory::Promoted);
     SetValueFormat(Value::FormatFromRcheevosFormat(pLeaderboard.format));
     SetLowerIsBetter(pLeaderboard.public_.lower_is_better);
     SetHidden(pLeaderboard.hidden);

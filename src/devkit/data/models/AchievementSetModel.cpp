@@ -175,7 +175,7 @@ static void SyncSubset(rc_client_subset_info_t& pSubsetInfo,
     pSubsetInfo.active = !vAchievements.empty() || !vLeaderboards.empty();
 }
 
-void AchievementSetModel::SyncToRuntime(rc_client_subset_info_t& pSubset, GameAssets& pAssets)
+void AchievementSetModel::SyncToRuntime(const rc_client_subset_info_t& pSubset, GameAssets& pAssets)
 {
     if (m_pInfo == nullptr)
     {
@@ -191,9 +191,9 @@ void AchievementSetModel::SyncToRuntime(rc_client_subset_info_t& pSubset, GameAs
     }
 
     // find the assets that belong to this subset
-    std::vector<ra::data::models::AchievementModel*> vCoreAchievements;
+    std::vector<ra::data::models::AchievementModel*> vPublishedAchievements;
     std::vector<ra::data::models::AchievementModel*> vLocalAchievements;
-    std::vector<ra::data::models::LeaderboardModel*> vCoreLeaderboards;
+    std::vector<ra::data::models::LeaderboardModel*> vPublishedLeaderboards;
     std::vector<ra::data::models::LeaderboardModel*> vLocalLeaderboards;
 
     for (auto& pAsset : pAssets)
@@ -210,7 +210,7 @@ void AchievementSetModel::SyncToRuntime(rc_client_subset_info_t& pSubset, GameAs
             if (vmAchievement->GetCategory() == ra::data::models::AssetCategory::Local)
                 vLocalAchievements.push_back(vmAchievement);
             else
-                vCoreAchievements.push_back(vmAchievement);
+                vPublishedAchievements.push_back(vmAchievement);
 
             continue;
         }
@@ -221,7 +221,7 @@ void AchievementSetModel::SyncToRuntime(rc_client_subset_info_t& pSubset, GameAs
             if (vmLeaderboard->GetCategory() == ra::data::models::AssetCategory::Local)
                 vLocalLeaderboards.push_back(vmLeaderboard);
             else
-                vCoreLeaderboards.push_back(vmLeaderboard);
+                vPublishedLeaderboards.push_back(vmLeaderboard);
 
             continue;
         }
@@ -230,7 +230,7 @@ void AchievementSetModel::SyncToRuntime(rc_client_subset_info_t& pSubset, GameAs
     // sync the models into the runtime
     SyncSubset(m_pInfo->oPublishedRuntimeInfo,
                m_pInfo->vPublishedAchievements, m_pInfo->vPublishedLeaderboards,
-               vCoreAchievements, vCoreLeaderboards);
+               vPublishedAchievements, vPublishedLeaderboards);
 
     SyncSubset(m_pInfo->oLocalRuntimeInfo,
                m_pInfo->vLocalAchievements, m_pInfo->vLocalLeaderboards,

@@ -189,7 +189,7 @@ void RichPresenceModel::ReloadRichPresenceScript()
     UpdateLocalCheckpoint();
 
     // if there's a local script, but no core script, change the category to Local
-    if (GetChanges() == ra::data::models::AssetChanges::Unpublished && m_pScript.m_sCoreDefinition.empty())
+    if (GetChanges() == ra::data::models::AssetChanges::Unpublished && m_pScript.m_sPublishedDefinition.empty())
     {
         SetCategory(ra::data::models::AssetCategory::Local);
         UpdateLocalCheckpoint();

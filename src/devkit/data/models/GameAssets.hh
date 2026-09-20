@@ -121,17 +121,17 @@ public:
     }
 
     /// <summary>
-    /// Determines if any Core assets exist.
+    /// Determines if any Promoted assets exist.
     /// </summary>
-    bool HasCoreAssets() const
+    bool HasPromotedAssets() const
     {
-        return (MostPublishedAssetCategory() == ra::data::models::AssetCategory::Core);
+        return (MostPublishedAssetCategory() == ra::data::models::AssetCategory::Promoted);
     }
 
     /// <summary>
     /// Determines the most published asset category.
     /// </summary>
-    /// <remarks>Core > Unpublished > Local > None</remarks>
+    /// <remarks>Promoted > Unpromoted > Local > None</remarks>
     ra::data::models::AssetCategory MostPublishedAssetCategory() const;
 
     /// <summary>

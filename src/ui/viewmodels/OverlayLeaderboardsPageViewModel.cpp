@@ -71,7 +71,7 @@ void OverlayLeaderboardsPageViewModel::Refresh()
 
     std::vector<rc_client_subset_info_t*> vDeactivatedSubsets;
     const auto& pAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
-    if (pAssetList.GetCategoryFilter() == ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Core)
+    if (pAssetList.GetCategoryFilter() == ra::ui::viewmodels::AssetListViewModel::CategoryFilter::Promoted)
     {
         // disable local subset while we build the list
         auto* pSubset = pClient->game ? pClient->game->subsets : nullptr;

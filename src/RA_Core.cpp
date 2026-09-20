@@ -178,8 +178,8 @@ API int CCONV _RA_ConfirmLoadNewRom(int bQuittingApp)
     //	Returns true if we can go ahead and load the new rom.
     std::wstring sModifiedSet;
 
-    bool bCoreModified = false;
-    bool bUnofficialModified = false;
+    bool bPromotedModified = false;
+    bool bUnpromotedModified = false;
     bool bLocalModified = false;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
@@ -192,20 +192,20 @@ API int CCONV _RA_ConfirmLoadNewRom(int bQuittingApp)
                 case ra::data::models::AssetCategory::Local:
                     bLocalModified = true;
                     break;
-                case ra::data::models::AssetCategory::Core:
-                    bCoreModified = true;
+                case ra::data::models::AssetCategory::Promoted:
+                    bPromotedModified = true;
                     break;
-                case ra::data::models::AssetCategory::Unofficial:
-                    bUnofficialModified = true;
+                case ra::data::models::AssetCategory::Unpromoted:
+                    bUnpromotedModified = true;
                     break;
             }
         }
     }
 
-    if (bCoreModified)
-        sModifiedSet = L"Core";
-    else if (bUnofficialModified)
-        sModifiedSet = L"Unofficial";
+    if (bPromotedModified)
+        sModifiedSet = L"Promoted";
+    else if (bUnpromotedModified)
+        sModifiedSet = L"Unpromoted";
     else if (bLocalModified)
         sModifiedSet = L"Local";
     else

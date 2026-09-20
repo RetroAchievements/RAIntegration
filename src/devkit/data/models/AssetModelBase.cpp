@@ -10,7 +10,7 @@ const IntModelProperty AssetModelBase::TypeProperty("AssetModelBase", "Type", ra
 const IntModelProperty AssetModelBase::IDProperty("AssetModelBase", "ID", 0);
 const StringModelProperty AssetModelBase::NameProperty("AssetModelBase", "Name", L"");
 const StringModelProperty AssetModelBase::DescriptionProperty("AssetModelBase", "Description", L"");
-const IntModelProperty AssetModelBase::CategoryProperty("AssetModelBase", "Category", ra::etoi(AssetCategory::Core));
+const IntModelProperty AssetModelBase::CategoryProperty("AssetModelBase", "Category", ra::etoi(AssetCategory::Promoted));
 const IntModelProperty AssetModelBase::SubsetIDProperty("AssetModelBase", "SubsetID", 0);
 const StringModelProperty AssetModelBase::AuthorProperty("AssetModelBase", "Author", L"");
 const IntModelProperty AssetModelBase::StateProperty("AssetModelBase", "State", ra::etoi(AssetState::Inactive));
@@ -421,7 +421,7 @@ const std::string& AssetModelBase::GetAssetDefinition(const AssetDefinition& pAs
     switch (nState)
     {
         case AssetChanges::None:
-            return pAsset.m_sCoreDefinition;
+            return pAsset.m_sPublishedDefinition;
 
         case AssetChanges::Unpublished:
             return pAsset.m_sLocalDefinition;
@@ -436,24 +436,24 @@ const std::string& AssetModelBase::GetLocalAssetDefinition(const AssetDefinition
     if (pAsset.m_bLocalModified)
         return pAsset.m_sLocalDefinition;
 
-    return pAsset.m_sCoreDefinition;
+    return pAsset.m_sPublishedDefinition;
 }
 
 void AssetModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::string& sValue)
 {
     if (m_pTransaction == nullptr)
     {
-        // before core checkpoint
-        if (pAsset.m_sCoreDefinition != sValue)
+        // before published checkpoint
+        if (pAsset.m_sPublishedDefinition != sValue)
         {
-            pAsset.m_sCoreDefinition = sValue;
+            pAsset.m_sPublishedDefinition = sValue;
             UpdateAssetDefinitionVersion(pAsset, AssetChanges::None);
         }
     }
     else if (m_pTransaction->m_pNext == nullptr)
     {
         // before local checkpoint
-        if (sValue == pAsset.m_sCoreDefinition)
+        if (sValue == pAsset.m_sPublishedDefinition)
         {
             if (!pAsset.m_sLocalDefinition.empty())
             {
@@ -483,9 +483,9 @@ void AssetModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::stri
                 UpdateAssetDefinitionVersion(pAsset, AssetChanges::Unpublished);
             }
         }
-        else if (!pAsset.m_bLocalModified && sValue == pAsset.m_sCoreDefinition)
+        else if (!pAsset.m_bLocalModified && sValue == pAsset.m_sPublishedDefinition)
         {
-            // value being set to core value (and no unpublished value exists)
+            // value being set to published value (and no unpublished value exists)
             if (nState != AssetChanges::None)
             {
                 pAsset.m_sCurrentDefinition.clear();
@@ -512,7 +512,7 @@ void AssetModelBase::CommitTransaction()
 
     if (m_pTransaction->m_pNext == nullptr)
     {
-        // commit local to core
+        // commit local to published
         for (auto pAsset : m_vAssetDefinitions)
         {
             Expects(pAsset != nullptr);
@@ -521,7 +521,7 @@ void AssetModelBase::CommitTransaction()
             {
                 if (pAsset->m_bLocalModified)
                 {
-                    pAsset->m_sCoreDefinition.swap(pAsset->m_sLocalDefinition);
+                    pAsset->m_sPublishedDefinition.swap(pAsset->m_sLocalDefinition);
                     pAsset->m_sLocalDefinition.clear();
                     pAsset->m_bLocalModified = false;
                     UpdateAssetDefinitionVersion(*pAsset, AssetChanges::None);
@@ -541,7 +541,7 @@ void AssetModelBase::CommitTransaction()
 
             if (GetAssetDefinitionState(*pAsset) == AssetChanges::Modified)
             {
-                if (pAsset->m_sCurrentDefinition == pAsset->m_sCoreDefinition)
+                if (pAsset->m_sCurrentDefinition == pAsset->m_sPublishedDefinition)
                 {
                     pAsset->m_sCurrentDefinition.clear();
                     pAsset->m_sLocalDefinition.clear();
@@ -589,7 +589,7 @@ void AssetModelBase::RevertTransaction()
 
             case AssetChanges::Unpublished:
                 pAsset->m_sCurrentDefinition.clear();
-                pAsset->m_bLocalModified = (pAsset->m_sLocalDefinition != pAsset->m_sCoreDefinition);
+                pAsset->m_bLocalModified = (pAsset->m_sLocalDefinition != pAsset->m_sPublishedDefinition);
                 break;
 
             default:

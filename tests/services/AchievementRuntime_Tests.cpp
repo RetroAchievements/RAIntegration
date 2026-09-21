@@ -1921,7 +1921,7 @@ public:
         Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
     }
 
-    TEST_METHOD(TestHandleAchievementTriggeredEventMemoryInsecureSoftcore)
+    TEST_METHOD(TestHandleAchievementTriggeredEventMemoryInsecureCasual)
     {
         AchievementRuntimeHarness runtime;
         auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
@@ -2351,7 +2351,7 @@ public:
         Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
     }
 
-    TEST_METHOD(TestHandleGameCompletedEventSoftcore)
+    TEST_METHOD(TestHandleGameCompletedEventCasual)
     {
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
@@ -2420,7 +2420,7 @@ public:
         Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
     }
 
-    TEST_METHOD(TestHandleSubsetCompletedEventSoftcore)
+    TEST_METHOD(TestHandleSubsetCompletedEventCasual)
     {
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
@@ -2781,7 +2781,7 @@ public:
         AssertSimpleScoreboard(runtime, 4U);
     }
 
-    TEST_METHOD(TestHandleLeaderboardSubmittedEventSoftcore)
+    TEST_METHOD(TestHandleLeaderboardSubmittedEventCasual)
     {
         AchievementRuntimeHarness runtime;
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);

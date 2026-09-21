@@ -1431,13 +1431,13 @@ public:
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
-        // should get popup message indicating leaderboards not supported in softcore
+        // should get popup message indicating leaderboards not supported in casual mode
         game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
         Assert::IsFalse(game.mockDesktop.WasDialogShown());
 
         const auto* pPopup = game.mockOverlayManager.GetMessage(2U);
         Expects(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Playing in Casual Mode"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Leaderboard entries will not be submitted."), pPopup->GetDescription());
     }
 
@@ -1458,13 +1458,13 @@ public:
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, false);
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
-        // should get popup message indicating playing in softcore
+        // should get popup message indicating playing in casual mode
         game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
         Assert::IsFalse(game.mockDesktop.WasDialogShown());
 
         const auto* pPopup = game.mockOverlayManager.GetMessage(2U);
         Expects(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Playing in Casual Mode"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L""), pPopup->GetDescription());
     }
 
@@ -1552,13 +1552,13 @@ public:
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
-        // should only get softcore popup
+        // should only get casual mode popup
         game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
         Assert::IsFalse(game.mockDesktop.WasDialogShown());
 
         const auto* pPopup = game.mockOverlayManager.GetMessage(2U);
         Expects(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Playing in Casual Mode"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L""), pPopup->GetDescription());
 
         // hardcore should remain disabled

@@ -411,7 +411,7 @@ public:
         Assert::IsTrue(emulator.ValidateClientVersion());
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::AreEqual(std::string(), emulator.mockDesktop.LastOpenedUrl());
-        // successful downgrade to softcore
+        // successful downgrade to casual
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
         Assert::IsTrue(emulator.mockLoginService.IsLoggedIn());
 
@@ -660,7 +660,7 @@ public:
         emulator.mockAchievementRuntime.MockLeaderboardWithLboard(32U);
         emulator.mockAchievementRuntime.MockAchievementWithTrigger(44U);
         auto* pAchievement45 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(45U);
-        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement45, RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE);
+        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement45, RC_CLIENT_ACHIEVEMENT_UNLOCKED_CASUAL);
         auto* pAchievement46 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
         emulator.mockAchievementRuntime.UnlockAchievement(pAchievement46, RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH);
         emulator.mockGameContext.InitializeFromAchievementRuntime();
@@ -746,7 +746,7 @@ public:
         emulator.mockAchievementRuntime.MockLeaderboardWithLboard(32U);
         emulator.mockAchievementRuntime.MockAchievementWithTrigger(44U);
         auto* pAchievement45 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(45U);
-        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement45, RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE);
+        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement45, RC_CLIENT_ACHIEVEMENT_UNLOCKED_CASUAL);
         auto* pAchievement46 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
         emulator.mockAchievementRuntime.UnlockAchievement(pAchievement46, RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH);
         emulator.mockGameContext.InitializeFromAchievementRuntime();
@@ -918,7 +918,7 @@ public:
         emulator.mockAchievementRuntime.MockLeaderboardWithLboard(32U);
         emulator.mockAchievementRuntime.MockAchievementWithTrigger(44U);
         auto* pAchievement45 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(45U);
-        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement45, RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE);
+        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement45, RC_CLIENT_ACHIEVEMENT_UNLOCKED_CASUAL);
         auto* pAchievement46 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
         emulator.mockAchievementRuntime.UnlockAchievement(pAchievement46, RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH);
         emulator.mockGameContext.InitializeFromAchievementRuntime();

@@ -144,7 +144,7 @@ private:
 
     friend class ra::services::AchievementRuntimeExports;
     bool BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaused);
-    void EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWarning);
+    void EndLoadGame(int nResult, bool bWasPaused, bool bShowCasualWarning);
 
 protected:
     void OnBeforeActiveGameChanged();

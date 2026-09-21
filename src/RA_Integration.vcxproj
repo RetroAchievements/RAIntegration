@@ -197,7 +197,6 @@
     <ClInclude Include="api\impl\ServerBase.hh" />
     <ClInclude Include="api\IServer.hh" />
     <ClInclude Include="api\UpdateAchievement.hh" />
-    <ClInclude Include="api\UpdateLeaderboard.hh" />
     <ClInclude Include="api\UpdateRichPresence.hh" />
     <ClInclude Include="api\UploadBadge.hh" />
     <ClInclude Include="data\context\EmulatorContext.hh" />

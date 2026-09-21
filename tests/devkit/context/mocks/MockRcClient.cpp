@@ -94,9 +94,12 @@ void MockRcClient::SendRequest(const rc_api_request_t& pRequest, rc_api_server_r
         }
     }
 
-    pServerResponse.http_status_code = 504; // Gateway Timeout (upstream server took too long to response to intermediary proxy)
-    pServerResponse.body = "";
-    pServerResponse.body_length = 0;
+    // 410 Gone indicates the resource is not available.
+    // More importantly, it's not classified as a retryable error, so a test that's not using the correct
+    // request string won't retry infinitely.
+    pServerResponse.http_status_code = 410;
+    pServerResponse.body = "Gone";
+    pServerResponse.body_length = 4;
 }
 
 void MockRcClient::MockResponse(const std::string& sRequestParams, const std::string& sResponseBody, int nHttpStatusCode)

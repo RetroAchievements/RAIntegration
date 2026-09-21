@@ -318,6 +318,21 @@ void LeaderboardModel::SyncTrackerToRuntime() const
     }
 }
 
+void LeaderboardModel::SyncCategoryToRuntime() const
+{
+    switch (GetCategory())
+    {
+        case ra::data::models::AssetCategory::Promoted:
+        case ra::data::models::AssetCategory::Local:
+            m_pLeaderboardInfo->public_.category = RC_CLIENT_LEADERBOARD_CATEGORY_PROMOTED;
+            break;
+
+        default:
+            m_pLeaderboardInfo->public_.category = RC_CLIENT_LEADERBOARD_CATEGORY_UNPROMOTED;
+            break;
+    }
+}
+
 void LeaderboardModel::SyncDefinitionToRuntime()
 {
     Expects(m_pLeaderboardInfo != nullptr);
@@ -477,7 +492,7 @@ void LeaderboardModel::InitializeFromPublishedLeaderboard(
     SetID(pLeaderboard.public_.id);
     SetName(ra::util::String::Widen(pLeaderboard.public_.title));
     SetDescription(ra::util::String::Widen(pLeaderboard.public_.description));
-    SetCategory(AssetCategory::Promoted);
+    SetCategory(pLeaderboard.public_.category == RC_CLIENT_LEADERBOARD_CATEGORY_PROMOTED ? AssetCategory::Promoted : AssetCategory::Unpromoted);
     SetValueFormat(Value::FormatFromRcheevosFormat(pLeaderboard.format));
     SetLowerIsBetter(pLeaderboard.public_.lower_is_better);
     SetHidden(pLeaderboard.hidden);
@@ -535,6 +550,7 @@ void LeaderboardModel::SyncToLocalLeaderboardInfo()
     SyncTitleToRuntime();
     SyncDescriptionToRuntime();
     SyncDefinitionToRuntime();
+    SyncCategoryToRuntime();
     SyncValueFormatToRuntime();
 }
 

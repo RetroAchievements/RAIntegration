@@ -151,7 +151,7 @@ public:
 
             mockAchievementRuntime.MockUser("Username", "ApiToken");
             mockRcClient.MockResponse(
-                "r=achievementsets&u=Username&t=ApiToken&m=" + sHash,
+                "r=achievementsets&u=Username&t=ApiToken&m=" + sHash + "&v=2",
                 "{\"Success\":true,"
                   "\"GameId\":" + std::to_string(nGameID) + ","
                   "\"Title\":\"GameTitle\","
@@ -917,7 +917,7 @@ public:
         GameContextHarness game;
         game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
         game.mockRcClient.MockResponse(
-                "r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321",
+                "r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321&v=2",
                 "{\"Success\":true,"
                  "\"GameId\":1,"
                  "\"Title\":\"GameTitle\","
@@ -1315,7 +1315,7 @@ public:
         game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         bool bBeforeResponseCalled = false;
-        game.mockRcClient.OnBeforeResponse("r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321",
+        game.mockRcClient.OnBeforeResponse("r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321&v=2",
             [&game, &bBeforeResponseCalled]() {
                 bBeforeResponseCalled = true;
                 Assert::IsTrue(game.mockAchievementRuntime.IsPaused());
@@ -1333,7 +1333,7 @@ public:
         game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         bool bBeforeResponseCalled = false;
-        game.mockRcClient.OnBeforeResponse("r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321",
+        game.mockRcClient.OnBeforeResponse("r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321&v=2",
             [&game, &bBeforeResponseCalled]() {
                 bBeforeResponseCalled = true;
                 Assert::IsTrue(game.mockAchievementRuntime.IsPaused());

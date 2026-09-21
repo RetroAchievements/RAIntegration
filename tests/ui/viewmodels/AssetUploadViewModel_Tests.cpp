@@ -1076,39 +1076,24 @@ public:
     TEST_METHOD(TestSingleLocalLeaderboard)
     {
         AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
         Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
 
         vmUpload.QueueAsset(pLeaderboard);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateLeaderboard>([&bApiCalled]
-        (const ra::api::UpdateLeaderboard::Request& pRequest, ra::api::UpdateLeaderboard::Response& pResponse)
-        {
-            bApiCalled = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
-            Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
-            Assert::AreEqual(std::string("0xH1234=1"), pRequest.StartTrigger);
-            Assert::AreEqual(std::string("0xH1234=2"), pRequest.SubmitTrigger);
-            Assert::AreEqual(std::string("0xH1234=3"), pRequest.CancelTrigger);
-            Assert::AreEqual(std::string("0xH2345"), pRequest.ValueDefinition);
-            Assert::AreEqual(ra::data::Value::Format::Score, pRequest.Format);
-            Assert::IsFalse(pRequest.LowerIsBetter);
-            Assert::AreEqual(0U, pRequest.LeaderboardId);
-
-            pResponse.LeaderboardId = 7716U;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadleaderboard&u=User&t=APITOKEN&g=22&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&m=unpromoted&h=b9e48151adc764317296ac777ab550f1",
+            "{\"Success\":\"true\",\"LeaderboardID\":7716}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
 
-        // published local leaderboard should be changed to promoted and have it's ID updated
-        Assert::AreEqual(AssetCategory::Promoted, pLeaderboard.GetCategory());
+        // newly published local leaderboard should be changed to unpromoted and have it's ID updated
+        Assert::AreEqual(AssetCategory::Unpromoted, pLeaderboard.GetCategory());
         Assert::AreEqual(7716U, pLeaderboard.GetID());
         Assert::AreEqual(AssetChanges::None, pLeaderboard.GetChanges());
 
@@ -1118,6 +1103,7 @@ public:
     TEST_METHOD(TestSingleLocalLeaderboardSubset)
     {
         AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.mockGameContext.Assets().AddAchievementSet(22, 33, L"Subset", ra::data::models::AchievementSetType::Bonus);
         auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1",
                                                      "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
@@ -1127,37 +1113,47 @@ public:
         vmUpload.QueueAsset(pLeaderboard);
         Assert::AreEqual({1U}, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateLeaderboard>(
-            [&bApiCalled](const ra::api::UpdateLeaderboard::Request& pRequest,
-                          ra::api::UpdateLeaderboard::Response& pResponse) {
-                bApiCalled = true;
-                Assert::AreEqual(33U, pRequest.GameId);
-                Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
-                Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
-                Assert::AreEqual(std::string("0xH1234=1"), pRequest.StartTrigger);
-                Assert::AreEqual(std::string("0xH1234=2"), pRequest.SubmitTrigger);
-                Assert::AreEqual(std::string("0xH1234=3"), pRequest.CancelTrigger);
-                Assert::AreEqual(std::string("0xH2345"), pRequest.ValueDefinition);
-                Assert::AreEqual(ra::data::Value::Format::Score, pRequest.Format);
-                Assert::IsFalse(pRequest.LowerIsBetter);
-                Assert::AreEqual(0U, pRequest.LeaderboardId);
-
-                pResponse.LeaderboardId = 7716U;
-                pResponse.Result = ra::api::ApiResult::Success;
-                return true;
-            });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadleaderboard&u=User&t=APITOKEN&g=33&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&m=unpromoted&h=b9e48151adc764317296ac777ab550f1",
+            "{\"Success\":\"true\",\"LeaderboardID\":7716}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
 
-        // published local leaderboard should be changed to promoted and have it's ID updated
-        Assert::AreEqual(AssetCategory::Promoted, pLeaderboard.GetCategory());
+        // newly published local leaderboard should be changed to unpromoted and have it's ID updated
+        Assert::AreEqual(AssetCategory::Unpromoted, pLeaderboard.GetCategory());
         Assert::AreEqual(7716U, pLeaderboard.GetID());
         Assert::AreEqual(AssetChanges::None, pLeaderboard.GetChanges());
 
         vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestSingleLocalLeaderboardNoClaim)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
+        auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
+        Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
+
+        vmUpload.QueueAsset(pLeaderboard);
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadleaderboard&u=User&t=APITOKEN&g=22&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&m=unpromoted&h=b9e48151adc764317296ac777ab550f1",
+            "{\"Success\":false,\"Status\":403,\"Code\":\"access_denied\",\"Error\":\"You must have an active claim on this game to perform this action.\"}"
+        );
+
+        vmUpload.DoUpload();
+
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
+        // newly published local leaderboard should be changed to unofficial and have it's ID updated
+        Assert::AreEqual(AssetCategory::Local, pLeaderboard.GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
+
+        vmUpload.AssertFailed(0, 1, L"* Title1: You must have an active claim on this game to perform this action.");
     }
 
     TEST_METHOD(TestRichPresence)
@@ -1442,9 +1438,6 @@ public:
         AssetUploadViewModelHarness vmUpload;
         vmUpload.mockUserContext.Initialize("User", "APITOKEN");
 
-        const std::string sLastRequest = "r=submitcodenotes&u=User&t=APITOKEN&g=22&n=5296:Note+5296%0a5298:Note+5298%0a5300:Note+5300%0a5302:Note+5302%0a5304:Note+5304%0a5306:Note+5306%0a5308:Note+5308%0a5310:Note+5310%0a5312:Note+5312%0a5314:Note+5314%0a5316:Note+5316%0a5318:Note+5318%0a5320:Note+5320%0a5322:Note+5322%0a";
-        vmUpload.mockRcClient.MockResponse(sLastRequest, "", 504); // dummy timeout response, but allows us to see if the request got called
-
         constexpr size_t NumNotes = 614;
         for (uint32_t nAddress = 0x1000; nAddress < 0x1000 + NumNotes * 2; nAddress += 2)
             vmUpload.MemoryNotes().SetNote(nAddress, ra::util::String::Printf(L"Note %u", nAddress));
@@ -1461,7 +1454,6 @@ public:
         Assert::AreEqual({ 100 }, vmUpload.GetProgress()); // 100%
 
         vmUpload.mockRcClient.AssertNumRequestsHandled(7); // 6 * 100 + 1 * 14
-        vmUpload.mockRcClient.AssertCalled(sLastRequest);
     }
 
     TEST_METHOD(TestMultipleMemoryNotesWithNewlines)

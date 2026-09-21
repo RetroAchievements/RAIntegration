@@ -531,63 +531,6 @@ FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const Fetch
     return response;
 }
 
-UpdateLeaderboard::Response ConnectedServer::UpdateLeaderboard(const UpdateLeaderboard::Request& request)
-{
-    UpdateLeaderboard::Response response;
-
-    rc_api_update_leaderboard_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
-    api_params.username = pUserContext.GetUsername().c_str();
-    api_params.api_token = pUserContext.GetApiToken().c_str();
-
-    const std::string sTitle = ra::util::String::Narrow(request.Title);
-    const std::string sDescription = ra::util::String::Narrow(request.Description);
-
-    api_params.leaderboard_id = request.LeaderboardId;
-    api_params.game_id = request.GameId;
-    api_params.title = sTitle.c_str();
-    api_params.description = sDescription.c_str();
-    api_params.start_trigger = request.StartTrigger.c_str();
-    api_params.submit_trigger = request.SubmitTrigger.c_str();
-    api_params.cancel_trigger = request.CancelTrigger.c_str();
-    api_params.value_definition = request.ValueDefinition.c_str();
-    api_params.lower_is_better = request.LowerIsBetter ? 1 : 0;
-    api_params.format = ra::data::Value::FormatToServerEnum(request.Format);
-
-    rc_api_request_t api_request;
-    const int result = rc_api_init_update_leaderboard_request(&api_request, &api_params);
-    if (result == RC_OK)
-    {
-        ra::services::Http::Response httpResponse;
-        if (DoRequest(api_request, UpdateLeaderboard::Name(), httpResponse, response))
-        {
-            rc_api_update_leaderboard_response_t api_response;
-            rc_api_server_response_t server_response;
-            HttpResponseToServerResponse(httpResponse, &server_response);
-
-            const auto nResult = rc_api_process_update_leaderboard_server_response(&api_response, &server_response);
-
-            if (ValidateResponse(nResult, api_response.response, UpdateLeaderboard::Name(), httpResponse.StatusCode(), response))
-            {
-                response.Result = ApiResult::Success;
-                response.LeaderboardId = api_response.leaderboard_id;
-            }
-
-            rc_api_destroy_update_leaderboard_response(&api_response);
-        }
-    }
-    else
-    {
-        response.Result = ApiResult::Failed;
-        response.ErrorMessage = rc_error_str(result);
-    }
-
-    rc_api_destroy_request(&api_request);
-    return response;
-}
-
 FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request)
 {
     FetchLeaderboardInfo::Response response;

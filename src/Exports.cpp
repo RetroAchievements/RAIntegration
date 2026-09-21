@@ -342,7 +342,7 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
         if (bHardcore)
             vmMessage->SetDescription(ra::util::String::Printf(L"%u points", pUser->score));
         else
-            vmMessage->SetDescription(ra::util::String::Printf(L"%u points (softcore)", pUser->score_softcore));
+            vmMessage->SetDescription(ra::util::String::Printf(L"%u points (casual mode)", pUser->score_casual));
 
         vmMessage->SetDetail((pUser->num_unread_messages == 1)
             ? L"You have 1 new message"

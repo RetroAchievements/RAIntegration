@@ -298,7 +298,7 @@ public:
         Assert::IsTrue(bWasMenuRebuilt);
     }
 
-    TEST_METHOD(TestAttemptLoginSuccessWithPreviousSessionDataSoftcore)
+    TEST_METHOD(TestAttemptLoginSuccessWithPreviousSessionDataCasual)
     {
         AttemptLoginHarness harness;
 
@@ -322,7 +322,7 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome back User"), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"123 points (softcore)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"123 points (casual mode)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());

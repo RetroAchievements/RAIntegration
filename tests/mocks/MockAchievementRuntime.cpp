@@ -190,8 +190,8 @@ void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAc
 {
     pAchievement->public_.unlocked |= nMode;
 
-    if (pAchievement->unlock_time_softcore == 0)
-        pAchievement->unlock_time_softcore = time(nullptr);
+    if (pAchievement->unlock_time_casual == 0)
+        pAchievement->unlock_time_casual = time(nullptr);
 
     if (nMode == RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH)
     {
@@ -203,7 +203,7 @@ void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAc
         if (pAchievement->trigger)
             pAchievement->trigger->state = RC_TRIGGER_STATE_TRIGGERED;
     }
-    else if (nMode == RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE &&
+    else if (nMode == RC_CLIENT_ACHIEVEMENT_UNLOCKED_CASUAL &&
              !rc_client_get_hardcore_enabled(GetClient()))
     {
         pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;

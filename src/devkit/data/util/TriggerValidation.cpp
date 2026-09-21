@@ -5,6 +5,7 @@
 #include "context/IGameContext.hh"
 
 #include "data/models/MemoryNotesModel.hh"
+#include "data/models/StructuredMemoryNoteModel.hh"
 
 #include "services/ServiceLocator.hh"
 
@@ -84,18 +85,27 @@ static const ra::data::models::MemoryNoteModel* ValidateMemoryNotesOperand(
     const auto nAddress = pOperand.value.memref->address;
     auto nStartAddress = nAddress;
     if (!bIsAddAddressChain)
-        pOperandNote = pNotes.FindMemoryNoteModel(nAddress, false);
+    {
+        pOperandNote = pNotes.FindNote(nAddress, false);
+    }
     else if (pParentNote)
-        pOperandNote = pParentNote->GetPointerNoteAtOffset(nAddress);
+    {
+        const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pParentNote);
+        if (pStructuredNote)
+            pOperandNote = pStructuredNote->GetNoteAtOffset(nAddress);
+    }
 
     if (!pOperandNote)
     {
         if (!bIsAddAddressChain)
         {
             // No note at address. See if it's included in a larger container note.
-            nStartAddress = pNotes.FindNoteStart(nAddress);
-            if (nStartAddress != 0xFFFFFFFF)
-                pOperandNote = pNotes.FindMemoryNoteModel(nStartAddress, false);
+            const auto pReference = pNotes.FindNoteContaining(nAddress);
+            if (pReference.pMemoryNote)
+            {
+                pOperandNote = pReference.pMemoryNote;
+                nStartAddress = pReference.nAddress;
+            }
         }
 
         if (!pOperandNote)
@@ -120,7 +130,7 @@ static const ra::data::models::MemoryNoteModel* ValidateMemoryNotesOperand(
         return pOperandNote;
 
     // A pointer may be masked by reading a smaller size.
-    if (pOperandNote->IsPointer())
+    if (pOperandNote->GetType() == ra::data::models::MemoryNoteType::Pointer)
     {
         const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
         ra::data::Memory::Size nReadSize;

@@ -76,7 +76,9 @@
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
     <ClCompile Include="data\models\MemoryNotesModel_Tests.cpp" />
+    <ClCompile Include="data\models\PointerMemoryNoteModel_Tests.cpp" />
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
+    <ClCompile Include="data\models\ValueMemoryNoteModel_Tests.cpp" />
     <ClCompile Include="data\Requirement_Tests.cpp" />
     <ClCompile Include="data\util\AchievementLogicSerializer_Tests.cpp" />
     <ClCompile Include="data\util\IndirectNoteResolver_Tests.cpp" />

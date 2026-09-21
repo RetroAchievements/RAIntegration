@@ -1,7 +1,12 @@
 #include "MemoryNotesModel.hh"
 
+#include "context/IEmulatorMemoryContext.hh"
 #include "context/IRcClient.hh"
 #include "context/UserContext.hh"
+
+#include "data/models/AuthoredMemoryNoteModel.hh"
+#include "data/models/PointerMemoryNoteModel.hh"
+#include "data/models/StructuredMemoryNoteModel.hh"
 
 #include "services/ServiceLocator.hh"
 #include "services/IMessageDispatcher.hh"
@@ -102,7 +107,7 @@ void MemoryNotesModel::Refresh(unsigned int nGameId,
 
         for (const auto& pNote : m_vMemoryNotes)
         {
-            if (pNote->IsPointer())
+            if (pNote->GetType() == MemoryNoteType::Pointer)
             {
                 m_bHasPointers = true;
                 break;
@@ -123,12 +128,14 @@ static int CompareNoteAddresses(const std::unique_ptr<MemoryNoteModel>& left,
 
 void MemoryNotesModel::AddMemoryNote(ra::data::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
 {
-    std::unique_ptr<MemoryNoteModel> note = std::make_unique<MemoryNoteModel>();
-    note->SetAuthor(sAuthor);
-    note->SetNote(sNote);
+    std::unique_ptr<MemoryNoteModel> note = MemoryNoteModel::Parse(sNote);
     note->SetAddress(nAddress);
 
-    const bool bIsPointer = note->IsPointer();
+    auto* pAuthoredNote = dynamic_cast<AuthoredMemoryNoteModel*>(note.get());
+    if (pAuthoredNote != nullptr)
+        pAuthoredNote->SetAuthor(sAuthor);
+
+    const bool bIsPointer = dynamic_cast<StructuredMemoryNoteModel*>(note.get()) != nullptr;
     if (bIsPointer && !m_bRefreshing)
         m_bHasPointers = true;
 
@@ -157,42 +164,13 @@ void MemoryNotesModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const
         m_fMemoryNoteChanged(nAddress, sNewNote);
 }
 
-ra::data::ByteAddress MemoryNotesModel::FindNoteStart(ra::data::ByteAddress nAddress) const
+MemoryNoteModel::Reference MemoryNotesModel::FindNoteContaining(ra::data::ByteAddress nAddress) const
 {
-    auto pIter = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nAddress, CompareNoteAddresses);
+    std::vector<MemoryNoteModel::Reference> vChain;
+    if (GetChainTo(vChain, nAddress))
+        return vChain.back();
 
-    // exact match, return it
-    if (pIter != m_vMemoryNotes.end() && (*pIter)->GetAddress() == nAddress)
-        return nAddress;
-
-    // lower_bound returns the first item _after_ the search value. scan all items before
-    // the found item to see if any of them contain the target address. have to scan
-    // all items because a singular note may exist within a range.
-    if (pIter != m_vMemoryNotes.begin())
-    {
-        do
-        {
-            --pIter;
-            const auto* pMemoryNote = pIter->get();
-
-            if (pMemoryNote && pMemoryNote->GetBytes() > 1 && pMemoryNote->GetBytes() + pMemoryNote->GetAddress() > nAddress)
-                return pMemoryNote->GetAddress();
-
-        } while (pIter != m_vMemoryNotes.begin());
-    }
-
-    // also check for derived memory notes
-    if (m_bHasPointers)
-    {
-        for (const auto& pNote : m_vMemoryNotes)
-        {
-            const auto pair = pNote->GetPointerNoteAtAddress(nAddress);
-            if (pair.second != nullptr)
-                return pair.first;
-        }
-    }
-
-    return 0xFFFFFFFF;
+    return { nullptr, 0, 0 };
 }
 
 std::wstring MemoryNotesModel::BuildNoteForAddress(ra::data::ByteAddress nAddress,
@@ -268,17 +246,28 @@ std::wstring MemoryNotesModel::FindNote(ra::data::ByteAddress nAddress, Memory::
     {
         for (const auto& pMemoryNote2 : m_vMemoryNotes)
         {
-            const auto pair = pMemoryNote2->GetPointerNoteAtAddress(nAddress);
-            if (pair.second != nullptr)
-                return BuildNoteForAddress(nAddress, nCheckBytes, pair.first, *pair.second) + L" [indirect]";
+            const auto* pStructuredNote = dynamic_cast<const StructuredMemoryNoteModel*>(pMemoryNote2.get());
+            if (pStructuredNote)
+            {
+                std::vector<MemoryNoteModel::Reference> vMatches;
+                if (pStructuredNote->GetChainTo(vMatches, nAddress))
+                    return BuildNoteForAddress(nAddress, nCheckBytes, vMatches.back().nAddress, *vMatches.back().pMemoryNote) + L" [indirect]";
+            }
         }
 
-        const auto nLastAddress = nAddress + nCheckBytes - 1;
-        for (const auto& pMemoryNote2 : m_vMemoryNotes)
+        if (nCheckBytes > 1)
         {
-            const auto pair = pMemoryNote2->GetPointerNoteAtAddress(nLastAddress);
-            if (pair.second != nullptr)
-                return BuildNoteForAddress(nAddress, nCheckBytes, pair.first, *pair.second) + L" [indirect]";
+            const auto nLastAddress = nAddress + nCheckBytes - 1;
+            for (const auto& pMemoryNote2 : m_vMemoryNotes)
+            {
+                const auto* pStructuredNote = dynamic_cast<const StructuredMemoryNoteModel*>(pMemoryNote2.get());
+                if (pStructuredNote)
+                {
+                    std::vector<MemoryNoteModel::Reference> vMatches;
+                    if (pStructuredNote->GetChainTo(vMatches, nLastAddress))
+                        return BuildNoteForAddress(nAddress, nCheckBytes, vMatches.back().nAddress, *vMatches.back().pMemoryNote) + L" [indirect]";
+                }
+            }
         }
     }
 
@@ -322,8 +311,10 @@ void MemoryNotesModel::SetNote(ra::data::ByteAddress nAddress, const std::wstrin
                 // capture the original value
                 const auto* pMemoryNote = pIter->get();
                 Expects(pMemoryNote != nullptr);
+                const auto* pAuthorNote = dynamic_cast<const AuthoredMemoryNoteModel*>(pMemoryNote);
+                Expects(pAuthorNote != nullptr);
                 m_mOriginalNotes.insert_or_assign(nAddress,
-                    std::make_pair(pMemoryNote->GetAuthor(), pMemoryNote->GetNote()));
+                    std::make_pair(pAuthorNote->GetAuthor(), pMemoryNote->GetNote()));
             }
             else
             {
@@ -361,41 +352,75 @@ void MemoryNotesModel::SetNote(ra::data::ByteAddress nAddress, const std::wstrin
     }
 }
 
-const MemoryNoteModel* MemoryNotesModel::FindMemoryNoteModel(ra::data::ByteAddress nAddress, bool bIncludeDerived) const
+const MemoryNoteModel* MemoryNotesModel::FindNote(ra::data::ByteAddress nAddress, bool bIncludeDerived) const
 {
     const auto pIter = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nAddress, CompareNoteAddresses);
     if (pIter != m_vMemoryNotes.end() && (*pIter)->GetAddress() == nAddress)
         return pIter->get();
 
     if (m_bHasPointers && bIncludeDerived)
-        return FindIndirectMemoryNoteInternal(nAddress).second;
+        return FindIndirectMemoryNoteInternal(nAddress).pMemoryNote;
 
     return nullptr;
 }
 
-std::pair<ra::data::ByteAddress, const MemoryNoteModel*>
-    MemoryNotesModel::FindIndirectMemoryNoteInternal(ra::data::ByteAddress nAddress) const
+MemoryNoteModel::Reference MemoryNotesModel::FindIndirectMemoryNoteInternal(ra::data::ByteAddress nAddress) const
 {
     for (const auto& pMemoryNote : m_vMemoryNotes)
     {
-        auto pair = pMemoryNote->GetPointerNoteAtAddress(nAddress);
-        if (pair.second != nullptr && pair.first == nAddress) // only match start of note
-            return {pMemoryNote->GetAddress(), pair.second};
+        const auto* pStructuredNote = dynamic_cast<const StructuredMemoryNoteModel*>(pMemoryNote.get());
+        if (pStructuredNote)
+        {
+            std::vector<MemoryNoteModel::Reference> vMatches;
+            if (pStructuredNote->GetChainTo(vMatches, nAddress) && vMatches.back().nAddress == nAddress)
+                return vMatches.back();
+        }
     }
 
-    return {0, nullptr};
+    return {};
 }
 
-ra::data::ByteAddress MemoryNotesModel::GetIndirectSource(ra::data::ByteAddress nAddress) const
+bool MemoryNotesModel::GetChainTo(std::vector<MemoryNoteModel::Reference>& vChain, ra::data::ByteAddress nAddress) const
 {
-    if (m_bHasPointers)
+    auto pIter = std::lower_bound(m_vMemoryNotes.begin(), m_vMemoryNotes.end(), nAddress, CompareNoteAddresses);
+
+    // exact match, return it
+    if (pIter != m_vMemoryNotes.end() && (*pIter)->GetAddress() == nAddress)
     {
-        const auto pMemoryNote = FindIndirectMemoryNoteInternal(nAddress);
-        if (pMemoryNote.second != nullptr)
-            return pMemoryNote.first;
+        vChain.emplace_back(pIter->get(), nAddress, 0);
+        return true;
     }
 
-    return 0xFFFFFFFF;
+    // lower_bound returns the first item _after_ the search value. scan all items before
+    // the found item to see if any of them contain the target address. have to scan
+    // all items because a singular note may exist within a range.
+    if (pIter != m_vMemoryNotes.begin())
+    {
+        do
+        {
+            --pIter;
+            const auto* pMemoryNote = pIter->get();
+
+            if (pMemoryNote && pMemoryNote->GetBytes() > 1 && pMemoryNote->GetBytes() + pMemoryNote->GetAddress() > nAddress)
+            {
+                vChain.emplace_back(pMemoryNote, pMemoryNote->GetAddress(), 0);
+                return true;
+            }
+        } while (pIter != m_vMemoryNotes.begin());
+    }
+
+    // also check for derived memory notes
+    if (m_bHasPointers)
+    {
+        for (const auto& pMemoryNote : m_vMemoryNotes)
+        {
+            const auto* pStructuredNote = dynamic_cast<const StructuredMemoryNoteModel*>(pMemoryNote.get());
+            if (pStructuredNote && pStructuredNote->GetChainTo(vChain, nAddress))
+                return true;
+        }
+    }
+
+    return false;
 }
 
 ra::data::ByteAddress MemoryNotesModel::GetNextNoteAddress(ra::data::ByteAddress nAfterAddress, bool bIncludeDerived) const
@@ -454,51 +479,51 @@ ra::data::ByteAddress MemoryNotesModel::GetPreviousNoteAddress(ra::data::ByteAdd
     return nBestAddress;
 }
 
-void MemoryNotesModel::EnumerateMemoryNotes(std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel& pMemoryNote)> callback, bool bIncludeDerived) const
+void MemoryNotesModel::EnumerateNotes(std::function<bool(const MemoryNoteModel::Reference& pMemoryNote)> callback, bool bIncludeDerived) const
 {
     if (!bIncludeDerived || !m_bHasPointers)
     {
-        // no pointers, just iterate over the normal memory notes
+        // No pointers. Just iterate over the root memory notes.
         for (const auto& pMemoryNote : m_vMemoryNotes)
         {
-            if (!callback(pMemoryNote->GetAddress(), *pMemoryNote))
+            const MemoryNoteModel::Reference pReference(pMemoryNote.get(), pMemoryNote->GetAddress(), 0);
+            if (!callback(pReference))
                 break;
         }
 
         return;
     }
 
-    // create a hash from the current pointer addresses
-    std::map<ra::data::ByteAddress, const MemoryNoteModel*> mNotes;
-    for (const auto& pMemoryNote : m_vMemoryNotes)
-    {
-        if (!pMemoryNote->IsPointer() || pMemoryNote->GetRawPointerValue() == 0)
-            continue;
-
-        std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel&)> fCallback =
-            [&mNotes, &fCallback](ra::data::ByteAddress nAddress, const MemoryNoteModel& pNote)
+    // Create a hash from the current pointer addresses.
+    std::map<ra::data::ByteAddress, MemoryNoteModel::Reference> mNotes;
+    std::function<bool(const MemoryNoteModel::Reference&)> fCallback =
+        [&mNotes, &fCallback](const MemoryNoteModel::Reference& pNote)
         {
-            mNotes[nAddress] = &pNote;
+            mNotes[pNote.nAddress] = pNote;
 
-            // if the note is a valid (non-null) pointer, recurse into it too
-            if (pNote.IsPointer() && pNote.HasRawPointerValue() && pNote.GetRawPointerValue() != 0)
-                pNote.EnumeratePointerNotes(fCallback);
+            // Recurse if appropriate.
+            const auto* pStructuredNote = dynamic_cast<const StructuredMemoryNoteModel*>(pNote.pMemoryNote);
+            if (pStructuredNote)
+                pStructuredNote->EnumerateOffsetNotes(fCallback, pNote.nAddress);
 
             return true;
         };
 
-        pMemoryNote->EnumeratePointerNotes(fCallback);
-
+    for (const auto& pMemoryNote : m_vMemoryNotes)
+    {
+        const auto* pStructuredNote = dynamic_cast<const StructuredMemoryNoteModel*>(pMemoryNote.get());
+        if (pStructuredNote)
+            pStructuredNote->EnumerateOffsetNotes(fCallback);
     }
 
-    // merge in the non-pointer notes
+    // Merge in the non-pointer notes.
     for (const auto& pMemoryNote : m_vMemoryNotes)
-        mNotes[pMemoryNote->GetAddress()] = pMemoryNote.get();
+        mNotes[pMemoryNote->GetAddress()] = { pMemoryNote.get(), pMemoryNote->GetAddress(), 0 };
 
-    // and iterate the result
+    // And iterate the result.
     for (const auto& pIter : mNotes)
     {
-        if (!callback(pIter.first, *pIter.second))
+        if (!callback(pIter.second))
             break;
     }
 }
@@ -512,15 +537,16 @@ void MemoryNotesModel::DoFrame()
 
     for (auto& pMemoryNote : m_vMemoryNotes)
     {
-        if (pMemoryNote->IsPointer())
+        auto* pPointerNote = dynamic_cast<PointerMemoryNoteModel*>(pMemoryNote.get());
+        if (pPointerNote)
         {
             if (!m_fMemoryNoteMoved)
             {
-                pMemoryNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext, nullptr);
+                pPointerNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext, nullptr);
             }
-            else if (pMemoryNote->HasRawPointerValue())
+            else if (pPointerNote->HasRawPointerValue())
             {
-                pMemoryNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext,
+                pPointerNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext,
                     [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel& pOffsetNote) {
                         m_fMemoryNoteMoved(nOldAddress, nNewAddress, pOffsetNote.GetNote());
                     });
@@ -528,7 +554,7 @@ void MemoryNotesModel::DoFrame()
             else
             {
                 // pointer hasn't been read before, provide dummy previous address
-                pMemoryNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext,
+                pPointerNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext,
                     [this](ra::data::ByteAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel& pOffsetNote) {
                         m_fMemoryNoteMoved(0xFFFFFFFF, nNewAddress, pOffsetNote.GetNote());
                     });

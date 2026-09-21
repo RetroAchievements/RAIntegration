@@ -7,6 +7,7 @@
 #include "context\IRcClient.hh"
 
 #include "data\context\EmulatorContext.hh"
+#include "data\models\StructuredMemoryNoteModel.hh"
 #include "data\util\AchievementLogicSerializer.hh"
 
 #include "services\AchievementRuntime.hh"
@@ -542,7 +543,7 @@ void MemoryWatchViewModel::UpdateRealNote()
     {
         if (!IsIndirectAddress())
         {
-            pNote = pMemoryNotes->FindMemoryNoteModel(GetAddress());
+            pNote = pMemoryNotes->FindNote(GetAddress());
         }
         else
         {
@@ -560,10 +561,18 @@ void MemoryWatchViewModel::UpdateRealNote()
                 }
 
                 const auto nAddress = rc_operand_is_memref(pOperand) ? pOperand->value.memref->address : pOperand->value.num;
-                if (pNote)
-                    pNote = pNote->GetPointerNoteAtOffset(nAddress);
+
+                if (!pNote)
+                {
+                    // first node
+                    pNote = pMemoryNotes->FindNote(nAddress, false);
+                }
                 else
-                    pNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
+                {
+                    // chained node
+                    const auto pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pNote);
+                    pNote = pStructuredNote ? pStructuredNote->GetNoteAtOffset(nAddress) : nullptr;
+                }
 
                 if (!pNote)
                     break;

@@ -1,6 +1,9 @@
 #include "AchievementLogicSerializer.hh"
 
 #include "context/IConsoleContext.hh"
+#include "context/IEmulatorMemoryContext.hh"
+
+#include "data/models/StructuredMemoryNoteModel.hh"
 
 #include "services/ServiceLocator.hh"
 
@@ -300,9 +303,21 @@ void AchievementLogicSerializer::AppendHitTarget(std::string& sBuffer, uint32_t 
 std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models::MemoryNoteModel& pRootNote,
     const ra::data::models::MemoryNoteModel& pLeafNote)
 {
-    std::vector<const ra::data::models::MemoryNoteModel*> vChain;
-    if (!pLeafNote.GetPointerChain(vChain, pRootNote))
-        return std::string();
+    std::vector<ra::data::models::MemoryNoteModel::Reference> vChain;
+
+    const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(&pRootNote);
+    if (pStructuredNote)
+        pStructuredNote->GetChainTo(vChain, pLeafNote);
+    else
+        vChain.emplace_back(&pRootNote, pRootNote.GetAddress(), 0);
+
+    return BuildMemRefChain(vChain);
+}
+
+std::string AchievementLogicSerializer::BuildMemRefChain(const std::vector<ra::data::models::MemoryNoteModel::Reference>& vChain)
+{
+    if (vChain.empty())
+        return "";
 
     auto nSize = ra::data::Memory::Size::ThirtyTwoBit;
     uint32_t nMask = 0xFFFFFFFF;
@@ -311,7 +326,7 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     if (!pConsoleContext.GetRealAddressConversion(&nSize, &nMask, &nOffset))
     {
-        nSize = pRootNote.GetMemSize();
+        nSize = vChain.front().pMemoryNote->GetMemSize();
         nMask = 0xFFFFFFFF;
         nOffset = pConsoleContext.RealAddressFromByteAddress(0);
         if (nOffset == 0xFFFFFFFF)
@@ -320,10 +335,10 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
 
     std::string sBuffer;
     size_t nBitmaskOffset = std::string::npos;
-    ra::data::ByteAddress nPointerBase = 0, nAddress = 0;
+    ra::data::ByteAddress nAddress = 0;
     for (size_t i = 0; i < vChain.size() - 1; ++i)
     {
-        const auto* pNote = vChain.at(i);
+        const auto* pNote = vChain.at(i).pMemoryNote;
         Expects(pNote != nullptr);
 
         nAddress = pNote->GetAddress();
@@ -340,7 +355,6 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
 
         AppendConditionType(sBuffer, Requirement::Type::AddAddress);
         AppendOperand(sBuffer, Requirement::OperandType::Address, nSize, nAddress);
-        nPointerBase = pNote->GetPointerAddress();
 
         if (nOffset != 0)
         {
@@ -361,7 +375,7 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
         AppendConditionSeparator(sBuffer);
     }
 
-    nAddress = pLeafNote.GetAddress();
+    nAddress = vChain.back().pMemoryNote->GetAddress();
     if (nAddress > nMask && nBitmaskOffset != std::string::npos)
     {
         sBuffer.erase(nBitmaskOffset, sBuffer.length() - nBitmaskOffset);
@@ -370,7 +384,7 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const ra::data::models:
 
     AppendConditionType(sBuffer, Requirement::Type::Measured);
 
-    nSize = pLeafNote.GetMemSize();
+    nSize = vChain.back().pMemoryNote->GetMemSize();
     if (nSize == ra::data::Memory::Size::Unknown)
         nSize = ra::data::Memory::Size::EightBit;
 

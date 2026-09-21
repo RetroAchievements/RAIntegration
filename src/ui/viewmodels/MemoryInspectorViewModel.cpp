@@ -1,6 +1,7 @@
 #include "MemoryInspectorViewModel.hh"
 
 #include "data\context\GameContext.hh"
+#include "data\models\PointerMemoryNoteModel.hh"
 #include "data\util\AchievementLogicSerializer.hh"
 
 #include "services\IConfiguration.hh"
@@ -143,12 +144,10 @@ void MemoryInspectorViewModel::SaveUncommittedNote()
     auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
     if (pMemoryNotes != nullptr)
     {
-        std::wstring sEmpty;
-        const auto* pNote = pMemoryNotes->FindNote(m_nUncommittedNoteAddress);
-        if (pNote == nullptr)
-            pNote = &sEmpty;
+        const auto* pNoteModel = pMemoryNotes->FindNote(m_nUncommittedNoteAddress);
+        const std::wstring pNote = pNoteModel ? pNoteModel->GetNote() : L"";
 
-        if (*pNote != m_sOriginalNoteValue)
+        if (pNote != m_sOriginalNoteValue)
         {
             m_nUncommittedNoteAddress = 0xFFFFFFFF;
 
@@ -217,7 +216,7 @@ void MemoryInspectorViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddres
         const auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
 
-        const auto* pDirectNote = pMemoryNotes ? pMemoryNotes->FindMemoryNoteModel(nAddress, false) : nullptr;
+        const auto* pDirectNote = pMemoryNotes ? pMemoryNotes->FindNote(nAddress, false) : nullptr;
         if (pDirectNote)
         {
             // non indirect note found. normally, this will match sNewNote, but sometimes sNewNote
@@ -231,7 +230,7 @@ void MemoryInspectorViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddres
             if (sNewNote.length() == 0)
             {
                 // empty note notification is probably a deleted note, but check to be sure
-                const auto* pIndirectNote = pMemoryNotes ? pMemoryNotes->FindMemoryNoteModel(nAddress, true) : nullptr;
+                const auto* pIndirectNote = pMemoryNotes ? pMemoryNotes->FindNote(nAddress, true) : nullptr;
                 m_bNoteIsIndirect = (pIndirectNote != nullptr);
             }
             else
@@ -256,44 +255,42 @@ void MemoryInspectorViewModel::SetCurrentAddressNoteInternal(const std::wstring&
 
 void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nNewAddress)
 {
+    SaveUncommittedNote();
+
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
 
-    SaveUncommittedNote();
+    std::vector<ra::data::models::MemoryNoteModel::Reference> vChain;
+    if (pMemoryNotes)
+        pMemoryNotes->GetChainTo(vChain, nNewAddress);
 
-    m_bNoteIsIndirect = false;
-    const std::wstring* pNote = nullptr;
-    if (pMemoryNotes != nullptr)
+    m_bNoteIsIndirect = (vChain.size() > 1);
+
+    if (vChain.empty())
     {
-        pNote = pMemoryNotes->FindNote(nNewAddress);
-        if (pNote)
-        {
-            // see if there's a non-indirect note at the address. if so, use it.
-            std::string sAuthor;
-            const auto* pDirectNote = pMemoryNotes->FindMemoryNoteModel(nNewAddress, false);
-            if (pDirectNote != nullptr)
-                pNote = &pDirectNote->GetNote();
-            else
-                m_bNoteIsIndirect = true;
-        }
+        SetCurrentAddressNoteInternal(L"");
     }
-
-    if (pNote)
+    else if (!m_bNoteIsIndirect)
     {
-        const auto nIndirectSource = m_bNoteIsIndirect ? pMemoryNotes->GetIndirectSource(nNewAddress) : 0xFFFFFFFF;
-        if (nIndirectSource != 0xFFFFFFFF)
-        {
-            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-            SetCurrentAddressNoteInternal(ra::util::String::Printf(L"[Indirect from %s]\r\n%s", pMemoryContext.FormatAddress(nIndirectSource), *pNote));
-        }
-        else
-        {
-            SetCurrentAddressNoteInternal(*pNote);
-        }
+        SetCurrentAddressNoteInternal(vChain.front().pMemoryNote->GetNote());
     }
     else
     {
-        SetCurrentAddressNoteInternal(L"");
+        std::wstring sIndirectNote;
+        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+
+        for (const auto& pChain : vChain)
+        {
+            const auto pPointerNote = dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(pChain.pMemoryNote);
+            if (pPointerNote)
+            {
+                sIndirectNote += ra::util::String::Printf(L"[Indirect from %s]\r\n", pMemoryContext.FormatAddress(pChain.nAddress));
+                continue;
+            }
+        }
+
+        sIndirectNote += vChain.back().pMemoryNote->GetNote();
+        SetCurrentAddressNoteInternal(sIndirectNote);
     }
 
     UpdateNoteButtons();
@@ -326,31 +323,31 @@ std::string MemoryInspectorViewModel::GetCurrentAddressMemRefChain() const
 {
     const auto nAddress = GetCurrentAddress();
 
-    // if the memory note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
-    const auto* pNote = pMemoryNotes ? pMemoryNotes->FindMemoryNoteModel(nAddress) : nullptr;
-    auto nSize = pNote ? pNote->GetMemSize() : ra::data::Memory::Size::Unknown;
-    if (nSize >= ra::data::Memory::Size::Unknown)
-        nSize = Viewer().GetSize();
 
-    if (m_bNoteIsIndirect && pNote) // pNote being not null implies pMemoryNotes is not null
+    std::vector<ra::data::models::MemoryNoteModel::Reference> vChain;
+    if (pMemoryNotes && pMemoryNotes->GetChainTo(vChain, nAddress))
     {
-        const auto nIndirectSource = pMemoryNotes->GetIndirectSource(nAddress);
-        if (nIndirectSource != 0xFFFFFFFF)
-        {
-            const auto* pRootNote = pMemoryNotes->FindMemoryNoteModel(nIndirectSource);
-            Expects(pRootNote != nullptr);
+        std::unique_ptr<ra::data::models::MemoryNoteModel> pTemporaryNote;
 
-            return ra::data::util::AchievementLogicSerializer::BuildMemRefChain(*pRootNote, *pNote);
+        // if the memory note doesn't specify an explicit size, use the selected viewer mode size.
+        if (vChain.back().pMemoryNote->GetMemSize() >= ra::data::Memory::Size::Unknown)
+        {
+            pTemporaryNote = ra::data::models::MemoryNoteModel::Parse(L"Virtual Note");
+            pTemporaryNote->SetAddress(vChain.back().pMemoryNote->GetAddress());
+            pTemporaryNote->SetMemSize(Viewer().GetSize());
+            vChain.back().pMemoryNote = pTemporaryNote.get();
         }
+
+        return ra::data::util::AchievementLogicSerializer::BuildMemRefChain(vChain);
     }
 
     std::string sMemRef;
     ra::data::util::AchievementLogicSerializer::AppendConditionType(
         sMemRef, ra::data::Requirement::Type::Measured);
     ra::data::util::AchievementLogicSerializer::AppendOperand(
-        sMemRef, ra::data::Requirement::OperandType::Address, nSize, nAddress);
+        sMemRef, ra::data::Requirement::OperandType::Address, Viewer().GetSize(), nAddress);
     return sMemRef;
 }
 

@@ -71,6 +71,7 @@ void EmulatorMemoryContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
         pBlock.read = pReader;
         pBlock.write = pWriter;
         pBlock.readBlock = nullptr;
+        pBlock.readBlockSearch = nullptr;
 
         m_nTotalMemorySize += nBytes;
 
@@ -83,6 +84,13 @@ void EmulatorMemoryContext::AddMemoryBlockReader(gsl::index nIndex,
 {
     if (nIndex < gsl::narrow_cast<gsl::index>(m_vMemoryBlocks.size()))
         m_vMemoryBlocks.at(nIndex).readBlock = pReader;
+}
+
+void EmulatorMemoryContext::AddSearchMemoryBlockReader(gsl::index nIndex,
+    EmulatorMemoryContext::MemoryReadBlockFunction pReader)
+{
+    if (nIndex < gsl::narrow_cast<gsl::index>(m_vMemoryBlocks.size()))
+        m_vMemoryBlocks.at(nIndex).readBlockSearch = pReader;
 }
 
 void EmulatorMemoryContext::OnTotalMemorySizeChanged()
@@ -589,7 +597,11 @@ void EmulatorMemoryContext::CaptureMemory(std::vector<ra::data::CapturedMemoryBl
             }
 
             Expects(pBlock != nullptr);
-            const auto nRead = ReadMemory(nAdjustedAddress, pBlock->GetBytes(), nBlockSize, pMemoryBlock, false);
+            uint32_t nRead;
+            if (pMemoryBlock.readBlockSearch)
+                nRead = pMemoryBlock.readBlockSearch(nAdjustedAddress, pBlock->GetBytes(), nBlockSize);
+            else
+                nRead = ReadMemory(nAdjustedAddress, pBlock->GetBytes(), nBlockSize, pMemoryBlock, false);
             if (nRead == 0)
                 vBlocks.pop_back();
             else

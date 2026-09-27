@@ -70,6 +70,8 @@ extern "C" {
     //  pWriter is typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned char nVal );
     API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize);
     API void CCONV _RA_InstallMemoryBankBlockReader(int nBankID, void* pBlockReader);
+    // pBlockReader returning 0 excludes the block from memory searches; takes priority over _RA_InstallMemoryBankBlockReader during CaptureMemory
+    API void CCONV _RA_InstallSearchMemoryBankReader(int nBankID, void* pBlockReader);
 
     // Call before installing any memory banks
     API void CCONV _RA_ClearMemoryBanks();

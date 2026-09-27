@@ -262,6 +262,7 @@ static rc_client_leaderboard_info_t* AddLeaderboard(const rc_client_t* client, r
     const std::string sGeneratedDescripton = ra::util::String::Printf("Description %u", nId);
     leaderboard->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
+    leaderboard->public_.category = RC_CLIENT_LEADERBOARD_CATEGORY_PROMOTED;
     leaderboard->public_.state = static_cast<uint8_t>(rc_client_get_hardcore_enabled(client) ?
         RC_CLIENT_LEADERBOARD_STATE_ACTIVE : RC_CLIENT_LEADERBOARD_STATE_INACTIVE);
 

@@ -235,7 +235,7 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
     EndLoadGame(nResult, bWasPaused, true);
 }
 
-void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWarning)
+void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowCasualWarning)
 {
     {
         ra::data::models::RichPresenceModel* pRichPresence = nullptr;
@@ -374,13 +374,13 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
             if (vmWarning.ShowModal() == ra::ui::DialogResult::Yes)
                 ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().EnableHardcoreMode(false);
         }
-        else if (bShowSoftcoreWarning)
+        else if (bShowCasualWarning)
         {
             const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
 
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
             ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                L"Playing in Softcore Mode",
+                L"Playing in Casual Mode",
                 bLeaderboardsEnabled ? L"Leaderboard entries will not be submitted." : L"");
         }
     }

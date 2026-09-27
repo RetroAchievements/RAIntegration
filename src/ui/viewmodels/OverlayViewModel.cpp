@@ -167,10 +167,10 @@ void OverlayViewModel::CreateRenderImage()
     const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
     const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     const auto* pUser = rc_client_get_user_info(pClient);
-    const auto sPoints = ra::util::String::Printf(L"%u Points", !pUser ? 0 : bHardcore ? pUser->score : pUser->score_softcore);
+    const auto sPoints = ra::util::String::Printf(L"%u Points", !pUser ? 0 : bHardcore ? pUser->score : pUser->score_casual);
     const auto szPoints = m_pSurface->MeasureText(nSubFont, sPoints);
 
-    const auto sHardcore = bHardcore ? std::wstring(L"HARDCORE") : std::wstring(L"SOFTCORE");
+    const auto sHardcore = bHardcore ? std::wstring(L"HARDCORE") : std::wstring(L"CASUAL MODE");
     const auto szHardcore = m_pSurface->MeasureText(nDetailFont, sHardcore);
 
     constexpr auto nImageSize = 64;

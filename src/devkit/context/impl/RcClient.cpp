@@ -41,7 +41,7 @@ RcClient::RcClient() noexcept
     if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
        rc_client_enable_logging(m_pClient.get(), RC_CLIENT_LOG_LEVEL_VERBOSE, RcClient::LogMessage);
 
-    m_pClient->state.allow_leaderboards_in_softcore = true;
+    m_pClient->state.allow_leaderboards_in_casual = true;
 
     rc_client_set_unpromoted_enabled(m_pClient.get(), 1);
 }

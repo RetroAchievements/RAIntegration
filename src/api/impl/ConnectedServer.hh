@@ -18,7 +18,6 @@ public:
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override;
     UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request& request) override;
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) override;
-    UpdateLeaderboard::Response UpdateLeaderboard(const UpdateLeaderboard::Request& request) override;
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) override;
     UpdateRichPresence::Response UpdateRichPresence(const UpdateRichPresence::Request& request) override;
     UploadBadge::Response UploadBadge(const UploadBadge::Request& request) override;

@@ -1250,9 +1250,6 @@ void AssetListViewModel::SaveSelected()
             {
                 switch (pAsset->GetType())
                 {
-                    case ra::data::models::AssetType::Leaderboard:
-                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Leaderboards cannot be demoted.");
-                        return;
                     case ra::data::models::AssetType::RichPresence:
                         ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Rich Presence cannot be demoted.");
                         return;

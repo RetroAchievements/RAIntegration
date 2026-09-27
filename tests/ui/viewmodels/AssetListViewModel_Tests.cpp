@@ -3221,8 +3221,10 @@ public:
         vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             bDialogSeen = true;
-            Assert::AreEqual(std::wstring(L"Leaderboards cannot be demoted."), vmMessageBox.GetMessage());
-            return DialogResult::OK;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to demote 2 items?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Unpromoted items can no longer be earned by players."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
         });
 
         const auto* pItem1 = vmAssetList.mockGameContext.Assets().GetItemAt(0);
@@ -3242,13 +3244,13 @@ public:
         Assert::IsTrue(bDialogSeen);
 
         Assert::AreEqual(AssetChanges::None, pItem1->GetChanges());
-        Assert::AreEqual(AssetCategory::Promoted, pItem1->GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, pItem1->GetCategory());
         Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
-        Assert::AreEqual(AssetCategory::Promoted, pItem2->GetCategory());
+        Assert::AreEqual(AssetCategory::Unpromoted, pItem2->GetCategory());
 
-        // item will have been moved to Promoted, so nothing will be selected
+        // item will have been moved to Unpromoted, so nothing will be selected
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(SaveButtonState::Demote);
+        vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
     }
 
     TEST_METHOD(TestSaveSelectedPublishLocal)

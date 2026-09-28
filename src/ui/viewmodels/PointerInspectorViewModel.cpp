@@ -710,7 +710,7 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::util::StringBuilder&
     }
 
     // restore the captured note (temporary note is about to go out of scope)
-    if (newNote)
+    if (newNote && pSelectedField)
         pSelectedField->m_pNote = pExistingNote;
 }
 

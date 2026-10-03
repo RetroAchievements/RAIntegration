@@ -2,6 +2,7 @@
 #define RA_CONTEXT_MOCK_GAMECONTEXT_HH
 #pragma once
 
+#include "context/IEmulatorMemoryContext.hh"
 #include "context/IGameContext.hh"
 
 #include "data/models/LocalBadgesModel.hh"
@@ -41,11 +42,11 @@ public:
                     // pointed-at note exists. this normally occurs in DoFrame, but for
                     // the unit tests, force the update immediately after the note is updated
                     GSL_SUPPRESS_TYPE3
-                        auto* pNote = const_cast<ra::data::models::MemoryNoteModel*>(m_oMemoryNotes.FindMemoryNoteModel(nAddress, false));
-                    if (pNote && pNote->IsPointer())
+                        auto* pNote = const_cast<ra::data::models::MemoryNoteModel*>(m_oMemoryNotes.FindNote(nAddress, false));
+                    if (pNote && pNote->GetType() == ra::data::models::MemoryNoteType::Pointer)
                     {
-                        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-                        pNote->UpdateRawPointerValue(nAddress, pMemoryContext, nullptr);
+                        //const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+                        //pNote->UpdateRawPointerValue(nAddress, pMemoryContext, nullptr);
                     }
 
                     OnMemoryNoteChanged(nAddress, sNote);

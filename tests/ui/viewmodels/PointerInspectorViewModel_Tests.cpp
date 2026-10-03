@@ -2,23 +2,15 @@
 
 #include "ui\viewmodels\PointerInspectorViewModel.hh"
 
-#include "tests\ui\UIAsserts.hh"
-#include "tests\RA_UnitTestHelpers.h"
-
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockDevKitContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
 #include "tests\devkit\context\mocks\MockUserContext.hh"
-#include "tests\devkit\services\mocks\MockConfiguration.hh"
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockLogger.hh"
-#include "tests\devkit\services\mocks\MockThreadPool.hh"
 #include "tests\devkit\testutil\MemoryAsserts.hh"
 #include "tests\mocks\MockClipboard.hh"
-#include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
-#include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -72,12 +64,6 @@ private:
         {
             mockGameContext.DoFrame(); // ensure note pointers get updated
             PointerInspectorViewModel::DoFrame();
-        }
-
-        const std::wstring* FindNote(ra::data::ByteAddress nAddress) const
-        {
-            const auto* pMemoryNotes = mockGameContext.Assets().FindMemoryNotes();
-            return (pMemoryNotes != nullptr) ? pMemoryNotes->FindNote(nAddress) : nullptr;
         }
 
         void AssertField(gsl::index nIndex, int32_t nOffset, ra::data::ByteAddress nAddress,
@@ -143,7 +129,7 @@ private:
 
         void AssertNote(ra::data::ByteAddress nAddress, const std::wstring& sExpectedNote)
         {
-            const auto* pNote = mockGameContext.Assets().FindMemoryNotes()->FindMemoryNoteModel(nAddress);
+            const auto* pNote = mockGameContext.Assets().FindMemoryNotes()->FindNote(nAddress);
             Assert::IsNotNull(pNote);
             Ensures(pNote != nullptr);
             Assert::AreEqual(sExpectedNote, pNote->GetNote());

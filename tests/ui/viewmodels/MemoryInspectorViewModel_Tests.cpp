@@ -78,10 +78,11 @@ private:
 
         bool CurrentBitsVisible() const { return GetValue(CurrentBitsVisibleProperty); }
 
-        const std::wstring* FindNote(ra::data::ByteAddress nAddress) const
+        const std::wstring FindNote(ra::data::ByteAddress nAddress) const
         {
             const auto* pMemoryNotes = mockGameContext.Assets().FindMemoryNotes();
-            return (pMemoryNotes != nullptr) ? pMemoryNotes->FindNote(nAddress) : nullptr;
+            const auto* pNote = pMemoryNotes ? pMemoryNotes->FindNote(nAddress) : nullptr;
+            return pNote ? pNote->GetNote() : L"";
         }
 
         void PreparePublish(ra::data::ByteAddress nAddress, std::wstring sNote)
@@ -525,7 +526,7 @@ public:
         Assert::IsTrue(bWindowSeen);
         Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
         Assert::AreEqual(std::wstring(L"Test"), inspector.GetCurrentAddressNote());
-        Assert::AreEqual(std::wstring(L"Test"), *inspector.mockGameContext.Assets().FindMemoryNotes()->FindNote(0x12));
+        Assert::AreEqual(std::wstring(L"Test"), inspector.FindNote(0x12));
         Assert::IsFalse(inspector.mockGameContext.Assets().FindMemoryNotes()->IsNoteModified(0x12));
     }
 
@@ -553,7 +554,7 @@ public:
         Assert::IsTrue(bWindowSeen);
         Assert::IsTrue(inspector.CanRevertCurrentAddressNote());
         Assert::AreEqual(std::wstring(L"Test2"), inspector.GetCurrentAddressNote());
-        Assert::AreEqual(std::wstring(L"Test2"), *inspector.mockGameContext.Assets().FindMemoryNotes()->FindNote(0x12));
+        Assert::AreEqual(std::wstring(L"Test2"), inspector.FindNote(0x12));
         Assert::IsTrue(inspector.mockGameContext.Assets().FindMemoryNotes()->IsNoteModified(0x12));
     }
 

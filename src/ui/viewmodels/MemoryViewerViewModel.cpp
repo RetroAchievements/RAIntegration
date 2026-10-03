@@ -203,17 +203,13 @@ static MemoryViewerViewModel::TextColor GetColor(ra::data::ByteAddress nAddress,
         const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
         if (pMemoryNotes != nullptr)
         {
-            const auto nNoteStart = pMemoryNotes->FindNoteStart(nAddress);
-            if (nNoteStart != 0xFFFFFFFF)
+            const auto pReference = pMemoryNotes->FindNoteContaining(nAddress);
+            if (pReference.pMemoryNote)
             {
-                if (nNoteStart == 0 && pMemoryNotes->FindMemoryNoteModel(nAddress, false) == nullptr)
-                    return MemoryViewerViewModel::TextColor::Default;
-
-                if (nNoteStart != nAddress)
+                if (pReference.nAddress != nAddress)
                     return MemoryViewerViewModel::TextColor::HasSurrogateNote;
 
-                const auto* pNote = pMemoryNotes->FindNote(nAddress);
-                if (pNote != nullptr && !pNote->empty())
+                if (pReference.pMemoryNote->HasNote())
                     return MemoryViewerViewModel::TextColor::HasNote;
             }
         }
@@ -239,13 +235,14 @@ void MemoryViewerViewModel::UpdateColors()
     if (pMemoryNotes != nullptr)
     {
         const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
-        pMemoryNotes->EnumerateMemoryNotes([nFirstAddress, nStopAddress, this](ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel& pNote) {
-            auto nBytes = pNote.GetBytes();
+        pMemoryNotes->EnumerateNotes([nFirstAddress, nStopAddress, this](const ra::data::models::MemoryNoteModel::Reference& pNote) {
+            auto nAddress = pNote.nAddress;
+            auto nBytes = pNote.pMemoryNote->GetBytes();
             if (nAddress + nBytes <= nFirstAddress) // not to viewing window yet
                 return true;
             if (nAddress >= nStopAddress) // past viewing window
                 return false;
-            if (pNote.GetNote().empty()) // ignore deleted notes
+            if (pNote.pMemoryNote->GetNote().empty()) // ignore deleted notes
                 return true;
 
             uint8_t* pOffset = m_pColor;
@@ -262,8 +259,11 @@ void MemoryViewerViewModel::UpdateColors()
             else
             {
                 pOffset += (nAddress - nFirstAddress);
-                if ((*pOffset & 0x0F) == ra::etoi(TextColor::Default))
+                const auto nColor = ra::itoe<TextColor>(*pOffset & 0x0F);
+                if (nColor == TextColor::Default)
                     *pOffset |= ra::etoi(TextColor::HasNote);
+                else if (nColor == TextColor::HasSurrogateNote)
+                    *pOffset -= gsl::narrow_cast<uint8_t>(ra::etoi(TextColor::HasSurrogateNote) - ra::etoi(TextColor::HasNote));
             }
 
             if (nBytes > 1)
@@ -772,7 +772,7 @@ void MemoryViewerViewModel::OnMemoryNoteMoved(ra::data::ByteAddress nOldAddress,
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
         Expects(pMemoryNotes != nullptr);
-        const auto pNote = pMemoryNotes->FindMemoryNoteModel(nOldAddress);
+        const auto pNote = pMemoryNotes->FindNote(nOldAddress);
         OnMemoryNoteChanged(nOldAddress, pNote ? pNote->GetNote() : std::wstring());
     }
 
@@ -797,7 +797,7 @@ void MemoryViewerViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, 
     Expects(pMemoryNotes != nullptr);
 
     const auto nSelectedAddress = GetAddress();
-    const auto* pMemoryNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
+    const auto* pMemoryNote = pMemoryNotes->FindNote(nAddress);
 
     const auto nMax = nFirstAddress + nVisibleLines * 16 - nAddress;
     const auto nSize = std::min(pMemoryNote ? pMemoryNote->GetBytes() : 1U, nMax);

@@ -291,7 +291,7 @@ private:
 
     std::mutex m_mtxLoadNote;
 
-    const ra::data::models::MemoryNoteModel* m_pCurrentNote = nullptr;
+    const ra::data::models::MemoryNoteModel* m_pCurrentNote = nullptr; // TODO: make StructuredNoteModel?
 };
 
 } // namespace viewmodels

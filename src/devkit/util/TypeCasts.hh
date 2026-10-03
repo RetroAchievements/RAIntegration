@@ -2,6 +2,7 @@
 #define RA_TYPE_CASTS_HH
 #pragma once
 
+#include "GSL.hh"
 #include "TypeTraits.hh"
 
 /*

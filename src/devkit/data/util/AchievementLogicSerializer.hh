@@ -7,6 +7,8 @@
 
 #include "data/models/MemoryNoteModel.hh"
 
+#include "util/GSL.hh"
+
 namespace ra {
 namespace data {
 namespace util {
@@ -61,6 +63,14 @@ public:
     /// </remarks>
     static std::string BuildMemRefChain(const ra::data::models::MemoryNoteModel& pRootNote,
                                         const ra::data::models::MemoryNoteModel& pLeafNote);
+
+    /// <summary>
+    /// Constructs the serialized logic to read memory at the address pointer to by a memory note chain.
+    /// </summary>
+    /// <remarks>
+    /// Result will include a Measured flag for immediate use in bookmarks.
+    /// </remarks>
+    static std::string BuildMemRefChain(const std::vector<ra::data::models::MemoryNoteModel::Reference>& vChain);
 };
 
 } // namespace util

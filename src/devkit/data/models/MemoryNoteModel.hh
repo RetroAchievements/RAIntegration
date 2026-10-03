@@ -2,41 +2,53 @@
 #define RA_DATA_MODELS_MEMORYNOTEMODEL_H
 #pragma once
 
-#include "context/IEmulatorMemoryContext.hh"
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "data/Memory.hh"
+
+#include "util/Compat.hh"
 
 namespace ra {
 namespace data {
 namespace models {
 
+enum class MemoryNoteType : uint8_t
+{
+    None = 0,
+    Value,
+    Pointer,
+    Array,
+};
+
 class MemoryNoteModel
 {
 public:
-	MemoryNoteModel() noexcept;
-	virtual ~MemoryNoteModel();
-	MemoryNoteModel(const MemoryNoteModel&) noexcept = delete;
+    MemoryNoteModel(std::wstring_view svNote, uint32_t nBytes, Memory::Format nMemFormat, Memory::Size nMemSize, MemoryNoteType nType) noexcept
+        : m_svNote(svNote),
+          m_nBytes(nBytes),
+          m_nMemFormat(nMemFormat),
+          m_nMemSize(nMemSize),
+          m_nType(nType)
+    {
+    }
+
+	virtual ~MemoryNoteModel() = default;
+    MemoryNoteModel(const MemoryNoteModel&) noexcept = delete;
     MemoryNoteModel& operator=(const MemoryNoteModel&) noexcept = delete;
-    MemoryNoteModel(MemoryNoteModel&&) noexcept;
-    MemoryNoteModel& operator=(MemoryNoteModel&&) noexcept;
+    MemoryNoteModel(MemoryNoteModel&&) noexcept = default;
+    MemoryNoteModel& operator=(MemoryNoteModel&&) noexcept = default;
 
     /// <summary>
-    /// Gets the author of the note.
+    /// Creates a MemoryNoteModel from a note text.
     /// </summary>
-    const std::string& GetAuthor() const noexcept { return m_sAuthor; }
+    static std::unique_ptr<MemoryNoteModel> Parse(const std::wstring& sNote);
 
     /// <summary>
-    /// Sets the author of the note.
+    /// Creates a nested MemoryNoteModel from a note text.
     /// </summary>
-    void SetAuthor(const std::string& sAuthor) { m_sAuthor = sAuthor; }
-
-    /// <summary>
-    /// Gets the full note.
-    /// </summary>
-    const std::wstring& GetNote() const noexcept { return m_sNote; }
-
-    /// <summary>
-    /// Sets the full note.
-    /// </summary>
-    void SetNote(const std::wstring& sNote, bool bImpliedPointer = false);
+    static std::unique_ptr<MemoryNoteModel> ParseOffsetNote(std::wstring_view svNote, std::wstring_view svIndent);
 
     /// <summary>
     /// Gets the address/offset of the note.
@@ -47,6 +59,22 @@ public:
     /// Sets the address/offset of the note.
     /// </summary>
     void SetAddress(ra::data::ByteAddress nAddress) noexcept { m_nAddress = nAddress; }
+
+    /// <summary>
+    /// Gets the full note.
+    /// </summary>
+    virtual std::wstring GetNote() const { return std::wstring(m_svNote); }
+
+    /// <summary>
+    /// Returns true if GetNote would return a non-empty string.
+    /// </summary>
+    /// <remarks>Avoids constructing a wstring just to check for existance.</remarks>
+    bool HasNote() const noexcept { return !m_svNote.empty(); }
+
+    /// <summary>
+    /// Sets the full note.
+    /// </summary>
+    void SetNote(const std::wstring_view& svNote) noexcept { m_svNote = svNote; }
 
     /// <summary>
     /// Gets the number of bytes that the note is associated to.
@@ -69,83 +97,73 @@ public:
     const Memory::Format GetDefaultMemFormat() const noexcept { return m_nMemFormat; }
 
     /// <summary>
-    /// Gets the non-pointed-at-data portion of the note.
+    /// Gets the non-enum/subnote portion of the note with any size information removed.
     /// </summary>
-    std::wstring GetPrimaryNote() const;
+    std::wstring GetSummary() const
+    {
+        return TrimSize(GetFullSummaryStringView(), false);
+    }
 
     /// <summary>
     /// Gets the non-enum/subnote portion of the note.
     /// </summary>
-    std::wstring GetSummary() const;
+    std::wstring GetFullSummary() const
+    {
+        return std::wstring(GetFullSummaryStringView());
+    }
 
     /// <summary>
-    /// Gets the sub-note text associated with the specified bit(s).
+    /// Gets the type of note.
     /// </summary>
-    std::wstring_view GetSubNote(ra::data::Memory::Size nBits) const;
+    MemoryNoteType GetType() const noexcept { return m_nType; }
+
+    typedef struct Reference
+    {
+        Reference() noexcept {}
+        Reference(const MemoryNoteModel* pMemoryNote, ra::data::ByteAddress nAddress, uint32_t nElementIndex) noexcept
+            : pMemoryNote(pMemoryNote), nAddress(nAddress), nElementIndex(nElementIndex)
+        {
+        }
+
+        /// <summary>
+        /// The matched note, <c>nullptr</c> if not matched.
+        /// </summary>
+        const MemoryNoteModel* pMemoryNote = nullptr;
+
+        /// <summary>
+        /// The address where the note applied.
+        /// </summary>
+        ra::data::ByteAddress nAddress = 0;
+
+        /// <summary>
+        /// The array offset (when pMemoryNote is an ArrayMemoryNoteModel).
+        /// </summary>
+        uint32_t nElementIndex = 0;
+    } Reference;
 
     /// <summary>
-    /// Gets the sub-note text associated with the specified enum value.
+    /// Builds a reference chain to the specified address.
     /// </summary>
-    std::wstring_view GetEnumText(uint32_t nValue) const;
+    /// <returns><c>true</c> if a chain was built, <c>false</c> if the specified address could not be reached from this note.</returns>
+    virtual bool GetChainTo(std::vector<Reference>& vChain, ra::data::ByteAddress nSearchAddress) const;
 
     /// <summary>
-    /// Gets whether or not the note contains information about data the note is pointing at.
+    /// Builds a reference chain to the specified address.
     /// </summary>
-    bool IsPointer() const noexcept { return m_pPointerData != nullptr; }
+    /// <returns><c>true</c> if a chain was built, <c>false</c> if the specified address could not be reached from this note.</returns>
+    virtual bool GetChainTo(std::vector<Reference>& vChain, const MemoryNoteModel& pNote) const;
 
     /// <summary>
-    /// Gets the first line of the note.
+    /// Determines if this note is an ancestor of the provided note.
     /// </summary>
-    std::wstring GetPointerDescription() const;
+    bool IsAncestorOf(const MemoryNoteModel& pPossibleDescendant) const noexcept
+    {
+        if (m_svNote.empty())
+            return false;
 
-    /// <summary>
-    /// Gets whether or not the RawPointerValue has been set.
-    /// </summary>
-    bool HasRawPointerValue() const noexcept;
-
-    /// <summary>
-    /// Gets the raw pointer value.
-    /// </summary>
-    uint32_t GetRawPointerValue() const noexcept;
-
-    typedef std::function<void(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel&)> NoteMovedFunction;
-    /// <summary>
-    /// Updates the raw pointer value by reading from memory.
-    /// </summary>
-    /// <param name="nAddress">The address of the pointer data. For root pointers, this will be the note's address. For nested pointers, it will be the note's offset + the parent pointer's value.</param>
-    /// <param name="pMemoryContext">Where to read the new value from.</param>
-    /// <param name="fNoteMovedCallback">Function to call if the PointerAddress changes.</param>
-    void UpdateRawPointerValue(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext, NoteMovedFunction fNoteMovedCallback);
-
-    /// <summary>
-    /// Gets the last known value of the pointer.
-    /// </summary>
-    ra::data::ByteAddress GetPointerAddress() const noexcept;
-
-    /// <summary>
-    /// Gets whether or not the note has pointers in its field list.
-    /// </summary>
-    bool HasNestedPointers() const noexcept;
-
-    /// <summary>
-    /// Get the subnote for the field at the specified offset.
-    /// </summary>
-    /// <returns>Requested subnote, <c>null</c> if not found.</returns>
-    const MemoryNoteModel* GetPointerNoteAtOffset(int nOffset) const;
-
-    /// <summary>
-    /// Gets the subnote for the specified address.
-    /// </summary>
-    /// <returns>A pair representing the nested note and its actual address, or an empty pair if not found.</returns>
-    std::pair<ra::data::ByteAddress, const MemoryNoteModel*> GetPointerNoteAtAddress(ra::data::ByteAddress nAddress) const;
-
-    /// <summary>
-    /// Attempts to build a path from the provided root note to this note.
-    /// </summary>
-    /// <param name="vChain">If a path is found, it will be captured here (root first).</param>
-    /// <param name="pRootNote">The root note that is suspected to contain this note.</param>
-    /// <returns><c>true</c> if a path is found, <c>false</c> if not.</returns>
-    virtual bool GetPointerChain(std::vector<const MemoryNoteModel*>& vChain, const MemoryNoteModel& pRootNote) const;
+        return pPossibleDescendant.m_svNote.data() >= m_svNote.data() &&
+               (pPossibleDescendant.m_svNote.data() + pPossibleDescendant.m_svNote.size()) <= (m_svNote.data() + m_svNote.size());
+    }
 
     /// <summary>
     /// Gets the address of the closest subnote before the specified address.
@@ -154,7 +172,7 @@ public:
     /// <c>true</c> if a subnote was found (<see cref="nPreviousAddress"/> will be set).
     /// <c>false</c> if not (<see cref="nPreviousAddress"/> may be uninitialized).
     /// </returns>
-    bool GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra::data::ByteAddress& nPreviousAddress) const;
+    virtual bool GetPreviousAddress(_UNUSED ra::data::ByteAddress nBeforeAddress, _UNUSED ra::data::ByteAddress& nPreviousAddress) const noexcept(false) { return false; }
 
     /// <summary>
     /// Gets the address of the closest subnote after the specified address.
@@ -163,86 +181,36 @@ public:
     /// <c>true</c> if a subnote was found (<see cref="nPreviousAddress"/> will be set).
     /// <c>false</c> if not (<see cref="nPreviousAddress"/> may be uninitialized).
     /// </returns>
-    bool GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data::ByteAddress& nNextAddress) const;
-
-    /// <summary>
-    /// Calls the provided callback for each subnote.
-    /// </summary>
-    void EnumeratePointerNotes(std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel&)> fCallback) const;
+    virtual bool GetNextAddress(_UNUSED ra::data::ByteAddress nAfterAddress, _UNUSED ra::data::ByteAddress& nNextAddress) const noexcept(false) { return false; }
 
     /// <summary>
     /// Removes the size annotation from a note string.
     /// </summary>
     /// <param name="sNote">The note string to process.</param>
     /// <param name="bKeepPointer"><c>true</c> to prefix the result with '[pointer]' if a pointer annotation was seen.</param>
-    static std::wstring TrimSize(const std::wstring& sNote, bool bKeepPointer);
+    static std::wstring TrimSize(std::wstring_view sNote, bool bKeepPointer);
 
 protected:
-    class Parser
-    {
-    public:
-        Parser(const std::wstring& sNote, size_t nStartIndex, size_t nEndIndex) noexcept :
-            m_sNote(sNote), m_nIndex(nStartIndex), m_nEndIndex(nEndIndex)
-        {
-        }
+    /// <summary>
+    /// Gets the non-enum/subnote portion of the note.
+    /// </summary>
+    virtual std::wstring_view GetFullSummaryStringView() const;
 
-        enum TokenType
-        {
-            None = 0,
-            Number,
-            Bits,
-            Bytes,
-            Float,
-            Double,
-            MBF,
-            BigEndian,
-            LittleEndian,
-            BCD,
-            Hex,
-            ASCII,
-            HexNumber,
-            Other,
-        };
+    uint32_t m_nAddress = 0;                             // The address/offset of the note.
+    uint32_t m_nBytes = 1;                               // The number of bytes associated to the note.
+    std::wstring_view m_svNote;                          // The contents of the note.
+    MemoryNoteType m_nType = MemoryNoteType::None;       // The type of note (which subclass is implemented).
+    Memory::Size m_nMemSize = Memory::Size::Unknown;     // The logical size of the note.
+    Memory::Format m_nMemFormat = Memory::Format::Dec;   // Whether the note value should be displayed as hex or dec.
 
-        TokenType NextToken(std::wstring& sWord) const;
-        wchar_t Peek() const { return (m_nIndex < m_nEndIndex) ? m_sNote.at(m_nIndex) : 0; }
-
-    private:
-        const std::wstring& m_sNote;
-        mutable size_t m_nIndex;
-        size_t m_nEndIndex;
-    };
-
-private:
-    std::string m_sAuthor; // TODO: make this a reference to data stored in the MemoryNotesModel.
-    std::wstring m_sNote;
-    ra::data::ByteAddress m_nAddress = 0; // address of root nodes, offset to indirect nodes
-    unsigned int m_nBytes = 1;
-    Memory::Size m_nMemSize = Memory::Size::Unknown;
-    Memory::Format m_nMemFormat = Memory::Format::Dec;
-
-    enum EnumState {
+    enum EnumState : uint8_t {
         None,
         Hex,
         Dec,
         Bits,
         Unknown,
     };
-    mutable EnumState m_nEnumState = EnumState::Unknown;
-    static EnumState DetermineEnumState(const std::wstring_view svNote);
-
-    struct PointerData;
-    std::unique_ptr<PointerData> m_pPointerData;
-
-    bool GetPointerChainRecursive(std::vector<const MemoryNoteModel*>& vChain, const MemoryNoteModel& pParentNote) const;
-
-    void EnumeratePointerNotes(ra::data::ByteAddress nPointerAddress,
-        std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel&)> fCallback) const;
-
-    void ProcessIndirectNotes(const std::wstring& sNote, size_t nIndex);
-    void ExtractSize(const std::wstring& sNote, bool bIsPointer);
-    static Memory::Size GetImpliedPointerSize();
-    static Memory::Format DeterminePreferredMemFormat(std::wstring_view sNote);
+    mutable EnumState m_nEnumState = EnumState::Unknown; // Information about specifically identified values for the note.
 };
 
 } // namespace models

@@ -33,29 +33,20 @@ public:
     void Refresh(unsigned int nGameId, MemoryNoteChangedFunction fMemoryNoteChanged, MemoryNoteMovedFunction fMemoryNoteMoved, std::function<void()> callback);
 
     /// <summary>
-    /// Returns the note associated with the specified address.
-    /// </summary>    
-    /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    const std::wstring* FindNote(ra::data::ByteAddress nAddress) const
-    {
-        const auto* pNote = FindMemoryNoteModel(nAddress);
-        return (pNote != nullptr) ? &pNote->GetNote() : nullptr;
-    }
-
-    /// <summary>
     /// Returns the note model associated with the specified address.
     /// </summary>
     /// <returns>The note model associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    const MemoryNoteModel* FindMemoryNoteModel(ra::data::ByteAddress nAddress, bool bIncludeDerived = true) const;
+    const MemoryNoteModel* FindNote(ra::data::ByteAddress nAddress, bool bIncludeDerived = true) const;
     
     /// <summary>
     /// Returns the address of the first byte containing the specified memory note.
     /// </summary>
     /// <returns>
-    ///  Returns 0xFFFFFFFF if not found.
+    /// Reference to matching memory note. pMemoryNote will be nullptr if no match is found.
     /// </returns>
-    ra::data::ByteAddress FindNoteStart(ra::data::ByteAddress nAddress) const;
+    MemoryNoteModel::Reference FindNoteContaining(ra::data::ByteAddress nAddress) const;
 
+    // TODO: move this to MemorySearchViewModel
     /// <summary>
     /// Returns the note associated with the specified address.
     /// </summary>
@@ -66,12 +57,10 @@ public:
     std::wstring FindNote(ra::data::ByteAddress nAddress, Memory::Size nSize) const;
 
     /// <summary>
-    /// Returns the address of the real memory note from which an indirect memory note was derived.
+    /// Builds a reference chain to the specified address.
     /// </summary>
-    /// <returns>
-    ///  Returns 0xFFFFFFFF if not found, or not an indirect note.
-    /// </returns>
-    ra::data::ByteAddress GetIndirectSource(ra::data::ByteAddress nAddress) const;
+    /// <returns><c>true</c> if a chain was built, <c>false</c> if the specified address could not be reached from this note.</returns>
+    bool GetChainTo(std::vector<MemoryNoteModel::Reference>& vChain, ra::data::ByteAddress nAddress) const;
 
     /// <summary>
     /// Returns the address of the next memory note after the provided address.
@@ -95,7 +84,7 @@ public:
     /// <remarks>
     /// <paramref name="callback" /> is called for each known memory note. If it returns <c>false</c> enumeration stops.
     /// </remarks>
-    void EnumerateMemoryNotes(std::function<bool(ra::data::ByteAddress nAddress, const MemoryNoteModel& pMemoryNote)> callback, bool bIncludeDerived = false) const;
+    virtual void EnumerateNotes(std::function<bool(const MemoryNoteModel::Reference& pMemoryNote)> callback, bool bIncludeDerived = false) const;
 
     /// <summary>
     /// Sets the note to associate with the specified address.
@@ -161,7 +150,7 @@ protected:
 
     std::map<ra::data::ByteAddress, std::wstring> m_mPendingNotes;
 
-    std::pair<ra::data::ByteAddress, const MemoryNoteModel*> FindIndirectMemoryNoteInternal(ra::data::ByteAddress nAddress) const;
+    MemoryNoteModel::Reference FindIndirectMemoryNoteInternal(ra::data::ByteAddress nAddress) const;
 
     bool m_bHasPointers = false;
     bool m_bRefreshing = false;

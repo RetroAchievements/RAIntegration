@@ -4602,7 +4602,7 @@ public:
         Assert::AreEqual(std::wstring(L"foo"), vmAssetList.mockWindowManager.MemoryInspector.GetCurrentAddressNote());
         const auto* pNote = vmAssetList.mockGameContext.Assets().FindMemoryNotes()->FindNote(nAddress);
         Assert::IsNotNull(pNote);
-        Assert::AreEqual(std::wstring(L"foo"), *pNote);
+        Assert::AreEqual(std::wstring(L"foo"), pNote->GetNote());
     }
 
     TEST_METHOD(TestReloadSelectedUnmodified)

@@ -26,7 +26,7 @@ private:
         ra::context::mocks::MockGameContext mockGameContext;
         ra::context::mocks::MockUserContext mockUserContext;
 
-        IndirectNoteResolverHarness()
+        IndirectNoteResolverHarness() noexcept
             : IndirectNoteResolver()
         {
             m_pMemoryNotes = &mockGameContext.MemoryNotes();
@@ -46,7 +46,7 @@ private:
             return m_pTrigger;
         }
 
-        void UpdateMemrefs()
+        void UpdateMemrefs() noexcept
         {
             rc_memrefs_t* memrefs = rc_trigger_get_memrefs(m_pTrigger);
             rc_update_memref_values(memrefs, mockEmulatorMemoryContext.Peek, nullptr);
@@ -57,7 +57,7 @@ private:
             m_pMemory.at(static_cast<size_t>(nAddress)) = nValue;
         }
 
-        const rc_condition_t& GetCondition(size_t nIndex) const
+        const rc_condition_t& GetCondition(size_t nIndex) const noexcept
         {
             const rc_condition_t* pCondition = m_pTrigger->requirement->conditions;
             for (; nIndex > 0; --nIndex)
@@ -304,6 +304,20 @@ public:
 
         Assert::AreEqual(std::wstring(L"Region differentiator"), vParentChain.front().pNote->GetNote());
         Assert::AreEqual(std::wstring(L"[US] Note for NA"), vParentChain.back().pNote->GetNote());
+    }
+
+    TEST_METHOD(TestStructAddress)
+    {
+        IndirectNoteResolverHarness resolver;
+        resolver.mockGameContext.SetNote({ 0x10U }, L"[16 bytes]\n+2=This is a note.");
+        resolver.Parse("0xH0012=3");
+
+        std::vector<IndirectNoteResolver::Node> vParentChain;
+        Assert::AreEqual(0x12U, resolver.ResolveOperand(resolver.GetCondition(0), true, vParentChain));
+        Assert::AreEqual({ 2U }, vParentChain.size());
+        Assert::AreEqual(std::wstring(L"0x0010+2"), resolver.BuildPath(vParentChain));
+        Assert::AreEqual(std::wstring(L"[16 bytes]\n+2=This is a note."), vParentChain.front().pNote->GetNote());
+        Assert::AreEqual(std::wstring(L"This is a note."), vParentChain.back().pNote->GetNote());
     }
 
     TEST_METHOD(TestRecallBasic)

@@ -985,7 +985,7 @@ void MemorySearchViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, 
     if (!pMemoryNotes)
         return;
 
-    const auto* pNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
+    const auto* pNote = pMemoryNotes->FindNote(nAddress);
     if (pNote != nullptr)
     {
         // if updated note is before first visible result, ignore

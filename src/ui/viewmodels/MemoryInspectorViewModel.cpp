@@ -264,18 +264,22 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nNe
     if (pMemoryNotes)
         pMemoryNotes->GetChainTo(vChain, nNewAddress);
 
-    m_bNoteIsIndirect = (vChain.size() > 1);
-
     if (vChain.empty())
     {
+        m_bNoteIsIndirect = false;
+
         SetCurrentAddressNoteInternal(L"");
     }
-    else if (!m_bNoteIsIndirect)
+    else if (vChain.size() == 1 && vChain.front().nAddress == nNewAddress)
     {
+        m_bNoteIsIndirect = false;
+
         SetCurrentAddressNoteInternal(vChain.front().pMemoryNote->GetNote());
     }
     else
     {
+        m_bNoteIsIndirect = true;
+
         std::wstring sIndirectNote;
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
 

@@ -33,6 +33,13 @@ public:
     void AddMemoryBlockReader(gsl::index nIndex, MemoryReadBlockFunction pReader);
 
     /// <summary>
+    /// Specifies a function used exclusively during memory searches to read chunks of memory.
+    /// If registered, takes priority over the block reader in CaptureMemory.
+    /// Returning 0 signals that the block contains no valid data and should be excluded from search results.
+    /// </summary>
+    void AddSearchMemoryBlockReader(gsl::index nIndex, MemoryReadBlockFunction pReader);
+
+    /// <summary>
     /// Clears all registered memory blocks so they can be rebuilt.
     /// </summary>
     void ClearMemoryBlocks();
@@ -122,6 +129,7 @@ protected:
         MemoryReadFunction* read;
         MemoryWriteFunction* write;
         MemoryReadBlockFunction* readBlock;
+        MemoryReadBlockFunction* readBlockSearch;
     };
     static uint32_t ReadMemory(ra::data::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount, const MemoryBlock& pBlock, bool bFill = true);
 

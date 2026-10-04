@@ -97,11 +97,9 @@ void PointerMemoryNoteModel::UpdateBaseAddress(ra::data::ByteAddress nAddress, c
 const MemoryNoteModel* PointerMemoryNoteModel::GetNoteAtOffset(int nOffset) const
 {
     // look for explicit offset match
-    for (const auto& pOffsetNote : m_vOffsetNotes)
-    {
-        if (ra::to_signed(pOffsetNote->GetAddress()) == nOffset)
-            return pOffsetNote.get();
-    }
+    const auto* pMatch = StructuredMemoryNoteModel::GetNoteAtOffset(nOffset);
+    if (pMatch)
+        return pMatch;
 
     if (m_nOffsetType == OffsetType::Overflow)
     {
@@ -109,11 +107,7 @@ const MemoryNoteModel* PointerMemoryNoteModel::GetNoteAtOffset(int nOffset) cons
         const auto nConvertedAddress = ConvertPointer(m_nRawPointerValue);
         nOffset += nConvertedAddress - m_nRawPointerValue;
 
-        for (const auto& pOffsetNote : m_vOffsetNotes)
-        {
-            if (ra::to_signed(pOffsetNote->GetAddress()) == nOffset)
-                return pOffsetNote.get();
-        }
+        return StructuredMemoryNoteModel::GetNoteAtOffset(nOffset);
     }
 
     return nullptr;

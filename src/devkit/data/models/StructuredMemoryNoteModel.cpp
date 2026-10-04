@@ -282,6 +282,25 @@ const MemoryNoteModel* StructuredMemoryNoteModel::GetNoteAtOffset(int nOffset) c
     if (pIter != m_vOffsetNotes.end() && (*pIter)->GetAddress() == ra::to_unsigned(nOffset))
         return pIter->get();
 
+    // lower_bound returns the first item _after_ the search value. scan all items before
+    // the found item to see if any of them contain the target address. have to scan
+    // all items because a singular note may exist within a range.
+    if (pIter != m_vOffsetNotes.begin())
+    {
+        do
+        {
+            --pIter;
+            const auto* pStructuredNote = dynamic_cast<const StructuredMemoryNoteModel*>(pIter->get());
+
+            if (pStructuredNote && pStructuredNote->GetBytes() > 1 && pStructuredNote->GetBytes() + pStructuredNote->GetAddress() > nOffset)
+            {
+                const auto* pMemoryNote = pStructuredNote->GetNoteAtOffset(nOffset - pStructuredNote->GetAddress());
+                if (pMemoryNote != nullptr)
+                    return pMemoryNote;
+            }
+        } while (pIter != m_vOffsetNotes.begin());
+    }
+
     return nullptr;
 }
 

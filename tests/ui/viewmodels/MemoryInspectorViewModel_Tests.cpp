@@ -835,6 +835,34 @@ public:
         Assert::AreEqual(std::string("I:0xX0004_M:0xX0004"), pBookmarks.Items().GetItemAt(0)->GetIndirectAddress());
         Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), pBookmarks.Items().GetItemAt(0)->GetRealNote());
     }
+
+    TEST_METHOD(TestBookmarkCurrentAddressArray)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
+            L"[32-bit pointer] Party data\n"
+            L"+4: [4x16-bytes] Character data\n"
+            L"+|8: [32-bit] Max HP");
+        inspector.mockGameContext.DoFrame(); // force indirect memory note initialization
+
+        inspector.SetCurrentAddress(24U); // 12 + 4 + 8
+        inspector.BookmarkCurrentAddress();
+
+        const auto& pBookmarks = inspector.mockWindowManager.MemoryBookmarks.Bookmarks();
+        Assert::AreEqual({ 1U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 24U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(std::string("I:0xX0004_M:0xX000c"), pBookmarks.Items().GetItemAt(0)->GetIndirectAddress());
+        Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), pBookmarks.Items().GetItemAt(0)->GetRealNote());
+    }
 };
 
 } // namespace tests

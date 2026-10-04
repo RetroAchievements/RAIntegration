@@ -1,5 +1,6 @@
 #include "MemoryNoteModel.hh"
 
+#include "ArrayMemoryNoteModel.hh"
 #include "AuthoredMemoryNoteModel.hh"
 #include "PointerMemoryNoteModel.hh"
 #include "ValueMemoryNoteModel.hh"
@@ -36,7 +37,9 @@ public:
         Hex,
         ASCII,
         HexNumber,
+        Multiplier,
         Pointer,
+        Struct,
         Other,
     };
 
@@ -59,11 +62,13 @@ public:
     void Parse(std::wstring_view svNote, std::wstring_view svParentIndent);
 
     bool IsPointer() const noexcept { return m_bIsPointer; }
+    uint32_t GetBytesPerElement() const noexcept { return m_nBytesPerElement; }
 
 private:
     void ExtractSize(std::wstring_view sNote);
     static Memory::Size GetImpliedPointerSize();
 
+    uint32_t m_nBytesPerElement = 0;
     bool m_bIsPointer = false;
 };
 
@@ -72,6 +77,17 @@ class RootPointerMemoryNoteModel : public PointerMemoryNoteModel, public Authore
 public:
     RootPointerMemoryNoteModel(const std::wstring& sNote, const UnknownMemoryNoteModel& pNote)
         : PointerMemoryNoteModel(sNote, pNote.GetBytes(), pNote.GetDefaultMemFormat(), pNote.GetMemSize()),
+          AuthoredMemoryNoteModel(sNote)
+    {
+        m_svNote = m_sNote;
+    }
+};
+
+class RootArrayMemoryNoteModel : public ArrayMemoryNoteModel, public AuthoredMemoryNoteModel
+{
+public:
+    RootArrayMemoryNoteModel(const std::wstring& sNote, const UnknownMemoryNoteModel& pNote)
+        : ArrayMemoryNoteModel(sNote, pNote.GetBytes(), pNote.GetBytesPerElement()),
           AuthoredMemoryNoteModel(sNote)
     {
         m_svNote = m_sNote;
@@ -101,6 +117,13 @@ std::unique_ptr<MemoryNoteModel> MemoryNoteModel::Parse(const std::wstring& sNot
         return std::move(pPointerNote);
     }
 
+    if (pNote.GetBytesPerElement() != 0 || pNote.GetMemSize() == Memory::Size::Array)
+    {
+        auto pArrayNote = std::make_unique<RootArrayMemoryNoteModel>(sNote, pNote);
+        pArrayNote->ExtractIndirectNotes(L"\n");
+        return std::move(pArrayNote);
+    }
+
     auto pValueNote = std::make_unique<RootValueMemoryNoteModel>(sNote, pNote);
     pValueNote->DeterminePreferredMemFormat();
     return std::move(pValueNote);
@@ -116,6 +139,13 @@ std::unique_ptr<MemoryNoteModel> MemoryNoteModel::ParseOffsetNote(std::wstring_v
         auto pPointerNote = std::make_unique<PointerMemoryNoteModel>(svNote, pNote.GetBytes(), pNote.GetDefaultMemFormat(), pNote.GetMemSize());
         pPointerNote->ExtractIndirectNotes(svIndent);
         return std::move(pPointerNote);
+    }
+
+    if (pNote.GetBytesPerElement() != 0 || pNote.GetMemSize() == Memory::Size::Array)
+    {
+        auto pArrayNote = std::make_unique<ArrayMemoryNoteModel>(svNote, pNote.GetBytes(), pNote.GetBytesPerElement());
+        pArrayNote->ExtractIndirectNotes(svIndent);
+        return std::move(pArrayNote);
     }
 
     auto pValueNote = std::make_unique<ValueMemoryNoteModel>(svNote, pNote.GetBytes(), pNote.GetDefaultMemFormat(), pNote.GetMemSize());
@@ -153,13 +183,13 @@ void UnknownMemoryNoteModel::Parse(std::wstring_view svNote, std::wstring_view s
         nIndex = nNextIndex + 1;
     } while (true);
 
-    if (!m_bIsPointer && svNote.find(L'+') != std::wstring::npos)
+    if (!m_bIsPointer && !m_nBytesPerElement && svNote.find(L'+') != std::wstring::npos)
     {
         m_svNote = svNote;
         DetermineIndent(svParentIndent);
         if (!m_svIndent.empty())
         {
-            m_bIsPointer = true;
+            m_bIsPointer = (m_nBytes <= 4);
 
             // Reset size and format and only parse the pre-indent part of the note.
             m_nMemSize = Memory::Size::Unknown;
@@ -168,6 +198,7 @@ void UnknownMemoryNoteModel::Parse(std::wstring_view svNote, std::wstring_view s
 
             const auto svPreIndent = svNote.substr(0, svNote.find(m_svIndent));
             Parse(svPreIndent, svParentIndent);
+
             return;
         }
     }
@@ -346,6 +377,16 @@ MemoryNoteParser::TokenType MemoryNoteParser::NextToken(std::wstring& sWord) con
                 return TokenType::Pointer;
             break;
 
+        case 's':
+            if (sWord == L"struct" || sWord == L"structure")
+                return TokenType::Struct;
+            break;
+
+        case 'x':
+            if (sWord == L"x")
+                return TokenType::Multiplier;
+            break;
+
         default:
             break;
     }
@@ -365,6 +406,7 @@ void UnknownMemoryNoteModel::ExtractSize(std::wstring_view sNote)
     bool bFoundPointer = false;
     bool bLastWordIsSize = false;
     auto nLastTokenType = MemoryNoteParser::TokenType::None;
+    uint32_t nElementCount = 0;
 
     std::wstring sPreviousWord, sWord;
     const MemoryNoteParser parser(sNote);
@@ -458,6 +500,14 @@ void UnknownMemoryNoteModel::ExtractSize(std::wstring_view sNote)
                         m_nMemSize = Memory::Size::MBF32;
                     break;
 
+                case MemoryNoteParser::TokenType::Struct:
+                    if (m_nBytesPerElement == 0)
+                    {
+                        m_nMemSize = Memory::Size::Array;
+                        m_nBytesPerElement = m_nBytes;
+                    }
+                    break;
+
                 default:
                     break;
             }
@@ -485,10 +535,21 @@ void UnknownMemoryNoteModel::ExtractSize(std::wstring_view sNote)
                     bFoundSize = true;
                 }
             }
+            else if (nTokenType == MemoryNoteParser::TokenType::Multiplier)
+            {
+                if (!bFoundSize)
+                    nElementCount = _wtoi(sPreviousWord.c_str());
+            }
 
             if (bWordIsSize)
             {
-                if (m_nMemSize == Memory::Size::Unknown ||     // size not yet determined
+                if (nElementCount != 0)
+                {
+                    m_nMemSize = Memory::Size::Array;
+                    m_nBytesPerElement = m_nBytes;
+                    m_nBytes *= nElementCount;
+                }
+                else if (m_nMemSize == Memory::Size::Unknown ||     // size not yet determined
                     Memory::SizeBytes(m_nMemSize) != m_nBytes) // size mismatch
                 {
                     switch (m_nBytes)
@@ -545,6 +606,10 @@ void UnknownMemoryNoteModel::ExtractSize(std::wstring_view sNote)
                     bFoundSize = true;
                 }
             }
+        }
+        else
+        {
+            nElementCount = 0;
         }
 
         // store information about the word for later

@@ -89,6 +89,7 @@
     <ClCompile Include="data\Requirement_Tests.cpp" />
     <ClCompile Include="data\models\PointerMemoryNoteModel_Tests.cpp" />
     <ClCompile Include="data\models\ValueMemoryNoteModel_Tests.cpp" />
+    <ClCompile Include="data\models\ArrayMemoryNoteModel_Tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

@@ -4,6 +4,8 @@
 
 #include "MemoryNoteModel.hh"
 
+#include "context/IEmulatorMemoryContext.hh"
+
 #include <functional>
 
 namespace ra {
@@ -77,6 +79,16 @@ public:
     void EnumerateOffsetNotes(std::function<bool(const MemoryNoteModel::Reference&)> fCallback, ra::data::ByteAddress nBaseAddress = 0) const;
 
     virtual void ExtractIndirectNotes(std::wstring_view svParentIndent);
+
+    typedef std::function<void(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel&)> NoteMovedFunction;
+
+    /// <summary>
+    /// Updates the base address of the note's location.
+    /// </summary>
+    /// <param name="nAddress">The new base address of the note.</param>
+    /// <param name="pMemoryContext">Where to read the new value from.</param>
+    /// <param name="fNoteMovedCallback">Function to call if the note address changes.</param>
+    virtual void UpdateBaseAddress(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext, NoteMovedFunction fNoteMovedCallback);
 
 protected:
     virtual bool EnumerateOffsetNotesImpl(ra::data::ByteAddress nBaseAddress, std::function<bool(const MemoryNoteModel::Reference&)> fCallback) const;

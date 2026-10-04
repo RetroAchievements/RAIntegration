@@ -70,6 +70,7 @@
     <ClCompile Include="data\ModelPropertyContainer.cpp" />
     <ClCompile Include="data\models\AchievementModel.cpp" />
     <ClCompile Include="data\models\AchievementSetModel.cpp" />
+    <ClCompile Include="data\models\ArrayMemoryNoteModel.cpp" />
     <ClCompile Include="data\models\AssetModelBase.cpp" />
     <ClCompile Include="data\models\GameAssets.cpp" />
     <ClCompile Include="data\models\LeaderboardModel.cpp" />
@@ -115,6 +116,7 @@
     <ClInclude Include="data\ModelPropertyContainer.hh" />
     <ClInclude Include="data\models\AchievementModel.hh" />
     <ClInclude Include="data\models\AchievementSetModel.hh" />
+    <ClInclude Include="data\models\ArrayMemoryNoteModel.hh" />
     <ClInclude Include="data\models\AssetModelBase.hh" />
     <ClInclude Include="data\models\AuthoredMemoryNoteModel.hh" />
     <ClInclude Include="data\models\GameAssets.hh" />

@@ -361,6 +361,24 @@ bool StructuredMemoryNoteModel::GetChainTo(std::vector<MemoryNoteModel::Referenc
     return false;
 }
 
+void StructuredMemoryNoteModel::UpdateBaseAddress(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext, NoteMovedFunction fNoteMovedCallback)
+{
+    for (const auto& pOffsetNote : m_vOffsetNotes)
+    {
+        auto* pStructuredNote = dynamic_cast<StructuredMemoryNoteModel*>(pOffsetNote.get());
+        if (pStructuredNote)
+            pStructuredNote->UpdateBaseAddress(nAddress + pOffsetNote->GetAddress(), pMemoryContext, fNoteMovedCallback);
+    }
+
+    if (m_nBaseAddress != nAddress)
+    {
+        if (fNoteMovedCallback)
+            fNoteMovedCallback(m_nBaseAddress, nAddress, *this);
+
+        m_nBaseAddress = nAddress;
+    }
+}
+
 } // namespace models
 } // namespace data
 } // namespace ra

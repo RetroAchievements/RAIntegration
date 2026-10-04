@@ -4,8 +4,6 @@
 
 #include "StructuredMemoryNoteModel.hh"
 
-#include "context/IEmulatorMemoryContext.hh"
-
 #include <functional>
 
 namespace ra {
@@ -35,14 +33,13 @@ public:
     /// </summary>
     uint32_t GetRawPointerValue() const noexcept { return m_nRawPointerValue; }
 
-    typedef std::function<void(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel&)> NoteMovedFunction;
     /// <summary>
     /// Updates the raw pointer value by reading from memory.
     /// </summary>
     /// <param name="nAddress">The address of the pointer data. For root pointers, this will be the note's address. For nested pointers, it will be the note's offset + the parent pointer's value.</param>
     /// <param name="pMemoryContext">Where to read the new value from.</param>
     /// <param name="fNoteMovedCallback">Function to call if the PointerAddress changes.</param>
-    void UpdateRawPointerValue(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext, NoteMovedFunction fNoteMovedCallback);
+    void UpdateBaseAddress(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext, NoteMovedFunction fNoteMovedCallback) override;
 
     /// <summary>
     /// Get the subnote for the field at the specified offset.

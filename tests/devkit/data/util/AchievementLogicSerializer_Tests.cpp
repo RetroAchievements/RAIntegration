@@ -44,7 +44,7 @@ public:
             L"+0x448 | [32-bit BE] Not-nested number";
         auto pNote = Parse(sNote);
         pNote->SetAddress(0x1234);
-        pNote->UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
+        pNote->UpdateBaseAddress(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(pNote->GetNoteAtOffset(0x438));
         Assert::IsNotNull(note2);
@@ -69,7 +69,7 @@ public:
             L"++0x24C | [16-bit] State";
         auto pNote = Parse(sNote);
         pNote->SetAddress(0x1234);
-        pNote->UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
+        pNote->UpdateBaseAddress(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(pNote->GetNoteAtOffset(0x428));
         Assert::IsNotNull(note2);
@@ -94,7 +94,7 @@ public:
             L"++0x24C | [16-bit] State";
         auto pNote = Parse(sNote);
         pNote->SetAddress(0x1234);
-        pNote->UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
+        pNote->UpdateBaseAddress(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(pNote->GetNoteAtOffset(0x428));
         Assert::IsNotNull(note2);
@@ -119,7 +119,7 @@ public:
             L"++0x24C | [16-bit BE] State";
         auto pNote = Parse(sNote);
         pNote->SetAddress(0x1234);
-        pNote->UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
+        pNote->UpdateBaseAddress(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(pNote->GetNoteAtOffset(0x428));
         Assert::IsNotNull(note2);
@@ -144,7 +144,7 @@ public:
             L"++0x8000024C | [16-bit BE] State";
         auto pNote = Parse(sNote);
         pNote->SetAddress(0x1234);
-        pNote->UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
+        pNote->UpdateBaseAddress(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(pNote->GetNoteAtOffset(0x80000428));
         Assert::IsNotNull(note2);
@@ -169,7 +169,7 @@ public:
             L"++0x824C | [16-bit] State";
         auto pNote = Parse(sNote);
         pNote->SetAddress(0x1234);
-        pNote->UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
+        pNote->UpdateBaseAddress(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(pNote->GetNoteAtOffset(0x8428));
         Assert::IsNotNull(note2);
@@ -194,7 +194,7 @@ public:
             L"++0x824C | [16-bit] State";
         auto pNote = Parse(sNote);
         pNote->SetAddress(0x1234);
-        pNote->UpdateRawPointerValue(0x1234, mockEmulatorMemoryContext, nullptr);
+        pNote->UpdateBaseAddress(0x1234, mockEmulatorMemoryContext, nullptr);
 
         const auto* note2 = dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(pNote->GetNoteAtOffset(0xFFFFFFF8));
         Assert::IsNotNull(note2);

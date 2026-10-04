@@ -112,7 +112,7 @@ public:
                     if (pPointerNote)
                     {
                         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-                        pPointerNote->UpdateRawPointerValue(nAddress, pMemoryContext, nullptr);
+                        pPointerNote->UpdateBaseAddress(nAddress, pMemoryContext, nullptr);
                     }
                 }
 

@@ -306,6 +306,35 @@ public:
         Assert::AreEqual(std::wstring(L"[US] Note for NA"), vParentChain.back().pNote->GetNote());
     }
 
+    TEST_METHOD(TestArrayAddress)
+    {
+        IndirectNoteResolverHarness resolver;
+        resolver.mockGameContext.SetNote({ 0x10U }, L"[4x16-byte]\n+2=This is a note.");
+        resolver.Parse("0xH0022=3");
+
+        std::vector<IndirectNoteResolver::Node> vParentChain;
+        Assert::AreEqual(0x22U, resolver.ResolveOperand(resolver.GetCondition(0), true, vParentChain));
+        Assert::AreEqual({ 3U }, vParentChain.size());
+        Assert::AreEqual(std::wstring(L"0x0010[1]+2"), resolver.BuildPath(vParentChain));
+        Assert::AreEqual(std::wstring(L"[4x16-byte]\n+2=This is a note."), vParentChain.front().pNote->GetNote());
+        Assert::AreEqual(std::wstring(L"This is a note."), vParentChain.back().pNote->GetNote());
+    }
+
+    TEST_METHOD(TestArrayPointedAtAddress)
+    {
+        IndirectNoteResolverHarness resolver;
+        resolver.mockGameContext.SetNote({ 2U }, L"[8-bit pointer]\n+2=[4x16-byte]\n++2=This is a note.");
+        resolver.Parse("I:0xH0002_0xH0024=3"); // +24 = +2 for start of array, +20 for element, +2 for offset in element
+
+        // $0002 = 2, 2+2=4, 4+0x20 = 0x24 + 2 = 0x26
+        std::vector<IndirectNoteResolver::Node> vParentChain;
+        Assert::AreEqual(0x26U, resolver.ResolveOperand(resolver.GetCondition(1), true, vParentChain));
+        Assert::AreEqual({ 4U }, vParentChain.size());
+        Assert::AreEqual(std::wstring(L"$0x0002+0x02[2]+2"), resolver.BuildPath(vParentChain));
+        Assert::AreEqual(std::wstring(L"[8-bit pointer]\n+2=[4x16-byte]\n++2=This is a note."), vParentChain.front().pNote->GetNote());
+        Assert::AreEqual(std::wstring(L"This is a note."), vParentChain.back().pNote->GetNote());
+    }
+
     TEST_METHOD(TestStructAddress)
     {
         IndirectNoteResolverHarness resolver;

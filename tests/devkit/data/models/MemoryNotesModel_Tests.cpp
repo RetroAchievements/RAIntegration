@@ -763,6 +763,39 @@ public:
         notes.AssertNoteDescription(2U, nullptr);
     }
 
+    TEST_METHOD(TestFindNoteArray)
+    {
+        MemoryNotesModelHarness notes;
+        const std::wstring sNote =
+            L"[32-bit pointer] Root\r\n"
+            L"+0x08: [4x16 bytes] Item Data\r\n"
+            L"+|0x00: [32-bit] Item Type\r\n"
+            L"+|0x04: [16-bit] Item Quantity";
+        notes.AddMemoryNote(4U, "Author", sNote);
+
+        std::array<uint8_t, 64> memory = {};
+        memory.at(4) = 0x10;
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
+
+        notes.DoFrame();
+
+        // expected locations
+        notes.AssertNoteDescription(0x04U, L"[32-bit pointer] Root");
+        notes.AssertNoteDescription(0x18U, L"[32-bit] Item Type");
+        notes.AssertNoteDescription(0x1CU, L"[16-bit] Item Quantity");
+        notes.AssertNoteDescription(0x28U, L"[32-bit] Item Type");
+        notes.AssertNoteDescription(0x2CU, L"[16-bit] Item Quantity");
+        notes.AssertNoteDescription(0x38U, L"[32-bit] Item Type");
+        notes.AssertNoteDescription(0x3CU, L"[16-bit] Item Quantity");
+        notes.AssertNoteDescription(0x48U, L"[32-bit] Item Type");
+        notes.AssertNoteDescription(0x4CU, L"[16-bit] Item Quantity");
+
+        // unexpected locations
+        notes.AssertNoteDescription(0x08U, nullptr);
+        notes.AssertNoteDescription(0x30U, nullptr); // in range, but not specifically handled
+        notes.AssertNoteDescription(0x58U, nullptr);
+    }
+
     TEST_METHOD(TestEnumerateMemoryNotes)
     {
         MemoryNotesModelHarness notes;
@@ -946,6 +979,68 @@ public:
         }, true);
 
         Assert::AreEqual(7, i);
+    }
+
+    TEST_METHOD(TestEnumerateMemoryNotesArray)
+    {
+        MemoryNotesModelHarness notes;
+        std::array<uint8_t, 32> memory{};
+        notes.mockEmulatorMemoryContext.MockMemory(memory);
+        memory.at(4) = 0x10; // start with initial value for pointer
+
+        const std::wstring sRootNote =
+            L"[32-bit pointer] Root\r\n"
+            L"+0x08: [2x16 bytes] Item Data\r\n"
+            L"+|0x04: [32-bit] Item Type\r\n"
+            L"+|0x08: [16-bit] Item Quantity";
+        notes.AddMemoryNote(4, "Author", sRootNote);
+        notes.DoFrame();
+
+        int i = 0;
+        notes.EnumerateNotes([&i, &sRootNote](const MemoryNoteModel::Reference& pNote) {
+            const auto nBytes = pNote.pMemoryNote->GetBytes();
+            const auto sNote = pNote.pMemoryNote->GetNote();
+
+            switch (i++)
+            {
+                case 0:
+                    Assert::AreEqual({ 0x04U }, pNote.nAddress);
+                    Assert::AreEqual(4U, nBytes);
+                    Assert::AreEqual(sRootNote, sNote);
+                    break;
+                case 1:
+                    Assert::AreEqual({ 0x18U }, pNote.nAddress);
+                    Assert::AreEqual(32U, nBytes);
+                    Assert::AreEqual(std::wstring(L"[2x16 bytes] Item Data\r\n|0x04: [32-bit] Item Type\r\n|0x08: [16-bit] Item Quantity"), sNote);
+                    break;
+                case 2:
+                    Assert::AreEqual({ 0x1CU }, pNote.nAddress);
+                    Assert::AreEqual(4U, nBytes);
+                    Assert::AreEqual(std::wstring(L"[32-bit] Item Type"), sNote);
+                    break;
+                case 3:
+                    Assert::AreEqual({ 0x20U }, pNote.nAddress);
+                    Assert::AreEqual(2U, nBytes);
+                    Assert::AreEqual(std::wstring(L"[16-bit] Item Quantity"), sNote);
+                    break;
+                case 4:
+                    Assert::AreEqual({ 0x2CU }, pNote.nAddress);
+                    Assert::AreEqual(4U, nBytes);
+                    Assert::AreEqual(std::wstring(L"[32-bit] Item Type"), sNote);
+                    break;
+                case 5:
+                    Assert::AreEqual({ 0x30U }, pNote.nAddress);
+                    Assert::AreEqual(2U, nBytes);
+                    Assert::AreEqual(std::wstring(L"[16-bit] Item Quantity"), sNote);
+                    break;
+                case 6:
+                    Assert::Fail(L"Too many notes");
+                    break;
+            }
+            return true;
+        }, true);
+
+        Assert::AreEqual(6, i);
     }
 
     TEST_METHOD(TestDoFrame)

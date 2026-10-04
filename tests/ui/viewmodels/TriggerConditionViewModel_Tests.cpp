@@ -945,7 +945,7 @@ public:
 
         // $0001 = 1, 1+2 = $0003, 1+5 = $0006
         Assert::AreEqual(std::wstring(L"0x0003 (indirect $0x0001+0x02)\r\n[No memory note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
-        Assert::AreEqual(std::wstring(L"0x0006 (indirect $0x0001+0x05)\r\n[8 bytes] This is a note."), pCondition->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0006 (indirect $0x0001+0x04+1)\r\n[8 bytes] This is a note."), pCondition->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 
     TEST_METHOD(TestTooltipIndirectAddressMultiplyNoMemoryNote)

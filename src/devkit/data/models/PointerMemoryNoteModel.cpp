@@ -47,8 +47,8 @@ static ra::data::ByteAddress ConvertPointer(ra::data::ByteAddress nAddress)
     return nAddress;
 }
 
-void PointerMemoryNoteModel::UpdateRawPointerValue(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext,
-                                                   NoteMovedFunction fNoteMovedCallback)
+void PointerMemoryNoteModel::UpdateBaseAddress(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext,
+                                               NoteMovedFunction fNoteMovedCallback)
 {
     const auto nOldAddress = m_nBaseAddress;
     ra::data::ByteAddress nNewAddress = 0;
@@ -75,7 +75,8 @@ void PointerMemoryNoteModel::UpdateRawPointerValue(ra::data::ByteAddress nAddres
                 for (const auto& pNote : m_vOffsetNotes)
                 {
                     // Pointers are handled below.
-                    if (pNote->GetType() != MemoryNoteType::Pointer)
+                    const auto* pStructuredNote = dynamic_cast<StructuredMemoryNoteModel*>(pNote.get());
+                    if (pStructuredNote == nullptr)
                         fNoteMovedCallback(nOldAddress + pNote->GetAddress(), nNewAddress + pNote->GetAddress(), *pNote);
                 }
             }
@@ -86,12 +87,9 @@ void PointerMemoryNoteModel::UpdateRawPointerValue(ra::data::ByteAddress nAddres
     {
         for (auto& pNote : m_vOffsetNotes)
         {
-            auto* pPointerNote = dynamic_cast<PointerMemoryNoteModel*>(pNote.get());
-            if (pPointerNote)
-            {
-                pPointerNote->UpdateRawPointerValue(nNewAddress + pNote->GetAddress(),
-                                                    pMemoryContext, fNoteMovedCallback);
-            }
+            auto* pStructuredNote = dynamic_cast<StructuredMemoryNoteModel*>(pNote.get());
+            if (pStructuredNote)
+                pStructuredNote->UpdateBaseAddress(nNewAddress + pNote->GetAddress(), pMemoryContext, fNoteMovedCallback);
         }
     }
 }
@@ -99,11 +97,9 @@ void PointerMemoryNoteModel::UpdateRawPointerValue(ra::data::ByteAddress nAddres
 const MemoryNoteModel* PointerMemoryNoteModel::GetNoteAtOffset(int nOffset) const
 {
     // look for explicit offset match
-    for (const auto& pOffsetNote : m_vOffsetNotes)
-    {
-        if (ra::to_signed(pOffsetNote->GetAddress()) == nOffset)
-            return pOffsetNote.get();
-    }
+    const auto* pMatch = StructuredMemoryNoteModel::GetNoteAtOffset(nOffset);
+    if (pMatch)
+        return pMatch;
 
     if (m_nOffsetType == OffsetType::Overflow)
     {
@@ -111,11 +107,7 @@ const MemoryNoteModel* PointerMemoryNoteModel::GetNoteAtOffset(int nOffset) cons
         const auto nConvertedAddress = ConvertPointer(m_nRawPointerValue);
         nOffset += nConvertedAddress - m_nRawPointerValue;
 
-        for (const auto& pOffsetNote : m_vOffsetNotes)
-        {
-            if (ra::to_signed(pOffsetNote->GetAddress()) == nOffset)
-                return pOffsetNote.get();
-        }
+        return StructuredMemoryNoteModel::GetNoteAtOffset(nOffset);
     }
 
     return nullptr;

@@ -1,6 +1,7 @@
 #include "MemoryInspectorViewModel.hh"
 
 #include "data\context\GameContext.hh"
+#include "data\models\ArrayMemoryNoteModel.hh"
 #include "data\models\PointerMemoryNoteModel.hh"
 #include "data\util\AchievementLogicSerializer.hh"
 
@@ -289,6 +290,18 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nNe
             if (pPointerNote)
             {
                 sIndirectNote += ra::util::String::Printf(L"[Indirect from %s]\r\n", pMemoryContext.FormatAddress(pChain.nAddress));
+                continue;
+            }
+
+            const auto pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pChain.pMemoryNote);
+            if (pArrayNote)
+            {
+                if (pArrayNote->GetElementCount() == 1)
+                    sIndirectNote += ra::util::String::Printf(L"[Struct at %s]\r\n", pMemoryContext.FormatAddress(pChain.nAddress));
+                else
+                    sIndirectNote += ra::util::String::Printf(L"[Array at %s, element %u]\r\n",
+                        pMemoryContext.FormatAddress(pChain.nAddress), pChain.nElementIndex);
+
                 continue;
             }
         }

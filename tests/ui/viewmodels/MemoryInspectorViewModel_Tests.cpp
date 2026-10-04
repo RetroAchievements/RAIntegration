@@ -261,6 +261,77 @@ public:
         Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
     }
 
+    TEST_METHOD(TestSetCurrentAddressWithNoteStruct)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetServerNote({ 3U }, L"[10-byte struct]\n+1 Test");
+
+        inspector.SetCurrentAddress({ 3U });
+
+        Assert::AreEqual({ 3U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0003"), inspector.GetCurrentAddressText());
+        Assert::AreEqual(std::wstring(L"[10-byte struct]\n+1 Test"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"0 0 0 0 0 0 1 1"), inspector.GetCurrentAddressBits());
+        Assert::IsFalse(inspector.IsCurrentAddressNoteReadOnly());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
+
+        inspector.SetCurrentAddress({ 4U });
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
+        Assert::AreEqual(std::wstring(L"[Struct at 0x0003]\r\nTest"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"0 0 0 0 0 1 0 0"), inspector.GetCurrentAddressBits());
+        Assert::IsTrue(inspector.IsCurrentAddressNoteReadOnly());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
+    }
+
+    TEST_METHOD(TestSetCurrentAddressWithNoteArray)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetServerNote({ 3U }, L"[2x6 bytes]\n+1 Test");
+
+        inspector.SetCurrentAddress({ 3U });
+
+        Assert::AreEqual({ 3U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0003"), inspector.GetCurrentAddressText());
+        Assert::AreEqual(std::wstring(L"[2x6 bytes]\n+1 Test"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"0 0 0 0 0 0 1 1"), inspector.GetCurrentAddressBits());
+        Assert::IsFalse(inspector.IsCurrentAddressNoteReadOnly());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
+
+        inspector.SetCurrentAddress({ 4U });
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
+        Assert::AreEqual(std::wstring(L"[Array at 0x0003, element 0]\r\nTest"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"0 0 0 0 0 1 0 0"), inspector.GetCurrentAddressBits());
+        Assert::IsTrue(inspector.IsCurrentAddressNoteReadOnly());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
+
+        inspector.SetCurrentAddress({ 10U });
+
+        Assert::AreEqual({ 10U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x000a"), inspector.GetCurrentAddressText());
+        Assert::AreEqual(std::wstring(L"[Array at 0x0003, element 1]\r\nTest"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"0 0 0 0 1 0 1 0"), inspector.GetCurrentAddressBits());
+        Assert::IsTrue(inspector.IsCurrentAddressNoteReadOnly());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
+    }
+
     TEST_METHOD(TestSetCurrentAddressKeepsSelectedSearchResult)
     {
         MemoryInspectorViewModelHarness inspector;
@@ -763,6 +834,34 @@ public:
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pBookmarks.Items().GetItemAt(0)->GetSize());
         Assert::AreEqual(std::string("I:0xX0004_M:0xX0004"), pBookmarks.Items().GetItemAt(0)->GetIndirectAddress());
         Assert::AreEqual(std::wstring(L"[32-bit] Current HP"), pBookmarks.Items().GetItemAt(0)->GetRealNote());
+    }
+
+    TEST_METHOD(TestBookmarkCurrentAddressArray)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 8; i < memory.size(); i += 4)
+            memory.at(i) = i;
+        inspector.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 12;
+
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
+            L"[32-bit pointer] Party data\n"
+            L"+4: [4x16-bytes] Character data\n"
+            L"+|8: [32-bit] Max HP");
+        inspector.mockGameContext.DoFrame(); // force indirect memory note initialization
+
+        inspector.SetCurrentAddress(24U); // 12 + 4 + 8
+        inspector.BookmarkCurrentAddress();
+
+        const auto& pBookmarks = inspector.mockWindowManager.MemoryBookmarks.Bookmarks();
+        Assert::AreEqual({ 1U }, pBookmarks.Items().Count());
+        Assert::AreEqual({ 24U }, pBookmarks.Items().GetItemAt(0)->GetAddress());
+        Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBit, pBookmarks.Items().GetItemAt(0)->GetSize());
+        Assert::AreEqual(std::string("I:0xX0004_M:0xX000c"), pBookmarks.Items().GetItemAt(0)->GetIndirectAddress());
+        Assert::AreEqual(std::wstring(L"[32-bit] Max HP"), pBookmarks.Items().GetItemAt(0)->GetRealNote());
     }
 };
 

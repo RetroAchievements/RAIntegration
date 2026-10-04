@@ -292,7 +292,7 @@ const MemoryNoteModel* StructuredMemoryNoteModel::GetNoteAtOffset(int nOffset) c
             --pIter;
             const auto* pStructuredNote = dynamic_cast<const StructuredMemoryNoteModel*>(pIter->get());
 
-            if (pStructuredNote && pStructuredNote->GetBytes() > 1 && pStructuredNote->GetBytes() + pStructuredNote->GetAddress() > nOffset)
+            if (pStructuredNote && pStructuredNote->GetBytes() > 1 && pStructuredNote->GetBytes() + pStructuredNote->GetAddress() > ra::to_unsigned(nOffset))
             {
                 const auto* pMemoryNote = pStructuredNote->GetNoteAtOffset(nOffset - pStructuredNote->GetAddress());
                 if (pMemoryNote != nullptr)

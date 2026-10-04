@@ -2,8 +2,11 @@
 
 #include "RA_Defs.h"
 
+#include "context\IEmulatorMemoryContext.hh"
+
 #include "data\Memory.hh"
 #include "data\context\GameContext.hh"
+#include "data\models\ValueMemoryNoteModel.hh"
 #include "data\util\IndirectNoteResolver.hh"
 
 #include "services\ServiceLocator.hh"
@@ -599,12 +602,13 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             }
 
             if (!pNote)
-                pNote = pMemoryNotes->FindMemoryNoteModel(pCondition->operand1.value.memref->address);
+                pNote = pMemoryNotes->FindNote(pCondition->operand1.value.memref->address);
         }
 
         if (pNote)
         {
-            const auto pSubNote = pNote->GetSubNote(ra::data::Memory::SizeFromRcheevosSize(pCondition->operand1.size));
+            const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
+            const auto pSubNote = pValueNote ? pValueNote->GetSubNote(ra::data::Memory::SizeFromRcheevosSize(pCondition->operand1.size)) : L"";
             if (!pSubNote.empty())
                 pClause.SetReference(EnumValueFromText(pSubNote));
             else
@@ -643,12 +647,13 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
                     }
 
                     if (!pNote2)
-                        pNote2 = pMemoryNotes->FindMemoryNoteModel(pCondition->operand2.value.memref->address);
+                        pNote2 = pMemoryNotes->FindNote(pCondition->operand2.value.memref->address);
                 }
 
                 if (pNote2)
                 {
-                    const auto pSubNote = pNote2->GetSubNote(ra::data::Memory::SizeFromRcheevosSize(pCondition->operand2.size));
+                    const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
+                    const auto pSubNote = pValueNote ? pValueNote->GetSubNote(ra::data::Memory::SizeFromRcheevosSize(pCondition->operand2.size)) : L"";
                     if (!pSubNote.empty())
                         pClause.SetTarget(EnumValueFromText(pSubNote));
                     else
@@ -695,7 +700,8 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             }
 
             // look for enum value in note
-            const auto pEnumText = pNote->GetEnumText(nTarget);
+            const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
+            const auto pEnumText = pValueNote ? pValueNote->GetEnumText(nTarget) : L"";
             if (!pEnumText.empty())
                 pClause.SetTarget(EnumValueFromText(pEnumText));
             else
@@ -878,7 +884,7 @@ void TriggerSummaryViewModel::AddHeaders()
             if (nBucket == TriggerClauseBucket::Start && vBucketItems.size() == 1)
             {
                 auto* pItem = m_vClauses.GetItemAt(nInsertIndex - 1);
-                if (pItem->GetTally() == L"once")
+                if (!pItem || pItem->GetTally() == L"once")
                     pItem->SetTally(L"");
             }
         };
@@ -908,7 +914,7 @@ void TriggerSummaryViewModel::AddHeaders()
     const auto vRestartItems = vBuckets.at(ra::etoi(TriggerClauseBucket::Restart));
     if (!vRestartItems.empty())
     {
-        const wchar_t* sHeader;
+        const wchar_t* sHeader = nullptr;
         if (vBuckets.at(ra::etoi(TriggerClauseBucket::Start)).empty())
         {
             // No starting condition. Anything with hit counts was moved into Ongoing bucket.

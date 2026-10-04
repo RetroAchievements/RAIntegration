@@ -5,6 +5,7 @@
 #include "api\UploadBadge.hh"
 
 #include "context\UserContext.hh"
+#include "context\IEmulatorMemoryContext.hh"
 #include "context\IRcClient.hh"
 
 #include "data\context\GameContext.hh"
@@ -143,19 +144,18 @@ void AssetUploadViewModel::QueueMemoryNote(ra::data::models::MemoryNotesModel& p
             if (pOriginalNote == nullptr)
                 pOriginalNote = &sEmpty;
 
-            const auto* pNote = pMemoryNotes.FindNote(nAddress);
-            if (pNote == nullptr)
-                pNote = &sEmpty;
+            const auto* pNoteModel = pMemoryNotes.FindNote(nAddress, false);
+            const std::wstring pNote = pNoteModel ? pNoteModel->GetNote() : sEmpty;
 
             ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
-            if (!pNote->empty())
+            if (!pNote.empty())
             {
                 vmPrompt.SetHeader(
                     ra::util::String::Printf(L"Overwrite note for address %s?", pMemoryContext.FormatAddress(nAddress)));
 
-                if (pOriginalNote->length() > 256 || pNote->length() > 256)
+                if (pOriginalNote->length() > 256 || pNote.length() > 256)
                 {
-                    const auto sNewNoteShort = ShortenNote(*pNote);
+                    const auto sNewNoteShort = ShortenNote(pNote);
                     const auto sOldNoteShort = ShortenNote(*pOriginalNote);
                     vmPrompt.SetMessage(
                         ra::util::String::Printf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
@@ -165,7 +165,7 @@ void AssetUploadViewModel::QueueMemoryNote(ra::data::models::MemoryNotesModel& p
                 {
                     vmPrompt.SetMessage(
                         ra::util::String::Printf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
-                                         *pOriginalAuthor, *pOriginalNote, *pNote));
+                                         *pOriginalAuthor, *pOriginalNote, pNote));
                 }
             }
             else
@@ -528,7 +528,7 @@ void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel&
                 auto& pEntry = vEntries.emplace_back();
                 pEntry.address = ra::to_unsigned(pScan.nExtra);
 
-                const auto* pNote = pNotes.FindMemoryNoteModel(pEntry.address);
+                const auto* pNote = pNotes.FindNote(pEntry.address);
                 if (pNote != nullptr && !pNote->GetNote().empty())
                     vUtf8Notes[pEntry.address] = ra::util::String::Narrow(pNote->GetNote());
 
@@ -545,7 +545,7 @@ void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel&
                 auto& pEntry = vEntries.emplace_back();
                 pEntry.address = ra::to_unsigned(pScan.nExtra);
 
-                const auto* pNote = pNotes.FindMemoryNoteModel(pEntry.address);
+                const auto* pNote = pNotes.FindNote(pEntry.address);
                 if (pNote != nullptr && !pNote->GetNote().empty())
                     vUtf8Notes[pEntry.address] = ra::util::String::Narrow(pNote->GetNote());
 
@@ -628,9 +628,9 @@ void AssetUploadViewModel::UploadMemoryNotes(ra::data::models::MemoryNotesModel&
                                 {
                                     if (pEntry.note)
                                     {
-                                        const auto* pNote = pNotes.FindNote(pEntry.address);
+                                        const auto* pNote = pNotes.FindNote(pEntry.address, false);
                                         if (pNote)
-                                            pNotes.SetServerNote(pEntry.address, *pNote);
+                                            pNotes.SetServerNote(pEntry.address, pNote->GetNote());
                                     }
                                     else
                                         pNotes.SetServerNote(pEntry.address, L"");

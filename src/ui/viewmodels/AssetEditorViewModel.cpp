@@ -269,7 +269,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
         m_pAsset = pAsset;
         SetValue(IsAssetLoadedProperty, true);
 
-        UpdateMeasuredValue();
+        DoFrame();
 
         if (AreDebugHighlightsEnabled())
             UpdateDebugHighlights();
@@ -457,8 +457,7 @@ void AssetEditorViewModel::OnViewModelIntValueChanged(const IntModelProperty::Ch
     else if (args.Property == TriggerViewModel::SelectedGroupIndexProperty ||
              args.Property == TriggerViewModel::ScrollOffsetProperty)
     {
-        if (m_pAsset && AreDebugHighlightsEnabled())
-            UpdateDebugHighlights();
+        DoFrame();
     }
 }
 
@@ -896,6 +895,44 @@ void AssetEditorViewModel::UpdateTriggerBinding()
     UpdateMeasuredValue();
 }
 
+static void UpdateMemrefs(ra::data::models::AssetModelBase& pAsset)
+{
+    rc_memrefs_t* memrefs = nullptr;
+
+    switch (pAsset.GetType())
+    {
+        case ra::data::models::AssetType::Achievement:
+        {
+            auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(&pAsset);
+            if (pAchievement)
+            {
+                auto* pTrigger = pAchievement->GetMutableRuntimeTrigger();
+                if (pTrigger)
+                    memrefs = rc_trigger_get_memrefs(pTrigger);
+            }
+            break;
+        }
+
+        case ra::data::models::AssetType::Leaderboard:
+        {
+            auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(&pAsset);
+            if (pLeaderboard)
+            {
+                auto *pLboard = pLeaderboard->GetMutableRuntimeLeaderboard();
+                if (pLboard && pLboard->has_memrefs)
+                {
+                    GSL_SUPPRESS_TYPE1
+                    memrefs = &(reinterpret_cast<rc_lboard_with_memrefs_t*>(pLboard)->memrefs);
+                }
+            }
+            break;
+        }
+    }
+
+    if (memrefs)
+        rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
+}
+
 void AssetEditorViewModel::DoFrame()
 {
     if (m_pAsset == nullptr)
@@ -905,8 +942,10 @@ void AssetEditorViewModel::DoFrame()
     {
         if (m_pAsset->IsActive())
             UpdateAssetFrameValues();
-        else
+        else if (m_vmTrigger.GetTriggerFromString() != nullptr)
             m_vmTrigger.UpdateMemrefs();
+        else
+            UpdateMemrefs(*m_pAsset);
     }
 }
 

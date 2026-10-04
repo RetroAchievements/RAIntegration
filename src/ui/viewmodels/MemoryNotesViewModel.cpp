@@ -93,19 +93,19 @@ void MemoryNotesViewModel::ResetFilter()
     auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
     if (pMemoryNotes != nullptr)
     {
-        pMemoryNotes->EnumerateMemoryNotes([this, &nIndex, pMemoryNotes](ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel& pMemoryNote)
+        pMemoryNotes->EnumerateNotes([this, &nIndex, pMemoryNotes](const ra::data::models::MemoryNoteModel::Reference& pNote)
         {
             const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-            const auto bNoteModified = pMemoryNotes->IsNoteModified(nAddress);
-            const auto nBytes = pMemoryNote.GetBytes();
+            const auto bNoteModified = pMemoryNotes->IsNoteModified(pNote.nAddress);
+            const auto nBytes = pNote.pMemoryNote->GetBytes();
 
             std::wstring sAddress;
             if (nBytes <= 4)
-                sAddress = pMemoryContext.FormatAddress(nAddress);
+                sAddress = pMemoryContext.FormatAddress(pNote.nAddress);
             else
-                sAddress = ra::util::String::Printf(L"%s\n- %s", pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nAddress + nBytes - 1));
+                sAddress = ra::util::String::Printf(L"%s\n- %s", pMemoryContext.FormatAddress(pNote.nAddress), pMemoryContext.FormatAddress(pNote.nAddress + nBytes - 1));
 
-            const auto& sNote = pMemoryNote.GetNote();
+            const auto sNote = pNote.pMemoryNote->GetNote();
             auto* vmNote = m_vNotes.GetItemAt(nIndex);
             if (vmNote)
             {
@@ -117,7 +117,7 @@ void MemoryNotesViewModel::ResetFilter()
             {
                 vmNote = &m_vNotes.Add(sAddress, sNote);
             }
-            vmNote->nAddress = nAddress;
+            vmNote->nAddress = pNote.nAddress;
             vmNote->nBytes = nBytes;
             vmNote->SetModified(bNoteModified);
 
@@ -174,7 +174,13 @@ void MemoryNotesViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, c
         return;
 
     const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
-    if (pMemoryNotes == nullptr || pMemoryNotes->GetIndirectSource(nAddress) != 0xFFFFFFFF)
+    if (pMemoryNotes == nullptr)
+        return;
+
+    // Ignore changes to indirect notes.
+    std::vector<ra::data::models::MemoryNoteModel::Reference> vChain;
+    pMemoryNotes->GetChainTo(vChain, nAddress);
+    if (vChain.size() > 1)
         return;
 
     m_nUnfilteredNotesCount = pMemoryNotes->NoteCount();
@@ -222,7 +228,7 @@ void MemoryNotesViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, c
             {
                 pNote->SetModified(bNoteModified);
 
-                const auto* pMemoryNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
+                const auto* pMemoryNote = pMemoryNotes->FindNote(nAddress);
                 pNote->nBytes = pMemoryNote ? pMemoryNote->GetBytes() : 0;
                 std::wstring sAddress;
                 if (pNote->nBytes <= 4)
@@ -312,7 +318,7 @@ void MemoryNotesViewModel::BookmarkSelected() const
         {
             auto nSize = ra::data::Memory::Size::Unknown;
 
-            const auto* pMemoryNote = pMemoryNotes ? pMemoryNotes->FindMemoryNoteModel(pNote.nAddress, false) : nullptr;
+            const auto* pMemoryNote = pMemoryNotes ? pMemoryNotes->FindNote(pNote.nAddress, false) : nullptr;
             if (pMemoryNote != nullptr)
             {
                 nSize = pMemoryNote->GetMemSize();

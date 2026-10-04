@@ -2,6 +2,8 @@
 
 #include "context/IEmulatorMemoryContext.hh"
 
+#include "data/models/StructuredMemoryNoteModel.hh"
+
 #include "services/ServiceLocator.hh"
 
 #include "util/Strings.hh"
@@ -11,6 +13,22 @@
 namespace ra {
 namespace data {
 namespace util {
+
+static void AppendSubNoteOffset(const ra::data::models::MemoryNoteModel* pNote, int nOffset,
+    std::vector<ra::data::util::IndirectNoteResolver::Node>& vParentChain)
+{
+    auto& pOffsetNode = vParentChain.emplace_back();
+    pOffsetNode.nType = ra::data::util::IndirectNoteResolver::NodeType::Constant;
+    pOffsetNode.nValue = nOffset;
+    pOffsetNode.nModifierType = RC_OPERATOR_ADD;
+
+    const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pNote);
+    if (pStructuredNote)
+        pOffsetNode.pNote = pStructuredNote->GetNoteAtOffset(nOffset);
+
+    if (!pOffsetNode.pNote)
+        pOffsetNode.pNote = pNote;
+}
 
 static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
     std::vector<ra::data::util::IndirectNoteResolver::Node>& vParentChain,
@@ -29,9 +47,15 @@ static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
         pNode.nType = ra::data::util::IndirectNoteResolver::NodeType::Recall;
 
         if (pParentNote)
-            pNode.pNote = pParentNote->GetPointerNoteAtOffset(pValue.value.u32);
+        {
+            const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pParentNote);
+            if (pStructuredNote)
+                pNode.pNote = pStructuredNote->GetNoteAtOffset(pValue.value.u32);
+        }
         else
-            pNode.pNote = pMemoryNotes.FindMemoryNoteModel(pValue.value.u32, false);
+        {
+            pNode.pNote = pMemoryNotes.FindNote(pValue.value.u32, false);
+        }
 
         pNode.nValue = pValue.value.u32;
         return pValue.value.u32;
@@ -44,11 +68,27 @@ static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
 
         auto& pNode = vParentChain.emplace_back();
         pNode.nType = ra::data::util::IndirectNoteResolver::NodeType::ConstantOffset;
+        pNode.nValue = pValue.value.u32;
 
         if (pParentNote)
-            pNode.pNote = pParentNote->GetPointerNoteAtOffset(pValue.value.u32);
+        {
+            const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pParentNote);
+            if (pStructuredNote)
+            {
+                const auto pOffsetNote = pStructuredNote->GetNoteContainingOffset(pValue.value.u32);
+                if (pOffsetNote)
+                {
+                    pNode.pNote = pOffsetNote;
 
-        pNode.nValue = pValue.value.u32;
+                    if (pOffsetNote->GetType() == ra::data::models::MemoryNoteType::Array)
+                    {
+                        pNode.nValue = pOffsetNote->GetAddress();
+                        AppendSubNoteOffset(pOffsetNote, pValue.value.u32 - pOffsetNote->GetAddress(), vParentChain);
+                    }
+                }
+            }
+        }
+
         return pValue.value.u32;
     }
 
@@ -60,22 +100,17 @@ static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
         pNode.nValue = pOperand->value.memref->address;
 
         // find the memory note associated to the root pointer
-        pNode.pNote = pMemoryNotes.FindMemoryNoteModel(pNode.nValue, false);
+        pNode.pNote = pMemoryNotes.FindNote(pNode.nValue, false);
         if (!pNode.pNote)
         {
-            const auto nStartAddress = pMemoryNotes.FindNoteStart(pNode.nValue);
-            if (nStartAddress != 0xFFFFFFFF && nStartAddress != pNode.nValue)
+            const auto pReference = pMemoryNotes.FindNoteContaining(pNode.nValue);
+            if (pReference.pMemoryNote && pReference.nAddress != pNode.nValue)
             {
-                const auto nOffset = pNode.nValue - nStartAddress;
-                pNode.nValue = nStartAddress;
-                const auto* pNote = pMemoryNotes.FindMemoryNoteModel(nStartAddress);
-                pNode.pNote = pNote;
+                const auto nOffset = pNode.nValue - pReference.nAddress;
+                pNode.nValue = pReference.nAddress;
+                pNode.pNote = pReference.pMemoryNote;
 
-                auto& pNode2 = vParentChain.emplace_back();
-                pNode2.nType = ra::data::util::IndirectNoteResolver::NodeType::Constant;
-                pNode2.nValue = nOffset;
-                pNode2.nModifierType = RC_OPERATOR_ADD;
-                pNode2.pNote = pNote;
+                AppendSubNoteOffset(pNode.pNote, nOffset, vParentChain);
             }
         }
 
@@ -106,7 +141,7 @@ static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
         const auto nAddress = pModifier.value.u32;
 
         const auto* pParentNote = !vParentChain.empty() ? vParentChain.back().pNote : nullptr;
-        if (pParentNote && !pParentNote->IsPointer())
+        if (pParentNote && pParentNote->GetType() != ra::data::models::MemoryNoteType::Pointer)
         {
             // if the parent note is not a pointer, assume it's an index
             Expects(pModifiedMemref->modifier.type == RC_OPERAND_CONST);
@@ -115,15 +150,16 @@ static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
             pNode.nType = ra::data::util::IndirectNoteResolver::NodeType::ArrayOffset;
 
             // find the memory note associated to the start of the array
-            pNode.pNote = pMemoryNotes.FindMemoryNoteModel(nAddress, false);
+            pNode.pNote = pMemoryNotes.FindNote(nAddress, false);
 
             // return the address offset into the array
             return pValue.value.u32;
         }
 
         // process the pointer
+        const auto nIndex = vParentChain.size();
         ResolveOperandRecursive(&pModifiedMemref->modifier, vParentChain, pMemoryNotes);
-        vParentChain.back().nModifierType = RC_OPERATOR_INDIRECT_READ;
+        vParentChain.at(nIndex).nModifierType = RC_OPERATOR_INDIRECT_READ;
 
         return pValue.value.u32;
     }
@@ -265,7 +301,6 @@ std::wstring IndirectNoteResolver::BuildPath(const std::vector<Node>& vParentCha
 
     return sPointerChain;
 }
-
 
 } // namespace util
 } // namespace data

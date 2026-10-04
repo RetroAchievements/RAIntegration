@@ -231,6 +231,18 @@
     <ClInclude Include="data\Requirement.hh">
       <Filter>data</Filter>
     </ClInclude>
+    <ClInclude Include="data\models\ValueMemoryNoteModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\AuthoredMemoryNoteModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\PointerMemoryNoteModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\StructuredMemoryNoteModel.hh">
+      <Filter>data\models</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -334,6 +346,15 @@
     </ClCompile>
     <ClCompile Include="data\Requirement.cpp">
       <Filter>data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\ValueMemoryNoteModel.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\PointerMemoryNoteModel.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\StructuredMemoryNoteModel.cpp">
+      <Filter>data\models</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -2,7 +2,10 @@
 #define RA_DATA_MOCK_GAMECONTEXT_HH
 #pragma once
 
+#include "context\IEmulatorMemoryContext.hh"
+
 #include "data\context\GameContext.hh"
+#include "data\models\PointerMemoryNoteModel.hh"
 
 #include "services\ServiceLocator.hh"
 
@@ -104,11 +107,12 @@ public:
                 if (pMemoryNotes)
                 {
                     GSL_SUPPRESS_TYPE3
-                    auto* pNote = const_cast<ra::data::models::MemoryNoteModel*>(pMemoryNotes->FindMemoryNoteModel(nAddress, false));
-                    if (pNote && pNote->IsPointer())
+                    auto* pNote = const_cast<ra::data::models::MemoryNoteModel*>(pMemoryNotes->FindNote(nAddress, false));
+                    auto* pPointerNote = dynamic_cast<ra::data::models::PointerMemoryNoteModel*>(pNote);
+                    if (pPointerNote)
                     {
                         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-                        pNote->UpdateRawPointerValue(nAddress, pMemoryContext, nullptr);
+                        pPointerNote->UpdateRawPointerValue(nAddress, pMemoryContext, nullptr);
                     }
                 }
 

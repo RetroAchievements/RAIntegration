@@ -3,7 +3,10 @@
 #include "RA_Defs.h"
 #include "util\Strings.hh"
 
+#include "context\IEmulatorMemoryContext.hh"
+
 #include "data\context\GameContext.hh"
+#include "data\models\ValueMemoryNoteModel.hh"
 #include "data\util\AchievementLogicSerializer.hh"
 #include "data\util\IndirectNoteResolver.hh"
 
@@ -441,7 +444,7 @@ std::wstring TriggerConditionViewModel::GetPotentialEnumValueTooltip(const std::
 {
     const ra::data::models::MemoryNoteModel* pNote = nullptr;
 
-    uint32_t nValue;
+    uint32_t nValue = 0;
     std::wstring sError;
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -460,12 +463,13 @@ std::wstring TriggerConditionViewModel::GetPotentialEnumValueTooltip(const std::
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
         if (pMemoryNotes)
-            pNote = pMemoryNotes->FindMemoryNoteModel(nCompareAddress);
+            pNote = pMemoryNotes->FindNote(nCompareAddress);
     }
 
-    if (pNote != nullptr)
+    const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
+    if (pValueNote != nullptr)
     {
-        const auto pEnumText = pNote->GetEnumText(nValue);
+        const auto pEnumText = pValueNote->GetEnumText(nValue);
         if (!pEnumText.empty())
             return std::wstring(pEnumText);
     }
@@ -662,19 +666,19 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
         const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
         if (pMemoryNotes)
         {
-            pNote = pMemoryNotes->FindMemoryNoteModel(nAddress);
+            pNote = pMemoryNotes->FindNote(nAddress);
             if (pNote == nullptr)
             {
-                const auto nNoteStart = pMemoryNotes->FindNoteStart(nAddress);
-                if (nNoteStart != 0xFFFFFFFF)
+                const auto pReference = pMemoryNotes->FindNoteContaining(nAddress);
+                if (pReference.pMemoryNote)
                 {
-                    pNote = pMemoryNotes->FindMemoryNoteModel(nNoteStart);
+                    pNote = pReference.pMemoryNote;
 
                     if (sPointerChain.empty())
                     {
-                        const auto nOffset = nAddress - nNoteStart;
+                        const auto nOffset = nAddress - pReference.nAddress;
                         const wchar_t* sFormat = nOffset < 10 ? L"%s (%s+%u)" : L"%s (%s+0x%02x)";
-                        sAddress = ra::util::String::Printf(sFormat, pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(nNoteStart), nOffset);
+                        sAddress = ra::util::String::Printf(sFormat, pMemoryContext.FormatAddress(nAddress), pMemoryContext.FormatAddress(pReference.nAddress), nOffset);
                     }
                 }
             }
@@ -683,17 +687,21 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::data::ByteAddress 
             return ra::util::String::Printf(L"%s\r\n[No memory note]", sAddress);
     }
 
-    if (pNote->IsPointer() && GetType() == ra::data::Requirement::Type::AddAddress)
-        return ra::util::String::Printf(L"%s\r\n%s", sAddress, pNote->GetPointerDescription());
+    if (pNote->GetType() == ra::data::models::MemoryNoteType::Pointer && GetType() == ra::data::Requirement::Type::AddAddress)
+        return ra::util::String::Printf(L"%s\r\n%s", sAddress, pNote->GetFullSummary());
 
-    const auto svSubNote = pNote->GetSubNote(nSize);
-    if (!svSubNote.empty())
+    const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
+    if (pValueNote)
     {
-        const auto sSummary = pNote->GetSummary();
-        if (sSummary.empty())
-            return ra::util::String::Printf(L"%s\r\n%s", sAddress, svSubNote);
+        const auto svSubNote = pValueNote->GetSubNote(nSize);
+        if (!svSubNote.empty())
+        {
+            const auto sSummary = pNote->GetSummary();
+            if (sSummary.empty())
+                return ra::util::String::Printf(L"%s\r\n%s", sAddress, svSubNote);
 
-        return ra::util::String::Printf(L"%s\r\n%s\r\n%s", sAddress, sSummary, svSubNote);
+            return ra::util::String::Printf(L"%s\r\n%s\r\n%s", sAddress, sSummary, svSubNote);
+        }
     }
 
     // limit the tooltip to the first 20 lines of the memory note

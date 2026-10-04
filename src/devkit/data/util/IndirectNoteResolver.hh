@@ -14,7 +14,7 @@ namespace util {
 class IndirectNoteResolver
 {
 public:
-    IndirectNoteResolver(const ra::data::models::MemoryNotesModel& pMemoryNotes)
+    IndirectNoteResolver(const ra::data::models::MemoryNotesModel& pMemoryNotes) noexcept
         : m_pMemoryNotes(&pMemoryNotes)
     {
     }
@@ -51,7 +51,7 @@ public:
     std::wstring BuildPath(const std::vector<Node>& vParentChain) const;
 
 protected:
-    IndirectNoteResolver() {}
+    IndirectNoteResolver() noexcept {}
 
     const ra::data::models::MemoryNotesModel* m_pMemoryNotes = nullptr;
 };

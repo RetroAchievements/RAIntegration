@@ -32,8 +32,12 @@
 #include "context\IRcClient.hh"
 #include "services\impl\OfflineRcClient.hh"
 
-#include <rcheevos\src\rc_client_internal.h>
-#include <rcheevos\src\rcheevos\rc_internal.h>
+#include <rcheevos\src\client\rc_client_internal.h>
+#include <rcheevos\src\runtime\rc_condset.h>
+#include <rcheevos\src\runtime\rc_lboard.h>
+#include <rcheevos\src\runtime\rc_modified_memref.h>
+#include <rcheevos\src\runtime\rc_parse_state.h>
+#include <rcheevos\src\runtime\rc_trigger.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -353,7 +357,7 @@ public:
         // MockAchievement generates triggers with their own memrefs - promote to common memref pool
         auto& runtime = GetClient()->game->runtime;
         rc_parse_state_t parse;
-        rc_init_parse_state(&parse, nullptr);
+        rc_init_parse_state(&parse, nullptr, 0);
         parse.memrefs = runtime.memrefs;
 
         for (unsigned i = 0; i < runtime.trigger_count; ++i)

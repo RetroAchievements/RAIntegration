@@ -14,7 +14,7 @@
 #include "testutil/AssetAsserts.hh"
 #include "testutil/CppUnitTest.hh"
 
-#include <rcheevos/src/rc_client_internal.h>
+#include <rcheevos/src/client/rc_client_internal.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

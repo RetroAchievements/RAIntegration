@@ -22,7 +22,8 @@
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
-#include "rcheevos\src\rc_client_internal.h"
+#include "rcheevos\src\runtime\rc_trigger.h"
+#include "rcheevos\src\runtime\rc_value.h"
 
 #include "Exports.hh"
 #include "RA_BuildVer.h"

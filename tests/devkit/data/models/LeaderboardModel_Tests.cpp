@@ -11,7 +11,8 @@
 #include "testutil/CppUnitTest.hh"
 #include "testutil/ValueAsserts.hh"
 
-#include <rcheevos/src/rc_client_internal.h>
+#include <rcheevos/src/client/rc_client_internal.h>
+#include <rcheevos/src/runtime/rc_lboard.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

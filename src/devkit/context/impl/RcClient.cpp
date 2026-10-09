@@ -9,7 +9,7 @@
 #include "util/Log.hh"
 #include "util/Strings.hh"
 
-#include <rcheevos/src/rc_client_internal.h>
+#include <rcheevos/src/client/rc_client_internal.h>
 
 namespace ra {
 namespace context {

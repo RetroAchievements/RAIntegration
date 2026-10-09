@@ -85,11 +85,21 @@
     <ClCompile Include="data\models\AchievementSetModel_Tests.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
-    <ClCompile Include="data\util\AchievementLogicSerializer_Tests.cpp" />
-    <ClCompile Include="data\Requirement_Tests.cpp" />
-    <ClCompile Include="data\models\PointerMemoryNoteModel_Tests.cpp" />
-    <ClCompile Include="data\models\ValueMemoryNoteModel_Tests.cpp" />
-    <ClCompile Include="data\models\ArrayMemoryNoteModel_Tests.cpp" />
+    <ClCompile Include="data\util\AchievementLogicSerializer_Tests.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\ArrayMemoryNoteModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\PointerMemoryNoteModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\ValueMemoryNoteModel_Tests.cpp">
+      <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\Requirement_Tests.cpp">
+      <Filter>data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />
@@ -205,7 +215,11 @@
     <ClInclude Include="context\mocks\MockDevKitContext.hh">
       <Filter>context\mocks</Filter>
     </ClInclude>
-    <ClInclude Include="services\mocks\MockConfiguration.hh" />
-    <ClInclude Include="testutil\RequirementAsserts.hh" />
+    <ClInclude Include="services\mocks\MockConfiguration.hh">
+      <Filter>services\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="testutil\RequirementAsserts.hh">
+      <Filter>testutil</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

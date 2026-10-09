@@ -14,8 +14,8 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLoginService.hh"
 
-#include <rcheevos\src\rc_client_external.h>
-#include <rcheevos\src\rc_client_internal.h>
+#include <rcheevos\src\client\rc_client_external.h>
+#include <rcheevos\src\client\rc_client_internal.h>
 #include <rcheevos\include\rc_client_raintegration.h>
 
 #include "context\IRcClient.hh"

@@ -46,10 +46,15 @@
 
 #include <rcheevos\include\rc_api_runtime.h>
 #include <rcheevos\include\rc_client_raintegration.h>
-#include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
-#include <rcheevos\src\rcheevos\rc_internal.h>
-#include <rcheevos\src\rc_client_internal.h>
-#include <rcheevos\src\rhash\md5.h>
+#include <rcheevos\src\api\rc_api_common.h> // for parsing cached patchdata response
+#include <rcheevos\src\client\rc_client_internal.h>
+#include <rcheevos\src\runtime\rc_condition.h>
+#include <rcheevos\src\runtime\rc_condset.h>
+#include <rcheevos\src\runtime\rc_lboard.h>
+#include <rcheevos\src\runtime\rc_memref.h>
+#include <rcheevos\src\runtime\rc_parse_state.h>
+#include <rcheevos\src\runtime\rc_trigger.h>
+#include <rcheevos\src\util\md5.h>
 
 namespace ra {
 namespace services {

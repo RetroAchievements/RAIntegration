@@ -15,7 +15,10 @@
 
 #include "util\Strings.hh"
 
-#include <rcheevos/src/rcheevos/rc_internal.h>
+#include <rcheevos/src/runtime/rc_condition.h>
+#include <rcheevos/src/runtime/rc_condset.h>
+#include <rcheevos/src/runtime/rc_memref.h>
+#include <rcheevos/src/runtime/rc_operand.h>
 
 namespace ra {
 namespace ui {

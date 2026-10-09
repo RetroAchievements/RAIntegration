@@ -37,6 +37,8 @@
 #include "tests\mocks\MockSurface.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
+#include <rcheevos\src\client\rc_client_internal.h>
+#include <rcheevos\src\runtime\rc_trigger.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

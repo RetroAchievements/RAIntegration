@@ -27,8 +27,7 @@
 #include "RAInterface\RA_Consoles.h"
 #include "RAInterface\RA_Emulators.h"
 
-#include <rcheevos/src/rc_client_internal.h>
-#include <rcheevos/src/rapi/rc_api_common.h>
+#include <rcheevos/src/api/rc_api_common.h>
 
 namespace ra {
 namespace data {

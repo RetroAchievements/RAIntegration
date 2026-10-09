@@ -11,8 +11,14 @@
 
 #include "util/Strings.hh"
 
-#include <rcheevos/src/rcheevos/rc_validate.h>
-#include <rcheevos/src/rcheevos/rc_internal.h>
+#include <rcheevos/include/rc_error.h>
+#include <rcheevos/src/runtime/rc_condition.h>
+#include <rcheevos/src/runtime/rc_condset.h>
+#include <rcheevos/src/runtime/rc_memref.h>
+#include <rcheevos/src/runtime/rc_operand.h>
+#include <rcheevos/src/runtime/rc_parse_state.h>
+#include <rcheevos/src/runtime/rc_trigger.h>
+#include <rcheevos/src/runtime/rc_validate.h>
 
 namespace ra {
 namespace data {
@@ -270,9 +276,9 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     rc_preparse_state_t preparse;
     rc_init_preparse_state(&preparse);
 
-    rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+    rc_trigger_t* trigger = rc_alloc_trigger_with_memrefs(&preparse.parse);
     const char* sMemaddr = sTrigger.c_str();
-    rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
+    rc_parse_trigger_internal(trigger, &sMemaddr, &preparse.parse);
     rc_preparse_alloc_memrefs(nullptr, &preparse);
 
     const auto nSize = preparse.parse.offset;
@@ -285,13 +291,14 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     std::string sTriggerBuffer;
     sTriggerBuffer.resize(nSize);
 
-    rc_reset_parse_state(&preparse.parse, sTriggerBuffer.data());
-    trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
-    rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
+    rc_reset_parse_state(&preparse.parse, sTriggerBuffer.data(), nSize);
+    trigger = rc_alloc_trigger_with_memrefs(&preparse.parse);
+    auto* memrefs = rc_trigger_get_memrefs(trigger);
+    rc_preparse_alloc_memrefs(memrefs, &preparse);
 
     sMemaddr = sTrigger.c_str();
-    rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
-    trigger->trigger.has_memrefs = 1;
+    rc_parse_trigger_internal(trigger, &sMemaddr, &preparse.parse);
+    trigger->has_memrefs = 1;
 
     char sErrorBuffer[256] = "";
     int nResult = 1;
@@ -307,30 +314,30 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
             const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
             nMaxAddress = gsl::narrow_cast<unsigned>(pMemoryContext.TotalMemorySize()) - 1;
 
-            nResult = rc_validate_trigger(&trigger->trigger, sErrorBuffer, sizeof(sErrorBuffer), nMaxAddress);
+            nResult = rc_validate_trigger(trigger, sErrorBuffer, sizeof(sErrorBuffer), nMaxAddress);
         }
         else
         {
             // if console definition does specify a max address, call the console-specific validator for additional validation
-            nResult = rc_validate_trigger_for_console(&trigger->trigger, sErrorBuffer, sizeof(sErrorBuffer),
+            nResult = rc_validate_trigger_for_console(trigger, sErrorBuffer, sizeof(sErrorBuffer),
                                                       ra::etoi(pConsoleContext.Id()));
         }
     }
     else
     {
         // shouldn't get here, but if we do (unit tests), validate the logic but not the addresses.
-        nResult = rc_validate_trigger(&trigger->trigger, sErrorBuffer, sizeof(sErrorBuffer), 0xFFFFFFFF);
+        nResult = rc_validate_trigger(trigger, sErrorBuffer, sizeof(sErrorBuffer), 0xFFFFFFFF);
     }
 
     if (nResult)
     {
         if (nType == ra::data::models::AssetType::Leaderboard)
         {
-            if (!ValidateLeaderboardTrigger(&trigger->trigger, sError))
+            if (!ValidateLeaderboardTrigger(trigger, sError))
                 return false;
         }
 
-        if (!ValidateMemoryNotes(&trigger->trigger, sError))
+        if (!ValidateMemoryNotes(trigger, sError))
             return false;
 
         sError.clear();

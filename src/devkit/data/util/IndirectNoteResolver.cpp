@@ -9,7 +9,11 @@
 
 #include "util/Strings.hh"
 
-#include <rcheevos/src/rcheevos/rc_internal.h>
+#include <rcheevos/src/runtime/rc_condition.h>
+#include <rcheevos/src/runtime/rc_modified_memref.h>
+#include <rcheevos/src/runtime/rc_operand.h>
+#include <rcheevos/src/runtime/rc_operator.h>
+#include <rcheevos/src/runtime/rc_typed_value.h>
 
 namespace ra {
 namespace data {

@@ -13,6 +13,8 @@
 #include "tests\mocks\MockWindowManager.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
+#include <rcheevos\src\client\rc_client_internal.h>
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {

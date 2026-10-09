@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.6.33829.357
+# Visual Studio Version 18
+VisualStudioVersion = 18.10.12224.181 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{264665A7-BA65-4F48-B565-6D97245E2B88}"
 	ProjectSection(SolutionItems) = preProject
@@ -9,8 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		src\ra_rules.ruleset = src\ra_rules.ruleset
 	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rcheevos", "src\rcheevos.vcxproj", "{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RADevKit", "src\devkit\RADevKit.vcxproj", "{8AE21D54-F905-44E1-90E5-D22E346BFF39}"
 EndProject
@@ -22,6 +20,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Integration.Tests", "tes
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Interface.Tests", "tests\RA_Interface.Tests.vcxproj", "{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rc_client", "rcheevos\src\client\rc_client.vcxproj", "{4916FA87-56EE-4B79-B3C4-D5B723847A48}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Analysis|Win32 = Analysis|Win32
@@ -32,18 +32,6 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Analysis|Win32.ActiveCfg = Release|Win32
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Analysis|Win32.Build.0 = Release|Win32
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Analysis|x64.ActiveCfg = Release|x64
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Analysis|x64.Build.0 = Release|x64
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Debug|Win32.ActiveCfg = Debug|Win32
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Debug|Win32.Build.0 = Debug|Win32
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Debug|x64.ActiveCfg = Debug|x64
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Debug|x64.Build.0 = Debug|x64
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release|Win32.ActiveCfg = Release|Win32
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release|Win32.Build.0 = Release|Win32
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release|x64.ActiveCfg = Release|x64
-		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release|x64.Build.0 = Release|x64
 		{8AE21D54-F905-44E1-90E5-D22E346BFF39}.Analysis|Win32.ActiveCfg = Analysis|Win32
 		{8AE21D54-F905-44E1-90E5-D22E346BFF39}.Analysis|Win32.Build.0 = Analysis|Win32
 		{8AE21D54-F905-44E1-90E5-D22E346BFF39}.Analysis|x64.ActiveCfg = Analysis|x64
@@ -103,6 +91,18 @@ Global
 		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release|Win32.Build.0 = Release|Win32
 		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release|x64.ActiveCfg = Release|x64
 		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release|x64.Build.0 = Release|x64
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Analysis|Win32.ActiveCfg = Debug-integ|Win32
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Analysis|Win32.Build.0 = Debug-integ|Win32
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Analysis|x64.ActiveCfg = Debug-integ|x64
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Analysis|x64.Build.0 = Debug-integ|x64
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Debug|Win32.Build.0 = Debug|Win32
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Debug|x64.ActiveCfg = Debug|x64
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Debug|x64.Build.0 = Debug|x64
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Release|Win32.ActiveCfg = Release|Win32
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Release|Win32.Build.0 = Release|Win32
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Release|x64.ActiveCfg = Release|x64
+		{4916FA87-56EE-4B79-B3C4-D5B723847A48}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

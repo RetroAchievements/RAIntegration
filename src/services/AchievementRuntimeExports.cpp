@@ -21,8 +21,9 @@
 
 #include "util\Strings.hh"
 
-#include <rcheevos\src\rc_client_internal.h>
-#include <rcheevos\src\rc_client_external.h>
+#include <rcheevos\src\client\rc_client_internal.h>
+#include <rcheevos\src\client\rc_client_external.h>
+#include <rcheevos\src\runtime\rc_trigger.h>
 #include <rcheevos\include\rc_client_raintegration.h>
 
 extern void OnStateRestored(); // in Exports.cpp

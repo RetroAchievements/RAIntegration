@@ -17,8 +17,14 @@
 
 #include "ui\viewmodels\WindowManager.hh"
 
-#include <rcheevos/src/rcheevos/rc_internal.h>
-#include <rcheevos/src/rc_client_internal.h>
+#include <rcheevos/src/client/rc_client_internal.h>
+#include <rcheevos/src/runtime/rc_condition.h>
+#include <rcheevos/src/runtime/rc_condset.h>
+#include <rcheevos/src/runtime/rc_eval_state.h>
+#include <rcheevos/src/runtime/rc_modified_memref.h>
+#include <rcheevos/src/runtime/rc_parse_state.h>
+#include <rcheevos/src/runtime/rc_typed_value.h>
+#include <rcheevos/src/runtime/rc_value.h>
 
 #ifdef RA_UTEST
 // awkward workaround to allow individual bookmarks access to the bookmarks view model being tested
@@ -228,7 +234,9 @@ uint32_t MemoryWatchViewModel::ReadValue()
     if (m_pValue)
     {
         rc_typed_value_t value;
-        rc_evaluate_value_typed(m_pValue, &value, rc_peek_callback, nullptr);
+        rc_eval_state_t eval_state;
+        rc_init_eval_state(&eval_state, rc_peek_callback, nullptr);
+        rc_evaluate_value_typed(m_pValue, &value, &eval_state);
 
         if (IsIndirectAddress())
             UpdateCurrentAddressFromIndirectAddress();
@@ -487,9 +495,9 @@ void MemoryWatchViewModel::SetIndirectAddress(const std::string& sSerialized)
     rc_init_preparse_state(&preparse);
     preparse.parse.existing_memrefs = pGame ? pGame->runtime.memrefs : nullptr;
 
-    rc_value_with_memrefs_t* value = RC_ALLOC(rc_value_with_memrefs_t, &preparse.parse);
+    rc_value_t* value = rc_alloc_value_with_memrefs(&preparse.parse);
     const char* memaddr = sSerialized.c_str();
-    rc_parse_value_internal(&value->value, &memaddr, &preparse.parse);
+    rc_parse_value_internal(value, &memaddr, &preparse.parse);
     rc_preparse_alloc_memrefs(nullptr, &preparse);
 
     const auto nSize = preparse.parse.offset;
@@ -500,19 +508,20 @@ void MemoryWatchViewModel::SetIndirectAddress(const std::string& sSerialized)
     if (!m_pBuffer)
         return;
 
-    rc_reset_parse_state(&preparse.parse, m_pBuffer.get());
-    value = RC_ALLOC(rc_value_with_memrefs_t, &preparse.parse);
-    rc_preparse_alloc_memrefs(&value->memrefs, &preparse);
-    Expects(preparse.parse.memrefs == &value->memrefs);
+    rc_reset_parse_state(&preparse.parse, m_pBuffer.get(), nSize);
+    value = rc_alloc_value_with_memrefs(&preparse.parse);
+    auto* memrefs = rc_value_get_memrefs(value);
+    rc_preparse_alloc_memrefs(memrefs, &preparse);
+    Expects(preparse.parse.memrefs == memrefs);
 
     preparse.parse.existing_memrefs = pGame ? pGame->runtime.memrefs : nullptr;
 
     memaddr = sSerialized.c_str();
-    rc_parse_value_internal(&value->value, &memaddr, &preparse.parse);
+    rc_parse_value_internal(value, &memaddr, &preparse.parse);
     Expects(preparse.parse.offset == nSize);
-    value->value.has_memrefs = 1;
+    value->has_memrefs = 1;
 
-    m_pValue = &value->value;
+    m_pValue = value;
     m_sIndirectAddress = sSerialized;
 
     const auto* pCondition = FindMeasuredCondition(m_pValue);

@@ -17,7 +17,7 @@
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-#include <rcheevos/src/rcheevos/rc_internal.h>
+#include <rcheevos/src/runtime/rc_memref.h>
 
 namespace ra {
 namespace ui {

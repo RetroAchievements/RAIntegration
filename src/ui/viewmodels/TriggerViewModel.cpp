@@ -1,9 +1,5 @@
 #include "TriggerViewModel.hh"
 
-#include <rcheevos.h>
-#include <rcheevos/src/rcheevos/rc_internal.h>
-#include <rcheevos/src/rc_client_internal.h>
-
 #include "RA_Defs.h"
 
 #include "context\IRcClient.hh"
@@ -19,6 +15,15 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\viewmodels\TriggerSummaryViewModel.hh"
+
+#include <rcheevos/src/client/rc_client_internal.h>
+#include <rcheevos/src/runtime/rc_alloc.h>
+#include <rcheevos/src/runtime/rc_condset.h>
+#include <rcheevos/src/runtime/rc_eval_state.h>
+#include <rcheevos/src/runtime/rc_parse_state.h>
+#include <rcheevos/src/runtime/rc_trigger.h>
+#include <rcheevos/src/runtime/rc_typed_value.h>
+#include <rcheevos/src/runtime/rc_value.h>
 
 namespace ra {
 namespace ui {
@@ -143,9 +148,9 @@ rc_condset_t* TriggerViewModel::GroupViewModel::GetConditionSet(bool bIsValue) c
     preparse.parse.existing_memrefs = pMemrefs;
     preparse.parse.is_value = bIsValue ? 1 : 0;
     preparse.parse.ignore_non_parse_errors = 1;
-    rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+    rc_trigger_t* trigger = rc_alloc_trigger_with_memrefs(&preparse.parse);
     const char* sMemaddr = sTrigger.c_str();
-    rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
+    rc_parse_trigger_internal(trigger, &sMemaddr, &preparse.parse);
     rc_preparse_alloc_memrefs(nullptr, &preparse);
 
     const auto nSize = preparse.parse.offset;
@@ -153,20 +158,21 @@ rc_condset_t* TriggerViewModel::GroupViewModel::GetConditionSet(bool bIsValue) c
     {
         m_sBuffer.resize(nSize);
 
-        rc_reset_parse_state(&preparse.parse, m_sBuffer.data());
-        trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
-        rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
+        rc_reset_parse_state(&preparse.parse, m_sBuffer.data(), nSize);
+        trigger = rc_alloc_trigger_with_memrefs(&preparse.parse);
+        auto* memrefs = rc_trigger_get_memrefs(trigger);
+        rc_preparse_alloc_memrefs(memrefs, &preparse);
 
         preparse.parse.existing_memrefs = pMemrefs;
-        preparse.parse.memrefs = &trigger->memrefs;
+        preparse.parse.memrefs = memrefs;
         preparse.parse.is_value = bIsValue ? 1 : 0;
         preparse.parse.ignore_non_parse_errors = 1;
 
         sMemaddr = sTrigger.c_str();
-        rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
-        trigger->trigger.has_memrefs = 1;
+        rc_parse_trigger_internal(trigger, &sMemaddr, &preparse.parse);
+        trigger->has_memrefs = 1;
 
-        m_pConditionSet = trigger->trigger.requirement;
+        m_pConditionSet = trigger->requirement;
     }
 
     return m_pConditionSet;
@@ -786,26 +792,46 @@ rc_trigger_t* TriggerViewModel::ParseTrigger(const std::string& sTrigger)
 {
     if (m_bIsValue)
     {
-        const auto nSize = rc_value_size(sTrigger.c_str());
+        rc_memrefs_t* pMemrefs = nullptr;
+        if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        {
+            auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
+            auto* pGame = pClient->game;
+            if (pGame != nullptr)
+                pMemrefs = pGame->runtime.memrefs;
+        }
+
+        rc_preparse_state_t preparse;
+        rc_init_preparse_state(&preparse);
+        preparse.parse.existing_memrefs = pMemrefs;
+        preparse.parse.is_value = 1;
+        rc_alloc_trigger_with_memrefs(&preparse.parse);
+        rc_value_t* pValue = RC_ALLOC(rc_value_t, &preparse.parse);
+        const char* sMemaddr = sTrigger.c_str();
+        rc_parse_value_internal(pValue, &sMemaddr, &preparse.parse);
+        rc_preparse_alloc_memrefs(nullptr, &preparse);
+
+        const auto nSize = preparse.parse.offset;
         if (nSize > 0)
         {
-            m_sTriggerBuffer.resize(nSize + sizeof(rc_trigger_with_memrefs_t));
-            rc_value_t* pValue = rc_parse_value(m_sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
-            rc_trigger_with_memrefs_t* pTriggerWithMemrefs;
-            GSL_SUPPRESS_TYPE1 pTriggerWithMemrefs = reinterpret_cast<rc_trigger_with_memrefs_t*>(m_sTriggerBuffer.data() + nSize);
-            memset(pTriggerWithMemrefs, 0, sizeof(rc_trigger_with_memrefs_t));
-            auto* pTrigger = &pTriggerWithMemrefs->trigger;
+            m_sTriggerBuffer.resize(nSize);
+
+            rc_reset_parse_state(&preparse.parse, m_sTriggerBuffer.data(), nSize);
+            auto* pTrigger = rc_alloc_trigger_with_memrefs(&preparse.parse);
+            auto* memrefs = rc_trigger_get_memrefs(pTrigger);
+            rc_preparse_alloc_memrefs(memrefs, &preparse);
+
+            preparse.parse.existing_memrefs = pMemrefs;
+            preparse.parse.memrefs = memrefs;
+            preparse.parse.is_value = 1;
+
+            pValue = RC_ALLOC(rc_value_t, &preparse.parse);
+            sMemaddr = sTrigger.c_str();
+            rc_parse_value_internal(pValue, &sMemaddr, &preparse.parse);
+            pValue->has_memrefs = 1;
+
             pTrigger->requirement = pValue->conditions;
             pTrigger->alternative = pValue->conditions->next;
-
-            if (pValue->has_memrefs)
-            {
-                rc_value_with_memrefs_t* pValueWithMemrefs;
-                GSL_SUPPRESS_TYPE1 pValueWithMemrefs = reinterpret_cast<rc_value_with_memrefs_t*>(pValue);
-                memcpy(&pTriggerWithMemrefs->memrefs, &pValueWithMemrefs->memrefs,
-                       sizeof(pTriggerWithMemrefs->memrefs));
-                pTrigger->has_memrefs = 1;
-            }
 
             return pTrigger;
         }
@@ -1601,11 +1627,14 @@ void TriggerViewModel::UpdateMemrefs()
 {
     if (m_pTrigger)
     {
+        rc_eval_state_t eval_state;
+        rc_init_eval_state(&eval_state, rc_peek_callback, nullptr);
+
         std::lock_guard<std::mutex> lock(m_pMutex);
 
         auto* memrefs = rc_trigger_get_memrefs(m_pTrigger);
         if (memrefs)
-            rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
+            rc_update_memref_values(memrefs, &eval_state);
     }
 }
 

@@ -35,7 +35,8 @@
 #include "ui\viewmodels\ScoreboardViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
-#include <rcheevos\src\rc_client_internal.h>
+#include <rcheevos\src\client\rc_client_internal.h>
+#include <rcheevos\src\runtime\rc_trigger.h>
 #include <rcheevos\include\rc_api_runtime.h>
 
 namespace ra {

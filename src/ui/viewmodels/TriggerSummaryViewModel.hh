@@ -6,6 +6,7 @@
 #include "ui\ViewModelCollection.hh"
 #include "ui\Types.hh"
 
+struct rc_condition_t;
 struct rc_condset_t;
 
 namespace ra {
@@ -53,7 +54,7 @@ public:
         Color GetColor() const { return Color(ra::to_unsigned(GetValue(ColorProperty))); }
         void SetColor(Color value) { SetValue(ColorProperty, ra::to_signed(value.ARGB)); }
 
-        const rc_condition_t* pCondition = nullptr;
+        const struct rc_condition_t* pCondition = nullptr;
         enum TriggerClauseType : int;
         TriggerClauseType nType = ra::itoe<TriggerClauseType>(0);
     };

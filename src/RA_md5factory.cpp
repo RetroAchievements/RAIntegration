@@ -5,7 +5,7 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
-#include <rcheevos/src/rhash/md5.h>
+#include <rcheevos/src/util/md5.h>
 
 namespace {
 constexpr static unsigned int MD5_STRING_LEN = 32;

@@ -16,7 +16,11 @@
 #include "ui\viewmodels\TriggerViewModel.hh"
 #include "ui\EditorTheme.hh"
 
-#include <rcheevos\src\rcheevos\rc_internal.h>
+#include <rcheevos\src\runtime\rc_condset.h>
+#include <rcheevos\src\runtime\rc_modified_memref.h>
+#include <rcheevos\src\runtime\rc_operand.h>
+#include <rcheevos\src\runtime\rc_trigger.h>
+#include <rcheevos\src\runtime\rc_typed_value.h>
 
 namespace ra {
 namespace ui {

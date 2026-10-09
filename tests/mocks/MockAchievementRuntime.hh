@@ -7,9 +7,9 @@
 #include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 
-#include <rcheevos\src\rc_client_internal.h>
-
 #include "tests\devkit\testutil\CppUnitTest.hh"
+
+#include <rcheevos\src\client\rc_client_internal.h>
 
 namespace ra {
 namespace services {

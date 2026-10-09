@@ -2,7 +2,7 @@
 
 #include "util/Strings.hh"
 
-#include <rc_runtime_types.h>
+#include <rcheevos/src/runtime/rc_format.h>
 
 namespace ra {
 namespace data {

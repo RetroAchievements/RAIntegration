@@ -7,7 +7,11 @@
 
 #include "testutil/CppUnitTest.hh"
 
-#include <rcheevos/src/rcheevos/rc_internal.h>
+#include <rcheevos/src/runtime/rc_condition.h>
+#include <rcheevos/src/runtime/rc_condset.h>
+#include <rcheevos/src/runtime/rc_eval_state.h>
+#include <rcheevos/src/runtime/rc_modified_memref.h>
+#include <rcheevos/src/runtime/rc_trigger.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -49,7 +53,10 @@ private:
         void UpdateMemrefs() noexcept
         {
             rc_memrefs_t* memrefs = rc_trigger_get_memrefs(m_pTrigger);
-            rc_update_memref_values(memrefs, mockEmulatorMemoryContext.Peek, nullptr);
+            rc_eval_state_t eval_state;
+            rc_init_eval_state(&eval_state, mockEmulatorMemoryContext.Peek, nullptr);
+
+            rc_update_memref_values(memrefs, &eval_state);
         }
 
         void SetMemory(ra::data::ByteAddress nAddress, uint8_t nValue)

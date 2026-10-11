@@ -61,6 +61,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ProjectReference Include="..\rcheevos\src\client\rc_client.vcxproj">
+      <Project>{4916fa87-56ee-4b79-b3c4-d5b723847a48}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\src\devkit\RADevKit.vcxproj">
       <Project>{8ae21d54-f905-44e1-90e5-d22e346bff39}</Project>
     </ProjectReference>

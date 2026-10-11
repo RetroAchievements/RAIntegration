@@ -2,12 +2,9 @@
 
 #include "RA_Resource.h"
 
-#include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
-#include "ui\win32\bindings\GridLookupColumnBinding.hh"
-#include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
 #include "util\EnumOps.hh"
@@ -480,20 +477,20 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
     return DialogBase::OnCommand(nCommand);
 }
 
-void MemoryInspectorDialog::ToggleCodeNotesExpanded()
+void MemoryInspectorDialog::ToggleCodeNotesExpanded() noexcept
 {
     auto hGroupBox = ::GetDlgItem(GetHWND(), IDC_RA_GBX_NOTES);
     auto hTextBox = ::GetDlgItem(GetHWND(), IDC_RA_NOTE_TEXT);
     if (!hGroupBox || !hTextBox)
         return;
 
-    RECT rcGroupBox, rcTextBox;
+    RECT rcGroupBox{}, rcTextBox{};
     ::GetWindowRect(hGroupBox, &rcGroupBox);
     const int nGroupBoxWidth = rcGroupBox.right - rcGroupBox.left;
     ::GetWindowRect(hTextBox, &rcTextBox);
     const int nTextBoxWidth = rcTextBox.right - rcTextBox.left;
 
-    int nNewGroupBoxHeight, nNewTextBoxHeight;
+    int nNewGroupBoxHeight = 0, nNewTextBoxHeight = 0;
     if (m_bIsCodeNotesExpanded)
     {
         nNewGroupBoxHeight = m_nCodeNoteGroupBoxCollapsedHeight;
@@ -504,7 +501,7 @@ void MemoryInspectorDialog::ToggleCodeNotesExpanded()
     }
     else
     {
-        RECT rcMemViewer;
+        RECT rcMemViewer{};
         auto hMemViewer = ::GetDlgItem(GetHWND(), IDC_RA_MEMVIEWER);
         ::GetWindowRect(hMemViewer, &rcMemViewer);
 
@@ -518,8 +515,8 @@ void MemoryInspectorDialog::ToggleCodeNotesExpanded()
         m_bIsCodeNotesExpanded = true;
     }
 
-    ::SetWindowPos(hGroupBox, 0, 0, 0, nGroupBoxWidth, nNewGroupBoxHeight, SWP_NOMOVE | SWP_NOZORDER);
-    ::SetWindowPos(hTextBox, 0, 0, 0, nTextBoxWidth, nNewTextBoxHeight, SWP_NOMOVE | SWP_NOZORDER);
+    ::SetWindowPos(hGroupBox, nullptr, 0, 0, nGroupBoxWidth, nNewGroupBoxHeight, SWP_NOMOVE | SWP_NOZORDER);
+    ::SetWindowPos(hTextBox, nullptr, 0, 0, nTextBoxWidth, nNewTextBoxHeight, SWP_NOMOVE | SWP_NOZORDER);
 
     const int vMemViewerDlgItems[] = {
         IDC_RA_LBL_MEMVIEW,
@@ -533,7 +530,7 @@ void MemoryInspectorDialog::ToggleCodeNotesExpanded()
     };
     const int nShow = (m_bIsCodeNotesExpanded) ? SW_HIDE : SW_SHOW;
     for (gsl::index nIndex = 0; nIndex < sizeof(vMemViewerDlgItems) / sizeof(vMemViewerDlgItems[0]); ++nIndex)
-        ::ShowWindow(::GetDlgItem(GetHWND(), vMemViewerDlgItems[nIndex]), nShow);
+        ::ShowWindow(::GetDlgItem(GetHWND(), gsl::at(vMemViewerDlgItems, nIndex)), nShow);
 
     using namespace ra::bitwise_ops;
     auto nAnchor = Anchor::Top | Anchor::Left | Anchor::Right;

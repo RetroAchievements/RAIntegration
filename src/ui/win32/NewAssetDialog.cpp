@@ -1,6 +1,5 @@
 #include "NewAssetDialog.hh"
 
-#include "RA_Core.h"
 #include "RA_Resource.h"
 
 namespace ra {
@@ -12,7 +11,7 @@ bool NewAssetDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& v
     return (dynamic_cast<const ra::ui::viewmodels::NewAssetViewModel*>(&vmViewModel) != nullptr);
 }
 
-void NewAssetDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
+void NewAssetDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd) noexcept
 {
     auto* vmNewAsset = dynamic_cast<ra::ui::viewmodels::NewAssetViewModel*>(&vmViewModel);
     Expects(vmNewAsset != nullptr);
@@ -21,7 +20,7 @@ void NewAssetDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewMod
     oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_NEWASSET), this, hParentWnd);
 }
 
-void NewAssetDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel)
+void NewAssetDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel) noexcept
 {
     ShowModal(oViewModel, nullptr);
 }

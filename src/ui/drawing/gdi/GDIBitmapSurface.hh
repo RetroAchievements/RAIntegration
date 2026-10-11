@@ -104,7 +104,7 @@ public:
 
     void Blend(HDC hTargetDC, int nX, int nY) const;
 
-    void SetOpacity(double fAlpha) override;
+    void SetOpacity(double fAlpha) noexcept override;
 
 private:
     GDIBitmapSurface m_pBlendBuffer;

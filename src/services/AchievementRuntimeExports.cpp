@@ -10,6 +10,7 @@
 #include "context\IRcClient.hh"
 #include "context\impl\EmulatorMemoryContext.hh"
 
+#include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
 #include "services\FrameEventQueue.hh"
@@ -485,7 +486,7 @@ private:
         }
 
         static void Dispatch(int nResult, const char* sErrorMessage, rc_client_leaderboard_entry_list_t* pList,
-                             rc_client_t*, void* pUserdata)
+                             rc_client_t*, void* pUserdata) noexcept
         {
             auto* wrapper = static_cast<LeaderboardEntriesListCallbackWrapper*>(pUserdata);
             Expects(wrapper != nullptr);
@@ -997,7 +998,7 @@ private:
         }
     }
 
-    static void GetGameTitle(char buffer[])
+    static void GetGameTitle(char buffer[]) noexcept
     {
         Expects(buffer != nullptr);
         buffer[0] = '\0';

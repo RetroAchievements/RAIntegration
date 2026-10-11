@@ -131,7 +131,7 @@ public:
     /// <summary>
     /// Gets the image to render.
     /// </summary>
-    const ra::ui::drawing::ISurface& GetRenderImage() const
+    const ra::ui::drawing::ISurface& GetRenderImage() const noexcept
     {
         Expects(m_pSurface != nullptr);
         return *m_pSurface;
@@ -170,7 +170,7 @@ public:
     void SetDestroyPending() noexcept { m_bDestroyPending = true; }
 
 protected:
-    static int GetFadeOffset(double fAnimationProgress, double fTotalAnimationTime, double fInOutTime, int nInitialOffset, int nTargetOffset);
+    static int GetFadeOffset(double fAnimationProgress, double fTotalAnimationTime, double fInOutTime, int nInitialOffset, int nTargetOffset) noexcept;
 
     static ra::ui::Color GetBackgroundColor();
 

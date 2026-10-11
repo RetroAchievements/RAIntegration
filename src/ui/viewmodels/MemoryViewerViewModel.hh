@@ -4,15 +4,11 @@
 
 #include "context\IEmulatorMemoryContext.hh"
 
-#include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
-#include "ui\WindowViewModelBase.hh"
-
+#include "ui\ViewModelBase.hh"
 #include "ui\drawing\ISurface.hh"
-
-#include "ui\viewmodels\LookupItemViewModel.hh"
 
 namespace ra {
 namespace ui {
@@ -67,7 +63,7 @@ public:
     /// <summary>
     /// Gets the image to render.
     /// </summary>
-    const ra::ui::drawing::ISurface& GetRenderImage() const
+    const ra::ui::drawing::ISurface& GetRenderImage() const noexcept
     {
         Expects(m_pSurface != nullptr);
         return *m_pSurface;

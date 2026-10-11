@@ -9,7 +9,7 @@
 // replace it with our custom handler, which will log and report the error before throwing it.
 #ifndef RA_UTEST
  #ifdef NDEBUG
-  extern void __gsl_contract_handler(const char* const file, unsigned int line);
+  extern void __gsl_contract_handler(const char* const file, unsigned int line) noexcept;
   #undef Expects
   #define Expects(cond) (GSL_LIKELY(cond) ? static_cast<void>(0) : __gsl_contract_handler(__FILE__, __LINE__))
  #else
@@ -17,7 +17,7 @@
    #define GSL_STRINGIFY_DETAIL(x) #x
    #define GSL_STRINGIFY(x) GSL_STRINGIFY_DETAIL(x)
   #endif
-  extern void __gsl_contract_handler(const char* const file, unsigned int line, const char* const error);
+  extern void __gsl_contract_handler(const char* const file, unsigned int line, const char* const error) noexcept;
   #undef Expects
   #define Expects(cond) (GSL_LIKELY(cond) ? static_cast<void>(0) : __gsl_contract_handler(__FILE__, __LINE__, GSL_STRINGIFY(cond)))
  #endif

@@ -68,7 +68,7 @@ public:
     /// <param name="nMask">[out] the mask to apply (if 0xFFFFFFFF, no mask is necessary).</param>
     /// <param name="nOffset">[out] the offset to apply (if 0, no offset is necessary).</param>
     /// <returns><c>true<c> if a mapping was found, <c>false</c> if not.</returns>
-    virtual bool GetRealAddressConversion(ra::data::Memory::Size* nReadSize, uint32_t* nMask, uint32_t* nOffset) const
+    virtual bool GetRealAddressConversion(ra::data::Memory::Size* nReadSize, uint32_t* nMask, uint32_t* nOffset) const noexcept
     {
         Expects(nReadSize != nullptr);
         Expects(nMask != nullptr);

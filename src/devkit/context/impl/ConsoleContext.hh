@@ -22,7 +22,7 @@ public:
 
     ra::data::ByteAddress ByteAddressFromRealAddress(ra::data::ByteAddress nRealAddress) const noexcept override;
     ra::data::ByteAddress RealAddressFromByteAddress(ra::data::ByteAddress nRealAddress) const noexcept override;
-    bool GetRealAddressConversion(ra::data::Memory::Size* nReadSize, uint32_t* nMask, uint32_t* nOffset) const override;
+    bool GetRealAddressConversion(ra::data::Memory::Size* nReadSize, uint32_t* nMask, uint32_t* nOffset) const noexcept override;
 };
 
 } // namespace impl

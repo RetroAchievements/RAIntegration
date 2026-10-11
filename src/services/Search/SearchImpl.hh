@@ -74,7 +74,7 @@ public:
 
     // gets the nIndex'th search result
     bool GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex,
-                            _Out_ SearchResult& result) const noexcept;
+                            _Out_ SearchResult& result) const;
 
     // calls the provided callback for each matching address
     void EnumerateMatches(const SearchResults& srResults, 

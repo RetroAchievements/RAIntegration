@@ -42,7 +42,7 @@ public:
                     // pointed-at note exists. this normally occurs in DoFrame, but for
                     // the unit tests, force the update immediately after the note is updated
                     GSL_SUPPRESS_TYPE3
-                        auto* pNote = const_cast<ra::data::models::MemoryNoteModel*>(m_oMemoryNotes.FindNote(nAddress, false));
+                        const auto* pNote = const_cast<ra::data::models::MemoryNoteModel*>(m_oMemoryNotes.FindNote(nAddress, false));
                     if (pNote && pNote->GetType() == ra::data::models::MemoryNoteType::Pointer)
                     {
                         //const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();

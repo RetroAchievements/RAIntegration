@@ -103,8 +103,8 @@ public:
 
     void SyncToRuntime(const rc_client_subset_info_t& pSubset, GameAssets& pAsset);
 
-    rc_client_subset_info_t* GetPublishedSubsetInfo() const;
-    rc_client_subset_info_t* GetLocalSubsetInfo() const;
+    rc_client_subset_info_t* GetPublishedSubsetInfo() const noexcept;
+    rc_client_subset_info_t* GetLocalSubsetInfo() const noexcept;
 
 private:
     struct SubsetInfo;

@@ -155,7 +155,7 @@ ra::data::ByteAddress ConsoleContext::RealAddressFromByteAddress(ra::data::ByteA
     return 0xFFFFFFFF;
 }
 
-bool ConsoleContext::GetRealAddressConversion(ra::data::Memory::Size* nReadSize, uint32_t* nMask, uint32_t* nOffset) const
+bool ConsoleContext::GetRealAddressConversion(ra::data::Memory::Size* nReadSize, uint32_t* nMask, uint32_t* nOffset) const noexcept
 {
     Expects(nReadSize != nullptr);
     Expects(nMask != nullptr);

@@ -806,7 +806,7 @@ rc_trigger_t* TriggerViewModel::ParseTrigger(const std::string& sTrigger)
         preparse.parse.existing_memrefs = pMemrefs;
         preparse.parse.is_value = 1;
         rc_alloc_trigger_with_memrefs(&preparse.parse);
-        rc_value_t* pValue = RC_ALLOC(rc_value_t, &preparse.parse);
+        GSL_SUPPRESS_ES47 rc_value_t* pValue = RC_ALLOC(rc_value_t, &preparse.parse);
         const char* sMemaddr = sTrigger.c_str();
         rc_parse_value_internal(pValue, &sMemaddr, &preparse.parse);
         rc_preparse_alloc_memrefs(nullptr, &preparse);
@@ -825,7 +825,7 @@ rc_trigger_t* TriggerViewModel::ParseTrigger(const std::string& sTrigger)
             preparse.parse.memrefs = memrefs;
             preparse.parse.is_value = 1;
 
-            pValue = RC_ALLOC(rc_value_t, &preparse.parse);
+            GSL_SUPPRESS_ES47 pValue = RC_ALLOC(rc_value_t, &preparse.parse);
             sMemaddr = sTrigger.c_str();
             rc_parse_value_internal(pValue, &sMemaddr, &preparse.parse);
             pValue->has_memrefs = 1;

@@ -726,7 +726,7 @@ void DialogBase::UpdateAnchoredControls()
 class FixedWidthFontHolder
 {
 public:
-    FixedWidthFontHolder()
+    FixedWidthFontHolder() noexcept
     {
         m_hFont = CreateFontW(
             15,                      // cHeight
@@ -746,10 +746,15 @@ public:
         );
     }
 
-    ~FixedWidthFontHolder()
+    ~FixedWidthFontHolder() noexcept
     {
         DeleteObject(m_hFont);
     }
+
+    FixedWidthFontHolder(const FixedWidthFontHolder& other) noexcept = delete;
+    FixedWidthFontHolder& operator=(const FixedWidthFontHolder&) noexcept = delete;
+    FixedWidthFontHolder(FixedWidthFontHolder&& other) noexcept = delete;
+    FixedWidthFontHolder& operator=(FixedWidthFontHolder&&) noexcept = delete;
 
     HFONT GetFont() const noexcept { return m_hFont; }
 

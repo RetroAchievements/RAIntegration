@@ -3434,7 +3434,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         runtime.MockInspectingMemory(true);
-        auto& pAch = runtime.mockGameContext.MockAchievement();
+        const auto& pAch = runtime.mockGameContext.MockAchievement();
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::string("Inspecting Memory"), runtime.GetRichPresenceOverride());

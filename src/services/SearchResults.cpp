@@ -384,7 +384,7 @@ bool SearchResults::ExcludeResult(const SearchResult& pResult)
     return false;
 }
 
-gsl::index SearchResults::GetAddressIndex(ra::data::ByteAddress nAddress) const noexcept
+gsl::index SearchResults::GetAddressIndex(ra::data::ByteAddress nAddress) const
 {
     if (m_pImpl != nullptr)
         return m_pImpl->GetAddressIndex(*this, nAddress);
@@ -398,7 +398,7 @@ void SearchResults::EnumerateMatches(std::function<bool(const SearchResult& resu
         m_pImpl->EnumerateMatches(*this, fCallback);
 }
 
-bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResult& result) const noexcept
+bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResult& result) const
 {
     if (m_pImpl == nullptr)
     {

@@ -13,7 +13,6 @@
 
 #include "services\AchievementRuntime.hh"
 #include "services\AchievementRuntimeExports.hh"
-#include "services\IClock.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\IHttpRequester.hh"
@@ -250,6 +249,7 @@ bool EmulatorContext::FetchLatestVersion()
     rc_api_response_t api_response;
     rc_buffer_init(&api_response.buffer);
 
+    GSL_SUPPRESS_ES47
     rc_json_field_t fields[] = {
         RC_JSON_NEW_FIELD("Success"),
         RC_JSON_NEW_FIELD("Error"),

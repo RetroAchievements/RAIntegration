@@ -6,6 +6,7 @@
 #include "util/GSL.hh"
 
 #include <map>
+#include <string>
 
 namespace ra {
 namespace data {

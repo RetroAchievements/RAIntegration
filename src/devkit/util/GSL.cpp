@@ -7,6 +7,8 @@
 #include "util/Log.hh"
 #include "util/Strings.hh"
 
+#include <cassert>
+
 static inline constexpr const char* __gsl_filename(const char* const str)
 {
     if (str == nullptr)

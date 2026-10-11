@@ -37,6 +37,7 @@
 #undef GetMessage
 
 /* C Stuff */
+#include <cassert>
 #include <cctype>
 
 /* STL Stuff */
@@ -72,6 +73,10 @@
   #undef Expects
   #define Expects(cond) (GSL_LIKELY(cond) ? static_cast<void>(0) : __gsl_contract_handler(__FILE__, __LINE__))
  #else
+  #ifndef GSL_STRINGIFY
+   #define GSL_STRINGIFY_DETAIL(x) #x
+   #define GSL_STRINGIFY(x) GSL_STRINGIFY_DETAIL(x)
+  #endif
   extern void __gsl_contract_handler(const char* const file, unsigned int line, const char* const error);
   #undef Expects
   #define Expects(cond) (GSL_LIKELY(cond) ? static_cast<void>(0) : __gsl_contract_handler(__FILE__, __LINE__, GSL_STRINGIFY(cond)))

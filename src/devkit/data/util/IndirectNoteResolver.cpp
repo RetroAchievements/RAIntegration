@@ -2,6 +2,7 @@
 
 #include "context/IEmulatorMemoryContext.hh"
 
+#include "data/models/ArrayMemoryNoteModel.hh"
 #include "data/models/StructuredMemoryNoteModel.hh"
 
 #include "services/ServiceLocator.hh"
@@ -14,20 +15,35 @@ namespace ra {
 namespace data {
 namespace util {
 
-static void AppendSubNoteOffset(const ra::data::models::MemoryNoteModel* pNote, int nOffset,
+static void AppendSubNoteOffset(uint32_t nFinalAddress,
+    std::vector<ra::data::models::MemoryNoteModel::Reference>& vNoteChain,
     std::vector<ra::data::util::IndirectNoteResolver::Node>& vParentChain)
 {
+    uint32_t nAddress = 0;
+    for (const auto& pNote : vNoteChain)
+    {
+        const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pNote.pMemoryNote);
+        if (pArrayNote)
+        {
+            nAddress = pNote.nAddress;
+
+            if (pArrayNote->GetElementCount() > 1)
+            {
+                auto& pIndexNode = vParentChain.emplace_back();
+                pIndexNode.nType = ra::data::util::IndirectNoteResolver::NodeType::ArrayIndex;
+                pIndexNode.nValue = pNote.nElementIndex;
+                pIndexNode.pNote = pNote.pMemoryNote;
+
+                nAddress += pNote.nElementIndex * pArrayNote->GetElementSize();
+            }
+        }
+    }
+
     auto& pOffsetNode = vParentChain.emplace_back();
-    pOffsetNode.nType = ra::data::util::IndirectNoteResolver::NodeType::Constant;
-    pOffsetNode.nValue = nOffset;
     pOffsetNode.nModifierType = RC_OPERATOR_ADD;
-
-    const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pNote);
-    if (pStructuredNote)
-        pOffsetNode.pNote = pStructuredNote->GetNoteAtOffset(nOffset);
-
-    if (!pOffsetNode.pNote)
-        pOffsetNode.pNote = pNote;
+    pOffsetNode.nType = ra::data::util::IndirectNoteResolver::NodeType::Constant;
+    pOffsetNode.pNote = vNoteChain.back().pMemoryNote;
+    pOffsetNode.nValue = nFinalAddress - nAddress;
 }
 
 static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
@@ -82,8 +98,12 @@ static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
 
                     if (pOffsetNote->GetType() == ra::data::models::MemoryNoteType::Array)
                     {
-                        pNode.nValue = pOffsetNote->GetAddress();
-                        AppendSubNoteOffset(pOffsetNote, pValue.value.u32 - pOffsetNote->GetAddress(), vParentChain);
+                        std::vector<ra::data::models::MemoryNoteModel::Reference> vNoteChain;
+                        if (pOffsetNote->GetChainTo(vNoteChain, pValue.value.u32))
+                        {
+                            pNode.nValue = pOffsetNote->GetAddress();
+                            AppendSubNoteOffset(pValue.value.u32, vNoteChain, vParentChain);
+                        }
                     }
                 }
             }
@@ -95,22 +115,27 @@ static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
     // check for root pointer
     if (pOperand->value.memref->value.memref_type != RC_MEMREF_TYPE_MODIFIED_MEMREF)
     {
+        const auto nAddress = pOperand->value.memref->address;
+
         auto& pNode = vParentChain.emplace_back();
         pNode.nType = ra::data::util::IndirectNoteResolver::NodeType::Address;
-        pNode.nValue = pOperand->value.memref->address;
+        pNode.nValue = nAddress;
 
         // find the memory note associated to the root pointer
-        pNode.pNote = pMemoryNotes.FindNote(pNode.nValue, false);
-        if (!pNode.pNote)
+        const auto* pNote = pMemoryNotes.FindNote(nAddress, false);
+        if (pNote)
         {
-            const auto pReference = pMemoryNotes.FindNoteContaining(pNode.nValue);
-            if (pReference.pMemoryNote && pReference.nAddress != pNode.nValue)
+            pNode.pNote = pNote;
+        }
+        else
+        {
+            std::vector<ra::data::models::MemoryNoteModel::Reference> vNoteChain;
+            if (pMemoryNotes.GetChainTo(vNoteChain, nAddress))
             {
-                const auto nOffset = pNode.nValue - pReference.nAddress;
-                pNode.nValue = pReference.nAddress;
-                pNode.pNote = pReference.pMemoryNote;
+                pNode.nValue = vNoteChain.front().nAddress;
+                pNode.pNote = vNoteChain.front().pMemoryNote;
 
-                AppendSubNoteOffset(pNode.pNote, nOffset, vParentChain);
+                AppendSubNoteOffset(nAddress, vNoteChain, vParentChain);
             }
         }
 
@@ -122,6 +147,7 @@ static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
         reinterpret_cast<const rc_modified_memref_t*>(pOperand->value.memref);
     ResolveOperandRecursive(&pModifiedMemref->parent, vParentChain, pMemoryNotes);
 
+    Expects(!vParentChain.empty());
     if (vParentChain.back().nType == ra::data::util::IndirectNoteResolver::NodeType::Address)
         vParentChain.back().nType = ra::data::util::IndirectNoteResolver::NodeType::DereferencedAddress;
 
@@ -274,6 +300,12 @@ std::wstring IndirectNoteResolver::BuildPath(const std::vector<Node>& vParentCha
 
             case ra::data::util::IndirectNoteResolver::NodeType::ArrayOffset:
                 sPointerChain.insert(0, ra::util::String::Printf(L"%s[", pMemoryContext.FormatAddress(pNode.nValue)));
+                sPointerChain.push_back(']');
+                break;
+
+            case ra::data::util::IndirectNoteResolver::NodeType::ArrayIndex:
+                sPointerChain.push_back('[');
+                sPointerChain += std::to_wstring(pNode.nValue);
                 sPointerChain.push_back(']');
                 break;
 

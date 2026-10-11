@@ -425,7 +425,7 @@ public:
             L"++0x80000006 = data (8-bit)";
         const auto pNote = Parse(sNote);
         pNote->SetAddress(0x04);
-        pNote->UpdateRawPointerValue(0x04, mockEmulatorMemoryContext, nullptr);
+        pNote->UpdateBaseAddress(0x04, mockEmulatorMemoryContext, nullptr);
 
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, pNote->GetMemSize());
 
@@ -460,7 +460,7 @@ public:
             L"++0x80000006 = data (8-bit)";
         const auto pNote = Parse(sNote);
         pNote->SetAddress(0x04);
-        pNote->UpdateRawPointerValue(0x04, mockEmulatorMemoryContext, nullptr);
+        pNote->UpdateBaseAddress(0x04, mockEmulatorMemoryContext, nullptr);
 
         Assert::AreEqual(Memory::Size::ThirtyTwoBit, pNote->GetMemSize());
         Assert::AreEqual(std::wstring(L"root"), pNote->GetSummary());
@@ -502,7 +502,7 @@ public:
         memory.at(8) = 20; // obj1 pointer = 20
         memory.at(12) = 28; // obj2 pointer = 28
 
-        pNote->UpdateRawPointerValue(4U, mockEmulatorMemoryContext, nullptr);
+        pNote->UpdateBaseAddress(4U, mockEmulatorMemoryContext, nullptr);
         Assert::AreEqual(8U, pNote->GetBaseAddress());
 
         const auto* pObj1Note = dynamic_cast<const PointerMemoryNoteModel*>(pNote->GetNoteAtOffset(0));

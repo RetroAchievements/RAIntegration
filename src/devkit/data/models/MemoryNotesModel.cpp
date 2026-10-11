@@ -4,6 +4,7 @@
 #include "context/IRcClient.hh"
 #include "context/UserContext.hh"
 
+#include "data/models/ArrayMemoryNoteModel.hh"
 #include "data/models/AuthoredMemoryNoteModel.hh"
 #include "data/models/PointerMemoryNoteModel.hh"
 #include "data/models/StructuredMemoryNoteModel.hh"
@@ -30,7 +31,7 @@ void MemoryNotesModel::Refresh(unsigned int nGameId,
     std::function<void()> callback)
 {
     m_vMemoryNotes.clear();
-    m_bHasPointers = false;
+    m_bHasStructuredData = false;
 
     if (nGameId == 0)
     {
@@ -107,9 +108,10 @@ void MemoryNotesModel::Refresh(unsigned int nGameId,
 
         for (const auto& pNote : m_vMemoryNotes)
         {
-            if (pNote->GetType() == MemoryNoteType::Pointer)
+            const auto* pStructuredData = dynamic_cast<const StructuredMemoryNoteModel*>(pNote.get());
+            if (pStructuredData)
             {
-                m_bHasPointers = true;
+                m_bHasStructuredData = true;
                 break;
             }
         }
@@ -135,9 +137,19 @@ void MemoryNotesModel::AddMemoryNote(ra::data::ByteAddress nAddress, const std::
     if (pAuthoredNote != nullptr)
         pAuthoredNote->SetAuthor(sAuthor);
 
-    const bool bIsPointer = dynamic_cast<StructuredMemoryNoteModel*>(note.get()) != nullptr;
-    if (bIsPointer && !m_bRefreshing)
-        m_bHasPointers = true;
+    auto* pStructuredNote = dynamic_cast<StructuredMemoryNoteModel*>(note.get());
+    if (pStructuredNote)
+    {
+        const auto* pArrayNote = dynamic_cast<ArrayMemoryNoteModel*>(note.get());
+        if (pArrayNote)
+        {
+            const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
+            pStructuredNote->UpdateBaseAddress(pStructuredNote->GetAddress(), pMemoryContext, nullptr);
+        }
+
+        if (!m_bRefreshing)
+            m_bHasStructuredData = true;
+    }
 
     {
         std::unique_lock<std::mutex> lock(m_oMutex);
@@ -242,7 +254,7 @@ std::wstring MemoryNotesModel::FindNote(ra::data::ByteAddress nAddress, Memory::
     }
 
     // no memory note on the address, check for pointers
-    if (m_bHasPointers)
+    if (m_bHasStructuredData)
     {
         for (const auto& pMemoryNote2 : m_vMemoryNotes)
         {
@@ -358,7 +370,7 @@ const MemoryNoteModel* MemoryNotesModel::FindNote(ra::data::ByteAddress nAddress
     if (pIter != m_vMemoryNotes.end() && (*pIter)->GetAddress() == nAddress)
         return pIter->get();
 
-    if (m_bHasPointers && bIncludeDerived)
+    if (m_bHasStructuredData && bIncludeDerived)
         return FindIndirectMemoryNoteInternal(nAddress).pMemoryNote;
 
     return nullptr;
@@ -401,16 +413,16 @@ bool MemoryNotesModel::GetChainTo(std::vector<MemoryNoteModel::Reference>& vChai
             --pIter;
             const auto* pMemoryNote = pIter->get();
 
-            if (pMemoryNote && pMemoryNote->GetBytes() > 1 && pMemoryNote->GetBytes() + pMemoryNote->GetAddress() > nAddress)
+            if (pMemoryNote && pMemoryNote->GetType() != MemoryNoteType::Pointer)
             {
-                vChain.emplace_back(pMemoryNote, pMemoryNote->GetAddress(), 0);
-                return true;
+                if (pMemoryNote->GetChainTo(vChain, nAddress))
+                    return true;
             }
         } while (pIter != m_vMemoryNotes.begin());
     }
 
     // also check for derived memory notes
-    if (m_bHasPointers)
+    if (m_bHasStructuredData)
     {
         for (const auto& pMemoryNote : m_vMemoryNotes)
         {
@@ -432,7 +444,7 @@ ra::data::ByteAddress MemoryNotesModel::GetNextNoteAddress(ra::data::ByteAddress
     if (pIter != m_vMemoryNotes.end())
         nBestAddress = (*pIter)->GetAddress();
 
-    if (m_bHasPointers && bIncludeDerived)
+    if (m_bHasStructuredData && bIncludeDerived)
     {
         ra::data::ByteAddress nNextAddress = 0U;
         for (const auto& pNote : m_vMemoryNotes)
@@ -464,7 +476,7 @@ ra::data::ByteAddress MemoryNotesModel::GetPreviousNoteAddress(ra::data::ByteAdd
         nBestAddress = (*pIter)->GetAddress();
     }
 
-    if (m_bHasPointers && bIncludeDerived)
+    if (m_bHasStructuredData && bIncludeDerived)
     {
         ra::data::ByteAddress nPreviousAddress = 0U;
 
@@ -481,7 +493,7 @@ ra::data::ByteAddress MemoryNotesModel::GetPreviousNoteAddress(ra::data::ByteAdd
 
 void MemoryNotesModel::EnumerateNotes(std::function<bool(const MemoryNoteModel::Reference& pMemoryNote)> callback, bool bIncludeDerived) const
 {
-    if (!bIncludeDerived || !m_bHasPointers)
+    if (!bIncludeDerived || !m_bHasStructuredData)
     {
         // No pointers. Just iterate over the root memory notes.
         for (const auto& pMemoryNote : m_vMemoryNotes)
@@ -530,7 +542,7 @@ void MemoryNotesModel::EnumerateNotes(std::function<bool(const MemoryNoteModel::
 
 void MemoryNotesModel::DoFrame()
 {
-    if (!m_bHasPointers)
+    if (!m_bHasStructuredData)
         return;
 
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
@@ -542,11 +554,11 @@ void MemoryNotesModel::DoFrame()
         {
             if (!m_fMemoryNoteMoved)
             {
-                pPointerNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext, nullptr);
+                pPointerNote->UpdateBaseAddress(pMemoryNote->GetAddress(), pMemoryContext, nullptr);
             }
             else if (pPointerNote->HasRawPointerValue())
             {
-                pPointerNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext,
+                pPointerNote->UpdateBaseAddress(pMemoryNote->GetAddress(), pMemoryContext,
                     [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel& pOffsetNote) {
                         m_fMemoryNoteMoved(nOldAddress, nNewAddress, pOffsetNote.GetNote());
                     });
@@ -554,7 +566,7 @@ void MemoryNotesModel::DoFrame()
             else
             {
                 // pointer hasn't been read before, provide dummy previous address
-                pPointerNote->UpdateRawPointerValue(pMemoryNote->GetAddress(), pMemoryContext,
+                pPointerNote->UpdateBaseAddress(pMemoryNote->GetAddress(), pMemoryContext,
                     [this](ra::data::ByteAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel& pOffsetNote) {
                         m_fMemoryNoteMoved(0xFFFFFFFF, nNewAddress, pOffsetNote.GetNote());
                     });

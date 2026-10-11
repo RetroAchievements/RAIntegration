@@ -27,6 +27,7 @@ public:
         Constant,
         ConstantOffset,
         ArrayOffset,
+        ArrayIndex,
         Recall,
     };
 

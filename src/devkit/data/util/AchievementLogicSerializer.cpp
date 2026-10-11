@@ -3,6 +3,7 @@
 #include "context/IConsoleContext.hh"
 #include "context/IEmulatorMemoryContext.hh"
 
+#include "data/models/ArrayMemoryNoteModel.hh"
 #include "data/models/StructuredMemoryNoteModel.hh"
 
 #include "services/ServiceLocator.hh"
@@ -336,12 +337,22 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const std::vector<ra::d
     std::string sBuffer;
     size_t nBitmaskOffset = std::string::npos;
     ra::data::ByteAddress nAddress = 0;
-    for (size_t i = 0; i < vChain.size() - 1; ++i)
+    for (size_t i = 0; i < vChain.size(); ++i)
     {
         const auto* pNote = vChain.at(i).pMemoryNote;
         Expects(pNote != nullptr);
 
         nAddress = pNote->GetAddress();
+        const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pNote);
+        if (pArrayNote)
+        {
+            nAddress += vChain.at(i).nElementIndex * pArrayNote->GetElementSize();
+            pNote = vChain.at(++i).pMemoryNote;
+            Expects(pNote != nullptr);
+
+            nAddress += pNote->GetAddress();
+        }
+
         if (nBitmaskOffset != std::string::npos)
         {
             if (nAddress > nMask && nAddress < (0xFFFFFFFF - nMask))
@@ -352,6 +363,9 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const std::vector<ra::d
 
             nBitmaskOffset = std::string::npos;
         }
+
+        if (i == vChain.size() - 1)
+            break;
 
         AppendConditionType(sBuffer, Requirement::Type::AddAddress);
         AppendOperand(sBuffer, Requirement::OperandType::Address, nSize, nAddress);
@@ -372,13 +386,6 @@ std::string AchievementLogicSerializer::BuildMemRefChain(const std::vector<ra::d
             }
         }
 
-        AppendConditionSeparator(sBuffer);
-    }
-
-    nAddress = vChain.back().pMemoryNote->GetAddress();
-    if (nAddress > nMask && nBitmaskOffset != std::string::npos)
-    {
-        sBuffer.erase(nBitmaskOffset, sBuffer.length() - nBitmaskOffset);
         AppendConditionSeparator(sBuffer);
     }
 

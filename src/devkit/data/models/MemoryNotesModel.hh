@@ -152,7 +152,7 @@ protected:
 
     MemoryNoteModel::Reference FindIndirectMemoryNoteInternal(ra::data::ByteAddress nAddress) const;
 
-    bool m_bHasPointers = false;
+    bool m_bHasStructuredData = false;
     bool m_bRefreshing = false;
 
     MemoryNoteChangedFunction m_fMemoryNoteChanged;

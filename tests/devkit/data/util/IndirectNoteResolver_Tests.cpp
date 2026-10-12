@@ -61,7 +61,7 @@ private:
 
         void SetMemory(ra::data::ByteAddress nAddress, uint8_t nValue)
         {
-            m_pMemory.at(static_cast<size_t>(nAddress)) = nValue;
+            m_pMemory.at(gsl::narrow_cast<size_t>(nAddress)) = nValue;
         }
 
         const rc_condition_t& GetCondition(size_t nIndex) const noexcept

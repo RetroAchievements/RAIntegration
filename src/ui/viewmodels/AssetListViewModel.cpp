@@ -22,6 +22,7 @@
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
+#include "rcheevos\src\runtime\rc_condset.h"
 #include "rcheevos\src\runtime\rc_trigger.h"
 #include "rcheevos\src\runtime\rc_value.h"
 

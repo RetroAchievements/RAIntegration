@@ -15,7 +15,12 @@
 #include "tests\devkit\testutil\RequirementAsserts.hh"
 #include "tests\mocks\MockGameContext.hh"
 
-#include <rcheevos\src\rcheevos\rc_internal.h>
+#include <rcheevos\src\runtime\rc_condition.h>
+#include <rcheevos\src\runtime\rc_condset.h>
+#include <rcheevos\src\runtime\rc_eval_state.h>
+#include <rcheevos\src\runtime\rc_modified_memref.h>
+#include <rcheevos\src\runtime\rc_trigger.h>
+#include <rcheevos\src\runtime\rc_value.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -1135,8 +1140,10 @@ public:
         vmTrigger.InitializeFrom(*pTrigger);
 
         // manually update the memrefs as if rc_runtime_do_frame where called
+        rc_eval_state_t eval_state;
+        rc_init_eval_state(&eval_state, rc_peek_callback, nullptr);
         auto* memrefs = rc_trigger_get_memrefs(pTrigger);
-        rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
+        rc_update_memref_values(memrefs, &eval_state);
 
         const auto* pCondition1 = vmTrigger.Conditions().GetItemAt(0);
         Expects(pCondition1 != nullptr);
@@ -1159,7 +1166,7 @@ public:
         vmTrigger.SetMemory({ 1 }, 3);
 
         // Manually update the memrefs as if rc_runtime_do_frame where called
-        rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
+        rc_update_memref_values(memrefs, &eval_state);
 
         // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008
         Assert::AreEqual(std::wstring(L"0x0001\r\n[No memory note]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
@@ -1556,7 +1563,9 @@ public:
 
         auto* pTrigger = vmTrigger.GetTriggerFromString();
         auto* pMemrefs = rc_trigger_get_memrefs(pTrigger);
-        rc_update_memref_values(pMemrefs, rc_peek_callback, nullptr);
+        rc_eval_state_t eval_state;
+        rc_init_eval_state(&eval_state, rc_peek_callback, nullptr);
+        rc_update_memref_values(pMemrefs, &eval_state);
 
         // start validation
         const auto* pCondition1 = vmTrigger.Conditions().GetItemAt(0);

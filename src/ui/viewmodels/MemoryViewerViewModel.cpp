@@ -237,6 +237,9 @@ void MemoryViewerViewModel::UpdateColors()
         const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
         pMemoryNotes->EnumerateNotes([nFirstAddress, nStopAddress, this](const ra::data::models::MemoryNoteModel::Reference& pNote) {
             auto nAddress = pNote.nAddress;
+            if (!pNote.pMemoryNote)
+                return true;
+
             auto nBytes = pNote.pMemoryNote->GetBytes();
             if (nAddress + nBytes <= nFirstAddress) // not to viewing window yet
                 return true;

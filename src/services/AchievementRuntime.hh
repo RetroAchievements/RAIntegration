@@ -2,8 +2,7 @@
 #define RA_SERVICES_ACHIEVEMENT_RUNTIME_HH
 #pragma once
 
-#include "data\Types.hh"
-#include "data\context\EmulatorContext.hh"
+#include "data\Memory.hh"
 #include "data\models\AchievementModel.hh"
 
 #include <string>
@@ -174,7 +173,7 @@ private:
             m_fCallback(nResult, sErrorMessage, m_pClient, m_pCallbackUserdata);
         }
 
-        static void Dispatch(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata)
+        static void Dispatch(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) noexcept
         {
             auto* pWrapper = static_cast<CallbackWrapper*>(pUserdata);
             Expects(pWrapper != nullptr);

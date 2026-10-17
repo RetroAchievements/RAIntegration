@@ -104,7 +104,7 @@ public:
     }
 
     virtual bool CompareMemory(const unsigned char* pLeft,
-        const unsigned char* pRight, size_t nCount, ComparisonType nCompareType) const
+        const unsigned char* pRight, size_t nCount, ComparisonType nCompareType) const noexcept
     {
         Expects(pLeft != nullptr);
         Expects(pRight != nullptr);

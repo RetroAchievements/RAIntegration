@@ -1,5 +1,7 @@
 #include "ModelCollectionBase.hh"
 
+#include <cassert>
+
 namespace ra {
 namespace data {
 

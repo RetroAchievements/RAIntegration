@@ -176,7 +176,7 @@ uint8_t EmulatorMemoryContext::ReadMemoryByte(ra::data::ByteAddress nAddress) co
 }
 
 uint32_t EmulatorMemoryContext::ReadMemory(ra::data::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount,
-                                   const EmulatorMemoryContext::MemoryBlock& pBlock, bool bFill)
+                                   const EmulatorMemoryContext::MemoryBlock& pBlock, bool bFill) noexcept
 {
     Expects(pBuffer != nullptr);
 

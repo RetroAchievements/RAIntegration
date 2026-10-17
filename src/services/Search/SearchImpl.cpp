@@ -2,8 +2,6 @@
 
 #include "util\TypeCasts.hh"
 
-#include <algorithm>
-
 namespace ra {
 namespace services {
 namespace search {
@@ -199,7 +197,7 @@ void SearchImpl::ApplyFilter(SearchResults & srNew, const SearchResults & srPrev
     }
 }
 
-bool SearchImpl::GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex, _Out_ SearchResult& result) const noexcept
+bool SearchImpl::GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex, _Out_ SearchResult& result) const
 {
     result.nSize = GetMemSize();
 

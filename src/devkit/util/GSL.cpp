@@ -31,7 +31,8 @@ static inline constexpr const char* __gsl_filename(const char* const str)
 
 #ifdef NDEBUG
 
-void __gsl_contract_handler(const char* const file, unsigned int line)
+GSL_SUPPRESS_F6 /* exists checks prevent exception */
+void __gsl_contract_handler(const char* const file, unsigned int line) noexcept
 {
     static char buffer[128];
     snprintf(buffer, sizeof(buffer), "Assertion failure at %s: %u", __gsl_filename(file), line);
@@ -47,22 +48,28 @@ void __gsl_contract_handler(const char* const file, unsigned int line)
             .ReportErrorMessage(L"Unexpected error", ra::util::String::Widen(buffer));
     }
 
-    gsl::details::throw_exception(gsl::fail_fast(buffer));
+    gsl::details::terminate();
 }
 
 #else
 
-void __gsl_contract_handler(const char* const file, unsigned int line, const char* const error)
+GSL_SUPPRESS_F6 /* exists checks prevent exception */
+void __gsl_contract_handler(const char* const file, unsigned int line, const char* const error) noexcept
 {
-    const char* const filename = __gsl_filename(file);
-    const auto sError = ra::util::String::Printf("Assertion failure at %s: %d: %s", filename, line, error);
+    const auto sError = ra::util::String::Printf("Assertion failure at %s: %u: %s", __gsl_filename(file), line, error);
 
     if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
     {
         RA_LOG_ERR("%s", sError.c_str());
     }
 
-    _wassert(ra::util::String::Widen(error).c_str(), ra::util::String::Widen(filename).c_str(), line);
+    if (ra::services::ServiceLocator::Exists<ra::services::IMessageDispatcher>())
+    {
+        ra::services::ServiceLocator::Get<ra::services::IMessageDispatcher>()
+            .ReportErrorMessage(L"Unexpected error", ra::util::String::Widen(sError));
+    }
+
+    gsl::details::terminate();
 }
 
 #endif

@@ -7,7 +7,7 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
-#include <rcheevos\src\rapi\rc_api_common.h>
+#include <rcheevos\src\api\rc_api_common.h>
 
 #ifndef RA_UTEST
 #include "services\impl\StringTextWriter.hh"
@@ -25,7 +25,7 @@ static void ReadPopupLocation(JsonFileConfiguration& pConfiguration, ra::ui::vie
     ra::ui::viewmodels::PopupLocation nLocation = nDefaultLocation;
 
     std::string sValue;
-    bool bValue;
+    bool bValue = false;
 
     if (doc.TryGetString(sFieldName, sValue) && !sValue.empty())
     {

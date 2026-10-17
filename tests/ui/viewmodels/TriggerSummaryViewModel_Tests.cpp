@@ -9,6 +9,8 @@
 
 #include "ui\EditorTheme.hh"
 
+#include <rcheevos\src\runtime\rc_trigger.h>
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {

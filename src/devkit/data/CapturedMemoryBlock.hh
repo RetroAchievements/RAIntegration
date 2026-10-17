@@ -20,7 +20,7 @@ private:
     };
 
 public:
-    explicit CapturedMemoryBlock(uint32_t nAddress, uint32_t nSize, uint32_t nMaxAddresses) :
+    explicit CapturedMemoryBlock(uint32_t nAddress, uint32_t nSize, uint32_t nMaxAddresses) noexcept :
         m_nFirstAddress(nAddress),
         m_nBytesSize(nSize),
         m_nMatchingAddressCount(nMaxAddresses),
@@ -110,12 +110,12 @@ public:
     /// <summary>
     /// Gets the Nth matching address.
     /// </summary>
-    ByteAddress GetMatchingAddress(gsl::index nIndex) const noexcept;
+    ByteAddress GetMatchingAddress(gsl::index nIndex) const;
 
     /// <summary>
     /// Determines whether the specified address is marked as matching.
     /// </summary>
-    bool ContainsMatchingAddress(ByteAddress nAddress) const;
+    bool ContainsMatchingAddress(ByteAddress nAddress) const noexcept;
 
     /// <summary>
     /// Gets the index of the matching address for the specified address.
@@ -131,12 +131,12 @@ public:
     /// <summary>
     /// Marks an address as no longer matching.
     /// </summary>
-    void ExcludeMatchingAddress(ByteAddress nAddress);
+    void ExcludeMatchingAddress(ByteAddress nAddress) noexcept;
 
     /// <summary>
     /// Copies the matching addresses from another CapturedMemoryBlock.
     /// </summary>
-    void CopyMatchingAddresses(const CapturedMemoryBlock& pSource);
+    void CopyMatchingAddresses(const CapturedMemoryBlock& pSource) noexcept;
 
     /// <summary>
     /// Gets the raw pointer to the matching address data to pass to <see cref="HasMatchingAddress" />.

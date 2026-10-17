@@ -8,8 +8,6 @@
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
-#include <rcheevos\src\rc_client_internal.h>
-
 // TODO: Move AchievementRuntimeTests::ServerCallOffline* when moving this class.
 
 namespace ra {

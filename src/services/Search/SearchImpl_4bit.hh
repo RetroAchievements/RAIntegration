@@ -27,7 +27,7 @@ class FourBitSearchImpl : public SearchImpl
         return nAddress / 2;
     }
 
-    bool ContainsAddress(const SearchResults& srResults, ra::data::ByteAddress nAddress) const override
+    bool ContainsAddress(const SearchResults& srResults, ra::data::ByteAddress nAddress) const noexcept override
     {
         nAddress <<= 1;
 

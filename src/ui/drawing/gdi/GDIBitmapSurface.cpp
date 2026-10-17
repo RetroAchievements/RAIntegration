@@ -1,7 +1,5 @@
 #include "GDIBitmapSurface.hh"
 
-#include "ui\drawing\gdi\ImageRepository.hh"
-
 namespace ra {
 namespace ui {
 namespace drawing {
@@ -237,7 +235,7 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
 
 #pragma warning(pop)
 
-void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
+void GDIAlphaBitmapSurface::SetOpacity(double fAlpha) noexcept
 {
     assert(fAlpha >= 0.0 && fAlpha <= 1.0);
     const auto nAlpha = static_cast<std::uint8_t>(255 * fAlpha);

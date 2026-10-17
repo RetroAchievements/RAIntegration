@@ -6,6 +6,7 @@
 #include "TypeCasts.hh"
 #include "TypeTraits.hh"
 
+#include <cassert>
 #include <iomanip>
 #include <sstream>
 #include <string>

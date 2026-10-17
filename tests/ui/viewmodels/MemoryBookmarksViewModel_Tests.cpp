@@ -2,9 +2,7 @@
 
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MemoryBookmarksViewModel.hh"
-
-#include "tests\RA_UnitTestHelpers.h"
-#include "tests\ui\UIAsserts.hh"
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
@@ -13,7 +11,7 @@
 #include "tests\devkit\services\mocks\MockConfiguration.hh"
 #include "tests\devkit\services\mocks\MockFileSystem.hh"
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
-#include "tests\devkit\testutil\MemoryAsserts.hh"
+#include "tests\devkit\testutil\MemoryAsserts.hh" // VCIC-Excluded: Provides ToString for Assert
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"

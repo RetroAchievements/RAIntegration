@@ -262,7 +262,7 @@ void CapturedMemoryBlock::SetMatchingAddresses(std::vector<ra::data::ByteAddress
     }
 }
 
-void CapturedMemoryBlock::CopyMatchingAddresses(const CapturedMemoryBlock& pSource)
+void CapturedMemoryBlock::CopyMatchingAddresses(const CapturedMemoryBlock& pSource) noexcept
 {
     Expects(pSource.m_nAddressCount == m_nAddressCount);
     if (pSource.AreAllAddressesMatching())
@@ -278,7 +278,7 @@ void CapturedMemoryBlock::CopyMatchingAddresses(const CapturedMemoryBlock& pSour
     }
 }
 
-void CapturedMemoryBlock::ExcludeMatchingAddress(ra::data::ByteAddress nAddress)
+void CapturedMemoryBlock::ExcludeMatchingAddress(ra::data::ByteAddress nAddress) noexcept
 {
     const auto nAddressesSize = (m_nAddressCount + 7) / 8;
     unsigned char* pAddresses = nullptr;
@@ -312,7 +312,7 @@ bool CapturedMemoryBlock::ContainsAddress(ra::data::ByteAddress nAddress) const 
     return (nAddress < m_nAddressCount);
 }
 
-bool CapturedMemoryBlock::ContainsMatchingAddress(ra::data::ByteAddress nAddress) const
+bool CapturedMemoryBlock::ContainsMatchingAddress(ra::data::ByteAddress nAddress) const noexcept
 {
     if (nAddress < m_nFirstAddress)
         return false;
@@ -379,7 +379,7 @@ gsl::index CapturedMemoryBlock::GetAddressIndex(ra::data::ByteAddress nAddress) 
     return nMatchingIndex;
 }
 
-ra::data::ByteAddress CapturedMemoryBlock::GetMatchingAddress(gsl::index nIndex) const noexcept
+ra::data::ByteAddress CapturedMemoryBlock::GetMatchingAddress(gsl::index nIndex) const 
 {
     if (AreAllAddressesMatching())
         return m_nFirstAddress + gsl::narrow_cast<ra::data::ByteAddress>(nIndex);

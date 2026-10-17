@@ -31,6 +31,7 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
     <ProjectName>RADevKit.Tests</ProjectName>
     <ProjectGuid>{6131C3D1-165E-4F39-A44C-94F01EAA03C5}</ProjectGuid>
@@ -38,10 +39,10 @@
     <ProjectSubType>NativeUnitTestProject</ProjectSubType>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <VCToolsVersion />
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -53,11 +54,11 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\rcheevos\src\client\rc_client.vcxproj">
+      <Project>{4916fa87-56ee-4b79-b3c4-d5b723847a48}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\devkit\RADevKit.vcxproj">
       <Project>{8ae21d54-f905-44e1-90e5-d22e346bff39}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\src\rcheevos.vcxproj">
-      <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

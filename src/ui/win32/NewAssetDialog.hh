@@ -6,8 +6,6 @@
 #include "ui/win32/DialogBase.hh"
 #include "ui/win32/IDialogPresenter.hh"
 
-#include <memory>
-
 namespace ra {
 namespace ui {
 namespace win32 {
@@ -26,8 +24,8 @@ public:
     {
     public:
         bool IsSupported(const ra::ui::WindowViewModelBase& viewModel) noexcept override;
-        void ShowWindow(ra::ui::WindowViewModelBase& viewModel) override;
-        void ShowModal(ra::ui::WindowViewModelBase& viewModel, HWND hParentWnd) override;
+        void ShowWindow(ra::ui::WindowViewModelBase& viewModel) noexcept override;
+        void ShowModal(ra::ui::WindowViewModelBase& viewModel, HWND hParentWnd) noexcept override;
     };
 
 protected:

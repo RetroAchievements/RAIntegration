@@ -15,8 +15,10 @@
 #include "util/Log.hh"
 #include "util/Strings.hh"
 
-#include <rcheevos/src/rcheevos/rc_internal.h>
-#include <rcheevos/src/rc_client_internal.h>
+#include <rcheevos/src/client/rc_client_internal.h>
+#include <rcheevos/src/runtime/rc_alloc.h>
+#include <rcheevos/src/runtime/rc_parse_state.h>
+#include <rcheevos/src/runtime/rc_trigger.h>
 
 namespace ra {
 namespace data {
@@ -477,9 +479,9 @@ void AchievementModel::ParseTrigger() const
     rc_init_preparse_state(&preparse);
     preparse.parse.existing_memrefs = pGame->runtime.memrefs;
 
-    rc_trigger_with_memrefs_t* trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
+    rc_trigger_t* trigger = rc_alloc_trigger_with_memrefs(&preparse.parse);
     const char* sMemaddr = sTrigger.c_str();
-    rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
+    rc_parse_trigger_internal(trigger, &sMemaddr, &preparse.parse);
     rc_preparse_alloc_memrefs(nullptr, &preparse);
 
     const auto nSize = preparse.parse.offset;
@@ -489,18 +491,19 @@ void AchievementModel::ParseTrigger() const
         if (trigger_buffer)
         {
             // populate the item, using the communal memrefs pool
-            rc_reset_parse_state(&preparse.parse, trigger_buffer.get());
-            trigger = RC_ALLOC(rc_trigger_with_memrefs_t, &preparse.parse);
-            rc_preparse_alloc_memrefs(&trigger->memrefs, &preparse);
-            Expects(preparse.parse.memrefs == &trigger->memrefs);
+            rc_reset_parse_state(&preparse.parse, trigger_buffer.get(), nSize);
+            trigger = rc_alloc_trigger_with_memrefs(&preparse.parse);
+            auto* memrefs = rc_trigger_get_memrefs(trigger);
+            rc_preparse_alloc_memrefs(memrefs, &preparse);
+            Expects(preparse.parse.memrefs == memrefs);
 
             preparse.parse.existing_memrefs = pGame->runtime.memrefs;
 
             sMemaddr = sTrigger.c_str();
-            rc_parse_trigger_internal(&trigger->trigger, &sMemaddr, &preparse.parse);
-            trigger->trigger.has_memrefs = 1;
+            rc_parse_trigger_internal(trigger, &sMemaddr, &preparse.parse);
+            trigger->has_memrefs = 1;
 
-            UpdateRuntimeAchievement(pGame, m_pAchievementInfo, &trigger->trigger);
+            UpdateRuntimeAchievement(pGame, m_pAchievementInfo, trigger);
 
             m_pTriggerBuffer = std::move(trigger_buffer);
 

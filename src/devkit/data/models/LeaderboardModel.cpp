@@ -8,8 +8,10 @@
 
 #include "util/Strings.hh"
 
-#include <rcheevos/src/rc_client_internal.h>
-#include <rcheevos/src/rcheevos/rc_internal.h>
+#include <rcheevos/src/client/rc_client_internal.h>
+#include <rcheevos/src/runtime/rc_alloc.h>
+#include <rcheevos/src/runtime/rc_lboard.h>
+#include <rcheevos/src/runtime/rc_parse_state.h>
 
 namespace ra {
 namespace data {
@@ -407,8 +409,8 @@ void LeaderboardModel::ParseDefinition() const
     rc_init_preparse_state(&preparse);
     preparse.parse.existing_memrefs = pGame->runtime.memrefs;
 
-    rc_lboard_with_memrefs_t* lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
-    rc_parse_lboard_internal(&lboard->lboard, sMemAddr.c_str(), &preparse.parse);
+    rc_lboard_t* lboard = rc_alloc_lboard_with_memrefs(&preparse.parse);
+    rc_parse_lboard_internal(lboard, sMemAddr.c_str(), &preparse.parse);
     rc_preparse_alloc_memrefs(nullptr, &preparse);
 
     const auto nSize = preparse.parse.offset;
@@ -418,17 +420,18 @@ void LeaderboardModel::ParseDefinition() const
         if (lboard_buffer)
         {
             // populate the item, using the communal memrefs pool
-            rc_reset_parse_state(&preparse.parse, lboard_buffer.get());
-            lboard = RC_ALLOC(rc_lboard_with_memrefs_t, &preparse.parse);
-            rc_preparse_alloc_memrefs(&lboard->memrefs, &preparse);
+            rc_reset_parse_state(&preparse.parse, lboard_buffer.get(), nSize);
+            lboard = rc_alloc_lboard_with_memrefs(&preparse.parse);
+            auto* memrefs = rc_lboard_get_memrefs(lboard);
+            rc_preparse_alloc_memrefs(memrefs, &preparse);
 
             preparse.parse.existing_memrefs = pGame->runtime.memrefs;
-            preparse.parse.memrefs = &lboard->memrefs;
+            preparse.parse.memrefs = memrefs;
 
-            rc_parse_lboard_internal(&lboard->lboard, sMemAddr.c_str(), &preparse.parse);
-            lboard->lboard.has_memrefs = 1;
+            rc_parse_lboard_internal(lboard, sMemAddr.c_str(), &preparse.parse);
+            lboard->has_memrefs = 1;
 
-            UpdateRuntimeLeaderboard(pGame, m_pLeaderboardInfo, &lboard->lboard);
+            UpdateRuntimeLeaderboard(pGame, m_pLeaderboardInfo, lboard);
 
             m_pLeaderboardBuffer = std::move(lboard_buffer);
 

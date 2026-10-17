@@ -8,8 +8,10 @@
 
 #include "util/Strings.hh"
 
-#include <rcheevos/src/rcheevos/rc_internal.h>
-#include <rcheevos/src/rc_client_internal.h>
+#include <rcheevos/src/client/rc_client_internal.h>
+#include <rcheevos/src/runtime/rc_alloc.h>
+#include <rcheevos/src/runtime/rc_parse_state.h>
+#include <rcheevos/src/runtime/rc_richpresence.h>
 
 namespace ra {
 namespace data {
@@ -295,9 +297,9 @@ void RichPresenceModel::ParseScript()
     rc_init_preparse_state(&preparse);
     preparse.parse.existing_memrefs = pGame->runtime.memrefs;
 
-    rc_richpresence_with_memrefs_t* richpresence = RC_ALLOC(rc_richpresence_with_memrefs_t, &preparse.parse);
-    preparse.parse.variables = &richpresence->richpresence.values;
-    rc_parse_richpresence_internal(&richpresence->richpresence, sScript.c_str(), &preparse.parse);
+    rc_richpresence_t* richpresence = rc_alloc_richpresence_with_memrefs(&preparse.parse);
+    preparse.parse.variables = &richpresence->values;
+    rc_parse_richpresence_internal(richpresence, sScript.c_str(), &preparse.parse);
     rc_preparse_alloc_memrefs(nullptr, &preparse);
 
     const auto nSize = preparse.parse.offset;
@@ -322,18 +324,19 @@ void RichPresenceModel::ParseScript()
         if (definition_buffer)
         {
             // populate the item, using the communal memrefs pool
-            rc_reset_parse_state(&preparse.parse, definition_buffer.get());
+            rc_reset_parse_state(&preparse.parse, definition_buffer.get(), nSize);
             preparse.parse.existing_memrefs = pGame->runtime.memrefs;
 
-            richpresence = RC_ALLOC(rc_richpresence_with_memrefs_t, &preparse.parse);
-            rc_preparse_alloc_memrefs(&richpresence->memrefs, &preparse);
-            Expects(preparse.parse.memrefs == &richpresence->memrefs);
+            richpresence = rc_alloc_richpresence_with_memrefs(&preparse.parse);
+            auto* memrefs = rc_richpresence_get_memrefs(richpresence);
+            rc_preparse_alloc_memrefs(memrefs, &preparse);
+            Expects(preparse.parse.memrefs == memrefs);
 
             preparse.parse.existing_memrefs = pGame->runtime.memrefs;
 
-            preparse.parse.variables = &richpresence->richpresence.values;
-            rc_parse_richpresence_internal(&richpresence->richpresence, sScript.c_str(), &preparse.parse);
-            richpresence->richpresence.has_memrefs = 1;
+            preparse.parse.variables = &richpresence->values;
+            rc_parse_richpresence_internal(richpresence, sScript.c_str(), &preparse.parse);
+            richpresence->has_memrefs = 1;
 
             // alloc here so runtime can free
             if (!m_pRichPresenceInfo)
@@ -342,7 +345,7 @@ void RichPresenceModel::ParseScript()
             // switch to the new rich presence
             if (m_pRichPresenceInfo != nullptr)
             {
-                m_pRichPresenceInfo->richpresence = &richpresence->richpresence;
+                m_pRichPresenceInfo->richpresence = richpresence;
                 memcpy(m_pRichPresenceInfo->md5, md5, sizeof(md5));
             }
 

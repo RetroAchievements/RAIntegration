@@ -20,7 +20,11 @@
 #include "util\EnumOps.hh"
 #include "util\Strings.hh"
 
-#include <rcheevos\src\rcheevos\rc_internal.h>
+#include <rcheevos\src\runtime\rc_condset.h>
+#include <rcheevos\src\runtime\rc_eval_state.h>
+#include <rcheevos\src\runtime\rc_lboard.h>
+#include <rcheevos\src\runtime\rc_modified_memref.h>
+#include <rcheevos\src\runtime\rc_trigger.h>
 
 namespace ra {
 namespace ui {
@@ -920,17 +924,18 @@ static void UpdateMemrefs(ra::data::models::AssetModelBase& pAsset)
             {
                 auto *pLboard = pLeaderboard->GetMutableRuntimeLeaderboard();
                 if (pLboard && pLboard->has_memrefs)
-                {
-                    GSL_SUPPRESS_TYPE1
-                    memrefs = &(reinterpret_cast<rc_lboard_with_memrefs_t*>(pLboard)->memrefs);
-                }
+                    memrefs = rc_lboard_get_memrefs(pLboard);
             }
             break;
         }
     }
 
     if (memrefs)
-        rc_update_memref_values(memrefs, rc_peek_callback, nullptr);
+    {
+        rc_eval_state_t eval_state;
+        rc_init_eval_state(&eval_state, rc_peek_callback, nullptr);
+        rc_update_memref_values(memrefs, &eval_state);
+    }
 }
 
 void AssetEditorViewModel::DoFrame()

@@ -137,7 +137,7 @@ public:
     /// </summary>
     /// <param name="result">The result.</param>
     /// <returns><c>true</c> if result was populated, <c>false</c> if the index was invalid.</returns>
-    bool GetMatchingAddress(gsl::index nIndex, _Out_ SearchResult& result) const noexcept;
+    bool GetMatchingAddress(gsl::index nIndex, _Out_ SearchResult& result) const;
 
     /// <summary>
     /// Gets an item from the results matching a result from another set of results.
@@ -150,7 +150,7 @@ public:
     /// <summary>
     /// Gets the index of the specified address. Returns <c>-1</c> if the address was not captured.
     /// </summary>
-    gsl::index GetAddressIndex(ra::data::ByteAddress nAddress) const noexcept;
+    gsl::index GetAddressIndex(ra::data::ByteAddress nAddress) const;
 
     /// <summary>
     /// Gets the raw bytes at the specified address.

@@ -2,9 +2,9 @@
 #define RA_UNITTESTHELPERS_H
 #pragma once
 
-#include "util\Strings.hh"
-
 #include "data\Types.hh"
+
+#include "util\TypeCasts.hh"
 
 // The rcheevos nameless struct warning is only affecting the test project, for now we have
 // to disable the warning in the project or pragmatically in rcheevos. Careful not to use nameless structs here.

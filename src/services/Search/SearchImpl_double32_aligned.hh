@@ -15,7 +15,7 @@ public:
 
     unsigned int GetPadding() const noexcept override { return 7U; }
 
-    bool ContainsAddress(const SearchResults& srResults, ra::data::ByteAddress nAddress) const override
+    bool ContainsAddress(const SearchResults& srResults, ra::data::ByteAddress nAddress) const noexcept override
     {
         if ((nAddress & 7) != 4)
             return false;

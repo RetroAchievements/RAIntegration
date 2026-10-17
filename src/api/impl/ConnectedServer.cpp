@@ -10,7 +10,7 @@
 #include "services\IHttpRequester.hh"
 #include "services\ServiceLocator.hh"
 
-#include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
+#include <rcheevos\src\api\rc_api_common.h> // for parsing cached patchdata response
 #include <rc_api_editor.h>
 #include <rc_api_info.h>
 #include <rc_api_runtime.h>

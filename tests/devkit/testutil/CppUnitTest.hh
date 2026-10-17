@@ -5,7 +5,7 @@
 #include <CodeAnalysis/Warnings.h>
 #pragma warning(push)
 #pragma warning(disable: ALL_CPPCORECHECK_WARNINGS ALL_CODE_ANALYSIS_WARNINGS)
-#include <CppUnitTest.h>
+#include <CppUnitTest.h> // VCIC-Excluded: Pulls in the various CPP Unit Test macros that may be used
 #pragma warning(pop)
 
 /* This has to be globally disabled in the unit tests because it occurs in the

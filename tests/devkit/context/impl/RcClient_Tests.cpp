@@ -7,8 +7,6 @@
 
 #include "testutil\CppUnitTest.hh"
 
-#include <rcheevos\src\rc_client_internal.h>
-
 namespace ra {
 namespace context {
 namespace impl {

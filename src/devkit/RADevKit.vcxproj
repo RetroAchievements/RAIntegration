@@ -31,6 +31,7 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
     <ProjectName>RADevKit</ProjectName>
     <ProjectGuid>{8AE21D54-F905-44E1-90E5-D22E346BFF39}</ProjectGuid>
@@ -38,10 +39,10 @@
     <RootNamespace>ra</RootNamespace>
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <VCToolsVersion />
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -167,8 +168,8 @@
     <ClInclude Include="util\TypeTraits.hh" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\rcheevos.vcxproj">
-      <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
+    <ProjectReference Include="..\..\rcheevos\src\client\rc_client.vcxproj">
+      <Project>{4916fa87-56ee-4b79-b3c4-d5b723847a48}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

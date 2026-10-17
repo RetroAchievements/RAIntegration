@@ -3,7 +3,6 @@
 #include "AchievementRuntimeExports.hh"
 #include "Exports.hh"
 #include "RA_Defs.h"
-#include "RA_Resource.h"
 #include "util\EnumOps.hh"
 #include "util\Json.hh"
 #include "util\Log.hh"
@@ -23,21 +22,15 @@
 #include "data\context\SessionTracker.hh"
 
 #include "services\FrameEventQueue.hh"
-#include "services\GameIdentifier.hh"
-#include "services\Http.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
-#include "services\IHttpRequester.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ILoginService.hh"
-#include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
-#include "services\impl\LoginService.hh"
 
 #include "ui\viewmodels\IntegrationMenuViewModel.hh"
-#include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\PopupMessageViewModel.hh"
@@ -45,11 +38,13 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\include\rc_api_runtime.h>
-#include <rcheevos\include\rc_client_raintegration.h>
-#include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
-#include <rcheevos\src\rcheevos\rc_internal.h>
-#include <rcheevos\src\rc_client_internal.h>
-#include <rcheevos\src\rhash\md5.h>
+#include <rcheevos\src\client\rc_client_internal.h>
+#include <rcheevos\src\runtime\rc_condition.h>
+#include <rcheevos\src\runtime\rc_condset.h>
+#include <rcheevos\src\runtime\rc_lboard.h>
+#include <rcheevos\src\runtime\rc_memref.h>
+#include <rcheevos\src\runtime\rc_parse_state.h>
+#include <rcheevos\src\runtime\rc_trigger.h>
 
 namespace ra {
 namespace services {
@@ -231,12 +226,12 @@ void AchievementRuntime::InitializeRcClient()
     rc_client_set_event_handler(pClient, EventHandler);
 }
 
-GSL_SUPPRESS_F6
 AchievementRuntime::~AchievementRuntime()
 {
     if (!ra::services::ServiceLocator::IsShuttingDown() &&
         ra::services::ServiceLocator::Exists<ra::context::IRcClient>())
     {
+        GSL_SUPPRESS_F6
         ra::services::ServiceLocator::GetMutable<ra::context::IRcClient>().Shutdown();
     }
 }

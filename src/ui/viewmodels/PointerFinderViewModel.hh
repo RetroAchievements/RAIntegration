@@ -7,6 +7,7 @@
 
 #include "ui/WindowViewModelBase.hh"
 
+#include "ui/viewmodels/LookupItemViewModel.hh"
 #include "ui/viewmodels/MemoryViewerViewModel.hh"
 
 namespace ra {

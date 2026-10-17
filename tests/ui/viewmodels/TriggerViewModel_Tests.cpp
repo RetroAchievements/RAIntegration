@@ -14,6 +14,7 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
+#include <rcheevos\src\runtime\rc_condset.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

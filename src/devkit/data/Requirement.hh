@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string>
 
-#include <rcheevos/include/rc_runtime_types.h>
+#include <rcheevos/src/runtime/rc_condition.h>
 
 typedef struct rc_typed_value_t rc_typed_value_t;
 

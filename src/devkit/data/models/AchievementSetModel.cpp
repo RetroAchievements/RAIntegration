@@ -4,9 +4,9 @@
 
 #include "data/models/GameAssets.hh"
 
-#include "util/Strings.hh"
+#include "util/GSL.hh"
 
-#include <rcheevos/src/rc_client_internal.h>
+#include <rcheevos/src/client/rc_client_internal.h>
 
 namespace ra {
 namespace data {
@@ -73,9 +73,10 @@ static void SyncSubset(rc_client_subset_info_t& pSubsetInfo,
         {
             vNewAchievements.resize(vAchievementModels.size());
             rc_client_achievement_info_t* pDst = &vNewAchievements.at(0);
+            Expects(pDst != nullptr);
 
             size_t nFirstUnmatched = 0;
-            for (auto* pAchievementModel : vAchievementModels)
+            for (const gsl::not_null<AchievementModel*> pAchievementModel : vAchievementModels)
             {
                 const auto nId = pAchievementModel->GetID();
 
@@ -133,9 +134,10 @@ static void SyncSubset(rc_client_subset_info_t& pSubsetInfo,
         {
             vNewLeaderboards.resize(vLeaderboardModels.size());
             rc_client_leaderboard_info_t* pDst = &vNewLeaderboards.at(0);
+            Expects(pDst != nullptr);
 
             size_t nFirstUnmatched = 0;
-            for (auto* pLeaderboardModel : vLeaderboardModels)
+            for (const gsl::not_null<LeaderboardModel*> pLeaderboardModel : vLeaderboardModels)
             {
                 const auto nId = pLeaderboardModel->GetID();
 
@@ -237,12 +239,12 @@ void AchievementSetModel::SyncToRuntime(const rc_client_subset_info_t& pSubset, 
                vLocalAchievements, vLocalLeaderboards);
 }
 
-rc_client_subset_info_t* AchievementSetModel::GetPublishedSubsetInfo() const
+rc_client_subset_info_t* AchievementSetModel::GetPublishedSubsetInfo() const noexcept
 {
     return m_pInfo ? &m_pInfo->oPublishedRuntimeInfo : nullptr;
 }
 
-rc_client_subset_info_t* AchievementSetModel::GetLocalSubsetInfo() const
+rc_client_subset_info_t* AchievementSetModel::GetLocalSubsetInfo() const noexcept
 {
     return m_pInfo ? &m_pInfo->oLocalRuntimeInfo : nullptr;
 }

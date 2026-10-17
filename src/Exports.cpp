@@ -45,9 +45,7 @@
 
 #include <RAInterface\RA_Emulators.h>
 
-#include <rcheevos\include\rc_api_runtime.h>
-#include <rcheevos\src\rapi\rc_api_common.h>
-#include <rcheevos\src\rc_client_internal.h>
+#include <rcheevos\src\client\rc_client_internal.h>
 
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }
 

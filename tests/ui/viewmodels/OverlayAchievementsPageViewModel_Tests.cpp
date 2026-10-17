@@ -17,6 +17,9 @@
 #include "tests\mocks\MockWindowManager.hh"
 #include "tests\data\DataAsserts.hh"
 
+#include <rcheevos\src\client\rc_client_internal.h>
+#include <rcheevos\src\runtime\rc_trigger.h>
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::data::models::AssetCategory;

@@ -2,10 +2,10 @@
 #define RA_DATA_MODEL_PROPERTY_H
 #pragma once
 
-#include "util/Compat.hh"
 #include "util/GSL.hh"
 
 #include <map>
+#include <string>
 
 namespace ra {
 namespace data {

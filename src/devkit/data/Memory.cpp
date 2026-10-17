@@ -2,8 +2,8 @@
 
 #include "util/Strings.hh"
 
-#include <rc_runtime_types.h>
-#include <rcheevos/src/rcheevos/rc_internal.h>
+#include <rcheevos/src/runtime/rc_memref.h>
+#include <rcheevos/src/runtime/rc_typed_value.h>
 
 namespace ra {
 namespace data {

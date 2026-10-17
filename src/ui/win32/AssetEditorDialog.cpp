@@ -5,14 +5,11 @@
 
 #include "context\IRcClient.hh"
 
-#include "data\context\EmulatorContext.hh"
-
 #include "services\IConfiguration.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
-#include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
@@ -545,7 +542,7 @@ void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstrin
         }
     }
 
-    InvokeOnUIThread([this, sTextCopy = sText]()
+    InvokeOnUIThread([this, sTextCopy = sText]() noexcept
     {
         if (ra::util::String::StartsWith(sTextCopy, L"local\\"))
         {

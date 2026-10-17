@@ -162,7 +162,7 @@ protected:
         WindowBinding::InvokeOnUIThreadAndWait(fAction);
     }
 
-    HWND GetDialogHwnd() const
+    HWND GetDialogHwnd() const noexcept
     {
         Expects(m_pDialog != nullptr);
         return m_pDialog->m_hWnd;

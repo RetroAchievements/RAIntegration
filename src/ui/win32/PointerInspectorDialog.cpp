@@ -87,12 +87,12 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindWindow.BindEnabled(IDC_RA_DELETE_COND, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADD_COND, PointerInspectorViewModel::HasSelectedNodeProperty);
 
-    m_bindAddress.BindItems(vmPointerFinder.KnownPointers());
-    m_bindAddress.BindSelectedItem(PointerInspectorViewModel::CurrentAddressProperty);
+    m_bindAddress.BindItems(vmPointerFinder.RootAddresses());
+    m_bindAddress.BindSelectedItem(PointerInspectorViewModel::SelectedRootAddressProperty);
     m_bindAddress.SetDropDownWidth(300);
     m_bindNodes.BindItems(vmPointerFinder.Nodes());
     m_bindNodes.BindSelectedItem(PointerInspectorViewModel::SelectedNodeProperty);
-    m_bindDescription.BindText(PointerInspectorViewModel::CurrentAddressNoteProperty);
+    m_bindDescription.BindText(PointerInspectorViewModel::RootAddressNoteProperty);
 
     auto pOffsetColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         PointerInspectorViewModel::StructFieldViewModel::OffsetProperty);
@@ -169,6 +169,8 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_ADDRESS, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_INDEX, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_INDEX, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_DESCRIPTION, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_LBX_GROUPS, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
@@ -178,7 +180,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     SetAnchor(IDC_RA_DELETE_COND, Anchor::Right | Anchor::Bottom);
     SetAnchor(IDC_RA_ADD_COND, Anchor::Right | Anchor::Bottom);
 
-    SetMinimumSize(480, 258);
+    SetMinimumSize(490, 258);
 }
 
 BOOL PointerInspectorDialog::OnInitDialog()

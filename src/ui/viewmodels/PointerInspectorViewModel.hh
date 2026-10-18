@@ -42,49 +42,55 @@ public:
     void InitializeNotifyTargets();
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the current address.
+    /// Gets the list of available root addresses.
     /// </summary>
-    static const IntModelProperty CurrentAddressProperty;
+    LookupItemViewModelCollection& RootAddresses() noexcept { return m_vPointers; }
 
     /// <summary>
-    /// Gets the current address.
+    /// Gets the list of available root addresses.
     /// </summary>
-    ra::data::ByteAddress GetCurrentAddress() const { return GetValue(CurrentAddressProperty); }
+    const LookupItemViewModelCollection& RootAddresses() const noexcept { return m_vPointers; }
 
     /// <summary>
-    /// Sets the current address.
+    /// The <see cref="ModelProperty" /> for the selected root address.
     /// </summary>
-    void SetCurrentAddress(const ra::data::ByteAddress nValue) { SetValue(CurrentAddressProperty, nValue); }
+    static const IntModelProperty SelectedRootAddressProperty;
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the current address as a string.
+    /// Gets the selected root address.
     /// </summary>
-    static const StringModelProperty CurrentAddressTextProperty;
+    ra::data::ByteAddress GetSelectedRootAddress() const { return GetValue(SelectedRootAddressProperty); }
 
     /// <summary>
-    /// Gets the current address as a string.
+    /// Sets the selected root address.
     /// </summary>
-    const std::wstring& GetCurrentAddressText() const { return GetValue(CurrentAddressTextProperty); }
+    void SetSelectedRootAddress(const ra::data::ByteAddress nValue) { SetValue(SelectedRootAddressProperty, nValue); }
+    
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not a root address is selected.
+    /// </summary>
+    static const BoolModelProperty HasSelectedRootAddressProperty;
 
     /// <summary>
-    /// Sets the current address as a string.
+    /// Gets whether or not a root address is selected.
     /// </summary>
-    void SetCurrentAddressText(const std::wstring& sValue) { SetValue(CurrentAddressTextProperty, sValue); }
+    bool HasSelectedRootAddress() const { return GetValue(HasSelectedRootAddressProperty); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the current address's note.
+    /// The <see cref="ModelProperty" /> for the selected root address's note.
     /// </summary>
-    static const StringModelProperty CurrentAddressNoteProperty;
+    static const StringModelProperty RootAddressNoteProperty;
 
     /// <summary>
-    /// Gets the current address's note.
+    /// Gets the selected root address's note.
     /// </summary>
-    const std::wstring& GetCurrentAddressNote() const { return GetValue(CurrentAddressNoteProperty); }
+    const std::wstring& GetRootAddressNote() const { return GetValue(RootAddressNoteProperty); }
 
     /// <summary>
-    /// Sets the current address's note.
+    /// Sets the selected root address's note.
     /// </summary>
-    void SetCurrentAddressNote(const std::wstring& sValue) { SetValue(CurrentAddressNoteProperty, sValue); }
+    void SetRootAddressNote(const std::wstring& sValue) { SetValue(RootAddressNoteProperty, sValue); }
+
 
     class StructFieldViewModel : public MemoryWatchViewModel
     {
@@ -166,22 +172,12 @@ public:
     };
 
     /// <summary>
-    /// Gets the list of available nodes.
-    /// </summary>
-    LookupItemViewModelCollection& KnownPointers() noexcept { return m_vPointers; }
-
-    /// <summary>
-    /// Gets the list of available nodes.
-    /// </summary>
-    const LookupItemViewModelCollection& KnownPointers() const noexcept { return m_vPointers; }
-
-    /// <summary>
-    /// Gets the list of available nodes.
+    /// Gets the list of available nodes associated to the selected root address.
     /// </summary>
     LookupItemViewModelCollection& Nodes() noexcept { return m_vNodes; }
 
     /// <summary>
-    /// Gets the list of available nodes.
+    /// Gets the list of available nodes associated to the selected root address.
     /// </summary>
     const LookupItemViewModelCollection& Nodes() const noexcept { return m_vNodes; }
 
@@ -211,22 +207,22 @@ public:
     bool HasSelectedNode() const { return GetValue(HasSelectedNodeProperty); }
 
     /// <summary>
-    /// Gets the pointer chain list.
+    /// Gets the pointer chain list from the selected root address to the selected node.
     /// </summary>
     ViewModelCollection<StructFieldViewModel>& PointerChain() noexcept { return m_vPointerChain; }
 
     /// <summary>
-    /// Gets the pointer chain list.
+    /// Gets the pointer chain list from the selected root address to the selected node.
     /// </summary>
     const ViewModelCollection<StructFieldViewModel>& PointerChain() const noexcept { return m_vPointerChain; }
 
     /// <summary>
-    /// Gets the list of fields.
+    /// Gets the list of fields for the selected note.
     /// </summary>
     MemoryWatchListViewModel& Fields() noexcept { return m_vmFields; }
 
     /// <summary>
-    /// Gets the list of fields.
+    /// Gets the list of fields for the selected note..
     /// </summary>
     const MemoryWatchListViewModel& Fields() const noexcept { return m_vmFields; }
 

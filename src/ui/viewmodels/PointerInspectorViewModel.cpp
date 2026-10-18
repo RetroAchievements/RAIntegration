@@ -20,14 +20,15 @@ namespace viewmodels {
 
 constexpr int SelectedNodeNone = -2;
 
-const IntModelProperty PointerInspectorViewModel::CurrentAddressProperty("PointerInspectorViewModel", "CurrentAddress", 0);
-const StringModelProperty PointerInspectorViewModel::CurrentAddressTextProperty("PointerInspectorViewModel", "CurrentAddressText", L"0x0000");
-const StringModelProperty PointerInspectorViewModel::CurrentAddressNoteProperty("PointerInspectorViewModel", "CurrentAddressNote", L"");
-const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::OffsetProperty("StructFieldViewModel", "Offset", L"+0000");
-const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::BodyProperty("StructFieldViewModel", "Body", L"");
+const IntModelProperty PointerInspectorViewModel::SelectedRootAddressProperty("PointerInspectorViewModel", "SelectedRootAddress", 0);
+const BoolModelProperty PointerInspectorViewModel::HasSelectedRootAddressProperty("PointerInspectorViewModel", "HasSelectedRootAddress", false);
+const StringModelProperty PointerInspectorViewModel::RootAddressNoteProperty("PointerInspectorViewModel", "RootAddressNote", L"");
 const IntModelProperty PointerInspectorViewModel::SelectedNodeProperty("PointerInspectorViewModel", "SelectedNode", SelectedNodeNone);
 const BoolModelProperty PointerInspectorViewModel::HasSelectedNodeProperty("PointerInspectorViewModel", "HasSelectedNode", false);
 const StringModelProperty PointerInspectorViewModel::CurrentFieldNoteProperty("PointerInspectorViewModel", "CurrentFieldNote", L"");
+
+const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::OffsetProperty("StructFieldViewModel", "Offset", L"+0000");
+const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::BodyProperty("StructFieldViewModel", "Body", L"");
 
 PointerInspectorViewModel::PointerInspectorViewModel()
 {
@@ -60,15 +61,9 @@ void PointerInspectorViewModel::OnValueChanged(const BoolModelProperty::ChangeAr
 
 void PointerInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == CurrentAddressProperty && !m_bSyncingAddress)
+    if (args.Property == SelectedRootAddressProperty && !m_bSyncingAddress)
     {
         const auto nAddress = static_cast<ra::data::ByteAddress>(args.tNewValue);
-
-        m_bSyncingAddress = true;
-        const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-        SetCurrentAddressText(pMemoryContext.FormatAddress(nAddress));
-        m_bSyncingAddress = false;
-
         OnCurrentAddressChanged(nAddress);
     }
     else if (args.Property == SelectedNodeProperty && !m_bSyncingAddress)
@@ -85,20 +80,9 @@ void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::Change
     {
         UpdateSourceMemoryNote();
     }
-    else if (args.Property == CurrentAddressNoteProperty && !m_bSyncingNote)
+    else if (args.Property == RootAddressNoteProperty && !m_bSyncingNote)
     {
         UpdateSourceMemoryNote();
-    }
-    else if (args.Property == CurrentAddressTextProperty && !m_bSyncingAddress)
-    {
-        const auto nAddress = ra::data::Memory::ParseAddress(args.tNewValue);
-
-        // ignore change event for current address so text field is not modified
-        m_bSyncingAddress = true;
-        SetCurrentAddress(nAddress);
-        m_bSyncingAddress = false;
-
-        OnCurrentAddressChanged(nAddress);
     }
 
     WindowViewModelBase::OnValueChanged(args);
@@ -142,11 +126,12 @@ void PointerInspectorViewModel::OnActiveGameChanged()
         m_pCurrentNote = nullptr;
 
         m_bSyncingAddress = true;
-        SetCurrentAddress(0);
+        SetSelectedRootAddress(0);
+        SetValue(HasSelectedRootAddressProperty, false);
         m_bSyncingAddress = false;
 
         m_bSyncingNote = true;
-        SetCurrentAddressNote(L"");
+        SetRootAddressNote(L"");
         m_bSyncingNote = false;
 
         m_bSyncingNote = true;
@@ -156,10 +141,11 @@ void PointerInspectorViewModel::OnActiveGameChanged()
     else
     {
         m_bSyncingAddress = true;
-        SetCurrentAddress(0xFFFFFFFF);
+        SetSelectedRootAddress(0xFFFFFFFF);
         m_bSyncingAddress = false;
 
-        SetCurrentAddress(nAddress);
+        SetSelectedRootAddress(nAddress);
+        SetValue(HasSelectedRootAddressProperty, true);
     }
 }
 
@@ -195,7 +181,7 @@ void PointerInspectorViewModel::OnEndGameLoad()
 
 void PointerInspectorViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring&)
 {
-    if (nAddress == GetCurrentAddress() && !m_bSyncingNote)
+    if (nAddress == GetSelectedRootAddress() && !m_bSyncingNote)
     {
         m_bSyncingAddress = true;
         OnCurrentAddressChanged(nAddress); // not really, but causes the note to be reloaded
@@ -226,6 +212,9 @@ void PointerInspectorViewModel::UpdatePointerVisibility(ra::data::ByteAddress nA
             {
                 // non-pointer note found, remove it
                 m_vPointers.RemoveAt(nIndex);
+
+                if (GetSelectedRootAddress() == nAddress)
+                    OnActiveGameChanged(); // force selection of first root address or no selection
             }
 
             // address found, we're done
@@ -251,6 +240,12 @@ void PointerInspectorViewModel::UpdatePointerVisibility(ra::data::ByteAddress nA
                              ra::data::models::MemoryNoteModel::TrimSize(pNote->GetSummary(), false)));
         m_vPointers.MoveItem(nCount, nIndex);
         m_vPointers.EndUpdate();
+
+        if (!HasSelectedRootAddress())
+        {
+            SetSelectedRootAddress(nAddress);
+            SetValue(HasSelectedRootAddressProperty, true);
+        }
     }
 }
 
@@ -357,7 +352,7 @@ const ra::data::models::MemoryNoteModel* PointerInspectorViewModel::UpdatePointe
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
-    const auto nCurrentAddress = GetCurrentAddress();
+    const auto nCurrentAddress = GetSelectedRootAddress();
     const auto* pNote = pMemoryNotes ? pMemoryNotes->FindNote(nCurrentAddress) : nullptr;
 
     if (m_bRebuildNodes)
@@ -503,7 +498,7 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::MemoryNoteModel
 {
     if (pNote == nullptr)
     {
-        SetCurrentAddressNote(L"");
+        SetRootAddressNote(L"");
         m_pCurrentNote = nullptr;
         m_vmFields.Items().Clear();
         return;
@@ -513,7 +508,7 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::MemoryNoteModel
         std::lock_guard<std::mutex> lock(m_mtxLoadNote);
 
         m_bSyncingNote = true;
-        SetCurrentAddressNote(pNote->GetFullSummary());
+        SetRootAddressNote(pNote->GetFullSummary());
         m_bSyncingNote = false;
 
         m_pCurrentNote = pNote;
@@ -617,11 +612,11 @@ void PointerInspectorViewModel::LoadNodes(const ra::data::models::MemoryNoteMode
 
     if (pNote == nullptr)
     {
-        m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetCurrentAddress()), L"Root");
+        m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetSelectedRootAddress()), L"Root");
     }
     else
     {
-        m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetCurrentAddress()), pNote->GetFullSummary());
+        m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetSelectedRootAddress()), pNote->GetFullSummary());
 
         const auto* pPointerNote = dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(pNote);
         if (pPointerNote && pPointerNote->HasNestedStructures())
@@ -759,7 +754,7 @@ void PointerInspectorViewModel::BuildNote(ra::util::StringBuilder& builder,
             if (pOffsetNote.pMemoryNote->GetType() != ra::data::models::MemoryNoteType::Pointer)
                 builder.Append(ra::data::models::MemoryNoteModel::TrimSize(pOffsetNote.pMemoryNote->GetNote(), false));
             else if (pOffsetNote.pMemoryNote == m_pCurrentNote)
-                builder.Append(ra::data::models::MemoryNoteModel::TrimSize(GetCurrentAddressNote(), false));
+                builder.Append(ra::data::models::MemoryNoteModel::TrimSize(GetRootAddressNote(), false));
             else
                 builder.Append(ra::data::models::MemoryNoteModel::TrimSize(pOffsetNote.pMemoryNote->GetSummary(), false));
             
@@ -772,7 +767,7 @@ void PointerInspectorViewModel::BuildNote(ra::util::StringBuilder& builder,
 
 void PointerInspectorViewModel::UpdateSourceMemoryNote()
 {
-    const auto nAddress = GetCurrentAddress();
+    const auto nAddress = GetSelectedRootAddress();
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
     Expects(pMemoryNotes != nullptr);
@@ -788,7 +783,7 @@ void PointerInspectorViewModel::UpdateSourceMemoryNote()
             ra::util::StringBuilder builder;
 
             if (pNote == m_pCurrentNote)
-                builder.Append(GetCurrentAddressNote());
+                builder.Append(GetRootAddressNote());
             else
                 builder.Append(pNote->GetFullSummary());
 
@@ -954,7 +949,7 @@ std::string PointerInspectorViewModel::GetMemRefChain(bool bMeasured) const
     const auto* vmField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nSelectedFieldIndex);
     Expects(vmField != nullptr);
 
-    auto* pRootNote = pMemoryNotes->FindNote(GetCurrentAddress());
+    auto* pRootNote = pMemoryNotes->FindNote(GetSelectedRootAddress());
     Expects(pRootNote != nullptr);
 
     std::vector<ra::data::models::MemoryNoteModel::Reference> vChain;

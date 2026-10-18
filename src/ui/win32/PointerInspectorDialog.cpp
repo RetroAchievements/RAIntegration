@@ -73,6 +73,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     : DialogBase(vmPointerFinder),
       m_bindAddress(vmPointerFinder),
       m_bindNodes(vmPointerFinder),
+      m_bindIndices(vmPointerFinder),
       m_bindDescription(vmPointerFinder),
       m_bindPointerChain(vmPointerFinder),
       m_bindFields(vmPointerFinder),
@@ -81,6 +82,11 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Pointer Inspector");
 
     m_bindWindow.AddChildViewModel(vmPointerFinder.Fields());
+    m_bindWindow.BindEnabled(IDC_RA_FILTER_VALUE, PointerInspectorViewModel::HasSelectedRootAddressProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DESCRIPTION, PointerInspectorViewModel::HasSelectedRootAddressProperty);
+    m_bindWindow.BindEnabled(IDC_RA_LBX_GROUPS, PointerInspectorViewModel::HasSelectedRootAddressProperty);
+    m_bindWindow.BindEnabled(IDC_RA_LBX_ADDRESSES, PointerInspectorViewModel::HasSelectedRootAddressProperty);
+    m_bindWindow.BindEnabled(IDC_RA_INDEX, PointerInspectorViewModel::IsSelectedNodeIndexableProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADDBOOKMARK, ra::ui::viewmodels::MemoryWatchListViewModel::HasSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
@@ -92,6 +98,8 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindAddress.SetDropDownWidth(300);
     m_bindNodes.BindItems(vmPointerFinder.Nodes());
     m_bindNodes.BindSelectedItem(PointerInspectorViewModel::SelectedNodeProperty);
+    m_bindIndices.BindItems(vmPointerFinder.SelectedNodeIndices());
+    m_bindIndices.BindSelectedItem(PointerInspectorViewModel::SelectedNodeIndexProperty);
     m_bindDescription.BindText(PointerInspectorViewModel::RootAddressNoteProperty);
 
     auto pOffsetColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(

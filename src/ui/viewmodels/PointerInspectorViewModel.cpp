@@ -25,6 +25,8 @@ const BoolModelProperty PointerInspectorViewModel::HasSelectedRootAddressPropert
 const StringModelProperty PointerInspectorViewModel::RootAddressNoteProperty("PointerInspectorViewModel", "RootAddressNote", L"");
 const IntModelProperty PointerInspectorViewModel::SelectedNodeProperty("PointerInspectorViewModel", "SelectedNode", SelectedNodeNone);
 const BoolModelProperty PointerInspectorViewModel::HasSelectedNodeProperty("PointerInspectorViewModel", "HasSelectedNode", false);
+const IntModelProperty PointerInspectorViewModel::SelectedNodeIndexProperty("PointerInspectorViewModel", "SelectedNodeIndex", 0);
+const BoolModelProperty PointerInspectorViewModel::IsSelectedNodeIndexableProperty("PointerInspectorViewModel", "IsSelectedNodeIndexable", false);
 const StringModelProperty PointerInspectorViewModel::CurrentFieldNoteProperty("PointerInspectorViewModel", "CurrentFieldNote", L"");
 
 const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::OffsetProperty("StructFieldViewModel", "Offset", L"+0000");

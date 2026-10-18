@@ -149,6 +149,7 @@ public:
         Assert::AreEqual({ 0U }, inspector.GetSelectedRootAddress());
         Assert::AreEqual(std::wstring(), inspector.GetRootAddressNote());
         Assert::IsFalse(inspector.HasSelectedRootAddress());
+        Assert::IsFalse(inspector.IsSelectedNodeIndexable());
     }
 
     TEST_METHOD(TestSetCurrentAddressWithNote)

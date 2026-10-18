@@ -207,6 +207,41 @@ public:
     bool HasSelectedNode() const { return GetValue(HasSelectedNodeProperty); }
 
     /// <summary>
+    /// Gets the list of available indices for the selected node.
+    /// </summary>
+    LookupItemViewModelCollection& SelectedNodeIndices() noexcept { return m_vIndices; }
+
+    /// <summary>
+    /// Gets the list of available indices for the selected node.
+    /// </summary>
+    const LookupItemViewModelCollection& SelectedNodeIndices() const noexcept { return m_vIndices; }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the selected index for the selected node.
+    /// </summary>
+    static const IntModelProperty SelectedNodeIndexProperty;
+
+    /// <summary>
+    /// Gets the selected index for the selected node.
+    /// </summary>
+    ra::data::ByteAddress GetSelectedNodeIndex() const { return GetValue(SelectedNodeIndexProperty); }
+
+    /// <summary>
+    /// Sets the selected index for the selected node.
+    /// </summary>
+    void SetSelectedNodeIndex(const ra::data::ByteAddress nValue) { SetValue(SelectedNodeIndexProperty, nValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the selected node can be indexed.
+    /// </summary>
+    static const BoolModelProperty IsSelectedNodeIndexableProperty;
+
+    /// <summary>
+    /// Gets whether or not a root address is selected.
+    /// </summary>
+    bool IsSelectedNodeIndexable() const { return GetValue(IsSelectedNodeIndexableProperty); }
+
+    /// <summary>
     /// Gets the pointer chain list from the selected root address to the selected node.
     /// </summary>
     ViewModelCollection<StructFieldViewModel>& PointerChain() noexcept { return m_vPointerChain; }
@@ -279,6 +314,7 @@ private:
 
     LookupItemViewModelCollection m_vPointers;
     LookupItemViewModelCollection m_vNodes;
+    LookupItemViewModelCollection m_vIndices;
     ViewModelCollection<StructFieldViewModel> m_vPointerChain;
     MemoryWatchListViewModel m_vmFields;
     bool m_bSyncingAddress = false;

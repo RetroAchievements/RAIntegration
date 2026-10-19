@@ -60,6 +60,7 @@ private:
             case ra::data::Memory::Size::MBF32:
             case ra::data::Memory::Size::MBF32LE:
             case ra::data::Memory::Size::Text:
+            case ra::data::Memory::Size::Array:
                 return true;
 
             default:

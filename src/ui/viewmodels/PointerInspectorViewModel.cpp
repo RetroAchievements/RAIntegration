@@ -420,7 +420,7 @@ const ra::data::models::MemoryNoteModel::Reference PointerInspectorViewModel::Up
             {
                 pNote = pStructuredNote->GetNoteAtOffset(pItem->m_nOffset);
 
-                if (pNote && pNote->GetAddress() != pItem->m_nOffset)
+                if (pNote && ra::to_signed(pNote->GetAddress()) != pItem->m_nOffset)
                 {
                     std::vector<ra::data::models::MemoryNoteModel::Reference> vChain;
                     if (pStructuredNote->GetChainTo(vChain, *pNote) && vChain.size() == 3)
@@ -496,13 +496,16 @@ void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructField
     {
         case ra::data::Memory::Size::Unknown:
             nSize = ra::data::Memory::Size::EightBit;
+            pFieldViewModel.SetReadOnly(false);
             break;
 
         case ra::data::Memory::Size::Array:
             pFieldViewModel.SetFormat(ra::data::Memory::Format::Unknown);
+            pFieldViewModel.SetReadOnly(true);
             break;
 
         default:
+            pFieldViewModel.SetReadOnly(false);
             break;
     }
     pFieldViewModel.SetSize(nSize);
@@ -1043,7 +1046,7 @@ std::string PointerInspectorViewModel::GetMemRefChain(bool bMeasured) const
         pVirtualLeaf->SetAddress(vmField->m_nOffset);
         pLeafNote = pVirtualLeaf.get();
     }
-    else if (vmField->m_nOffset != pLeafNote->GetAddress())
+    else if (vmField->m_nOffset != ra::to_signed(pLeafNote->GetAddress()))
     {
         const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pStructuredNote);
         if (pArrayNote != nullptr)

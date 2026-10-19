@@ -929,6 +929,9 @@
     <ClInclude Include="services\impl\JsonFileWindowConfiguration.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridMemoryWatchSizeColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

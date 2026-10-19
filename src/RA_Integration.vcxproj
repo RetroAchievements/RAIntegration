@@ -331,6 +331,7 @@
     <ClInclude Include="ui\win32\bindings\GridAddressColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridMemoryWatchSizeColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridMemoryWatchValueColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridBooleanColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridCheckBoxColumnBinding.hh" />

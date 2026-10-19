@@ -7,6 +7,7 @@
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh"
+#include "ui\win32\bindings\GridMemoryWatchSizeColumnBinding.hh"
 #include "ui\win32\bindings\GridMemoryWatchValueColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
@@ -111,7 +112,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 80);
     m_bindFields.BindColumn(1, std::move(pDescriptionColumn));
 
-    auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
+    auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchSizeColumnBinding>(
         PointerInspectorViewModel::StructFieldViewModel::SizeProperty, vmPointerFinder.Fields().Sizes());
     pSizeColumn->SetHeader(L"Size");
     pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 90);

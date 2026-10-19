@@ -9,6 +9,7 @@
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh"
+#include "ui\win32\bindings\GridMemoryWatchSizeColumnBinding.hh"
 #include "ui\win32\bindings\GridMemoryWatchValueColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
@@ -145,7 +146,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pAddressColumn->BindTooltip(MemoryBookmarksViewModel::MemoryBookmarkViewModel::RealNoteProperty);
     m_bindBookmarks.BindColumn(1, std::move(pAddressColumn));
 
-    auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
+    auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchSizeColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty, vmMemoryBookmarks.Bookmarks().Sizes());
     pSizeColumn->SetHeader(L"Size");
     pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 90);

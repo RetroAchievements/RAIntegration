@@ -46,7 +46,6 @@ protected:
 private:
     bindings::ComboBoxBinding m_bindAddress;
     bindings::ComboBoxBinding m_bindNodes;
-    bindings::ComboBoxBinding m_bindIndices;
     bindings::TextBoxBinding m_bindDescription;
     bindings::GridBinding m_bindPointerChain;
     bindings::GridBinding m_bindFields;

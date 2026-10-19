@@ -207,41 +207,6 @@ public:
     bool HasSelectedNode() const { return GetValue(HasSelectedNodeProperty); }
 
     /// <summary>
-    /// Gets the list of available indices for the selected node.
-    /// </summary>
-    LookupItemViewModelCollection& SelectedNodeIndices() noexcept { return m_vIndices; }
-
-    /// <summary>
-    /// Gets the list of available indices for the selected node.
-    /// </summary>
-    const LookupItemViewModelCollection& SelectedNodeIndices() const noexcept { return m_vIndices; }
-
-    /// <summary>
-    /// The <see cref="ModelProperty" /> for the selected index for the selected node.
-    /// </summary>
-    static const IntModelProperty SelectedNodeIndexProperty;
-
-    /// <summary>
-    /// Gets the selected index for the selected node.
-    /// </summary>
-    ra::data::ByteAddress GetSelectedNodeIndex() const { return GetValue(SelectedNodeIndexProperty); }
-
-    /// <summary>
-    /// Sets the selected index for the selected node.
-    /// </summary>
-    void SetSelectedNodeIndex(const ra::data::ByteAddress nValue) { SetValue(SelectedNodeIndexProperty, nValue); }
-
-    /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the selected node can be indexed.
-    /// </summary>
-    static const BoolModelProperty IsSelectedNodeIndexableProperty;
-
-    /// <summary>
-    /// Gets whether or not a root address is selected.
-    /// </summary>
-    bool IsSelectedNodeIndexable() const { return GetValue(IsSelectedNodeIndexableProperty); }
-
-    /// <summary>
     /// Gets the pointer chain list from the selected root address to the selected node.
     /// </summary>
     ViewModelCollection<StructFieldViewModel>& PointerChain() noexcept { return m_vPointerChain; }
@@ -292,13 +257,13 @@ private:
     void OnSelectedFieldChanged(int nNode);
     void OnFieldSizeChanged(gsl::index nIndex);
     void OnFieldOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset);
-    void LoadNote(const ra::data::models::MemoryNoteModel* pNote);
+    void LoadNote(const ra::data::models::MemoryNoteModel* pNote, uint32_t nElementIndex);
     void LoadNodes(const ra::data::models::MemoryNoteModel* pNote);
     const ra::data::models::MemoryNoteModel* FindNestedMemoryNoteModel(const ra::data::models::MemoryNoteModel& pRootNote, int nNewNode);
     void GetPointerChain(gsl::index nIndex, std::stack<const PointerNodeViewModel*>& sChain) const;
     void SyncField(StructFieldViewModel& pFieldViewModel, const ra::data::models::MemoryNoteModel& pOffsetNote);
     void UpdatePointerVisibility(ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel* pNote);
-    const ra::data::models::MemoryNoteModel* UpdatePointerChain(int nNewNode);
+    const ra::data::models::MemoryNoteModel::Reference UpdatePointerChain(int nNewNode);
     void UpdatePointerChainRowColor(StructFieldViewModel& pPointer);
     void UpdatePointerChainValues();
     void UpdateValues();
@@ -323,7 +288,7 @@ private:
 
     std::mutex m_mtxLoadNote;
 
-    const ra::data::models::MemoryNoteModel* m_pCurrentNote = nullptr; // TODO: make StructuredNoteModel?
+    const ra::data::models::MemoryNoteModel* m_pCurrentNote = nullptr;
 };
 
 } // namespace viewmodels

@@ -29,6 +29,20 @@ private:
         Assert::AreEqual(nExpectedFormat, pNote->GetDefaultMemFormat(), sNote.c_str());
     }
 
+    void TestTrimSize(const std::wstring& sNote, const std::wstring sExpected)
+    {
+        auto sTrimmedNote = MemoryNoteModel::TrimSize(sNote, false);
+
+        Assert::AreEqual(sExpected, sTrimmedNote, sNote.c_str());
+    }
+
+    void TestTrimSizeKeepPointer(const std::wstring& sNote, const std::wstring sExpected)
+    {
+        auto sTrimmedNote = MemoryNoteModel::TrimSize(sNote, true);
+
+        Assert::AreEqual(sExpected, sTrimmedNote, sNote.c_str());
+    }
+
 public:
     TEST_METHOD(TestExtractSize)
     {
@@ -161,6 +175,32 @@ public:
         TestNoteFormat(L"[16-bit] Test", Memory::Format::Dec);
 
         TestNoteFormat(L"[16-bit BCD] Test", Memory::Format::Hex);
+    }
+
+    TEST_METHOD(TestTrimSize)
+    {
+        TestTrimSize(L"Test", L"Test");
+        TestTrimSize(L"[8-bit] Test", L"Test");
+        TestTrimSize(L"Test [8-bit]", L"Test");
+        TestTrimSize(L"Test [0]", L"Test [0]");
+
+        TestTrimSize(L"[32-bit pointer] Test", L"Test");
+        TestTrimSize(L"[3x8-bit] Test", L"Test");
+
+        TestTrimSize(L"[Japan] Test", L"[Japan] Test");
+    }
+
+    TEST_METHOD(TestTrimSizeKeepPointer)
+    {
+        TestTrimSizeKeepPointer(L"Test", L"Test");
+        TestTrimSizeKeepPointer(L"[8-bit] Test", L"Test");
+        TestTrimSizeKeepPointer(L"Test [8-bit]", L"Test");
+        TestTrimSizeKeepPointer(L"Test [0]", L"Test [0]");
+
+        TestTrimSizeKeepPointer(L"[32-bit pointer] Test", L"[pointer] Test");
+        TestTrimSizeKeepPointer(L"[3x8-bit] Test", L"[3x8-bit] Test");
+
+        TestTrimSizeKeepPointer(L"[Japan] Test", L"[Japan] Test");
     }
 };
 

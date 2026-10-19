@@ -141,20 +141,23 @@ public:
     public:
         static const int RootNodeId = -1;
 
-        PointerNodeViewModel(gsl::index nParentIndex, int32_t nOffset, const std::wstring& sLabel) noexcept
+        PointerNodeViewModel(gsl::index nParentIndex, int32_t nOffset, uint32_t nIndex, const std::wstring& sLabel) noexcept
             : LookupItemViewModel(nParentIndex < 0 ? RootNodeId : gsl::narrow_cast<int>((nParentIndex << 24) | (nOffset & 0x00FFFFFF)), sLabel),
               m_nParentIndex(nParentIndex),
-              m_nOffset(nOffset)
+              m_nOffset(nOffset),
+              m_nIndex(nIndex)
         {
         }
 
         bool IsRootNode() const noexcept { return m_nParentIndex == -1; }
         gsl::index GetParentIndex() const noexcept { return m_nParentIndex; }
         int32_t GetOffset() const noexcept { return m_nOffset; }
+        uint32_t GetIndex() const noexcept { return m_nIndex; }
 
     private:
         gsl::index m_nParentIndex = -1;
         int32_t m_nOffset = 0;
+        uint32_t m_nIndex = 0;
     };
 
     /// <summary>

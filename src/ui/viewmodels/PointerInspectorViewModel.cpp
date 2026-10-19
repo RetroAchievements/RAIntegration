@@ -408,6 +408,10 @@ const ra::data::models::MemoryNoteModel::Reference PointerInspectorViewModel::Up
             pItem->m_nOffset = nCurrentAddress;
             pItem->m_nIndent = 0;
             pItem->SetOffset(L"");
+
+            const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pNote);
+            if (pArrayNote != nullptr)
+                pItem->m_nOffset += pNode->GetIndex() * pArrayNote->GetElementSize();
         }
         else
         {
@@ -426,10 +430,6 @@ const ra::data::models::MemoryNoteModel::Reference PointerInspectorViewModel::Up
                     if (pStructuredNote->GetChainTo(vChain, *pNote) && vChain.size() == 3)
                         pNote = vChain.at(1).pMemoryNote;
                 }
-
-                const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pNote);
-                if (pArrayNote != nullptr && pArrayNote->GetElementCount() > 1)
-                    nIndex = (pItem->m_nOffset - pArrayNote->GetAddress()) / pArrayNote->GetElementSize();
             }
             else
             {
@@ -440,6 +440,10 @@ const ra::data::models::MemoryNoteModel::Reference PointerInspectorViewModel::Up
         pItem->m_pNote = pNote;
         if (pNote)
         {
+            const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pNote);
+            if (pArrayNote != nullptr && pArrayNote->GetElementCount() > 1)
+                nIndex = (pItem->m_nOffset - pArrayNote->GetAddress()) / pArrayNote->GetElementSize();
+
             // SetRealNote will keep a "[pointer]" tag on the description, so strip it now.
             std::wstring sNote = ra::data::models::MemoryNoteModel::TrimSize(pNote->GetSummary(), false);
 
@@ -627,46 +631,62 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::MemoryNoteModel
 }
 
 static void LoadSubNotes(LookupItemViewModelCollection& vNodes,
-    const ra::data::models::StructuredMemoryNoteModel& pNote, ra::data::ByteAddress nBaseAddress, int nDepth, int nParentIndex)
+    const ra::data::models::StructuredMemoryNoteModel& pNote,
+    ra::data::ByteAddress nBaseAddress, int nDepth, int nParentIndex);
+
+static void LoadSubNote(LookupItemViewModelCollection& vNodes,
+    const ra::data::models::StructuredMemoryNoteModel& pStructuredNote,
+    uint32_t nOffset, int nDepth, int nParentIndex)
+{
+    const auto sSummary = pStructuredNote.GetFullSummary();
+
+    std::wstring sLabel;
+    if (nDepth > 1)
+        sLabel = std::wstring(gsl::narrow_cast<size_t>(nDepth) - 1, ' ');
+
+    const auto pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(&pStructuredNote);
+    if (pArrayNote && pArrayNote->GetElementCount() > 1)
+    {
+        auto nStop = pArrayNote->GetElementCount();
+        if (nStop > 32)
+            nStop = 20;
+
+        for (uint32_t nIndex = 0; nIndex < nStop; ++nIndex)
+        {
+            const std::wstring sArrayLabel = ra::util::String::Printf(L"%s+%04x | %s [%u]", sLabel, nOffset, sSummary, nIndex);
+
+            auto& vmNode = vNodes.Add<PointerInspectorViewModel::PointerNodeViewModel>(nParentIndex, nOffset, nIndex, sArrayLabel);
+            if (nParentIndex == PointerInspectorViewModel::PointerNodeViewModel::RootNodeId)
+                vmNode.SetId(nOffset);
+
+            if (pStructuredNote.HasNestedStructures())
+                LoadSubNotes(vNodes, pStructuredNote, pStructuredNote.GetBaseAddress(), nDepth + 1, gsl::narrow_cast<int>(vNodes.Count() - 1));
+
+            nOffset += pArrayNote->GetElementSize();
+        }
+    }
+    else
+    {
+        sLabel += ra::util::String::Printf(L"+%04x | %s", nOffset, sSummary);
+
+        vNodes.Add<PointerInspectorViewModel::PointerNodeViewModel>(nParentIndex, nOffset, 0, sLabel);
+
+        if (pStructuredNote.HasNestedStructures())
+            LoadSubNotes(vNodes, pStructuredNote, pStructuredNote.GetBaseAddress(), nDepth + 1, gsl::narrow_cast<int>(vNodes.Count() - 1));
+    }
+}
+
+static void LoadSubNotes(LookupItemViewModelCollection& vNodes,
+    const ra::data::models::StructuredMemoryNoteModel& pNote,
+    ra::data::ByteAddress nBaseAddress, int nDepth, int nParentIndex)
 {
     pNote.EnumerateOffsetNotes([&vNodes, nBaseAddress, nDepth, nParentIndex]
                                 (const ra::data::models::MemoryNoteModel::Reference& pOffsetNote) {
-        auto nOffset = pOffsetNote.nAddress - nBaseAddress;
         const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pOffsetNote.pMemoryNote);
-        if (!pStructuredNote)
-            return true;
-
-        std::wstring sLabel;
-        if (nDepth > 1)
-            sLabel = std::wstring(gsl::narrow_cast<size_t>(nDepth) - 1, ' ');
-
-        const auto pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pStructuredNote);
-        if (pArrayNote && pArrayNote->GetElementCount() > 1)
+        if (pStructuredNote)
         {
-            auto nStop = pArrayNote->GetElementCount();
-            if (nStop > 32)
-                nStop = 20;
-
-            for (uint32_t nIndex = 0; nIndex < nStop; ++nIndex)
-            {
-                const std::wstring sArrayLabel = ra::util::String::Printf(L"%s+%04x | %s [%u]", sLabel, nOffset, pStructuredNote->GetFullSummary(), nIndex);
-
-                vNodes.Add<PointerInspectorViewModel::PointerNodeViewModel>(nParentIndex, nOffset, sArrayLabel);
-
-                if (pStructuredNote->HasNestedStructures())
-                    LoadSubNotes(vNodes, *pStructuredNote, pStructuredNote->GetBaseAddress(), nDepth + 1, gsl::narrow_cast<int>(vNodes.Count() - 1));
-
-                nOffset += pArrayNote->GetElementSize();
-            }
-        }
-        else
-        {
-            sLabel += ra::util::String::Printf(L"+%04x | %s", nOffset, pStructuredNote->GetFullSummary());
-
-            vNodes.Add<PointerInspectorViewModel::PointerNodeViewModel>(nParentIndex, nOffset, sLabel);
-
-            if (pStructuredNote->HasNestedStructures())
-                LoadSubNotes(vNodes, *pStructuredNote, pStructuredNote->GetBaseAddress(), nDepth + 1, gsl::narrow_cast<int>(vNodes.Count() - 1));
+            const auto nOffset = pOffsetNote.nAddress - nBaseAddress;
+            LoadSubNote(vNodes, *pStructuredNote, nOffset, nDepth, nParentIndex);
         }
 
         return true;
@@ -682,22 +702,30 @@ void PointerInspectorViewModel::LoadNodes(const ra::data::models::MemoryNoteMode
 
     if (pNote == nullptr)
     {
-        m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetSelectedRootAddress()), L"Root");
+        m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetSelectedRootAddress()), 0, L"Root");
     }
     else
     {
-        m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetSelectedRootAddress()), pNote->GetFullSummary());
+        const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pNote);
+        if (pArrayNote)
+        {
+            LoadSubNote(m_vNodes, *pArrayNote, 0, 1, PointerNodeViewModel::RootNodeId);
+        }
+        else
+        {
+            m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetSelectedRootAddress()), 0, pNote->GetFullSummary());
 
-        const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pNote);
-        if (pStructuredNote && pStructuredNote->HasNestedStructures())
-            LoadSubNotes(m_vNodes, *pStructuredNote, pStructuredNote->GetBaseAddress(), 1, 0);
+            const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pNote);
+            if (pStructuredNote && pStructuredNote->HasNestedStructures())
+                LoadSubNotes(m_vNodes, *pStructuredNote, pStructuredNote->GetBaseAddress(), 1, 0);
+        }
     }
 
     m_vNodes.EndUpdate();
 
-    // if the selected item is no longer available, select the root node
+    // if the selected item is no longer available, select the first node
     if (m_vNodes.FindItemIndex(LookupItemViewModel::IdProperty, nSelectedNode) == -1)
-        SetSelectedNode(PointerNodeViewModel::RootNodeId);
+        SetSelectedNode(m_vNodes.Count() > 0 ? m_vNodes.GetItemAt(0)->GetId() : PointerNodeViewModel::RootNodeId);
 }
 
 static void AppendNoteOffsetAndSize(ra::util::StringBuilder& builder, const std::wstring& sIndent,

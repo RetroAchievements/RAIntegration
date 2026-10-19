@@ -97,7 +97,7 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindAddress.SetDropDownWidth(300);
     m_bindNodes.BindItems(vmPointerFinder.Nodes());
     m_bindNodes.BindSelectedItem(PointerInspectorViewModel::SelectedNodeProperty);
-    m_bindDescription.BindText(PointerInspectorViewModel::RootAddressNoteProperty);
+    m_bindDescription.BindText(PointerInspectorViewModel::SelectedNodeNoteProperty);
 
     auto pOffsetColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         PointerInspectorViewModel::StructFieldViewModel::OffsetProperty);

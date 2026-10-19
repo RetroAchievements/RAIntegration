@@ -162,8 +162,14 @@ void MemoryWatchViewModel::OnSizeChanged(const IntModelProperty::ChangeArgs& arg
     {
         case ra::data::Memory::Size::BitCount:
         case ra::data::Memory::Size::Text:
+            SetReadOnly(true);
+            break;
+
         case ra::data::Memory::Size::Array:
             SetReadOnly(true);
+
+            // Array value is always constant. No need to try to read memory (below).
+            SetValue(CurrentValueProperty, BuildCurrentValue());
             return;
 
         default:

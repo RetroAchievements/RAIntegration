@@ -23,7 +23,7 @@ constexpr int SelectedNodeNone = -2;
 
 const IntModelProperty PointerInspectorViewModel::SelectedRootAddressProperty("PointerInspectorViewModel", "SelectedRootAddress", 0);
 const BoolModelProperty PointerInspectorViewModel::HasSelectedRootAddressProperty("PointerInspectorViewModel", "HasSelectedRootAddress", false);
-const StringModelProperty PointerInspectorViewModel::RootAddressNoteProperty("PointerInspectorViewModel", "RootAddressNote", L"");
+const StringModelProperty PointerInspectorViewModel::SelectedNodeNoteProperty("PointerInspectorViewModel", "RootAddressNote", L"");
 const IntModelProperty PointerInspectorViewModel::SelectedNodeProperty("PointerInspectorViewModel", "SelectedNode", SelectedNodeNone);
 const BoolModelProperty PointerInspectorViewModel::HasSelectedNodeProperty("PointerInspectorViewModel", "HasSelectedNode", false);
 const StringModelProperty PointerInspectorViewModel::CurrentFieldNoteProperty("PointerInspectorViewModel", "CurrentFieldNote", L"");
@@ -81,7 +81,7 @@ void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::Change
     {
         UpdateSourceMemoryNote();
     }
-    else if (args.Property == RootAddressNoteProperty && !m_bSyncingNote)
+    else if (args.Property == SelectedNodeNoteProperty && !m_bSyncingNote)
     {
         UpdateSourceMemoryNote();
     }
@@ -97,7 +97,7 @@ void PointerInspectorViewModel::OnViewModelIntValueChanged(const IntModelPropert
 
 void PointerInspectorViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
-    if (args.Property == StructFieldViewModel::OffsetProperty)
+    if (args.Property == StructFieldViewModel::OffsetProperty && !m_bSyncingNote)
         OnFieldOffsetChanged(nIndex, args.tNewValue);
 }
 
@@ -132,7 +132,7 @@ void PointerInspectorViewModel::OnActiveGameChanged()
         m_bSyncingAddress = false;
 
         m_bSyncingNote = true;
-        SetRootAddressNote(L"");
+        SetSelectedNodeNote(L"");
         m_bSyncingNote = false;
 
         m_bSyncingNote = true;
@@ -460,6 +460,8 @@ const ra::data::models::MemoryNoteModel::Reference PointerInspectorViewModel::Up
             pItem->SetSize(ra::data::Memory::Size::EightBit);
         }
 
+        pItem->m_nIndex = nIndex;
+
         // EndInitialization does memory reads, so it must be dispatched. we'll do it in a bit
 
         ++nInsertIndex;
@@ -488,7 +490,7 @@ void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructField
 
     pFieldViewModel.SetFormat(pOffsetNote.GetDefaultMemFormat());
 
-    const auto& sNote = pOffsetNote.GetNote();
+    const auto sNote = pOffsetNote.GetNote();
     pFieldViewModel.SetRealNote(sNote);
 
     auto nSize = pOffsetNote.GetMemSize();
@@ -532,7 +534,7 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::MemoryNoteModel
 {
     if (pNote == nullptr)
     {
-        SetRootAddressNote(L"");
+        SetSelectedNodeNote(L"");
         m_pCurrentNote = nullptr;
         m_vmFields.Items().Clear();
         return;
@@ -542,7 +544,7 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::MemoryNoteModel
         std::lock_guard<std::mutex> lock(m_mtxLoadNote);
 
         m_bSyncingNote = true;
-        SetRootAddressNote(pNote->GetFullSummary());
+        SetSelectedNodeNote(pNote->GetFullSummary());
         m_bSyncingNote = false;
 
         m_pCurrentNote = pNote;
@@ -586,10 +588,9 @@ void PointerInspectorViewModel::LoadNote(const ra::data::models::MemoryNoteModel
                     if (pArrayNote != nullptr)
                         pItem->m_nOffset += nElementIndex * pArrayNote->GetElementSize();
 
+                    m_bSyncingNote = true;
                     pItem->SetOffset(sOffset);
                     pItem->SetAddressWithoutUpdatingValue(pOffsetNote.nAddress);
-
-                    m_bSyncingNote = true;
                     SyncField(*pItem, *pOffsetNote.pMemoryNote);
                     m_bSyncingNote = false;
 
@@ -699,68 +700,94 @@ void PointerInspectorViewModel::LoadNodes(const ra::data::models::MemoryNoteMode
         SetSelectedNode(PointerNodeViewModel::RootNodeId);
 }
 
+static void AppendNoteOffsetAndSize(ra::util::StringBuilder& builder, const std::wstring& sIndent,
+    const ra::data::models::MemoryNoteModel& pNote, int32_t nOffset, ra::data::Memory::Size nSize)
+{
+    builder.Append(ra::util::String::Printf(L"\r\n%s0x%02X: ", sIndent, ra::to_unsigned(nOffset)));
+
+    if (nSize != ra::data::Memory::Size::Unknown)
+    {
+        builder.Append(L'[');
+        if (nSize == ra::data::Memory::Size::Text)
+        {
+            builder.Append(pNote.GetBytes());
+            builder.Append(L"-byte ASCII] ");
+        }
+        else
+        {
+            switch (pNote.GetType())
+            {
+                case ra::data::models::MemoryNoteType::Pointer:
+                    builder.Append(ra::data::Memory::SizeString(nSize));
+                    builder.Append(L" pointer] ");
+                    break;
+
+                case ra::data::models::MemoryNoteType::Array:
+                {
+                    const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(&pNote);
+                    Expects(pArrayNote != nullptr);
+                    builder.Append(ra::util::String::Printf(L"%ux%u bytes] ", pArrayNote->GetElementCount(), pArrayNote->GetElementSize()));
+                    break;
+                }
+
+                default:
+                    builder.Append(ra::data::Memory::SizeString(nSize));
+                    builder.Append(L"] ");
+                    break;
+            }
+        }
+    }
+}
+
 void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::util::StringBuilder& builder,
-    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
-    gsl::index nDepth)
+    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain, std::wstring& sIndent)
 {
     std::unique_ptr<ra::data::models::MemoryNoteModel> newNote;
 
-    // if a single field is selected, push the current field value back into the field
+    // If a single field is selected, push the current field note value back into the field.
     const auto nSingleSelectionIndex = gsl::narrow_cast<gsl::index>(m_vmFields.GetSingleSelectionIndex());
     auto* pSelectedField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nSingleSelectionIndex);
 
-    // SyncField will cause pField to point at the local newNote, capture the current value so it can be restored
+    // SyncField will cause pField to point at the local newNote. Capture the current value so it can be restored.
     const ra::data::models::MemoryNoteModel* pExistingNote = pSelectedField ? pSelectedField->m_pNote : nullptr;
 
     if (pSelectedField)
     {
-        m_bSyncingNote = true;
         newNote = ra::data::models::MemoryNoteModel::Parse(GetCurrentFieldNote());
-        SyncField(*pSelectedField, *newNote);
+
+        m_bSyncingNote = true;
+        SyncField(*pSelectedField, *newNote); // Sets pSelectedField->m_pNote to newNote so we don't have to check in the loop.
         m_bSyncingNote = false;
 
-        const bool bExistingPointer = pExistingNote && pExistingNote->GetType() == ra::data::models::MemoryNoteType::Pointer;
-        const bool bNewPointer = newNote->GetType() == ra::data::models::MemoryNoteType::Pointer;
+        const bool bExistingPointer = pExistingNote && dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pExistingNote) != nullptr;
+        const bool bNewPointer = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(newNote.get()) != nullptr;
         if (bExistingPointer != bNewPointer)
             m_bRebuildNodes = true;
     }
 
+    // If we're viewing a non-zero index of an array, the offsets need to be adjusted back to the 0th element.
+    int32_t nAdjustment = 0;
+    const auto* pArrayParent = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(m_pCurrentNote);
+    if (pArrayParent != nullptr && m_vPointerChain.Count() > 0)
+    {
+        const auto* pParent = m_vPointerChain.GetItemAt<StructFieldViewModel>(m_vPointerChain.Count() - 1);
+        nAdjustment = pParent->m_nIndex * pArrayParent->GetElementSize();
+    }
+
     for (auto& pItem : m_vmFields.Items())
     {
-        auto* pField = dynamic_cast<StructFieldViewModel*>(&pItem);
+        const auto* pField = dynamic_cast<StructFieldViewModel*>(&pItem);
         if (!pField)
             continue;
 
-        const bool bIsPointer = pField->m_pNote && pField->m_pNote->GetType() == ra::data::models::MemoryNoteType::Pointer;
-
-        builder.Append(L"\r\n");
-        builder.Append(std::wstring(nDepth, '+'));
-        builder.Append(ra::util::String::Printf(L"0x%02X: ", pField->m_nOffset));
-
-        if (pField->GetSize() != ra::data::Memory::Size::Unknown)
-        {
-            builder.Append('[');
-            if (pField->GetSize() == ra::data::Memory::Size::Text)
-            {
-                builder.Append(newNote->GetBytes());
-                builder.Append(L"-byte ASCII] ");
-            }
-            else
-            {
-                builder.Append(ra::data::Memory::SizeString(pField->GetSize()));
-
-                if (bIsPointer)
-                    builder.Append(L" pointer] ");
-                else
-                    builder.Append(L"] ");
-            }
-        }
+        Expects(pField->m_pNote != nullptr);
+        AppendNoteOffsetAndSize(builder, sIndent, *pField->m_pNote, pField->m_nOffset - nAdjustment, pField->GetSize());
 
         const auto& sDescription = pField->GetDescription();
-        if (bIsPointer && ra::util::String::StartsWith(sDescription, L"[pointer] "))
-            builder.Append(pField->GetDescription().substr(10));
+        if (pField->m_pNote->GetType() == ra::data::models::MemoryNoteType::Pointer && ra::util::String::StartsWith(sDescription, L"[pointer] "))
+            builder.Append(sDescription.substr(10));
         else
-            builder.Append(pField->GetDescription());
+            builder.Append(sDescription);
 
         const auto& sBody = pField->GetBody();
         if (!sBody.empty())
@@ -769,69 +796,71 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::util::StringBuilder&
             builder.Append(sBody);
         }
 
-        if (bIsPointer)
-            BuildNote(builder, sChain, nDepth + 1, *pField->m_pNote);
+        const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pField->m_pNote);
+        if (pStructuredNote != nullptr)
+            BuildNote(builder, sChain, *pStructuredNote, sIndent);
     }
 
-    // restore the captured note (temporary note is about to go out of scope)
+    // Restore the captured note (temporary note is about to go out of scope).
     if (newNote && pSelectedField)
         pSelectedField->m_pNote = pExistingNote;
 }
 
 void PointerInspectorViewModel::BuildNote(ra::util::StringBuilder& builder,
     std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
-    gsl::index nDepth, const ra::data::models::MemoryNoteModel& pNote)
+    const ra::data::models::MemoryNoteModel& pNote, std::wstring& sIndent)
 {
-    if (nDepth == gsl::narrow_cast<gsl::index>(sChain.size()))
+    const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(&pNote);
+    Expects(pStructuredNote != nullptr);
+
+    switch (pNote.GetType())
     {
-        BuildNoteForCurrentNode(builder, sChain, nDepth);
+        case ra::data::models::MemoryNoteType::Pointer:
+            sIndent.push_back(L'+');
+            break;
+
+        case ra::data::models::MemoryNoteType::Array:
+            sIndent.push_back(L'|');
+            break;
+
+        default:
+            break;
+    }
+
+    if (sIndent.length() == sChain.size() && pStructuredNote == m_pCurrentNote)
+    {
+        BuildNoteForCurrentNode(builder, sChain, sIndent);
+        sIndent.pop_back();
         return;
     }
 
-    const auto* pPointerNote = dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(&pNote);
-    Expects(pPointerNote != nullptr);
-    const auto nBaseAddress = pPointerNote->GetBaseAddress();
+    const auto nBaseAddress = pStructuredNote->GetBaseAddress();
 
-    pPointerNote->EnumerateOffsetNotes([this, &builder, &sChain, nDepth, nBaseAddress]
-        (const ra::data::models::MemoryNoteModel::Reference& pOffsetNote) {
-            const auto nOffset = pOffsetNote.nAddress - nBaseAddress;
+    pStructuredNote->EnumerateOffsetNotes([this, &builder, &sChain, nBaseAddress, &sIndent]
+        (const ra::data::models::MemoryNoteModel& pOffsetNote) {
+            AppendNoteOffsetAndSize(builder, sIndent, pOffsetNote, pOffsetNote.GetAddress(), pOffsetNote.GetMemSize());
 
-            builder.Append(L"\r\n");
-            builder.Append(std::wstring(nDepth, '+'));
-            builder.Append(ra::util::String::Printf(L"0x%02X: ", nOffset));
-
-            if (pOffsetNote.pMemoryNote->GetMemSize() != ra::data::Memory::Size::Unknown)
+            const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(&pOffsetNote);
+            if (pStructuredNote != nullptr)
             {
-                builder.Append('[');
-                if (pOffsetNote.pMemoryNote->GetMemSize() == ra::data::Memory::Size::Text)
-                {
-                    builder.Append(pOffsetNote.pMemoryNote->GetBytes());
-                    builder.Append(L"-byte ASCII] ");
-                }
+                // If this is the selected node, use the editable text value. Otherwise, pull the summary value from the note.
+                if (&pOffsetNote == m_pCurrentNote)
+                    builder.Append(ra::data::models::MemoryNoteModel::TrimSize(GetSelectedNodeNote(), false));
                 else
-                {
-                    builder.Append(ra::data::Memory::SizeString(pOffsetNote.pMemoryNote->GetMemSize()));
+                    builder.Append(ra::data::models::MemoryNoteModel::TrimSize(pOffsetNote.GetSummary(), false));
 
-                    if (pOffsetNote.pMemoryNote->GetType() == ra::data::models::MemoryNoteType::Pointer)
-                        builder.Append(L" pointer] ");
-                    else
-                        builder.Append(L"] ");
-                }
+                BuildNote(builder, sChain, *pStructuredNote, sIndent);
             }
-
-
-            if (pOffsetNote.pMemoryNote->GetType() != ra::data::models::MemoryNoteType::Pointer)
-                builder.Append(ra::data::models::MemoryNoteModel::TrimSize(pOffsetNote.pMemoryNote->GetNote(), false));
-            else if (pOffsetNote.pMemoryNote == m_pCurrentNote)
-                builder.Append(ra::data::models::MemoryNoteModel::TrimSize(GetRootAddressNote(), false));
             else
-                builder.Append(ra::data::models::MemoryNoteModel::TrimSize(pOffsetNote.pMemoryNote->GetSummary(), false));
-            
-            if (pOffsetNote.pMemoryNote->GetType() == ra::data::models::MemoryNoteType::Pointer)
-                BuildNote(builder, sChain, nDepth + 1, *pOffsetNote.pMemoryNote);
+            {
+                // Not a structured note. Capture the entire note (header and body).
+                builder.Append(ra::data::models::MemoryNoteModel::TrimSize(pOffsetNote.GetNote(), false));
+            }
 
             return true;
         });
+
+    sIndent.pop_back();
 }
 
 void PointerInspectorViewModel::UpdateSourceMemoryNote()
@@ -852,12 +881,14 @@ void PointerInspectorViewModel::UpdateSourceMemoryNote()
             ra::util::StringBuilder builder;
 
             if (pNote == m_pCurrentNote)
-                builder.Append(GetRootAddressNote());
+                builder.Append(GetSelectedNodeNote());
             else
                 builder.Append(pNote->GetFullSummary());
 
             m_bRebuildNodes = false;
-            BuildNote(builder, sChain, 1, *pNote);
+
+            std::wstring sIndent;
+            BuildNote(builder, sChain, *pNote, sIndent);
 
             // nested note reference is invalidated in SetMemoryNote. temporarily release
             // the reference and restore it after SetMemoryNote completes to prevent the UI
@@ -875,13 +906,13 @@ void PointerInspectorViewModel::UpdateSourceMemoryNote()
 
             // update the field note pointers
             gsl::index nNoteIndex = 0;
-            if (m_pCurrentNote) {
-                dynamic_cast<const ra::data::models::PointerMemoryNoteModel*>(m_pCurrentNote)->EnumerateOffsetNotes([this, &nNoteIndex]
-                    (const ra::data::models::MemoryNoteModel::Reference& pOffsetNote)
-                        {
-                            m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNoteIndex++)->m_pNote = pOffsetNote.pMemoryNote;
-                            return true;
-                        });
+            const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(m_pCurrentNote);
+            if (pStructuredNote) {
+                pStructuredNote->EnumerateOffsetNotes([this, &nNoteIndex](const ra::data::models::MemoryNoteModel& pOffsetNote)
+                {
+                    m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNoteIndex++)->m_pNote = &pOffsetNote;
+                    return true;
+                });
             }
             for (; nNoteIndex < gsl::narrow_cast<gsl::index>(m_vmFields.Items().Count()); ++nNoteIndex)
                 m_vmFields.Items().GetItemAt<StructFieldViewModel>(nNoteIndex)->m_pNote = nullptr;

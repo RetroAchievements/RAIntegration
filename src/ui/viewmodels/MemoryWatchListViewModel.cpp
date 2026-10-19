@@ -32,7 +32,6 @@ MemoryWatchListViewModel::MemoryWatchListViewModel() noexcept
     m_vSizes.Add(ra::etoi(ra::data::Memory::Size::MBF32), ra::data::Memory::SizeString(ra::data::Memory::Size::MBF32));
     m_vSizes.Add(ra::etoi(ra::data::Memory::Size::MBF32LE), ra::data::Memory::SizeString(ra::data::Memory::Size::MBF32LE));
     m_vSizes.Add(ra::etoi(ra::data::Memory::Size::Text), ra::data::Memory::SizeString(ra::data::Memory::Size::Text));
-    m_vSizes.Add(ra::etoi(ra::data::Memory::Size::Array), ra::data::Memory::SizeString(ra::data::Memory::Size::Array));
 
     m_vFormats.Add(ra::etoi(ra::data::Memory::Format::Hex), L"Hex");
     m_vFormats.Add(ra::etoi(ra::data::Memory::Format::Dec), L"Dec");

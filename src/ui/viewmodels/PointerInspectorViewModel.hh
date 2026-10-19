@@ -76,21 +76,6 @@ public:
     /// </summary>
     bool HasSelectedRootAddress() const { return GetValue(HasSelectedRootAddressProperty); }
 
-    /// <summary>
-    /// The <see cref="ModelProperty" /> for the selected root address's note.
-    /// </summary>
-    static const StringModelProperty RootAddressNoteProperty;
-
-    /// <summary>
-    /// Gets the selected root address's note.
-    /// </summary>
-    const std::wstring& GetRootAddressNote() const { return GetValue(RootAddressNoteProperty); }
-
-    /// <summary>
-    /// Sets the selected root address's note.
-    /// </summary>
-    void SetRootAddressNote(const std::wstring& sValue) { SetValue(RootAddressNoteProperty, sValue); }
-
 
     class StructFieldViewModel : public MemoryWatchViewModel
     {
@@ -131,6 +116,7 @@ public:
 
         int32_t m_nOffset = 0;
         int32_t m_nIndent = 0;
+        uint32_t m_nIndex = 0;
         const ra::data::models::MemoryNoteModel* m_pNote = nullptr;
         bool m_bFormattingOffset = false;
     };
@@ -207,6 +193,21 @@ public:
     bool HasSelectedNode() const { return GetValue(HasSelectedNodeProperty); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the selected node's note text.
+    /// </summary>
+    static const StringModelProperty SelectedNodeNoteProperty;
+
+    /// <summary>
+    /// Gets the selected node's note text.
+    /// </summary>
+    const std::wstring& GetSelectedNodeNote() const { return GetValue(SelectedNodeNoteProperty); }
+
+    /// <summary>
+    /// Sets the selected node's note text.
+    /// </summary>
+    void SetSelectedNodeNote(const std::wstring& sValue) { SetValue(SelectedNodeNoteProperty, sValue); }
+
+    /// <summary>
     /// Gets the pointer chain list from the selected root address to the selected node.
     /// </summary>
     ViewModelCollection<StructFieldViewModel>& PointerChain() noexcept { return m_vPointerChain; }
@@ -272,10 +273,10 @@ private:
     void UpdateSourceMemoryNote();
     void BuildNote(ra::util::StringBuilder& builder,
                    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
-                   gsl::index nDepth, const ra::data::models::MemoryNoteModel& pNote);
+                   const ra::data::models::MemoryNoteModel& pNote, std::wstring& sIndent);
     void BuildNoteForCurrentNode(ra::util::StringBuilder& builder,
                                  std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
-                                 gsl::index nDepth);
+                                 std::wstring& sIndent);
 
     LookupItemViewModelCollection m_vPointers;
     LookupItemViewModelCollection m_vNodes;

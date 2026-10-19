@@ -20,6 +20,16 @@ public:
         ra::ui::win32::bindings::GridLookupColumnBinding(pBoundProperty, vmItems)
     {}
 
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+        const auto sLabel = m_vmItems.GetLabelForId(nValue);
+        if (!sLabel.empty())
+            return sLabel;
+
+        return ra::data::Memory::SizeString(ra::itoe<ra::data::Memory::Size>(nValue));
+    }
+
     HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
     {
         const auto& vmItems = static_cast<ra::ui::win32::bindings::GridBinding*>(pInfo.pGridBinding)->GetItems();

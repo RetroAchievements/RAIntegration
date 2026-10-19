@@ -78,6 +78,11 @@ public:
     /// <remarks>This function is not implicitly recursive. If you want to traverse the children of each match, do so in the callback</remarks>
     void EnumerateOffsetNotes(std::function<bool(const MemoryNoteModel::Reference&)> fCallback, ra::data::ByteAddress nBaseAddress = 0) const;
 
+    /// <summary>
+    /// Calls the provided callback for each subnote.
+    /// </summary>
+    void EnumerateOffsetNotes(std::function<bool(const MemoryNoteModel&)> fCallback) const;
+
     virtual void ExtractIndirectNotes(std::wstring_view svParentIndent);
 
     typedef std::function<void(ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel&)> NoteMovedFunction;

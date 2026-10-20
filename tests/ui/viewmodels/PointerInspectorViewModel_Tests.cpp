@@ -8,7 +8,7 @@
 #include "tests\devkit\context\mocks\MockUserContext.hh"
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockLogger.hh"
-#include "tests\devkit\testutil\MemoryAsserts.hh"
+#include "tests\devkit\testutil\MemoryAsserts.hh" // VCIC-Excluded: Provides ToString<Memory::Format,Memory::Size> for Assert
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockGameContext.hh"
 

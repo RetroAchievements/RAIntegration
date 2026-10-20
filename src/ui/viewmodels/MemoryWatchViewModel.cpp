@@ -579,7 +579,7 @@ void MemoryWatchViewModel::UpdateRealNote()
                 if (pCondition->type == RC_CONDITION_MEASURED)
                 {
                     std::vector<ra::data::util::IndirectNoteResolver::Node> vParentChain;
-                    ra::data::util::IndirectNoteResolver resolver(*pMemoryNotes);
+                    const ra::data::util::IndirectNoteResolver resolver(*pMemoryNotes);
                     if (resolver.ResolveOperand(*pCondition, true, vParentChain) != 0)
                         pNote = vParentChain.back().pNote;
 

@@ -799,7 +799,8 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::util::StringBuilder&
     if (pArrayParent != nullptr && m_vPointerChain.Count() > 0)
     {
         const auto* pParent = m_vPointerChain.GetItemAt<StructFieldViewModel>(m_vPointerChain.Count() - 1);
-        nAdjustment = pParent->m_nIndex * pArrayParent->GetElementSize();
+        if (pParent->m_nIndex != 0xFFFFFFFF)
+            nAdjustment = pParent->m_nIndex * pArrayParent->GetElementSize();
     }
 
     for (auto& pItem : m_vmFields.Items())

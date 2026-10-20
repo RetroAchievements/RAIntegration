@@ -549,6 +549,48 @@ public:
         inspector.AssertPointerChain(1, L"+0000", 0x0C, L"Stats", L"14");
     }
 
+    TEST_METHOD(TestSelectedNodeStruct)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 128> memory = {};
+        for (uint8_t i = 4; i < memory.size(); i += 4)
+            memory.at(i) = i + 8;
+        memory.at(0x0C) = 'H';
+        memory.at(0x0D) = 'i';
+        inspector.mockEmulatorContext.MockMemory(memory);
+
+        inspector.SetSelectedRootAddress({ 4U });
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
+            L"[32 bytes] Inventory\r\n"
+            L"|0x00: [32-bit] Item type\r\n"
+            L"|0x04: [16-bit] Item quantity\r\n"
+            L"|0x06: [16-bit] Item flags\r\n"
+            L"b0=Equipped\r\n"
+            L"|0x08: [24-byte ASCII] Item name"
+        );
+
+        Assert::AreEqual({ 4U }, inspector.GetSelectedRootAddress());
+        Assert::AreEqual(std::wstring(L"[32 bytes] Inventory"), inspector.GetSelectedNodeNote());
+
+        Assert::AreEqual({ 1U }, inspector.Nodes().Count());
+        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"+0000 | [32 bytes] Inventory"), inspector.Nodes().GetItemAt(0)->GetLabel());
+
+        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.GetSelectedNode());
+        Assert::AreEqual(std::wstring(L"[32 bytes] Inventory"), inspector.GetSelectedNodeNote());
+        Assert::AreEqual({ 4U }, inspector.Fields().Items().Count());
+        inspector.AssertField(0, 0, 0x04U, L"+0000", L"Item type", ra::data::Memory::Size::ThirtyTwoBit, ra::data::Memory::Format::Dec, L"12");
+        inspector.AssertField(1, 4, 0x08U, L"+0004", L"Item quantity", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Dec, L"16");
+        inspector.AssertField(2, 6, 0x0AU, L"+0006", L"Item flags", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Hex, L"0000");
+        inspector.AssertField(3, 8, 0x0CU, L"+0008", L"Item name", ra::data::Memory::Size::Text, ra::data::Memory::Format::Dec, L"Hi");
+
+        Assert::AreEqual({ 1U }, inspector.PointerChain().Count());
+        inspector.AssertPointerChain(0, L"", 0x04, L"Inventory", L"");
+    }
+
     TEST_METHOD(TestSelectedField)
     {
         PointerInspectorViewModelHarness inspector;
@@ -900,6 +942,47 @@ public:
 
         Assert::AreEqual(std::wstring(L"[16-bit] Item quality"), inspector.GetCurrentFieldNote());
         inspector.AssertField(1, 0x14, 0x28U, L"+0004", L"Item quality", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Dec, L"48");
+    }
+
+    TEST_METHOD(TestUpdateCurrentFieldNoteStruct)
+    {
+        PointerInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 128> memory = {};
+        for (uint8_t i = 4; i < memory.size(); i += 4)
+            memory.at(i) = i + 8;
+        inspector.mockEmulatorContext.MockMemory(memory);
+
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
+            L"[32 bytes] Inventory\r\n"
+            L"|0x00: [32-bit] Item type\r\n"
+            L"|0x04: [16-bit] Item quantity\r\n"
+            L"|0x06: [16-bit] Item flags\r\n"
+            L"b0=Equipped\r\n"
+            L"|0x08: [24-byte ASCII] Item name"
+        );
+        inspector.SetSelectedRootAddress({ 4U });
+
+        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.GetSelectedNode());
+        Assert::AreEqual({ 4U }, inspector.Fields().Items().Count());
+        inspector.AssertField(1, 4, 0x08U, L"+0004", L"Item quantity", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Dec, L"16");
+        inspector.Fields().Items().GetItemAt(1)->SetSelected(true);
+        Assert::AreEqual(std::wstring(L"[16-bit] Item quantity"), inspector.GetCurrentFieldNote());
+
+        inspector.SetCurrentFieldNote(L"[16-bit] Item quality");
+        inspector.AssertNote({ 4U }, std::wstring(
+            L"[32 bytes] Inventory\r\n"
+            L"|0x00: [32-bit] Item type\r\n"
+            L"|0x04: [16-bit] Item quality\r\n"
+            L"|0x06: [16-bit] Item flags\r\n"
+            L"b0=Equipped\r\n"
+            L"|0x08: [24-byte ASCII] Item name"
+        ));
+
+        Assert::AreEqual(std::wstring(L"[16-bit] Item quality"), inspector.GetCurrentFieldNote());
+        inspector.AssertField(1, 4, 0x08U, L"+0004", L"Item quality", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Dec, L"16");
     }
 
     TEST_METHOD(TestUpdateFieldConvertToPointer)

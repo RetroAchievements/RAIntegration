@@ -73,6 +73,11 @@ public:
     bool HasNestedStructures() const noexcept { return m_bHasNestedStructures; }
 
     /// <summary>
+    /// Gets whether or not the note has any fields defined.
+    /// </summary>
+    bool HasOffsetNotes() const noexcept { return !m_vOffsetNotes.empty(); }
+
+    /// <summary>
     /// Calls the provided callback for each subnote.
     /// </summary>
     /// <remarks>This function is not implicitly recursive. If you want to traverse the children of each match, do so in the callback</remarks>

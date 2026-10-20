@@ -150,6 +150,31 @@ void StructuredDataBrowserViewModel::OnActiveGameChanged()
     }
 }
 
+static bool IsNoteVisible(const ra::data::models::MemoryNoteModel& pNote) noexcept
+{
+    switch (pNote.GetType())
+    {
+        case ra::data::models::MemoryNoteType::Pointer:
+            return true;
+
+        case ra::data::models::MemoryNoteType::Array:
+        {
+            const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(&pNote);
+            return (pArrayNote && pArrayNote->HasOffsetNotes());
+        }
+
+        default:
+            return false;
+    }
+}
+
+static std::wstring FormatNodeLabel(const ra::context::IEmulatorMemoryContext& pMemoryContext, ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel& pNote)
+{
+    return ra::util::String::Printf(L"%s | %s",
+        pMemoryContext.FormatAddress(nAddress),
+        ra::data::models::MemoryNoteModel::TrimSize(pNote.GetSummary(), false));
+}
+
 void StructuredDataBrowserViewModel::OnEndGameLoad()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
@@ -163,15 +188,8 @@ void StructuredDataBrowserViewModel::OnEndGameLoad()
     {
         pMemoryNotes->EnumerateNotes(
             [this, &pMemoryContext](const ra::data::models::MemoryNoteModel::Reference& pNote) {
-                switch (pNote.pMemoryNote->GetType())
-                {
-                    case ra::data::models::MemoryNoteType::Pointer:
-                    case ra::data::models::MemoryNoteType::Array:
-                        m_vRootAddresses.Add(pNote.nAddress,
-                                        ra::util::String::Printf(L"%s | %s", pMemoryContext.FormatAddress(pNote.nAddress),
-                                                                             pNote.pMemoryNote->GetSummary()));
-                        break;
-                }
+                if (pNote.pMemoryNote && IsNoteVisible(*pNote.pMemoryNote))
+                    m_vRootAddresses.Add(pNote.nAddress, FormatNodeLabel(pMemoryContext, pNote.nAddress, *pNote.pMemoryNote));
 
                 return true;
             });
@@ -203,17 +221,7 @@ void StructuredDataBrowserViewModel::OnMemoryNoteChanged(ra::data::ByteAddress n
 
 void StructuredDataBrowserViewModel::UpdateAddressVisibility(ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel* pNote)
 {
-    bool bIsPointerNote = false;
-    if (pNote)
-    {
-        switch (pNote->GetType())
-        {
-            case ra::data::models::MemoryNoteType::Pointer:
-            case ra::data::models::MemoryNoteType::Array:
-                bIsPointerNote = true;
-                break;
-        }
-    }
+    const bool bIsNoteVisible = pNote && IsNoteVisible(*pNote);
 
     const gsl::index nCount = gsl::narrow_cast<gsl::index>(m_vRootAddresses.Count());
     gsl::index nIndex = 0;
@@ -222,7 +230,7 @@ void StructuredDataBrowserViewModel::UpdateAddressVisibility(ra::data::ByteAddre
         const auto nPointerAddress = gsl::narrow_cast<ra::data::ByteAddress>(m_vRootAddresses.GetItemValue(nIndex, LookupItemViewModel::IdProperty));
         if (nPointerAddress == nAddress)
         {
-            if (!bIsPointerNote)
+            if (!bIsNoteVisible)
             {
                 // non-pointer note found, remove it
                 m_vRootAddresses.RemoveAt(nIndex);
@@ -244,14 +252,12 @@ void StructuredDataBrowserViewModel::UpdateAddressVisibility(ra::data::ByteAddre
         ++nIndex;
     }
 
-    if (bIsPointerNote)
+    if (bIsNoteVisible)
     {
         // valid pointer note not found, insert it
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
         m_vRootAddresses.BeginUpdate();
-        m_vRootAddresses.Add(nAddress,
-                        ra::util::String::Printf(L"%s | %s", pMemoryContext.FormatAddress(nAddress),
-                             ra::data::models::MemoryNoteModel::TrimSize(pNote->GetSummary(), false)));
+        m_vRootAddresses.Add(nAddress, FormatNodeLabel(pMemoryContext, nAddress, *pNote));
         m_vRootAddresses.MoveItem(nCount, nIndex);
         m_vRootAddresses.EndUpdate();
 
@@ -420,11 +426,21 @@ const ra::data::models::MemoryNoteModel::Reference StructuredDataBrowserViewMode
         {
             pItem->m_nOffset = nCurrentAddress;
             pItem->m_nIndent = 0;
-            pItem->SetOffset(L"");
 
             const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pNote);
             if (pArrayNote != nullptr)
-                pItem->m_nOffset += pNode->GetIndex() * pArrayNote->GetElementSize();
+            {
+                // set the offset to adjust for the index
+                pItem->m_nOffset = pNode->GetIndex() * pArrayNote->GetElementSize();
+                pItem->FormatOffset();
+
+                // roll the start address back in
+                pItem->m_nOffset += nCurrentAddress;
+            }
+            else
+            {
+                pItem->SetOffset(L"");
+            }
         }
         else
         {
@@ -573,8 +589,15 @@ void StructuredDataBrowserViewModel::LoadNote(const ra::data::models::MemoryNote
         const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pNote);
         if (pStructuredNote != nullptr)
         {
+            auto nBaseAddress = pStructuredNote->GetBaseAddress();
+            if (pStructuredNote->GetType() == ra::data::models::MemoryNoteType::Array)
+            {
+                const auto* pParentAddress = m_vAddressChain.GetItemAt(m_vAddressChain.Count() - 1);
+                if (pParentAddress != nullptr)
+                    nBaseAddress = pParentAddress->GetAddress();
+            }
+
             const auto pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pStructuredNote);
-            const auto nBaseAddress = pStructuredNote->GetBaseAddress();
 
             pStructuredNote->EnumerateOffsetNotes([this, &nCount, &nInsertIndex, nBaseAddress, pArrayNote, nElementIndex]
                 (const ra::data::models::MemoryNoteModel::Reference& pOffsetNote)
@@ -602,7 +625,7 @@ void StructuredDataBrowserViewModel::LoadNote(const ra::data::models::MemoryNote
                     pItem->BeginInitialization();
 
                     pItem->m_nOffset = nOffset;
-                    if (pArrayNote != nullptr)
+                    if (pArrayNote != nullptr && nElementIndex != 0xFFFFFFFF)
                         pItem->m_nOffset += nElementIndex * pArrayNote->GetElementSize();
 
                     m_bSyncingNote = true;
@@ -673,7 +696,17 @@ static void LoadSubNote(LookupItemViewModelCollection& vNodes,
                 vmNode.SetId(nOffset);
 
             if (pStructuredNote.HasNestedStructures())
-                LoadSubNotes(vNodes, pStructuredNote, pStructuredNote.GetBaseAddress(), nDepth + 1, gsl::narrow_cast<int>(vNodes.Count() - 1));
+            {
+                pStructuredNote.EnumerateOffsetNotes([&vNodes, nDepth, nParentIndex=gsl::narrow_cast<int>(vNodes.Count() - 1)]
+                    (const ra::data::models::MemoryNoteModel& pOffsetNote)
+                    {
+                        const auto* pStructuredOffsetNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(&pOffsetNote);
+                        if (pStructuredOffsetNote && pStructuredOffsetNote->HasOffsetNotes())
+                            LoadSubNote(vNodes, *pStructuredOffsetNote, pStructuredOffsetNote->GetAddress(), nDepth + 1, nParentIndex);
+
+                        return true;
+                    });
+            }
 
             nOffset += pArrayNote->GetElementSize();
         }
@@ -1047,7 +1080,17 @@ void StructuredDataBrowserViewModel::UpdateAddressChainRowColor(StructuredDataBr
 void StructuredDataBrowserViewModel::UpdateValues()
 {
     const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(m_pCurrentNote);
-    const auto nBaseAddress = pStructuredNote ? pStructuredNote->GetBaseAddress() : 0U;
+    auto nBaseAddress = 0U;
+    if (pStructuredNote != nullptr)
+    {
+        nBaseAddress = pStructuredNote->GetBaseAddress();
+        if (pStructuredNote->GetType() == ra::data::models::MemoryNoteType::Array)
+        {
+            const auto* pParentAddress = m_vAddressChain.GetItemAt(m_vAddressChain.Count() - 1);
+            if (pParentAddress != nullptr)
+                nBaseAddress = pParentAddress->GetAddress();
+        }
+    }
 
     m_vmFields.Items().BeginUpdate();
 
@@ -1056,7 +1099,11 @@ void StructuredDataBrowserViewModel::UpdateValues()
         auto* pField = dynamic_cast<StructFieldViewModel*>(&pItem);
         if (pField != nullptr)
         {
-            pField->SetAddress(nBaseAddress + pField->m_nOffset);
+            if (pField->m_pNote)
+                pField->SetAddress(nBaseAddress + pField->m_pNote->GetAddress());
+            else
+                pField->SetAddress(nBaseAddress + pField->m_nOffset);
+
             pField->DoFrame();
         }
     }

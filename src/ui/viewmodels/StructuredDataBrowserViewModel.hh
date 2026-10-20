@@ -114,9 +114,9 @@ public:
 
         using MemoryWatchViewModel::SetAddressWithoutUpdatingValue;
 
-        int32_t m_nOffset = 0;
-        int32_t m_nIndent = 0;
-        uint32_t m_nIndex = 0;
+        int32_t m_nOffset = 0; // offset to field from parent
+        int32_t m_nIndent = 0; // depth of field
+        uint32_t m_nIndex = 0; // index for array fields
         const ra::data::models::MemoryNoteModel* m_pNote = nullptr;
         bool m_bFormattingOffset = false;
     };

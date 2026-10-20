@@ -474,7 +474,7 @@ public:
         inspector.AssertField(3, 8, 0x0CU, L"+0008", L"Item name", ra::data::Memory::Size::Text, ra::data::Memory::Format::Dec, L"Hi");
 
         Assert::AreEqual({ 1U }, inspector.AddressChain().Count());
-        inspector.AssertPointerChain(0, L"", 0x04, L"Inventory [0]", L"");
+        inspector.AssertPointerChain(0, L"+0000", 0x04, L"Inventory [0]", L"");
 
         inspector.SetSelectedNode(0x00000040);
         Assert::AreEqual(0x00000040, inspector.GetSelectedNode());
@@ -486,7 +486,7 @@ public:
         inspector.AssertField(3, 0x48, 0x4CU, L"+0008", L"Item name", ra::data::Memory::Size::Text, ra::data::Memory::Format::Dec, L"Me");
 
         Assert::AreEqual({ 1U }, inspector.AddressChain().Count());
-        inspector.AssertPointerChain(0, L"", 0x44, L"Inventory [2]", L"");
+        inspector.AssertPointerChain(0, L"+0040", 0x44, L"Inventory [2]", L"");
     }
 
     TEST_METHOD(TestSelectedNodeNestedArray)
@@ -612,7 +612,62 @@ public:
         inspector.AssertField(3, 8, 0x0CU, L"+0008", L"Item name", ra::data::Memory::Size::Text, ra::data::Memory::Format::Dec, L"Hi");
 
         Assert::AreEqual({ 1U }, inspector.AddressChain().Count());
-        inspector.AssertPointerChain(0, L"", 0x04, L"Inventory", L"");
+        inspector.AssertPointerChain(0, L"+0000", 0x04, L"Inventory", L"");
+    }
+
+
+    TEST_METHOD(TestSelectedNodeNestedArrayWithBuffer)
+    {
+        StructuredDataBrowserViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        std::array<uint8_t, 144> memory = {};
+        for (uint8_t i = 4; i < memory.size(); i += 4)
+            memory.at(i) = i + 8;
+        inspector.mockEmulatorContext.MockMemory(memory);
+
+        inspector.SetSelectedRootAddress({ 4U });
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({ 4U },
+            L"[4x32 bytes] Character data\r\n"
+            L"|0x00: [8-bit] Class\r\n"
+            L"|0x08: [16 bytes] Stats\r\n"
+            L"||0x00: Strength\r\n"
+            L"||0x01: Dexterity"
+        );
+
+        Assert::AreEqual({ 4U }, inspector.GetSelectedRootAddress());
+        Assert::AreEqual(std::wstring(L"[4x32 bytes] Character data"), inspector.GetSelectedNodeNote());
+
+        Assert::AreEqual({ 8U }, inspector.Nodes().Count());
+        Assert::AreEqual(0x00000000, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"+0000 | [4x32 bytes] Character data [0]"), inspector.Nodes().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(0x00000008, inspector.Nodes().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L" +0008 | [16 bytes] Stats"), inspector.Nodes().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(0x00000020, inspector.Nodes().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"+0020 | [4x32 bytes] Character data [1]"), inspector.Nodes().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(0x02000008, inspector.Nodes().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L" +0008 | [16 bytes] Stats"), inspector.Nodes().GetItemAt(3)->GetLabel());
+        Assert::AreEqual(0x00000040, inspector.Nodes().GetItemAt(4)->GetId());
+        Assert::AreEqual(std::wstring(L"+0040 | [4x32 bytes] Character data [2]"), inspector.Nodes().GetItemAt(4)->GetLabel());
+        Assert::AreEqual(0x04000008, inspector.Nodes().GetItemAt(5)->GetId());
+        Assert::AreEqual(std::wstring(L" +0008 | [16 bytes] Stats"), inspector.Nodes().GetItemAt(5)->GetLabel());
+        Assert::AreEqual(0x00000060, inspector.Nodes().GetItemAt(6)->GetId());
+        Assert::AreEqual(std::wstring(L"+0060 | [4x32 bytes] Character data [3]"), inspector.Nodes().GetItemAt(6)->GetLabel());
+        Assert::AreEqual(0x06000008, inspector.Nodes().GetItemAt(7)->GetId());
+        Assert::AreEqual(std::wstring(L" +0008 | [16 bytes] Stats"), inspector.Nodes().GetItemAt(7)->GetLabel());
+
+        inspector.SetSelectedNode(0x02000008);
+        Assert::AreEqual(0x02000008, inspector.GetSelectedNode());
+
+        Assert::AreEqual({ 2U }, inspector.AddressChain().Count());
+        inspector.AssertPointerChain(0, L"+0020", 0x24, L"Character data [1]", L"");
+        inspector.AssertPointerChain(1, L"+0008", 0x2C, L"Stats", L"");
+
+        Assert::AreEqual(std::wstring(L"[16 bytes] Stats"), inspector.GetSelectedNodeNote());
+        Assert::AreEqual({ 2U }, inspector.Fields().Items().Count());
+        inspector.AssertField(0, 0, 0x2CU, L"+0000", L"Strength", ra::data::Memory::Size::EightBit, ra::data::Memory::Format::Dec, L"52");
+        inspector.AssertField(1, 1, 0x2DU, L"+0001", L"Dexterity", ra::data::Memory::Size::EightBit, ra::data::Memory::Format::Dec, L"0");
     }
 
     TEST_METHOD(TestSelectedField)

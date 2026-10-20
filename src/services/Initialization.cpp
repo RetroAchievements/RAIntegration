@@ -235,7 +235,7 @@ void Initialization::InitializeNotifyTargets()
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.MemoryInspector.InitializeNotifyTargets();
     pWindowManager.MemoryBookmarks.InitializeNotifyTargets();
-    pWindowManager.PointerInspector.InitializeNotifyTargets();
+    pWindowManager.StructuredDataBrowser.InitializeNotifyTargets();
     pWindowManager.RichPresenceMonitor.InitializeNotifyTargets();
     pWindowManager.AssetList.InitializeNotifyTargets();
 }

@@ -5,7 +5,7 @@
 #include "data\context\EmulatorContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
-#include "ui\viewmodels\PointerInspectorViewModel.hh"
+#include "ui\viewmodels\StructuredDataBrowserViewModel.hh"
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh"
@@ -28,7 +28,7 @@ namespace win32 {
 bool MemoryBookmarksDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
 {
     return (dynamic_cast<const MemoryBookmarksViewModel*>(&vmViewModel) != nullptr &&
-            dynamic_cast<const ra::ui::viewmodels::PointerInspectorViewModel*>(&vmViewModel) == nullptr);
+            dynamic_cast<const ra::ui::viewmodels::StructuredDataBrowserViewModel*>(&vmViewModel) == nullptr);
 }
 
 void MemoryBookmarksDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND)

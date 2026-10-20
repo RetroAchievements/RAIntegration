@@ -342,11 +342,8 @@
     <ClCompile Include="services\AchievementRuntimeExports_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
-    <ClCompile Include="ui\viewmodels\PointerInspectorViewModel_Tests.cpp">
+    <ClCompile Include="ui\viewmodels\StructuredDataViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ui\viewmodels\PointerInspectorViewModel.cpp">
-      <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\services\search\SearchImpl.cpp">
       <Filter>Code</Filter>
@@ -391,6 +388,9 @@
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\services\PointerFinder.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\StructuredDataBrowserViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>

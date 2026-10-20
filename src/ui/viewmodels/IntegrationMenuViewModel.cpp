@@ -89,7 +89,7 @@ void IntegrationMenuViewModel::AddCommonMenuItems(LookupItemViewModelCollection&
     vmMenu.Add(IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
     vmMenu.Add(0, L"-----");
     vmMenu.Add(IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-    vmMenu.Add(IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+    vmMenu.Add(IDM_RA_FILES_STRUCTBROWSER, L"Structured Data B&rowser");
 }
 
 void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
@@ -152,8 +152,8 @@ void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
             ShowPointerFinder();
             break;
 
-        case IDM_RA_FILES_POINTERINSPECTOR:
-            ShowPointerInspector();
+        case IDM_RA_FILES_STRUCTBROWSER:
+            ShowStructuredDataBrowser();
             break;
 
         case IDM_RA_FILES_CODENOTES:
@@ -357,13 +357,13 @@ void IntegrationMenuViewModel::ShowPointerFinder()
     }
 }
 
-void IntegrationMenuViewModel::ShowPointerInspector()
+void IntegrationMenuViewModel::ShowStructuredDataBrowser()
 {
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    if (pEmulatorContext.WarnDisableHardcoreMode("inspect pointers"))
+    if (pEmulatorContext.WarnDisableHardcoreMode("browse data structures"))
     {
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-        pWindowManager.PointerInspector.Show();
+        pWindowManager.StructuredDataBrowser.Show();
     }
 }
 

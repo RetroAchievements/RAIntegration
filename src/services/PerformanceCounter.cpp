@@ -23,7 +23,7 @@ static std::string GetLabel(PerformanceCheckpoint nCheckpoint)
         case PerformanceCheckpoint::AssetListDoFrame: sCheckpoint = "AssetList"; break;
         case PerformanceCheckpoint::AssetEditorDoFrame: sCheckpoint = "AssetEditor"; break;
         case PerformanceCheckpoint::PointerFinderDoFrame: sCheckpoint = "PointerFinder"; break;
-        case PerformanceCheckpoint::PointerInspectorDoFrame: sCheckpoint = "PointerInspector"; break;
+        case PerformanceCheckpoint::StructuredDataBrowserDoFrame: sCheckpoint = "StructuredDataBrowser"; break;
         case PerformanceCheckpoint::FrameEvents: sCheckpoint = "FrameEvents"; break;
         default: sCheckpoint = std::to_string(ra::etoi(nCheckpoint)); break;
     }

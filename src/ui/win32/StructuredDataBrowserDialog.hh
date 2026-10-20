@@ -1,8 +1,8 @@
-#ifndef RA_UI_WIN32_DLG_POINTERINSPECTOR_H
-#define RA_UI_WIN32_DLG_POINTERINSPECTOR_H
+#ifndef RA_UI_WIN32_DLG_STRUCTUREDDATABROWSER_H
+#define RA_UI_WIN32_DLG_STRUCTUREDDATABROWSER_H
 #pragma once
 
-#include "ui/viewmodels/PointerInspectorViewModel.hh"
+#include "ui/viewmodels/StructuredDataBrowserViewModel.hh"
 
 #include "ui/win32/DialogBase.hh"
 #include "ui/win32/IDialogPresenter.hh"
@@ -17,15 +17,15 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
-class PointerInspectorDialog : public DialogBase
+class StructuredDataBrowserDialog : public DialogBase
 {
 public:
-    explicit PointerInspectorDialog(viewmodels::PointerInspectorViewModel& vmPointerInspector);
-    virtual ~PointerInspectorDialog() noexcept = default;
-    PointerInspectorDialog(const PointerInspectorDialog&) noexcept = delete;
-    PointerInspectorDialog& operator=(const PointerInspectorDialog&) noexcept = delete;
-    PointerInspectorDialog(PointerInspectorDialog&&) noexcept = delete;
-    PointerInspectorDialog& operator=(PointerInspectorDialog&&) noexcept = delete;
+    explicit StructuredDataBrowserDialog(viewmodels::StructuredDataBrowserViewModel& vmStructuredDataBrowser);
+    virtual ~StructuredDataBrowserDialog() noexcept = default;
+    StructuredDataBrowserDialog(const StructuredDataBrowserDialog&) noexcept = delete;
+    StructuredDataBrowserDialog& operator=(const StructuredDataBrowserDialog&) noexcept = delete;
+    StructuredDataBrowserDialog(StructuredDataBrowserDialog&&) noexcept = delete;
+    StructuredDataBrowserDialog& operator=(StructuredDataBrowserDialog&&) noexcept = delete;
 
     class Presenter : public IClosableDialogPresenter
     {
@@ -36,7 +36,7 @@ public:
         void OnClosed() noexcept override;
 
     private:
-        std::unique_ptr<PointerInspectorDialog> m_pDialog;
+        std::unique_ptr<StructuredDataBrowserDialog> m_pDialog;
     };
 
 protected:
@@ -56,4 +56,4 @@ private:
 } // namespace ui
 } // namespace ra
 
-#endif // !RA_UI_WIN32_DLG_POINTERINSPECTOR_H
+#endif // !RA_UI_WIN32_DLG_STRUCTUREDDATABROWSER_H

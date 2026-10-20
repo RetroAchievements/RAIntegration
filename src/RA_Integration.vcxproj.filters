@@ -339,10 +339,10 @@
     <ClCompile Include="services\AchievementRuntimeExports.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="ui\viewmodels\PointerInspectorViewModel.cpp">
+    <ClCompile Include="ui\viewmodels\StructuredDataBrowserViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="ui\win32\PointerInspectorDialog.cpp">
+    <ClCompile Include="ui\win32\StructuredDataBrowserDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
     <ClCompile Include="services\search\SearchImpl.cpp">
@@ -806,10 +806,10 @@
     <ClInclude Include="services\AchievementRuntimeExports.hh">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="ui\viewmodels\PointerInspectorViewModel.hh">
+    <ClInclude Include="ui\viewmodels\StructuredDataBrowserViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
-    <ClInclude Include="ui\win32\PointerInspectorDialog.hh">
+    <ClInclude Include="ui\win32\StructuredDataBrowserDialog.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh">

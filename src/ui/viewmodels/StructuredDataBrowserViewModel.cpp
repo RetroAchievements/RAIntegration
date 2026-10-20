@@ -1,4 +1,4 @@
-#include "PointerInspectorViewModel.hh"
+#include "StructuredDataBrowserViewModel.hh"
 
 #include "RA_Defs.h"
 
@@ -21,25 +21,25 @@ namespace viewmodels {
 
 constexpr int SelectedNodeNone = -2;
 
-const IntModelProperty PointerInspectorViewModel::SelectedRootAddressProperty("PointerInspectorViewModel", "SelectedRootAddress", 0);
-const BoolModelProperty PointerInspectorViewModel::HasSelectedRootAddressProperty("PointerInspectorViewModel", "HasSelectedRootAddress", false);
-const StringModelProperty PointerInspectorViewModel::SelectedNodeNoteProperty("PointerInspectorViewModel", "RootAddressNote", L"");
-const IntModelProperty PointerInspectorViewModel::SelectedNodeProperty("PointerInspectorViewModel", "SelectedNode", SelectedNodeNone);
-const BoolModelProperty PointerInspectorViewModel::HasSelectedNodeProperty("PointerInspectorViewModel", "HasSelectedNode", false);
-const StringModelProperty PointerInspectorViewModel::CurrentFieldNoteProperty("PointerInspectorViewModel", "CurrentFieldNote", L"");
+const IntModelProperty StructuredDataBrowserViewModel::SelectedRootAddressProperty("StructuredDataBrowserViewModel", "SelectedRootAddress", 0);
+const BoolModelProperty StructuredDataBrowserViewModel::HasSelectedRootAddressProperty("StructuredDataBrowserViewModel", "HasSelectedRootAddress", false);
+const StringModelProperty StructuredDataBrowserViewModel::SelectedNodeNoteProperty("StructuredDataBrowserViewModel", "RootAddressNote", L"");
+const IntModelProperty StructuredDataBrowserViewModel::SelectedNodeProperty("StructuredDataBrowserViewModel", "SelectedNode", SelectedNodeNone);
+const BoolModelProperty StructuredDataBrowserViewModel::HasSelectedNodeProperty("StructuredDataBrowserViewModel", "HasSelectedNode", false);
+const StringModelProperty StructuredDataBrowserViewModel::CurrentFieldNoteProperty("StructuredDataBrowserViewModel", "CurrentFieldNote", L"");
 
-const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::OffsetProperty("StructFieldViewModel", "Offset", L"+0000");
-const StringModelProperty PointerInspectorViewModel::StructFieldViewModel::BodyProperty("StructFieldViewModel", "Body", L"");
+const StringModelProperty StructuredDataBrowserViewModel::StructFieldViewModel::OffsetProperty("StructFieldViewModel", "Offset", L"+0000");
+const StringModelProperty StructuredDataBrowserViewModel::StructFieldViewModel::BodyProperty("StructFieldViewModel", "Body", L"");
 
-PointerInspectorViewModel::PointerInspectorViewModel()
+StructuredDataBrowserViewModel::StructuredDataBrowserViewModel()
 {
-    SetWindowTitle(L"Pointer Inspector");
+    SetWindowTitle(L"Structured Data Browser");
 
     m_vmFields.AddNotifyTarget(*this); // for properties on the field list
     m_vmFields.Items().AddNotifyTarget(*this); // for properties on individual fields
 }
 
-void PointerInspectorViewModel::InitializeNotifyTargets()
+void StructuredDataBrowserViewModel::InitializeNotifyTargets()
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);
@@ -50,7 +50,7 @@ void PointerInspectorViewModel::InitializeNotifyTargets()
     m_vmFields.InitializeNotifyTargets(false);
 }
 
-void PointerInspectorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
+void StructuredDataBrowserViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == IsVisibleProperty && args.tNewValue)
     {
@@ -60,7 +60,7 @@ void PointerInspectorViewModel::OnValueChanged(const BoolModelProperty::ChangeAr
     WindowViewModelBase::OnValueChanged(args);
 }
 
-void PointerInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+void StructuredDataBrowserViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == SelectedRootAddressProperty && !m_bSyncingAddress)
     {
@@ -75,7 +75,7 @@ void PointerInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     WindowViewModelBase::OnValueChanged(args);
 }
 
-void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
+void StructuredDataBrowserViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
     if (args.Property == CurrentFieldNoteProperty && !m_bSyncingNote)
     {
@@ -89,40 +89,40 @@ void PointerInspectorViewModel::OnValueChanged(const StringModelProperty::Change
     WindowViewModelBase::OnValueChanged(args);
 }
 
-void PointerInspectorViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+void StructuredDataBrowserViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == MemoryWatchListViewModel::SingleSelectionIndexProperty)
         OnSelectedFieldChanged(args.tNewValue);
 }
 
-void PointerInspectorViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
+void StructuredDataBrowserViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
     if (args.Property == StructFieldViewModel::OffsetProperty && !m_bSyncingNote)
         OnFieldOffsetChanged(nIndex, args.tNewValue);
 }
 
-void PointerInspectorViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
+void StructuredDataBrowserViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == StructFieldViewModel::SizeProperty && !m_bSyncingNote)
         OnFieldSizeChanged(nIndex);
 }
 
-void PointerInspectorViewModel::OnActiveGameChanged()
+void StructuredDataBrowserViewModel::OnActiveGameChanged()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     ra::data::ByteAddress nAddress = 0;
 
     if (pGameContext.GameId() != 0)
     {
-        if (m_vPointers.Count() > 0)
-            nAddress = gsl::narrow_cast<ra::data::ByteAddress>(m_vPointers.GetItemAt(0)->GetId());
+        if (m_vRootAddresses.Count() > 0)
+            nAddress = gsl::narrow_cast<ra::data::ByteAddress>(m_vRootAddresses.GetItemAt(0)->GetId());
     }
 
     if (nAddress == 0)
     {
-        m_vPointers.Clear();
+        m_vRootAddresses.Clear();
         m_vNodes.Clear();
-        m_vPointerChain.Clear();
+        m_vAddressChain.Clear();
         m_vmFields.Items().Clear();
         m_pCurrentNote = nullptr;
 
@@ -150,12 +150,12 @@ void PointerInspectorViewModel::OnActiveGameChanged()
     }
 }
 
-void PointerInspectorViewModel::OnEndGameLoad()
+void StructuredDataBrowserViewModel::OnEndGameLoad()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
-    m_vPointers.BeginUpdate();
-    m_vPointers.Clear();
+    m_vRootAddresses.BeginUpdate();
+    m_vRootAddresses.Clear();
 
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
@@ -163,24 +163,27 @@ void PointerInspectorViewModel::OnEndGameLoad()
     {
         pMemoryNotes->EnumerateNotes(
             [this, &pMemoryContext](const ra::data::models::MemoryNoteModel::Reference& pNote) {
-                if (pNote.pMemoryNote->GetType() == ra::data::models::MemoryNoteType::Pointer)
+                switch (pNote.pMemoryNote->GetType())
                 {
-                    m_vPointers.Add(pNote.nAddress,
-                                    ra::util::String::Printf(L"%s | %s", pMemoryContext.FormatAddress(pNote.nAddress),
-                                                                         pNote.pMemoryNote->GetSummary()));
+                    case ra::data::models::MemoryNoteType::Pointer:
+                    case ra::data::models::MemoryNoteType::Array:
+                        m_vRootAddresses.Add(pNote.nAddress,
+                                        ra::util::String::Printf(L"%s | %s", pMemoryContext.FormatAddress(pNote.nAddress),
+                                                                             pNote.pMemoryNote->GetSummary()));
+                        break;
                 }
 
                 return true;
             });
 
-        if (m_vPointers.Count() == 0)
-            m_vPointers.Add(0, L"No pointer notes found");
+        if (m_vRootAddresses.Count() == 0)
+            m_vRootAddresses.Add(0, L"No pointer notes found");
     }
 
-    m_vPointers.EndUpdate();
+    m_vRootAddresses.EndUpdate();
 }
 
-void PointerInspectorViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring&)
+void StructuredDataBrowserViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring&)
 {
     if (nAddress == GetSelectedRootAddress() && !m_bSyncingNote)
     {
@@ -194,25 +197,35 @@ void PointerInspectorViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddre
     if (pMemoryNotes != nullptr)
     {
         const auto* pNote = pMemoryNotes->FindNote(nAddress, false);
-        UpdatePointerVisibility(nAddress, pNote);
+        UpdateAddressVisibility(nAddress, pNote);
     }
 }
 
-void PointerInspectorViewModel::UpdatePointerVisibility(ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel* pNote)
+void StructuredDataBrowserViewModel::UpdateAddressVisibility(ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel* pNote)
 {
-    const bool bIsPointerNote = pNote && pNote->GetType() == ra::data::models::MemoryNoteType::Pointer;
+    bool bIsPointerNote = false;
+    if (pNote)
+    {
+        switch (pNote->GetType())
+        {
+            case ra::data::models::MemoryNoteType::Pointer:
+            case ra::data::models::MemoryNoteType::Array:
+                bIsPointerNote = true;
+                break;
+        }
+    }
 
-    const gsl::index nCount = gsl::narrow_cast<gsl::index>(m_vPointers.Count());
+    const gsl::index nCount = gsl::narrow_cast<gsl::index>(m_vRootAddresses.Count());
     gsl::index nIndex = 0;
     while (nIndex < nCount)
     {
-        const auto nPointerAddress = gsl::narrow_cast<ra::data::ByteAddress>(m_vPointers.GetItemValue(nIndex, LookupItemViewModel::IdProperty));
+        const auto nPointerAddress = gsl::narrow_cast<ra::data::ByteAddress>(m_vRootAddresses.GetItemValue(nIndex, LookupItemViewModel::IdProperty));
         if (nPointerAddress == nAddress)
         {
             if (!bIsPointerNote)
             {
                 // non-pointer note found, remove it
-                m_vPointers.RemoveAt(nIndex);
+                m_vRootAddresses.RemoveAt(nIndex);
 
                 if (GetSelectedRootAddress() == nAddress)
                     OnActiveGameChanged(); // force selection of first root address or no selection
@@ -235,12 +248,12 @@ void PointerInspectorViewModel::UpdatePointerVisibility(ra::data::ByteAddress nA
     {
         // valid pointer note not found, insert it
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-        m_vPointers.BeginUpdate();
-        m_vPointers.Add(nAddress,
+        m_vRootAddresses.BeginUpdate();
+        m_vRootAddresses.Add(nAddress,
                         ra::util::String::Printf(L"%s | %s", pMemoryContext.FormatAddress(nAddress),
                              ra::data::models::MemoryNoteModel::TrimSize(pNote->GetSummary(), false)));
-        m_vPointers.MoveItem(nCount, nIndex);
-        m_vPointers.EndUpdate();
+        m_vRootAddresses.MoveItem(nCount, nIndex);
+        m_vRootAddresses.EndUpdate();
 
         if (!HasSelectedRootAddress())
         {
@@ -250,7 +263,7 @@ void PointerInspectorViewModel::UpdatePointerVisibility(ra::data::ByteAddress nA
     }
 }
 
-void PointerInspectorViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nNewAddress)
+void StructuredDataBrowserViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nNewAddress)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
@@ -271,34 +284,34 @@ void PointerInspectorViewModel::OnCurrentAddressChanged(ra::data::ByteAddress nN
             LoadNote(nullptr, 0);
         }
 
-        UpdatePointerChain(GetSelectedNode());
+        UpdateAddressChain(GetSelectedNode());
     }
 }
 
-void PointerInspectorViewModel::GetPointerChain(gsl::index nIndex, std::stack<const PointerNodeViewModel*>& sChain) const
+void StructuredDataBrowserViewModel::GetAddressChain(gsl::index nIndex, std::stack<const StructureNodeViewModel*>& sChain) const
 {
-    const auto* pNode = m_vNodes.GetItemAt<PointerNodeViewModel>(nIndex);
+    const auto* pNode = m_vNodes.GetItemAt<StructureNodeViewModel>(nIndex);
     Expects(pNode != nullptr);
 
     while (!pNode->IsRootNode())
     {
         sChain.push(pNode);
-        pNode = m_vNodes.GetItemAt<PointerNodeViewModel>(pNode->GetParentIndex());
+        pNode = m_vNodes.GetItemAt<StructureNodeViewModel>(pNode->GetParentIndex());
         Expects(pNode != nullptr);
     }
 
     sChain.push(pNode);
 }
 
-const ra::data::models::MemoryNoteModel* PointerInspectorViewModel::FindNestedMemoryNoteModel(
+const ra::data::models::MemoryNoteModel* StructuredDataBrowserViewModel::FindNestedMemoryNoteModel(
     const ra::data::models::MemoryNoteModel& pRootNote, int nNewNode)
 {
     const auto nIndex = m_vNodes.FindItemIndex(LookupItemViewModel::IdProperty, nNewNode);
     if (nIndex == -1)
         return nullptr;
 
-    std::stack<const PointerNodeViewModel*> sChain;
-    GetPointerChain(nIndex, sChain);
+    std::stack<const StructureNodeViewModel*> sChain;
+    GetAddressChain(nIndex, sChain);
 
     const auto* pParentNote = &pRootNote;
     do
@@ -319,21 +332,21 @@ const ra::data::models::MemoryNoteModel* PointerInspectorViewModel::FindNestedMe
     return pParentNote;
 }
 
-void PointerInspectorViewModel::OnSelectedNodeChanged(int nNewNode)
+void StructuredDataBrowserViewModel::OnSelectedNodeChanged(int nNewNode)
 {
-    SetValue(HasSelectedNodeProperty, nNewNode >= PointerNodeViewModel::RootNodeId);
+    SetValue(HasSelectedNodeProperty, nNewNode >= StructureNodeViewModel::RootNodeId);
 
     DispatchMemoryRead([this, nNewNode]() {
         const auto nSelectedNode = GetSelectedNode();
         if (nSelectedNode == nNewNode)
         {
-            const auto pNoteReference = UpdatePointerChain(nNewNode);
+            const auto pNoteReference = UpdateAddressChain(nNewNode);
             LoadNote(pNoteReference.pMemoryNote, pNoteReference.nElementIndex);
         }
     });
 }
 
-void PointerInspectorViewModel::OnSelectedFieldChanged(int nNewFieldIndex)
+void StructuredDataBrowserViewModel::OnSelectedFieldChanged(int nNewFieldIndex)
 {
     m_bSyncingNote = true;
     if (nNewFieldIndex != -1)
@@ -349,7 +362,7 @@ void PointerInspectorViewModel::OnSelectedFieldChanged(int nNewFieldIndex)
     m_bSyncingNote = false;
 }
 
-const ra::data::models::MemoryNoteModel::Reference PointerInspectorViewModel::UpdatePointerChain(int nNewNode)
+const ra::data::models::MemoryNoteModel::Reference StructuredDataBrowserViewModel::UpdateAddressChain(int nNewNode)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
@@ -364,37 +377,37 @@ const ra::data::models::MemoryNoteModel::Reference PointerInspectorViewModel::Up
             LoadNodes(pNote);
     }
 
-    auto nNewNodeIndex = Nodes().FindItemIndex(PointerNodeViewModel::IdProperty, nNewNode);
+    auto nNewNodeIndex = Nodes().FindItemIndex(StructureNodeViewModel::IdProperty, nNewNode);
     if (nNewNodeIndex == -1)
     {
         if (Nodes().Count() == 0)
         {
-            PointerChain().Clear();
+            AddressChain().Clear();
             return {};
         }
 
         nNewNodeIndex = 0;
     }
 
-    std::stack<const PointerNodeViewModel*> sChain;
-    GetPointerChain(nNewNodeIndex, sChain);
+    std::stack<const StructureNodeViewModel*> sChain;
+    GetAddressChain(nNewNodeIndex, sChain);
     uint32_t nIndex = 0xFFFFFFFF;
 
-    gsl::index nCount = gsl::narrow_cast<gsl::index>(PointerChain().Count());
+    gsl::index nCount = gsl::narrow_cast<gsl::index>(AddressChain().Count());
     gsl::index nInsertIndex = 0;
-    PointerChain().BeginUpdate();
+    AddressChain().BeginUpdate();
 
     do
     {
         StructFieldViewModel* pItem = nullptr;
         if (nInsertIndex < nCount)
         {
-            pItem = PointerChain().GetItemAt(nInsertIndex);
+            pItem = AddressChain().GetItemAt(nInsertIndex);
         }
         else
         {
             ++nCount;
-            pItem = &PointerChain().Add();
+            pItem = &AddressChain().Add();
         }
 
         Expects(pItem != nullptr);
@@ -474,21 +487,21 @@ const ra::data::models::MemoryNoteModel::Reference PointerInspectorViewModel::Up
     } while (!sChain.empty());
 
     while (nCount > nInsertIndex)
-        PointerChain().RemoveAt(--nCount);
+        AddressChain().RemoveAt(--nCount);
 
     DispatchMemoryRead([this]() {
-        for (auto& pItem : PointerChain())
+        for (auto& pItem : AddressChain())
             pItem.EndInitialization();
 
-        UpdatePointerChainValues();
+        UpdateAddressChainValues();
     });
 
-    PointerChain().EndUpdate();
+    AddressChain().EndUpdate();
 
     return { pNote, 0, nIndex };
 }
 
-void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructFieldViewModel& pFieldViewModel, const ra::data::models::MemoryNoteModel& pOffsetNote)
+void StructuredDataBrowserViewModel::SyncField(StructuredDataBrowserViewModel::StructFieldViewModel& pFieldViewModel, const ra::data::models::MemoryNoteModel& pOffsetNote)
 {
     pFieldViewModel.m_pNote = &pOffsetNote;
 
@@ -534,7 +547,7 @@ void PointerInspectorViewModel::SyncField(PointerInspectorViewModel::StructField
     }
 }
 
-void PointerInspectorViewModel::LoadNote(const ra::data::models::MemoryNoteModel* pNote, uint32_t nElementIndex)
+void StructuredDataBrowserViewModel::LoadNote(const ra::data::models::MemoryNoteModel* pNote, uint32_t nElementIndex)
 {
     if (pNote == nullptr)
     {
@@ -655,8 +668,8 @@ static void LoadSubNote(LookupItemViewModelCollection& vNodes,
         {
             const std::wstring sArrayLabel = ra::util::String::Printf(L"%s+%04x | %s [%u]", sLabel, nOffset, sSummary, nIndex);
 
-            auto& vmNode = vNodes.Add<PointerInspectorViewModel::PointerNodeViewModel>(nParentIndex, nOffset, nIndex, sArrayLabel);
-            if (nParentIndex == PointerInspectorViewModel::PointerNodeViewModel::RootNodeId)
+            auto& vmNode = vNodes.Add<StructuredDataBrowserViewModel::StructureNodeViewModel>(nParentIndex, nOffset, nIndex, sArrayLabel);
+            if (nParentIndex == StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId)
                 vmNode.SetId(nOffset);
 
             if (pStructuredNote.HasNestedStructures())
@@ -669,7 +682,7 @@ static void LoadSubNote(LookupItemViewModelCollection& vNodes,
     {
         sLabel += ra::util::String::Printf(L"+%04x | %s", nOffset, sSummary);
 
-        vNodes.Add<PointerInspectorViewModel::PointerNodeViewModel>(nParentIndex, nOffset, 0, sLabel);
+        vNodes.Add<StructuredDataBrowserViewModel::StructureNodeViewModel>(nParentIndex, nOffset, 0, sLabel);
 
         if (pStructuredNote.HasNestedStructures())
             LoadSubNotes(vNodes, pStructuredNote, pStructuredNote.GetBaseAddress(), nDepth + 1, gsl::narrow_cast<int>(vNodes.Count() - 1));
@@ -693,7 +706,7 @@ static void LoadSubNotes(LookupItemViewModelCollection& vNodes,
     }, nBaseAddress);
 }
 
-void PointerInspectorViewModel::LoadNodes(const ra::data::models::MemoryNoteModel* pNote)
+void StructuredDataBrowserViewModel::LoadNodes(const ra::data::models::MemoryNoteModel* pNote)
 {
     const int nSelectedNode = GetSelectedNode();
 
@@ -702,18 +715,18 @@ void PointerInspectorViewModel::LoadNodes(const ra::data::models::MemoryNoteMode
 
     if (pNote == nullptr)
     {
-        m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetSelectedRootAddress()), 0, L"Root");
+        m_vNodes.Add<StructureNodeViewModel>(StructureNodeViewModel::RootNodeId, ra::to_signed(GetSelectedRootAddress()), 0, L"Root");
     }
     else
     {
         const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pNote);
         if (pArrayNote)
         {
-            LoadSubNote(m_vNodes, *pArrayNote, 0, 1, PointerNodeViewModel::RootNodeId);
+            LoadSubNote(m_vNodes, *pArrayNote, 0, 1, StructureNodeViewModel::RootNodeId);
         }
         else
         {
-            m_vNodes.Add<PointerNodeViewModel>(PointerNodeViewModel::RootNodeId, ra::to_signed(GetSelectedRootAddress()), 0, pNote->GetFullSummary());
+            m_vNodes.Add<StructureNodeViewModel>(StructureNodeViewModel::RootNodeId, ra::to_signed(GetSelectedRootAddress()), 0, pNote->GetFullSummary());
 
             const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pNote);
             if (pStructuredNote && pStructuredNote->HasNestedStructures())
@@ -725,7 +738,7 @@ void PointerInspectorViewModel::LoadNodes(const ra::data::models::MemoryNoteMode
 
     // if the selected item is no longer available, select the first node
     if (m_vNodes.FindItemIndex(LookupItemViewModel::IdProperty, nSelectedNode) == -1)
-        SetSelectedNode(m_vNodes.Count() > 0 ? m_vNodes.GetItemAt(0)->GetId() : PointerNodeViewModel::RootNodeId);
+        SetSelectedNode(m_vNodes.Count() > 0 ? m_vNodes.GetItemAt(0)->GetId() : StructureNodeViewModel::RootNodeId);
 }
 
 static void AppendNoteOffsetAndSize(ra::util::StringBuilder& builder, const std::wstring& sIndent,
@@ -767,8 +780,8 @@ static void AppendNoteOffsetAndSize(ra::util::StringBuilder& builder, const std:
     }
 }
 
-void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::util::StringBuilder& builder,
-    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain, std::wstring& sIndent)
+void StructuredDataBrowserViewModel::BuildNoteForCurrentNode(ra::util::StringBuilder& builder,
+    std::stack<const StructuredDataBrowserViewModel::StructureNodeViewModel*>& sChain, std::wstring& sIndent)
 {
     std::unique_ptr<ra::data::models::MemoryNoteModel> newNote;
 
@@ -796,9 +809,9 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::util::StringBuilder&
     // If we're viewing a non-zero index of an array, the offsets need to be adjusted back to the 0th element.
     int32_t nAdjustment = 0;
     const auto* pArrayParent = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(m_pCurrentNote);
-    if (pArrayParent != nullptr && m_vPointerChain.Count() > 0)
+    if (pArrayParent != nullptr && m_vAddressChain.Count() > 0)
     {
-        const auto* pParent = m_vPointerChain.GetItemAt<StructFieldViewModel>(m_vPointerChain.Count() - 1);
+        const auto* pParent = m_vAddressChain.GetItemAt<StructFieldViewModel>(m_vAddressChain.Count() - 1);
         if (pParent->m_nIndex != 0xFFFFFFFF)
             nAdjustment = pParent->m_nIndex * pArrayParent->GetElementSize();
     }
@@ -835,8 +848,8 @@ void PointerInspectorViewModel::BuildNoteForCurrentNode(ra::util::StringBuilder&
         pSelectedField->m_pNote = pExistingNote;
 }
 
-void PointerInspectorViewModel::BuildNote(ra::util::StringBuilder& builder,
-    std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
+void StructuredDataBrowserViewModel::BuildNote(ra::util::StringBuilder& builder,
+    std::stack<const StructuredDataBrowserViewModel::StructureNodeViewModel*>& sChain,
     const ra::data::models::MemoryNoteModel& pNote, std::wstring& sIndent)
 {
     const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(&pNote);
@@ -892,7 +905,7 @@ void PointerInspectorViewModel::BuildNote(ra::util::StringBuilder& builder,
     sIndent.pop_back();
 }
 
-void PointerInspectorViewModel::UpdateSourceMemoryNote()
+void StructuredDataBrowserViewModel::UpdateSourceMemoryNote()
 {
     const auto nAddress = GetSelectedRootAddress();
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -904,8 +917,8 @@ void PointerInspectorViewModel::UpdateSourceMemoryNote()
         const auto nIndex = m_vNodes.FindItemIndex(LookupItemViewModel::IdProperty, GetSelectedNode());
         if (nIndex != -1)
         {
-            std::stack<const PointerNodeViewModel*> sChain;
-            GetPointerChain(nIndex, sChain);
+            std::stack<const StructureNodeViewModel*> sChain;
+            GetAddressChain(nIndex, sChain);
 
             ra::util::StringBuilder builder;
 
@@ -930,7 +943,7 @@ void PointerInspectorViewModel::UpdateSourceMemoryNote()
             m_bSyncingNote = false;
 
             // update the current note pointer
-            const auto pNoteReference = UpdatePointerChain(GetSelectedNode());
+            const auto pNoteReference = UpdateAddressChain(GetSelectedNode());
             m_pCurrentNote = pNoteReference.pMemoryNote;
 
             // update the field note pointers
@@ -954,52 +967,47 @@ void PointerInspectorViewModel::UpdateSourceMemoryNote()
     }
 }
 
-void PointerInspectorViewModel::UpdatePointerChainValues()
+void StructuredDataBrowserViewModel::UpdateAddressChainValues()
 {
-    if (m_vPointerChain.Count() == 0)
+    if (m_vAddressChain.Count() == 0)
         return;
 
     ra::data::ByteAddress nAddress = 0;
 
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
 
-    m_vPointerChain.BeginUpdate();
+    m_vAddressChain.BeginUpdate();
 
-    for (auto& pPointer : m_vPointerChain)
+    for (auto& pRow : m_vAddressChain)
     {
-        nAddress += pPointer.m_nOffset;
-        pPointer.SetAddressWithoutUpdatingValue(nAddress);
+        nAddress += pRow.m_nOffset;
+        pRow.SetAddressWithoutUpdatingValue(nAddress);
 
-        if (pPointer.DoFrame())
-            UpdatePointerChainRowColor(pPointer);
+        if (pRow.m_pNote && pRow.m_pNote->GetType() != ra::data::models::MemoryNoteType::Pointer)
+            continue;
 
-        const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pPointer.m_pNote);
-        if (pArrayNote != nullptr)
+        if (pRow.DoFrame())
+            UpdateAddressChainRowColor(pRow);
+
+        nAddress = pRow.GetCurrentValueRaw();
+        if (nAddress > 0)
         {
-            
-        }
-        else
-        {
-            nAddress = pPointer.GetCurrentValueRaw();
-            if (nAddress > 0)
-            {
-                const auto nAdjustedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
-                if (nAdjustedAddress != 0xFFFFFFFF)
-                    nAddress = nAdjustedAddress;
-            }
+            const auto nAdjustedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
+            if (nAdjustedAddress != 0xFFFFFFFF)
+                nAddress = nAdjustedAddress;
         }
     }
 
-    m_vPointerChain.EndUpdate();
+    m_vAddressChain.EndUpdate();
 }
 
-void PointerInspectorViewModel::UpdatePointerChainRowColor(PointerInspectorViewModel::StructFieldViewModel& pPointer)
+void StructuredDataBrowserViewModel::UpdateAddressChainRowColor(StructuredDataBrowserViewModel::StructFieldViewModel& pRow)
 {
-    const auto nPointerValue = pPointer.GetCurrentValueRaw();
+    const auto nPointerValue = pRow.GetCurrentValueRaw();
     if (nPointerValue == 0)
     {
         // pointer is null
-        pPointer.SetRowColor(ra::ui::Color(0xFFFFC0C0));
+        pRow.SetRowColor(ra::ui::Color(0xFFFFC0C0));
         return;
     }
 
@@ -1015,7 +1023,7 @@ void PointerInspectorViewModel::UpdatePointerChainRowColor(PointerInspectorViewM
             nMemSize = ra::data::Memory::Size::ThirtyTwoBit;
 
         const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
-        const auto nRawPointer = pMemoryContext.ReadMemory(pPointer.GetAddress(), nMemSize);
+        const auto nRawPointer = pMemoryContext.ReadMemory(pRow.GetAddress(), nMemSize);
         bValid = (pConsoleContext.ByteAddressFromRealAddress(nRawPointer) != 0xFFFFFFFF);
     }
     else
@@ -1026,17 +1034,17 @@ void PointerInspectorViewModel::UpdatePointerChainRowColor(PointerInspectorViewM
     if (!bValid)
     {
         // pointer is invalid
-        pPointer.SetRowColor(ra::ui::Color(0xFFFFFFC0));
+        pRow.SetRowColor(ra::ui::Color(0xFFFFFFC0));
     }
     else
     {
         // pointer is valid
-        pPointer.SetRowColor(
+        pRow.SetRowColor(
             ra::ui::Color(ra::to_unsigned(MemoryWatchViewModel::RowColorProperty.GetDefaultValue())));
     }
 }
 
-void PointerInspectorViewModel::UpdateValues()
+void StructuredDataBrowserViewModel::UpdateValues()
 {
     const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(m_pCurrentNote);
     const auto nBaseAddress = pStructuredNote ? pStructuredNote->GetBaseAddress() : 0U;
@@ -1056,22 +1064,22 @@ void PointerInspectorViewModel::UpdateValues()
     m_vmFields.Items().EndUpdate();
 }
 
-void PointerInspectorViewModel::DoFrame()
+void StructuredDataBrowserViewModel::DoFrame()
 {
     if (!IsVisible())
         return;
 
-    UpdatePointerChainValues();
+    UpdateAddressChainValues();
     UpdateValues();
 }
 
-void PointerInspectorViewModel::CopyDefinition() const
+void StructuredDataBrowserViewModel::CopyDefinition() const
 {
     const auto sDefinition = GetMemRefChain(false);
     ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::util::String::Widen(sDefinition));
 }
 
-std::string PointerInspectorViewModel::GetMemRefChain(bool bMeasured) const
+std::string StructuredDataBrowserViewModel::GetMemRefChain(bool bMeasured) const
 {
     std::string sBuffer;
 
@@ -1132,7 +1140,7 @@ std::string PointerInspectorViewModel::GetMemRefChain(bool bMeasured) const
     return sBuffer;
 }
 
-void PointerInspectorViewModel::BookmarkCurrentField() const
+void StructuredDataBrowserViewModel::BookmarkCurrentField() const
 {
     auto sDefinition = GetMemRefChain(true);
 
@@ -1158,7 +1166,7 @@ void PointerInspectorViewModel::BookmarkCurrentField() const
         pWindowManager.MemoryBookmarks.Show();
 }
 
-void PointerInspectorViewModel::OnFieldOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset)
+void StructuredDataBrowserViewModel::OnFieldOffsetChanged(gsl::index nIndex, const std::wstring& sNewOffset)
 {
     auto* pField = m_vmFields.Items().GetItemAt<StructFieldViewModel>(nIndex);
     if (!pField || pField->m_bFormattingOffset)
@@ -1216,7 +1224,7 @@ void PointerInspectorViewModel::OnFieldOffsetChanged(gsl::index nIndex, const st
     }
 }
 
-void PointerInspectorViewModel::StructFieldViewModel::FormatOffset()
+void StructuredDataBrowserViewModel::StructFieldViewModel::FormatOffset()
 {
     std::wstring sLabel;
     if (m_nIndent > 0)
@@ -1228,7 +1236,7 @@ void PointerInspectorViewModel::StructFieldViewModel::FormatOffset()
     m_bFormattingOffset = false;
 }
 
-void PointerInspectorViewModel::OnFieldSizeChanged(gsl::index nIndex)
+void StructuredDataBrowserViewModel::OnFieldSizeChanged(gsl::index nIndex)
 {
     // if it's the selected note, we have to update the CurrentFieldNote
     // before calling UpdatingSourceMemoryNote().
@@ -1252,7 +1260,7 @@ void PointerInspectorViewModel::OnFieldSizeChanged(gsl::index nIndex)
     UpdateSourceMemoryNote();
 }
 
-void PointerInspectorViewModel::NewField()
+void StructuredDataBrowserViewModel::NewField()
 {
     auto pField = std::make_unique<StructFieldViewModel>();
     pField->BeginInitialization();
@@ -1298,7 +1306,7 @@ void PointerInspectorViewModel::NewField()
     m_vmFields.Items().Append(std::move(pField));
 }
 
-void PointerInspectorViewModel::RemoveSelectedField()
+void StructuredDataBrowserViewModel::RemoveSelectedField()
 {
     const auto nIndex = m_vmFields.GetSingleSelectionIndex();
     if (nIndex == -1)

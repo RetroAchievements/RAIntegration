@@ -1,6 +1,6 @@
 #include "CppUnitTest.h"
 
-#include "ui\viewmodels\PointerInspectorViewModel.hh"
+#include "ui\viewmodels\StructuredDataBrowserViewModel.hh"
 
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockDevKitContext.hh"
@@ -19,10 +19,10 @@ namespace ui {
 namespace viewmodels {
 namespace tests {
 
-TEST_CLASS(PointerInspectorViewModel_Tests)
+TEST_CLASS(StructuredDataBrowserViewModel_Tests)
 {
 private:
-    class PointerInspectorViewModelHarness : public PointerInspectorViewModel
+    class StructuredDataBrowserViewModelHarness : public StructuredDataBrowserViewModel
     {
     public:
         ra::context::mocks::MockConsoleContext mockConsoleContext;
@@ -36,7 +36,7 @@ private:
 
         std::array<unsigned char, 32> memory{};
 
-        GSL_SUPPRESS_F6 PointerInspectorViewModelHarness()
+        GSL_SUPPRESS_F6 StructuredDataBrowserViewModelHarness()
         {
             InitializeNotifyTargets();
 
@@ -52,18 +52,18 @@ private:
             SetIsVisible(true);
         }
 
-        ~PointerInspectorViewModelHarness() = default;
+        ~StructuredDataBrowserViewModelHarness() = default;
 
-        PointerInspectorViewModelHarness(const PointerInspectorViewModelHarness&) noexcept = delete;
-        PointerInspectorViewModelHarness& operator=(const PointerInspectorViewModelHarness&) noexcept = delete;
-        PointerInspectorViewModelHarness(PointerInspectorViewModelHarness&&) noexcept = delete;
-        PointerInspectorViewModelHarness& operator=(PointerInspectorViewModelHarness&&) noexcept = delete;
+        StructuredDataBrowserViewModelHarness(const StructuredDataBrowserViewModelHarness&) noexcept = delete;
+        StructuredDataBrowserViewModelHarness& operator=(const StructuredDataBrowserViewModelHarness&) noexcept = delete;
+        StructuredDataBrowserViewModelHarness(StructuredDataBrowserViewModelHarness&&) noexcept = delete;
+        StructuredDataBrowserViewModelHarness& operator=(StructuredDataBrowserViewModelHarness&&) noexcept = delete;
 
         GSL_SUPPRESS_C128
         void DoFrame()
         {
             mockGameContext.DoFrame(); // ensure note pointers get updated
-            PointerInspectorViewModel::DoFrame();
+            StructuredDataBrowserViewModel::DoFrame();
         }
 
         void AssertField(gsl::index nIndex, int32_t nOffset, ra::data::ByteAddress nAddress,
@@ -94,7 +94,7 @@ private:
                          ra::data::ByteAddress nAddress, const std::wstring& sDescription,
                          const std::wstring& sValue)
         {
-            const auto* pPointer = PointerChain().GetItemAt(nIndex);
+            const auto* pPointer = AddressChain().GetItemAt(nIndex);
             Assert::IsNotNull(pPointer, L"invalid index");
             Ensures(pPointer != nullptr);
             Assert::AreEqual(sOffset, pPointer->GetOffset(), L"sOffset");
@@ -105,7 +105,7 @@ private:
 
         void AssertPointerChainAddressValid(gsl::index nIndex)
         {
-            const auto* pPointer = PointerChain().GetItemAt(nIndex);
+            const auto* pPointer = AddressChain().GetItemAt(nIndex);
             Assert::IsNotNull(pPointer);
             Ensures(pPointer != nullptr);
             Assert::AreEqual(ra::ui::Color(0x00000000).ARGB, pPointer->GetRowColor().ARGB);
@@ -113,7 +113,7 @@ private:
 
         void AssertPointerChainAddressInvalid(gsl::index nIndex)
         {
-            const auto* pPointer = PointerChain().GetItemAt(nIndex);
+            const auto* pPointer = AddressChain().GetItemAt(nIndex);
             Assert::IsNotNull(pPointer);
             Ensures(pPointer != nullptr);
             Assert::AreEqual(ra::ui::Color(0xFFFFFFC0).ARGB, pPointer->GetRowColor().ARGB);
@@ -121,7 +121,7 @@ private:
 
         void AssertPointerChainAddressNull(gsl::index nIndex)
         {
-            const auto* pPointer = PointerChain().GetItemAt(nIndex);
+            const auto* pPointer = AddressChain().GetItemAt(nIndex);
             Assert::IsNotNull(pPointer);
             Ensures(pPointer != nullptr);
             Assert::AreEqual(ra::ui::Color(0xFFFFC0C0).ARGB, pPointer->GetRowColor().ARGB);
@@ -144,7 +144,7 @@ private:
 public:
     TEST_METHOD(TestInitialValues)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
 
         Assert::AreEqual({ 0U }, inspector.GetSelectedRootAddress());
         Assert::AreEqual(std::wstring(), inspector.GetSelectedNodeNote());
@@ -153,7 +153,7 @@ public:
 
     TEST_METHOD(TestSetCurrentAddressWithNote)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -172,7 +172,7 @@ public:
 
     TEST_METHOD(TestSetCurrentAddressWithPointerNote)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -199,7 +199,7 @@ public:
 
     TEST_METHOD(TestSetCurrentAddressWithMultiLinePointerNote)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -230,7 +230,7 @@ public:
 
     TEST_METHOD(TestNoRootAddresses)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -245,7 +245,7 @@ public:
 
     TEST_METHOD(TestRootAddresses)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -260,21 +260,33 @@ public:
             L"+4: [32-bit] Current world\r\n"
             L"+8: [32-bit] Current stage");
         inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({20U}, L"Read this");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({32U},
+            L"[4x16 bytes] Inventory\r\n"
+            L"+0: [32-bit] Item type\r\n"
+            L"+4: [32-bit] Item quantity");
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({120U},
+            L"[40 bytes] Area data\r\n"
+            L"+0: [32-bit] Width (in tiles)\r\n"
+            L"+4: [32-bit] Height (in tiles)");
 
         inspector.mockGameContext.NotifyGameLoad();
 
         Assert::AreEqual({4U}, inspector.GetSelectedRootAddress());
 
-        Assert::AreEqual({2U}, inspector.RootAddresses().Count());
+        Assert::AreEqual({4U}, inspector.RootAddresses().Count());
         Assert::AreEqual(4, inspector.RootAddresses().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"0x0004 | Player data"), inspector.RootAddresses().GetItemAt(0)->GetLabel());
         Assert::AreEqual(16, inspector.RootAddresses().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"0x0010 | Level data"), inspector.RootAddresses().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(32, inspector.RootAddresses().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0020 | Inventory"), inspector.RootAddresses().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(120, inspector.RootAddresses().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0078 | Area data"), inspector.RootAddresses().GetItemAt(3)->GetLabel());
     }
 
     TEST_METHOD(TestRootAddressesUpdateOnMemoryNoteChange)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -329,11 +341,23 @@ public:
         Assert::AreEqual(std::wstring(L"0x000c | New pointer"), inspector.RootAddresses().GetItemAt(0)->GetLabel());
         Assert::AreEqual(20, inspector.RootAddresses().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"0x0014 | Should be here instead"), inspector.RootAddresses().GetItemAt(1)->GetLabel());
+
+        inspector.mockGameContext.Assets().FindMemoryNotes()->SetNote({32U},
+            L"[4x16 bytes] Inventory\r\n"
+            L"+0: [32-bit] Item type\r\n"
+            L"+4: [32-bit] Item quantity");
+        Assert::AreEqual({ 3U }, inspector.RootAddresses().Count());
+        Assert::AreEqual(12, inspector.RootAddresses().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"0x000c | New pointer"), inspector.RootAddresses().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(20, inspector.RootAddresses().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0014 | Should be here instead"), inspector.RootAddresses().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(32, inspector.RootAddresses().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"0x0020 | Inventory"), inspector.RootAddresses().GetItemAt(2)->GetLabel());
     }
 
     TEST_METHOD(TestSelectedNode)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -359,7 +383,7 @@ public:
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Player data"), inspector.GetSelectedNodeNote());
 
         Assert::AreEqual({5U}, inspector.Nodes().Count());
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
         Assert::AreEqual(0x00000000, inspector.Nodes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"+0000 | [8-bit pointer] Row 1"), inspector.Nodes().GetItemAt(1)->GetLabel());
@@ -370,7 +394,7 @@ public:
         Assert::AreEqual(0x00000010, inspector.Nodes().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L"+0010 | [8-bit pointer] Row 3"), inspector.Nodes().GetItemAt(4)->GetLabel());
 
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.GetSelectedNode());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.GetSelectedNode());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Player data"), inspector.GetSelectedNodeNote());
         Assert::AreEqual({4U}, inspector.Fields().Items().Count());
         inspector.AssertField(0, 0, 0x0CU, L"+0000", L"[pointer] Row 1", ra::data::Memory::Size::EightBit, ra::data::Memory::Format::Hex, L"14");
@@ -378,7 +402,7 @@ public:
         inspector.AssertField(2, 16, 0x1CU, L"+0010", L"[pointer] Row 3", ra::data::Memory::Size::EightBit, ra::data::Memory::Format::Hex, L"24");
         inspector.AssertField(3, 24, 0x24U, L"+0018", L"Generic data", ra::data::Memory::Size::EightBit, ra::data::Memory::Format::Dec, L"44");
 
-        Assert::AreEqual({1U}, inspector.PointerChain().Count());
+        Assert::AreEqual({1U}, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
 
         inspector.SetSelectedNode(0x00000008);
@@ -386,7 +410,7 @@ public:
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Row 2"), inspector.GetSelectedNodeNote());
         Assert::AreEqual({0U}, inspector.Fields().Items().Count());
 
-        Assert::AreEqual({2U}, inspector.PointerChain().Count());
+        Assert::AreEqual({2U}, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
         inspector.AssertPointerChain(1, L"+0008", 0x14, L"Row 2", L"1c");
 
@@ -398,14 +422,14 @@ public:
         inspector.AssertField(1, 4, 0x18U, L"+0004", L"[pointer] Column 1b", ra::data::Memory::Size::EightBit, ra::data::Memory::Format::Hex, L"20");
         inspector.AssertField(2, 8, 0x1CU, L"+0008", L"Column 1c", ra::data::Memory::Size::EightBit, ra::data::Memory::Format::Dec, L"36");
 
-        Assert::AreEqual({2U}, inspector.PointerChain().Count());
+        Assert::AreEqual({2U}, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
         inspector.AssertPointerChain(1, L"+0000", 0x0C, L"Row 1", L"14");
     }
 
     TEST_METHOD(TestSelectedNodeArray)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -449,7 +473,7 @@ public:
         inspector.AssertField(2, 6, 0x0AU, L"+0006", L"Item flags", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Hex, L"0000");
         inspector.AssertField(3, 8, 0x0CU, L"+0008", L"Item name", ra::data::Memory::Size::Text, ra::data::Memory::Format::Dec, L"Hi");
 
-        Assert::AreEqual({ 1U }, inspector.PointerChain().Count());
+        Assert::AreEqual({ 1U }, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Inventory [0]", L"");
 
         inspector.SetSelectedNode(0x00000040);
@@ -461,13 +485,13 @@ public:
         inspector.AssertField(2, 0x46, 0x4AU, L"+0006", L"Item flags", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Hex, L"0000");
         inspector.AssertField(3, 0x48, 0x4CU, L"+0008", L"Item name", ra::data::Memory::Size::Text, ra::data::Memory::Format::Dec, L"Me");
 
-        Assert::AreEqual({ 1U }, inspector.PointerChain().Count());
+        Assert::AreEqual({ 1U }, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x44, L"Inventory [2]", L"");
     }
 
     TEST_METHOD(TestSelectedNodeNestedArray)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -492,7 +516,7 @@ public:
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Player data"), inspector.GetSelectedNodeNote());
 
         Assert::AreEqual({ 6U }, inspector.Nodes().Count());
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
         Assert::AreEqual(0x00000000, inspector.Nodes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"+0000 | [8-bit pointer] Stats"), inspector.Nodes().GetItemAt(1)->GetLabel());
@@ -505,14 +529,14 @@ public:
         Assert::AreEqual(0x00000020, inspector.Nodes().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"+0020 | [4x8-byte] Inventory [3]"), inspector.Nodes().GetItemAt(5)->GetLabel());
 
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.GetSelectedNode());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.GetSelectedNode());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Player data"), inspector.GetSelectedNodeNote());
         Assert::AreEqual({ 3U }, inspector.Fields().Items().Count());
         inspector.AssertField(0, 0, 0x0CU, L"+0000", L"[pointer] Stats", ra::data::Memory::Size::EightBit, ra::data::Memory::Format::Hex, L"14");
         inspector.AssertField(1, 8, 0x14U, L"+0008", L"[4x8-byte] Inventory", ra::data::Memory::Size::Array, ra::data::Memory::Format::Unknown, L"");
         inspector.AssertField(2, 40, 0x34U, L"+0028", L"Generic data", ra::data::Memory::Size::EightBit, ra::data::Memory::Format::Dec, L"60");
 
-        Assert::AreEqual({ 1U }, inspector.PointerChain().Count());
+        Assert::AreEqual({ 1U }, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
 
         inspector.SetSelectedNode(0x00000008);
@@ -523,7 +547,7 @@ public:
         inspector.AssertField(1, 4, 0x18U, L"+0004", L"Item quantity", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Dec, L"32");
         inspector.AssertField(2, 6, 0x1AU, L"+0006", L"Item flags", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Hex, L"0000");
 
-        Assert::AreEqual({ 2U }, inspector.PointerChain().Count());
+        Assert::AreEqual({ 2U }, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
         inspector.AssertPointerChain(1, L"+0008", 0x14, L"Inventory [0]", L"");
 
@@ -535,7 +559,7 @@ public:
         inspector.AssertField(1, 0x14, 0x28U, L"+0004", L"Item quantity", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Dec, L"48");
         inspector.AssertField(2, 0x16, 0x2AU, L"+0006", L"Item flags", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Hex, L"0000");
 
-        Assert::AreEqual({ 2U }, inspector.PointerChain().Count());
+        Assert::AreEqual({ 2U }, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
         inspector.AssertPointerChain(1, L"+0018", 0x24, L"Inventory [2]", L"");
 
@@ -544,14 +568,14 @@ public:
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Stats"), inspector.GetSelectedNodeNote());
         Assert::AreEqual({ 0U }, inspector.Fields().Items().Count());
 
-        Assert::AreEqual({ 2U }, inspector.PointerChain().Count());
+        Assert::AreEqual({ 2U }, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
         inspector.AssertPointerChain(1, L"+0000", 0x0C, L"Stats", L"14");
     }
 
     TEST_METHOD(TestSelectedNodeStruct)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -576,10 +600,10 @@ public:
         Assert::AreEqual(std::wstring(L"[32 bytes] Inventory"), inspector.GetSelectedNodeNote());
 
         Assert::AreEqual({ 1U }, inspector.Nodes().Count());
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"+0000 | [32 bytes] Inventory"), inspector.Nodes().GetItemAt(0)->GetLabel());
 
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.GetSelectedNode());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.GetSelectedNode());
         Assert::AreEqual(std::wstring(L"[32 bytes] Inventory"), inspector.GetSelectedNodeNote());
         Assert::AreEqual({ 4U }, inspector.Fields().Items().Count());
         inspector.AssertField(0, 0, 0x04U, L"+0000", L"Item type", ra::data::Memory::Size::ThirtyTwoBit, ra::data::Memory::Format::Dec, L"12");
@@ -587,13 +611,13 @@ public:
         inspector.AssertField(2, 6, 0x0AU, L"+0006", L"Item flags", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Hex, L"0000");
         inspector.AssertField(3, 8, 0x0CU, L"+0008", L"Item name", ra::data::Memory::Size::Text, ra::data::Memory::Format::Dec, L"Hi");
 
-        Assert::AreEqual({ 1U }, inspector.PointerChain().Count());
+        Assert::AreEqual({ 1U }, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Inventory", L"");
     }
 
     TEST_METHOD(TestSelectedField)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -660,7 +684,7 @@ public:
 
     TEST_METHOD(TestUpdateCurrentFieldNoteSimple)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -690,7 +714,7 @@ public:
 
     TEST_METHOD(TestUpdateCurrentFieldNoteMultiline)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -723,7 +747,7 @@ public:
 
     TEST_METHOD(TestUpdateCurrentFieldNoteNested)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -758,7 +782,7 @@ public:
 
     TEST_METHOD(TestUpdateFieldNoteSize)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -816,7 +840,7 @@ public:
 
     TEST_METHOD(TestUpdateFieldNoteTextSize)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -858,7 +882,7 @@ public:
 
     TEST_METHOD(TestUpdateCurrentFieldNoteArray)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -900,7 +924,7 @@ public:
 
     TEST_METHOD(TestUpdateCurrentFieldNoteNestedArray)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -946,7 +970,7 @@ public:
 
     TEST_METHOD(TestUpdateCurrentFieldNoteStruct)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -965,7 +989,7 @@ public:
         );
         inspector.SetSelectedRootAddress({ 4U });
 
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.GetSelectedNode());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.GetSelectedNode());
         Assert::AreEqual({ 4U }, inspector.Fields().Items().Count());
         inspector.AssertField(1, 4, 0x08U, L"+0004", L"Item quantity", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Dec, L"16");
         inspector.Fields().Items().GetItemAt(1)->SetSelected(true);
@@ -987,7 +1011,7 @@ public:
 
     TEST_METHOD(TestUpdateFieldConvertToPointer)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -1003,7 +1027,7 @@ public:
             L"+8: [32-bit] Max HP");
 
         Assert::AreEqual({ 1U }, inspector.Nodes().Count());
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
 
         Assert::AreEqual({ 4U }, inspector.GetSelectedRootAddress());
@@ -1022,7 +1046,7 @@ public:
             L"+0x08: [32-bit pointer] Max HP"));
 
         Assert::AreEqual({ 2U }, inspector.Nodes().Count());
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
         Assert::AreEqual(0x00000008, inspector.Nodes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"+0008 | [32-bit pointer] Max HP"), inspector.Nodes().GetItemAt(1)->GetLabel());
@@ -1037,13 +1061,13 @@ public:
             L"+0x08: [32-bit] Max HP"));
 
         Assert::AreEqual({ 1U }, inspector.Nodes().Count());
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.Nodes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"[32-bit pointer] Player data"), inspector.Nodes().GetItemAt(0)->GetLabel());
     }
 
     TEST_METHOD(TestUpdateCurrentFieldOffsetSimple)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -1061,7 +1085,7 @@ public:
         Assert::AreEqual({4U}, inspector.GetSelectedRootAddress());
         inspector.AssertField(0, 8, 20, L"+0008", L"Max HP", ra::data::Memory::Size::ThirtyTwoBit, ra::data::Memory::Format::Dec, L"20");
 
-        auto* pField = inspector.Fields().Items().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
+        auto* pField = inspector.Fields().Items().GetItemAt<StructuredDataBrowserViewModel::StructFieldViewModel>(0);
         Expects(pField != nullptr);
         pField->SetOffset(L"+000c");
 
@@ -1073,7 +1097,7 @@ public:
 
     TEST_METHOD(TestUpdateCurrentFieldOffsetNested)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -1096,7 +1120,7 @@ public:
         inspector.AssertField(0, 8, 32, L"+0008", L"First item", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Dec, L"32");
 
         // position does not change
-        auto* pField = inspector.Fields().Items().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
+        auto* pField = inspector.Fields().Items().GetItemAt<StructuredDataBrowserViewModel::StructFieldViewModel>(0);
         Expects(pField != nullptr);
         pField->SetSelected(true);
         Assert::AreEqual(std::wstring(L"[16-bit] First item"), inspector.GetCurrentFieldNote());
@@ -1112,7 +1136,7 @@ public:
                       L"++0x04: [16-bit] First item\r\n++0x0A: [16-bit] Second item"));
 
         // position does change
-        pField = inspector.Fields().Items().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
+        pField = inspector.Fields().Items().GetItemAt<StructuredDataBrowserViewModel::StructFieldViewModel>(0);
         Expects(pField != nullptr);
         pField->SetOffset(L"10");
         Assert::AreEqual(1, inspector.GetSingleSelectionIndex());
@@ -1128,7 +1152,7 @@ public:
 
     TEST_METHOD(TestCopyDefinition)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -1152,7 +1176,7 @@ public:
 
         Assert::AreEqual({4U}, inspector.GetSelectedRootAddress());
 
-        Assert::AreEqual(PointerInspectorViewModel::PointerNodeViewModel::RootNodeId, inspector.GetSelectedNode());
+        Assert::AreEqual(StructuredDataBrowserViewModel::StructureNodeViewModel::RootNodeId, inspector.GetSelectedNode());
         Assert::AreEqual(std::wstring(L"[8-bit pointer] Player data"), inspector.GetSelectedNodeNote());
         inspector.AssertField(1, 8, 0x14U, L"+0008", L"[pointer] Row 2", ra::data::Memory::Size::EightBit, ra::data::Memory::Format::Hex, L"1c");
 
@@ -1177,7 +1201,7 @@ public:
 
     TEST_METHOD(TestCopyDefinitionArray)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -1199,7 +1223,7 @@ public:
         );
 
         inspector.SetSelectedNode(0x00000008);
-        Assert::AreEqual({ 2U }, inspector.PointerChain().Count());
+        Assert::AreEqual({ 2U }, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
         inspector.AssertPointerChain(1, L"+0008", 0x14, L"Inventory [0]", L"");
         Assert::AreEqual({ 3U }, inspector.Fields().Items().Count());
@@ -1210,7 +1234,7 @@ public:
         Assert::AreEqual(std::wstring(L"I:0xH0004_0x 000c=32"), inspector.mockClipboard.GetText());
 
         inspector.SetSelectedNode(0x00000018);
-        Assert::AreEqual({ 2U }, inspector.PointerChain().Count());
+        Assert::AreEqual({ 2U }, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0c");
         inspector.AssertPointerChain(1, L"+0018", 0x24, L"Inventory [2]", L"");
         Assert::AreEqual({ 3U }, inspector.Fields().Items().Count());
@@ -1223,7 +1247,7 @@ public:
 
     TEST_METHOD(TestDoFrame)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -1246,7 +1270,7 @@ public:
         inspector.AssertField(0, 4, 16U, L"+0004", L"Current HP", ra::data::Memory::Size::ThirtyTwoBit, ra::data::Memory::Format::Dec, L"16");
         inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", ra::data::Memory::Size::ThirtyTwoBit, ra::data::Memory::Format::Dec, L"20");
 
-        Assert::AreEqual({1U}, inspector.PointerChain().Count());
+        Assert::AreEqual({1U}, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0000000c");
 
         // data changes
@@ -1256,7 +1280,7 @@ public:
         inspector.AssertField(0, 4, 16U, L"+0004", L"Current HP", ra::data::Memory::Size::ThirtyTwoBit, ra::data::Memory::Format::Dec, L"272");
         inspector.AssertField(1, 8, 20U, L"+0008", L"Max HP", ra::data::Memory::Size::ThirtyTwoBit, ra::data::Memory::Format::Dec, L"99");
 
-        Assert::AreEqual({1U}, inspector.PointerChain().Count());
+        Assert::AreEqual({1U}, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0000000c");
 
         // pointer changes
@@ -1265,13 +1289,13 @@ public:
         inspector.AssertField(0, 4, 17U, L"+0004", L"Current HP", ra::data::Memory::Size::ThirtyTwoBit, ra::data::Memory::Format::Dec, L"1660944385");
         inspector.AssertField(1, 8, 21U, L"+0008", L"Max HP", ra::data::Memory::Size::ThirtyTwoBit, ra::data::Memory::Format::Dec, L"402653184");
 
-        Assert::AreEqual({1U}, inspector.PointerChain().Count());
+        Assert::AreEqual({1U}, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0000000d");
     }
 
     TEST_METHOD(TestDoFrameNested)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -1313,7 +1337,7 @@ public:
         inspector.AssertField(1, 8, 0x28U, L"+0008", L"Max HP",     // 20+08=28 (0x64 => 100)
             ra::data::Memory::Size::ThirtyTwoBit, ra::data::Memory::Format::Dec, L"100");
 
-        Assert::AreEqual({3U}, inspector.PointerChain().Count());
+        Assert::AreEqual({3U}, inspector.AddressChain().Count());
         inspector.AssertPointerChain(0, L"", 0x04, L"Player data", L"0000000c");     //    04    (0C)
         inspector.AssertPointerChain(1, L"+0004", 0x10, L"1st player", L"00000034"); // 0C+04=10 (34)
         inspector.AssertPointerChain(2, L" +0008", 0x3C, L"Health", L"00000020");    // 34+08=3C (20)
@@ -1354,7 +1378,7 @@ public:
 
     TEST_METHOD(TestNewFieldEmpty)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockConsoleContext.SetId(ConsoleID::PlayStation);
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
@@ -1390,7 +1414,7 @@ public:
 
     TEST_METHOD(TestNewFieldEmptyBigEndian)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockConsoleContext.SetId(ConsoleID::GameCube);
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
@@ -1423,7 +1447,7 @@ public:
 
     TEST_METHOD(TestNewFieldSized)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockConsoleContext.SetId(ConsoleID::PlayStation2);
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
@@ -1472,7 +1496,7 @@ public:
 
     TEST_METHOD(TestRemoveSelectedField)
     {
-        PointerInspectorViewModelHarness inspector;
+        StructuredDataBrowserViewModelHarness inspector;
         inspector.mockGameContext.SetGameId(1);
         inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
 
@@ -1495,7 +1519,7 @@ public:
         inspector.AssertField(0, 8, 32, L"+0008", L"First item", ra::data::Memory::Size::SixteenBit, ra::data::Memory::Format::Dec, L"32");
 
         // position does not change
-        auto* pField = inspector.Fields().Items().GetItemAt<PointerInspectorViewModel::StructFieldViewModel>(0);
+        auto* pField = inspector.Fields().Items().GetItemAt<StructuredDataBrowserViewModel::StructFieldViewModel>(0);
         Expects(pField != nullptr);
         pField->SetSelected(true);
         Assert::AreEqual(std::wstring(L"[16-bit] First item"), inspector.GetCurrentFieldNote());

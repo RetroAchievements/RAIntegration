@@ -162,7 +162,7 @@ public:
         menu.AssertMenuItem(nIndex++, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         menu.AssertMenuSeparator(nIndex++);
         menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_STRUCTBROWSER, L"Structured Data B&rowser");
     }
 
     TEST_METHOD(TestBuildMenuLoggedIn)
@@ -195,7 +195,7 @@ public:
         menu.AssertMenuItem(nIndex++, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         menu.AssertMenuSeparator(nIndex++);
         menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_STRUCTBROWSER, L"Structured Data B&rowser");
         menu.AssertMenuSeparator(nIndex++);
         menu.AssertMenuItem(nIndex++, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
         menu.AssertMenuItem(nIndex++, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
@@ -226,7 +226,7 @@ public:
         menu.AssertMenuItem(nIndex++, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         menu.AssertMenuSeparator(nIndex++);
         menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        menu.AssertMenuItem(nIndex++, IDM_RA_FILES_STRUCTBROWSER, L"Structured Data B&rowser");
         menu.AssertMenuSeparator(nIndex++);
         menu.AssertMenuItem(nIndex++, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
@@ -672,18 +672,18 @@ public:
             IDM_RA_FILES_POINTERFINDER, false, "find pointer", DialogResult::None);
     }
 
-    TEST_METHOD(TestShowPointerInspectorHardcoreAbort)
+    TEST_METHOD(TestShowStructuredDataBrowserHardcoreAbort)
     {
         IntegrationMenuViewModelHarness menu;
-        menu.AssertShowWindow<ra::ui::viewmodels::PointerInspectorViewModel>(
-            IDM_RA_FILES_POINTERINSPECTOR, true, "inspect pointers", DialogResult::No);
+        menu.AssertShowWindow<ra::ui::viewmodels::StructuredDataBrowserViewModel>(
+            IDM_RA_FILES_STRUCTBROWSER, true, "browse data structures", DialogResult::No);
     }
 
-    TEST_METHOD(TestShowPointerInspectorNonHardcore)
+    TEST_METHOD(TestShowStructuredDataBrowserNonHardcore)
     {
         IntegrationMenuViewModelHarness menu;
-        menu.AssertShowWindow<ra::ui::viewmodels::PointerInspectorViewModel>(
-            IDM_RA_FILES_POINTERINSPECTOR, false, "inspect pointers", DialogResult::None);
+        menu.AssertShowWindow<ra::ui::viewmodels::StructuredDataBrowserViewModel>(
+            IDM_RA_FILES_STRUCTBROWSER, false, "browse data structures", DialogResult::None);
     }
 
     TEST_METHOD(TestOpenAllHardcore)

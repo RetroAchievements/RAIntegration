@@ -1,5 +1,5 @@
-#ifndef RA_UI_POINTERINSPECTORVIEWMODEL_H
-#define RA_UI_POINTERINSPECTORVIEWMODEL_H
+#ifndef RA_UI_STRUCTUREDDATABROWSERVIEWMODEL_H
+#define RA_UI_STRUCTUREDDATABROWSERVIEWMODEL_H
 #pragma once
 
 #include "data\context\EmulatorContext.hh"
@@ -24,32 +24,32 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class PointerInspectorViewModel : public WindowViewModelBase,
+class StructuredDataBrowserViewModel : public WindowViewModelBase,
     protected ra::data::context::GameContext::NotifyTarget,
     protected ra::data::context::EmulatorContext::DispatchesReadMemory,
     protected ra::ui::ViewModelBase::NotifyTarget,
     protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
 public:
-    GSL_SUPPRESS_F6 PointerInspectorViewModel();
-    ~PointerInspectorViewModel() noexcept = default;
+    GSL_SUPPRESS_F6 StructuredDataBrowserViewModel();
+    ~StructuredDataBrowserViewModel() noexcept = default;
 
-    PointerInspectorViewModel(const PointerInspectorViewModel&) noexcept = delete;
-    PointerInspectorViewModel& operator=(const PointerInspectorViewModel&) noexcept = delete;
-    PointerInspectorViewModel(PointerInspectorViewModel&&) noexcept = delete;
-    PointerInspectorViewModel& operator=(PointerInspectorViewModel&&) noexcept = delete;
+    StructuredDataBrowserViewModel(const StructuredDataBrowserViewModel&) noexcept = delete;
+    StructuredDataBrowserViewModel& operator=(const StructuredDataBrowserViewModel&) noexcept = delete;
+    StructuredDataBrowserViewModel(StructuredDataBrowserViewModel&&) noexcept = delete;
+    StructuredDataBrowserViewModel& operator=(StructuredDataBrowserViewModel&&) noexcept = delete;
 
     void InitializeNotifyTargets();
 
     /// <summary>
     /// Gets the list of available root addresses.
     /// </summary>
-    LookupItemViewModelCollection& RootAddresses() noexcept { return m_vPointers; }
+    LookupItemViewModelCollection& RootAddresses() noexcept { return m_vRootAddresses; }
 
     /// <summary>
     /// Gets the list of available root addresses.
     /// </summary>
-    const LookupItemViewModelCollection& RootAddresses() const noexcept { return m_vPointers; }
+    const LookupItemViewModelCollection& RootAddresses() const noexcept { return m_vRootAddresses; }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the selected root address.
@@ -136,12 +136,12 @@ public:
     /// </summary>
     void SetCurrentFieldNote(const std::wstring& sValue) { SetValue(CurrentFieldNoteProperty, sValue); }
 
-    class PointerNodeViewModel : public LookupItemViewModel
+    class StructureNodeViewModel : public LookupItemViewModel
     {
     public:
         static const int RootNodeId = -1;
 
-        PointerNodeViewModel(gsl::index nParentIndex, int32_t nOffset, uint32_t nIndex, const std::wstring& sLabel) noexcept
+        StructureNodeViewModel(gsl::index nParentIndex, int32_t nOffset, uint32_t nIndex, const std::wstring& sLabel) noexcept
             : LookupItemViewModel(nParentIndex < 0 ? RootNodeId : gsl::narrow_cast<int>((nParentIndex << 24) | (nOffset & 0x00FFFFFF)), sLabel),
               m_nParentIndex(nParentIndex),
               m_nOffset(nOffset),
@@ -211,14 +211,14 @@ public:
     void SetSelectedNodeNote(const std::wstring& sValue) { SetValue(SelectedNodeNoteProperty, sValue); }
 
     /// <summary>
-    /// Gets the pointer chain list from the selected root address to the selected node.
+    /// Gets the address chain list from the selected root address to the selected node.
     /// </summary>
-    ViewModelCollection<StructFieldViewModel>& PointerChain() noexcept { return m_vPointerChain; }
+    ViewModelCollection<StructFieldViewModel>& AddressChain() noexcept { return m_vAddressChain; }
 
     /// <summary>
-    /// Gets the pointer chain list from the selected root address to the selected node.
+    /// Gets the address chain list from the selected root address to the selected node.
     /// </summary>
-    const ViewModelCollection<StructFieldViewModel>& PointerChain() const noexcept { return m_vPointerChain; }
+    const ViewModelCollection<StructFieldViewModel>& AddressChain() const noexcept { return m_vAddressChain; }
 
     /// <summary>
     /// Gets the list of fields for the selected note.
@@ -264,27 +264,26 @@ private:
     void LoadNote(const ra::data::models::MemoryNoteModel* pNote, uint32_t nElementIndex);
     void LoadNodes(const ra::data::models::MemoryNoteModel* pNote);
     const ra::data::models::MemoryNoteModel* FindNestedMemoryNoteModel(const ra::data::models::MemoryNoteModel& pRootNote, int nNewNode);
-    void GetPointerChain(gsl::index nIndex, std::stack<const PointerNodeViewModel*>& sChain) const;
+    void GetAddressChain(gsl::index nIndex, std::stack<const StructureNodeViewModel*>& sChain) const;
     void SyncField(StructFieldViewModel& pFieldViewModel, const ra::data::models::MemoryNoteModel& pOffsetNote);
-    void UpdatePointerVisibility(ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel* pNote);
-    const ra::data::models::MemoryNoteModel::Reference UpdatePointerChain(int nNewNode);
-    void UpdatePointerChainRowColor(StructFieldViewModel& pPointer);
-    void UpdatePointerChainValues();
+    void UpdateAddressVisibility(ra::data::ByteAddress nAddress, const ra::data::models::MemoryNoteModel* pNote);
+    const ra::data::models::MemoryNoteModel::Reference UpdateAddressChain(int nNewNode);
+    void UpdateAddressChainRowColor(StructFieldViewModel& pRow);
+    void UpdateAddressChainValues();
     void UpdateValues();
     std::string GetMemRefChain(bool bMeasured) const;
 
     void UpdateSourceMemoryNote();
     void BuildNote(ra::util::StringBuilder& builder,
-                   std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
+                   std::stack<const StructuredDataBrowserViewModel::StructureNodeViewModel*>& sChain,
                    const ra::data::models::MemoryNoteModel& pNote, std::wstring& sIndent);
     void BuildNoteForCurrentNode(ra::util::StringBuilder& builder,
-                                 std::stack<const PointerInspectorViewModel::PointerNodeViewModel*>& sChain,
+                                 std::stack<const StructuredDataBrowserViewModel::StructureNodeViewModel*>& sChain,
                                  std::wstring& sIndent);
 
-    LookupItemViewModelCollection m_vPointers;
+    LookupItemViewModelCollection m_vRootAddresses;
     LookupItemViewModelCollection m_vNodes;
-    LookupItemViewModelCollection m_vIndices;
-    ViewModelCollection<StructFieldViewModel> m_vPointerChain;
+    ViewModelCollection<StructFieldViewModel> m_vAddressChain;
     MemoryWatchListViewModel m_vmFields;
     bool m_bSyncingAddress = false;
     bool m_bSyncingNote = false;
@@ -299,4 +298,4 @@ private:
 } // namespace ui
 } // namespace ra
 
-#endif !RA_UI_POINTERINSPECTORVIEWMODEL_H
+#endif !RA_UI_STRUCTUREDDATABROWSERVIEWMODEL_H

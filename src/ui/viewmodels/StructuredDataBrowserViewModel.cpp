@@ -199,6 +199,12 @@ void StructuredDataBrowserViewModel::OnEndGameLoad()
     }
 
     m_vRootAddresses.EndUpdate();
+
+    if (!HasSelectedRootAddress() && m_vRootAddresses.Count() > 0)
+    {
+        SetSelectedRootAddress(m_vRootAddresses.GetItemAt(0)->GetId());
+        SetValue(HasSelectedRootAddressProperty, true);
+    }
 }
 
 void StructuredDataBrowserViewModel::OnMemoryNoteChanged(ra::data::ByteAddress nAddress, const std::wstring&)

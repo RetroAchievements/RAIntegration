@@ -2,6 +2,7 @@
 
 #include "context/IRcClient.hh"
 
+#include <rcheevos/src/client/rc_client_game.h>
 #include <rcheevos/src/client/rc_client_internal.h>
 
 namespace ra {

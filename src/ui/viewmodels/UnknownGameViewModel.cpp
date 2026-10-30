@@ -9,8 +9,6 @@
 
 #include "data\context\GameContext.hh"
 
-#include "services\AchievementRuntime.hh"
-#include "services\AchievementRuntimeExports.hh"
 #include "services\IClipboard.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ILoginService.hh"
@@ -20,8 +18,7 @@
 
 #include <rcheevos\include\rc_api_editor.h>
 #include <rcheevos\include\rc_api_info.h>
-#include <rcheevos\src\client\rc_client_external.h>
-#include <rcheevos\src\client\rc_client_internal.h>
+#include <rcheevos\src\client\rc_client_game.h>
 
 namespace ra {
 namespace ui {

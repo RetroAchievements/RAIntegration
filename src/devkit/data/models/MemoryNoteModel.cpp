@@ -288,7 +288,7 @@ MemoryNoteParser::TokenType MemoryNoteParser::NextToken(std::wstring& sWord) con
                 // start of number
                 sWord.push_back(c);
 
-                if (c == '0' && m_nIndex < m_sNote.size() - 2 &&
+                if (c == '0' && m_nIndex + 2 < m_sNote.size() &&
                     m_sNote.at(m_nIndex + 1) == 'x' &&
                     ra::util::String::IsHexDigit(m_sNote.at(m_nIndex + 2)))
                 {
@@ -664,20 +664,43 @@ std::wstring MemoryNoteModel::TrimSize(std::wstring_view svNote, bool bKeepPoint
     }
 
     bool bPointer = false;
+    bool bSize = false;
+    bool bMultiplier = false;
     std::wstring sWord;
     MemoryNoteParser::TokenType nTokenType;
     const MemoryNoteParser parser(svNote.substr(nStartIndex + 1, nEndIndex - nStartIndex - 1));
     do
     {
         nTokenType = parser.NextToken(sWord);
-        if (nTokenType == MemoryNoteParser::TokenType::Pointer)
-            bPointer = true;
-        else if (nTokenType == MemoryNoteParser::TokenType::Other)
-            return std::wstring(svNote);
+        switch (nTokenType)
+        {
+            case MemoryNoteParser::TokenType::Pointer:
+                bPointer = true;
+                break;
+
+            case MemoryNoteParser::TokenType::Other:
+                return std::wstring(svNote);
+
+            case MemoryNoteParser::TokenType::Bits:
+            case MemoryNoteParser::TokenType::Bytes:
+                bSize = true;
+                break;
+
+            case MemoryNoteParser::TokenType::Multiplier:
+                bMultiplier = true;
+                break;
+        }
     } while (nTokenType != MemoryNoteParser::TokenType::None);
 
+    if (!bSize) // we did not find a size to trim
+        return std::wstring(svNote);
+
+    // if we found an array notation and are keeping the pointer annotation, just return the original string
+    if (bMultiplier && bKeepPointer)
+        return std::wstring(svNote);
+
     std::wstring sSummary;
-    if (bPointer && bKeepPointer)
+    if (bPointer && bKeepPointer) // if we found a pointer notation, simplify it
         sSummary.append(L"[pointer] ");
 
     while (nStartIndex > 0)

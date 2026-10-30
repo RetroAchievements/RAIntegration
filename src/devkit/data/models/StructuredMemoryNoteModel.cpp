@@ -246,6 +246,15 @@ void StructuredMemoryNoteModel::ExtractIndirectNotes(std::wstring_view svParentI
     } while (true);
 }
 
+void StructuredMemoryNoteModel::EnumerateOffsetNotes(std::function<bool(const MemoryNoteModel&)> fCallback) const
+{
+    for (const auto& pNote : m_vOffsetNotes)
+    {
+        if (!fCallback(*pNote.get()))
+            break;
+    }
+}
+
 void StructuredMemoryNoteModel::EnumerateOffsetNotes(
     std::function<bool(const MemoryNoteModel::Reference&)> fCallback, ra::data::ByteAddress nBaseAddress) const
 {

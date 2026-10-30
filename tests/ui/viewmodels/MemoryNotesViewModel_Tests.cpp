@@ -4,8 +4,7 @@
 #include "ui\viewmodels\MemoryNotesViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-#include "tests\ui\UIAsserts.hh"
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\ui\UIAsserts.hh" // VCIC-Excluded: Provides ToString<MessageBoxViewModel::Buttons> for Assert
 #include "tests\devkit\context\mocks\MockConsoleContext.hh"
 #include "tests\devkit\context\mocks\MockDevKitContext.hh"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
@@ -15,7 +14,7 @@
 #include "tests\devkit\services\mocks\MockLocalStorage.hh"
 #include "tests\devkit\services\mocks\MockLogger.hh"
 #include "tests\devkit\services\mocks\MockThreadPool.hh"
-#include "tests\devkit\testutil\MemoryAsserts.hh"
+#include "tests\devkit\testutil\MemoryAsserts.hh" // VCIC-Excluded: Provides ToString<Memory::Size> for Assert
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockServer.hh"

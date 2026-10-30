@@ -1,20 +1,9 @@
 #include "MemoryWatchListViewModel.hh"
 
-#include "RA_Defs.h"
-#include "util\Strings.hh"
+#include "context\IEmulatorMemoryContext.hh"
+#include "data\context\GameContext.hh"
 
-#include "data\Types.hh"
-#include "data\context\EmulatorContext.hh"
-#include "data\util\AchievementLogicSerializer.hh"
-
-#include "services\FrameEventQueue.hh"
-#include "services\IConfiguration.hh"
-#include "services\IFileSystem.hh"
-#include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
-
-#include "ui\viewmodels\FileDialogViewModel.hh"
-#include "ui\viewmodels\MessageBoxViewModel.hh"
 
 namespace ra {
 namespace ui {

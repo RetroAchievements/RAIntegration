@@ -5,7 +5,7 @@
 #include "data\context\EmulatorContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
-#include "ui\viewmodels\PointerInspectorViewModel.hh"
+#include "ui\viewmodels\StructuredDataBrowserViewModel.hh"
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh"

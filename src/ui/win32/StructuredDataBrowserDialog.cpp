@@ -1,53 +1,50 @@
-#include "PointerInspectorDialog.hh"
+#include "StructuredDataBrowserDialog.hh"
 
 #include "RA_Defs.h"
 #include "RA_Resource.h"
 
-#include "ui\viewmodels\WindowManager.hh"
-
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridMemoryWatchFormatColumnBinding.hh"
+#include "ui\win32\bindings\GridMemoryWatchSizeColumnBinding.hh"
 #include "ui\win32\bindings\GridMemoryWatchValueColumnBinding.hh"
-#include "ui\win32\bindings\GridLookupColumnBinding.hh"
-#include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
 #include "util\EnumOps.hh"
 #include "util\Log.hh"
 
-using ra::ui::viewmodels::PointerInspectorViewModel;
+using ra::ui::viewmodels::StructuredDataBrowserViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;
 
 namespace ra {
 namespace ui {
 namespace win32 {
 
-bool PointerInspectorDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
+bool StructuredDataBrowserDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
 {
-    return (dynamic_cast<const PointerInspectorViewModel*>(&vmViewModel) != nullptr);
+    return (dynamic_cast<const StructuredDataBrowserViewModel*>(&vmViewModel) != nullptr);
 }
 
-void PointerInspectorDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND)
+void StructuredDataBrowserDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND)
 {
     ShowWindow(vmViewModel);
 }
 
-void PointerInspectorDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmViewModel)
+void StructuredDataBrowserDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmViewModel)
 {
-    auto* vmPointerFinder = dynamic_cast<PointerInspectorViewModel*>(&vmViewModel);
+    auto* vmPointerFinder = dynamic_cast<StructuredDataBrowserViewModel*>(&vmViewModel);
     Expects(vmPointerFinder != nullptr);
 
     if (m_pDialog == nullptr)
     {
-        m_pDialog.reset(new PointerInspectorDialog(*vmPointerFinder));
-        if (!m_pDialog->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_POINTERINSPECTOR), this))
-            RA_LOG_ERR("Could not create Pointer Inspector dialog!");
+        m_pDialog.reset(new StructuredDataBrowserDialog(*vmPointerFinder));
+        if (!m_pDialog->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_STRUCTUREDDATABROWSER), this))
+            RA_LOG_ERR("Could not create Structured Data Browser dialog!");
     }
 
     m_pDialog->ShowDialogWindow();
 }
 
-void PointerInspectorDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
+void StructuredDataBrowserDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 
 // ------------------------------------
 
@@ -69,7 +66,7 @@ class GridOffsetColumnBinding : public ra::ui::win32::bindings::GridTextColumnBi
     }
 };
 
-PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPointerFinder)
+StructuredDataBrowserDialog::StructuredDataBrowserDialog(StructuredDataBrowserViewModel& vmPointerFinder)
     : DialogBase(vmPointerFinder),
       m_bindAddress(vmPointerFinder),
       m_bindNodes(vmPointerFinder),
@@ -78,37 +75,41 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
       m_bindFields(vmPointerFinder),
       m_bindFieldNote(vmPointerFinder)
 {
-    m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Pointer Inspector");
+    m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Structured Data Browser");
 
     m_bindWindow.AddChildViewModel(vmPointerFinder.Fields());
+    m_bindWindow.BindEnabled(IDC_RA_FILTER_VALUE, StructuredDataBrowserViewModel::HasSelectedRootAddressProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DESCRIPTION, StructuredDataBrowserViewModel::HasSelectedRootAddressProperty);
+    m_bindWindow.BindEnabled(IDC_RA_LBX_GROUPS, StructuredDataBrowserViewModel::HasSelectedRootAddressProperty);
+    m_bindWindow.BindEnabled(IDC_RA_LBX_ADDRESSES, StructuredDataBrowserViewModel::HasSelectedRootAddressProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADDBOOKMARK, ra::ui::viewmodels::MemoryWatchListViewModel::HasSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_DELETE_COND, ra::ui::viewmodels::MemoryWatchListViewModel::HasSingleSelectionProperty);
-    m_bindWindow.BindEnabled(IDC_RA_ADD_COND, PointerInspectorViewModel::HasSelectedNodeProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ADD_COND, StructuredDataBrowserViewModel::HasSelectedNodeProperty);
 
-    m_bindAddress.BindItems(vmPointerFinder.KnownPointers());
-    m_bindAddress.BindSelectedItem(PointerInspectorViewModel::CurrentAddressProperty);
+    m_bindAddress.BindItems(vmPointerFinder.RootAddresses());
+    m_bindAddress.BindSelectedItem(StructuredDataBrowserViewModel::SelectedRootAddressProperty);
     m_bindAddress.SetDropDownWidth(300);
     m_bindNodes.BindItems(vmPointerFinder.Nodes());
-    m_bindNodes.BindSelectedItem(PointerInspectorViewModel::SelectedNodeProperty);
-    m_bindDescription.BindText(PointerInspectorViewModel::CurrentAddressNoteProperty);
+    m_bindNodes.BindSelectedItem(StructuredDataBrowserViewModel::SelectedNodeProperty);
+    m_bindDescription.BindText(StructuredDataBrowserViewModel::SelectedNodeNoteProperty);
 
     auto pOffsetColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::OffsetProperty);
+        StructuredDataBrowserViewModel::StructFieldViewModel::OffsetProperty);
     pOffsetColumn->SetHeader(L"Offset");
     pOffsetColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
     pOffsetColumn->SetReadOnly(false);
     m_bindFields.BindColumn(0, std::move(pOffsetColumn));
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::DescriptionProperty);
+        StructuredDataBrowserViewModel::StructFieldViewModel::DescriptionProperty);
     pDescriptionColumn->SetHeader(L"Description");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 80);
     m_bindFields.BindColumn(1, std::move(pDescriptionColumn));
 
-    auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::SizeProperty, vmPointerFinder.Fields().Sizes());
+    auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchSizeColumnBinding>(
+        StructuredDataBrowserViewModel::StructFieldViewModel::SizeProperty, vmPointerFinder.Fields().Sizes());
     pSizeColumn->SetHeader(L"Size");
     pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 90);
     pSizeColumn->SetAlignment(ra::ui::RelativePosition::Far);
@@ -116,54 +117,54 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     m_bindFields.BindColumn(2, std::move(pSizeColumn));
 
     auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchFormatColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::FormatProperty, vmPointerFinder.Fields().Formats());
+        StructuredDataBrowserViewModel::StructFieldViewModel::FormatProperty, vmPointerFinder.Fields().Formats());
     pFormatColumn->SetHeader(L"Format");
     pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 34);
     pFormatColumn->SetReadOnly(false);
     m_bindFields.BindColumn(3, std::move(pFormatColumn));
 
     auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchValueColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::CurrentValueProperty);
+        StructuredDataBrowserViewModel::StructFieldViewModel::CurrentValueProperty);
     pValueColumn->SetHeader(L"Value");
-    pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
+    pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 90);
     pValueColumn->SetAlignment(ra::ui::RelativePosition::Center);
     pValueColumn->SetReadOnly(false);
     m_bindFields.BindColumn(4, std::move(pValueColumn));
 
     m_bindFields.BindItems(vmPointerFinder.Fields().Items());
-    m_bindFields.BindIsSelected(PointerInspectorViewModel::StructFieldViewModel::IsSelectedProperty);
-    m_bindFields.BindRowColor(PointerInspectorViewModel::StructFieldViewModel::RowColorProperty);
+    m_bindFields.BindIsSelected(StructuredDataBrowserViewModel::StructFieldViewModel::IsSelectedProperty);
+    m_bindFields.BindRowColor(StructuredDataBrowserViewModel::StructFieldViewModel::RowColorProperty);
     m_bindFields.SetShowGridLines(true);
 
     pOffsetColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::OffsetProperty);
+        StructuredDataBrowserViewModel::StructFieldViewModel::OffsetProperty);
     pOffsetColumn->SetHeader(L"Offset");
     pOffsetColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
     m_bindPointerChain.BindColumn(0, std::move(pOffsetColumn));
 
     auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::AddressProperty);
+        StructuredDataBrowserViewModel::StructFieldViewModel::AddressProperty);
     pAddressColumn->SetHeader(L"Address");
     pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
     m_bindPointerChain.BindColumn(1, std::move(pAddressColumn));
 
     pValueColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchValueColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::CurrentValueProperty);
+        StructuredDataBrowserViewModel::StructFieldViewModel::CurrentValueProperty);
     pValueColumn->SetHeader(L"Value");
     pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
     pValueColumn->SetAlignment(ra::ui::RelativePosition::Center);
     m_bindPointerChain.BindColumn(2, std::move(pValueColumn));
 
     pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        PointerInspectorViewModel::StructFieldViewModel::DescriptionProperty);
+        StructuredDataBrowserViewModel::StructFieldViewModel::DescriptionProperty);
     pDescriptionColumn->SetHeader(L"Description");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 80);
     m_bindPointerChain.BindColumn(3, std::move(pDescriptionColumn));
 
-    m_bindPointerChain.BindItems(vmPointerFinder.PointerChain());
-    m_bindPointerChain.BindRowColor(PointerInspectorViewModel::StructFieldViewModel::RowColorProperty);
+    m_bindPointerChain.BindItems(vmPointerFinder.AddressChain());
+    m_bindPointerChain.BindRowColor(StructuredDataBrowserViewModel::StructFieldViewModel::RowColorProperty);
 
-    m_bindFieldNote.BindText(PointerInspectorViewModel::CurrentFieldNoteProperty,
+    m_bindFieldNote.BindText(StructuredDataBrowserViewModel::CurrentFieldNoteProperty,
                              ra::ui::win32::bindings::TextBoxBinding::UpdateMode::Typing);
 
     using namespace ra::bitwise_ops;
@@ -178,10 +179,10 @@ PointerInspectorDialog::PointerInspectorDialog(PointerInspectorViewModel& vmPoin
     SetAnchor(IDC_RA_DELETE_COND, Anchor::Right | Anchor::Bottom);
     SetAnchor(IDC_RA_ADD_COND, Anchor::Right | Anchor::Bottom);
 
-    SetMinimumSize(480, 258);
+    SetMinimumSize(490, 258);
 }
 
-BOOL PointerInspectorDialog::OnInitDialog()
+BOOL StructuredDataBrowserDialog::OnInitDialog()
 {
     m_bindAddress.SetControl(*this, IDC_RA_ADDRESS);
     m_bindNodes.SetControl(*this, IDC_RA_FILTER_VALUE);
@@ -197,38 +198,38 @@ BOOL PointerInspectorDialog::OnInitDialog()
     return DialogBase::OnInitDialog();
 }
 
-BOOL PointerInspectorDialog::OnCommand(WORD nCommand)
+BOOL StructuredDataBrowserDialog::OnCommand(WORD nCommand)
 {
     switch (nCommand)
     {
         case IDC_RA_ADDBOOKMARK: {
-            const auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
-            if (vmPointerInspector)
-                vmPointerInspector->BookmarkCurrentField();
+            const auto* vmStructuredDataBrowser = dynamic_cast<StructuredDataBrowserViewModel*>(&m_vmWindow);
+            if (vmStructuredDataBrowser)
+                vmStructuredDataBrowser->BookmarkCurrentField();
 
             return TRUE;
         }
 
         case IDC_RA_COPY_ALL: {
-            const auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
-            if (vmPointerInspector)
-                vmPointerInspector->CopyDefinition();
+            const auto* vmStructuredDataBrowser = dynamic_cast<StructuredDataBrowserViewModel*>(&m_vmWindow);
+            if (vmStructuredDataBrowser)
+                vmStructuredDataBrowser->CopyDefinition();
 
             return TRUE;
         }
 
         case IDC_RA_ADD_COND: {
-            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
-            if (vmPointerInspector)
-                vmPointerInspector->NewField();
+            auto* vmStructuredDataBrowser = dynamic_cast<StructuredDataBrowserViewModel*>(&m_vmWindow);
+            if (vmStructuredDataBrowser)
+                vmStructuredDataBrowser->NewField();
 
             return TRUE;
         }
 
         case IDC_RA_DELETE_COND: {
-            auto* vmPointerInspector = dynamic_cast<PointerInspectorViewModel*>(&m_vmWindow);
-            if (vmPointerInspector)
-                vmPointerInspector->RemoveSelectedField();
+            auto* vmStructuredDataBrowser = dynamic_cast<StructuredDataBrowserViewModel*>(&m_vmWindow);
+            if (vmStructuredDataBrowser)
+                vmStructuredDataBrowser->RemoveSelectedField();
 
             return TRUE;
         }

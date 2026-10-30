@@ -485,7 +485,7 @@ private:
         AssertMenuItem(menu_ptr++, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         AssertMenuItem(menu_ptr++, 0, nullptr);
         AssertMenuItem(menu_ptr++, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        AssertMenuItem(menu_ptr++, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        AssertMenuItem(menu_ptr++, IDM_RA_FILES_STRUCTBROWSER, L"Structured Data B&rowser");
     }
 
     TEST_METHOD(TestGetPopupMenuItemsLoggedIn)
@@ -518,7 +518,7 @@ private:
         AssertMenuItem(menu_ptr++, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         AssertMenuItem(menu_ptr++, 0, nullptr);
         AssertMenuItem(menu_ptr++, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        AssertMenuItem(menu_ptr++, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        AssertMenuItem(menu_ptr++, IDM_RA_FILES_STRUCTBROWSER, L"Structured Data B&rowser");
         AssertMenuItem(menu_ptr++, 0, nullptr);
         AssertMenuItem(menu_ptr++, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
         AssertMenuItem(menu_ptr++, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
@@ -558,7 +558,7 @@ private:
         AssertMenuItem(menu_ptr++, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
         AssertMenuItem(menu_ptr++, 0, nullptr);
         AssertMenuItem(menu_ptr++, IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
-        AssertMenuItem(menu_ptr++, IDM_RA_FILES_POINTERINSPECTOR, L"Pointer &Inspector");
+        AssertMenuItem(menu_ptr++, IDM_RA_FILES_STRUCTBROWSER, L"Structured Data B&rowser");
         AssertMenuItem(menu_ptr++, 0, nullptr);
         AssertMenuItem(menu_ptr++, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
         AssertMenuItem(menu_ptr++, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");

@@ -8,8 +8,8 @@
 #include "MemoryBookmarksViewModel.hh"
 #include "MemoryInspectorViewModel.hh"
 #include "PointerFinderViewModel.hh"
-#include "PointerInspectorViewModel.hh"
 #include "RichPresenceMonitorViewModel.hh"
+#include "StructuredDataBrowserViewModel.hh"
 
 namespace ra {
 namespace ui {
@@ -25,7 +25,7 @@ public:
     MemoryInspectorViewModel MemoryInspector;
     MemoryNotesViewModel MemoryNotes;
     PointerFinderViewModel PointerFinder;
-    PointerInspectorViewModel PointerInspector;
+    StructuredDataBrowserViewModel StructuredDataBrowser;
 };
 
 } // namespace viewmodels

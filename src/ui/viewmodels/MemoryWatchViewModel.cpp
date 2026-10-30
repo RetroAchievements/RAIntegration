@@ -9,6 +9,7 @@
 #include "data\context\EmulatorContext.hh"
 #include "data\models\StructuredMemoryNoteModel.hh"
 #include "data\util\AchievementLogicSerializer.hh"
+#include "data\util\IndirectNoteResolver.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
@@ -164,6 +165,13 @@ void MemoryWatchViewModel::OnSizeChanged(const IntModelProperty::ChangeArgs& arg
             SetReadOnly(true);
             break;
 
+        case ra::data::Memory::Size::Array:
+            SetReadOnly(true);
+
+            // Array value is always constant. No need to try to read memory (below).
+            SetValue(CurrentValueProperty, BuildCurrentValue());
+            return;
+
         default:
             SetReadOnly(false);
             break;
@@ -268,6 +276,10 @@ uint32_t MemoryWatchViewModel::ReadValue()
 
         return ra::util::String::Hash(sText);
     }
+    else if (m_nSize == ra::data::Memory::Size::Array)
+    {
+        return 0;
+    }
 
     return pMemoryContext.ReadMemory(m_nAddress, m_nSize);
 }
@@ -342,6 +354,9 @@ bool MemoryWatchViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std
 
 bool MemoryWatchViewModel::DoFrame()
 {
+    if (m_nSize == ra::data::Memory::Size::Array)
+        return false;
+
     const auto nValue = ReadValue();
 
     if (IsIndirectAddress() && IgnoreValueChange(nValue))
@@ -395,6 +410,10 @@ std::wstring MemoryWatchViewModel::BuildCurrentValue() const
         ra::services::SearchResults pResults;
         pResults.Initialize(m_nAddress, MaxTextBookmarkLength, ra::services::SearchType::AsciiText);
         return pResults.GetFormattedValue(m_nAddress, ra::data::Memory::Size::Text);
+    }
+    else if (m_nSize == ra::data::Memory::Size::Array)
+    {
+        return L"";
     }
 
     return ra::data::Memory::FormatValue(m_nValue, m_nSize, GetFormat());
@@ -545,9 +564,8 @@ void MemoryWatchViewModel::UpdateRealNote()
     if (pGameContext.IsGameLoading()) // no notes available
         return;
 
-    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
     const ra::data::models::MemoryNoteModel* pNote = nullptr;
-
+    const auto* pMemoryNotes = pGameContext.Assets().FindMemoryNotes();
     if (pMemoryNotes)
     {
         if (!IsIndirectAddress())
@@ -556,35 +574,17 @@ void MemoryWatchViewModel::UpdateRealNote()
         }
         else
         {
-            // manually traverse the offset chain to find the leaf note to avoid
-            // any null pointers in the chain or conflicting addresses
             for (const auto* pCondition = m_pValue->conditions->conditions; pCondition; pCondition = pCondition->next)
             {
-                const auto* pOperand = rc_condition_get_real_operand1(pCondition);
-                if (rc_operand_is_memref(pOperand) && pOperand->value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
+                if (pCondition->type == RC_CONDITION_MEASURED)
                 {
-                    GSL_SUPPRESS_TYPE1 const auto* pModifiedMemref =
-                        reinterpret_cast<rc_modified_memref_t*>(pCondition->operand1.value.memref);
-                    if (pModifiedMemref->modifier_type == RC_OPERATOR_INDIRECT_READ)
-                        pOperand = &pModifiedMemref->modifier;
-                }
+                    std::vector<ra::data::util::IndirectNoteResolver::Node> vParentChain;
+                    const ra::data::util::IndirectNoteResolver resolver(*pMemoryNotes);
+                    if (resolver.ResolveOperand(*pCondition, true, vParentChain) != 0)
+                        pNote = vParentChain.back().pNote;
 
-                const auto nAddress = rc_operand_is_memref(pOperand) ? pOperand->value.memref->address : pOperand->value.num;
-
-                if (!pNote)
-                {
-                    // first node
-                    pNote = pMemoryNotes->FindNote(nAddress, false);
-                }
-                else
-                {
-                    // chained node
-                    const auto pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pNote);
-                    pNote = pStructuredNote ? pStructuredNote->GetNoteAtOffset(nAddress) : nullptr;
-                }
-
-                if (!pNote)
                     break;
+                }
             }
         }
     }

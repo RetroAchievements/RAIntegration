@@ -2,7 +2,6 @@
 #define RA_UI_MEMORYWATCHVIEWMODEL_H
 #pragma once
 
-#include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
 
 #include "ui\Types.hh"
@@ -288,9 +287,9 @@ protected:
 
     virtual bool IgnoreValueChange(uint32_t) noexcept(false) { return false; }
     virtual bool ChangeValue(uint32_t nNewValue);
+    std::wstring BuildCurrentValue() const;
 
 private:
-    std::wstring BuildCurrentValue() const;
     static std::wstring ExtractDescriptionHeader(const std::wstring& sFullNote);
 
     // keep address/size/value fields directly accessible for speed - also keep in ValueProperty for binding

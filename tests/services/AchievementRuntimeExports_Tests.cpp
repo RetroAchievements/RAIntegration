@@ -503,7 +503,7 @@ public:
         AssertMenuItem(pMenu, nIndex++, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
         AssertMenuSeparator(pMenu, nIndex++);
         AssertMenuItem(pMenu, nIndex++, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
-        AssertMenuItem(pMenu, nIndex++, IDM_RA_FILES_POINTERINSPECTOR, "Pointer &Inspector");
+        AssertMenuItem(pMenu, nIndex++, IDM_RA_FILES_STRUCTBROWSER, "Structured Data B&rowser");
 
         runtime.mockLoginService.Login("User", "ApiToken");
 
@@ -526,7 +526,7 @@ public:
         AssertMenuItem(pMenu, nIndex++, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
         AssertMenuSeparator(pMenu, nIndex++);
         AssertMenuItem(pMenu, nIndex++, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
-        AssertMenuItem(pMenu, nIndex++, IDM_RA_FILES_POINTERINSPECTOR, "Pointer &Inspector");
+        AssertMenuItem(pMenu, nIndex++, IDM_RA_FILES_STRUCTBROWSER, "Structured Data B&rowser");
         AssertMenuSeparator(pMenu, nIndex++);
         AssertMenuItem(pMenu, nIndex++, IDM_RA_REPORTBROKENACHIEVEMENTS, "&Report Achievement Problem");
         AssertMenuItem(pMenu, nIndex++, IDM_RA_GETROMCHECKSUM, "View Game H&ash");
@@ -554,7 +554,7 @@ public:
         AssertMenuItem(pMenu, nIndex++, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
         AssertMenuSeparator(pMenu, nIndex++);
         AssertMenuItem(pMenu, nIndex++, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
-        AssertMenuItem(pMenu, nIndex++, IDM_RA_FILES_POINTERINSPECTOR, "Pointer &Inspector");
+        AssertMenuItem(pMenu, nIndex++, IDM_RA_FILES_STRUCTBROWSER, "Structured Data B&rowser");
         AssertMenuSeparator(pMenu, nIndex++);
         AssertMenuItem(pMenu, nIndex++, IDM_RA_REPORTBROKENACHIEVEMENTS, "&Report Achievement Problem");
         AssertMenuItem(pMenu, nIndex++, IDM_RA_GETROMCHECKSUM, "View Game H&ash");

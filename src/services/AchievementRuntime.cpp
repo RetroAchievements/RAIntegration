@@ -38,6 +38,7 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\include\rc_api_runtime.h>
+#include <rcheevos\src\client\rc_client_game.h>
 #include <rcheevos\src\client\rc_client_internal.h>
 #include <rcheevos\src\runtime\rc_condition.h>
 #include <rcheevos\src\runtime\rc_condset.h>

@@ -10,18 +10,15 @@
 
 #include "data\context\GameContext.hh"
 
-#include "services\Http.hh"
-
 #include "ui\ImageReference.hh"
 #include "ui\IImageRepository.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-#include "RA_Defs.h"
 #include "util\Log.hh"
 
 #include <rcheevos/include/rc_api_runtime.h>
 #include <rcheevos/include/rc_api_editor.h>
-#include <rcheevos/src/client/rc_client_internal.h>
+#include <rcheevos/src/client/rc_client_server.h>
 
 namespace ra {
 namespace ui {

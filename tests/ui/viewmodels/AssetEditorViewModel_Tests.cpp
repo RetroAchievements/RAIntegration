@@ -35,7 +35,7 @@
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
-#include <rcheevos\src\client\rc_client_internal.h>
+#include <rcheevos\src\client\rc_client_game.h>
 #include <rcheevos\src\runtime\rc_condset.h>
 #include <rcheevos\src\runtime\rc_format.h>
 #include <rcheevos\src\runtime\rc_lboard.h>

@@ -1,15 +1,10 @@
 #include "GameContext.hh"
 
-#include "Exports.hh"
-
-#include "RA_Defs.h"
-#include "RA_md5factory.h"
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
 #include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
-#include "context\UserContext.hh"
 
 #include "data\context\EmulatorContext.hh"
 #include "data\context\SessionTracker.hh"
@@ -20,21 +15,17 @@
 #include "data\models\RichPresenceModel.hh"
 
 #include "services\AchievementRuntime.hh"
-#include "services\FrameEventQueue.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
-#include "services\impl\FileTextReader.hh"
-#include "services\impl\FileTextWriter.hh"
-#include "services\impl\StringTextReader.hh"
 
 #include "ui\ImageReference.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
-#include "ui\viewmodels\ScoreboardViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
+#include <rcheevos\src\client\rc_client_game.h>
 #include <rcheevos\src\client\rc_client_internal.h>
 #include <rcheevos\src\runtime\rc_trigger.h>
 #include <rcheevos\include\rc_api_runtime.h>

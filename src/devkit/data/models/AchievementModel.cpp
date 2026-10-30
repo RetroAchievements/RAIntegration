@@ -15,6 +15,7 @@
 #include "util/Log.hh"
 #include "util/Strings.hh"
 
+#include <rcheevos/src/client/rc_client_game.h>
 #include <rcheevos/src/client/rc_client_internal.h>
 #include <rcheevos/src/runtime/rc_alloc.h>
 #include <rcheevos/src/runtime/rc_parse_state.h>
@@ -209,7 +210,7 @@ void AchievementModel::SyncStateFromRuntime(uint8_t nState)
     }
 }
 
-static void HideChallengeIndicator(struct rc_client_achievement_info_t* pAchievement)
+static void HideChallengeIndicator(const struct rc_client_achievement_info_t* pAchievement)
 {
     auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (client->game && client->callbacks.event_handler)

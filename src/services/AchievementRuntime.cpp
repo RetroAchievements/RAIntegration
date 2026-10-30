@@ -323,7 +323,7 @@ std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_
     return sBadgeName;
 }
 
-void AchievementRuntime::RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const
+void AchievementRuntime::RaiseClientEvent(const rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const
 {
     auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (client->game && client->callbacks.event_handler)

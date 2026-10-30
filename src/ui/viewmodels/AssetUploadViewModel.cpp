@@ -15,6 +15,7 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "util\Log.hh"
+#include "util\Strings.hh"
 
 #include <rcheevos/include/rc_api_runtime.h>
 #include <rcheevos/include/rc_api_editor.h>

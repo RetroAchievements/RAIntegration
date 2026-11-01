@@ -22,11 +22,12 @@ CapturedMemoryBlock::CapturedMemoryBlock(const CapturedMemoryBlock& other) noexc
     m_nMatchingAddressCount = other.m_nMatchingAddressCount;
     if (!AreAllAddressesMatching())
     {
-        if ((m_nMatchingAddressCount + 7) / 8 > sizeof(m_vAddresses))
+        const auto nAddressesSize = (m_nAddressCount + 7) / 8;
+        if (nAddressesSize > sizeof(m_vAddresses))
         {
             auto* pAddresses = AllocateMatchingAddresses();
             if (pAddresses != nullptr)
-                std::memcpy(pAddresses, other.m_pAddresses, (m_nMatchingAddressCount + 7) / 8);
+                std::memcpy(pAddresses, other.m_pAddresses, nAddressesSize);
         }
         else
         {
@@ -54,9 +55,9 @@ CapturedMemoryBlock::CapturedMemoryBlock(CapturedMemoryBlock&& other) noexcept :
 
     if (!AreAllAddressesMatching())
     {
-        if ((m_nMatchingAddressCount + 7) / 8 > sizeof(m_vAddresses))
+        if ((m_nAddressCount + 7) / 8 > sizeof(m_vAddresses))
         {
-            m_pAddresses = other.m_pAddresses;
+            m_pAddresses = other.m_pAddresses; // Transfer ownership
             other.m_pAddresses = nullptr;
             other.m_nMatchingAddressCount = 0;
         }
@@ -76,7 +77,7 @@ CapturedMemoryBlock::~CapturedMemoryBlock() noexcept
             free(m_pAllocatedMemory);
     }
 
-    if (!AreAllAddressesMatching() && (m_nMatchingAddressCount + 7) / 8 > sizeof(m_vAddresses))
+    if (!AreAllAddressesMatching() && (m_nAddressCount + 7) / 8 > sizeof(m_vAddresses))
         delete[] m_pAddresses;
 }
 
@@ -427,7 +428,12 @@ bool CapturedMemoryBlock::EnumerateMatchingAddressesInternal(std::function<bool(
         uint8_t nValue = *pAddresses++;
         if (nValue)
         {
+            const auto nRemainingAddresses = nStop - nAddress;
+            if (nRemainingAddresses < 8)
+                nValue &= (1 << nRemainingAddresses) - 1; // Prevent enumating past end of collection
+
             ra::data::ByteAddress nScanAddress = nAddress;
+
             do
             {
                 if (nValue & 1)

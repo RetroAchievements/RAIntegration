@@ -446,7 +446,7 @@ bool SearchResults::GetBytes(ra::data::ByteAddress nAddress, unsigned char* pBuf
         }
     }
 
-    memset(pBuffer, gsl::narrow_cast<int>(nCount), 0);
+    memset(pBuffer, 0, nCount);
     return false;
 }
 

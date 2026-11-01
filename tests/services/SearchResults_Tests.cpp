@@ -2,7 +2,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\devkit\context\mocks\MockEmulatorMemoryContext.hh"
-#include "tests\devkit\testutil\MemoryAsserts.hh"
+#include "tests\devkit\testutil\MemoryAsserts.hh" // VCIC-Excluded: Provides ToString for Assert
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -2991,6 +2991,66 @@ public:
         Assert::AreEqual(ra::data::Memory::Size::ThirtyTwoBitBigEndian, result.nSize);
         Assert::AreEqual(0xdeadbeefU, result.nValue);
     }
+
+    TEST_METHOD(TestGetBytesFillsMissingMemoryWithZeroes)
+    {
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        ra::context::mocks::MockEmulatorMemoryContext mockMemoryContext;
+        mockMemoryContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, 5U, ra::services::SearchType::EightBit);
+
+        std::array<unsigned char, 8> buffer;
+        buffer.fill(0xAA);
+
+        Assert::IsFalse(results.GetBytes(0U, buffer.data(), buffer.size()));
+        for (size_t i = 0; i < memory.size(); ++i)
+            Assert::AreEqual(memory.at(i), buffer.at(i));
+
+        for (size_t i = memory.size(); i < buffer.size(); ++i)
+            Assert::AreEqual(0, static_cast<int>(buffer.at(i)));
+    }
+
+    TEST_METHOD(TestEnumerateMatchingAddressesDoesNotExceedCapturedAddresses)
+    {
+        ra::data::CapturedMemoryBlock block(100U, 3U, 6U);
+        block.ExcludeMatchingAddress(100U);
+
+        std::vector<ra::data::ByteAddress> vAddresses;
+        Assert::IsTrue(block.EnumerateMatchingAddresses([&vAddresses](ra::data::ByteAddress nAddress) {
+            vAddresses.push_back(nAddress);
+            return true;
+        }));
+
+        Assert::AreEqual({ 5U }, vAddresses.size());
+        ra::data::ByteAddress nExpectedAddress = 101U;
+        for (const auto nAddress : vAddresses)
+            Assert::AreEqual(nExpectedAddress++, nAddress);
+    }
+
+    TEST_METHOD(TestCapturedMemoryBlockCopyIsIndependent)
+    {
+        ra::data::CapturedMemoryBlock block(0U, 80U, 100U);
+
+        std::vector<ra::data::ByteAddress> vAddresses(100);
+        for (size_t i = 0; i < vAddresses.size(); ++i)
+            vAddresses.at(i) = gsl::narrow_cast<ra::data::ByteAddress>(i);
+
+        block.SetMatchingAddresses(vAddresses, 0, 59);
+        Assert::AreEqual({ 60U }, block.GetMatchingAddressCount());
+
+        // Changes made to block shouldn't be reflected in copy
+        ra::data::CapturedMemoryBlock copy(block);
+
+        block.ExcludeMatchingAddress(0U);
+        Assert::AreEqual({ 59U }, block.GetMatchingAddressCount());
+        Assert::AreEqual(1U, block.GetMatchingAddress(0U));
+
+        Assert::AreEqual({ 60U }, copy.GetMatchingAddressCount());
+        Assert::AreEqual(0U, copy.GetMatchingAddress(0U));
+    }
+
 };
 
 } // namespace tests

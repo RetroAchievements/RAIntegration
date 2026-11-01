@@ -30,11 +30,19 @@ static std::pair<size_t, bool> CalculateUtf8Length(std::wstring_view str) noexce
             {
                 nUtf8Length += 2;
             }
-            else if (c >= 0xD800 && c <= 0xDBFF && *pSrc >= 0xDC00 && *pSrc <= 0xDFFF)
+            else if (c >= 0xD800 && c <= 0xDBFF)
             {
-                // two surrogate pairs will take four bytes total
-                nUtf8Length += 4;
-                ++pSrc;
+                if (pSrc < pStop && *pSrc >= 0xDC00 && *pSrc <= 0xDFFF)
+                {
+                    // two surrogate pairs will take four bytes total
+                    nUtf8Length += 4;
+                    ++pSrc;
+                }
+                else
+                {
+                    // invalid surrogate pair will be replaced with placeholder. do not consume following character.
+                    nUtf8Length += 3;
+                }
             }
             else
             {
@@ -93,6 +101,11 @@ std::string StringBuilder::Narrow(std::wstring_view str)
             if (c >= 0xDC00)
             {
                 // second part of surrogate pair after first
+                c = 0xFFFD;
+            }
+            else if (pSrc == pStop)
+            {
+                // incomplete surrogate pair
                 c = 0xFFFD;
             }
             else

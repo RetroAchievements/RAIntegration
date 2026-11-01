@@ -20,6 +20,14 @@ public:
         Assert::AreEqual(std::string("\xF0\x9F\x8C\x8F"), StringBuilder::Narrow(std::wstring(L"\xD83C\xDF0F")));
     }
 
+    TEST_METHOD(TestNarrowInvalidSurrogate)
+    {
+        // invalid UTF-16 replaced with placeholder U+FFFD
+        Assert::AreEqual(std::string("\xEF\xBF\xBD"), StringBuilder::Narrow(L"\xD83C"));
+        Assert::AreEqual(std::string("\xEF\xBF\xBD\xEF\xBF\xBD"), StringBuilder::Narrow(L"\xD83C\xD83C"));
+        Assert::AreEqual(std::string("\xEF\xBF\xBD!"), StringBuilder::Narrow(L"\xD83C!"));
+    }
+
     TEST_METHOD(TestWiden)
     {
         // ASCII

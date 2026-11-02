@@ -268,6 +268,16 @@ public:
         summary.AssertClause(0, L"1-2", L"World", L"changed from", L"5");
     }
 
+    TEST_METHOD(TestBitEquals)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Inputs\r\nBit0=Left\r\nBit1=Right\r\nBit2=Up\r\nBit3=Down");
+        summary.InitializeFrom("0xO1234=1");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Up", L"is", L"1");
+    }
+
     TEST_METHOD(TestBitChangedTo)
     {
         TriggerSummaryViewModelHarness summary;

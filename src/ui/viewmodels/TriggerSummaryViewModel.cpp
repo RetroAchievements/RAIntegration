@@ -318,16 +318,27 @@ static constexpr bool IsValueCharacter(wchar_t c)
     return false;
 }
 
-static std::wstring EnumValueFromText(std::wstring_view sEnumText)
+static std::wstring EnumValueFromText(std::wstring_view sEnumText, ra::data::Memory::Size nSize)
 {
     const auto nSplit = sEnumText.find_first_of(L"=:");
     auto sEnumDescription = sEnumText.substr(nSplit + 1);
-    for (size_t i = 0; i < nSplit; ++i)
+
+    uint32_t nLow, nHigh;
+    if (ra::data::Memory::SizeBits(nSize) < 8 &&
+        ra::data::models::ValueMemoryNoteModel::ParseBitRange(sEnumText.substr(0, nSplit), nLow, nHigh))
     {
-        if (!IsValueCharacter(sEnumText.at(i)))
+        // Left side is a bit size, assume the right side is the text.
+    }
+    else
+    {
+        for (size_t i = 0; i < nSplit; ++i)
         {
-            sEnumDescription = sEnumText.substr(0, nSplit);
-            break;
+            if (!IsValueCharacter(sEnumText.at(i)))
+            {
+                // Left side is not a value, assume it's the text.
+                sEnumDescription = sEnumText.substr(0, nSplit);
+                break;
+            }
         }
     }
 
@@ -611,9 +622,10 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
         if (pNote)
         {
             const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
-            const auto pSubNote = pValueNote ? pValueNote->GetSubNote(ra::data::Memory::SizeFromRcheevosSize(pCondition->operand1.size)) : L"";
+            const auto nSize = ra::data::Memory::SizeFromRcheevosSize(pCondition->operand1.size);
+            const auto pSubNote = pValueNote ? pValueNote->GetSubNote(nSize) : L"";
             if (!pSubNote.empty())
-                pClause.SetReference(EnumValueFromText(pSubNote));
+                pClause.SetReference(EnumValueFromText(pSubNote, nSize));
             else
                 pClause.SetReference(pNote->GetSummary());
         }
@@ -656,9 +668,10 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
                 if (pNote2)
                 {
                     const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
-                    const auto pSubNote = pValueNote ? pValueNote->GetSubNote(ra::data::Memory::SizeFromRcheevosSize(pCondition->operand2.size)) : L"";
+                    const auto nSize = ra::data::Memory::SizeFromRcheevosSize(pCondition->operand2.size);
+                    const auto pSubNote = pValueNote ? pValueNote->GetSubNote(nSize) : L"";
                     if (!pSubNote.empty())
-                        pClause.SetTarget(EnumValueFromText(pSubNote));
+                        pClause.SetTarget(EnumValueFromText(pSubNote, nSize));
                     else
                         pClause.SetTarget(pNote2->GetSummary());
 
@@ -704,9 +717,10 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
 
             // look for enum value in note
             const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
+            const auto nSize = ra::data::Memory::SizeFromRcheevosSize(pCondition->operand2.size);
             const auto pEnumText = pValueNote ? pValueNote->GetEnumText(nTarget) : L"";
             if (!pEnumText.empty())
-                pClause.SetTarget(EnumValueFromText(pEnumText));
+                pClause.SetTarget(EnumValueFromText(pEnumText, nSize));
             else
                 pClause.SetTarget(std::to_wstring(nTarget));
         }

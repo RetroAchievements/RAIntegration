@@ -14,9 +14,44 @@ namespace models {
 
 enum AchievementSetType
 {
+    /// <summary>
+    /// The main beatable achievement set.
+    /// </summary>
     Core,
+
+    /// <summary>
+    /// Additional challenges deemed too difficult for the core set.
+    /// </summary>
+    /// <remarks>
+    /// Core and Bonus sets will always be loaded together.
+    /// </remarks>
     Bonus,
+
+    /// <summary>
+    /// A unique way to play the game.
+    /// </summary>
+    /// <remarks>
+    /// Allows loads the core set and potentially bonus sets.
+    /// Must be explicitly opted-in by the player.
+    /// </remarks>
+    Challenge,
+
+    /// <summary>
+    /// A unique way to play the game.
+    /// </summary>
+    /// <remarks>
+    /// Still requires a unique hash that targets the specialty set.
+    /// Allows loading the core set and potentially bonus sets.
+    /// </remarks>
     Specialty,
+
+    /// <summary>
+    /// An alternate core set
+    /// </summary>
+    /// <remarks>
+    /// Requires a unique hash that targets the excluside set.
+    /// Does not allow loading the core set or bonus sets.
+    /// </remarks>
     Exclusive,
 };
 

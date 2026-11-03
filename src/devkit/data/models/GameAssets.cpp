@@ -231,7 +231,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::context::IGameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.ActiveGameId()));
+    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.GameId()));
     if (pData == nullptr)
     {
         // no local file found. reset non-local items to their server state
@@ -469,7 +469,7 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::context::IGameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.ActiveGameId()));
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.GameId()));
     if (pData == nullptr)
     {
         RA_LOG_ERR("Failed to create user assets file");

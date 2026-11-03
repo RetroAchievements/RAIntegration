@@ -1,15 +1,10 @@
 #include "GameContext.hh"
 
-#include "Exports.hh"
-
-#include "RA_Defs.h"
-#include "RA_md5factory.h"
 #include "util\Log.hh"
 #include "util\Strings.hh"
 
 #include "context\IConsoleContext.hh"
 #include "context\IRcClient.hh"
-#include "context\UserContext.hh"
 
 #include "data\context\EmulatorContext.hh"
 #include "data\context\SessionTracker.hh"
@@ -20,19 +15,14 @@
 #include "data\models\RichPresenceModel.hh"
 
 #include "services\AchievementRuntime.hh"
-#include "services\FrameEventQueue.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
-#include "services\impl\FileTextReader.hh"
-#include "services\impl\FileTextWriter.hh"
-#include "services\impl\StringTextReader.hh"
 
 #include "ui\ImageReference.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
-#include "ui\viewmodels\ScoreboardViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\src\client\rc_client_internal.h>
@@ -528,6 +518,9 @@ void GameContext::InitializeAchievementSets(const rc_api_fetch_game_sets_respons
             case RC_ACHIEVEMENT_SET_TYPE_SPECIALTY:
                 nType = ra::data::models::AchievementSetType::Specialty;
                 break;
+            case 4:// RC_ACHIEVEMENT_SET_TYPE_CHALLENGE:
+                nType = ra::data::models::AchievementSetType::Challenge;
+                break;
             default:
                 nType = ra::data::models::AchievementSetType::Bonus;
                 break;
@@ -555,6 +548,7 @@ void GameContext::MigrateSubsetUserFiles()
 
     for (const auto& pSubset : Assets().AchievementSets())
     {
+        // Core set does not need to be migrated
         if (pSubset.GetBackingGameID() == m_nGameId)
             continue;
 
@@ -562,13 +556,31 @@ void GameContext::MigrateSubsetUserFiles()
             std::to_wstring(pSubset.GetBackingGameID()));
         if (pSubsetData)
         {
-            // replace ID with "0|SUBSETID" so new IDs will be generated
-            std::string sSubsetReplace = "0|" + std::to_string(pSubset.GetID());
+            std::string sLine;
+            pSubsetData->GetLine(sLine); // Skip version
 
+            // Open the output file if we haven't already done so.
             if (!pGameData)
             {
-                pGameData = pLocalStorage.AppendText(ra::services::StorageItemType::UserAchievements,
-                    std::to_wstring(m_nGameId));
+                if (pLocalStorage.GetLastModified(ra::services::StorageItemType::UserAchievements, std::to_wstring(m_nGameId)).time_since_epoch().count() == 0)
+                {
+                    // File doesn't exist. Have to write the header (version/title).
+                    pGameData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements,
+                        std::to_wstring(m_nGameId));
+
+                    pGameData->WriteLine(sLine); // Version from the input file.
+
+                    const auto* pPrimarySubset = Assets().AchievementSets().GetItemAt(0);
+                    Expects(pPrimarySubset != nullptr);
+                    pGameData->WriteLine(pPrimarySubset->GetTitle());
+                }
+                else
+                {
+                    // File exists. Just append to it.
+                    pGameData = pLocalStorage.AppendText(ra::services::StorageItemType::UserAchievements,
+                        std::to_wstring(m_nGameId));
+                }
+
                 if (!pGameData)
                 {
                     RA_LOG_ERR("Could not append to %u-User.txt", m_nGameId);
@@ -576,16 +588,18 @@ void GameContext::MigrateSubsetUserFiles()
                 }
             }
 
-            std::string sLine;
-            pSubsetData->GetLine(sLine); // version
-            pSubsetData->GetLine(sLine); // game name
+            pSubsetData->GetLine(sLine); // Skip game name
+
+            // Replace ID with "0|SUBSETID" so new IDs will be generated
+            std::string sSubsetReplace = "0|" + std::to_string(pSubset.GetID());
+
             while (pSubsetData->GetLine(sLine))
             {
                 if (!sLine.empty())
                 {
                     if (ra::util::String::IsDigit(sLine.at(0)) || sLine.at(0) == 'L')
                     {
-                        // found a local achievement or leaderboard. inject subset id
+                        // Found a local achievement or leaderboard. Inject the subset id.
                         const auto nIndex = sLine.find(':');
                         if (nIndex != std::string::npos && nIndex > 8)
                         {
@@ -597,11 +611,11 @@ void GameContext::MigrateSubsetUserFiles()
                     }
                     else if (sLine.at(0) == 'N')
                     {
-                        // found a note, just copy it over
+                        // Found a note. Just copy it over.
                     }
                     else
                     {
-                        // unexpected. ignore
+                        // Unexpected. Ignore.
                         continue;
                     }
                 }
@@ -609,7 +623,7 @@ void GameContext::MigrateSubsetUserFiles()
                 pGameData->WriteLine(sLine);
             }
 
-            // release the file so it can be deleted, then delete it.
+            // Release the file so it can be deleted, then delete it.
             pSubsetData.reset();
             pLocalStorage.Delete(ra::services::StorageItemType::UserAchievements,
                 std::to_wstring(pSubset.GetBackingGameID()));

@@ -243,6 +243,19 @@ public:
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
+    TEST_METHOD(TestSaveLocalSpecialtySubset)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.mockGameContext.SetActiveGameId(77U); // assets should be written to the GameId, not the ActiveGameId
+        auto& pAch = gameAssets.AddAchievement(AssetCategory::Local, 5, L"Ach2", L"Desc2", L"22222", "2=2");
+        pAch.SetSubsetID(77U);
+
+        gameAssets.SaveAllAssets();
+
+        const auto& sExpected = ra::util::String::Printf("0.0.0.0\nGame Title\n%u|77:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n", GameAssets::FirstLocalId);
+        Assert::AreEqual(sExpected, gameAssets.GetUserFile());
+    }
+
     TEST_METHOD(TestSaveLocalBadges)
     {
         GameAssetsHarness gameAssets;

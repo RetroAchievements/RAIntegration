@@ -268,6 +268,16 @@ public:
         summary.AssertClause(0, L"1-2", L"World", L"changed from", L"5");
     }
 
+    TEST_METHOD(TestBitEquals)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"Inputs\r\nBit0=Left\r\nBit1=Right\r\nBit2=Up\r\nBit3=Down");
+        summary.InitializeFrom("0xO1234=1");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1", L"Up", L"is", L"1");
+    }
+
     TEST_METHOD(TestBitChangedTo)
     {
         TriggerSummaryViewModelHarness summary;
@@ -361,6 +371,66 @@ public:
         Assert::AreEqual({ 2U }, summary.Clauses().Count());
         summary.AssertClause(0, L"1", L"World", L"is not", L"4");
         summary.AssertClause(1, L"2", L"World", L"is", L"8"); // Reset will become a header
+    }
+
+    TEST_METHOD(TestInRange)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("0xH1234>=2_0xH1234<5");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"World", L"is in range", L"2-4");
+    }
+
+    TEST_METHOD(TestInRangeAndNext)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("N:0xH1234>=2_0xH1234<5");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"World", L"is in range", L"2-4");
+    }
+
+    TEST_METHOD(TestInRangeEnum)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World\r\n1=A\r\n2=B\r\n3=C\r\n4=D\r\n5=E\r\n");
+        summary.InitializeFrom("0xH1234>=2_0xH1234<5");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"World", L"is any of", L"B | C | D");
+    }
+
+    TEST_METHOD(TestNotInRange)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("O:0xH1234>=5_0xH1234<2");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"World", L"is not in range", L"2-4");
+    }
+
+    TEST_METHOD(TestNotInRangeEnum)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World\r\n1=A\r\n2=B\r\n3=C\r\n4=D\r\n5=E\r\n");
+        summary.InitializeFrom("O:0xH1234>=5_0xH1234<2");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"World", L"is not any of", L"B | C | D");
+    }
+
+    TEST_METHOD(TestWasInRange)
+    {
+        TriggerSummaryViewModelHarness summary;
+        summary.mockGameContext.SetNote({ 0x1234U }, L"World");
+        summary.InitializeFrom("d0xH1234>=2_d0xH1234<5");
+
+        Assert::AreEqual({ 1U }, summary.Clauses().Count());
+        summary.AssertClause(0, L"1-2", L"World", L"was in range", L"2-4");
     }
 
     TEST_METHOD(TestMemoryReferenceEqualsOtherMemory)

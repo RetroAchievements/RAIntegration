@@ -35,6 +35,8 @@ public:
 
     void DeterminePreferredMemFormat();
 
+    static bool ParseBitRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHigh);
+
 protected:
     static EnumState DetermineEnumState(std::wstring_view svNote);
     std::wstring_view GetFullSummaryStringView() const override;
@@ -44,7 +46,6 @@ protected:
     static size_t constexpr FindValueSplit(const std::wstring_view svLine) noexcept;
     static bool MatchEnumText(const std::wstring_view svValue, uint32_t nValue, bool isHex);
     static bool MatchBitsText(const std::wstring_view svValue, ra::data::Memory::Size nBits);
-    static bool ParseBitRange(std::wstring_view svRange, uint32_t& nLow, uint32_t& nHigh);
 };
 
 } // namespace models

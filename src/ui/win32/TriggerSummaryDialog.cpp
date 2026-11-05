@@ -81,7 +81,7 @@ TriggerSummaryDialog::TriggerSummaryDialog(TriggerSummaryViewModel& vmTriggerSum
     auto pTallyColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         TriggerSummaryViewModel::TriggerClauseViewModel::TallyProperty);
     pTallyColumn->SetHeader(L"Tally");
-    pTallyColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
+    pTallyColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 100);
     m_bindClauses.BindColumn(4, std::move(pTallyColumn));
 
     m_bindClauses.BindRowColor(TriggerSummaryViewModel::TriggerClauseViewModel::ColorProperty);

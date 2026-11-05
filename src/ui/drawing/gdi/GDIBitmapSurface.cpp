@@ -76,7 +76,11 @@ static constexpr uint8_t BlendPixel(std::uint8_t nTarget, std::uint8_t nBlend, s
 
 void GDIBitmapSurface::SetPixels(int nX, int nY, int nWidth, int nHeight, uint32_t* pARGB) noexcept
 {
+    Expects(nWidth > 0 && nHeight > 0);
+    Expects(nX >= 0 && nX < nWidth);
+    Expects(nY >= 0 && nY < nHeight);
     const auto nStride = ra::to_signed(GetWidth());
+    Expects(nWidth <= nStride);
     std::uint32_t* pBits = m_pBits + gsl::narrow_cast<size_t>(nY) * nStride + nX;
 
     while (nHeight--)

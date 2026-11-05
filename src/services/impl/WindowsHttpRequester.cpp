@@ -28,19 +28,20 @@ static bool ReadIntoString(const HINTERNET hRequest, std::string& sBuffer, DWORD
         return false;
 #pragma warning(pop)
 
-    // allocate enough space in the string for the whole content
-    sBuffer.resize(gsl::narrow_cast<size_t>(nContentLength) + 1); // reserve space for null terminator
-    sBuffer.at(nContentLength) = '\0'; // set null terminator, will fill remaining portion of buffer
-    sBuffer.resize(nContentLength);
-
     DWORD nAvailableBytes = 0U;
     WinHttpQueryDataAvailable(hRequest, &nAvailableBytes);
 
+    if (nAvailableBytes > nContentLength)
+        nContentLength = nAvailableBytes;
+
+    // allocate enough space in the string for the whole content
+    sBuffer.resize(nContentLength); // implicitly includes space for null terminator and zeroes out the memory
+
     DWORD nInsertAt = 0U;
-    while (nAvailableBytes > 0)
+    while (nAvailableBytes > 0 && nInsertAt < sBuffer.size())
     {
         DWORD nBytesFetched = 0U;
-        const DWORD nBytesToRead = gsl::narrow_cast<DWORD>(sBuffer.capacity()) - nInsertAt;
+        const DWORD nBytesToRead = gsl::narrow_cast<DWORD>(sBuffer.size()) - nInsertAt;
         if (WinHttpReadData(hRequest, &sBuffer.at(nInsertAt), nBytesToRead, &nBytesFetched))
         {
             nInsertAt += nBytesFetched;

@@ -946,6 +946,7 @@ public:
                         "\"Created\":1234567890,\"Modified\":123459999}"
                     "],\"Leaderboards\":[]"
                  "}]}");
+        game.mockStorage.MockLastModified(ra::services::StorageItemType::UserAchievements, L"1", std::chrono::system_clock::now());
         game.mockStorage.MockStoredData(ra::services::StorageItemType::UserAchievements, L"1",
                                         "Version\n"
                                         "Game\n"
@@ -1035,7 +1036,7 @@ public:
         Assert::AreEqual(10, pAch->GetPoints());
         Assert::AreEqual(std::string("R:1=1"), pAch->GetTrigger());
 
-        // migration should have moved the records in 2-User.txt into 1-User.txt and deleted 2-User.txt
+        // migration should have moved the records from 2-User.txt into 1-User.txt and deleted 2-User.txt
         Assert::IsFalse(game.mockStorage.HasStoredData(StorageItemType::UserAchievements, L"2"));
         Assert::AreEqual(std::string(
                 "Version\n"
@@ -1043,6 +1044,94 @@ public:
                 "7:1=2:Ach2b:Desc2b::::Auth2b:25:1234554321:1234555555:::54321\n"
                 "111000002:\"1=1\":\"Ach3\":\"Desc3\"::::Auth3:20:1234511111:1234500000:::555\n"
                 "111000003:\"R:1=1\":Ach4:Desc4::::Auth4:10:1234511111:1234500000:::556\n"
+                "5:1=2:Ach1b:Desc1b::::Auth1b:25:1234554321:1234555555:::54321\n"
+                "0|3:\"1=1\":\"Ach5\":\"Desc5\"::::Auth5:20:1234511111:1234500000:::555\n"
+                "0|3:\"R:1=1\":Ach6:Desc6::::Auth6:10:1234511111:1234500000:::556\n"
+            ), game.mockStorage.GetStoredData(StorageItemType::UserAchievements, L"1"));
+    }
+
+    TEST_METHOD(TestLoadGameMergeLocalAchievementsFromSubsetNoLocalFileForCore)
+    {
+        GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
+        game.mockRcClient.MockResponse(
+                "r=achievementsets&u=Username&t=ApiToken&m=0123456789abcdeffedcba987654321&v=2",
+                "{\"Success\":true,"
+                 "\"GameId\":1,"
+                 "\"Title\":\"GameTitle\","
+                 "\"ConsoleId\":1,"
+                 "\"ImageIconUrl\":\"http://server/Images/9743.png\","
+                 "\"RichPresenceGameId\":1,"
+                 "\"RichPresencePatch\":\"\","
+                 "\"Sets\":[{"
+                    "\"AchievementSetId\":5,\"GameId\":1,\"Title\":null,\"Type\":\"core\","
+                    "\"ImageIconUrl\":\"http://server/Images/9743.png\","
+                    "\"Achievements\":["
+                       "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
+                        "\"Points\":15,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+                        "\"Created\":1234567890,\"Modified\":123459999}"
+                    "],"
+                    "\"Leaderboards\":[]"
+                 "},{"
+                    "\"AchievementSetId\":3,\"GameId\":2,\"Title\":\"SetTitle\",\"Type\":\"bonus\","
+                    "\"ImageIconUrl\":\"\",\"Achievements\":["
+                       "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+                        "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+                        "\"Created\":1234567890,\"Modified\":123459999}"
+                    "],\"Leaderboards\":[]"
+                 "}]}");
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::UserAchievements, L"2",
+                                        "Version2\n"
+                                        "Subset\n"
+                                        "5:1=2:Ach1b:Desc1b::::Auth1b:25:1234554321:1234555555:::54321\n"
+                                        "111000001:\"1=1\":\"Ach5\":\"Desc5\"::::Auth5:20:1234511111:1234500000:::555\n"
+                                        "111000002:\"R:1=1\":Ach6:Desc6::::Auth6:10:1234511111:1234500000:::556\n");
+
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+        Assert::AreEqual({2U}, game.Assets().AchievementSets().Count());
+        Assert::AreEqual(2U, game.GetGameId(3U));
+
+        // local achievement data for 5 should be merged with server achievement data
+        auto* pAch = game.Assets().FindAchievement(5U);
+        Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
+        Assert::AreEqual(std::wstring(L"Ach1b"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Desc1b"), pAch->GetDescription());
+        Assert::AreEqual(std::wstring(L"Auth1"), pAch->GetAuthor()); // author not merged
+        Assert::AreEqual(std::wstring(L"54321"), pAch->GetBadge());
+        Assert::AreEqual(ra::data::models::AssetCategory::Promoted, pAch->GetCategory()); // category not merged
+        Assert::AreEqual(25, pAch->GetPoints());
+        Assert::AreEqual(std::string("1=2"), pAch->GetTrigger());
+
+        // IDs from subset file are incrementally assigned after last core ID
+        pAch = game.Assets().FindAchievement(111000001U);
+        Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
+        Assert::AreEqual(std::wstring(L"Ach5"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Desc5"), pAch->GetDescription());
+        Assert::AreEqual(std::wstring(L"Auth5"), pAch->GetAuthor());
+        Assert::AreEqual(std::wstring(L"00555"), pAch->GetBadge());
+        Assert::AreEqual(ra::data::models::AssetCategory::Local, pAch->GetCategory());
+        Assert::AreEqual(20, pAch->GetPoints());
+        Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
+
+        // IDs from subset file are incrementally assigned after last core ID
+        pAch = game.Assets().FindAchievement(111000002U);
+        Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
+        Assert::AreEqual(std::wstring(L"Ach6"), pAch->GetName());
+        Assert::AreEqual(std::wstring(L"Desc6"), pAch->GetDescription());
+        Assert::AreEqual(std::wstring(L"Auth6"), pAch->GetAuthor());
+        Assert::AreEqual(std::wstring(L"00556"), pAch->GetBadge());
+        Assert::AreEqual(ra::data::models::AssetCategory::Local, pAch->GetCategory());
+        Assert::AreEqual(10, pAch->GetPoints());
+        Assert::AreEqual(std::string("R:1=1"), pAch->GetTrigger());
+
+        // migration should have moved the records from 2-User.txt into 1-User.txt and deleted 2-User.txt
+        Assert::IsFalse(game.mockStorage.HasStoredData(StorageItemType::UserAchievements, L"2"));
+        Assert::AreEqual(std::string(
+                "Version2\n"  // copied from 2-User.txt
+                "GameTitle\n" // core set title from the server response
                 "5:1=2:Ach1b:Desc1b::::Auth1b:25:1234554321:1234555555:::54321\n"
                 "0|3:\"1=1\":\"Ach5\":\"Desc5\"::::Auth5:20:1234511111:1234500000:::555\n"
                 "0|3:\"R:1=1\":Ach6:Desc6::::Auth6:10:1234511111:1234500000:::556\n"

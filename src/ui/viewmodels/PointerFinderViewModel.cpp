@@ -38,8 +38,6 @@ const StringModelProperty PointerFinderViewModel::PotentialPointerViewModel::Poi
 const StringModelProperty PointerFinderViewModel::PotentialPointerViewModel::PointerValue4Property("PotentialPointerViewModel", "PointerValue4", L"");
 const BoolModelProperty PointerFinderViewModel::PotentialPointerViewModel::IsSelectedProperty("PotentialPointerViewModel", "IsSelected", false);
 
-constexpr uint32_t MAX_OFFSET = 1024;
-
 void PointerFinderViewModel::StateViewModel::DoFrame()
 {
     if (CanCapture())

@@ -37,7 +37,7 @@ public:
     /// <summary>
     /// Gets the last time the stored data was modified.
     /// </summary>
-    /// <returns>Time the stored data was last modified, <c>0</c> if it doesn't exist.</returns>
+    /// <returns>Time the stored data was last modified, time_since_epoch().count() will be <c>0</c> if it doesn't exist.</returns>
     virtual std::chrono::system_clock::time_point GetLastModified(StorageItemType nType, const std::wstring& sKey) = 0;
 
     /// <summary>

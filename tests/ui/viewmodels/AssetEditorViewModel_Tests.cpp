@@ -2429,7 +2429,7 @@ public:
         AchievementModel achievement;
         editor.LoadAsset(&achievement);
 
-        editor.mockGameContext.SetActiveGameId(1);
+        editor.mockGameContext.SetGameId(1);
         editor.mockGameContext.LocalBadges().SetLastDirectory(L"C:\\Badges");
 
         bool bDialogSeen = false;

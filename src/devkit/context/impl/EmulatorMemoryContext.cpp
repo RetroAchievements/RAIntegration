@@ -559,45 +559,44 @@ void EmulatorMemoryContext::CaptureMemory(std::vector<ra::data::CapturedMemoryBl
             continue;
         }
 
-        if (!pMemoryBlock.read && !pMemoryBlock.readBlock)
-        {
-            nCount -= gsl::narrow_cast<uint32_t>(pMemoryBlock.size);
-            nAddress += gsl::narrow_cast<ra::data::ByteAddress>(pMemoryBlock.size);
-            nAdjustedAddress = 0;
-            continue;
-        }
-
         const uint32_t nBlockRemaining = gsl::narrow_cast<uint32_t>(pMemoryBlock.size) - nAdjustedAddress;
         uint32_t nToRead = std::min(nCount, nBlockRemaining);
         nCount -= nToRead;
 
-        while (nToRead > 0)
+        if (!pMemoryBlock.read && !pMemoryBlock.readBlock)
         {
-            ra::data::CapturedMemoryBlock* pBlock = nullptr;
-
-            const uint32_t nBlockSize = std::min(nToRead, MAX_BLOCK_SIZE);
-            const bool bIsLastBlock = (nCount == 0 && nBlockSize == nToRead);
-            if (!bIsLastBlock)
+            nAddress += nToRead;
+        }
+        else
+        {
+            while (nToRead > 0)
             {
-                // capture nPadding overlapping bytes so we don't have to stitch multiple
-                // blocks together if a read occurs at the block boundary
-                pBlock = &vBlocks.emplace_back(nAddress, nBlockSize + nPadding, nBlockSize);
-            }
-            else
-            {
-                pBlock = &vBlocks.emplace_back(nAddress, nBlockSize, nBlockSize);
-            }
+                ra::data::CapturedMemoryBlock* pBlock = nullptr;
 
-            Expects(pBlock != nullptr);
-            const auto nRead = ReadMemory(nAdjustedAddress, pBlock->GetBytes(), nBlockSize, pMemoryBlock, false);
-            if (nRead == 0)
-                vBlocks.pop_back();
-            else
-                pBlock->OptimizeMemory(vBlocks);
+                const uint32_t nBlockSize = std::min(nToRead, MAX_BLOCK_SIZE);
+                const bool bIsLastBlock = (nCount == 0 && nBlockSize == nToRead);
+                if (!bIsLastBlock)
+                {
+                    // capture nPadding overlapping bytes so we don't have to stitch multiple
+                    // blocks together if a read occurs at the block boundary
+                    pBlock = &vBlocks.emplace_back(nAddress, nBlockSize + nPadding, nBlockSize);
+                }
+                else
+                {
+                    pBlock = &vBlocks.emplace_back(nAddress, nBlockSize, nBlockSize);
+                }
 
-            nAddress += nBlockSize;
-            nAdjustedAddress += nBlockSize;
-            nToRead -= nBlockSize;
+                Expects(pBlock != nullptr);
+                const auto nRead = ReadMemory(nAdjustedAddress, pBlock->GetBytes(), nBlockSize, pMemoryBlock, false);
+                if (nRead == 0)
+                    vBlocks.pop_back();
+                else
+                    pBlock->OptimizeMemory(vBlocks);
+
+                nAddress += nBlockSize;
+                nAdjustedAddress += nBlockSize;
+                nToRead -= nBlockSize;
+            }
         }
 
         if (nCount == 0)

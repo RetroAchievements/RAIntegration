@@ -2,6 +2,8 @@
 #define RA_UI_TRIGGERSUMMARYVIEWMODEL_H
 #pragma once
 
+#include "data\models\MemoryNoteModel.hh"
+
 #include "ui\WindowViewModelBase.hh"
 #include "ui\ViewModelCollection.hh"
 #include "ui\Types.hh"
@@ -55,6 +57,9 @@ public:
         void SetColor(Color value) { SetValue(ColorProperty, ra::to_signed(value.ARGB)); }
 
         const struct rc_condition_t* pCondition = nullptr;
+        const ra::data::models::MemoryNoteModel* pNote1 = nullptr;
+        const ra::data::models::MemoryNoteModel* pNote2 = nullptr;
+
         enum TriggerClauseType : int;
         TriggerClauseType nType = ra::itoe<TriggerClauseType>(0);
     };
@@ -71,9 +76,15 @@ private:
         TriggerSummaryViewModel::TriggerClauseViewModel& pClause1,
         TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
         gsl::index nIndex1, gsl::index nIndex2);
+    bool MergeRange(
+        TriggerSummaryViewModel::TriggerClauseViewModel& pClause1,
+        const TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
+        gsl::index nIndex2, uint8_t nMergeType);
     bool MergeClauses(TriggerSummaryViewModel::TriggerClauseViewModel& pClause,
         const TriggerSummaryViewModel::TriggerClauseViewModel& pDiscardClause,
         gsl::index nDiscardIndex, TriggerClauseViewModel::TriggerClauseType nNewType, const std::wstring& sNewOperation);
+    bool HandlePreviousType(TriggerSummaryViewModel::TriggerClauseViewModel& pClause,
+        uint8_t nPreviousType, ViewModelCollection<TriggerClauseViewModel>& vClauses);
 
     ViewModelCollection<TriggerClauseViewModel> m_vClauses;
 };

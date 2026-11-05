@@ -43,9 +43,13 @@ enum TriggerSummaryViewModel::TriggerClauseViewModel::TriggerClauseType : int
     HasntChanged,   // value doesn't differ from its delta
     ChangedTo,      // direct equality comparison (=) with a delta check
     ChangedFrom,    // direct inequality comparison (!=) with a delta check
+    InRange,        // between two values (inclusive)
+    NotInRange,     // outside of two values (exclusive)
 };
 
 using TriggerClauseType = TriggerSummaryViewModel::TriggerClauseViewModel::TriggerClauseType;
+
+static std::wstring EnumValueFromText(std::wstring_view sEnumText, ra::data::Memory::Size nSize);
 
 static constexpr bool IsChangeType(TriggerClauseType nType)
 {
@@ -184,6 +188,138 @@ bool TriggerSummaryViewModel::MergeClauses(TriggerSummaryViewModel::TriggerClaus
     return true;
 }
 
+
+bool TriggerSummaryViewModel::MergeRange(
+    TriggerSummaryViewModel::TriggerClauseViewModel& pClause1,
+    const TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
+    gsl::index nIndex2, uint8_t nMergeType)
+{
+    if (pClause1.pCondition->operand1.type != pClause2.pCondition->operand1.type ||
+        !rc_operand_is_memref(&pClause1.pCondition->operand1) ||
+        pClause1.pCondition->operand2.type != RC_OPERAND_CONST ||
+        pClause2.pCondition->operand2.type != RC_OPERAND_CONST ||
+        !IsSameMemoryReference(pClause1.pCondition->operand1, pClause2.pCondition->operand1))
+    {
+        return false;
+    }
+
+    uint32_t nLow = 0xFFFFFFFF;
+    uint32_t nHigh = 0;
+
+    switch (pClause1.pCondition->oper)
+    {
+        case RC_OPERATOR_GT:
+            nLow = pClause1.pCondition->operand2.value.num + 1;
+            break;
+        case RC_OPERATOR_GE:
+            nLow = pClause1.pCondition->operand2.value.num;
+            break;
+        case RC_OPERATOR_LT:
+            nHigh = pClause1.pCondition->operand2.value.num - 1;
+            break;
+        case RC_OPERATOR_LE:
+            nHigh = pClause1.pCondition->operand2.value.num;
+            break;
+        default:
+            return false;
+    }
+
+    switch (pClause2.pCondition->oper)
+    {
+        case RC_OPERATOR_GT:
+            if (nLow != 0xFFFFFFFF)
+                return false;
+            nLow = pClause2.pCondition->operand2.value.num + 1;
+            break;
+        case RC_OPERATOR_GE:
+            if (nLow != 0xFFFFFFFF)
+                return false;
+            nLow = pClause2.pCondition->operand2.value.num;
+            break;
+        case RC_OPERATOR_LT:
+            if (nHigh != 0)
+                return false;
+            nHigh = pClause2.pCondition->operand2.value.num - 1;
+            break;
+        case RC_OPERATOR_LE:
+            if (nHigh != 0)
+                return false;
+            nHigh = pClause2.pCondition->operand2.value.num;
+            break;
+        default:
+            return false;
+    }
+
+    const auto nNewOperation = (nLow <= nHigh) ? TriggerClauseType::InRange : TriggerClauseType::NotInRange;
+    if (nLow > nHigh)
+    {
+        if (nMergeType != RC_CONDITION_OR_NEXT)
+            return false;
+
+        std::swap(nLow, nHigh); // <=2 || >=5   =>  !(>=3 && <=4)
+        nHigh--;
+        nLow++;
+    }
+    else
+    {
+        if (nMergeType != RC_CONDITION_AND_NEXT)
+            return false;
+    }
+
+    std::wstring sNewOperation;
+    switch (pClause1.pCondition->operand1.type)
+    {
+        case RC_OPERAND_DELTA:
+            sNewOperation = (nNewOperation == TriggerClauseType::InRange) ? L"was" : L"was not";
+            break;
+
+        case RC_OPERAND_PRIOR:
+            sNewOperation = (nNewOperation == TriggerClauseType::InRange) ? L"was just" : L"was not just";
+            break;
+
+        default:
+            sNewOperation = (nNewOperation == TriggerClauseType::InRange) ? L"is" : L"is not";
+            break;
+    }
+
+    const auto *pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pClause1.pNote1);
+    if (pValueNote)
+    {
+        const auto nSize = ra::data::Memory::SizeFromRcheevosSize(pClause1.pCondition->operand1.size);
+        std::wstring sValues;
+        for (uint32_t i = nLow; i <= nHigh; ++i)
+        {
+            const auto pValueText = pValueNote->GetEnumText(i);
+            if (pValueText.empty())
+            {
+                sValues.clear();
+                break;
+            }
+
+            sValues.append(EnumValueFromText(pValueText, nSize));
+            sValues.append(L" | ");
+        }
+
+        if (!sValues.empty())
+        {
+            // remove last " | "
+            sValues.pop_back();
+            sValues.pop_back();
+            sValues.pop_back();
+
+            pClause1.SetTarget(sValues);
+
+            sNewOperation.append(L" any of");
+            return MergeClauses(pClause1, pClause2, nIndex2, nNewOperation, sNewOperation);
+        }
+    }
+
+    pClause1.SetTarget(ra::util::String::Printf(L"%u-%u", nLow, nHigh));
+
+    sNewOperation.append(L" in range");
+    return MergeClauses(pClause1, pClause2, nIndex2, nNewOperation, sNewOperation);
+}
+
 bool TriggerSummaryViewModel::MergeChangedToFrom(
     TriggerSummaryViewModel::TriggerClauseViewModel& pClause1,
     TriggerSummaryViewModel::TriggerClauseViewModel& pClause2,
@@ -303,6 +439,11 @@ bool TriggerSummaryViewModel::MergeClauses(
     {
         return MergeClauses(pClause2, pClause1, nIndex2, nIndex1);
     }
+    else if (pClause1.nType == TriggerClauseType::Comparison && pClause2.nType == TriggerClauseType::Comparison)
+    {
+        if (MergeRange(pClause1, pClause2, nIndex2, RC_CONDITION_AND_NEXT))
+            return true;
+    }
 
     return false;
 }
@@ -318,16 +459,27 @@ static constexpr bool IsValueCharacter(wchar_t c)
     return false;
 }
 
-static std::wstring EnumValueFromText(std::wstring_view sEnumText)
+static std::wstring EnumValueFromText(std::wstring_view sEnumText, ra::data::Memory::Size nSize)
 {
     const auto nSplit = sEnumText.find_first_of(L"=:");
     auto sEnumDescription = sEnumText.substr(nSplit + 1);
-    for (size_t i = 0; i < nSplit; ++i)
+
+    uint32_t nLow = 0, nHigh = 0;
+    if (ra::data::Memory::SizeBits(nSize) < 8 &&
+        ra::data::models::ValueMemoryNoteModel::ParseBitRange(sEnumText.substr(0, nSplit), nLow, nHigh))
     {
-        if (!IsValueCharacter(sEnumText.at(i)))
+        // Left side is a bit size, assume the right side is the text.
+    }
+    else
+    {
+        for (size_t i = 0; i < nSplit; ++i)
         {
-            sEnumDescription = sEnumText.substr(0, nSplit);
-            break;
+            if (!IsValueCharacter(sEnumText.at(i)))
+            {
+                // Left side is not a value, assume it's the text.
+                sEnumDescription = sEnumText.substr(0, nSplit);
+                break;
+            }
         }
     }
 
@@ -440,7 +592,7 @@ static void HandleTally(TriggerSummaryViewModel::TriggerClauseViewModel& pClause
     }
 }
 
-static void HandlePreviousType(TriggerSummaryViewModel::TriggerClauseViewModel& pClause,
+bool TriggerSummaryViewModel::HandlePreviousType(TriggerSummaryViewModel::TriggerClauseViewModel& pClause,
     uint8_t nPreviousType, ViewModelCollection<TriggerSummaryViewModel::TriggerClauseViewModel>& vClauses)
 {
     switch (nPreviousType)
@@ -449,14 +601,24 @@ static void HandlePreviousType(TriggerSummaryViewModel::TriggerClauseViewModel& 
         case RC_CONDITION_AND_NEXT:
             break;
         default:
-            return;
+            return false;
     }
 
     for (gsl::index nIndex = vClauses.Count() - 1; nIndex > 0; --nIndex)
     {
         if (vClauses.GetItemAt(nIndex) == &pClause)
         {
-            for (--nIndex; nIndex >= 0; --nIndex)
+            if (nIndex > 0)
+            {
+                auto* pClause2 = vClauses.GetItemAt(nIndex - 1);
+                Expects(pClause2 != nullptr);
+                if (MergeRange(*pClause2, pClause, nIndex, nPreviousType))
+                    return true;
+
+                --nIndex;
+            }
+
+            for (; nIndex >= 0; --nIndex)
             {
                 auto *pParentClause = vClauses.GetItemAt(nIndex);
                 if (pParentClause && !rc_condition_is_combining(pParentClause->pCondition))
@@ -478,8 +640,10 @@ static void HandlePreviousType(TriggerSummaryViewModel::TriggerClauseViewModel& 
             pClause.SetIndices(L"AND");
             break;
         default:
-            return;
+            break;
     }
+
+    return true;
 }
 
 static void HandleCompareMemoryReferenceToSelf(TriggerSummaryViewModel::TriggerClauseViewModel& pClause, const rc_condition_t& pCondition)
@@ -591,8 +755,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
 
         pClause.pCondition = pCondition;
 
-        // get note for let operand
-        const ra::data::models::MemoryNoteModel* pNote = nullptr;
+        // get note for left operand
         if (pMemoryNotes && rc_operand_is_memref(&pCondition->operand1))
         {
             if (nFirstIndex != nLastIndex)
@@ -601,21 +764,22 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
                 const ra::data::util::IndirectNoteResolver pResolver(*pMemoryNotes);
                 pResolver.ResolveOperand(*pCondition, true, vParentChain);
                 if (!vParentChain.empty())
-                    pNote = vParentChain.back().pNote;
+                    pClause.pNote1 = vParentChain.back().pNote;
             }
 
-            if (!pNote)
-                pNote = pMemoryNotes->FindNote(pCondition->operand1.value.memref->address);
+            if (!pClause.pNote1)
+                pClause.pNote1 = pMemoryNotes->FindNote(pCondition->operand1.value.memref->address);
         }
 
-        if (pNote)
+        if (pClause.pNote1)
         {
-            const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
-            const auto pSubNote = pValueNote ? pValueNote->GetSubNote(ra::data::Memory::SizeFromRcheevosSize(pCondition->operand1.size)) : L"";
+            const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pClause.pNote1);
+            const auto nSize = ra::data::Memory::SizeFromRcheevosSize(pCondition->operand1.size);
+            const auto pSubNote = pValueNote ? pValueNote->GetSubNote(nSize) : L"";
             if (!pSubNote.empty())
-                pClause.SetReference(EnumValueFromText(pSubNote));
+                pClause.SetReference(EnumValueFromText(pSubNote, nSize));
             else
-                pClause.SetReference(pNote->GetSummary());
+                pClause.SetReference(pClause.pNote1->GetSummary());
         }
         else
         {
@@ -637,7 +801,6 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             else
             {
                 // get note for right operand
-                const ra::data::models::MemoryNoteModel* pNote2 = nullptr;
                 if (pMemoryNotes && rc_operand_is_memref(&pCondition->operand2))
                 {
                     if (nFirstIndex != nLastIndex)
@@ -646,23 +809,24 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
                         const ra::data::util::IndirectNoteResolver pResolver(*pMemoryNotes);
                         pResolver.ResolveOperand(*pCondition, false, vParentChain);
                         if (!vParentChain.empty())
-                            pNote2 = vParentChain.back().pNote;
+                            pClause.pNote2 = vParentChain.back().pNote;
                     }
 
-                    if (!pNote2)
-                        pNote2 = pMemoryNotes->FindNote(pCondition->operand2.value.memref->address);
+                    if (!pClause.pNote2)
+                        pClause.pNote2 = pMemoryNotes->FindNote(pCondition->operand2.value.memref->address);
                 }
 
-                if (pNote2)
+                if (pClause.pNote2)
                 {
-                    const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
-                    const auto pSubNote = pValueNote ? pValueNote->GetSubNote(ra::data::Memory::SizeFromRcheevosSize(pCondition->operand2.size)) : L"";
+                    const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pClause.pNote2);
+                    const auto nSize = ra::data::Memory::SizeFromRcheevosSize(pCondition->operand2.size);
+                    const auto pSubNote = pValueNote ? pValueNote->GetSubNote(nSize) : L"";
                     if (!pSubNote.empty())
-                        pClause.SetTarget(EnumValueFromText(pSubNote));
+                        pClause.SetTarget(EnumValueFromText(pSubNote, nSize));
                     else
-                        pClause.SetTarget(pNote2->GetSummary());
+                        pClause.SetTarget(pClause.pNote2->GetSummary());
 
-                    if (pNote)
+                    if (pClause.pNote2)
                     {
                         auto sOperation = pClause.GetOperation();
                         if (sOperation == L"is")
@@ -684,7 +848,7 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
                 }
             }
         }
-        else if (pNote)
+        else if (pClause.pNote1)
         {
             // right is a constant
             auto nTarget = pCondition->operand2.value.num;
@@ -703,10 +867,11 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
             }
 
             // look for enum value in note
-            const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pNote);
+            const auto* pValueNote = dynamic_cast<const ra::data::models::ValueMemoryNoteModel*>(pClause.pNote1);
+            const auto nSize = ra::data::Memory::SizeFromRcheevosSize(pCondition->operand2.size);
             const auto pEnumText = pValueNote ? pValueNote->GetEnumText(nTarget) : L"";
             if (!pEnumText.empty())
-                pClause.SetTarget(EnumValueFromText(pEnumText));
+                pClause.SetTarget(EnumValueFromText(pEnumText, nSize));
             else
                 pClause.SetTarget(std::to_wstring(nTarget));
         }
@@ -719,18 +884,19 @@ void TriggerSummaryViewModel::InitializeFrom(const rc_condset_t& pCondSet)
         HandleTally(pClause, *pCondition);
 
         // handle previous type
-        HandlePreviousType(pClause, nPreviousType, m_vClauses);
-
-        // attempt to merge any other conditions comparing the same address (i.e. A>4 && A<6 => A between 4 and 6)
-        if (rc_operand_is_memref(&pCondition->operand1))
+        if (!HandlePreviousType(pClause, nPreviousType, m_vClauses))
         {
-            for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vClauses.Count()) - 1; ++nIndex)
+            // attempt to merge any other conditions comparing the same address (i.e. A>4 && A<6 => A between 4 and 6)
+            if (rc_operand_is_memref(&pCondition->operand1))
             {
-                auto* pOtherClause = m_vClauses.GetItemAt(nIndex);
-                if (pOtherClause && IsSameMemoryReference(pCondition->operand1, pOtherClause->pCondition->operand1))
+                for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vClauses.Count()) - 1; ++nIndex)
                 {
-                    if (MergeClauses(*pOtherClause, pClause, nIndex, m_vClauses.Count() - 1))
-                        break;
+                    auto* pOtherClause = m_vClauses.GetItemAt(nIndex);
+                    if (pOtherClause && IsSameMemoryReference(pCondition->operand1, pOtherClause->pCondition->operand1))
+                    {
+                        if (MergeClauses(*pOtherClause, pClause, nIndex, m_vClauses.Count() - 1))
+                            break;
+                    }
                 }
             }
         }

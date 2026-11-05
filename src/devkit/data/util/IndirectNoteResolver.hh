@@ -29,6 +29,8 @@ public:
         ArrayOffset,
         ArrayIndex,
         Recall,
+        DereferenceChainBegin,
+        DereferenceChainEnd,
     };
 
     struct Node

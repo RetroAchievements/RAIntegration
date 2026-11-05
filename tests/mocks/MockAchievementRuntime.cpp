@@ -8,6 +8,7 @@
 
 #include "data\models\GameAssets.hh"
 
+#include <rcheevos\src\client\rc_client_game.h>
 #include <rcheevos\src\client\rc_client_internal.h>
 #include <rcheevos\src\runtime\rc_lboard.h>
 #include <rcheevos\src\runtime\rc_trigger.h>

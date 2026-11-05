@@ -356,6 +356,32 @@ public:
         Assert::AreEqual(std::wstring(L"This is a note."), vParentChain.back().pNote->GetNote());
     }
 
+    TEST_METHOD(TestPointerInStructAtOffsetZero)
+    {
+        const std::wstring sNote =
+            L"[64 bytes] Array of NPC\r\n"
+            L"|0x00=[32-bit] Pointer to NPC #1\r\n"
+            L"|+0x14=[Float] NPC Health\r\n"
+            L"..1.0=Max";
+
+        ra::context::mocks::MockConsoleContext mockConsoleContext(ConsoleID::PSP, L"PSP");
+        IndirectNoteResolverHarness resolver;
+        resolver.mockGameContext.SetNote({ 0x10U }, sNote);
+        resolver.SetMemory(0x10, 0x20);
+        resolver.SetMemory(0x11, 0x00);
+        resolver.SetMemory(0x12, 0x00);
+        resolver.SetMemory(0x13, 0x00);
+        resolver.Parse("I:0xX0010_fF0014=f1.0");
+
+        // $0010 = 0x00000020, 0x20 + 0x14 = 0x34
+        std::vector<IndirectNoteResolver::Node> vParentChain;
+        Assert::AreEqual(0x00000034U, resolver.ResolveOperand(resolver.GetCondition(1), true, vParentChain));
+        Assert::AreEqual({ 3U }, vParentChain.size());
+        Assert::AreEqual(std::wstring(L"$(0x0010+0x00)+0x14"), resolver.BuildPath(vParentChain));
+        Assert::AreEqual(sNote, vParentChain.front().pNote->GetNote());
+        Assert::AreEqual(std::wstring(L"[Float] NPC Health\r\n..1.0=Max"), vParentChain.back().pNote->GetNote());
+    }
+
     TEST_METHOD(TestRecallBasic)
     {
         IndirectNoteResolverHarness resolver;

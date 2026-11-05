@@ -1159,7 +1159,7 @@ void MemoryViewerViewModel::DoFrame()
     uint8_t pMemory[MaxLines * 16];
     const auto nAddress = GetFirstAddress();
     const auto nVisibleLines = GetNumVisibleLines();
-    Expects(nVisibleLines < MaxLines);
+    Expects(nVisibleLines <= MaxLines);
 
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     const auto nToRead = gsl::narrow_cast<size_t>(nVisibleLines) * 16;

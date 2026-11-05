@@ -58,15 +58,15 @@ private:
     const MemoryNoteModel& AssertIndirectNote(const MemoryNoteModel& pNote, unsigned int nOffset,
         const std::wstring& sExpectedNote, Memory::Size nExpectedSize, unsigned int nExpectedBytes)
     {
-        const auto* pPointerNote = dynamic_cast<const ArrayMemoryNoteModel*>(&pNote);
-        Assert::IsNotNull(pPointerNote, L"Provided note is not an array note");
-        Ensures(pPointerNote != nullptr);
-        return AssertIndirectNote(*pPointerNote, nOffset, sExpectedNote, nExpectedSize, nExpectedBytes);
+        const auto* pArrayNote = dynamic_cast<const ArrayMemoryNoteModel*>(&pNote);
+        Assert::IsNotNull(pArrayNote, L"Provided note is not an array note");
+        Ensures(pArrayNote != nullptr);
+        return AssertIndirectNote(*pArrayNote, nOffset, sExpectedNote, nExpectedSize, nExpectedBytes);
     }
 
 public:
 
-    TEST_METHOD(TestGetPointerNoteAtOffsetStruct)
+    TEST_METHOD(TestGetNoteAtOffsetStruct)
     {
         const std::wstring sNote =
             L"[16-byte struct] Item Data\r\n"
@@ -85,7 +85,7 @@ public:
         Assert::IsNull(pNote->GetNoteAtOffset(0x10U));
     }
 
-    TEST_METHOD(TestGetPointerNoteAtOffsetUnannotated)
+    TEST_METHOD(TestGetNoteAtOffsetUnannotated)
     {
         const std::wstring sNote =
             L"[16-bytes] Item Data\r\n"
@@ -104,7 +104,7 @@ public:
         Assert::IsNull(pNote->GetNoteAtOffset(0x10U));
     }
 
-    TEST_METHOD(TestPointerNoteAtOffsetArray)
+    TEST_METHOD(TestGetNoteAtOffsetArray)
     {
         const std::wstring sNote =
             L"[4x16 bytes] Item Data\r\n"
@@ -129,7 +129,7 @@ public:
         Assert::IsNull(pNote->GetNoteAtOffset(0x40U));
     }
 
-    TEST_METHOD(TestPointerNoteAtOffsetNested)
+    TEST_METHOD(TestGetNoteAtOffsetNested)
     {
         ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
         const std::wstring sNote =
@@ -157,6 +157,32 @@ public:
         AssertIndirectNote(*pOffsetNote, 0x30U, L"[32-bit] Item Type", Memory::Size::ThirtyTwoBit, 4);
         AssertIndirectNote(*pOffsetNote, 0x34U, L"[16-bit] Item Quantity", Memory::Size::SixteenBit, 2);
         Assert::IsNull(pOffsetNote->GetNoteAtOffset(0x40U));
+    }
+
+    TEST_METHOD(TestGetNoteAtOffsetNestedPointer)
+    {
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        const std::wstring sNote =
+            L"[64 bytes] Array of NPC\r\n"
+            L"|0x00=[32-bit] Pointer to NPC #1\r\n"
+            L"|+0x210=[Float] NPC Health\r\n"
+            L"..1.0=Max";
+        const auto pNote = Parse(sNote);
+
+        Assert::AreEqual(Memory::Size::Array, pNote->GetMemSize());
+        const auto* pOffsetNote = dynamic_cast<const PointerMemoryNoteModel*>(pNote->GetNoteAtOffset(0x00));
+        Assert::IsNotNull(pOffsetNote);
+        Ensures(pOffsetNote != nullptr);
+
+        Assert::AreEqual(Memory::Size::ThirtyTwoBit, pOffsetNote->GetMemSize());
+        Assert::AreEqual(std::wstring(L"Pointer to NPC #1"), pOffsetNote->GetSummary());
+
+        // extracted notes for offset fields
+        const auto* pChildNote = pOffsetNote->GetNoteAtOffset(0x210);
+        Assert::IsNotNull(pChildNote, ra::util::String::Printf(L"No note found at offset 0x%04x", 0x210).c_str());
+        Ensures(pChildNote != nullptr);
+        Assert::AreEqual(Memory::Size::Float, pChildNote->GetMemSize());
+        Assert::AreEqual(std::wstring(L"[Float] NPC Health\r\n..1.0=Max"), pChildNote->GetNote());
     }
 };
 

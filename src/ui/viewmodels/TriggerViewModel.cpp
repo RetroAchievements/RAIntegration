@@ -16,6 +16,7 @@
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\viewmodels\TriggerSummaryViewModel.hh"
 
+#include <rcheevos/src/client/rc_client_game.h>
 #include <rcheevos/src/client/rc_client_internal.h>
 #include <rcheevos/src/runtime/rc_alloc.h>
 #include <rcheevos/src/runtime/rc_condset.h>

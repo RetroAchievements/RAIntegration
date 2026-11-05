@@ -6,7 +6,7 @@
 
 #include "util/GSL.hh"
 
-#include <rcheevos/src/client/rc_client_internal.h>
+#include <rcheevos/src/client/rc_client_game.h>
 
 namespace ra {
 namespace data {

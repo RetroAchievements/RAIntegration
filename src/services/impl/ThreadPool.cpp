@@ -58,7 +58,8 @@ void ThreadPool::RunThread()
         if (!m_bShutdownInitiated)
         {
             std::unique_lock<std::mutex> lock(m_oMutex);
-            m_cvWork.wait(lock);
+            if (!m_bShutdownInitiated)
+                m_cvWork.wait(lock);
         }
     } while (!m_bShutdownInitiated);
 }

@@ -25,6 +25,7 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
+#include <rcheevos\src\client\rc_client_game.h>
 #include <rcheevos\src\client\rc_client_internal.h>
 #include <rcheevos\src\runtime\rc_trigger.h>
 #include <rcheevos\include\rc_api_runtime.h>
@@ -518,7 +519,7 @@ void GameContext::InitializeAchievementSets(const rc_api_fetch_game_sets_respons
             case RC_ACHIEVEMENT_SET_TYPE_SPECIALTY:
                 nType = ra::data::models::AchievementSetType::Specialty;
                 break;
-            case 4:// RC_ACHIEVEMENT_SET_TYPE_CHALLENGE:
+            case RC_ACHIEVEMENT_SET_TYPE_CHALLENGE:
                 nType = ra::data::models::AchievementSetType::Challenge;
                 break;
             default:

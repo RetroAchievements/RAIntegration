@@ -9,13 +9,12 @@
 
 #include "data\context\GameContext.hh"
 
-#include "services\AchievementRuntime.hh"
-
 #include "ui\OverlayTheme.hh"
 
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\src\runtime\rc_format.h>
+#include <rcheevos\src\client\rc_client_game.h>
 #include <rcheevos\src\client\rc_client_internal.h>
 
 namespace ra {

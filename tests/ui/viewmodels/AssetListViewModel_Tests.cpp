@@ -8,7 +8,6 @@
 #include "ui\viewmodels\NewAssetViewModel.hh"
 
 #include "services\impl\FileLocalStorage.hh"
-#include "services\impl\StringTextWriter.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
@@ -37,6 +36,7 @@
 #include "tests\mocks\MockSurface.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
+#include <rcheevos\src\client\rc_client_game.h>
 #include <rcheevos\src\client\rc_client_internal.h>
 #include <rcheevos\src\runtime\rc_trigger.h>
 

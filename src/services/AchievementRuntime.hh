@@ -42,7 +42,7 @@ public:
     static std::string GetAchievementBadge(const rc_client_achievement_t& pAchievement);
 
     void InitializeRcClient();
-    void RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const;
+    void RaiseClientEvent(const rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const;
 
     void UpdateActiveAchievements() noexcept(false);
     void UpdateActiveLeaderboards();

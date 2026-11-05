@@ -38,6 +38,7 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\include\rc_api_runtime.h>
+#include <rcheevos\src\client\rc_client_game.h>
 #include <rcheevos\src\client\rc_client_internal.h>
 #include <rcheevos\src\runtime\rc_condition.h>
 #include <rcheevos\src\runtime\rc_condset.h>
@@ -322,7 +323,7 @@ std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_
     return sBadgeName;
 }
 
-void AchievementRuntime::RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const
+void AchievementRuntime::RaiseClientEvent(const rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const
 {
     auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (client->game && client->callbacks.event_handler)

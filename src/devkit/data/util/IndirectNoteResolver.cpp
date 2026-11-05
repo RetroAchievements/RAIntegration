@@ -129,7 +129,30 @@ static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
         const auto* pNote = pMemoryNotes.FindNote(nAddress, false);
         if (pNote)
         {
+            const auto nStartIndex = vParentChain.size();
+
             pNode.pNote = pNote;
+            do {
+                const auto* pArrayNote = dynamic_cast<const ra::data::models::ArrayMemoryNoteModel*>(pNote);
+                if (!pArrayNote)
+                    break;
+
+                pNote = pArrayNote->GetNoteAtOffset(0);
+                if (!pNote)
+                    break;
+
+                auto& pOffsetNode = vParentChain.emplace_back();
+                pOffsetNode.nType = ra::data::util::IndirectNoteResolver::NodeType::ConstantOffset;
+                pOffsetNode.nModifierType = RC_OPERATOR_ADD;
+                pOffsetNode.nValue = 0;
+                pOffsetNode.pNote = pNote;
+            } while (true);
+
+            if (vParentChain.size() != nStartIndex && pNote && pNote->GetType() == ra::data::models::MemoryNoteType::Pointer)
+            {
+                vParentChain.at(nStartIndex - 1).nType = ra::data::util::IndirectNoteResolver::NodeType::DereferenceChainBegin;
+                vParentChain.back().nType = ra::data::util::IndirectNoteResolver::NodeType::DereferenceChainEnd;
+            }
         }
         else
         {
@@ -300,6 +323,16 @@ std::wstring IndirectNoteResolver::BuildPath(const std::vector<Node>& vParentCha
             case ra::data::util::IndirectNoteResolver::NodeType::DereferencedAddress:
                 sPointerChain.push_back('$');
                 sPointerChain += pMemoryContext.FormatAddress(pNode.nValue);
+                break;
+
+            case ra::data::util::IndirectNoteResolver::NodeType::DereferenceChainBegin:
+                sPointerChain.push_back('$');
+                sPointerChain.push_back('(');
+                sPointerChain += pMemoryContext.FormatAddress(pNode.nValue);
+                break;
+
+            case ra::data::util::IndirectNoteResolver::NodeType::DereferenceChainEnd:
+                sPointerChain += ra::util::String::Printf(L"0x%02x)", pNode.nValue);
                 break;
 
             case ra::data::util::IndirectNoteResolver::NodeType::ArrayOffset:

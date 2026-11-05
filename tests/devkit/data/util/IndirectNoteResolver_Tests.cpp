@@ -364,6 +364,7 @@ public:
             L"|+0x14=[Float] NPC Health\r\n"
             L"..1.0=Max";
 
+        ra::context::mocks::MockConsoleContext mockConsoleContext(ConsoleID::PSP, L"PSP");
         IndirectNoteResolverHarness resolver;
         resolver.mockGameContext.SetNote({ 0x10U }, sNote);
         resolver.SetMemory(0x10, 0x20);

@@ -525,7 +525,7 @@ void MemoryNotesModel::EnumerateNotes(std::function<bool(const MemoryNoteModel::
     {
         const auto* pStructuredNote = dynamic_cast<const StructuredMemoryNoteModel*>(pMemoryNote.get());
         if (pStructuredNote)
-            pStructuredNote->EnumerateOffsetNotes(fCallback);
+            pStructuredNote->EnumerateOffsetNotes(fCallback, pStructuredNote->GetBaseAddress());
     }
 
     // Merge in the non-pointer notes.

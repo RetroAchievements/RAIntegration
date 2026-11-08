@@ -55,6 +55,8 @@ private:
             : ra::ui::win32::bindings::NumericUpDownBinding(vmViewModel) {}
 
     protected:
+        void SetHWND(DialogBase& pDialog, HWND hControl) override;
+        void SetSpinnerHWND(HWND hControl) noexcept override;
         void UpdateSourceFromText(const std::wstring& sText) override;
         void UpdateTextFromSource(const std::wstring& sText) override;
     };

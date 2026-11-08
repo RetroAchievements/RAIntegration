@@ -467,6 +467,19 @@ private:
     mutable gsl::index m_nEditingItemIndex = -1;
 };
 
+
+void AssetEditorDialog::BadgeNameBinding::SetSpinnerHWND(HWND hControl) noexcept
+{
+    NumericUpDownBinding::SetSpinnerHWND(hControl);
+    ::EnableWindow(hControl, false);
+}
+
+void AssetEditorDialog::BadgeNameBinding::SetHWND(DialogBase& pDialog, HWND hControl)
+{
+    NumericUpDownBinding::SetHWND(pDialog, hControl);
+    ::EnableWindow(hControl, false);
+}
+
 void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstring& sValue)
 {
     std::wstring sError;
@@ -532,7 +545,15 @@ void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstrin
                     SetRange(ra::to_signed(api_response.first_badge_id),
                         ra::to_signed(api_response.next_badge_id) - 1);
 
-                    InvokeOnUIThread([hWnd = m_hWndSpinner]() noexcept { ::EnableWindow(hWnd, true); });
+                    InvokeOnUIThread([this]() noexcept {
+                        ::EnableWindow(m_hWnd, true);
+
+                        // If a local image was selected while the request was pending, don't update the enabled state of the control
+                        std::wstring sText;
+                        GetText(sText);
+                        if (sText != L"[local]")
+                            ::EnableWindow(m_hWndSpinner, true);
+                    });
                 }
 
                 rc_api_destroy_fetch_badge_range_response(&api_response);

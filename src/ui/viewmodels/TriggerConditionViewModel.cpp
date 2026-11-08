@@ -746,9 +746,15 @@ static void BuildRecallTooltip(std::wstring& sTooltip,
             BuildRecallTooltip(sTooltip, mRememberRef, pIter->second.first, *pIter->second.second, *pRecallOperand);
     }
 
-    if (!pOperand.value.memref)
+    if (!rc_operand_type_is_memref(pOperand.memref_access_type))
     {
-        // if memref is null, a Remember couldn't be found for the {recall}
+        // Not a memref. Just output the constant.
+        sTooltip += ra::util::String::Printf(L"\r\n%u: ", gsl::narrow_cast<uint32_t>(nConditionIndex + 1));
+        BuildOperandTooltip(sTooltip, pOperand);
+    }
+    else if (!pOperand.value.memref)
+    {
+        // If memref is null, a Remember couldn't be found for the {recall}
         sTooltip.append(L"\r\n[invalid recall]");
     }
     else if (pOperand.value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
@@ -782,6 +788,12 @@ static void BuildRecallTooltip(std::wstring& sTooltip,
         }
 
         sTooltip.append(L" -> ");
+        BuildOperandTooltip(sTooltip, pOperand);
+    }
+    else
+    {
+        // Not a chain. Just output the last node.
+        sTooltip += ra::util::String::Printf(L"\r\n%u: ", gsl::narrow_cast<uint32_t>(nConditionIndex + 1));
         BuildOperandTooltip(sTooltip, pOperand);
     }
 }

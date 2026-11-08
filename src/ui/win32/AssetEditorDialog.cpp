@@ -545,7 +545,7 @@ void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstrin
                     SetRange(ra::to_signed(api_response.first_badge_id),
                         ra::to_signed(api_response.next_badge_id) - 1);
 
-                    InvokeOnUIThread([this]() noexcept {
+                    InvokeOnUIThread([this]() {
                         ::EnableWindow(m_hWnd, true);
 
                         // If a local image was selected while the request was pending, don't update the enabled state of the control

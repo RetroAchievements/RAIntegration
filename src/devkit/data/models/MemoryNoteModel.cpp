@@ -189,17 +189,21 @@ void UnknownMemoryNoteModel::Parse(std::wstring_view svNote, std::wstring_view s
         DetermineIndent(svParentIndent);
         if (!m_svIndent.empty())
         {
-            m_bIsPointer = (m_nBytes <= 4);
+            const auto nIndentIndex = svNote.find(m_svIndent);
+            if (nIndentIndex != std::string::npos)
+            {
+                m_bIsPointer = (m_nBytes <= 4);
 
-            // Reset size and format and only parse the pre-indent part of the note.
-            m_nMemSize = Memory::Size::Unknown;
-            m_nBytes = 1;
-            m_nMemFormat = Memory::Format::Unknown;
+                // Reset size and format and only parse the pre-indent part of the note.
+                m_nMemSize = Memory::Size::Unknown;
+                m_nBytes = 1;
+                m_nMemFormat = Memory::Format::Unknown;
 
-            const auto svPreIndent = svNote.substr(0, svNote.find(m_svIndent));
-            Parse(svPreIndent, svParentIndent);
+                const auto svPreIndent = svNote.substr(0, svNote.find(m_svIndent));
+                Parse(svPreIndent, svParentIndent);
 
-            return;
+                return;
+            }
         }
     }
 

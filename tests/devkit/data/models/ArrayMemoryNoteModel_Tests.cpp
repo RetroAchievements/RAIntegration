@@ -184,6 +184,44 @@ public:
         Assert::AreEqual(Memory::Size::Float, pChildNote->GetMemSize());
         Assert::AreEqual(std::wstring(L"[Float] NPC Health\r\n..1.0=Max"), pChildNote->GetNote());
     }
+
+    TEST_METHOD(TestPlusInSummary)
+    {
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        const std::wstring sNote =
+            L"[63-byte] First line of text log (R+B)\r\n"
+            L"\r\n"
+            L"+0: in use\r\n"
+            L"+1: inserts a separator above it\r\n"
+            L"+3: start of the actual text\r\n"
+            L"\r\n"
+            L"Used to prevent false triggers for recruits(gets set to 0 on floor changes)";
+        const auto pNote = Parse(sNote);
+
+        Assert::AreEqual(Memory::Size::Array, pNote->GetMemSize());
+        Assert::AreEqual({ 63U }, pNote->GetBytes());
+
+        const auto* pOffsetNote = pNote->GetNoteAtOffset(0x00);
+        Assert::IsNotNull(pOffsetNote);
+        Ensures(pOffsetNote != nullptr);
+
+        Assert::AreEqual(Memory::Size::Unknown, pOffsetNote->GetMemSize());
+        Assert::AreEqual(std::wstring(L"in use"), pOffsetNote->GetSummary());
+
+        pOffsetNote = pNote->GetNoteAtOffset(0x01);
+        Assert::IsNotNull(pOffsetNote);
+        Ensures(pOffsetNote != nullptr);
+
+        Assert::AreEqual(Memory::Size::Unknown, pOffsetNote->GetMemSize());
+        Assert::AreEqual(std::wstring(L"inserts a separator above it"), pOffsetNote->GetSummary());
+
+        pOffsetNote = pNote->GetNoteAtOffset(0x03);
+        Assert::IsNotNull(pOffsetNote);
+        Ensures(pOffsetNote != nullptr);
+
+        Assert::AreEqual(Memory::Size::Unknown, pOffsetNote->GetMemSize());
+        Assert::AreEqual(std::wstring(L"start of the actual text"), pOffsetNote->GetSummary());
+    }
 };
 
 } // namespace tests

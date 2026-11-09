@@ -1661,6 +1661,88 @@ public:
         Assert::AreEqual(std::wstring(L"6"), pCondition10->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 
+    TEST_METHOD(TestTooltipRecallChainNoteOffsets)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.mockGameContext.SetNote({ 4U },
+            L"[16-bit pointer] Root\r\n"
+            L"+8=[16-bit pointer] Node 1\r\n"
+            L"++0=[16-bit pointer] Node 2\r\n"
+            L"+++4=[16-bit pointer] Node 3\r\n"
+            L"++++1=[8-bit] Data 1\r\n"
+            L"++++2=[8-bit] Data 2");
+
+        vmTrigger.Parse("I:0x 0004_I:0x 0008_I:0x 0000_K:0x 0004_I:{recall}_0xH0001=3_I:{recall}_0xH0002=4");
+        //  1 AddAddress 16-bit 0x0004         $0004 => 0010
+        //  2 AddAddress 16-bit 0x0008         $0018 => 0020
+        //  3 AddAddress 16-bit 0x0000         $0020 => 0028
+        //  4 Remember   16-bit 0x0004         $002C => 0030
+        //  5 AddAddress {recall}
+        //  6            8-bit  0x0001 = 3     $0031
+        //  7 AddAddress {recall}
+        //  8            8-bit  0x0002 = 4     $0032
+
+        // Parse registers the default memory. Replace it with specific values
+        vmTrigger.mockEmulatorMemoryContext.MockMemoryValue(0x0004, 0x0010);
+        vmTrigger.mockEmulatorMemoryContext.MockMemoryValue(0x0018, 0x0020);
+        vmTrigger.mockEmulatorMemoryContext.MockMemoryValue(0x0020, 0x0028);
+        vmTrigger.mockEmulatorMemoryContext.MockMemoryValue(0x002C, 0x0030);
+
+        auto* pTrigger = vmTrigger.GetTriggerFromString();
+        auto* pMemrefs = rc_trigger_get_memrefs(pTrigger);
+        rc_eval_state_t eval_state;
+        rc_init_eval_state(&eval_state, rc_peek_callback, nullptr);
+        rc_update_memref_values(pMemrefs, &eval_state);
+
+        vmTrigger.MemoryNotesDoFrame();
+
+        // start validation
+        const auto* pCondition4 = vmTrigger.Conditions().GetItemAt(3);
+        Expects(pCondition4 != nullptr);
+        Assert::IsTrue(pCondition4->IsIndirect());
+        Assert::AreEqual(std::wstring(L""), pCondition4->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L"0x002c (indirect $0x0004+0x08+0x00+0x04)\r\n[16-bit pointer] Node 3\r\n+1=[8-bit] Data 1\r\n+2=[8-bit] Data 2"),
+                         pCondition4->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        const auto* pCondition5 = vmTrigger.Conditions().GetItemAt(4);
+        Expects(pCondition5 != nullptr);
+        Assert::IsFalse(pCondition5->IsIndirect());
+        Assert::AreEqual(std::wstring(L"0x00000030 (recall)\r\n4: $0x002c -> 0x00000030"),
+                         pCondition5->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition5->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        const auto* pCondition6 = vmTrigger.Conditions().GetItemAt(5);
+        Expects(pCondition6 != nullptr);
+        Assert::IsTrue(pCondition6->IsIndirect());
+        Assert::AreEqual(std::wstring(L""), pCondition6->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L"0x0031 (indirect {recall:0x30}+0x01)\r\n[8-bit] Data 1"),
+                         pCondition6->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        const auto* pCondition7 = vmTrigger.Conditions().GetItemAt(6);
+        Expects(pCondition7 != nullptr);
+        Assert::IsFalse(pCondition7->IsIndirect());
+        Assert::AreEqual(std::wstring(L"0x00000030 (recall)\r\n4: $0x002c -> 0x00000030"),
+            pCondition7->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L""), pCondition7->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        const auto* pCondition8 = vmTrigger.Conditions().GetItemAt(7);
+        Expects(pCondition8 != nullptr);
+        Assert::IsTrue(pCondition8->IsIndirect());
+        Assert::AreEqual(std::wstring(L""), pCondition8->GetTooltip(TriggerConditionViewModel::SourceTypeProperty));
+        Assert::AreEqual(std::wstring(L"0x0032 (indirect {recall:0x30}+0x02)\r\n[8-bit] Data 2"),
+                         pCondition8->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        // A null in the pointer chain should not break the tooltip
+        vmTrigger.mockEmulatorMemoryContext.MockMemoryValue(0x002C, 0x0000);
+        rc_update_memref_values(pMemrefs, &eval_state);
+        vmTrigger.MemoryNotesDoFrame();
+
+        Assert::AreEqual(std::wstring(L"0x0001 (indirect {recall:0x00}+0x01)\r\n[8-bit] Data 1"),
+                         pCondition6->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0002 (indirect {recall:0x00}+0x02)\r\n[8-bit] Data 2"),
+                         pCondition8->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
     TEST_METHOD(TestTooltipRecallInvalid)
     {
         IndirectAddressTriggerViewModelHarness vmTrigger;

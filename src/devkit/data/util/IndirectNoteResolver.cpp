@@ -61,21 +61,25 @@ static uint32_t ResolveOperandRecursive(const rc_operand_t* pOperand,
     // check for {recall}
     if (pOperand->type == RC_OPERAND_RECALL)
     {
-        auto* pParentNote = !vParentChain.empty() ? vParentChain.back().pNote : nullptr;
-
         auto& pNode = vParentChain.emplace_back();
         pNode.nType = ra::data::util::IndirectNoteResolver::NodeType::Recall;
 
-        if (pParentNote)
+        if (rc_operand_type_is_memref(pOperand->memref_access_type) && pOperand->value.memref &&
+            pOperand->value.memref->value.memref_type == RC_MEMREF_TYPE_MODIFIED_MEMREF)
         {
-            const auto* pStructuredNote = dynamic_cast<const ra::data::models::StructuredMemoryNoteModel*>(pParentNote);
-            if (pStructuredNote)
-                pNode.pNote = pStructuredNote->GetNoteAtOffset(pValue.value.u32);
+            std::vector<ra::data::util::IndirectNoteResolver::Node> vRecallChain;
+            rc_operand_t pOperandCopy;
+            memcpy(&pOperandCopy, pOperand, sizeof(pOperandCopy));
+            pOperandCopy.type = pOperand->memref_access_type;
+
+            ResolveOperandRecursive(&pOperandCopy, vRecallChain, pMemoryNotes);
+
+            if (!vRecallChain.empty())
+                pNode.pNote = vRecallChain.back().pNote;
         }
-        else
-        {
+
+        if (!pNode.pNote)
             pNode.pNote = pMemoryNotes.FindNote(pValue.value.u32, false);
-        }
 
         pNode.nValue = pValue.value.u32;
         return pValue.value.u32;

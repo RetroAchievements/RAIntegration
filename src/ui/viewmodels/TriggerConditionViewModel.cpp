@@ -607,7 +607,6 @@ const rc_condition_t* TriggerConditionViewModel::GetCondition() const
         gsl::index nConditionIndex = 0;
         for (; pCondition != nullptr; pCondition = pCondition->next)
         {
-
             auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);
             if (!vmCondition)
                 break;

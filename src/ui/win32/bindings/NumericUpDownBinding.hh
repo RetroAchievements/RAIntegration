@@ -33,18 +33,18 @@ public:
         SetSpinnerHWND(GetDlgItem(pDialog.GetHWND(), nControlResourceId));
     }
 
-    void SetSpinnerHWND(HWND hControl) noexcept
-    {
-        m_hWndSpinner = hControl;
-        ControlBinding::AddSecondaryControlBinding(hControl);
-    }
-
     void OnUdnDeltaPos(const NMUPDOWN& lpUpDown)
     {
         Adjust(-lpUpDown.iDelta); // up returns negative data
     }
 
 protected:
+    virtual void SetSpinnerHWND(HWND hControl) noexcept
+    {
+        m_hWndSpinner = hControl;
+        ControlBinding::AddSecondaryControlBinding(hControl);
+    }
+
     void Adjust(int nAmount)
     {
         std::wstring sBuffer;

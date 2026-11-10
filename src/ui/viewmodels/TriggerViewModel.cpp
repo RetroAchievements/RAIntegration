@@ -367,6 +367,7 @@ void TriggerViewModel::PasteFromClipboard()
             if (m_pTrigger)
             {
                 InitializeGroups(*m_pTrigger);
+                UpdateVersion();
                 return;
             }
         }

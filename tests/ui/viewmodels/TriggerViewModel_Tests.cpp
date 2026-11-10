@@ -649,6 +649,7 @@ public:
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "");
         Assert::AreEqual({ 0U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual({ 0U }, vmTrigger.GetVersion());
 
         vmTrigger.mockClipboard.SetText(L"0xL65FF=11S0xT3333=1");
         vmTrigger.PasteFromClipboard();
@@ -659,6 +660,7 @@ public:
         Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
 
         Assert::AreEqual(std::string("0xL65ff=11S0xT3333=1"), vmTrigger.Serialize());
+        Assert::AreEqual({ 1U }, vmTrigger.GetVersion());
     }
 
     TEST_METHOD(TestPasteFromClipboardMultipleGroupsEmptyErrorInAlt)
@@ -666,6 +668,7 @@ public:
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "");
         Assert::AreEqual({ 0U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual({ 0U }, vmTrigger.GetVersion());
 
         bool bDialogShown = false;
         vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
@@ -688,6 +691,7 @@ public:
         Assert::AreEqual({ 0U }, vmTrigger.Conditions().Count());
 
         Assert::AreEqual(std::string(), vmTrigger.Serialize());
+        Assert::AreEqual({ 0U }, vmTrigger.GetVersion());
     }
 
     TEST_METHOD(TestPasteFromClipboardMultipleConditions)

@@ -2,6 +2,7 @@
 
 #include "data/models/PointerMemoryNoteModel.hh"
 
+#include "tests/devkit/context/mocks/MockConsoleContext.hh"
 #include "tests/devkit/context/mocks/MockEmulatorMemoryContext.hh"
 
 #include "testutil/MemoryAsserts.hh"
@@ -183,6 +184,41 @@ public:
         Ensures(pChildNote != nullptr);
         Assert::AreEqual(Memory::Size::Float, pChildNote->GetMemSize());
         Assert::AreEqual(std::wstring(L"[Float] NPC Health\r\n..1.0=Max"), pChildNote->GetNote());
+    }
+
+    TEST_METHOD(TestGetChainToAddressArrayOfPointers)
+    {
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        std::array<uint8_t, 32> memory{};
+        memory.at(0x04) = 0x20;
+        memory.at(0x0C) = 0x30;
+        memory.at(0x14) = 0x40;
+        mockEmulatorMemoryContext.MockMemory(memory);
+
+        const std::wstring sNote =
+            L"[4x8 bytes] Inventory\r\n"
+            L"|0x00: [32-bit pointer] Item Data\r\n"
+            L"|+0x08: [32-bit] Item Type\r\n"
+            L"|0x04: [16-bit] Item Quantity";
+        const auto pNote = Parse(sNote);
+        pNote->SetAddress(4U);
+        pNote->UpdateBaseAddress(4U, mockEmulatorMemoryContext, nullptr);
+
+        Assert::AreEqual(Memory::Size::Array, pNote->GetMemSize());
+        Assert::AreEqual(sNote, pNote->GetNote()); // full note for pointer address
+        Assert::AreEqual(32U, pNote->GetBytes());
+        Assert::AreEqual(std::wstring(L"Inventory"), pNote->GetSummary());
+
+        std::vector<MemoryNoteModel::Reference> vChain;
+        Assert::IsTrue(pNote->GetChainTo(vChain, 0x38));
+        Assert::AreEqual({ 3U }, vChain.size());
+        Assert::AreEqual({ 0x04 }, vChain.at(0).nAddress);
+        Assert::AreEqual(std::wstring(L"Inventory"), vChain.at(0).pMemoryNote->GetSummary());
+        Assert::AreEqual({ 0x0C }, vChain.at(1).nAddress);
+        Assert::AreEqual(std::wstring(L"Item Data"), vChain.at(1).pMemoryNote->GetSummary());
+        Assert::AreEqual({ 0x38 }, vChain.at(2).nAddress);
+        Assert::AreEqual(std::wstring(L"Item Type"), vChain.at(2).pMemoryNote->GetSummary());
     }
 
     TEST_METHOD(TestPlusInSummary)

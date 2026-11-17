@@ -80,6 +80,8 @@ public:
 
     void MergeInto(PointerMemoryNoteModel& pOther);
 
+    ra::data::ByteAddress RawPointerToByteAddress(ra::data::ByteAddress nAddress) const;
+
 private:
     bool EnumerateOffsetNotesImpl(ra::data::ByteAddress nBaseAddress, std::function<bool(const MemoryNoteModel::Reference&)> fCallback) const override;
 

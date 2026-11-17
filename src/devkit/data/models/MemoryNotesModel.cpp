@@ -549,14 +549,18 @@ void MemoryNotesModel::DoFrame()
 
     for (auto& pMemoryNote : m_vMemoryNotes)
     {
-        auto* pPointerNote = dynamic_cast<PointerMemoryNoteModel*>(pMemoryNote.get());
-        if (pPointerNote)
+        auto* pStructuredNote = dynamic_cast<StructuredMemoryNoteModel*>(pMemoryNote.get());
+        if (!pStructuredNote)
+            continue;
+
+        if (!m_fMemoryNoteMoved)
         {
-            if (!m_fMemoryNoteMoved)
-            {
-                pPointerNote->UpdateBaseAddress(pMemoryNote->GetAddress(), pMemoryContext, nullptr);
-            }
-            else if (pPointerNote->HasRawPointerValue())
+            pStructuredNote->UpdateBaseAddress(pMemoryNote->GetAddress(), pMemoryContext, nullptr);
+        }
+        else
+        {
+            auto* pPointerNote = dynamic_cast<PointerMemoryNoteModel*>(pMemoryNote.get());
+            if (pPointerNote && pPointerNote->HasRawPointerValue())
             {
                 pPointerNote->UpdateBaseAddress(pMemoryNote->GetAddress(), pMemoryContext,
                     [this](ra::data::ByteAddress nOldAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel& pOffsetNote) {
@@ -566,7 +570,7 @@ void MemoryNotesModel::DoFrame()
             else
             {
                 // pointer hasn't been read before, provide dummy previous address
-                pPointerNote->UpdateBaseAddress(pMemoryNote->GetAddress(), pMemoryContext,
+                pStructuredNote->UpdateBaseAddress(pMemoryNote->GetAddress(), pMemoryContext,
                     [this](ra::data::ByteAddress, ra::data::ByteAddress nNewAddress, const MemoryNoteModel& pOffsetNote) {
                         m_fMemoryNoteMoved(0xFFFFFFFF, nNewAddress, pOffsetNote.GetNote());
                     });

@@ -169,6 +169,8 @@ public:
             case Size::ThirtyTwoBitBigEndian:
             case Size::Float:
             case Size::FloatBigEndian:
+            case Size::Double32:
+            case Size::Double32BigEndian:
             case Size::MBF32:
             case Size::MBF32LE:
                 return 4;

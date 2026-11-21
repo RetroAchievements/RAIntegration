@@ -122,6 +122,7 @@ public:
         TestNoteSize(L"[bigendian float] Test", 4U, Memory::Size::FloatBigEndian);
         TestNoteSize(L"[32-bit] pointer to float", 4U, Memory::Size::ThirtyTwoBit);
         TestNoteSize(L"[8-bit] can double down", 1U, Memory::Size::EightBit);
+        TestNoteSize(L"can double down [8-bit]", 1U, Memory::Size::EightBit);
 
         TestNoteSize(L"[64-bit double] Test", 8U, Memory::Size::Double32);
         TestNoteSize(L"[64-bit double BE] Test", 8U, Memory::Size::Double32BigEndian);

@@ -150,6 +150,8 @@ ra::data::ByteAddress ConsoleContext::RealAddressFromByteAddress(ra::data::ByteA
     {
         if (pRegion.ContainsAddress(nByteAddress))
             return pRegion.GetRealStartAddress() + nByteAddress;
+
+        nByteAddress -= pRegion.GetSize();
     }
 
     return 0xFFFFFFFF;

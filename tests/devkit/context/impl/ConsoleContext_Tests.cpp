@@ -52,6 +52,7 @@ public:
         AssertRegion(context, 0x80U, nullptr);
 
         Assert::AreEqual(0x14U, context.ByteAddressFromRealAddress(0x94U));
+        Assert::AreEqual(0x94U, context.RealAddressFromByteAddress(0x14U));
         Assert::AreEqual(0xFFFFFFFFU, context.ByteAddressFromRealAddress(0x14U));
     }
 
@@ -90,6 +91,7 @@ public:
         AssertRegion(context, 0x00058000U, nullptr);
 
         Assert::AreEqual(0x00019234U, context.ByteAddressFromRealAddress(0x02011234U));
+        Assert::AreEqual(0x02011234U, context.RealAddressFromByteAddress(0x00019234U));
     }
 
     TEST_METHOD(TestInitializePlayStationPortable)
@@ -127,6 +129,7 @@ public:
         AssertRegion(context, 0x04000000U, nullptr);
 
         Assert::AreEqual(0x01123456U, context.ByteAddressFromRealAddress(0x09123456U));
+        Assert::AreEqual(0x09123456U, context.RealAddressFromByteAddress(0x01123456U));
     }
 
     TEST_METHOD(TestByteAddressFromRealAddressDreamcast)

@@ -13,7 +13,6 @@ static ra::api::IServer& Server()
 }
 
 ResolveHash::Response ResolveHash::Request::Call() const { return Server().ResolveHash(*this); }
-UpdateAchievement::Response UpdateAchievement::Request::Call() const { return Server().UpdateAchievement(*this); }
 FetchAchievementInfo::Response FetchAchievementInfo::Request::Call() const { return Server().FetchAchievementInfo(*this); }
 FetchLeaderboardInfo::Response FetchLeaderboardInfo::Request::Call() const { return Server().FetchLeaderboardInfo(*this); }
 UpdateRichPresence::Response UpdateRichPresence::Request::Call() const { return Server().UpdateRichPresence(*this); }

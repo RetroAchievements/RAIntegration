@@ -63,11 +63,6 @@ public:
         return HandleRequest<ra::api::ResolveHash>(request);
     }
 
-    UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request& request) override
-    {
-        return HandleRequest<ra::api::UpdateAchievement>(request);
-    }
-
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) override
     {
         return HandleRequest<ra::api::FetchAchievementInfo>(request);

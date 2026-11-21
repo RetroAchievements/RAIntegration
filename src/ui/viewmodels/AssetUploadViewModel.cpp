@@ -1,6 +1,5 @@
 #include "AssetUploadViewModel.hh"
 
-#include "api\UpdateAchievement.hh"
 #include "api\UpdateRichPresence.hh"
 #include "api\UploadBadge.hh"
 
@@ -257,64 +256,116 @@ void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
 void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel& pAchievement)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    std::string sNarrowTitle = ra::util::String::Narrow(pAchievement.GetName());
+    std::string sNarrowDescription = ra::util::String::Narrow(pAchievement.GetDescription());
+    std::string sNarrowBadge = ra::util::String::Narrow(pAchievement.GetBadge());
 
-    ra::api::UpdateAchievement::Request request;
-    request.GameId = pGameContext.GetGameId(pAchievement.GetSubsetID());
-    request.Title = pAchievement.GetName();
-    request.Description = pAchievement.GetDescription();
-    request.Trigger = pAchievement.GetTrigger();
-    request.Points = pAchievement.GetPoints();
-    request.Badge = ra::util::String::Narrow(pAchievement.GetBadge());
+    // construct the API request
+    rc_api_update_achievement_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+    api_params.game_id = pGameContext.GetGameId(pAchievement.GetSubsetID()); // TODO: switch to achievement_set_id
+    api_params.title = sNarrowTitle.c_str();
+    api_params.description = sNarrowDescription.c_str();
+    api_params.trigger = pAchievement.GetTrigger().c_str();
+    api_params.points = pAchievement.GetPoints();
+    api_params.badge = sNarrowBadge.c_str();
 
     switch (pAchievement.GetAchievementType())
     {
         case ra::data::models::AchievementType::None:
-            request.Type = RC_ACHIEVEMENT_TYPE_STANDARD;
+            api_params.type = RC_ACHIEVEMENT_TYPE_STANDARD;
             break;
         case ra::data::models::AchievementType::Missable:
-            request.Type = RC_ACHIEVEMENT_TYPE_MISSABLE;
+            api_params.type = RC_ACHIEVEMENT_TYPE_MISSABLE;
             break;
         case ra::data::models::AchievementType::Progression:
-            request.Type = RC_ACHIEVEMENT_TYPE_PROGRESSION;
+            api_params.type = RC_ACHIEVEMENT_TYPE_PROGRESSION;
             break;
         case ra::data::models::AchievementType::Win:
-            request.Type = RC_ACHIEVEMENT_TYPE_WIN;
+            api_params.type = RC_ACHIEVEMENT_TYPE_WIN;
             break;
         default:
-            request.Type = ra::etoi(pAchievement.GetAchievementType());
+            api_params.type = ra::etoi(pAchievement.GetAchievementType());
             break;
     }
 
-    if (pAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
+    switch (pAchievement.GetCategory())
     {
-        request.Category = ra::to_unsigned(ra::etoi(ra::data::models::AssetCategory::Unpromoted));
-    }
-    else
-    {
-        request.Category = ra::to_unsigned(ra::etoi(pAchievement.GetCategory()));
-        request.AchievementId = pAchievement.GetID();
+        case ra::data::models::AssetCategory::Local:
+            // new achievement, submit to unpromoted
+            api_params.category = RC_ACHIEVEMENT_CATEGORY_UNPROMOTED;
+            break;
+
+        case ra::data::models::AssetCategory::Promoted:
+            // promoted achievement
+            api_params.achievement_id = pAchievement.GetID();
+            api_params.category = RC_ACHIEVEMENT_CATEGORY_PROMOTED;
+            break;
+
+        default:
+            // unpromoted achievement
+            api_params.achievement_id = pAchievement.GetID();
+            api_params.category = RC_ACHIEVEMENT_CATEGORY_UNPROMOTED;
+            break;
     }
 
-    const auto& response = request.Call();
+    auto& pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>();
+    rc_api_request_t api_request;
+    auto nResult = rc_api_init_update_achievement_request_hosted(&api_request, &api_params, pClient.GetHost());
+    std::string sErrorMessage = rc_error_str(nResult);
 
-    // update the achievement model
-    if (response.Succeeded())
+    if (nResult == RC_OK)
     {
-        if (pAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
+        bool bRetry = false;
+        std::string sResponseBuffer;
+
+        do
         {
-            pAchievement.SetCategory(ra::data::models::AssetCategory::Unpromoted);
-            pAchievement.SetID(response.AchievementId);
-        }
+            bRetry = false;
 
-        pAchievement.UpdateLocalCheckpoint();
-        pAchievement.UpdateServerCheckpoint();
+            // send the API request
+            rc_api_server_response_t api_response;
+            pClient.SendRequest(api_request, api_response, sResponseBuffer);
+
+            // process the response
+            rc_api_update_achievement_response_t response;
+            nResult = rc_api_process_update_achievement_server_response(&response, &api_response);
+            if (nResult == RC_OK)
+            {
+                if (pAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
+                {
+                    pAchievement.SetCategory(ra::data::models::AssetCategory::Unpromoted);
+                    pAchievement.SetID(response.achievement_id);
+                }
+
+                pAchievement.UpdateLocalCheckpoint();
+                pAchievement.UpdateServerCheckpoint();
+            }
+            else
+            {
+                bRetry = rc_client_should_retry(&api_response);
+                if (!bRetry)
+                {
+                    if (response.response.error_message)
+                        sErrorMessage = response.response.error_message;
+                    else
+                        sErrorMessage = rc_error_str(nResult);
+                }
+            }
+
+            rc_api_destroy_update_achievement_response(&response);
+
+            if (!bRetry)
+                break;
+
+            Rest();
+        } while (true);
     }
-    else if (response.Result == ra::api::ApiResult::Incomplete)
-    {
-        Rest();
-        UploadAchievement(pAchievement);
-        return;
-    }
+
+    rc_api_destroy_request(&api_request);
 
     // update the queue
     std::lock_guard<std::mutex> pLock(m_pMutex);
@@ -322,9 +373,9 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
     {
         if (pScan.pAsset == &pAchievement)
         {
-            pScan.sErrorMessage = response.ErrorMessage;
+            pScan.sErrorMessage = sErrorMessage;
 
-            if (response.ErrorMessage == "Invalid state")
+            if (nResult == RC_INVALID_STATE)
             {
                 // generic API failure. Try to guess what went wrong
                 if (pAchievement.GetName().empty())
@@ -335,7 +386,7 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
                     pScan.sErrorMessage = "At least one condition is required";
             }
 
-            pScan.nState = response.Succeeded() ? UploadState::Success : UploadState::Failed;
+            pScan.nState = (nResult == RC_OK) ? UploadState::Success : UploadState::Failed;
             break;
         }
     }

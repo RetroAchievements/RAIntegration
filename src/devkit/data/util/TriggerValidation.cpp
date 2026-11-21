@@ -185,6 +185,7 @@ static bool ValidateMemoryNotesCondSet(const rc_condset_t* pCondSet, const ra::d
     size_t nIndex = 0;
     const auto* pCondition = pCondSet->conditions;
     const ra::data::models::MemoryNoteModel* pParentNote = nullptr;
+    const ra::data::models::MemoryNoteModel* pRecallNote = nullptr;
     for (; pCondition; pCondition = pCondition->next)
     {
         ++nIndex;
@@ -202,6 +203,10 @@ static bool ValidateMemoryNotesCondSet(const rc_condset_t* pCondSet, const ra::d
                 sError = ra::util::String::Printf(L"Condition %u: %s", nIndex, sError);
                 return false;
             }
+        }
+        else if (pOperand1->type == RC_OPERAND_RECALL)
+        {
+            pOperand1Note = pRecallNote;
         }
 
         if (rc_operand_is_memref(&pCondition->operand2))
@@ -228,14 +233,21 @@ static bool ValidateMemoryNotesCondSet(const rc_condset_t* pCondSet, const ra::d
             }
         }
 
-        if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
+        switch (pCondition->type)
         {
-            pParentNote = pOperand1Note;
-            bIsAddAddressChain = true;
-        }
-        else
-        {
-            bIsAddAddressChain = false;
+            case RC_CONDITION_ADD_ADDRESS:
+                pParentNote = pOperand1Note;
+                bIsAddAddressChain = true;
+                break;
+
+            case RC_CONDITION_REMEMBER:
+                pRecallNote = pOperand1Note;
+                _FALLTHROUGH; /* to default */
+
+            default:
+                pParentNote = nullptr;
+                bIsAddAddressChain = false;
+                break;
         }
     }
 

@@ -46,6 +46,7 @@ public:
 
 private:
     bool EnumerateOffsetNotesImpl(ra::data::ByteAddress nBaseAddress, std::function<bool(const MemoryNoteModel::Reference&)> fCallback) const override;
+    bool GetNestedChainTo(std::vector<MemoryNoteModel::Reference>& vChain, ra::data::ByteAddress nBaseAddress, ra::data::ByteAddress nSearchAddress) const;
 
     uint32_t m_nBytesPerElement = 0;
 };

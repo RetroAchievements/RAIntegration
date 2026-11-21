@@ -145,7 +145,7 @@ StructuredDataBrowserDialog::StructuredDataBrowserDialog(StructuredDataBrowserVi
     auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
         StructuredDataBrowserViewModel::StructFieldViewModel::AddressProperty);
     pAddressColumn->SetHeader(L"Address");
-    pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
+    pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 90);
     m_bindPointerChain.BindColumn(1, std::move(pAddressColumn));
 
     pValueColumn = std::make_unique<ra::ui::win32::bindings::GridMemoryWatchValueColumnBinding>(

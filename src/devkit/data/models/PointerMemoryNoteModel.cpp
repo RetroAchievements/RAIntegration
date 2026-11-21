@@ -47,6 +47,11 @@ static ra::data::ByteAddress ConvertPointer(ra::data::ByteAddress nAddress)
     return nAddress;
 }
 
+ra::data::ByteAddress PointerMemoryNoteModel::RawPointerToByteAddress(ra::data::ByteAddress nAddress) const
+{
+    return (m_nOffsetType == OffsetType::Converted) ? ConvertPointer(nAddress) : nAddress;
+}
+
 void PointerMemoryNoteModel::UpdateBaseAddress(ra::data::ByteAddress nAddress, const ra::context::IEmulatorMemoryContext& pMemoryContext,
                                                NoteMovedFunction fNoteMovedCallback)
 {

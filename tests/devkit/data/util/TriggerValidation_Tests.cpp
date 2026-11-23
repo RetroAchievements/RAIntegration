@@ -233,6 +233,11 @@ public:
         AssertValidation("0xH0040>8", L""); // start of array
         AssertValidation("0xH0052>8", L""); // in array
 
+        mockGameContext.SetNote(0x0080, L"[3x8 bytes] array of structs\r\n|0x04=Field A");
+        AssertValidation("0xH0084>8", L""); // struct field in array
+        AssertValidation("0xH0094>8", L""); // struct field in array
+        AssertValidation("0xH0090>8", L""); // unmentioned struct field in array
+
         // chained value note
         AssertValidation("A:0xH0008_1=6", L""); // 1 is not an address so it shouldn't matter that it doesn't have a note
 
@@ -246,6 +251,19 @@ public:
         AssertValidation("I:0xW10080_0x 0008=3", L"");
         AssertValidation("I:0xX10080&65535_0x 0008=3", L"Condition 1: Pointer mask is too small for system");
         AssertValidation("I:0xX10080&16777215_0x 0008=3", L"");
+
+        mockGameContext.SetNote(0x10060, L"[32-bit pointer] root\r\n+0x10=[3x8 bytes] array of structs\r\n+|0x04=Field A");
+        AssertValidation("I:0xX10060_0xX0014=3", L"Condition 2: 32-bit read of offset 14 differs from implied memory note size 8-bit");
+        AssertValidation("I:0xX10060_0xH0014=3", L"");
+        AssertValidation("I:0xX10060_0xH0024=3", L"");
+        AssertValidation("I:0xX10060_0xH0020=3", L"Condition 2: No memory note for offset 20");
+        AssertValidation("K:0xX10060_I:{recall}_0xH0014=3", L"");
+
+        mockGameContext.SetNote(0x10060, L"[32-bit pointer] root\r\n+0x00=[3x8 bytes] array of structs\r\n+|0x04=Field A");
+        AssertValidation("I:0xX10060_0xX0004=3", L"Condition 2: 32-bit read of offset 4 differs from implied memory note size 8-bit");
+        AssertValidation("I:0xX10060_0xH0004=3", L"");
+        AssertValidation("I:0xX10060_0xH0004=3", L"");
+        AssertValidation("I:0xX10060_0xH0008=3", L"Condition 2: No memory note for offset 8");
     }
 
     TEST_METHOD(TestRecallConstantAcrossAlts)

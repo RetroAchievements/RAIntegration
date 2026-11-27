@@ -266,6 +266,49 @@ public:
         AssertValidation("I:0xX10060_0xH0008=3", L"Condition 2: No memory note for offset 8");
     }
 
+    TEST_METHOD(TestMemoryNoteIndexedPointers)
+    {
+        ra::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::context::mocks::MockUserContext mockUserContext;
+        ra::context::mocks::MockGameContext mockGameContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockGameContext.SetNote(0x0100, L"[32-bit] Player index");
+        for (unsigned int nAddress = 0x2000; nAddress < 0x2010; nAddress += 4)
+            mockGameContext.SetNote(nAddress, L"[32-bit pointer] Player data\n+0x08=[8-bit] State");
+        mockGameContext.SetNote(0x000C, L"[8-bit] Unrelated absolute address");
+
+        AssertValidation("I:0xX0100*4_I:0xX2000_0xH0008=1", L"");
+        AssertValidation("I:0xX0100*4_I:0xX2000_0xH000C=1", L"Condition 3: No memory note for offset 0c");
+        AssertValidation("I:0xX0100*4_I:0xX2000_0xX0008=1", L"Condition 3: 32-bit read of offset 8 differs from memory note size 8-bit");
+        AssertValidation("I:0xH0100*4_I:0xX2000_0xH0008=1", L"Condition 1: 8-bit read of address 0100 differs from memory note size 32-bit");
+    }
+
+    TEST_METHOD(TestMemoryNoteIndexedPointerMissingNotes)
+    {
+        ra::context::mocks::MockUserContext mockUserContext;
+        ra::context::mocks::MockGameContext mockGameContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        mockGameContext.SetNote(0x0100, L"[32-bit] Player index");
+
+        AssertValidation("I:0xX0100*4_I:0xX2000_0xH0008=1", L"Condition 2: No memory note for address 2000");
+        AssertValidation("I:0xX0104*4_I:0xX2000_0xH0008=1", L"Condition 1: No memory note for address 0104");
+    }
+
+    TEST_METHOD(TestMemoryNoteIndexedPointerMasksAndRecall)
+    {
+        ra::context::mocks::MockUserContext mockUserContext;
+        ra::context::mocks::MockGameContext mockGameContext;
+        ra::context::mocks::MockEmulatorMemoryContext mockEmulatorMemoryContext;
+        ra::context::mocks::MockConsoleContext mockConsoleContext(PlayStation, L"PSX");
+        mockGameContext.SetNote(0x10080, L"[32-bit] Player index");
+        mockGameContext.SetNote(0x12000, L"[32-bit pointer] Player data\n+0x08=[8-bit] State");
+
+        AssertValidation("I:0xX10080*4_I:0xX12000&16777215_0xH0008=1", L"");
+        AssertValidation("I:0xX10080*4_I:0xX12000&65535_0xH0008=1", L"Condition 2: Pointer mask is too small for system");
+        AssertValidation("K:0xX10080_I:{recall}*4_I:0xX12000_0xH0008=1", L"");
+        AssertValidation("K:4_I:{recall}_0xX12000=1", L"Condition 3: No memory note for offset 12000");
+    }
+
     TEST_METHOD(TestRecallConstantAcrossAlts)
     {
         AssertValidation("SQ:0xX00aa4968=4_K:11160468_I:{recall}_N:0xX00000000!=0_M:0=1.3."

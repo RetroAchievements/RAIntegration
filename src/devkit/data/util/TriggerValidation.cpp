@@ -237,7 +237,8 @@ static bool ValidateMemoryNotesCondSet(const rc_condset_t* pCondSet, const ra::d
         {
             case RC_CONDITION_ADD_ADDRESS:
                 pParentNote = pOperand1Note;
-                bIsAddAddressChain = true;
+                bIsAddAddressChain = !pOperand1Note ||
+                    pOperand1Note->GetType() == ra::data::models::MemoryNoteType::Pointer;
                 break;
 
             case RC_CONDITION_REMEMBER:

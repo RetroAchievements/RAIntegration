@@ -393,6 +393,9 @@
     <ClCompile Include="..\src\ui\viewmodels\StructuredDataBrowserViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="TestSuite.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

@@ -62,7 +62,7 @@ private:
     {
     public:
         AssetEditorViewModelHarness() noexcept
-            : m_pMockThemeOverride(&mockTheme, false)
+            : m_pMockThemeOverride(&mockTheme)
         {
             // DoFrame tests expect the dialog to be visible
             GSL_SUPPRESS_F6 SetIsVisible(true);

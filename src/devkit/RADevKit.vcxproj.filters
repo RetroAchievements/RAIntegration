@@ -362,5 +362,8 @@
     <ClCompile Include="data\models\ArrayMemoryNoteModel.cpp">
       <Filter>data\models</Filter>
     </ClCompile>
+    <ClCompile Include="services\ServiceLocator.cpp">
+      <Filter>services</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -2,13 +2,11 @@
 #define RA_SERVICE_LOCATOR_HH
 #pragma once
 
-#include "services/ILogger.hh"
+#include <functional>
+#include <memory>
+#include <string>
 
-#ifndef NDEBUG
-#include "util/Strings.hh"
-#endif
-
-#include <stdexcept>
+#include <gsl/assert>
 
 namespace ra {
 namespace services {
@@ -20,9 +18,8 @@ public:
     /// Returns a reference to a service implementing the requested interface.
     /// </summary>
     /// <returns>Reference to an implementation of the interface</returns>
-    /// <exception cref="std::runtime_error">No service is provided for the requested interface.</exception>
     template <class TClass>
-    static const TClass& Get()
+    static const TClass& Get() noexcept
     {
         return Service<TClass>::Get();
     }
@@ -31,13 +28,12 @@ public:
     /// Returns a non-const reference to a service implementing the requested interface.
     /// </summary>
     /// <returns>Reference to an implementation of the interface</returns>
-    /// <exception cref="std::runtime_error">No service is provided for the requested interface.</exception>
     /// <remarks>
     /// WARNING: mutable services are not guaranteed to be thread-safe. Prefer using non-mutable 
     /// services whenever possible.
     /// </remarks>
     template <class TClass>
-    static TClass& GetMutable()
+    static TClass& GetMutable() noexcept
     {
         return Service<TClass>::Get();
     }
@@ -62,10 +58,8 @@ public:
     template <class TClass>
     static void Provide(std::unique_ptr<TClass> pInstance) noexcept
     {
-        if (!Service<TClass>::s_bDestroy)
-            Service<TClass>::s_pInstance.release();
-
-        Service<TClass>::s_pInstance = std::move(pInstance);
+        Service<TClass>::s_pProvidedInstance = std::move(pInstance);
+        Service<TClass>::s_pCurrentInstance = Service<TClass>::s_pProvidedInstance.get();
     }
 
     /// <summary>
@@ -77,6 +71,14 @@ public:
     /// Gets whether or not shutdown has started
     /// </summary>
     static bool IsShuttingDown() noexcept;
+
+    /// <summary>
+    /// Provides a callback to run when a service is not found.
+    /// </summary>
+    /// <remarks>
+    /// Used by the unit test framework to assert failure instead of terminating the test runner.
+    /// </remarks>
+    static void SetNoServiceHandler(std::function<void(const std::string&)> fHandler);
 
     /// <summary>
     /// Provides a temporary implementation of an interface for the duration of the scope of the ServiceOverride.
@@ -93,29 +95,17 @@ public:
         /// Initializes a new instance of the <see cref="ServiceOverride" /> class.
         /// </summary>
         /// <param name="pOverride">A pointer to the temporary implementation.</param>
-        /// <param name="bDestroy">
-        /// If set to <c>true</c>, the pointer will be owned by the <see cref="ServiceOverride" /> and deleted 
-        /// when the <see cref="ServiceOverride" /> goes out of scope. This should normally be false, as 
-        /// <paramref name="pOverride" /> will typically be a this pointer to the subclass, or the address
-        /// of a stack variable.
-        /// </param>
-        explicit ServiceOverride(TClass* pOverride, bool bDestroy = false) noexcept
-            : m_pPreviousInstance(Service<TClass>::s_pInstance.release()),
-              m_bPreviousDestroy(Service<TClass>::s_bDestroy)
+        explicit ServiceOverride(TClass* pOverride) noexcept
+            : m_pPreviousInstance(Service<TClass>::s_pCurrentInstance)
         {
-            Service<TClass>::s_pInstance.reset(pOverride);
-            Service<TClass>::s_bDestroy = bDestroy;
+            Service<TClass>::s_pCurrentInstance = pOverride;
         }
 
         ServiceOverride() = delete;
 
         ~ServiceOverride() noexcept
         {
-            if (!Service<TClass>::s_bDestroy)
-                Service<TClass>::s_pInstance.release();
-
-            Service<TClass>::s_pInstance.reset(m_pPreviousInstance);
-            Service<TClass>::s_bDestroy = m_bPreviousDestroy;
+            Service<TClass>::s_pCurrentInstance = m_pPreviousInstance;
         }
 
         ServiceOverride(const ServiceOverride&) noexcept = delete;
@@ -125,71 +115,51 @@ public:
 
     private:
         TClass* m_pPreviousInstance;
-        bool m_bPreviousDestroy;
     };
 
 private:
+    static void ReportNoServiceProvided(const char* sFunctionName) noexcept;
+
     template <class TClass>
     class Service
     {
     public:
-        static TClass& Get()
+        static TClass& Get() noexcept
         {
-            if (s_pInstance == nullptr)
-                ThrowNoServiceProvidedException();
+            if (GSL_UNLIKELY(s_pCurrentInstance == nullptr))
+                ReportNoServiceProvided();
 
-            return *s_pInstance.get();
+            return *s_pCurrentInstance;
         }
 
         static bool Exists() noexcept
         {
-            return (s_pInstance != nullptr);
+            return (s_pCurrentInstance != nullptr);
         }
 
-        static std::unique_ptr<TClass> s_pInstance;
-        static bool s_bDestroy;
+        static std::unique_ptr<TClass> s_pProvidedInstance;
+        static TClass* s_pCurrentInstance;
 
     private:
-        static void ThrowNoServiceProvidedException()
+        static void ReportNoServiceProvided() noexcept
         {
 #if defined(__PRETTY_FUNCTION__)
-            std::string sMessage = __PRETTY_FUNCTION__;
+            const char* sFunctionName = __PRETTY_FUNCTION__;
 #elif defined (__FUNCTION__)
-            std::string sMessage = __FUNCTION__;
+            const char* sFunctionName = __FUNCTION__;
 #else
-            std::string sMessage = __FUNC__;
+            const char* sFunctionName = __FUNC__;
 #endif
-            const size_t index = sMessage.find('<');
-            const size_t index2 = sMessage.rfind('>');
-            if (index >= 0 && index2 > index)
-            {
-                sMessage.erase(index2);
-                sMessage.erase(0, index + 1);
-            }
-            sMessage.insert(0, "No service provided for ");
-
-            if (Service<ra::services::ILogger>::Exists())
-            {
-                const auto& pLogger = Service<ra::services::ILogger>::Get();
-                if (pLogger.IsEnabled(ra::services::LogLevel::Error))
-                    pLogger.LogMessage(ra::services::LogLevel::Error, "ERROR: " + sMessage);
-            }
-
-#ifndef NDEBUG
-            // expanded definition of assert macro so we can use the constructed error message
-            _wassert(ra::util::String::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), to_unsigned(__LINE__));
-#endif
-
-            throw std::runtime_error(sMessage);
+            ServiceLocator::ReportNoServiceProvided(sFunctionName);
         }
     };
 };
 
 template <class TClass>
-std::unique_ptr<TClass> ServiceLocator::Service<TClass>::s_pInstance;
+std::unique_ptr<TClass> ServiceLocator::Service<TClass>::s_pProvidedInstance;
 
 template<class TClass>
-bool ServiceLocator::Service<TClass>::s_bDestroy = true;
+TClass* ServiceLocator::Service<TClass>::s_pCurrentInstance = nullptr;
 
 } // namespace services
 } // namespace ra

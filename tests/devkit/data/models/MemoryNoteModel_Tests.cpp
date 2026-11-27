@@ -4,6 +4,8 @@
 
 #include "testutil/MemoryAsserts.hh"
 
+#include <limits>
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
@@ -160,8 +162,9 @@ public:
         TestNoteSize(L"[32-bit] 4x4 model", 4U, Memory::Size::ThirtyTwoBit);
         TestNoteSize(L"[128 byte struct] Level data", 128U, Memory::Size::Array);
         TestNoteSize(L"[3x64-byte struct] Character data", 192U, Memory::Size::Array);
-        TestNoteSize(L"[4096x4 bytes] Big Array\r\n|0x0: [4-byte] Field", 16384U, Memory::Size::Array);
-        TestNoteSize(L"[10737418232x4 bytes] Big Array\r\n|0x0: [4-byte] Field", 16384U, Memory::Size::Array);
+        TestNoteSize(L"[4096x4 bytes] Big Array\r\n|0x0: [32-bit] Field", 16384U, Memory::Size::Array);
+        TestNoteSize(L"[10737418232x4 bytes] Big Array\r\n|0x0: [32-bit] Field",
+            std::numeric_limits<int>::max(), Memory::Size::Array);
 
         TestNoteSize(L"[NTSCU]\r\n[16-bit] Test\r\n", 2U, Memory::Size::SixteenBit);
         TestNoteSize(L"[24-bit]\r\nIt's really 32-bit, but the top byte will never be non-zero\r\n", 3U, Memory::Size::TwentyFourBit);

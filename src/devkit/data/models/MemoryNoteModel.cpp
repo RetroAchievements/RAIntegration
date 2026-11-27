@@ -18,8 +18,6 @@ namespace ra {
 namespace data {
 namespace models {
 
-constexpr uint32_t MAX_ARRAY_ELEMENT_COUNT = 4096;
-
 class MemoryNoteParser
 {
 public:
@@ -549,9 +547,8 @@ void UnknownMemoryNoteModel::ExtractSize(std::wstring_view sNote)
                 if (!bFoundSize)
                 {
                     const auto nCount = std::wcstoll(sPreviousWord.c_str(), nullptr, 10);
-                    const long long nMaxCount = MAX_ARRAY_ELEMENT_COUNT;
                     nElementCount = (nCount > 0)
-                        ? gsl::narrow_cast<uint32_t>(std::min(nCount, nMaxCount))
+                        ? gsl::narrow_cast<uint32_t>(std::min<long long>(nCount, std::numeric_limits<uint32_t>::max()))
                         : 0U;
                 }
             }
@@ -561,10 +558,9 @@ void UnknownMemoryNoteModel::ExtractSize(std::wstring_view sNote)
                 if (nElementCount != 0)
                 {
                     const uint64_t nTotalBytes = static_cast<uint64_t>(m_nBytes) * nElementCount;
-                    const uint64_t nMaxBytes = std::numeric_limits<uint32_t>::max();
                     m_nMemSize = Memory::Size::Array;
                     m_nBytesPerElement = m_nBytes;
-                    m_nBytes = gsl::narrow_cast<uint32_t>(std::min(nTotalBytes, nMaxBytes));
+                    m_nBytes = gsl::narrow_cast<uint32_t>(std::min<uint64_t>(nTotalBytes, std::numeric_limits<int>::max()));
                 }
                 else if (m_nMemSize == Memory::Size::Unknown ||     // size not yet determined
                     Memory::SizeBytes(m_nMemSize) != m_nBytes) // size mismatch

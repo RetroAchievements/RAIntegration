@@ -9,6 +9,8 @@
 
 #include "util/Strings.hh"
 
+#include <limits>
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
@@ -128,6 +130,39 @@ public:
         AssertIndirectNote(*pNote, 0x30U, L"[32-bit] Item Type", Memory::Size::ThirtyTwoBit, 4);
         AssertIndirectNote(*pNote, 0x34U, L"[16-bit] Item Quantity", Memory::Size::SixteenBit, 2);
         Assert::IsNull(pNote->GetNoteAtOffset(0x40U));
+    }
+
+    TEST_METHOD(TestEnumerateOffsetNotesLargeArray)
+    {
+        const std::wstring sNote =
+            L"[10737418232x4 bytes] Big Array\r\n"
+            L"|0x0: [32-bit] Field";
+        const auto pNote = Parse(sNote);
+
+        // only the byte count should be clamped
+        constexpr uint32_t nMaxBytes = std::numeric_limits<int>::max();
+        Assert::AreEqual(nMaxBytes, pNote->GetBytes());
+        Assert::AreEqual(nMaxBytes / 4, pNote->GetElementCount());
+        Assert::AreEqual(sNote, pNote->GetNote());
+
+        AssertIndirectNote(*pNote, 0x10000U, L"[32-bit] Field", Memory::Size::ThirtyTwoBit, 4);
+
+        uint32_t nCount = 0;
+        uint32_t nFirstAddress = 0;
+        uint32_t nLastAddress = 0;
+        pNote->EnumerateOffsetNotes([&nCount, &nFirstAddress, &nLastAddress]
+            (const MemoryNoteModel::Reference& pReference)
+            {
+                if (nCount == 0)
+                    nFirstAddress = pReference.nAddress;
+                nLastAddress = pReference.nAddress;
+                ++nCount;
+                return true;
+            });
+
+        Assert::AreEqual(ArrayMemoryNoteModel::MaxEnumeratedElements, nCount);
+        Assert::AreEqual(0U, nFirstAddress);
+        Assert::AreEqual((ArrayMemoryNoteModel::MaxEnumeratedElements - 1) * 4, nLastAddress);
     }
 
     TEST_METHOD(TestGetNoteAtOffsetNested)

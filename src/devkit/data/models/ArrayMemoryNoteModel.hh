@@ -23,6 +23,11 @@ public:
     ArrayMemoryNoteModel& operator=(ArrayMemoryNoteModel&&) noexcept = default;
 
     /// <summary>
+    /// Maximum number of elements visited when enumerating an array note.
+    /// </summary>
+    static constexpr uint32_t MaxEnumeratedElements = 4096;
+
+    /// <summary>
     /// Gets the number of bytes for each element of the array.
     /// </summary>
     uint32_t GetElementSize() const noexcept { return m_nBytesPerElement; }

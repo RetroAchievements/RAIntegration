@@ -5,6 +5,8 @@
 
 #include "util/Strings.hh"
 
+#include <algorithm>
+
 namespace ra {
 namespace data {
 namespace models {
@@ -143,8 +145,10 @@ bool ArrayMemoryNoteModel::GetChainTo(std::vector<MemoryNoteModel::Reference>& v
 bool ArrayMemoryNoteModel::EnumerateOffsetNotesImpl(ra::data::ByteAddress nBaseAddress,
     std::function<bool(const MemoryNoteModel::Reference&)> fCallback) const
 {
-    for (uint32_t nOffset = 0; nOffset < m_nBytes; nOffset += m_nBytesPerElement)
+    const auto nEnumeratedElementCount = std::min(GetElementCount(), MaxEnumeratedElements);
+    for (uint32_t nElementIndex = 0; nElementIndex < nEnumeratedElementCount; ++nElementIndex)
     {
+        const auto nOffset = nElementIndex * m_nBytesPerElement;
         if (!StructuredMemoryNoteModel::EnumerateOffsetNotesImpl(nBaseAddress + nOffset, fCallback))
             return false;
     }

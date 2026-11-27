@@ -72,6 +72,11 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
             if (m_pLeaderboardInfo)
                 SyncValueFormatToRuntime();
         }
+        else if (args.Property == IDProperty)
+        {
+            if (m_pLeaderboardInfo)
+                SyncIDToRuntime();
+        }
     }
 
     AssetModelBase::OnValueChanged(args);

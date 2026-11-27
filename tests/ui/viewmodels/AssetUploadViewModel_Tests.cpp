@@ -42,6 +42,7 @@ private:
         AssetUploadViewModelHarness() noexcept
         {
             GSL_SUPPRESS_F6 mockGameContext.SetGameId(GameId);
+            GSL_SUPPRESS_F6 mockUserContext.Initialize("User", "APITOKEN");
         }
 
         static constexpr unsigned GameId = 22U;
@@ -263,28 +264,15 @@ public:
         vmUpload.QueueAsset(pAchievement);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&bApiCalled]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            bApiCalled = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
-            Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
-            Assert::AreEqual(std::string("0xH1234=1"), pRequest.Trigger);
-            Assert::AreEqual(5U, pRequest.Points);
-            Assert::AreEqual(std::string("12345"), pRequest.Badge);
-            Assert::AreEqual(5U, pRequest.Category);
-            Assert::AreEqual(1U, pRequest.AchievementId);
-
-            pResponse.AchievementId = pRequest.AchievementId;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=5&b=12345&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
 
         vmUpload.AssertSuccess(1);
@@ -299,29 +287,15 @@ public:
         vmUpload.QueueAsset(pAchievement);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&bApiCalled]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            bApiCalled = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
-            Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
-            Assert::AreEqual(std::string("0xH1234=1"), pRequest.Trigger);
-            Assert::AreEqual(5U, pRequest.Points);
-            Assert::AreEqual(std::string("12345"), pRequest.Badge);
-            Assert::AreEqual(3U, pRequest.Category);
-            Assert::AreEqual(1U, pRequest.AchievementId);
-            Assert::AreEqual(0U, pRequest.Type);
-
-            pResponse.AchievementId = pRequest.AchievementId;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
 
         vmUpload.AssertSuccess(1);
@@ -338,29 +312,15 @@ public:
         vmUpload.QueueAsset(pAchievement);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&bApiCalled]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            bApiCalled = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
-            Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
-            Assert::AreEqual(std::string("0xH1234=1"), pRequest.Trigger);
-            Assert::AreEqual(5U, pRequest.Points);
-            Assert::AreEqual(std::string("12345"), pRequest.Badge);
-            Assert::AreEqual(3U, pRequest.Category);
-            Assert::AreEqual(1U, pRequest.AchievementId);
-            Assert::AreEqual(1U, pRequest.Type);
-
-            pResponse.AchievementId = pRequest.AchievementId;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=12345&x=missable&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
 
         vmUpload.AssertSuccess(1);
@@ -375,28 +335,14 @@ public:
         vmUpload.QueueAsset(pAchievement);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&bApiCalled]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            bApiCalled = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
-            Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
-            Assert::AreEqual(std::string("0xH1234=1"), pRequest.Trigger);
-            Assert::AreEqual(5U, pRequest.Points);
-            Assert::AreEqual(std::string("12345"), pRequest.Badge);
-            Assert::AreEqual(5U, pRequest.Category);
-            Assert::AreEqual(0U, pRequest.AchievementId);
-
-            pResponse.AchievementId = 7716U;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=5&b=12345&x=&h=31d3167280796e02e030fa76d0c4634c",
+            "{\"Success\":\"true\",\"AchievementID\":7716}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
 
         // published local achievement should be changed to unpromoted and have it's ID updated
         Assert::AreEqual(AssetCategory::Unpromoted, pAchievement.GetCategory());
@@ -419,28 +365,14 @@ public:
         vmUpload.QueueAsset(pAchievement);
         Assert::AreEqual({1U}, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>(
-            [&bApiCalled](const ra::api::UpdateAchievement::Request& pRequest,
-                          ra::api::UpdateAchievement::Response& pResponse) {
-                bApiCalled = true;
-                Assert::AreEqual(33U, pRequest.GameId);
-                Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
-                Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
-                Assert::AreEqual(std::string("0xH1234=1"), pRequest.Trigger);
-                Assert::AreEqual(5U, pRequest.Points);
-                Assert::AreEqual(std::string("12345"), pRequest.Badge);
-                Assert::AreEqual(5U, pRequest.Category);
-                Assert::AreEqual(0U, pRequest.AchievementId);
-
-                pResponse.AchievementId = 7716U;
-                pResponse.Result = ra::api::ApiResult::Success;
-                return true;
-            });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&g=33&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=5&b=12345&x=&h=31d3167280796e02e030fa76d0c4634c",
+            "{\"Success\":\"true\",\"AchievementID\":7716}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
 
         // published local achievement should be changed to unpromoted and have it's ID updated
         Assert::AreEqual(AssetCategory::Unpromoted, pAchievement.GetCategory());
@@ -459,19 +391,15 @@ public:
         vmUpload.QueueAsset(pAchievement);
         Assert::AreEqual({ 1U }, vmUpload.TaskCount());
 
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&bApiCalled]
-                (const ra::api::UpdateAchievement::Request&, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            bApiCalled = true;
-            pResponse.Result = ra::api::ApiResult::Error;
-            pResponse.ErrorMessage = "You must be a developer to modify promoted achievements!";
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":false,\"Status\":403,\"Code\":\"access_denied\",\"Error\":\"You must be a developer to modify promoted achievements!\"}", 403
+        );
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
         vmUpload.AssertFailed(0, 1, L"* Title1: You must be a developer to modify promoted achievements!");
@@ -492,20 +420,12 @@ public:
         vmUpload.QueueAsset(pAchievement);
         Assert::AreEqual({1U}, vmUpload.TaskCount());
 
-        // mockServer doesn't call the API that would return Error/Invalid state, so update the mockServer
-        // to behave as if the failure happened at the API level.
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>(
-            [&bApiCalled](const ra::api::UpdateAchievement::Request&, ra::api::UpdateAchievement::Response& pResponse) {
-                bApiCalled = true;
-                pResponse.Result = ra::api::ApiResult::Error;
-                pResponse.ErrorMessage = "Invalid state";
-                return true;
-            });
+        // No need to queue an API response. Error will be handled constructing the request.
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
         vmUpload.AssertFailed(0, 1, L"* Title1: At least one condition is required");
@@ -527,20 +447,12 @@ public:
         vmUpload.QueueAsset(pAchievement);
         Assert::AreEqual({1U}, vmUpload.TaskCount());
 
-        // mockServer doesn't call the API that would return Error/Invalid state, so update the mockServer
-        // to behave as if the failure happened at the API level.
-        bool bApiCalled = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>(
-            [&bApiCalled](const ra::api::UpdateAchievement::Request&, ra::api::UpdateAchievement::Response& pResponse) {
-                bApiCalled = true;
-                pResponse.Result = ra::api::ApiResult::Error;
-                pResponse.ErrorMessage = "Invalid state";
-                return true;
-            });
+        // No need to queue an API response. Error will be handled constructing the request.
 
         vmUpload.DoUpload();
 
-        Assert::IsTrue(bApiCalled);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
 
         vmUpload.AssertFailed(0, 1, L"* Title1: Description is required");
@@ -570,22 +482,35 @@ public:
         vmUpload.QueueAsset(pAchievement6);
         Assert::AreEqual({ 6U }, vmUpload.TaskCount());
 
-        int nApiCount = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&nApiCount]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            ++nApiCount;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(3U, pRequest.Category);
-
-            pResponse.AchievementId = pRequest.AchievementId;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=2&g=22&n=Title2&d=Desc2&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=110ae1cb34baa79719a0836a4b8adbc5",
+            "{\"Success\":\"true\",\"AchievementID\":2}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=3&g=22&n=Title3&d=Desc3&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=1192f4a78edbacb36ad420093e44d8b0",
+            "{\"Success\":\"true\",\"AchievementID\":3}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=4&g=22&n=Title4&d=Desc4&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=92121d61f61f6a28726ae8e4a63d6ffb",
+            "{\"Success\":\"true\",\"AchievementID\":4}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=5&g=22&n=Title5&d=Desc5&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=e07e2b91b917f8e8f1ace71fea486acc",
+            "{\"Success\":\"true\",\"AchievementID\":5}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=6&g=22&n=Title6&d=Desc6&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=cea22fba8482aa0701759d8a33b44e15",
+            "{\"Success\":\"true\",\"AchievementID\":6}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::AreEqual(6, nApiCount);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(AssetChanges::None, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::None, pAchievement2.GetChanges());
         Assert::AreEqual(AssetChanges::None, pAchievement3.GetChanges());
@@ -620,29 +545,35 @@ public:
         vmUpload.QueueAsset(pAchievement6);
         Assert::AreEqual({ 6U }, vmUpload.TaskCount());
 
-        int nApiCount = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&nApiCount]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            ++nApiCount;
-
-            if (nApiCount == 4)
-            {
-                pResponse.Result = ra::api::ApiResult::Failed;
-                pResponse.ErrorMessage = "Timeout";
-            }
-            else
-            {
-                pResponse.AchievementId = pRequest.AchievementId;
-                pResponse.Result = ra::api::ApiResult::Success;
-            }
-
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=2&g=22&n=Title2&d=Desc2&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=110ae1cb34baa79719a0836a4b8adbc5",
+            "{\"Success\":\"true\",\"AchievementID\":2}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=3&g=22&n=Title3&d=Desc3&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=1192f4a78edbacb36ad420093e44d8b0",
+            "{\"Success\":\"true\",\"AchievementID\":3}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=4&g=22&n=Title4&d=Desc4&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=92121d61f61f6a28726ae8e4a63d6ffb",
+            "{\"Success\":false,\"Status\":404,\"Code\":\"not_found\",\"Error\":\"Not Found\"}", 404
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=5&g=22&n=Title5&d=Desc5&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=e07e2b91b917f8e8f1ace71fea486acc",
+            "{\"Success\":\"true\",\"AchievementID\":5}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=6&g=22&n=Title6&d=Desc6&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=cea22fba8482aa0701759d8a33b44e15",
+            "{\"Success\":\"true\",\"AchievementID\":6}"
+        );
 
         vmUpload.DoUpload();
 
-        Assert::AreEqual(6, nApiCount);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(AssetChanges::None, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::None, pAchievement2.GetChanges());
         Assert::AreEqual(AssetChanges::None, pAchievement3.GetChanges());
@@ -650,7 +581,7 @@ public:
         Assert::AreEqual(AssetChanges::None, pAchievement5.GetChanges());
         Assert::AreEqual(AssetChanges::None, pAchievement6.GetChanges());
 
-        vmUpload.AssertFailed(5, 1, L"* Title4: Timeout");
+        vmUpload.AssertFailed(5, 1, L"* Title4: Not Found");
     }
 
     TEST_METHOD(TestMultiplePromotedAchievementsAborted)
@@ -677,23 +608,33 @@ public:
         vmUpload.QueueAsset(pAchievement6);
         Assert::AreEqual({ 6U }, vmUpload.TaskCount());
 
-        int nApiCount = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&vmUpload, &nApiCount]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            ++nApiCount;
-
-            if (nApiCount == 4)
-                vmUpload.SetDialogResult(DialogResult::Cancel);
-
-            pResponse.AchievementId = pRequest.AchievementId;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=2&g=22&n=Title2&d=Desc2&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=110ae1cb34baa79719a0836a4b8adbc5",
+            "{\"Success\":\"true\",\"AchievementID\":2}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=3&g=22&n=Title3&d=Desc3&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=1192f4a78edbacb36ad420093e44d8b0",
+            "{\"Success\":\"true\",\"AchievementID\":3}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=4&g=22&n=Title4&d=Desc4&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=92121d61f61f6a28726ae8e4a63d6ffb",
+            "{\"Success\":\"true\",\"AchievementID\":4}"
+        );
+        vmUpload.mockRcClient.OnBeforeResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=4&g=22&n=Title4&d=Desc4&m=0xH1234%3d1&z=5&f=3&b=12345&x=&h=92121d61f61f6a28726ae8e4a63d6ffb",
+            [&vmUpload]() {
+                vmUpload.SetDialogResult(ra::ui::DialogResult::Cancel);
+            }
+        );
 
         vmUpload.DoUpload(50); // fourth item will complete, but isn't tallied
 
-        Assert::AreEqual(4, nApiCount);
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(AssetChanges::None, pAchievement1.GetChanges());
         Assert::AreEqual(AssetChanges::None, pAchievement2.GetChanges());
         Assert::AreEqual(AssetChanges::None, pAchievement3.GetChanges());
@@ -725,29 +666,16 @@ public:
             return true;
         });
 
-        bool bAchievementUploaded = false;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&bAchievementUploaded]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            bAchievementUploaded = true;
-            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
-            Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
-            Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
-            Assert::AreEqual(std::string("0xH1234=1"), pRequest.Trigger);
-            Assert::AreEqual(5U, pRequest.Points);
-            Assert::AreEqual(std::string("76543"), pRequest.Badge);
-            Assert::AreEqual(3U, pRequest.Category);
-            Assert::AreEqual(1U, pRequest.AchievementId);
-
-            pResponse.AchievementId = pRequest.AchievementId;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=76543&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
 
         vmUpload.DoUpload();
 
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::IsTrue(bImageUploaded);
-        Assert::IsTrue(bAchievementUploaded);
         Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
         Assert::AreEqual(std::wstring(L"76543"), pAchievement.GetBadge());
 
@@ -781,26 +709,20 @@ public:
             return true;
         });
 
-        int nAchievementsUploaded = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&nAchievementsUploaded]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            ++nAchievementsUploaded;
-
-            if (pRequest.Title == L"Title1")
-                Assert::AreEqual(std::string("76543"), pRequest.Badge);
-            else
-                Assert::AreEqual(std::string("55555"), pRequest.Badge);
-
-            pResponse.AchievementId = pRequest.AchievementId;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=76543&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=2&g=22&n=Title2&d=Desc2&m=0xH1234%3d1&z=5&f=3&b=55555&x=&h=110ae1cb34baa79719a0836a4b8adbc5",
+            "{\"Success\":\"true\",\"AchievementID\":2}"
+        );
 
         vmUpload.DoUpload();
 
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(2, nImagesUploaded);
-        Assert::AreEqual(2, nAchievementsUploaded);
         Assert::AreEqual(AssetChanges::None, pAchievement1.GetChanges());
         Assert::AreEqual(std::wstring(L"76543"), pAchievement1.GetBadge());
         Assert::AreEqual(AssetChanges::None, pAchievement2.GetChanges());
@@ -839,30 +761,20 @@ public:
             return true;
         });
 
-        int nAchievementsUploaded = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&nAchievementsUploaded]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            ++nAchievementsUploaded;
-
-            if (pRequest.Title == L"Title1")
-                Assert::AreEqual(std::string("76543"), pRequest.Badge);
-            else
-                Assert::AreEqual(std::string("55555"), pRequest.Badge);
-
-            pResponse.AchievementId = pRequest.AchievementId;
-
-            if (nAchievementsUploaded % 2 == 0)
-                pResponse.Result = ra::api::ApiResult::Incomplete;
-            else
-                pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=76543&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=2&g=22&n=Title2&d=Desc2&m=0xH1234%3d1&z=5&f=3&b=55555&x=&h=110ae1cb34baa79719a0836a4b8adbc5",
+            "{\"Success\":\"true\",\"AchievementID\":2}"
+        );
 
         vmUpload.DoUpload();
 
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(3, nImagesUploaded);
-        Assert::AreEqual(3, nAchievementsUploaded);
         Assert::AreEqual(AssetChanges::None, pAchievement1.GetChanges());
         Assert::AreEqual(std::wstring(L"76543"), pAchievement1.GetBadge());
         Assert::AreEqual(AssetChanges::None, pAchievement2.GetChanges());
@@ -898,21 +810,20 @@ public:
             return true;
         });
 
-        int nAchievementsUploaded = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&nAchievementsUploaded]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            ++nAchievementsUploaded;
-            Assert::AreEqual(std::string("76543"), pRequest.Badge);
-            pResponse.AchievementId = pRequest.AchievementId;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=76543&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=2&g=22&n=Title2&d=Desc2&m=0xH1234%3d1&z=5&f=3&b=76543&x=&h=110ae1cb34baa79719a0836a4b8adbc5",
+            "{\"Success\":\"true\",\"AchievementID\":2}"
+        );
 
         vmUpload.DoUpload();
 
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(1, nImagesUploaded);
-        Assert::AreEqual(2, nAchievementsUploaded);
         Assert::AreEqual(AssetChanges::None, pAchievement1.GetChanges());
         Assert::AreEqual(std::wstring(L"76543"), pAchievement1.GetBadge());
         Assert::AreEqual(AssetChanges::None, pAchievement2.GetChanges());
@@ -943,20 +854,13 @@ public:
             return true;
         });
 
-        int nAchievementsUploaded = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&nAchievementsUploaded]
-                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            ++nAchievementsUploaded;
-            pResponse.AchievementId = pRequest.AchievementId;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        // No need to mock achievement APIs. Image fail will prevent them.
 
         vmUpload.DoUpload();
 
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(2, nImagesUploaded);
-        Assert::AreEqual(0, nAchievementsUploaded);
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(std::wstring(L"local\\12345"), pAchievement1.GetBadge());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
@@ -987,20 +891,13 @@ public:
             return true;
         });
 
-        int nAchievementsUploaded = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&nAchievementsUploaded]
-        (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            ++nAchievementsUploaded;
-            pResponse.AchievementId = pRequest.AchievementId;
-            pResponse.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        // No need to mock achievement APIs. Image fail will prevent them.
 
         vmUpload.DoUpload();
 
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(1, nImagesUploaded);
-        Assert::AreEqual(0, nAchievementsUploaded);
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement1.GetChanges());
         Assert::AreEqual(std::wstring(L"local\\12345"), pAchievement1.GetBadge());
         Assert::AreEqual(AssetChanges::Unpublished, pAchievement2.GetChanges());
@@ -1036,32 +933,20 @@ public:
             return true;
         });
 
-        int nAchievementsUploaded = 0;
-        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&nAchievementsUploaded]
-        (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
-        {
-            ++nAchievementsUploaded;
-
-            if (pRequest.Title == L"Title1")
-            {
-                Assert::AreEqual(std::string("76543"), pRequest.Badge);
-                pResponse.AchievementId = pRequest.AchievementId;
-                pResponse.Result = ra::api::ApiResult::Success;
-            }
-            else
-            {
-                Assert::AreEqual(std::string("55555"), pRequest.Badge);
-                pResponse.Result = ra::api::ApiResult::Error;
-                pResponse.ErrorMessage = "Timeout";
-            }
-
-            return true;
-        });
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=1&g=22&n=Title1&d=Desc1&m=0xH1234%3d1&z=5&f=3&b=76543&x=&h=4a775f085d6283c92d427e6c4b1545eb",
+            "{\"Success\":\"true\",\"AchievementID\":1}"
+        );
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadachievement&u=User&t=APITOKEN&a=2&g=22&n=Title2&d=Desc2&m=0xH1234%3d1&z=5&f=3&b=55555&x=&h=110ae1cb34baa79719a0836a4b8adbc5",
+            "{\"Success\":false,\"Status\":404,\"Code\":\"not_found\",\"Error\":\"Not Found\"}", 404
+        );
 
         vmUpload.DoUpload();
 
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
         Assert::AreEqual(2, nImagesUploaded);
-        Assert::AreEqual(2, nAchievementsUploaded);
         Assert::AreEqual(AssetChanges::None, pAchievement1.GetChanges());
         Assert::AreEqual(std::wstring(L"76543"), pAchievement1.GetBadge());
 
@@ -1070,13 +955,12 @@ public:
         Assert::AreEqual(AssetChanges::Modified, pAchievement2.GetChanges());
         Assert::AreEqual(std::wstring(L"55555"), pAchievement2.GetBadge());
 
-        vmUpload.AssertFailed(1, 1, L"* Title2: Timeout");
+        vmUpload.AssertFailed(1, 1, L"* Title2: Not Found");
     }
 
     TEST_METHOD(TestSingleLocalLeaderboard)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
         Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
 
@@ -1103,7 +987,6 @@ public:
     TEST_METHOD(TestSingleLocalLeaderboardSubset)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.mockGameContext.Assets().AddAchievementSet(22, 33, L"Subset", ra::data::models::AchievementSetType::Bonus);
         auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1",
                                                      "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
@@ -1133,7 +1016,6 @@ public:
     TEST_METHOD(TestSingleLocalLeaderboardNoClaim)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
         Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
 
@@ -1154,6 +1036,42 @@ public:
         Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
 
         vmUpload.AssertFailed(0, 1, L"* Title1: You must have an active claim on this game to perform this action.");
+    }
+
+    TEST_METHOD(TestSingleLocalLeaderboard429)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::Value::Format::Score);
+        Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
+
+        vmUpload.QueueAsset(pLeaderboard);
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+
+        vmUpload.mockRcClient.MockResponse(
+            "r=uploadleaderboard&u=User&t=APITOKEN&g=22&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&m=unpromoted&h=b9e48151adc764317296ac777ab550f1",
+            "error code: 1015", 429
+        );
+        vmUpload.mockRcClient.OnBeforeResponse(
+            "r=uploadleaderboard&u=User&t=APITOKEN&g=22&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&m=unpromoted&h=b9e48151adc764317296ac777ab550f1",
+            [&vmUpload]() {
+                // 429 will trigger a Rest. Update the response so the next call succeeds.
+                vmUpload.mockRcClient.MockResponse(
+                    "r=uploadleaderboard&u=User&t=APITOKEN&g=22&n=Title1&d=Desc1&s=0xH1234%3d1&b=0xH1234%3d2&c=0xH1234%3d3&l=0xH2345&w=0&f=SCORE&m=unpromoted&h=b9e48151adc764317296ac777ab550f1",
+                    "{\"Success\":\"true\",\"LeaderboardID\":7716}"
+                );
+            }
+        );
+
+        vmUpload.DoUpload();
+
+        vmUpload.mockRcClient.AssertNoPendingRequests();
+
+        // newly published local leaderboard should be changed to unpromoted and have it's ID updated
+        Assert::AreEqual(AssetCategory::Unpromoted, pLeaderboard.GetCategory());
+        Assert::AreEqual(7716U, pLeaderboard.GetID());
+        Assert::AreEqual(AssetChanges::None, pLeaderboard.GetChanges());
+
+        vmUpload.AssertSuccess(1);
     }
 
     TEST_METHOD(TestRichPresence)
@@ -1193,7 +1111,6 @@ public:
     TEST_METHOD(TestSingleMemoryNoteNew)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
 
@@ -1217,7 +1134,6 @@ public:
     TEST_METHOD(TestSingleMemoryNoteNewSubset)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.mockGameContext.Assets().AddAchievementSet(22, 33, L"Subset", ra::data::models::AchievementSetType::Bonus);
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
@@ -1242,7 +1158,6 @@ public:
     TEST_METHOD(TestSingleMemoryNoteDeleted)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetServerNote(0x1234, L"This is a note.");
         vmUpload.MemoryNotes().SetNote(0x1234, L"");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
@@ -1413,7 +1328,6 @@ public:
     TEST_METHOD(TestMultipleMemoryNotes)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
@@ -1436,8 +1350,7 @@ public:
     TEST_METHOD(TestMultipleMemoryNotesBatching)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
-
+        
         constexpr size_t NumNotes = 614;
         for (uint32_t nAddress = 0x1000; nAddress < 0x1000 + NumNotes * 2; nAddress += 2)
             vmUpload.MemoryNotes().SetNote(nAddress, ra::util::String::Printf(L"Note %u", nAddress));
@@ -1459,7 +1372,6 @@ public:
     TEST_METHOD(TestMultipleMemoryNotesWithNewlines)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetNote(0x1234, L"[8-bit]\r\n0=True\r\n1=False");
         vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
@@ -1483,7 +1395,6 @@ public:
     TEST_METHOD(TestMultipleMemoryNotes429)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
@@ -1513,7 +1424,6 @@ public:
     TEST_METHOD(TestMultipleMemoryNotesCompleteFailure)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());
@@ -1532,7 +1442,6 @@ public:
     TEST_METHOD(TestMultipleMemoryNotesPartialFailure)
     {
         AssetUploadViewModelHarness vmUpload;
-        vmUpload.mockUserContext.Initialize("User", "APITOKEN");
         vmUpload.MemoryNotes().SetNote(0x1234, L"This is a note.");
         vmUpload.MemoryNotes().SetNote(0x1235, L"This is another note.");
         Assert::AreEqual(AssetChanges::Unpublished, vmUpload.MemoryNotes().GetChanges());

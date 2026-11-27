@@ -413,62 +413,6 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
     return response;
 }
 
-UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchievement::Request& request)
-{
-    UpdateAchievement::Response response;
-
-    rc_api_update_achievement_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
-    api_params.username = pUserContext.GetUsername().c_str();
-    api_params.api_token = pUserContext.GetApiToken().c_str();
-
-    const std::string sTitle = ra::util::String::Narrow(request.Title);
-    const std::string sDescription = ra::util::String::Narrow(request.Description);
-
-    api_params.achievement_id = request.AchievementId;
-    api_params.game_id = request.GameId;
-    api_params.title = sTitle.c_str();
-    api_params.description = sDescription.c_str();
-    api_params.trigger = request.Trigger.c_str();
-    api_params.points = request.Points;
-    api_params.category = request.Category;
-    api_params.badge = request.Badge.c_str();
-    api_params.type = request.Type;
-
-    rc_api_request_t api_request;
-    const int result = rc_api_init_update_achievement_request(&api_request, &api_params);
-    if (result == RC_OK)
-    {
-        ra::services::Http::Response httpResponse;
-        if (DoRequest(api_request, UpdateAchievement::Name(), httpResponse, response))
-        {
-            rc_api_update_achievement_response_t api_response;
-            rc_api_server_response_t server_response;
-            HttpResponseToServerResponse(httpResponse, &server_response);
-
-            const auto nResult = rc_api_process_update_achievement_server_response(&api_response, &server_response);
-
-            if (ValidateResponse(nResult, api_response.response, UpdateAchievement::Name(), httpResponse.StatusCode(), response))
-            {
-                response.Result = ApiResult::Success;
-                response.AchievementId = api_response.achievement_id;
-            }
-
-            rc_api_destroy_update_achievement_response(&api_response);
-        }
-    }
-    else
-    {
-        response.Result = ApiResult::Failed;
-        response.ErrorMessage = rc_error_str(result);
-    }
-
-    rc_api_destroy_request(&api_request);
-    return response;
-}
-
 FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const FetchAchievementInfo::Request& request)
 {
     FetchAchievementInfo::Response response;

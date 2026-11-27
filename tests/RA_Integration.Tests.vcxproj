@@ -157,6 +157,7 @@
     <ClCompile Include="services\FrameEventQueue_Tests.cpp" />
     <ClCompile Include="services\GameIdentifier_Tests.cpp" />
     <ClCompile Include="services\LoginService_Tests.cpp" />
+    <ClCompile Include="TestSuite.cpp" />
     <ClCompile Include="ui\OverlayTheme_Tests.cpp" />
     <ClCompile Include="ui\ViewModelBase_Tests.cpp" />
     <ClCompile Include="services\FileLogger_Tests.cpp" />

@@ -39,7 +39,7 @@ public:
     StructuredDataBrowserViewModel(StructuredDataBrowserViewModel&&) noexcept = delete;
     StructuredDataBrowserViewModel& operator=(StructuredDataBrowserViewModel&&) noexcept = delete;
 
-    void InitializeNotifyTargets();
+    void InitializeNotifyTargets() noexcept;
 
     /// <summary>
     /// Gets the list of available root addresses.

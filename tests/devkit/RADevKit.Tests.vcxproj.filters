@@ -100,6 +100,7 @@
     <ClCompile Include="data\Requirement_Tests.cpp">
       <Filter>data</Filter>
     </ClCompile>
+    <ClCompile Include="TestSuite.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\src\base.props" />

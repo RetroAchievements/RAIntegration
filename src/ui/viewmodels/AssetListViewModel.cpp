@@ -100,7 +100,7 @@ AssetListViewModel::~AssetListViewModel()
     m_bNeedToUpdateButtons.store(false);
 }
 
-void AssetListViewModel::InitializeNotifyTargets()
+void AssetListViewModel::InitializeNotifyTargets() noexcept
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);

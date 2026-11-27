@@ -210,7 +210,7 @@ void AchievementModel::SyncStateFromRuntime(uint8_t nState)
     }
 }
 
-static void HideChallengeIndicator(const struct rc_client_achievement_info_t* pAchievement)
+static void HideChallengeIndicator(const struct rc_client_achievement_info_t* pAchievement) noexcept
 {
     auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (client->game && client->callbacks.event_handler)

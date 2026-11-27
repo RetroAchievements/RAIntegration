@@ -66,7 +66,7 @@ public:
 
 private:
     static uint8_t ReadMemoryHelper(uint32_t nAddress);
-    static void WriteMemoryHelper(uint32_t nAddress, uint8_t nValue);
+    static void WriteMemoryHelper(uint32_t nAddress, uint8_t nValue) noexcept;
 
     ra::services::ServiceLocator::ServiceOverride<ra::context::IEmulatorMemoryContext> m_Override;
     uint8_t* m_pMemory = nullptr;

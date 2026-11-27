@@ -78,7 +78,7 @@ uint8_t MockEmulatorMemoryContext::ReadMemoryHelper(uint32_t nAddress)
     return mockEmulator->m_pMemory[nAddress];
 }
 
-void MockEmulatorMemoryContext::WriteMemoryHelper(uint32_t nAddress, uint8_t nValue)
+void MockEmulatorMemoryContext::WriteMemoryHelper(uint32_t nAddress, uint8_t nValue) noexcept
 {
     const auto* mockEmulator =
         dynamic_cast<MockEmulatorMemoryContext*>(&ra::services::ServiceLocator::GetMutable<IEmulatorMemoryContext>());

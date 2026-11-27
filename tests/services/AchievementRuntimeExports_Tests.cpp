@@ -71,7 +71,7 @@ public:
     ra::services::mocks::MockConfiguration mockConfiguration;
     ra::services::mocks::MockLoginService mockLoginService;
 
-    rc_client_t* GetClient() const
+    rc_client_t* GetClient() const noexcept
     {
         return ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     }

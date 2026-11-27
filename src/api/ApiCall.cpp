@@ -7,7 +7,7 @@
 namespace ra {
 namespace api {
 
-static ra::api::IServer& Server()
+static ra::api::IServer& Server() noexcept
 {
     return ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
 }

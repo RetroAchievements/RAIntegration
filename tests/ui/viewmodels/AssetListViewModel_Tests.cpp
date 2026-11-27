@@ -416,7 +416,7 @@ private:
         }
 
     private:
-        void EnsureCoreSubset() const
+        void EnsureCoreSubset() const noexcept
         {
             auto* pGame = mockRuntime.GetClient()->game;
             if (!pGame->subsets)

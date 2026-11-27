@@ -323,7 +323,7 @@ std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_
     return sBadgeName;
 }
 
-void AchievementRuntime::RaiseClientEvent(const rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const
+void AchievementRuntime::RaiseClientEvent(const rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const noexcept
 {
     auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (client->game && client->callbacks.event_handler)
@@ -371,7 +371,7 @@ void AchievementRuntime::UpdateActiveAchievements()
     }
 }
 
-void AchievementRuntime::UpdateActiveLeaderboards()
+void AchievementRuntime::UpdateActiveLeaderboards() noexcept
 {
     auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (client->game)
@@ -396,7 +396,7 @@ void AchievementRuntime::BeginLoginWithPassword(const std::string& sUsername, co
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginLoginWithPassword(const char* sUsername, const char* sPassword,
-                                                                     CallbackWrapper* pCallbackWrapper)
+                                                                     CallbackWrapper* pCallbackWrapper) noexcept
 {
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
@@ -415,7 +415,7 @@ void AchievementRuntime::BeginLoginWithToken(const std::string& sUsername, const
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginLoginWithToken(const char* sUsername, const char* sApiToken,
-                                                                  CallbackWrapper* pCallbackWrapper)
+                                                                  CallbackWrapper* pCallbackWrapper) noexcept
 {
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
@@ -572,13 +572,12 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, unsigned id,
-                                                            CallbackWrapper* pCallbackWrapper)
+                                                            CallbackWrapper* pCallbackWrapper) noexcept
 {
     auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
     // unload the game and free any additional memory we allocated for local changes
     UnloadGame();
-
 
     // if an ID was provided, store the hash->id mapping
     if (id != 0)
@@ -596,7 +595,7 @@ rc_client_async_handle_t* AchievementRuntime::BeginLoadGame(const char* sHash, u
 
 rc_client_async_handle_t* AchievementRuntime::BeginIdentifyAndLoadGame(uint32_t console_id, const char* file_path,
                                                                        const uint8_t* data, size_t data_size,
-                                                                       CallbackWrapper* pCallbackWrapper)
+                                                                       CallbackWrapper* pCallbackWrapper) noexcept
 {
     UnloadGame();
 
@@ -685,13 +684,13 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
 }
 
 rc_client_async_handle_t* AchievementRuntime::BeginIdentifyAndChangeMedia(const char* file_path,
-    const uint8_t* data, size_t data_size, CallbackWrapper* pCallbackWrapper)
+    const uint8_t* data, size_t data_size, CallbackWrapper* pCallbackWrapper) noexcept
 {
     auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     return rc_client_begin_identify_and_change_media(client, file_path, data, data_size, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
 }
 
-rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* sHash, CallbackWrapper* pCallbackWrapper)
+rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* sHash, CallbackWrapper* pCallbackWrapper) noexcept
 {
     auto* client = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     return rc_client_begin_change_media(client, sHash, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
@@ -711,7 +710,7 @@ void AchievementRuntime::ChangeMediaCallback(int nResult, const char* sErrorMess
     delete wrapper;
 }
 
-void AchievementRuntime::UnloadGame()
+void AchievementRuntime::UnloadGame() noexcept
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.Assets().DetachFromRuntime();
@@ -955,7 +954,7 @@ void AchievementRuntime::DoFrame()
         RaisePauseOnTriggerEvents(mActiveLeaderboards);
 }
 
-void AchievementRuntime::Idle() const
+void AchievementRuntime::Idle() const noexcept
 {
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     if (!pClient)
@@ -986,7 +985,7 @@ void AchievementRuntime::Idle() const
         rc_client_idle(pClient);
 }
 
-void AchievementRuntime::InvalidateAddress(ra::data::ByteAddress nAddress)
+void AchievementRuntime::InvalidateAddress(ra::data::ByteAddress nAddress) noexcept
 {
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
@@ -1701,7 +1700,7 @@ void AchievementRuntime::EventHandler(const rc_client_event_t* pEvent, rc_client
 
 /* ---- Runtime State ----- */
 
-void AchievementRuntime::ResetRuntime()
+void AchievementRuntime::ResetRuntime() noexcept
 {
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     rc_client_reset(pClient);

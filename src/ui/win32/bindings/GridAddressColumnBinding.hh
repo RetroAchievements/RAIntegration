@@ -16,7 +16,7 @@ namespace bindings {
 class GridAddressColumnBinding : public GridColumnBinding
 {
 public:
-    GridAddressColumnBinding(const IntModelProperty& pBoundProperty)
+    GridAddressColumnBinding(const IntModelProperty& pBoundProperty) noexcept
         : m_pBoundProperty(&pBoundProperty)
     {
         UpdateWidth();
@@ -36,8 +36,8 @@ public:
 
     bool HandleDoubleClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override;
 
-    void UpdateWidth();
-    static unsigned CalculateWidth();
+    void UpdateWidth() noexcept;
+    static unsigned CalculateWidth() noexcept;
 
 protected:
     const IntModelProperty* m_pBoundProperty = nullptr;

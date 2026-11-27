@@ -16,7 +16,7 @@ class RichPresenceMonitorViewModel : public WindowViewModelBase,
 public:
     GSL_SUPPRESS_F6 RichPresenceMonitorViewModel() noexcept;
 
-    void InitializeNotifyTargets();
+    void InitializeNotifyTargets() noexcept;
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the message.

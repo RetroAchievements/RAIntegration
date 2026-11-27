@@ -74,7 +74,7 @@ void MemoryRegionsModel::ResetCustomRegions()
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
 }
 
-bool MemoryRegionsModel::ParseFilterRange(const std::wstring& sRange, ra::data::ByteAddress& nStart, ra::data::ByteAddress& nEnd)
+bool MemoryRegionsModel::ParseFilterRange(const std::wstring& sRange, ra::data::ByteAddress& nStart, ra::data::ByteAddress& nEnd) noexcept
 {
     const auto& pMemoryContext = ra::services::ServiceLocator::Get<ra::context::IEmulatorMemoryContext>();
     const auto nMax = gsl::narrow_cast<ra::data::ByteAddress>(pMemoryContext.TotalMemorySize()) - 1;

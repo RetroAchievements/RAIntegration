@@ -66,7 +66,7 @@ public:
 
 private:
     void ExtractSize(std::wstring_view sNote);
-    static Memory::Size GetImpliedPointerSize();
+    static Memory::Size GetImpliedPointerSize() noexcept;
 
     uint32_t m_nBytesPerElement = 0;
     bool m_bIsPointer = false;
@@ -220,7 +220,7 @@ void UnknownMemoryNoteModel::Parse(std::wstring_view svNote, std::wstring_view s
     }
 }
 
-Memory::Size UnknownMemoryNoteModel::GetImpliedPointerSize()
+Memory::Size UnknownMemoryNoteModel::GetImpliedPointerSize() noexcept
 {
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
 

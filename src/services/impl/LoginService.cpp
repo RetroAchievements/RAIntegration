@@ -23,7 +23,7 @@ namespace ra {
 namespace services {
 namespace impl {
 
-bool LoginService::IsLoggedIn() const
+bool LoginService::IsLoggedIn() const noexcept
 {
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     return !pUserContext.GetApiToken().empty();

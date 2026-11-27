@@ -85,6 +85,7 @@
     <ClCompile Include="data\util\AchievementLogicSerializer_Tests.cpp" />
     <ClCompile Include="data\util\IndirectNoteResolver_Tests.cpp" />
     <ClCompile Include="data\util\TriggerValidation_Tests.cpp" />
+    <ClCompile Include="TestSuite.cpp" />
     <ClCompile Include="util\Tokenizer_Tests.cpp" />
     <ClInclude Include="context\mocks\MockConsoleContext.hh" />
     <ClInclude Include="context\mocks\MockDevKitContext.hh" />

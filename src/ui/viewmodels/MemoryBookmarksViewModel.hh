@@ -30,7 +30,7 @@ public:
     MemoryBookmarksViewModel(MemoryBookmarksViewModel&&) noexcept = delete;
     MemoryBookmarksViewModel& operator=(MemoryBookmarksViewModel&&) noexcept = delete;
     
-    void InitializeNotifyTargets();
+    void InitializeNotifyTargets() noexcept;
 
     void DoFrame();
 

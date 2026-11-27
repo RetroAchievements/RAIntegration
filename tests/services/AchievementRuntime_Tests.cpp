@@ -85,7 +85,7 @@ public:
     ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
     ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-    rc_client_t* GetClient() const
+    rc_client_t* GetClient() const noexcept
     {
         return ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     }
@@ -166,12 +166,12 @@ public:
             Assert::Fail(ra::util::String::Printf(L"Event %u not found.", nType).c_str());
     }
 
-    void RaiseEvent(const rc_client_event_t& event)
+    void RaiseEvent(const rc_client_event_t& event) noexcept
     {
         m_fRealEventHandler(&event, GetClient());
     }
 
-    void ProcessCapturedEvents()
+    void ProcessCapturedEvents() noexcept
     {
         for (const auto& pEvent : m_vEvents)
             RaiseEvent(pEvent);
@@ -261,7 +261,7 @@ public:
         return mockGameContext.Assets().FindAchievement(pAchievement->public_.id);
     }
 
-    rc_trigger_t* GetAchievementTrigger(uint32_t nId) const
+    rc_trigger_t* GetAchievementTrigger(uint32_t nId) const noexcept
     {
         const auto* pSubset = GetClient()->game->subsets;
         for (; pSubset; pSubset = pSubset->next)
@@ -344,7 +344,7 @@ public:
         return mockGameContext.Assets().FindLeaderboard(pLeaderboard->public_.id);
     }
 
-    void SyncToRuntime()
+    void SyncToRuntime() noexcept
     {
         // toggling hardcore will reset the runtime with appropriately active achievements
         const bool bHardcoreEnabled = rc_client_get_hardcore_enabled(GetClient());
@@ -810,7 +810,7 @@ public:
     }
     */
 
-    static rc_condition_t* GetCondition(const AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond)
+    static rc_condition_t* GetCondition(const AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond) noexcept
     {
         rc_trigger_t* pTrigger = harness.GetAchievementTrigger(nId);
         rc_condset_t* pCondset = pTrigger->requirement;
@@ -3522,7 +3522,7 @@ public:
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         mockLocalStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1234", "{\"a\":1}");
         ra::services::impl::OfflineRcClient pOfflineRcClient;
-        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient, false);
+        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient);
 
         rc_api_request_t pRequest;
         memset(&pRequest, 0, sizeof(pRequest));
@@ -3553,7 +3553,7 @@ public:
         AchievementRuntimeHarness runtime;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::impl::OfflineRcClient pOfflineRcClient;
-        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient, false);
+        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient);
 
         rc_api_request_t pRequest;
         memset(&pRequest, 0, sizeof(pRequest));
@@ -3587,7 +3587,7 @@ public:
         ra::services::mocks::MockGameIdentifier mockGameIdentifier;
         mockLocalStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1234", "{\"Title\":\"GameName\",\"Sets\":[{\"a\":1}]}");
         ra::services::impl::OfflineRcClient pOfflineRcClient;
-        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient, false);
+        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
         mockGameIdentifier.AddHash("ABCDEF0123456789", 1234);
 
@@ -3624,7 +3624,7 @@ public:
         // cached file exists, but is old format and should be ignored
         mockLocalStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1234", "{\"a\":1}");
         ra::services::impl::OfflineRcClient pOfflineRcClient;
-        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient, false);
+        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
         mockGameIdentifier.AddHash("ABCDEF0123456789", 1234);
 
@@ -3659,7 +3659,7 @@ public:
         ra::services::mocks::MockGameIdentifier mockGameIdentifier;
         mockGameIdentifier.AddHash("ABCDEF0123456789", 1234);
         ra::services::impl::OfflineRcClient pOfflineRcClient;
-        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient, false);
+        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
 
         rc_api_request_t pRequest;
@@ -3690,7 +3690,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         ra::services::impl::OfflineRcClient pOfflineRcClient;
-        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient, false);
+        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient);
 
         rc_api_request_t pRequest;
         memset(&pRequest, 0, sizeof(pRequest));
@@ -3720,7 +3720,7 @@ public:
     {
         AchievementRuntimeHarness runtime;
         ra::services::impl::OfflineRcClient pOfflineRcClient;
-        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient, false);
+        ra::services::ServiceLocator::ServiceOverride<ra::context::IRcClient> pRcClientOverride(&pOfflineRcClient);
 
         rc_api_request_t pRequest;
         memset(&pRequest, 0, sizeof(pRequest));

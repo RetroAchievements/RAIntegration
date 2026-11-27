@@ -23,7 +23,7 @@ MockRcClient::MockRcClient() noexcept : m_Override(this)
     rc_client_enable_logging(GetClient(), RC_CLIENT_LOG_LEVEL_NONE, nullptr);
 }
 
-void MockRcClient::AddAuthentication(const char** pUsername, const char** pApiToken) const
+void MockRcClient::AddAuthentication(const char** pUsername, const char** pApiToken) const noexcept
 {
     if (ra::services::ServiceLocator::Exists<ra::context::UserContext>())
     {

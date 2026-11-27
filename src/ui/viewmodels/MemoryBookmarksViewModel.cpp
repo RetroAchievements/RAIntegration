@@ -38,7 +38,7 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
     m_vmMemoryWatchList.Items().AddNotifyTarget(*this);
 }
 
-void MemoryBookmarksViewModel::InitializeNotifyTargets()
+void MemoryBookmarksViewModel::InitializeNotifyTargets() noexcept
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);

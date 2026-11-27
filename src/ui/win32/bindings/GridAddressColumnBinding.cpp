@@ -29,12 +29,12 @@ bool GridAddressColumnBinding::HandleDoubleClick(const ra::ui::ViewModelCollecti
     return false;
 }
 
-void GridAddressColumnBinding::UpdateWidth()
+void GridAddressColumnBinding::UpdateWidth() noexcept
 {
     SetWidth(GridColumnBinding::WidthType::Pixels, CalculateWidth());
 }
 
-unsigned GridAddressColumnBinding::CalculateWidth()
+unsigned GridAddressColumnBinding::CalculateWidth() noexcept
 {
     unsigned nMaxChars = 6; // 0x1234
 

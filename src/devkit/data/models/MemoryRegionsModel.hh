@@ -40,8 +40,11 @@ public:
     /// </summary>
     void AddCustomRegion(ra::data::ByteAddress nStartAddress, ra::data::ByteAddress nEndAddress, const std::wstring& sLabel);
 
-    
-    static bool ParseFilterRange(const std::wstring& sRange, ra::data::ByteAddress& nStart, ra::data::ByteAddress& nEnd);
+    /// <summary>
+    /// Extracts a start and stop address from a range.
+    /// </summary>
+    /// <returns><c>true</c> if the range was parsed successfully, <c>false</c> if not.</returns>
+    static bool ParseFilterRange(const std::wstring& sRange, ra::data::ByteAddress& nStart, ra::data::ByteAddress& nEnd) noexcept;
 
 private:
     std::vector<MemoryRegion> m_vRegions;

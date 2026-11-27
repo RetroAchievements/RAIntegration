@@ -55,7 +55,7 @@ void MemoryBookmarksDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); 
 
 // ------------------------------------
 
-MemoryBookmarksDialog::BookmarksGridBinding::BookmarksGridBinding(ViewModelBase& vmViewModel)
+MemoryBookmarksDialog::BookmarksGridBinding::BookmarksGridBinding(ViewModelBase& vmViewModel) noexcept
     : ra::ui::win32::bindings::GridBinding(vmViewModel)
 {
     auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();
@@ -91,7 +91,7 @@ void MemoryBookmarksDialog::BookmarksGridBinding::OnTotalMemorySizeChanged()
 class GridIndirectAddressColumnBinding : public ra::ui::win32::bindings::GridAddressColumnBinding
 {
 public:
-    GridIndirectAddressColumnBinding(const IntModelProperty& pBoundProperty) :
+    GridIndirectAddressColumnBinding(const IntModelProperty& pBoundProperty) noexcept :
         ra::ui::win32::bindings::GridAddressColumnBinding(pBoundProperty)
     {
     }

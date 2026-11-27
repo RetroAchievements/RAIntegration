@@ -22,7 +22,7 @@ RichPresenceMonitorViewModel::RichPresenceMonitorViewModel() noexcept
     SetWindowTitle(L"Rich Presence Monitor");
 }
 
-void RichPresenceMonitorViewModel::InitializeNotifyTargets()
+void RichPresenceMonitorViewModel::InitializeNotifyTargets() noexcept
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);

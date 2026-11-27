@@ -50,7 +50,7 @@ public:
         s_bIsExternalRcheevosClient = false;
     }
 
-    static void enable_logging(rc_client_t* client, int level, rc_client_message_callback_t callback)
+    static void enable_logging(rc_client_t* client, int level, rc_client_message_callback_t callback) noexcept
     {
         s_callbacks.log_callback = callback;
         s_callbacks.log_client = client;
@@ -59,7 +59,7 @@ public:
         rc_client_enable_logging(pClient, level, AchievementRuntimeExports::LogMessageExternal);
     }
 
-    static void set_event_handler(rc_client_t* client, rc_client_event_handler_t handler)
+    static void set_event_handler(rc_client_t* client, rc_client_event_handler_t handler) noexcept
     {
         s_callbacks.event_handler = handler;
         s_callbacks.event_client = client;
@@ -143,7 +143,7 @@ public:
         }
     }
 
-    static void set_get_time_millisecs(rc_client_t* client, rc_get_time_millisecs_func_t handler)
+    static void set_get_time_millisecs(rc_client_t* client, rc_get_time_millisecs_func_t handler) noexcept
     {
         s_callbacks.get_time_millisecs_handler = handler;
         s_callbacks.get_time_millisecs_client = client;
@@ -203,37 +203,37 @@ public:
         return true;
     }
 
-    static void set_encore_mode_enabled(int value)
+    static void set_encore_mode_enabled(int value) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         rc_client_set_encore_mode_enabled(pClient, value);
     }
 
-    static int get_encore_mode_enabled()
+    static int get_encore_mode_enabled() noexcept
     {
         const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_encore_mode_enabled(pClient);
     }
 
-    static void set_spectator_mode_enabled(int value)
+    static void set_spectator_mode_enabled(int value) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         rc_client_set_spectator_mode_enabled(pClient, value);
     }
 
-    static int get_spectator_mode_enabled()
+    static int get_spectator_mode_enabled() noexcept
     {
         const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_spectator_mode_enabled(pClient);
     }
 
-    static void set_allow_background_memory_reads(int value)
+    static void set_allow_background_memory_reads(int value) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         rc_client_set_allow_background_memory_reads(pClient, value);
     }
 
-    static void abort_async(rc_client_async_handle_t* handle)
+    static void abort_async(rc_client_async_handle_t* handle) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         rc_client_abort_async(pClient, handle);
@@ -261,13 +261,13 @@ public:
         return pClient.BeginLoginWithToken(username, token, pCallbackWrapper);
     }
 
-    static const rc_client_user_t* get_user_info()
+    static const rc_client_user_t* get_user_info() noexcept
     {
         const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_user_info(pClient);
     }
 
-    static void logout()
+    static void logout() noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_logout(pClient);
@@ -339,7 +339,7 @@ public:
         return pClient.BeginLoadGame(hash, 0, pCallbackData);
     }
 
-    static void add_game_hash(const char* hash, uint32_t game_id)
+    static void add_game_hash(const char* hash, uint32_t game_id) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         rc_client_add_game_hash(pClient, hash, game_id);
@@ -357,7 +357,7 @@ public:
         pClient->game->public_.console_id = ra::etoi(pConsoleContext.Id());
     }
 
-    static void unload_game()
+    static void unload_game() noexcept
     {
         _RA_ActivateGame(0);
 
@@ -365,19 +365,19 @@ public:
         return pRuntime.UnloadGame();
     }
 
-    static const rc_client_game_t* get_game_info()
+    static const rc_client_game_t* get_game_info() noexcept
     {
         const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_game_info(pClient);
     }
 
-    static const rc_client_subset_t* get_subset_info(uint32_t subset_id)
+    static const rc_client_subset_t* get_subset_info(uint32_t subset_id) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_subset_info(pClient, subset_id);
     }
 
-    static rc_client_subset_list_info_t* create_subset_list()
+    static rc_client_subset_list_info_t* create_subset_list() noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         GSL_SUPPRESS_TYPE1
@@ -387,13 +387,13 @@ public:
         return list;
     }
 
-    static void get_user_subset_summary(uint32_t subset_id, rc_client_user_game_summary_t* summary)
+    static void get_user_subset_summary(uint32_t subset_id, rc_client_user_game_summary_t* summary) noexcept
     {
         const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         rc_client_get_user_subset_summary(pClient, subset_id, summary);
     }
 
-    static void get_user_game_summary(rc_client_user_game_summary_t* summary)
+    static void get_user_game_summary(rc_client_user_game_summary_t* summary) noexcept
     {
         const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_user_game_summary(pClient, summary);
@@ -421,7 +421,7 @@ public:
         return pClient.BeginChangeMedia(hash, pCallbackData);
     }
 
-    static rc_client_achievement_list_info_t* create_achievement_list(int category, int grouping)
+    static rc_client_achievement_list_info_t* create_achievement_list(int category, int grouping) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         GSL_SUPPRESS_TYPE1
@@ -431,26 +431,26 @@ public:
         return list;
     }
 
-    static int has_achievements()
+    static int has_achievements() noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_has_achievements(pClient);
     }
 
-    static const rc_client_achievement_t* get_achievement_info(uint32_t id)
+    static const rc_client_achievement_t* get_achievement_info(uint32_t id) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_achievement_info(pClient, id);
     }
 
-    static const rc_client_achievement_t* get_next_achievement_info(uint32_t id, int32_t grouping)
+    static const rc_client_achievement_t* get_next_achievement_info(uint32_t id, int32_t grouping) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         auto* pAchievement = id ? rc_client_get_achievement_info(pClient, id) : nullptr;
         return rc_client_get_next_achievement_info(pClient, pAchievement, grouping);
     }
 
-    static rc_client_leaderboard_list_info_t* create_leaderboard_list(int grouping)
+    static rc_client_leaderboard_list_info_t* create_leaderboard_list(int grouping) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         GSL_SUPPRESS_TYPE1
@@ -460,13 +460,13 @@ public:
         return list;
     }
 
-    static int has_leaderboards()
+    static int has_leaderboards() noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_has_leaderboards(pClient);
     }
 
-    static const rc_client_leaderboard_t* get_leaderboard_info(uint32_t id)
+    static const rc_client_leaderboard_t* get_leaderboard_info(uint32_t id) noexcept
     {
         const auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_leaderboard_info(pClient, id);
@@ -535,13 +535,13 @@ public:
                                                                      LeaderboardEntriesListCallbackWrapper::Dispatch, pCallbackData);
     }
 
-    static size_t get_rich_presence_message(char buffer[], size_t buffer_size)
+    static size_t get_rich_presence_message(char buffer[], size_t buffer_size) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_get_rich_presence_message(pClient, buffer, buffer_size);
     }
 
-    static int has_rich_presence()
+    static int has_rich_presence() noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_has_rich_presence(pClient);
@@ -552,19 +552,19 @@ public:
         _RA_DoAchievementsFrame();
     }
 
-    static void idle()
+    static void idle() noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_idle(pClient);
     }
 
-    static int is_processing_required()
+    static int is_processing_required() noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_is_processing_required(pClient);
     }
 
-    static int can_pause(uint32_t* frames_remaining)
+    static int can_pause(uint32_t* frames_remaining) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_can_pause(pClient, frames_remaining);
@@ -577,13 +577,13 @@ public:
 #endif
     }
 
-    static size_t progress_size()
+    static size_t progress_size() noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_progress_size(pClient);
     }
 
-    static int serialize_progress(uint8_t* buffer, size_t buffer_size)
+    static int serialize_progress(uint8_t* buffer, size_t buffer_size) noexcept
     {
         auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
         return rc_client_serialize_progress_sized(pClient, buffer, buffer_size);

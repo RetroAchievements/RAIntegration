@@ -60,7 +60,7 @@ public:
     /// <c>true</c> if a subnote was found (<see cref="nPreviousAddress"/> will be set).
     /// <c>false</c> if not (<see cref="nPreviousAddress"/> may be uninitialized).
     /// </returns>
-    bool GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra::data::ByteAddress& nPreviousAddress) const override;
+    bool GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra::data::ByteAddress& nPreviousAddress) const noexcept override;
 
     /// <summary>
     /// Gets the address of the closest subnote after the specified address.
@@ -69,7 +69,7 @@ public:
     /// <c>true</c> if a subnote was found (<see cref="nPreviousAddress"/> will be set).
     /// <c>false</c> if not (<see cref="nPreviousAddress"/> may be uninitialized).
     /// </returns>
-    bool GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data::ByteAddress& nNextAddress) const override;
+    bool GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data::ByteAddress& nNextAddress) const noexcept override;
 
     void ExtractIndirectNotes(std::wstring_view svParentIndent) override;
 
@@ -80,7 +80,7 @@ public:
 
     void MergeInto(PointerMemoryNoteModel& pOther);
 
-    ra::data::ByteAddress RawPointerToByteAddress(ra::data::ByteAddress nAddress) const;
+    ra::data::ByteAddress RawPointerToByteAddress(ra::data::ByteAddress nAddress) const noexcept;
 
 private:
     bool EnumerateOffsetNotesImpl(ra::data::ByteAddress nBaseAddress, std::function<bool(const MemoryNoteModel::Reference&)> fCallback) const override;

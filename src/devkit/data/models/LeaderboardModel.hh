@@ -230,9 +230,9 @@ private:
     void SyncIDToRuntime() const;
     void SyncTitleToRuntime();
     void SyncDescriptionToRuntime();
-    void SyncStateToRuntime(AssetState nNewState) const;
+    void SyncStateToRuntime(AssetState nNewState) const noexcept;
     void SyncValueFormatToRuntime() const;
-    void SyncTrackerToRuntime() const;
+    void SyncTrackerToRuntime() const noexcept;
     void SyncCategoryToRuntime() const;
     void SyncDefinitionToRuntime();
 

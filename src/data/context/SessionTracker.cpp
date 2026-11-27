@@ -1,23 +1,19 @@
 #include "SessionTracker.hh"
 
-#include "Exports.hh"
-#include "RA_md5factory.h"
 #include "util\Log.hh"
+#include "util\MD5.hh"
 #include "util\Strings.hh"
 
 #include "context\IEmulatorMemoryContext.hh"
 
 #include "data\context\GameContext.hh"
 
-#include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
-
-#include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
 namespace data {
@@ -60,10 +56,7 @@ void SessionTracker::LoadSessions()
             if (!pTokenizer.Consume(':'))
                 continue;
 
-
-            const BYTE* pLine;
-            GSL_SUPPRESS_TYPE1{ pLine = reinterpret_cast<const BYTE*>(sLine.c_str()); }
-            const auto md5 = RAGenerateMD5(pLine, pTokenizer.CurrentPosition());
+            const auto md5 = ra::util::MD5::Generate(sLine.c_str(), pTokenizer.CurrentPosition());
             if (pTokenizer.Consume(md5.front()) && pTokenizer.Consume(md5.back()))
                 AddSession(nGameId, nSessionStart, std::chrono::seconds(nSessionLength));
         }
@@ -177,7 +170,7 @@ std::streampos SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDu
 
     auto nSessionDuration = tSessionDuration.count();
     auto sLine = ra::util::String::Printf("%u:%ll:%ll:", m_nCurrentGameId, m_tSessionStart, nSessionDuration);
-    const auto sMD5 = RAGenerateMD5(sLine);
+    const auto sMD5 = ra::util::MD5::Generate(sLine);
     sLine.push_back(sMD5.front());
     sLine.push_back(sMD5.back());
 

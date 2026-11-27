@@ -221,6 +221,11 @@ public:
     static std::string EncodeBase64(const std::string& sString);
 
     /// <summary>
+    /// Converts a sequence of bytes to their hex equivalents.
+    /// </summary>
+    static std::string FormatHex(const uint8_t* pBuffer, size_t nSize);
+
+    /// <summary>
     /// Determines if a given character is considered whitespace.
     /// </summary>
     template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>

@@ -11,6 +11,9 @@
 
 #include "util/Strings.hh"
 
+#include <algorithm>
+#include <limits>
+
 namespace ra {
 namespace data {
 namespace models {
@@ -542,16 +545,22 @@ void UnknownMemoryNoteModel::ExtractSize(std::wstring_view sNote)
             else if (nTokenType == MemoryNoteParser::TokenType::Multiplier)
             {
                 if (!bFoundSize)
-                    nElementCount = _wtoi(sPreviousWord.c_str());
+                {
+                    const auto nCount = std::wcstoll(sPreviousWord.c_str(), nullptr, 10);
+                    nElementCount = (nCount > 0)
+                        ? gsl::narrow_cast<uint32_t>(std::min<long long>(nCount, std::numeric_limits<uint32_t>::max()))
+                        : 0U;
+                }
             }
 
             if (bWordIsSize)
             {
                 if (nElementCount != 0)
                 {
+                    const uint64_t nTotalBytes = static_cast<uint64_t>(m_nBytes) * nElementCount;
                     m_nMemSize = Memory::Size::Array;
                     m_nBytesPerElement = m_nBytes;
-                    m_nBytes *= nElementCount;
+                    m_nBytes = gsl::narrow_cast<uint32_t>(std::min<uint64_t>(nTotalBytes, std::numeric_limits<int>::max()));
                 }
                 else if (m_nMemSize == Memory::Size::Unknown ||     // size not yet determined
                     Memory::SizeBytes(m_nMemSize) != m_nBytes) // size mismatch

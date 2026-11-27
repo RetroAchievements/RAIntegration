@@ -42,9 +42,6 @@
     <ClCompile Include="..\src\services\SearchResults.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\RA_md5factory.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\ViewModelBase.cpp">
       <Filter>Code</Filter>
     </ClCompile>

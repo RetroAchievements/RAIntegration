@@ -246,6 +246,9 @@
     <ClInclude Include="data\models\ArrayMemoryNoteModel.hh">
       <Filter>data\models</Filter>
     </ClInclude>
+    <ClInclude Include="util\MD5.hh">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\GSL.cpp">
@@ -361,6 +364,9 @@
     </ClCompile>
     <ClCompile Include="data\models\ArrayMemoryNoteModel.cpp">
       <Filter>data\models</Filter>
+    </ClCompile>
+    <ClCompile Include="util\MD5.cpp">
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

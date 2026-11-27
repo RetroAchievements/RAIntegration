@@ -187,6 +187,28 @@ public:
         String::ReplaceAll(input, "h", "");
         Assert::AreEqual(std::string("One two tree Four "), input);
     }
+
+    TEST_METHOD(TestFormatHex)
+    {
+        std::array<uint8_t, 32> sData{};
+        sData.at(8) = 0xFE;
+        sData.at(9) = 0xDC;
+        sData.at(10) = 0xBA;
+        sData.at(11) = 0x98;
+        sData.at(12) = 0x76;
+        sData.at(13) = 0x54;
+        sData.at(14) = 0x32;
+        sData.at(15) = 0x10;
+        sData.at(16) = 'a';
+        sData.at(17) = 'b';
+        sData.at(18) = 'c';
+
+        Assert::AreEqual(std::string("00"), String::FormatHex(&sData.at(0), 1));
+        Assert::AreEqual(std::string("00000000"), String::FormatHex(&sData.at(0), 4));
+        Assert::AreEqual(std::string("fedcba9876543210"), String::FormatHex(&sData.at(8), 8));
+        Assert::AreEqual(std::string("61626300"), String::FormatHex(&sData.at(16), 4));
+        Assert::AreEqual(std::string("321061"), String::FormatHex(&sData.at(14), 3));
+    }
 };
 
 

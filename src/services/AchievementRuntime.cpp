@@ -6,9 +6,8 @@
 #include "util\EnumOps.hh"
 #include "util\Json.hh"
 #include "util\Log.hh"
+#include "util\MD5.hh"
 #include "util\Strings.hh"
-
-#include "RA_md5factory.h"
 
 #include "api\impl\ConnectedServer.hh"
 
@@ -1770,7 +1769,7 @@ static void ProcessStateString(ra::util::Tokenizer& pTokenizer, unsigned int nId
     else
     {
         // recalculate the current achievement checksum
-        std::string sMD5Achievement = RAGenerateMD5(sMemString);
+        std::string sMD5Achievement = ra::util::MD5::Generate(sMemString);
         if (sGivenMD5Achievement != sMD5Achievement)
         {
             // achievement has been modified since data was captured, can't apply, just reset
@@ -1782,7 +1781,7 @@ static void ProcessStateString(ra::util::Tokenizer& pTokenizer, unsigned int nId
             const char* pStart = pTokenizer.GetPointer(nStart);
             std::string sModifiedProgressString =
                 ra::util::String::Printf("%s%.*s%s%u", sSalt, nEnd - nStart, pStart, sSalt, nId);
-            std::string sMD5Progress = RAGenerateMD5(sModifiedProgressString);
+            std::string sMD5Progress = ra::util::MD5::Generate(sModifiedProgressString);
             if (sMD5Progress != sGivenMD5Progress)
             {
                 // state checksum fail - assume user tried to modify it and ignore, just reset
@@ -1923,7 +1922,7 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
 
             if (tokenizer.PeekChar() == '#')
             {
-                const auto sLineMD5 = RAGenerateMD5(sLine.substr(0, tokenizer.CurrentPosition()));
+                const auto sLineMD5 = ra::util::MD5::Generate(sLine.c_str(), tokenizer.CurrentPosition());
                 tokenizer.Advance();
                 if (tokenizer.PeekChar() == sLineMD5.at(0))
                 {
@@ -1961,7 +1960,7 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
             const auto sChecksumMD5 = sLine.substr(tokenizer.CurrentPosition(), 32);
             tokenizer.Advance(32);
 
-            const auto sMemStringMD5 = RAFormatMD5(pRuntimeTrigger->md5);
+            const auto sMemStringMD5 = ra::util::MD5::Generate(pRuntimeTrigger->md5, sizeof(pRuntimeTrigger->md5));
             if (sMemStringMD5 != sChecksumMD5) // modified since captured
             {
                 rc_reset_trigger(pTrigger);
@@ -2003,7 +2002,7 @@ static bool LoadProgressV2(rc_client_t* pClient, ra::services::TextReader& pFile
             bool bValid = (tokenizer.PeekChar() == '#');
             if (bValid)
             {
-                const auto sLineMD5 = RAGenerateMD5(sLine.substr(0, tokenizer.CurrentPosition()));
+                const auto sLineMD5 = ra::util::MD5::Generate(std::string_view(sLine.c_str(), tokenizer.CurrentPosition()));
                 tokenizer.Advance();
                 if (tokenizer.PeekChar() != sLineMD5.at(0))
                 {

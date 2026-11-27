@@ -3,8 +3,8 @@
 #include "GDIBitmapSurface.hh"
 
 #include "RA_Defs.h"
-#include "RA_md5factory.h"
 #include "util\Log.hh"
+#include "util\MD5.hh"
 
 #include "context\IRcClient.hh"
 
@@ -13,7 +13,6 @@
 #include "services\Http.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
-#include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
 #include <rcheevos\include\rc_api_runtime.h>
@@ -243,9 +242,30 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName, cons
     });
 }
 
+static std::string GenerateFileMD5(const std::wstring& sPath)
+{
+    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    auto pFile = pFileSystem.OpenTextFile(sPath);
+    if (pFile == nullptr)
+        return "";
+
+    ra::util::MD5 md5;
+    std::array<uint8_t, 4096> sBuffer;
+    do
+    {
+        const auto nBytes = pFile->GetBytes(sBuffer.data(), sBuffer.size());
+        if (nBytes == 0)
+            break;
+
+        md5.Append(sBuffer.data(), nBytes);
+    } while (true);
+
+    return md5.Generate();
+}
+
 std::string ImageRepository::StoreImage(ImageType nType, const std::wstring& sPath)
 {
-    auto sFileMD5 = RAGenerateFileMD5(sPath);
+    auto sFileMD5 = GenerateFileMD5(sPath);
     if (sFileMD5.empty())
         return "";
 

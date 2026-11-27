@@ -161,7 +161,7 @@ bool String::ContainsCaseInsensitive(std::wstring_view sString, std::wstring_vie
 
 std::string String::EncodeBase64(const std::string& sString)
 {
-    const char base64EncTable[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    constexpr char base64EncTable[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     std::string sEncoded;
     sEncoded.reserve(((sString.length() + 2) / 3) * 4 + 1);
@@ -193,6 +193,27 @@ std::string String::EncodeBase64(const std::string& sString)
     }
 
     return sEncoded;
+}
+
+std::string String::FormatHex(const uint8_t* pBytes, size_t nBytes)
+{
+    constexpr char hexTable[] = "0123456789abcdef";
+    Expects(pBytes != nullptr);
+
+    std::string sResult(nBytes * 2, '\0');
+    char* pOut = sResult.data();
+    Expects(pOut != nullptr);
+
+    for (; nBytes > 0; --nBytes, ++pBytes)
+    {
+        GSL_SUPPRESS_BOUNDS4
+        {
+            *pOut++ = hexTable[(*pBytes >> 4) & 0x0F];
+            *pOut++ = hexTable[*pBytes & 0x0F];
+        }
+    }
+
+    return sResult;
 }
 
 } // namespace util

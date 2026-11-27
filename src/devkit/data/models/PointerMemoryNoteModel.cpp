@@ -37,7 +37,7 @@ void PointerMemoryNoteModel::ExtractIndirectNotes(std::wstring_view svParentInde
     }
 }
 
-static ra::data::ByteAddress ConvertPointer(ra::data::ByteAddress nAddress)
+static ra::data::ByteAddress ConvertPointer(ra::data::ByteAddress nAddress) noexcept
 {
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::context::IConsoleContext>();
     const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
@@ -47,7 +47,7 @@ static ra::data::ByteAddress ConvertPointer(ra::data::ByteAddress nAddress)
     return nAddress;
 }
 
-ra::data::ByteAddress PointerMemoryNoteModel::RawPointerToByteAddress(ra::data::ByteAddress nAddress) const
+ra::data::ByteAddress PointerMemoryNoteModel::RawPointerToByteAddress(ra::data::ByteAddress nAddress) const noexcept
 {
     return (m_nOffsetType == OffsetType::Converted) ? ConvertPointer(nAddress) : nAddress;
 }
@@ -118,7 +118,7 @@ const MemoryNoteModel* PointerMemoryNoteModel::GetNoteAtOffset(int nOffset) cons
     return nullptr;
 }
 
-bool PointerMemoryNoteModel::GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra::data::ByteAddress& nPreviousAddress) const
+bool PointerMemoryNoteModel::GetPreviousAddress(ra::data::ByteAddress nBeforeAddress, ra::data::ByteAddress& nPreviousAddress) const noexcept
 {
     const auto nPointerAddress = m_nBaseAddress;
     const auto nConvertedAddress = (m_nOffsetType == OffsetType::Overflow)
@@ -142,7 +142,7 @@ bool PointerMemoryNoteModel::GetPreviousAddress(ra::data::ByteAddress nBeforeAdd
     return bResult;
 }
 
-bool PointerMemoryNoteModel::GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data::ByteAddress& nNextAddress) const
+bool PointerMemoryNoteModel::GetNextAddress(ra::data::ByteAddress nAfterAddress, ra::data::ByteAddress& nNextAddress) const noexcept
 {
     const auto nPointerAddress = m_nBaseAddress;
     const auto nConvertedAddress = (m_nOffsetType == OffsetType::Overflow)

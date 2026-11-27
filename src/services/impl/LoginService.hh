@@ -18,7 +18,7 @@ public:
     LoginService(LoginService&&) noexcept = delete;
     LoginService& operator=(LoginService&&) noexcept = delete;
 
-    bool IsLoggedIn() const override;
+    bool IsLoggedIn() const noexcept override;
     bool Login(const std::string& sUsername, const std::string& sPassword) override;
     void Logout() override;
 };

@@ -26,7 +26,7 @@ public:
         InitializeRcClient();
     }
 
-    rc_client_t* GetClient() const
+    rc_client_t* GetClient() const noexcept
     {
         return ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     }
@@ -44,7 +44,7 @@ public:
     rc_client_achievement_info_t* MockSubsetAchievement(uint32_t nSubsetId, uint32_t nId, const char* sTitle = nullptr);
 
     rc_client_achievement_info_t* ActivateAchievement(uint32_t nId, const std::string& sTrigger);
-    void UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode);
+    void UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode) noexcept;
 
     rc_client_leaderboard_info_t* MockLeaderboard(uint32_t nId, const char* sTitle = nullptr);
     rc_client_leaderboard_info_t* MockLeaderboardWithLboard(uint32_t nId, const char* sTitle = nullptr);

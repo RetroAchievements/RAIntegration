@@ -33,7 +33,7 @@ public:
     OverlayManager(OverlayManager&&) noexcept = delete;
     OverlayManager& operator=(OverlayManager&&) noexcept = delete;
 
-    void InitializeNotifyTargets();
+    void InitializeNotifyTargets() noexcept;
 
     /// <summary>
     /// Updates the overlay.
@@ -296,7 +296,7 @@ public:
     /// <summary>
     /// Sets the function to call when there's something to be rendered.
     /// </summary>
-    void SetRenderRequestHandler(std::function<void()>&& fHandleRenderRequest)
+    void SetRenderRequestHandler(std::function<void()>&& fHandleRenderRequest) noexcept
     {
         auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
         pImageRepository.RemoveNotifyTarget(*this);

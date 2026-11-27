@@ -39,7 +39,7 @@ MemoryWatchListViewModel::MemoryWatchListViewModel() noexcept
     m_vItems.AddNotifyTarget(*this);
 }
 
-void MemoryWatchListViewModel::InitializeNotifyTargets(bool syncNotes)
+void MemoryWatchListViewModel::InitializeNotifyTargets(bool syncNotes) noexcept
 {
     if (syncNotes)
     {

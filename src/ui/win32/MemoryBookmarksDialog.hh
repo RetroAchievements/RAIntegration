@@ -44,7 +44,7 @@ private:
         protected ra::context::IEmulatorMemoryContext::NotifyTarget
     {
     public:
-        explicit BookmarksGridBinding(ViewModelBase& vmViewModel);
+        explicit BookmarksGridBinding(ViewModelBase& vmViewModel) noexcept;
         GSL_SUPPRESS_F6 ~BookmarksGridBinding();
         BookmarksGridBinding(const BookmarksGridBinding&) noexcept = delete;
         BookmarksGridBinding& operator=(const BookmarksGridBinding&) noexcept = delete;

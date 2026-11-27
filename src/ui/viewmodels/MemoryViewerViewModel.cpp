@@ -42,7 +42,7 @@ constexpr size_t NUM_ASCII_CHARS = (LAST_ASCII_CHAR - FIRST_ASCII_CHAR + 1);
 class MemoryViewerViewModel::MemoryBookmarkMonitor : protected ViewModelCollectionBase::NotifyTarget
 {
 public:
-    MemoryBookmarkMonitor(MemoryViewerViewModel& pOwner)
+    MemoryBookmarkMonitor(MemoryViewerViewModel& pOwner) noexcept
         : m_pOwner(pOwner),
           m_vBookmarks(ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Bookmarks().Items())
     {

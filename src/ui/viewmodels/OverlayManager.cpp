@@ -40,7 +40,7 @@ static void RenderPopupClippedX(ra::ui::drawing::ISurface& pSurface, const Popup
         pSurface.DrawSurface(nClipX, nY, pImage, pImage.GetWidth() - nVisibleWidth, 0, nVisibleWidth, pImage.GetHeight());
 }
 
-void OverlayManager::InitializeNotifyTargets()
+void OverlayManager::InitializeNotifyTargets() noexcept
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);

@@ -29,7 +29,7 @@ public:
     AssetListViewModel(AssetListViewModel&&) noexcept = delete;
     AssetListViewModel& operator=(AssetListViewModel&&) noexcept = delete;
 
-    void InitializeNotifyTargets();
+    void InitializeNotifyTargets() noexcept;
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the game ID.

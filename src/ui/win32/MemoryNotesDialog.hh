@@ -48,7 +48,7 @@ private:
         protected ra::context::IEmulatorMemoryContext::NotifyTarget
     {
     public:
-        explicit MemoryNotesGridBinding(ViewModelBase& vmViewModel);
+        explicit MemoryNotesGridBinding(ViewModelBase& vmViewModel) noexcept;
         GSL_SUPPRESS_F6 ~MemoryNotesGridBinding();
         MemoryNotesGridBinding(const MemoryNotesGridBinding&) noexcept = delete;
         MemoryNotesGridBinding& operator=(const MemoryNotesGridBinding&) noexcept = delete;

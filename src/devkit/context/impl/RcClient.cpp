@@ -68,7 +68,7 @@ void RcClient::LogMessage(const char* sMessage, const rc_client_t*)
         pLogger.LogMessage(ra::services::LogLevel::Info, sMessage);
 }
 
-void RcClient::AddAuthentication(const char** pUsername, const char** pApiToken) const
+void RcClient::AddAuthentication(const char** pUsername, const char** pApiToken) const noexcept
 {
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::context::UserContext>();
     if (pUsername)

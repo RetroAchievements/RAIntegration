@@ -39,7 +39,7 @@ StructuredDataBrowserViewModel::StructuredDataBrowserViewModel()
     m_vmFields.Items().AddNotifyTarget(*this); // for properties on individual fields
 }
 
-void StructuredDataBrowserViewModel::InitializeNotifyTargets()
+void StructuredDataBrowserViewModel::InitializeNotifyTargets() noexcept
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);

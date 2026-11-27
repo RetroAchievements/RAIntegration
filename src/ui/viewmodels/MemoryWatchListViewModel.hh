@@ -33,7 +33,7 @@ public:
     MemoryWatchListViewModel(MemoryWatchListViewModel&&) noexcept = delete;
     MemoryWatchListViewModel& operator=(MemoryWatchListViewModel&&) noexcept = delete;
     
-    void InitializeNotifyTargets(bool syncNotes = true);
+    void InitializeNotifyTargets(bool syncNotes = true) noexcept;
 
     void DoFrame();
 

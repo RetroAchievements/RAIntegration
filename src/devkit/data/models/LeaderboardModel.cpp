@@ -188,7 +188,7 @@ void LeaderboardModel::SyncStateFromRuntime(uint8_t nState)
     }
 }
 
-static void ReleaseLeaderboardTracker(struct rc_client_leaderboard_info_t* pLeaderboardInfo)
+static void ReleaseLeaderboardTracker(struct rc_client_leaderboard_info_t* pLeaderboardInfo) noexcept
 {
     rc_client_leaderboard_tracker_info_t* tracker = pLeaderboardInfo->tracker;
     if (tracker)
@@ -242,7 +242,7 @@ void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
     SyncStateToRuntime(nNewState);
 }
 
-void LeaderboardModel::SyncStateToRuntime(AssetState nNewState) const
+void LeaderboardModel::SyncStateToRuntime(AssetState nNewState) const noexcept
 {
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
 
@@ -309,7 +309,7 @@ void LeaderboardModel::SyncValueFormatToRuntime() const
     SyncTrackerToRuntime();
 }
 
-void LeaderboardModel::SyncTrackerToRuntime() const
+void LeaderboardModel::SyncTrackerToRuntime() const noexcept
 {
     if (m_pLeaderboardInfo->tracker)
     {

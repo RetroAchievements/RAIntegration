@@ -186,7 +186,7 @@ std::string UnknownGameViewModel::EncodeID(unsigned nId, const std::wstring& sHa
     return ra::util::String::Printf("%08x", nEncodedId);
 }
 
-static void AddClientHash(const std::string& sHash, uint32_t nGameId, bool isUnknown)
+static void AddClientHash(const std::string& sHash, uint32_t nGameId, bool isUnknown) noexcept
 {
     auto* pClient = ra::services::ServiceLocator::Get<ra::context::IRcClient>().GetClient();
     rc_client_add_game_hash(pClient, sHash.c_str(), nGameId);

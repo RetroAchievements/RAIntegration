@@ -52,7 +52,7 @@ void MemoryNotesDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 
 // ------------------------------------
 
-MemoryNotesDialog::MemoryNotesGridBinding::MemoryNotesGridBinding(ViewModelBase& vmViewModel)
+MemoryNotesDialog::MemoryNotesGridBinding::MemoryNotesGridBinding(ViewModelBase& vmViewModel) noexcept
     : ra::ui::win32::bindings::MultiLineGridBinding(vmViewModel)
 {
     auto& pMemoryContext = ra::services::ServiceLocator::GetMutable<ra::context::IEmulatorMemoryContext>();

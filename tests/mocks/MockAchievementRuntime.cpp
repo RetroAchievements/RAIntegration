@@ -187,7 +187,7 @@ rc_client_achievement_info_t* MockAchievementRuntime::ActivateAchievement(uint32
     return achievement;
 }
 
-void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode)
+void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode) noexcept
 {
     pAchievement->public_.unlocked |= nMode;
 
